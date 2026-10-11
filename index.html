@@ -585,6 +585,142 @@ body.en-tienda{padding-bottom:110px}
   .ticket .ps{border-top:1px dashed #000;padding:5px 0}.ticket .pl{display:flex;justify-content:space-between;gap:6px}.ticket .pt{font-weight:bold;font-size:14px}
 }
 
+/* ===== Proyectos ===== */
+.pj-ley{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--mut);margin:2px 2px 12px}
+.pj-ley span{display:inline-flex;align-items:center;gap:6px}
+.pj-ley i{width:10px;height:10px;border-radius:50%;display:inline-block}
+.pj-ley i.verde,.pj.verde{--sem:var(--ok);--semb:var(--okb)}
+.pj-ley i.amarillo,.pj.amarillo{--sem:var(--warn);--semb:var(--warnb)}
+.pj-ley i.rojo,.pj.rojo{--sem:var(--bad);--semb:var(--badb)}
+.pj.gris{--sem:var(--mut);--semb:color-mix(in srgb,var(--mut) 12%,transparent)}
+.pj-ley i{background:var(--sem)}
+.pj-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.pj{display:block;width:100%;text-align:left;font:inherit;color:var(--ink);cursor:pointer;border:1px solid var(--line);border-top:5px solid var(--sem);border-radius:20px;padding:13px 15px 14px;box-shadow:var(--sh);
+  background:linear-gradient(160deg,color-mix(in srgb,var(--sem) 9%,var(--card)) 0%,var(--card) 55%)}
+.pj:hover{border-color:color-mix(in srgb,var(--sem) 45%,var(--line));border-top-color:var(--sem)}
+.pj-h{display:flex;align-items:flex-start;gap:10px}
+.pj-h b{flex:1;min-width:0;font-weight:600;font-size:16px;line-height:1.25;overflow-wrap:anywhere}
+.pj-pill{flex:none;background:var(--semb);color:var(--sem);font-weight:700;font-size:13px;border-radius:99px;padding:3px 10px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.pj-sub{display:block;color:var(--mut);font-size:12.5px;margin:3px 0 11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj-sub em{font-style:normal;font-weight:600}
+.pj-st{display:grid;grid-template-columns:1fr 1.15fr 1.15fr;gap:6px;border-top:1px dashed var(--line);padding-top:10px}
+.pj-st small{display:block;color:var(--mut);font-size:11.5px}
+.pj-st b{display:block;font-size:14.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pj-st div:last-child b{color:var(--sem)}
+.pj-vacio p{max-width:520px;margin:0 auto 16px}
+/* detalle */
+.pj-cab{display:flex;flex-wrap:wrap;align-items:center;gap:6px 8px;margin-bottom:10px}
+.pj-cab .lnk{margin-left:auto}
+.lnk{border:0;background:none;color:var(--pri);font:600 13px var(--font);cursor:pointer;display:inline-flex;align-items:center;gap:4px;padding:2px 0}
+.pj-desc{margin:-4px 0 10px}
+.pj-res{--sem:var(--mut);--semb:color-mix(in srgb,var(--mut) 10%,transparent);border-radius:20px;border:1px solid color-mix(in srgb,var(--sem) 35%,var(--line));background:linear-gradient(150deg,var(--semb),var(--card) 70%);padding:14px;margin-bottom:6px}
+.pj-res.verde{--sem:var(--ok);--semb:var(--okb)}.pj-res.amarillo{--sem:var(--warn);--semb:var(--warnb)}.pj-res.rojo{--sem:var(--bad);--semb:var(--badb)}
+.pj-res-t{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;color:var(--sem);font-weight:600}
+.pj-res-t span{width:100%;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.pj-res-t b{font-size:30px;line-height:1.1;font-weight:700}
+.pj-res-t em{font-style:normal;font-size:14px}
+.pj-res.gris .pj-res-t{color:var(--ink);font-size:15px}
+.pj-sug{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-top:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:9px 12px}
+.pj-sug b{font-size:20px;color:var(--pri)}.pj-sug small{color:var(--mut);margin-right:auto}
+.pj-nums{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+.pj-nums div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 10px;min-width:0}
+.pj-nums small{display:block;color:var(--mut);font-size:11.5px}
+.pj-nums b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:560px){.pj-nums{grid-template-columns:1fr 1fr}}
+.pj-extra{display:flex;flex-direction:column;gap:3px;margin-top:10px;font-size:13px;color:var(--mut)}
+.pj-extra b{color:var(--ink)}
+.pj-ppto{margin-top:12px}.pj-ppto small{color:var(--mut)}.pj-ppto small b{color:var(--ink)}
+.pj-bar{height:8px;border-radius:99px;background:color-mix(in srgb,var(--mut) 15%,transparent);overflow:hidden;margin-top:5px}
+.pj-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,var(--h1),var(--h2))}
+.pj-bar i.ojo{background:var(--warn)}.pj-bar i.mal{background:var(--bad)}
+.pj-sg{display:flex!important;align-items:center;gap:6px;color:var(--pri)!important}
+.pj-inv{margin-top:10px}
+.pj-cats{display:flex;flex-direction:column;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:10px}
+.pj-cat{display:flex;align-items:center;gap:10px;font-size:13.5px}
+.pj-cat .e{font-size:18px;width:24px;text-align:center}
+.pj-cat>small{width:34px;text-align:right;color:var(--mut)}
+.pj-gastos .av{color:#fff}
+.pj-tags{display:flex!important;gap:5px;margin-top:3px;white-space:normal!important}
+.pj-an{margin-top:10px}.pj-an summary{cursor:pointer;padding:6px 2px}.pj-an .list{margin-top:6px}
+.pj-catsel{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.pj-catsel .chip{padding:6px 11px;font-size:13px}
+.pj-catsel .chip:disabled{opacity:.6;cursor:default}
+.pj-tot{display:flex;justify-content:space-between;align-items:center;background:var(--pri2);border-radius:14px;padding:10px 14px;margin:-2px 0 12px}
+.pj-tot b{font-size:20px;color:var(--pri)}
+.pj-pick{justify-content:flex-start;white-space:normal;text-align:left}
+.pj-cp{padding:11px 2px;font-weight:600}
+.pj-menu .li{width:100%;text-align:left;font:inherit;color:var(--ink)}
+.pj-menu .li>.ic{color:var(--pri)}
+.pj-pi{padding:12px 14px}.pj-pi .fld{margin-bottom:8px}
+.cj-sub{display:block;font-size:11.5px;color:var(--mut);font-weight:400}
+
+/* ===== Calculadora de precio ===== */
+.cp-panel{background:linear-gradient(160deg,var(--pri2),var(--card) 60%)}
+.cp-panel h3 .ic{color:var(--pri)}
+.cp-panel .fld input{background:var(--card)}
+.cp-op{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;margin-bottom:12px}
+.cp-op .chk{margin:0}
+.cp-red{display:inline-flex;align-items:center;gap:6px;font-size:13.5px;color:var(--mut)}
+.cp-red select{width:auto;padding:6px 8px;border-radius:10px}
+.cp-res{border-top:1px dashed var(--line);padding-top:12px}
+.cp-vacio{color:var(--mut);font-size:14px;padding:4px 0}
+.cp-big{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.cp-big small{color:var(--mut);font-size:13px;text-transform:uppercase;letter-spacing:.1em}
+.cp-big b{font-size:34px;color:var(--pri);font-weight:700;line-height:1.1}
+.cp-des{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px;margin:10px 0 8px}
+.cp-des div{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:7px 10px}
+.cp-des span{display:block;color:var(--mut);font-size:12px}.cp-des b{font-size:15px}
+.cp-nota{font-size:13px;color:var(--mut);margin:0 0 10px}.cp-nota b{color:var(--ink)}
+
+/* ===== Ayuda y novedades ===== */
+.ay-q{margin-bottom:12px}
+.ay-aqui{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:14px;margin-bottom:12px}
+.ay-h{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+.ay-h i,.ay-d summary i{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--t1),var(--t2));flex:none}
+.ay-h small{display:block;color:var(--mut);font-size:12px}.ay-h b{font:600 22px var(--serif)}
+.ay-t p{margin:0 0 8px;font-size:14.5px}
+.ay-t ol{margin:0 0 10px;padding-left:22px;display:flex;flex-direction:column;gap:6px;font-size:14.5px}
+.ay-t ol li::marker{color:var(--pri);font-weight:700}
+.ay-tips{background:var(--card);border-radius:12px;padding:8px 12px;margin-bottom:10px}
+.ay-tips p{margin:4px 0;font-size:13.5px;color:var(--mut)}
+.ay-acc{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}.ay-acc .btn{flex:1 1 200px}
+.ay-lista{display:flex;flex-direction:column;gap:8px}
+.ay-d{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 12px}
+.ay-d summary{display:flex;align-items:center;gap:12px;padding:9px 0;cursor:pointer;font-weight:600;list-style:none}
+.ay-d summary::-webkit-details-marker{display:none}
+.ay-d summary i{width:34px;height:34px;border-radius:11px}
+.ay-d summary:after{content:"+";margin-left:auto;color:var(--pri);font-size:20px;font-weight:600}
+.ay-d[open] summary:after{content:"–"}
+.ay-d .ay-t{padding:2px 0 12px}
+.me-ay{display:flex;align-items:center;gap:12px;width:100%;margin-top:12px;border:1px solid var(--line);background:var(--bg);border-radius:16px;padding:11px 12px;font:inherit;color:var(--ink);cursor:pointer;text-align:left}
+.me-ay>.ic:first-child{color:var(--pri)}.me-ay span{flex:1}.me-ay b{display:block}.me-ay small{color:var(--mut);font-size:12.5px}
+.nov .sheet-h h3{display:none}
+.nov-h{text-align:center;margin:-6px 0 14px}
+.nov-ic{width:64px;height:64px;border-radius:22px;margin:0 auto 8px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--h1),var(--h2));box-shadow:0 10px 26px var(--glow)}
+.nov-h h2{font:600 32px var(--serif)}.nov-h p{margin:2px 0 0;color:var(--mut);font-size:13px}
+.nov-l{display:flex;flex-direction:column;gap:12px}
+.nov-i{display:flex;gap:12px;align-items:flex-start}
+.nov-i>i{width:40px;height:40px;border-radius:13px;flex:none;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--t1),var(--t2))}
+.nov-i b{display:block;font-size:15px}.nov-i p{margin:2px 0 2px;font-size:13.5px;color:var(--mut)}
+.upd{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;z-index:60;width:min(520px,calc(100% - 24px));display:flex;align-items:center;gap:12px;
+  background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:11px 12px;box-shadow:0 18px 40px rgba(0,0,0,.18);transition:.3s}
+.upd.in{transform:translate(-50%,0);opacity:1}
+.upd>i{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--h1),var(--h2));flex:none}
+.upd b{display:block;font-size:14.5px}.upd small{color:var(--mut);font-size:12.5px}
+@media(min-width:900px){.upd{bottom:24px}}
+.banner.aviso-srv{background:var(--warnb)}.banner.aviso-srv .ic{color:var(--warn)}
+
+.pj-li{--sem:var(--mut);--semb:color-mix(in srgb,var(--mut) 12%,transparent)}
+.pj-li.verde{--sem:var(--ok);--semb:var(--okb)}.pj-li.amarillo{--sem:var(--warn);--semb:var(--warnb)}.pj-li.rojo{--sem:var(--bad);--semb:var(--badb)}
+.pj-li .av{background:var(--semb);color:var(--sem)}
+.pj-hoja .li .tx small{white-space:normal}
+.cp-panel .f2{grid-template-columns:1fr 1fr}
+.cp-red select{padding-right:30px}
+.cp-des{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cp-des div{padding:7px 9px}.cp-des span{font-size:11.5px}.cp-des b{font-size:14.5px;white-space:nowrap}
+.kpi i.neg{color:var(--bad)}
+.pj-form .f2,.pj-pi .f2{grid-template-columns:1fr 1fr}
+
 </style>
 </head>
 <body>
@@ -607,7 +743,7 @@ body.en-tienda{padding-bottom:110px}
 <script type="text/plain" id="backend-src">
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.0 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.2 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -627,7 +763,7 @@ const MULTI_NEGOCIO = true;
 const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite en modo un solo negocio)
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.1';
+const VERSION = '1.2';
 const DIAS_FOTO = 90;               // las fotos de productos sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -660,15 +796,18 @@ const SCHEMA = {
   Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
+  Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado'],
+  ProyectoGastos: ['id','proyectoId','dia','categoria','descripcion','cantidad','costoUnit','monto','productoId','caja','usuarioId','anulado','creado'],
+  ProyectoProductos: ['id','proyectoId','nombre','cantidad','unidad','peso','precio','productoId','inventario','creado'],
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q' };
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W' };
 const NUMS = new Set(['margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia']);
-const BOOLS = new Set(['activo','anulada','anulado','tienda']);
-const SOLO_FECHA = new Set(['fechaGasto']);
-const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto']);
+const BOOLS = new Set(['activo','anulada','anulado','tienda','caja']);
+const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario']);
+const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -800,6 +939,16 @@ function route_(req) {
     case 'anularDistribucion':  return lock_(() => anularDistribucion_(u, d));
     case 'inventario':      return inventario_(u, d);
     case 'cuentas':         return cuentas_(u, d);
+    case 'proyectos':       return proyectos_(u, d);
+    case 'proyecto':        return proyecto_(u, d);
+    case 'guardarProyecto': return lock_(() => guardarProyecto_(u, d));
+    case 'estadoProyecto':  return lock_(() => estadoProyecto_(u, d));
+    case 'duplicarProyecto': return lock_(() => duplicarProyecto_(u, d));
+    case 'gastoProyecto':   return lock_(() => gastoProyecto_(u, d));
+    case 'anularGastoProyecto': return lock_(() => anularGastoProyecto_(u, d));
+    case 'productoProyecto': return lock_(() => productoProyecto_(u, d));
+    case 'quitarProductoProyecto': return lock_(() => quitarProductoProyecto_(u, d));
+    case 'proyectoAInventario': return lock_(() => proyectoAInventario_(u, d));
     default: throw new Error('Acción no válida: ' + a);
   }
 }
@@ -1928,7 +2077,7 @@ function estadoPedido_(u, d) {
 
 function cajaCalc_(desde, hasta) {
   const en = f => f > desde && f <= hasta;
-  const k = { ventas: 0, cobros: 0, gastos: 0, pagos: 0, compras: 0, tarjeta: 0, transferencia: 0, credito: 0, nVentas: 0 };
+  const k = { ventas: 0, cobros: 0, gastos: 0, pagos: 0, compras: 0, tarjeta: 0, transferencia: 0, credito: 0, nVentas: 0, proyectos: 0 };
   rows_('Ventas').forEach(v => {
     if (v.anulada || !en(v.fecha)) return;
     k.nVentas++;
@@ -1941,6 +2090,8 @@ function cajaCalc_(desde, hasta) {
   rows_('Gastos').forEach(g => { if (!g.anulado && g.metodo === 'Efectivo' && en(g.creado)) k.gastos += g.monto; });
   rows_('Pagos').forEach(p => { if (!p.anulado && p.metodo === 'Efectivo' && en(p.fecha)) k.pagos += p.monto; });
   rows_('Compras').forEach(c => { if (!c.anulada && c.metodo === 'Efectivo' && en(c.fecha)) k.compras += c.total; });
+  // Gastos de proyectos pagados con el efectivo de la caja (cuentan como gasto en efectivo)
+  rows_('ProyectoGastos').forEach(g => { if (!g.anulado && g.caja && en(g.creado)) { k.gastos += g.monto; k.proyectos += g.monto; } });
   Object.keys(k).forEach(x => { k[x] = r2_(k[x]); });
   return k;
 }
@@ -2022,6 +2173,12 @@ function inicio_(u) {
       valor: r2_(prods.reduce((a, p) => a + Math.max(0, p.stock) * p.costo, 0)), productos: prods.length };
     const cm = rows_('Compras').filter(c => !c.anulada && c.fecha.slice(0, 7) === mes);
     out.comprasMes = { total: r2_(cm.reduce((a, c) => a + c.total, 0)), n: cm.length };
+    const pj = rows_('Proyectos').filter(p => p.estado === 'curso');
+    if (pj.length) {
+      const dt = datosProyectos_(), cfg = config_();
+      out.proyectosN = pj.length;
+      out.proyectos = desc_(pj, 'actualizado').slice(0, 3).map(p => { const c = calcProyecto_(p, dt.G[p.id] || [], dt.P[p.id] || [], cfg); return { id: p.id, nombre: p.nombre, semaforo: c.semaforo, pct: c.pct, costo: c.costo, unidades: c.unidades }; });
+    }
   }
   if (u.rol === 'bodega') {
     const pm = porId_(rows_('Productos'));
@@ -2213,6 +2370,283 @@ function cuentas_(u, d) {
   const cxp = antiguedad_(rows_('Compras').filter(c => !c.anulada && c.saldo > 0.004 && c.proveedorId), 'proveedorId', 'fecha')
     .map(o => { const p = pv[o.id] || {}; o.nombre = p.nombre || 'Proveedor'; o.telefono = p.telefono || ''; return o; });
   return { cobrar: cxc, pagar: cxp };
+}
+
+/* ===================== PROYECTOS =====================
+ * Un proyecto junta todo lo que se gasta para producir algo (materiales, mano de obra,
+ * alimentación, transporte…) y los productos finales que salen de él. Con eso calcula
+ * el costo por unidad, el precio sugerido y cuánto se gana.
+ */
+const VERDE_PROY = 30;   // % de ganancia sobre el costo desde el que un proyecto se ve en verde
+const EST_PROY = ['curso', 'terminado', 'cancelado'];
+
+function sugerido_(x) {
+  if (!(x > 0)) return 0;
+  return x >= 10 ? Math.ceil(x - 1e-9) : Math.ceil(x * 2 - 1e-9) / 2;
+}
+function tasaProy_(cfg) { return cfg.preciosConISV !== 'no' ? (Number(cfg.isv) || 0) : 0; }
+
+// Calcula costos, precio sugerido y ganancia de un proyecto
+function calcProyecto_(p, gastos, prods, cfg) {
+  const g = gastos.filter(x => !x.anulado);
+  const tasa = tasaProy_(cfg);
+  const costo = r2_(g.reduce((a, x) => a + x.monto, 0));
+  const unidades = r3_(prods.reduce((a, x) => a + x.cantidad, 0));
+  const base = prods.reduce((a, x) => a + x.cantidad * (x.peso > 0 ? x.peso : 1), 0);
+  const margen = Number(p.margen) >= 0 ? Number(p.margen) : VERDE_PROY;
+  let ingreso = 0, conPrecio = 0;
+  const productos = prods.map(x => {
+    const peso = x.peso > 0 ? x.peso : 1;
+    const asignado = base > 0 ? costo * x.cantidad * peso / base : 0;
+    const cu = x.cantidad > 0 ? asignado / x.cantidad : 0;
+    if (x.precio > 0) { ingreso += x.precio * x.cantidad; conPrecio++; }
+    return Object.assign({}, x, { peso: peso, costoAsignado: r2_(asignado), costoUnit: r2_(cu), sugerido: sugerido_(cu * (1 + margen / 100) * (1 + tasa)),
+      ganUnit: x.precio > 0 ? r2_(x.precio / (1 + tasa) - cu) : null });
+  });
+  const conTodo = prods.length > 0 && conPrecio === prods.length && costo > 0;
+  const neto = ingreso / (1 + tasa);
+  const ganancia = conTodo ? r2_(neto - costo) : null;
+  const pct = conTodo ? r2_(ganancia / costo * 100) : null;
+  let semaforo = 'gris';
+  if (pct !== null) semaforo = ganancia < 0 ? 'rojo' : pct >= VERDE_PROY ? 'verde' : 'amarillo';
+  const precioProm = conTodo && unidades > 0 ? neto / unidades : 0;
+  const cats = {};
+  g.forEach(x => { const c = x.categoria || 'Otros'; const y = cats[c] || (cats[c] = { categoria: c, monto: 0, n: 0 }); y.monto += x.monto; y.n++; });
+  return {
+    costo: costo, unidades: unidades, nProductos: prods.length, nGastos: g.length, margen: margen, tasa: tasa,
+    costoUnit: prods.length === 1 && unidades > 0 ? productos[0].costoUnit : null,
+    sugerido: prods.length === 1 ? productos[0].sugerido : null,
+    ingreso: r2_(ingreso), ingresoNeto: r2_(neto), ganancia: ganancia, pct: pct,
+    margenVenta: conTodo && neto > 0 ? r2_(ganancia / neto * 100) : null, semaforo: semaforo,
+    equilibrio: precioProm > 0 ? Math.ceil(costo / precioProm - 1e-9) : null,
+    presupuestoPct: p.presupuesto > 0 ? r2_(costo / p.presupuesto * 100) : null,
+    porCategoria: Object.keys(cats).map(k => ({ categoria: k, monto: r2_(cats[k].monto), n: cats[k].n, pct: costo > 0 ? r2_(cats[k].monto / costo * 100) : 0 }))
+      .sort((a, b) => b.monto - a.monto),
+    productos: productos
+  };
+}
+
+function datosProyectos_() {
+  const G = {}, P = {};
+  rows_('ProyectoGastos').forEach(x => { (G[x.proyectoId] || (G[x.proyectoId] = [])).push(x); });
+  rows_('ProyectoProductos').forEach(x => { (P[x.proyectoId] || (P[x.proyectoId] = [])).push(x); });
+  return { G: G, P: P };
+}
+
+function proyectos_(u, d) {
+  req_(u, ['admin','bodega']);
+  const cfg = config_(), dt = datosProyectos_();
+  const l = desc_(rows_('Proyectos'), 'actualizado').map(p => {
+    const c = calcProyecto_(p, dt.G[p.id] || [], dt.P[p.id] || [], cfg);
+    delete c.porCategoria;
+    c.productos = c.productos.map(x => ({ nombre: x.nombre, cantidad: x.cantidad, unidad: x.unidad }));
+    return Object.assign(p, { r: c });
+  });
+  return l;
+}
+
+function proyecto_(u, d) {
+  req_(u, ['admin','bodega']);
+  const p = rows_('Proyectos').find(x => x.id === d.id);
+  if (!p) throw new Error('El proyecto ya no existe');
+  const us = porId_(rows_('Usuarios'));
+  const gastos = rows_('ProyectoGastos').filter(x => x.proyectoId === p.id);
+  const prods = rows_('ProyectoProductos').filter(x => x.proyectoId === p.id);
+  p.r = calcProyecto_(p, gastos, prods, config_());
+  p.gastos = desc_(gastos.map(g => { g._k = g.dia + g.creado; g.usuario = us[g.usuarioId] ? us[g.usuarioId].nombre : ''; return g; }), '_k');
+  return p;
+}
+
+function proyectoValido_(id, editable) {
+  const p = rows_('Proyectos').find(x => x.id === id);
+  if (!p) throw new Error('El proyecto ya no existe');
+  if (editable && p.estado === 'cancelado') throw new Error('El proyecto está cancelado. Reábrelo para hacer cambios.');
+  return p;
+}
+function tocarProyecto_(id) { upsert_('Proyectos', { id: id, actualizado: ahora_() }); }
+
+function guardarProyecto_(u, d) {
+  req_(u, ['admin','bodega']);
+  const r = d.registro || {};
+  const prev = r.id ? proyectoValido_(r.id) : null;
+  const rec = {
+    nombre: txt_(r.nombre, 80), cliente: txt_(r.cliente, 80), descripcion: txt_(r.descripcion, 300), nota: txt_(r.nota, 300),
+    margen: r.margen === '' || r.margen === undefined || r.margen === null ? VERDE_PROY : r2_(r.margen),
+    presupuesto: r2_(r.presupuesto) > 0 ? r2_(r.presupuesto) : 0,
+    inicio: /^\d{4}-\d{2}-\d{2}$/.test(String(r.inicio || '')) ? r.inicio : (prev ? prev.inicio : hoy_()),
+    actualizado: ahora_()
+  };
+  if (!rec.nombre) throw new Error('Escribe el nombre del proyecto');
+  if (!(rec.margen >= 0 && rec.margen <= 1000)) throw new Error('El % de ganancia deseado no es válido');
+  if (prev) rec.id = prev.id;
+  else Object.assign(rec, { estado: 'curso', fin: '', usuarioId: u.id, creado: ahora_() });
+  const p = upsert_('Proyectos', rec);
+  // Al crear, se puede indicar de una vez el producto final
+  if (!prev && r.producto && txt_(r.producto.nombre, 80)) {
+    const cant = r3_(r.producto.cantidad);
+    if (!(cant > 0)) throw new Error('Escribe la cantidad que vas a producir');
+    upsert_('ProyectoProductos', { proyectoId: p.id, nombre: txt_(r.producto.nombre, 80), cantidad: cant, unidad: txt_(r.producto.unidad, 20) || 'unidad',
+      peso: 1, precio: r2_(r.producto.precio) > 0 ? r2_(r.producto.precio) : 0, productoId: '', inventario: '', creado: ahora_() });
+  }
+  return proyecto_(u, { id: p.id });
+}
+
+function estadoProyecto_(u, d) {
+  req_(u, ['admin','bodega']);
+  const p = proyectoValido_(d.id);
+  if (EST_PROY.indexOf(d.estado) < 0) throw new Error('Estado no válido');
+  upsert_('Proyectos', { id: p.id, estado: d.estado, fin: d.estado === 'curso' ? '' : hoy_(), actualizado: ahora_() });
+  return proyecto_(u, { id: p.id });
+}
+
+function duplicarProyecto_(u, d) {
+  req_(u, ['admin','bodega']);
+  const p = proyectoValido_(d.id);
+  const n = upsert_('Proyectos', { nombre: txt_(d.nombre, 80) || (p.nombre + ' (otra vez)').slice(0, 80), cliente: p.cliente, descripcion: p.descripcion, nota: '',
+    margen: p.margen, presupuesto: p.presupuesto, inicio: hoy_(), estado: 'curso', fin: '', usuarioId: u.id, creado: ahora_(), actualizado: ahora_() });
+  rows_('ProyectoProductos').filter(x => x.proyectoId === p.id).forEach(x => {
+    upsert_('ProyectoProductos', { proyectoId: n.id, nombre: x.nombre, cantidad: x.cantidad, unidad: x.unidad, peso: x.peso, precio: x.precio, productoId: '', inventario: '', creado: ahora_() });
+  });
+  let omitidos = 0;
+  if (d.gastos) {
+    const copia = rows_('ProyectoGastos').filter(x => x.proyectoId === p.id && !x.anulado).filter(x => { if (x.productoId) { omitidos++; return false; } return true; });
+    appendRows_('ProyectoGastos', copia.map((x, i) => ({ id: newId_('ProyectoGastos') + i, proyectoId: n.id, dia: hoy_(), categoria: x.categoria, descripcion: x.descripcion,
+      cantidad: x.cantidad, costoUnit: x.costoUnit, monto: x.monto, productoId: '', caja: false, usuarioId: u.id, anulado: false, creado: ahora_() })));
+  }
+  const r = proyecto_(u, { id: n.id });
+  r.omitidos = omitidos;
+  return r;
+}
+
+const CAT_PROY = ['Materiales','Mano de obra','Alimentación','Transporte','Servicios','Alquiler','Empaque','Herramientas','Publicidad','Otros'];
+
+function gastoProyecto_(u, d) {
+  req_(u, ['admin','bodega']);
+  const r = d.registro || {};
+  const p = proyectoValido_(r.proyectoId, true);
+  const prev = r.id ? rows_('ProyectoGastos').find(x => x.id === r.id && x.proyectoId === p.id) : null;
+  if (r.id && !prev) throw new Error('El gasto ya no existe');
+  if (prev && prev.anulado) throw new Error('No se puede modificar un gasto anulado');
+  if (prev && prev.productoId) throw new Error('El material tomado del inventario no se puede modificar. Anúlalo y regístralo de nuevo.');
+  let cat = txt_(r.categoria, 40) || 'Otros';
+  const ci = CAT_PROY.find(c => c.toLowerCase() === cat.toLowerCase()); if (ci) cat = ci;
+  const dia = /^\d{4}-\d{2}-\d{2}$/.test(String(r.dia || '')) ? r.dia : hoy_();
+  if (dia > hoy_()) throw new Error('La fecha no puede ser futura');
+  const rec = { proyectoId: p.id, dia: dia, categoria: cat, descripcion: txt_(r.descripcion, 120), caja: !!r.caja };
+  let mover = null;
+  if (!prev && r.productoId) {
+    // Material tomado del inventario: sale de las existencias al costo promedio
+    const pr = rows_('Productos').find(x => x.id === r.productoId);
+    if (!pr) throw new Error('Ese producto ya no existe');
+    if (pr.tipo !== 'producto') throw new Error('«' + pr.nombre + '» no controla existencias');
+    const cant = r3_(r.cantidad);
+    if (!(cant > 0)) throw new Error('Escribe la cantidad que usaste');
+    if (cant > pr.stock && config_().venderSinStock !== 'si') throw new Error('Solo hay ' + pr.stock + ' de «' + pr.nombre + '» en inventario');
+    const cu = pr.costo > 0 ? pr.costo : r2_(r.costoUnit);
+    if (!(cu > 0)) throw new Error('«' + pr.nombre + '» no tiene costo registrado: escribe cuánto te costó cada uno');
+    Object.assign(rec, { productoId: pr.id, cantidad: cant, costoUnit: cu, monto: r2_(cant * cu), descripcion: rec.descripcion || pr.nombre, caja: false });
+    mover = { pid: pr.id, cant: cant };
+  } else {
+    const cant = r3_(r.cantidad) > 0 ? r3_(r.cantidad) : 1, cu = r2_(r.costoUnit);
+    rec.cantidad = cant;
+    rec.costoUnit = cu > 0 ? cu : r2_(r2_(r.monto) / cant);
+    rec.monto = cu > 0 ? r2_(cant * cu) : r2_(r.monto);
+    rec.productoId = '';
+  }
+  if (!rec.descripcion) throw new Error('Escribe qué fue el gasto');
+  if (!(rec.monto > 0)) throw new Error('El monto debe ser mayor a cero');
+  if (prev) rec.id = prev.id;
+  else Object.assign(rec, { usuarioId: u.id, anulado: false, creado: ahora_() });
+  const g = upsert_('ProyectoGastos', rec);
+  if (mover) moverStock_({ [mover.pid]: -mover.cant }, 'proyecto', g.id, u, p.nombre);
+  tocarProyecto_(p.id);
+  const out = proyecto_(u, { id: p.id });
+  if (mover) out.catalogo = rows_('Productos');
+  return out;
+}
+
+function anularGastoProyecto_(u, d) {
+  req_(u, ['admin','bodega']);
+  const g = rows_('ProyectoGastos').find(x => x.id === d.id);
+  if (!g) throw new Error('El gasto no existe');
+  if (g.anulado) throw new Error('El gasto ya está anulado');
+  if (u.rol !== 'admin' && g.usuarioId !== u.id) throw new Error('Solo el administrador o quien lo registró puede anularlo');
+  const p = proyectoValido_(g.proyectoId);
+  upsert_('ProyectoGastos', { id: g.id, anulado: true });
+  let prods = null;
+  if (g.productoId) { moverStock_({ [g.productoId]: g.cantidad }, 'proyecto', g.id, u, 'Anulado · ' + p.nombre); prods = rows_('Productos'); }
+  tocarProyecto_(p.id);
+  const out = proyecto_(u, { id: p.id });
+  if (prods) out.catalogo = prods;
+  return out;
+}
+
+function productoProyecto_(u, d) {
+  req_(u, ['admin','bodega']);
+  const r = d.registro || {};
+  const p = proyectoValido_(r.proyectoId, true);
+  const prev = r.id ? rows_('ProyectoProductos').find(x => x.id === r.id && x.proyectoId === p.id) : null;
+  if (r.id && !prev) throw new Error('El producto ya no existe');
+  const rec = { proyectoId: p.id, nombre: txt_(r.nombre, 80), unidad: txt_(r.unidad, 20) || 'unidad',
+    peso: r2_(r.peso) > 0 ? r2_(r.peso) : 1, precio: r2_(r.precio) > 0 ? r2_(r.precio) : 0 };
+  const cant = r3_(r.cantidad);
+  if (!rec.nombre) throw new Error('Escribe el nombre del producto final');
+  if (prev && prev.inventario) { if (cant !== prev.cantidad) throw new Error('Este producto ya pasó al inventario: su cantidad no se puede cambiar'); }
+  if (!(cant > 0)) throw new Error('Escribe la cantidad producida');
+  rec.cantidad = cant;
+  if (prev) rec.id = prev.id; else Object.assign(rec, { productoId: '', inventario: '', creado: ahora_() });
+  upsert_('ProyectoProductos', rec);
+  tocarProyecto_(p.id);
+  return proyecto_(u, { id: p.id });
+}
+
+function quitarProductoProyecto_(u, d) {
+  req_(u, ['admin','bodega']);
+  const x = rows_('ProyectoProductos').find(y => y.id === d.id);
+  if (!x) throw new Error('El producto ya no existe');
+  if (x.inventario) throw new Error('Este producto ya pasó al inventario y no se puede quitar');
+  proyectoValido_(x.proyectoId, true);
+  deleteRow_('ProyectoProductos', x.id);
+  tocarProyecto_(x.proyectoId);
+  return proyecto_(u, { id: x.proyectoId });
+}
+
+// Pasa los productos finales al inventario: suben las existencias al costo calculado del proyecto
+function proyectoAInventario_(u, d) {
+  req_(u, ['admin','bodega']);
+  const p = proyectoValido_(d.proyectoId, true);
+  const det = proyecto_(u, { id: p.id });
+  if (!(det.r.costo > 0)) throw new Error('Primero registra los gastos del proyecto');
+  const items = d.items || [];
+  if (!items.length) throw new Error('Selecciona al menos un producto');
+  let n = 0;
+  items.forEach(it => {
+    const x = det.r.productos.find(y => y.id === it.id);
+    if (!x) throw new Error('Un producto del proyecto ya no existe');
+    if (x.inventario) throw new Error('«' + x.nombre + '» ya pasó al inventario');
+    const cu = x.costoUnit, precio = r2_(it.precio) > 0 ? r2_(it.precio) : (x.precio > 0 ? x.precio : x.sugerido);
+    let prod = it.productoId ? rows_('Productos').find(y => y.id === it.productoId) : null;
+    if (it.productoId && !prod) throw new Error('El producto del inventario ya no existe');
+    if (prod) {
+      if (prod.tipo !== 'producto') throw new Error('«' + prod.nombre + '» no controla existencias');
+      const st = Math.max(0, prod.stock);
+      const upd = { id: prod.id, costo: r2_((st * prod.costo + x.cantidad * cu) / (st + x.cantidad)) };
+      if (it.cambiarPrecio && precio > 0) upd.precio = precio;
+      upsert_('Productos', upd);
+    } else {
+      prod = upsert_('Productos', { codigo: '', nombre: x.nombre, categoria: txt_(it.categoria, 40) || 'Producción', tipo: 'producto', unidad: x.unidad || 'unidad',
+        precio: precio, costo: cu, margen: det.r.margen, stock: 0, stockMin: 0, tasaIsv: '', icono: txt_(it.icono, 4), foto: '', fotoFecha: '', descripcion: '',
+        tienda: false, activo: true, creado: ahora_() });
+    }
+    moverStock_({ [prod.id]: x.cantidad }, 'producción', p.id, u, p.nombre);
+    upsert_('ProyectoProductos', { id: x.id, productoId: prod.id, inventario: hoy_() });
+    n++;
+  });
+  tocarProyecto_(p.id);
+  const out = proyecto_(u, { id: p.id });
+  out.catalogo = rows_('Productos');
+  out.pasados = n;
+  return out;
 }
 
 /* ===================== TIENDA EN LÍNEA (página pública) ===================== */
@@ -2468,6 +2902,47 @@ function sembrarEjemplo_(adminId) {
       upsert_('Distribuciones', { mes: m2.mes, tipo: 'cuenta', destino: 'Ahorro', detalle: 'Fondo de emergencia', monto: r2_(m2.utilidad * 0.4), usuarioId: admin.id, nota: '', anulado: false, creado: reloj.f });
       upsert_('Distribuciones', { mes: m2.mes, tipo: 'pago', destino: 'Retiro de la dueña', detalle: '', monto: r2_(m2.utilidad * 0.6), usuarioId: admin.id, nota: '', anulado: false, creado: reloj.f });
     }
+    // Proyectos (uno en cada color del semáforo y uno sin precio todavía)
+    const proy = (dias, reg, gastos, estado) => {
+      reloj.f = fechaHace(dias, 9, 0);
+      reg.inicio = reloj.f.slice(0, 10);
+      const p = guardarProyecto_(admin, { registro: reg });
+      gastos.forEach((g, i) => {
+        const dd = Math.max(0, dias - (g[6] || i));
+        reloj.f = fechaHace(dd, 10 + (i % 7), 15);
+        const prod = g[5] ? rows_('Productos').find(x => x.nombre === g[5]) : null;
+        const r = { proyectoId: p.id, dia: reloj.f.slice(0, 10), categoria: g[0], descripcion: g[1], cantidad: g[2], costoUnit: g[3], caja: !!g[4] };
+        if (prod && prod.stock >= g[2]) r.productoId = prod.id;
+        gastoProyecto_(bodega || admin, { registro: r });
+      });
+      if (estado) { reloj.f = fechaHace(Math.max(0, dias - gastos.length - 2), 17, 0); estadoProyecto_(admin, { id: p.id, estado: estado }); }
+      return p;
+    };
+    const bodega = rows_('Usuarios').find(x => x.rol === 'bodega');
+    // Compras de material para los proyectos
+    [[27, 'Taza decorada', 24, 70], [19, 'Camiseta básica', 30, 140]].forEach(c => {
+      reloj.f = fechaHace(c[0], 9, 30);
+      const pr = rows_('Productos').find(x => x.nombre === c[1]);
+      compra_(bodega || admin, { proveedorId: P[0].id, metodo: 'Efectivo', factura: 'F-' + (8800 + c[0]), items: [{ productoId: pr.id, cantidad: c[2], costo: c[3] }] });
+    });
+    proy(26, { nombre: 'Canastas navideñas', cliente: 'Agrícola del Valle', descripcion: 'Canastas con taza, dulces y tarjeta para los empleados', margen: 35, presupuesto: 6000,
+      producto: { nombre: 'Canasta navideña', cantidad: 40, unidad: 'unidad', precio: 220 } }, [
+      ['Materiales', 'Canastas de mimbre', 40, 45], ['Materiales', 'Taza decorada', 15, 70, false, 'Taza decorada'], ['Empaque', 'Papel celofán y moños', 1, 520],
+      ['Mano de obra', 'Ayudante para armar (2 días)', 2, 400], ['Alimentación', 'Almuerzo del equipo', 1, 300, true], ['Empaque', 'Etiquetas personalizadas', 40, 6],
+      ['Transporte', 'Flete de entrega', 1, 450]]);
+    proy(40, { nombre: 'Kits escolares Escuela Morazán', cliente: 'Escuela Francisco Morazán', descripcion: 'Precio acordado con la escuela', margen: 30,
+      producto: { nombre: 'Kit escolar', cantidad: 60, unidad: 'unidad', precio: 185 } }, [
+      ['Materiales', 'Útiles escolares al por mayor', 60, 112], ['Empaque', 'Bolsas con logo', 60, 9], ['Mano de obra', 'Armado de kits', 1, 600],
+      ['Transporte', 'Entrega en la escuela', 1, 350], ['Alimentación', 'Refrigerio el día de la entrega', 1, 180]], 'terminado');
+    proy(18, { nombre: 'Camisetas Club Deportivo Real', cliente: 'Club Deportivo Real', descripcion: 'Camisetas estampadas con número', margen: 30,
+      producto: { nombre: 'Camiseta estampada', cantidad: 25, unidad: 'unidad', precio: 260 } }, [
+      ['Materiales', 'Camiseta básica', 25, 140, false, 'Camiseta básica'], ['Servicios', 'Estampado frente y número', 25, 85], ['Publicidad', 'Diseño del escudo', 1, 500],
+      ['Transporte', 'Ida al taller de estampado', 1, 150]]);
+    const dm = proy(3, { nombre: 'Arreglos Día de la Madre', descripcion: 'Arreglo con peluche y flores para vender en la tienda', margen: 40, presupuesto: 4500,
+      producto: { nombre: 'Arreglo con peluche', cantidad: 30, unidad: 'unidad' } }, [
+      ['Materiales', 'Peluches pequeños', 30, 60], ['Materiales', 'Flores artificiales', 1, 900], ['Alimentación', 'Café y pan para la tarde de armado', 1, 120]]);
+    reloj.f = fechaHace(2, 15, 0);
+    productoProyecto_(admin, { registro: { proyectoId: dm.id, nombre: 'Tarjeta con dedicatoria', cantidad: 30, unidad: 'unidad', peso: 0.15 } });
   } finally { ahora_ = origAhora; }
   return true;
 }
@@ -2709,7 +3184,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.1';
+const APP_VER = '1.2';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -2812,6 +3287,7 @@ function manejarError(m) {
   m = String(m || 'Error');
   if (m.indexOf('PRUEBA_VENCIDA|') === 0) { let info = {}; try { info = JSON.parse(m.slice(15)); } catch (e) {} if (!S.enTienda) mostrarVencida(info); throw new Error('Tu período de prueba terminó'); }
   if (m === 'SESION') { if (!S.enTienda) salir(true); throw new Error('Tu sesión expiró. Ingresa de nuevo.'); }
+  if (m.indexOf('Acción no válida') === 0) throw new Error('Esta función necesita la versión nueva del servidor. Escríbenos por WhatsApp al +504 3313-0265 para activarla.');
   throw new Error(m);
 }
 async function demoApi(action, data, silent) {
@@ -2949,6 +3425,7 @@ const VISTAS = {
   pedidos:     { t: 'Pedidos en línea', c: 'Pedidos', i: 'inbox', roles: ['admin', 'cajero'] },
   productos:   { t: 'Productos', i: 'box', roles: TODOS },
   precios:     { t: 'Precios', i: 'tag', roles: ['admin', 'bodega'] },
+  proyectos:   { t: 'Proyectos', i: 'layers', roles: ['admin', 'bodega'] },
   clientes:    { t: 'Clientes', i: 'users', roles: ['admin', 'cajero'] },
   proveedores: { t: 'Proveedores', i: 'truck', roles: ['admin', 'bodega'] },
   compras:     { t: 'Compras', i: 'bag', roles: ['admin', 'bodega'] },
@@ -2988,11 +3465,11 @@ function pintarHeader() {
   const demo = DEMO.on ? `<button class="demo-tag" data-a="menuDemo">MODO PRUEBA</button>` : '';
   const bell = puede('admin', 'cajero') ? `<button class="hbtn" data-a="ir" data-v="pedidos" aria-label="Pedidos">${ic('bell', 20)}${S.pedidosNuevos ? `<span class="dot">${S.pedidosNuevos}</span>` : ''}</button>` : '';
   if (S.vista === 'inicio') {
-    $('#hdr').innerHTML = `<div class="hero"><div class="hero-top"><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button>${demo}<div class="grp">${bell}<button class="hbtn" data-a="ir" data-v="ajustes" aria-label="Ajustes">${ic('gear', 20)}</button></div></div>
+    $('#hdr').innerHTML = `<div class="hero"><div class="hero-top"><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button>${demo}<div class="grp">${bell}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}</button><button class="hbtn" data-a="ir" data-v="ajustes" aria-label="Ajustes">${ic('gear', 20)}</button></div></div>
       <div class="hero-c">${monograma()}<div class="hero-name">${esc(S.config.nombre || 'Mi Negocio')}</div><div class="hero-tag">${esc(S.config.eslogan || giroNombre() || 'Gestión de negocio')}</div></div></div>`;
   } else {
     const extra = (R[S.vista + '_bar'] && R[S.vista + '_bar']()) || '';
-    $('#hdr').innerHTML = `<div class="bar"><div class="bar-in"><button class="hbtn" data-a="ir" data-v="inicio" aria-label="Volver">${ic('left', 22)}</button><div class="bar-t">${esc(v.t)}</div>${demo}${extra}<button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button></div></div>`;
+    $('#hdr').innerHTML = `<div class="bar"><div class="bar-in"><button class="hbtn" data-a="ir" data-v="inicio" aria-label="Volver">${ic('left', 22)}</button><div class="bar-t">${esc(v.t)}</div>${demo}${extra}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}</button><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button></div></div>`;
   }
 }
 function pintarNav() {
@@ -3019,12 +3496,16 @@ function pintarBanner() {
   if (L && L.estado === 'prueba' && puede('admin') && S.vista === 'ajustes') {
     h = `<div class="banner">${ic('sparkle', 18)}<span>Prueba gratis · ${L.diasRestantes === 1 ? 'te queda <b>1 día</b>' : `te quedan <b>${L.diasRestantes} días</b>`}</span><a class="btn sm acc" href="${waLink(CONTACTO_WA, 'Hola, quiero activar Gestión de Negocio VM para ' + (S.config.nombre || 'mi negocio'))}" target="_blank" rel="noopener">Activar</a></div>`;
   }
+  if (S.version && cmpVer(S.version, API_MIN) < 0 && puede('admin')) {
+    h += `<div class="banner aviso-srv">${ic('alert', 18)}<span>El servidor todavía tiene la versión <b>${esc(S.version)}</b>. Algunas funciones nuevas no van a responder hasta que se actualice.</span><a class="btn sm acc" href="${waLink(CONTACTO_WA, 'Hola, mi sistema Gestión de Negocio VM (' + (S.config.nombre || '') + ') dice que el servidor tiene la versión ' + S.version + ' y la app la ' + APP_VER + '.')}" target="_blank" rel="noopener">Avisar</a></div>`;
+  }
   $('#banner').innerHTML = h;
 }
 ACC.ir = el => { cerrarHojas(); ir(el.dataset.v, el.dataset.p ? JSON.parse(el.dataset.p) : {}); };
 ACC.mas = () => {
   const items = Object.keys(VISTAS).filter(k => k !== 'inicio' && puedeVer(k));
   const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}"><i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i><span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : ''}</button>`).join('')}</div>
+    <button class="me-ay" data-a="ayuda">${ic('help', 20)}<span><b>Ayuda y novedades</b><small>Cómo se usa cada pantalla · versión ${APP_VER}</small></span>${ic('right', 18)}</button>
     <div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.config.nombre || '')}</small></div><button class="btn sm bad" data-a="logout">${ic('logout', 16)} Salir</button></div>` });
   return h;
 };
@@ -3052,6 +3533,7 @@ function aplicarDatos(d) {
   if (d.negocioId !== undefined) S.negocioId = d.negocioId;
   if (d.multi !== undefined) { S.multi = !!d.multi; LS.set('multi', S.multi ? '1' : '0'); }
   if (d.usuario) S.user = d.usuario;
+  if (d.version) S.version = d.version;
   aplicarTema(S.config.tema || LS.get('tema', TEMA_DEF));
   document.title = (S.config.nombre || 'Mi Negocio') + ' · Gestión de Negocio VM';
   LS.set('nombre', S.config.nombre || '');
@@ -3077,6 +3559,8 @@ function mostrarApp() {
   const h = location.hash.slice(1);
   ir(VISTAS[h] ? h : 'inicio', {}, true);
   vigilarPedidos();
+  revisarNovedades();
+  setTimeout(() => buscarActualizacion(true), 4000);
 }
 function salir(expirada) {
   if (!expirada && S.token) api('logout', {}, true).catch(() => {});
@@ -3087,7 +3571,7 @@ function salir(expirada) {
   pintarLogin();
 }
 function limpiarSesion() {
-  S.pedidosNuevos = 0; S.pedidosL = null; S.cajaD = null; S.f = {}; S.yaReviso = false; S.ventasL = null; S.gastosL = null; S.comprasL = null; S.hist = null; S.inicioT = 0;
+  S.pedidosNuevos = 0; S.pedidosL = null; S.cajaD = null; S.proyL = null; S.hProy = null; S.f = {}; S.yaReviso = false; S.ventasL = null; S.gastosL = null; S.comprasL = null; S.hist = null; S.inicioT = 0;
   try { history.replaceState(null, '', '#inicio'); } catch (e) {}
 }
 function mostrarVencida(info) {
@@ -3256,6 +3740,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
   await detectarModo();
   pintarLogin();
+  setTimeout(() => buscarActualizacion(true), 3000);
 });
 
 /* ===================== INICIO ===================== */
@@ -3301,6 +3786,9 @@ R.inicio = () => {
       tile('t-pri', 'box', 'Productos', String(d.stock.productos), 'Con control de existencias', ['ir', 'productos']) +
       tile('t-verde', 'truck', 'Proveedores', String(S.proveedores.filter(p => p.activo).length), 'Contactos y compras', ['ir', 'proveedores']);
     listas += `<div class="sec-t"><h3>Movimientos de inventario</h3><a data-a="ir" data-v="productos">Productos</a></div><div class="list">${(d.movimientos || []).map(x => `<div class="li"><div class="av ${x.cantidad >= 0 ? 't-verde' : 't-rojo'}">${ic(x.cantidad >= 0 ? 'down' : 'up', 20)}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${esc(cap(x.tipo))} · ${esc(x.nota || '')} · ${hace(x.fecha)}</small></div><div class="am n ${x.cantidad >= 0 ? 'pos' : 'neg'}">${x.cantidad > 0 ? '+' : ''}${cant(x.cantidad)}</div></div>`).join('') || '<div class="empty">Sin movimientos todavía</div>'}</div>`;
+  }
+  if ((rol === 'admin' || rol === 'bodega') && d.proyectos && d.proyectos.length) {
+    listas += `<div class="sec-t"><h3>Proyectos en curso</h3><a data-a="ir" data-v="proyectos">${d.proyectosN > d.proyectos.length ? 'Ver los ' + d.proyectosN : 'Ver todos'}</a></div><div class="list">${d.proyectos.map(p => `<div class="li pj-li ${p.semaforo}" data-a="verProyecto" data-id="${p.id}"><div class="av"><span class="emo">${ic('layers', 20)}</span></div><div class="tx"><b>${esc(p.nombre)}</b><small>${p.unidades ? cant(p.unidades) + ' u · ' : ''}invertido ${money(p.costo)}</small></div><div class="am"><span class="pj-pill">${p.pct === null ? 'Sin precio' : pctTxt(p.pct)}</span></div></div>`).join('')}</div>`;
   }
   if ((rol === 'admin' || rol === 'bodega') && d.stock && d.stock.lista.length) {
     listas += `<div class="sec-t"><h3>Por agotarse</h3><a data-a="ir" data-v="productos" data-p='{"filtro":"bajos"}'>Ver todos</a></div><div class="list">${d.stock.lista.map(p => `<div class="li" data-a="verProducto" data-id="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>Mínimo ${cant(p.stockMin)}</small></div><div class="am"><span class="badge ${p.stock <= 0 ? 'b-bad' : 'b-warn'}">${p.stock <= 0 ? 'Agotado' : cant(p.stock) + ' disp.'}</span></div></div>`).join('')}</div>`;
@@ -3736,9 +4224,9 @@ function comprimirImagen(file, max) {
     fr.readAsDataURL(file);
   });
 }
-function formProducto(p, onSave) {
+function formProducto(p, onSave, pre) {
   const nuevo = !p;
-  p = p || { tipo: 'producto', unidad: 'unidad', tienda: true, activo: true, tasaIsv: '', icono: '', categoria: S.f.pcat || '' };
+  p = p || Object.assign({ tipo: 'producto', unidad: 'unidad', tienda: true, activo: true, tasaIsv: '', icono: '', categoria: S.f.pcat || '' }, pre || {});
   const st = { foto: p.foto || '', fotoNueva: null, icono: p.icono || '' };
   const isvG = Math.round(num(S.config.isv) * 100);
   const h = hoja({ titulo: nuevo ? 'Nuevo producto' : 'Editar producto', ancho: 1, html: `
@@ -3863,7 +4351,7 @@ R.precios = () => {
   const conM = l0.map(p => ({ p, m: margenInfo(p.precio, p.costo, tasaDe(p)) }));
   const sinCosto = conM.filter(x => !x.m).length, bajos = conM.filter(x => x.m && x.m.sobreCosto < 15).length;
   const prom = conM.filter(x => x.m); const mProm = prom.length ? prom.reduce((a, x) => a + x.m.sobreCosto, 0) / prom.length : 0;
-  $('#main').innerHTML = `<div class="kpis"><div class="kpi" style="--k:#00b56e"><small>Ganancia promedio</small><b>${fmtN(mProm, 1)}%</b><i>sobre el costo</i></div><div class="kpi" style="--k:var(--warn)"><small>Ganancia baja (&lt;15%)</small><b>${bajos}</b><i>productos</i></div><div class="kpi" style="--k:var(--mut)"><small>Sin costo</small><b>${sinCosto}</b><i>no se puede medir</i></div></div>
+  $('#main').innerHTML = calcPrecioHTML() + `<div class="kpis"><div class="kpi" style="--k:#00b56e"><small>Ganancia promedio</small><b>${fmtN(mProm, 1)}%</b><i>sobre el costo</i></div><div class="kpi" style="--k:var(--warn)"><small>Ganancia baja (&lt;15%)</small><b>${bajos}</b><i>productos</i></div><div class="kpi" style="--k:var(--mut)"><small>Sin costo</small><b>${sinCosto}</b><i>no se puede medir</i></div></div>
     <div class="panel bloque"><div class="row sp"><div><h3 style="margin:0">Cambiar precios en bloque</h3><p class="sm mut" style="margin:4px 0 0">Calcula precios nuevos con el costo promedio o sube un porcentaje. Antes de aplicar ves cómo quedan.</p></div></div>
       <div class="f3"><label class="fld"><span>Aplicar a</span><select id="pb-cat"><option value="">Todas las categorías</option>${cats.map(c => `<option>${esc(c)}</option>`).join('')}</select></label>
       <label class="fld"><span>Cómo</span><select id="pb-met"><option value="costo">% de ganancia sobre el costo</option><option value="subir">Subir el precio actual %</option><option value="bajar">Bajar el precio actual %</option></select></label>
@@ -3875,7 +4363,62 @@ R.precios = () => {
     <div class="ptabla" id="pr-l"></div>`;
   $('#pr-q').addEventListener('input', debounce(e => { S.f.prq = e.target.value; listaPrecios(); }, 150));
   const met = $('#pb-met'); met.addEventListener('change', () => { $('#pb-isv-w').hidden = met.value !== 'costo'; });
+  initCalcPrecio();
   listaPrecios();
+};
+/* Calculadora: costo + % de ganancia → precio de venta */
+function calcPrecioHTML() {
+  const c = S.f.calc || (S.f.calc = { costo: '', pct: '', sobre: 'costo', isv: S.config.preciosConISV !== 'no', red: 'entero' });
+  const tasa = Math.round(num(S.config.isv) * 100);
+  return `<div class="panel cp-panel"><h3>${ic('percent', 20)} Calculadora de precio</h3>
+    <div class="f2"><label class="fld"><span>Costo del producto</span><input id="cp-c" inputmode="decimal" value="${esc(c.costo)}" placeholder="¿Cuánto te cuesta?"></label>
+    <label class="fld"><span>% de ganancia</span><input id="cp-p" inputmode="decimal" value="${esc(c.pct)}" placeholder="Ej. 30"></label></div>
+    <div class="chips" id="cp-ch" style="margin:-4px 0 10px">${[10, 20, 25, 30, 40, 50, 100].map(x => `<button type="button" class="chip ${num(c.pct) === x && c.pct !== '' ? 'on' : ''}" data-p="${x}">${x}%</button>`).join('')}</div>
+    <div class="cp-op"><div class="seg" id="cp-s"><button type="button" class="${c.sobre === 'costo' ? 'on' : ''}" data-s="costo">Sobre el costo</button><button type="button" class="${c.sobre === 'precio' ? 'on' : ''}" data-s="precio">Sobre el precio de venta</button></div>
+      ${tasa ? `<label class="chk"><input type="checkbox" id="cp-i" ${c.isv ? 'checked' : ''}> Sumar ISV (${tasa}%)</label>` : ''}
+      <label class="cp-red">Redondear <select id="cp-r">${[['entero', 'al lempira'], ['cinco', 'a 5'], ['diez', 'a 10'], ['', 'no']].map(([v, t]) => `<option value="${v}" ${c.red === v ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
+    <div class="cp-res" id="cp-res"></div></div>`;
+}
+function calcPrecio(c) {
+  const costo = num(c.costo), pct = num(c.pct), tasa = c.isv ? num(S.config.isv) : 0;
+  if (!(costo > 0) || c.pct === '' || pct < 0) return null;
+  if (c.sobre === 'precio' && pct >= 100) return { error: 'Sobre el precio de venta, la ganancia tiene que ser menor que 100%' };
+  const neto = c.sobre === 'precio' ? costo / (1 - pct / 100) : costo * (1 + pct / 100);
+  const precio = redondear(neto * (1 + tasa), c.red);
+  const netoF = precio / (1 + tasa), g = netoF - costo;
+  return { costo, precio, tasa, isv: r2(precio - netoF), g: r2(g), sobreCosto: g / costo * 100, sobrePrecio: netoF > 0 ? g / netoF * 100 : 0, redondeo: r2(precio - neto * (1 + tasa)) };
+}
+function initCalcPrecio() {
+  const c = S.f.calc, el = $('.cp-panel'); if (!el) return;
+  const pinta = () => {
+    const x = calcPrecio(c), res = $('#cp-res');
+    $$('#cp-ch .chip').forEach(b => b.classList.toggle('on', c.pct !== '' && num(c.pct) === num(b.dataset.p)));
+    if (!x) { res.innerHTML = `<div class="cp-vacio">${!(num(c.costo) > 0) ? 'Escribe el costo y el % de ganancia que quieres: aquí aparece el precio de venta.' : 'Ahora escribe el % de ganancia o toca uno de los botones.'}</div>`; return; }
+    if (x.error) { res.innerHTML = `<div class="cp-vacio neg">${x.error}</div>`; return; }
+    res.innerHTML = `<div class="cp-big"><small>Precio de venta</small><b class="n">${money(x.precio)}</b></div>
+      <div class="cp-des"><div><span>Costo</span><b class="n">${money(x.costo)}</b></div><div><span>Ganancia por unidad</span><b class="n ${x.g < 0 ? 'neg' : 'pos'}">${money(x.g)}</b></div>${x.tasa ? `<div><span>ISV (${fmtN(x.tasa * 100, 0)}%)</span><b class="n">${money(x.isv)}</b></div>` : ''}</div>
+      <p class="cp-nota">Ganas <b>${fmtN(x.sobreCosto, 1)}%</b> sobre el costo, que es <b>${fmtN(x.sobrePrecio, 1)}%</b> del precio de venta${x.tasa ? ' (sin ISV)' : ''}.${x.redondeo > 0.004 ? ` El redondeo suma ${money(x.redondeo)}.` : ''}</p>
+      <div class="row"><button class="btn sm" data-a="cpAplicar">${ic('tag', 16)} Ponérselo a un producto</button>${puede('admin', 'bodega') ? `<button class="btn sm pri" data-a="cpNuevo">${ic('plus', 16)} Crear producto con este precio</button>` : ''}</div>`;
+  };
+  $('#cp-c').addEventListener('input', e => { c.costo = e.target.value; pinta(); });
+  $('#cp-p').addEventListener('input', e => { c.pct = e.target.value; pinta(); });
+  $('#cp-ch').addEventListener('click', e => { const b = e.target.closest('[data-p]'); if (!b) return; c.pct = b.dataset.p; $('#cp-p').value = b.dataset.p; pinta(); });
+  $('#cp-s').addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; c.sobre = b.dataset.s; $$('#cp-s button').forEach(x => x.classList.toggle('on', x === b)); pinta(); });
+  const i = $('#cp-i'); if (i) i.addEventListener('change', () => { c.isv = i.checked; pinta(); });
+  $('#cp-r').addEventListener('change', e => { c.red = e.target.value; pinta(); });
+  pinta();
+}
+ACC.cpNuevo = () => {
+  const x = calcPrecio(S.f.calc); if (!x || x.error) return;
+  formProducto(null, g => { if (S.vista === 'precios') R.precios(); }, { costo: x.costo, precio: x.precio, margen: S.f.calc.sobre === 'costo' ? num(S.f.calc.pct) : r2(x.sobreCosto) });
+};
+ACC.cpAplicar = () => {
+  const x = calcPrecio(S.f.calc); if (!x || x.error) return;
+  const l = S.productos.filter(p => p.activo).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const h = hoja({ titulo: '¿A qué producto?', html: `<p class="sm mut" style="margin-top:0">Precio nuevo <b>${money(x.precio)}</b> · costo ${money(x.costo)}. Antes de guardar lo puedes revisar.</p><div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="ca-q" placeholder="Buscar producto…"></div><div class="list" id="ca-l"></div>`, foco: '#ca-q' });
+  const pinta = () => { const q = norm($('#ca-q', h.el).value); $('#ca-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q)).slice(0, 80).map(p => `<div class="li" data-p="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>Costo ${p.costo ? money(p.costo) : '—'}</small></div><div class="am">${money(p.precio)}<small>precio actual</small></div></div>`).join('') || '<div class="empty">Sin resultados</div>'; };
+  $('#ca-q', h.el).addEventListener('input', pinta); pinta();
+  $('#ca-l', h.el).addEventListener('click', e => { const y = e.target.closest('[data-p]'); if (!y) return; h.cerrar(); editarPrecio(byId(S.productos, y.dataset.p), { costo: x.costo, precio: x.precio, margen: S.f.calc.sobre === 'costo' ? num(S.f.calc.pct) : r2(x.sobreCosto) }); });
 };
 function listaPrecios() {
   const q = norm(S.f.prq || ''), fil = S.f.prf || '';
@@ -3884,11 +4427,12 @@ function listaPrecios() {
   $('#pr-l').innerHTML = `<div class="pt-h"><span>Producto</span><span>Costo</span><span>Precio</span><span>Ganancia</span></div>` + l.map(({ p, m }) => `<div class="pt-r" data-a="editPrecio" data-id="${p.id}"><span class="pt-n">${avatarProd(p, 'av sm')}<b>${esc(p.nombre)}</b></span><span class="n">${p.costo ? money(p.costo) : '<i class="mut">—</i>'}</span><span class="n"><b>${money(p.precio)}</b></span><span><span class="badge ${claseMargen(m ? m.sobreCosto : null)}">${m ? fmtN(m.sobreCosto, 0) + '%' : 'Sin costo'}</span></span></div>`).join('') + (l.length ? '' : '<div class="empty">Nada por aquí</div>');
 }
 ACC.prf = el => { S.f.prf = el.dataset.k; R.precios(); };
-ACC.editPrecio = el => {
-  const p = byId(S.productos, el.dataset.id);
-  const h = hoja({ titulo: esc(p.nombre), cls: 'chica', html: `<div class="f2"><label class="fld"><span>Costo promedio</span><input id="ep-c" inputmode="decimal" value="${p.costo || ''}" placeholder="Sin costo"></label><label class="fld"><span>Precio de venta</span><input id="ep-p" inputmode="decimal" value="${p.precio}"></label></div>
+ACC.editPrecio = el => editarPrecio(byId(S.productos, el.dataset.id));
+function editarPrecio(p, pre) {
+  const v = Object.assign({ costo: p.costo, precio: p.precio, margen: p.margen }, pre || {});
+  const h = hoja({ titulo: esc(p.nombre), cls: 'chica', html: `${pre ? `<p class="sm mut" style="margin-top:0">Precio actual ${money(p.precio)}${p.costo ? ' · costo ' + money(p.costo) : ''}. Revisa y guarda.</p>` : ''}<div class="f2"><label class="fld"><span>Costo promedio</span><input id="ep-c" inputmode="decimal" value="${v.costo || ''}" placeholder="Sin costo"></label><label class="fld"><span>Precio de venta</span><input id="ep-p" inputmode="decimal" value="${v.precio}"></label></div>
     <small class="hint" id="ep-m"></small>
-    <div class="f2" style="margin-top:10px"><label class="fld"><span>% de ganancia sobre el costo</span><input id="ep-pct" inputmode="decimal" value="${p.margen || ''}" placeholder="30"></label><label class="fld"><span>Redondear</span><select id="ep-r"><option value="entero">Al lempira</option><option value="cinco">A 5</option><option value="diez">A 10</option><option value="">Sin redondeo</option></select></label></div>
+    <div class="f2" style="margin-top:10px"><label class="fld"><span>% de ganancia sobre el costo</span><input id="ep-pct" inputmode="decimal" value="${v.margen || ''}" placeholder="30"></label><label class="fld"><span>Redondear</span><select id="ep-r"><option value="entero">Al lempira</option><option value="cinco">A 5</option><option value="diez">A 10</option><option value="">Sin redondeo</option></select></label></div>
     <div class="sug" id="ep-s"></div>` });
   const c = $('#ep-c', h.el), pr = $('#ep-p', h.el), pc = $('#ep-pct', h.el), rd = $('#ep-r', h.el);
   const act = () => {
@@ -3901,9 +4445,9 @@ ACC.editPrecio = el => {
   [c, pr, pc].forEach(i => i.addEventListener('input', act)); rd.addEventListener('change', act); act();
   h.botones([{ t: 'Guardar precio', cls: 'pri', fn: async () => {
     const r = await api('precios', { cambios: [{ id: p.id, precio: num(pr.value), costo: c.value.trim() === '' ? '' : num(c.value), margen: pc.value.trim() === '' ? '' : num(pc.value) }] });
-    S.productos = r.productos; guardarCache(); h.cerrar(); toast('Precio actualizado', 'ok'); R.precios();
+    S.productos = r.productos; guardarCache(); h.cerrar(); toast('Precio actualizado', 'ok'); if (S.vista === 'precios') R.precios();
   } }]);
-};
+}
 ACC.pbVer = () => {
   const cat = $('#pb-cat').value, met = $('#pb-met').value, pct = num($('#pb-pct').value), red = $('#pb-red').value, conIsv = $('#pb-isv').checked;
   if (!(pct > 0)) return toast('Escribe el porcentaje', 'error');
@@ -4259,7 +4803,7 @@ R.caja = async () => {
   const k = d.k, esp = r2(d.fondo + k.ventas + k.cobros - k.gastos - k.pagos - k.compras);
   const fila = (t, v, signo, cls) => `<div class="cj-r ${cls || ''}"><span>${t}</span><b class="n">${signo}${money(v)}</b></div>`;
   m.innerHTML = `<div class="caja-card"><small>Efectivo que debería haber en caja</small><div class="big n">${money(esp)}</div><span class="desde">Desde ${esc(fFecha(d.desde))} ${fHora(d.desde)} · ${k.nVentas} ventas</span></div>
-    <div class="panel"><h3>Movimiento de efectivo</h3>${fila('Fondo inicial', d.fondo, '')}${fila('Ventas en efectivo', k.ventas, '+ ', 'pos')}${fila('Cobros de clientes', k.cobros, '+ ', 'pos')}${fila('Gastos en efectivo', k.gastos, '− ', 'neg')}${k.compras ? fila('Compras en efectivo', k.compras, '− ', 'neg') : ''}${k.pagos ? fila('Pagos a proveedores', k.pagos, '− ', 'neg') : ''}${fila('Esperado en caja', esp, '', 'tot')}</div>
+    <div class="panel"><h3>Movimiento de efectivo</h3>${fila('Fondo inicial', d.fondo, '')}${fila('Ventas en efectivo', k.ventas, '+ ', 'pos')}${fila('Cobros de clientes', k.cobros, '+ ', 'pos')}${fila('Gastos en efectivo' + (k.proyectos ? ` <small class="cj-sub">incluye ${money(k.proyectos)} de proyectos</small>` : ''), k.gastos, '− ', 'neg')}${k.compras ? fila('Compras en efectivo', k.compras, '− ', 'neg') : ''}${k.pagos ? fila('Pagos a proveedores', k.pagos, '− ', 'neg') : ''}${fila('Esperado en caja', esp, '', 'tot')}</div>
     <div class="kpis"><div class="kpi" style="--k:#1b4fd8"><small>Tarjeta</small><b class="n">${money(k.tarjeta)}</b></div><div class="kpi" style="--k:#00a8b5"><small>Transferencias</small><b class="n">${money(k.transferencia)}</b></div><div class="kpi" style="--k:#f25c05"><small>Vendido al crédito</small><b class="n">${money(k.credito)}</b></div></div>
     <button class="btn pri big" data-a="cerrarCaja">${ic('lock', 20)} Hacer cierre de caja</button>
     ${ventasHoyHTML(d.ventasHoy || [])}
@@ -4614,6 +5158,444 @@ ACC.cambiarClave = () => {
   const h = hoja({ titulo: 'Cambiar ' + P, cls: 'chica', html: `<label class="fld"><span>${cap(P)} actual</span><input id="cc-a" type="password" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''}></label><label class="fld"><span>Nuevo ${P}</span><input id="cc-n" type="password" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''}></label>` });
   h.botones([{ t: 'Cambiar', cls: 'pri', fn: async () => { await api('cambiarClave', { actual: $('#cc-a', h.el).value, nueva: $('#cc-n', h.el).value }); h.cerrar(); toast(cap(P) + ' cambiado', 'ok'); } }]);
 };
+
+/* ===================== PROYECTOS ===================== */
+const CATS_PROY = [['Materiales', '🧱'], ['Mano de obra', '👷'], ['Alimentación', '🍽️'], ['Transporte', '🚚'], ['Servicios', '💡'],
+  ['Alquiler', '🏠'], ['Empaque', '📦'], ['Herramientas', '🧰'], ['Publicidad', '📣'], ['Otros', '➕']];
+const COL_CAT = ['#e0247a', '#7b3ff2', '#ff8a00', '#1f7cff', '#00a6b4', '#00b06b', '#d4a000', '#ef4b3f', '#9c27b0', '#6f7787'];
+const emoCat = c => (CATS_PROY.find(x => x[0] === c) || [0, '➕'])[1];
+const colCat = c => { const i = CATS_PROY.findIndex(x => x[0] === c); return COL_CAT[i >= 0 ? i : COL_CAT.length - 1]; };
+const SEM = { verde: { t: 'Ganas bien', c: 'verde' }, amarillo: { t: 'Ganas poco', c: 'amarillo' }, rojo: { t: 'Pierdes', c: 'rojo' }, gris: { t: 'Sin precio', c: 'gris' } };
+const EST_PJ = { curso: 'En curso', terminado: 'Terminado', cancelado: 'Cancelado' };
+const pctTxt = p => (p > 0 ? '▲ ' : p < 0 ? '▼ ' : '') + fmtN(Math.abs(p), Math.abs(p) >= 100 ? 0 : 1) + '%';
+const unidadTxt = (n, u) => cant(n) + ' ' + (u && u !== 'unidad' ? u : (num(n) === 1 ? 'unidad' : 'unidades'));
+
+R.proyectos_bar = () => `<button class="hbtn" data-a="nuevoProyecto" aria-label="Nuevo proyecto">${ic('plus', 22)}</button>`;
+R.proyectos = async () => {
+  const m = $('#main');
+  if (!S.proyL) m.innerHTML = '<div class="empty">Cargando proyectos…</div>';
+  try { S.proyL = await api('proyectos', {}, !!S.proyL); } catch (e) { return err(e); }
+  if (S.vista !== 'proyectos') return;
+  const l = S.proyL, cnt = k => l.filter(p => p.estado === k).length;
+  if (!S.f.pjest) S.f.pjest = cnt('curso') ? 'curso' : 'todos';
+  const vis = l.filter(p => S.f.pjest === 'todos' || p.estado === S.f.pjest);
+  if (!l.length) {
+    m.innerHTML = `<div class="empty-big pj-vacio">${ic('layers', 40)}<h3>Calcula cuánto ganas en cada proyecto</h3>
+      <p>Un proyecto es todo lo que haces para producir algo: una tanda de pan, 50 uniformes, canastas navideñas, un pedido especial…
+      Registra lo que gastas (materiales, mano de obra, comida, transporte) y te dice el costo de cada unidad, el precio sugerido y cuánto ganas.</p>
+      <button class="btn pri" data-a="nuevoProyecto">${ic('plus', 18)} Crear mi primer proyecto</button></div>`;
+    return;
+  }
+  const inv = vis.reduce((a, p) => a + p.r.costo, 0), gan = vis.filter(p => p.r.ganancia !== null).reduce((a, p) => a + p.r.ganancia, 0);
+  const rojos = vis.filter(p => p.r.semaforo === 'rojo').length;
+  m.innerHTML = `<div class="kpis"><div class="kpi" style="--k:var(--pri)"><small>Invertido</small><b class="n">${money(inv)}</b><i>${vis.length} ${vis.length === 1 ? 'proyecto' : 'proyectos'}</i></div>
+      <div class="kpi" style="--k:${gan < 0 ? 'var(--bad)' : 'var(--ok)'}"><small>Ganancia esperada</small><b class="n ${gan < 0 ? 'neg' : ''}">${money(gan)}</b><i ${rojos ? 'class="neg"' : ''}>${rojos ? (rojos === 1 ? '1 proyecto con pérdida' : rojos + ' proyectos con pérdida') : 'con los precios de venta'}</i></div></div>
+    <div class="chips" style="margin-bottom:8px">${[['curso', 'En curso'], ['terminado', 'Terminados'], ['cancelado', 'Cancelados'], ['todos', 'Todos']].map(([k, t]) => `<button class="chip ${S.f.pjest === k ? 'on' : ''}" data-a="pjEst" data-k="${k}">${t}${k !== 'todos' ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
+    <div class="pj-ley"><span><i class="verde"></i>Ganas 30% o más</span><span><i class="amarillo"></i>Ganas menos</span><span><i class="rojo"></i>Pierdes</span></div>
+    <div class="pj-grid">${vis.map(cardProyecto).join('') || '<div class="empty">No hay proyectos aquí</div>'}</div>`;
+};
+function cardProyecto(p) {
+  const r = p.r, s = SEM[r.semaforo] || SEM.gris, uno = r.nProductos === 1;
+  const prod = r.productos.map(x => x.nombre).join(' · ');
+  return `<button class="pj ${s.c}" data-a="verProyecto" data-id="${p.id}">
+    <div class="pj-h"><b>${esc(p.nombre)}</b><span class="pj-pill">${r.pct === null ? (r.nProductos ? 'Sin precio' : 'Sin producto') : pctTxt(r.pct)}</span></div>
+    <small class="pj-sub">${esc(p.cliente || prod || 'Sin productos todavía')}${p.estado !== 'curso' ? ` · <em>${EST_PJ[p.estado]}</em>` : ''}</small>
+    <div class="pj-st"><div><small>Producido</small><b>${r.unidades ? esc(uno ? unidadTxt(r.unidades, r.productos[0].unidad) : cant(r.unidades) + ' u') : '—'}</b></div>
+      <div><small>${uno ? 'Costo c/u' : 'Costo total'}</small><b class="n">${uno && r.costoUnit !== null ? money(r.costoUnit) : money(r.costo)}</b></div>
+      <div><small>Ganancia</small><b class="n">${r.ganancia === null ? '—' : money(r.ganancia)}</b></div></div></button>`;
+}
+ACC.pjEst = el => { S.f.pjest = el.dataset.k; R.proyectos(); };
+ACC.nuevoProyecto = () => formProyecto(null);
+ACC.verProyecto = async el => { const d = await api('proyecto', { id: el.dataset.id }); verProyecto(d); };
+
+/* ---------- Detalle ---------- */
+function actualizarListaProy(d) {
+  if (!S.proyL) return;
+  const i = S.proyL.findIndex(x => x.id === d.id);
+  const lite = Object.assign({}, d, { r: Object.assign({}, d.r, { productos: d.r.productos.map(x => ({ nombre: x.nombre, cantidad: x.cantidad, unidad: x.unidad })) }) });
+  delete lite.gastos;
+  if (i >= 0) S.proyL[i] = lite; else S.proyL.unshift(lite);
+}
+function verProyecto(d) {
+  let h = S.hProy && !S.hProy.cerrado ? S.hProy : null;
+  const pinta = x => {
+    d = x; actualizarListaProy(d);
+    if (x.catalogo) { S.productos = x.catalogo; guardarCache(); delete x.catalogo; }
+    h.el.querySelector('.sheet-h h3').textContent = d.nombre;
+    h.b.innerHTML = htmlProyecto(d);
+    h.botones(d.estado === 'cancelado' ? [{ t: `${ic('undo', 18)} Reabrir proyecto`, cls: 'pri', fn: () => cambiarEstadoProy(d, 'curso') }]
+      : [{ t: ic('dots', 20), cls: 'icon', fn: () => menuProyecto(d, pinta) }, { t: `${ic('wa', 18)} Compartir`, fn: () => compartirProyecto(d) },
+        { t: `${ic('plus', 18)} Registrar gasto`, cls: 'pri', fn: () => formGastoProy(d, null, pinta) }]);
+  };
+  if (!h) { h = hoja({ titulo: esc(d.nombre), ancho: 1, cls: 'pj-hoja', html: '', onClose: () => { S.hProy = null; if (S.vista === 'proyectos') R.proyectos(); } }); S.hProy = h; }
+  h.pinta = pinta;
+  h.b.onclick = e => {
+    const a = e.target.closest('[data-pj]'); if (!a) return;
+    const k = a.dataset.pj, id = a.dataset.id;
+    if (k === 'gasto') formGastoProy(d, d.gastos.find(g => g.id === id), pinta);
+    if (k === 'prod') formProdProy(d, d.r.productos.find(x => x.id === id), pinta);
+    if (k === 'nuevoProd') formProdProy(d, null, pinta);
+    if (k === 'usarSug') { const x = d.r.productos.find(y => y.id === id); api('productoProyecto', { registro: Object.assign({}, x, { precio: x.sugerido }) }).then(r => { pinta(r); toast('Precio aplicado', 'ok'); }).catch(err); }
+    if (k === 'inventario') pasarAInventario(d, pinta);
+    if (k === 'editar') formProyecto(d, pinta);
+  };
+  pinta(d);
+}
+function htmlProyecto(d) {
+  const r = d.r, s = SEM[r.semaforo] || SEM.gris, uno = r.nProductos === 1, p0 = r.productos[0];
+  const dias = Math.max(1, Math.round((parseLocal(d.fin || hoy()) - parseLocal(d.inicio || hoy())) / 86400000) + 1);
+  const cab = `<div class="pj-cab"><span class="badge ${d.estado === 'curso' ? 'b-info' : d.estado === 'terminado' ? 'b-ok' : 'b-mut'}">${EST_PJ[d.estado]}</span>${d.cliente ? `<span class="badge b-mut">${ic('user', 13)} ${esc(d.cliente)}</span>` : ''}<span class="xs mut">${esc(fFechaC(d.inicio))}${d.fin ? ' – ' + esc(fFechaC(d.fin)) : ''} · ${dias} ${dias === 1 ? 'día' : 'días'}</span><button class="lnk" data-pj="editar">${ic('edit', 14)} Editar</button></div>${d.descripcion ? `<p class="sm mut pj-desc">${esc(d.descripcion)}</p>` : ''}`;
+  let res;
+  if (r.ganancia === null) {
+    res = `<div class="pj-res gris"><div class="pj-res-t">${!r.nProductos ? 'Agrega el producto final para calcular el costo por unidad' : !(r.costo > 0) ? 'Registra los gastos para calcular el costo' : 'Pon el precio de venta para ver tu ganancia'}</div>
+      ${uno && p0.sugerido ? `<div class="pj-sug">Precio sugerido <b class="n">${money(p0.sugerido)}</b><small>${fmtN(r.margen, 0)}% de ganancia${r.tasa ? ' + ISV' : ''}</small><button class="btn sm pri" data-pj="usarSug" data-id="${p0.id}">Usar</button></div>` : ''}`;
+  } else {
+    res = `<div class="pj-res ${s.c}"><div class="pj-res-t"><span>${s.t}</span><b class="n">${money(Math.abs(r.ganancia))}</b><em>${pctTxt(r.pct)} sobre lo invertido</em></div>`;
+  }
+  const num4 = [['Costo total', money(r.costo)], ['Producido', r.unidades ? (uno ? unidadTxt(r.unidades, p0.unidad) : cant(r.unidades) + ' u') : '—'],
+    [uno ? 'Costo por unidad' : 'Productos', uno ? (r.costoUnit !== null ? money(r.costoUnit) : '—') : String(r.nProductos)],
+    [uno ? 'Precio de venta' : 'Ventas esperadas', uno ? (p0.precio ? money(p0.precio) : '—') : (r.ingreso ? money(r.ingreso) : '—')]];
+  res += `<div class="pj-nums">${num4.map(([a, b]) => `<div><small>${a}</small><b class="n">${b}</b></div>`).join('')}</div>`;
+  const extra = [];
+  if (r.margenVenta !== null) extra.push(`Margen sobre la venta: <b>${fmtN(r.margenVenta, 1)}%</b>`);
+  if (r.equilibrio !== null && r.unidades) extra.push(r.equilibrio <= r.unidades ? `Recuperas lo invertido al vender <b>${cant(r.equilibrio)} de ${cant(r.unidades)}</b>` : `<span class="neg">Aunque vendas todo, no recuperas lo invertido</span>`);
+  if (uno && r.semaforo !== 'verde' && r.ganancia !== null && p0.sugerido > p0.precio) extra.push(`Para ganar ${fmtN(r.margen, 0)}% el precio debería ser <b>${money(p0.sugerido)}</b> <button class="lnk" data-pj="usarSug" data-id="${p0.id}">Usar</button>`);
+  if (r.tasa && r.ganancia !== null) extra.push(`Precios con ISV incluido (${fmtN(r.tasa * 100, 0)}%)`);
+  if (extra.length) res += `<div class="pj-extra">${extra.map(x => `<span>${x}</span>`).join('')}</div>`;
+  if (d.presupuesto > 0) {
+    const pp = r.presupuestoPct || 0;
+    res += `<div class="pj-ppto"><div class="row sp"><small>Presupuesto ${money(d.presupuesto)}</small><small class="${pp > 100 ? 'neg' : ''}"><b>${fmtN(pp, 0)}%</b> usado${pp > 100 ? ' · te pasaste ' + money(r.costo - d.presupuesto) : ' · quedan ' + money(d.presupuesto - r.costo)}</small></div><div class="pj-bar"><i style="width:${Math.min(100, pp)}%" class="${pp > 100 ? 'mal' : pp > 85 ? 'ojo' : ''}"></i></div></div>`;
+  }
+  res += '</div>';
+  // Productos finales
+  const pend = r.productos.filter(x => !x.inventario);
+  const prods = `<div class="sec-t"><h3>${r.nProductos > 1 ? 'Productos finales' : 'Producto final'}</h3>${d.estado !== 'cancelado' ? '<a data-pj="nuevoProd">+ Agregar</a>' : ''}</div>
+    <div class="list">${r.productos.map(x => `<div class="li" data-pj="prod" data-id="${x.id}"><div class="av t-pri"><span class="emo">📦</span></div><div class="tx"><b>${esc(x.nombre)}</b>
+      <small>${esc(unidadTxt(x.cantidad, x.unidad))} · costo c/u ${money(x.costoUnit)}${r.nProductos > 1 && x.peso !== 1 ? ' · peso ' + cant(x.peso) : ''}</small>
+      ${!x.precio && x.sugerido ? `<small class="pj-sg">Sugerido ${money(x.sugerido)} <button class="lnk" data-pj="usarSug" data-id="${x.id}">Usar</button></small>` : ''}</div>
+      <div class="am">${x.precio ? `<span class="n">${money(x.precio)}</span><small class="${x.ganUnit < 0 ? 'neg' : 'pos'}">${x.ganUnit < 0 ? 'pierdes ' + money(-x.ganUnit) : 'ganas ' + money(x.ganUnit)} c/u</small>` : '<span class="badge b-warn">Sin precio</span>'}${x.inventario ? `<small><span class="badge b-ok">${ic('box', 12)} En inventario</span></small>` : ''}</div></div>`).join('') || '<div class="empty">Agrega lo que vas a producir y cuántas unidades</div>'}</div>
+    ${pend.length && r.costo > 0 && d.estado !== 'cancelado' ? `<button class="btn full pj-inv" data-pj="inventario">${ic('box', 18)} Pasar al inventario para vender</button>` : ''}`;
+  // Gastos
+  const g = d.gastos.filter(x => !x.anulado), an = d.gastos.filter(x => x.anulado);
+  const cats = r.porCategoria.length ? `<div class="pj-cats">${r.porCategoria.map(c => `<div class="pj-cat"><span class="e">${emoCat(c.categoria)}</span><div class="grow"><div class="row sp"><span>${esc(c.categoria)}</span><b class="n">${money(c.monto)}</b></div><div class="pj-bar"><i style="width:${Math.max(2, c.pct)}%;background:${colCat(c.categoria)}"></i></div></div><small class="n">${fmtN(c.pct, 0)}%</small></div>`).join('')}</div>` : '';
+  const gas = `<div class="sec-t"><h3>Gastos <span class="mut sm">${g.length}</span></h3><span class="sm"><b class="n">${money(r.costo)}</b></span></div>${cats}
+    <div class="list pj-gastos">${g.map(x => filaGastoProy(x)).join('') || '<div class="empty">Todavía no hay gastos. Toca «Registrar gasto».</div>'}</div>
+    ${an.length ? `<details class="pj-an"><summary class="sm mut">${an.length} ${an.length === 1 ? 'gasto anulado' : 'gastos anulados'}</summary><div class="list">${an.map(x => filaGastoProy(x)).join('')}</div></details>` : ''}`;
+  return cab + res + prods + gas;
+}
+function filaGastoProy(x) {
+  const det = [esc(fFechaC(x.dia)), esc(x.categoria)];
+  if (x.cantidad !== 1 || x.productoId) det.push(`${cant(x.cantidad)} × ${money(x.costoUnit)}`);
+  return `<div class="li ${x.anulado ? 'anul' : ''}" data-pj="gasto" data-id="${x.id}"><div class="av" style="background:${colCat(x.categoria)}"><span class="emo">${emoCat(x.categoria)}</span></div>
+    <div class="tx"><b>${esc(x.descripcion)}</b><small>${det.join(' · ')}</small>${x.productoId || x.caja ? `<small class="pj-tags">${x.productoId ? `<span class="badge b-info">${ic('box', 12)} Del inventario</span>` : ''}${x.caja ? `<span class="badge b-warn">${ic('wallet', 12)} De la caja</span>` : ''}</small>` : ''}</div>
+    <div class="am n">${money(x.monto)}</div></div>`;
+}
+
+/* ---------- Formularios ---------- */
+function formProyecto(p, pinta) {
+  const nuevo = !p;
+  p = p || { margen: 30, inicio: hoy() };
+  const h = hoja({ titulo: nuevo ? 'Nuevo proyecto' : 'Editar proyecto', cls: 'pj-form', html: `
+    <label class="fld"><span>Nombre del proyecto *</span><input id="fp-n" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. Canastas navideñas"></label>
+    <label class="fld"><span>Cliente (opcional)</span><input id="fp-c" maxlength="80" value="${esc(p.cliente || '')}" placeholder="¿Para quién es?" list="dl-pjc"><datalist id="dl-pjc">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre)}">`).join('')}</datalist></label>
+    ${nuevo ? `<div class="precio-box"><h4>${ic('box', 18)} ¿Qué vas a producir?</h4>
+      <label class="fld"><span>Producto final</span><input id="fp-pn" maxlength="80" placeholder="Ej. Canasta navideña"></label>
+      <div class="f2"><label class="fld"><span>Cantidad</span><input id="fp-pq" inputmode="decimal" placeholder="Ej. 40"></label>
+      <label class="fld"><span>Unidad</span><select id="fp-pu">${UNIDADES.map(u => `<option>${u}</option>`).join('')}</select></label></div>
+      <label class="fld"><span>Precio de venta c/u (si ya lo sabes)</span><input id="fp-pp" inputmode="decimal" placeholder="Lo puedes poner después"></label>
+      <small class="hint">Si salen varios productos, agrega los demás desde el proyecto.</small></div>` : ''}
+    <label class="fld"><span>% de ganancia que quieres (para el precio sugerido)</span><input id="fp-m" inputmode="decimal" value="${p.margen}"></label>
+    <div class="chips" id="fp-mc" style="margin:-4px 0 12px">${[20, 30, 40, 50, 100].map(x => `<button type="button" class="chip ${num(p.margen) === x ? 'on' : ''}" data-m="${x}">${x}%</button>`).join('')}</div>
+    <div class="f2"><label class="fld"><span>Presupuesto (opcional)</span><input id="fp-b" inputmode="decimal" value="${p.presupuesto || ''}" placeholder="Para avisarte si te pasas"></label>
+    <label class="fld"><span>Fecha de inicio</span><input id="fp-i" type="date" value="${esc(p.inicio || hoy())}" max="${hoy()}"></label></div>
+    <label class="fld"><span>Descripción (opcional)</span><textarea id="fp-d" rows="2" maxlength="300" placeholder="Detalles del pedido o de la producción">${esc(p.descripcion || '')}</textarea></label>`, foco: nuevo ? '#fp-n' : null });
+  $('#fp-mc', h.el).addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; $('#fp-m', h.el).value = b.dataset.m; $$('#fp-mc .chip', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  $('#fp-m', h.el).addEventListener('input', e => $$('#fp-mc .chip', h.el).forEach(x => x.classList.toggle('on', x.dataset.m === e.target.value.trim())));
+  h.botones([{ t: nuevo ? 'Crear proyecto' : 'Guardar cambios', cls: 'pri', fn: async () => {
+    const reg = { id: p.id, nombre: $('#fp-n', h.el).value, cliente: $('#fp-c', h.el).value, margen: $('#fp-m', h.el).value, presupuesto: num($('#fp-b', h.el).value),
+      inicio: $('#fp-i', h.el).value, descripcion: $('#fp-d', h.el).value };
+    if (!reg.nombre.trim()) throw new Error('Escribe el nombre del proyecto');
+    if (nuevo) {
+      const pn = $('#fp-pn', h.el).value.trim();
+      if (pn) { if (!(num($('#fp-pq', h.el).value) > 0)) throw new Error('Escribe cuántas unidades vas a producir'); reg.producto = { nombre: pn, cantidad: num($('#fp-pq', h.el).value), unidad: $('#fp-pu', h.el).value, precio: num($('#fp-pp', h.el).value) }; }
+    }
+    const d = await api('guardarProyecto', { registro: reg });
+    h.cerrar();
+    if (pinta) { pinta(d); toast('Proyecto actualizado', 'ok'); } else { S.f.pjest = 'curso'; verProyecto(d); toast('Proyecto creado · ahora registra los gastos', 'ok', 4500); }
+  } }]);
+}
+
+function formGastoProy(d, g, pinta) {
+  const nuevo = !g, conInv = S.productos.some(p => p.activo && p.tipo === 'producto');
+  const st = { modo: g && g.productoId ? 'inv' : 'gasto', cat: g ? g.categoria : 'Materiales', prod: g && g.productoId ? byId(S.productos, g.productoId) : null };
+  const prevDesc = [...new Set(d.gastos.map(x => x.descripcion))];
+  const bloqueado = g && (g.anulado || g.productoId);
+  const h = hoja({ titulo: nuevo ? 'Registrar gasto' : g.anulado ? 'Gasto anulado' : 'Gasto del proyecto', cls: 'pj-form', html: `
+    ${nuevo && conInv ? `<div class="seg full" id="fg-m" style="margin-bottom:12px"><button class="on" data-m="gasto">Gasto o compra</button><button data-m="inv">Material de mi inventario</button></div>` : ''}
+    <div id="fg-cats" class="pj-catsel">${CATS_PROY.map(([c, e]) => `<button type="button" class="chip ${st.cat === c ? 'on' : ''}" data-c="${c}" ${bloqueado ? 'disabled' : ''}>${e} ${c}</button>`).join('')}</div>
+    <div id="fg-g">
+      <label class="fld"><span>¿Qué fue? *</span><input id="fg-d" maxlength="120" list="dl-fgd" value="${esc(g && !g.productoId ? g.descripcion : '')}" placeholder="Ej. Tela, almuerzo del equipo, flete…" ${bloqueado ? 'disabled' : ''}><datalist id="dl-fgd">${prevDesc.map(x => `<option value="${esc(x)}">`).join('')}</datalist></label>
+      <div class="f2"><label class="fld"><span>Cantidad</span><input id="fg-q" inputmode="decimal" value="${g && !g.productoId ? cant(g.cantidad) : '1'}" ${bloqueado ? 'disabled' : ''}></label>
+      <label class="fld"><span>Costo por unidad</span><input id="fg-c" inputmode="decimal" value="${g && !g.productoId ? g.costoUnit : ''}" placeholder="0.00" ${bloqueado ? 'disabled' : ''}></label></div></div>
+    <div id="fg-i" hidden>
+      <div class="fld"><span>Producto del inventario *</span><button type="button" class="btn full pj-pick" id="fg-p" ${bloqueado ? 'disabled' : ''}>${st.prod ? esc(st.prod.nombre) : `${ic('search', 16)} Elegir producto`}</button></div>
+      <div class="f2"><label class="fld"><span>Cantidad que usaste</span><input id="fg-iq" inputmode="decimal" value="${g && g.productoId ? cant(g.cantidad) : ''}" ${bloqueado ? 'disabled' : ''}></label>
+      <div class="fld"><span>Costo promedio</span><div class="pj-cp" id="fg-ic">—</div></div></div>
+      <small class="hint" id="fg-ih">Sale de tus existencias al costo promedio.</small></div>
+    <div class="pj-tot"><span>Total</span><b class="n" id="fg-t">${money(g ? g.monto : 0)}</b></div>
+    <label class="fld"><span>Fecha</span><input id="fg-f" type="date" value="${esc(g ? g.dia : hoy())}" max="${hoy()}" ${bloqueado ? 'disabled' : ''}></label>
+    <label class="sw-row" id="fg-cj"><input type="checkbox" id="fg-caja" ${g && g.caja ? 'checked' : ''} ${bloqueado ? 'disabled' : ''}><span class="sw"></span><div><b>Lo pagué con el efectivo de la caja</b><small>Se resta del efectivo esperado para que el cierre de caja cuadre</small></div></label>
+    ${g && g.productoId ? '<p class="sm mut">El material del inventario no se modifica: si te equivocaste, anúlalo (vuelve a las existencias) y regístralo de nuevo.</p>' : ''}
+    ${g && g.anulado ? '<p class="sm neg">Este gasto está anulado y no cuenta en el costo.</p>' : ''}${g && g.usuario ? `<p class="xs mut">Registrado por ${esc(g.usuario)}</p>` : ''}`, foco: nuevo ? '#fg-d' : null });
+  const tot = () => {
+    let t = 0;
+    if (st.modo === 'inv') { const p = st.prod; $('#fg-ic', h.el).textContent = p ? money(p.costo) : '—'; t = p ? num($('#fg-iq', h.el).value) * p.costo : 0; if (p) $('#fg-ih', h.el).innerHTML = `Hay <b>${cant(p.stock)}</b> en inventario · sale al costo promedio.${p.costo > 0 ? '' : ' <span class="neg">Este producto no tiene costo registrado.</span>'}`; }
+    else t = num($('#fg-q', h.el).value || 1) * num($('#fg-c', h.el).value);
+    if (!(g && g.productoId)) $('#fg-t', h.el).textContent = money(t);
+  };
+  const modo = m => { st.modo = m; $('#fg-g', h.el).hidden = m === 'inv'; $('#fg-i', h.el).hidden = m !== 'inv'; $('#fg-cj', h.el).hidden = m === 'inv'; if (m === 'inv' && !g) { st.cat = 'Materiales'; $$('#fg-cats .chip', h.el).forEach(x => x.classList.toggle('on', x.dataset.c === 'Materiales')); } tot(); };
+  const sm = $('#fg-m', h.el); if (sm) sm.addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; $$('#fg-m button', h.el).forEach(x => x.classList.toggle('on', x === b)); modo(b.dataset.m); });
+  $('#fg-cats', h.el).addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b || b.disabled) return; st.cat = b.dataset.c; $$('#fg-cats .chip', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  ['#fg-q', '#fg-c', '#fg-iq'].forEach(s => $(s, h.el).addEventListener('input', tot));
+  $('#fg-p', h.el).onclick = () => elegirProducto(p => { st.prod = p; $('#fg-p', h.el).textContent = p.nombre; tot(); $('#fg-iq', h.el).focus(); });
+  modo(st.modo);
+  const bs = [];
+  if (!nuevo && !g.anulado && d.estado !== 'cancelado' && (puede('admin') || g.usuarioId === S.user.id)) bs.push({ t: ic('trash', 18), cls: 'bad icon', fn: async () => {
+    if (!(await confirmar(`¿Anular «${esc(g.descripcion)}» (${money(g.monto)})?${g.productoId ? ' Las unidades vuelven al inventario.' : ''}`, { si: 'Anular', peligro: 1 }))) return;
+    const r = await api('anularGastoProyecto', { id: g.id }); h.cerrar(); pinta(r); toast('Gasto anulado', 'ok');
+  } });
+  if (!bloqueado && d.estado !== 'cancelado') bs.push({ t: nuevo ? 'Guardar gasto' : 'Guardar cambios', cls: 'pri', fn: async () => {
+    const reg = { id: g ? g.id : undefined, proyectoId: d.id, categoria: st.cat, dia: $('#fg-f', h.el).value, caja: $('#fg-caja', h.el).checked };
+    if (st.modo === 'inv') {
+      if (!st.prod) throw new Error('Elige el producto del inventario');
+      Object.assign(reg, { productoId: st.prod.id, cantidad: num($('#fg-iq', h.el).value), descripcion: st.prod.nombre, caja: false });
+    } else Object.assign(reg, { descripcion: $('#fg-d', h.el).value, cantidad: num($('#fg-q', h.el).value || 1), costoUnit: num($('#fg-c', h.el).value) });
+    if (st.modo !== 'inv' && !reg.descripcion.trim()) throw new Error('Escribe qué fue el gasto');
+    const r = await api('gastoProyecto', { registro: reg });
+    h.cerrar(); pinta(r); S.cajaD = null; toast(nuevo ? 'Gasto registrado' : 'Gasto actualizado', 'ok');
+  } });
+  h.botones(bs);
+}
+function elegirProducto(cb) {
+  const l = S.productos.filter(p => p.activo && p.tipo === 'producto').sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const h = hoja({ titulo: 'Material del inventario', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="ep-q" placeholder="Buscar producto…"></div><div class="list" id="ep-l"></div>`, foco: '#ep-q' });
+  const pinta = () => { const q = norm($('#ep-q', h.el).value); $('#ep-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q)).slice(0, 80).map(p => `<div class="li" data-p="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>Costo promedio ${money(p.costo)}</small></div><div class="am">${cant(p.stock)}<small>en existencia</small></div></div>`).join('') || '<div class="empty">Sin resultados</div>'; };
+  $('#ep-q', h.el).addEventListener('input', pinta); pinta();
+  $('#ep-l', h.el).addEventListener('click', e => { const x = e.target.closest('[data-p]'); if (!x) return; h.cerrar(); cb(byId(S.productos, x.dataset.p)); });
+}
+
+function formProdProy(d, x, pinta) {
+  const nuevo = !x, multi = d.r.nProductos > 1 || (nuevo && d.r.nProductos >= 1);
+  const h = hoja({ titulo: nuevo ? 'Producto final' : esc(x.nombre), cls: 'chica pj-form', html: `
+    <label class="fld"><span>Producto *</span><input id="pp-n" maxlength="80" value="${esc(x ? x.nombre : '')}" placeholder="Ej. Canasta navideña"></label>
+    <div class="f2"><label class="fld"><span>Cantidad producida *</span><input id="pp-q" inputmode="decimal" value="${x ? cant(x.cantidad) : ''}" ${x && x.inventario ? 'disabled' : ''}></label>
+    <label class="fld"><span>Unidad</span><select id="pp-u">${UNIDADES.map(u => `<option ${x && x.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
+    <label class="fld"><span>Precio de venta c/u</span><input id="pp-p" inputmode="decimal" value="${x && x.precio ? x.precio : ''}" placeholder="${x && x.sugerido ? 'Sugerido ' + fmtN(x.sugerido) : '0.00'}"></label>
+    ${x && x.sugerido ? `<div class="sug"><span>Precio sugerido (${fmtN(d.r.margen, 0)}% de ganancia${d.r.tasa ? ' + ISV' : ''})</span><b class="n">${money(x.sugerido)}</b><button type="button" class="btn sm pri" id="pp-us">Usar</button></div>` : ''}
+    ${multi ? `<label class="fld" style="margin-top:10px"><span>Peso en el costo</span><input id="pp-w" inputmode="decimal" value="${x ? cant(x.peso) : '1'}"></label><small class="hint" style="margin-top:-8px">Cómo se reparte el gasto entre los productos. 1 = normal; 2 = lleva el doble de material y trabajo que uno de peso 1; 0.5 = la mitad.</small>` : ''}
+    ${x && x.inventario ? `<p class="sm mut">${ic('box', 14)} Pasó al inventario el ${esc(fFechaC(x.inventario))}. La cantidad ya no se puede cambiar.</p>` : ''}`, foco: nuevo ? '#pp-n' : null });
+  const us = $('#pp-us', h.el); if (us) us.onclick = () => { $('#pp-p', h.el).value = x.sugerido; };
+  const bs = [];
+  if (!nuevo && !x.inventario) bs.push({ t: ic('trash', 18), cls: 'bad icon', fn: async () => {
+    if (!(await confirmar(`¿Quitar «${esc(x.nombre)}» del proyecto?`, { si: 'Quitar', peligro: 1 }))) return;
+    const r = await api('quitarProductoProyecto', { id: x.id }); h.cerrar(); pinta(r); toast('Producto quitado', 'ok');
+  } });
+  bs.push({ t: 'Guardar', cls: 'pri', fn: async () => {
+    const reg = { id: x ? x.id : undefined, proyectoId: d.id, nombre: $('#pp-n', h.el).value, cantidad: num($('#pp-q', h.el).value), unidad: $('#pp-u', h.el).value,
+      precio: num($('#pp-p', h.el).value), peso: $('#pp-w', h.el) ? num($('#pp-w', h.el).value) || 1 : (x ? x.peso : 1) };
+    const r = await api('productoProyecto', { registro: reg }); h.cerrar(); pinta(r); toast('Guardado', 'ok');
+  } });
+  h.botones(bs);
+}
+
+function menuProyecto(d, pinta) {
+  const h = hoja({ titulo: esc(d.nombre), cls: 'chica', html: `<div class="list pj-menu">
+    <button class="li" data-k="editar">${ic('edit', 20)}<div class="tx"><b>Editar datos del proyecto</b><small>Nombre, cliente, % de ganancia, presupuesto</small></div></button>
+    <button class="li" data-k="duplicar">${ic('copy', 20)}<div class="tx"><b>Repetir este proyecto</b><small>Crea uno nuevo con los mismos productos y gastos</small></div></button>
+    ${d.estado === 'curso' ? `<button class="li" data-k="terminado">${ic('star', 20)}<div class="tx"><b>Marcar como terminado</b><small>Pasa a la pestaña Terminados</small></div></button>` : `<button class="li" data-k="curso">${ic('undo', 20)}<div class="tx"><b>Volver a «En curso»</b></div></button>`}
+    <button class="li" data-k="cancelado">${ic('x', 20)}<div class="tx"><b class="neg">Cancelar proyecto</b><small>No se borra: queda en Cancelados y lo puedes reabrir</small></div></button></div>` });
+  h.b.onclick = async e => {
+    const b = e.target.closest('[data-k]'); if (!b) return;
+    const k = b.dataset.k;
+    try {
+      if (k === 'editar') { h.cerrar(); formProyecto(d, pinta); }
+      if (k === 'duplicar') {
+        h.cerrar();
+        const n = await pedirTexto('Repetir proyecto', { label: 'Nombre del proyecto nuevo', valor: d.nombre + ' (otra vez)', si: 'Crear', msg: 'Se copian los productos finales y los gastos (con fecha de hoy). El material tomado del inventario no se copia.' });
+        if (n === null) return;
+        const r = await api('duplicarProyecto', { id: d.id, nombre: n, gastos: true });
+        S.f.pjest = 'curso'; pinta(r); toast('Proyecto creado' + (r.omitidos ? ` · ${r.omitidos} material${r.omitidos === 1 ? '' : 'es'} del inventario sin copiar` : ''), 'ok', 4500);
+      }
+      if (['terminado', 'curso', 'cancelado'].includes(k)) { h.cerrar(); await cambiarEstadoProy(d, k, pinta); }
+    } catch (x) { err(x); }
+  };
+}
+async function cambiarEstadoProy(d, est, pinta) {
+  if (est === 'cancelado' && !(await confirmar(`¿Cancelar «${esc(d.nombre)}»? Sus gastos se conservan y lo puedes reabrir cuando quieras.`, { si: 'Cancelar proyecto', no: 'Volver', peligro: 1 }))) return;
+  const r = await api('estadoProyecto', { id: d.id, estado: est });
+  (pinta || (S.hProy && S.hProy.pinta) || (() => {}))(r);
+  toast({ terminado: '¡Proyecto terminado!', curso: 'Proyecto en curso', cancelado: 'Proyecto cancelado' }[est], 'ok');
+}
+function compartirProyecto(d) {
+  const r = d.r, emo = { verde: '🟢', amarillo: '🟡', rojo: '🔴', gris: '⚪' }[r.semaforo];
+  const lineas = [`*Proyecto: ${d.nombre}*${d.cliente ? ' · ' + d.cliente : ''}`];
+  r.productos.forEach(x => lineas.push(`• ${x.nombre}: ${unidadTxt(x.cantidad, x.unidad)} · costo c/u ${money(x.costoUnit)}${x.precio ? ' · precio ' + money(x.precio) : x.sugerido ? ' · sugerido ' + money(x.sugerido) : ''}`));
+  lineas.push(`Costo total: ${money(r.costo)}`);
+  if (r.ganancia !== null) lineas.push(`${emo} Ganancia: ${money(r.ganancia)} (${fmtN(r.pct, 1)}% sobre lo invertido)`);
+  if (r.porCategoria.length) { lineas.push('', '*Gastos*'); r.porCategoria.forEach(c => lineas.push(`${emoCat(c.categoria)} ${c.categoria}: ${money(c.monto)} (${fmtN(c.pct, 0)}%)`)); }
+  lineas.push('', '_' + (S.config.nombre || '') + ' · Gestión de Negocio VM_');
+  window.open(waLink('', lineas.join('\n')), '_blank');
+}
+function pasarAInventario(d, pinta) {
+  const pend = d.r.productos.filter(x => !x.inventario);
+  const opts = S.productos.filter(p => p.activo && p.tipo === 'producto').sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const h = hoja({ titulo: 'Pasar al inventario', ancho: 1, html: `<p class="sm mut">Las unidades producidas suben a tus existencias para venderlas en <b>Vender</b> y en la tienda. El costo por unidad del proyecto queda como costo del producto.
+    Hazlo cuando ya registraste todos los gastos.</p>
+    ${pend.map((x, i) => { const igual = opts.find(p => norm(p.nombre) === norm(x.nombre)); return `<div class="panel pj-pi" data-i="${i}"><label class="chk"><input type="checkbox" data-sel checked> <b>${esc(x.nombre)}</b> · ${esc(unidadTxt(x.cantidad, x.unidad))} · costo c/u ${money(x.costoUnit)}</label>
+      <div class="f2" style="margin-top:8px"><label class="fld"><span>Agregar como</span><select data-dest><option value="">Producto nuevo</option>${opts.map(p => `<option value="${p.id}" ${igual && igual.id === p.id ? 'selected' : ''}>${esc(p.nombre)} (hay ${cant(p.stock)})</option>`).join('')}</select></label>
+      <label class="fld"><span>Precio de venta</span><input data-precio inputmode="decimal" value="${x.precio || x.sugerido || ''}"></label></div>
+      <label class="fld" data-catw><span>Categoría</span><input data-cat list="dl-cat2" value="Producción"></label>
+      <label class="chk" data-cpw hidden><input type="checkbox" data-cp> Cambiar también su precio de venta</label></div>`; }).join('')}<datalist id="dl-cat2">${catsSugeridas().map(c => `<option value="${esc(c)}">`).join('')}</datalist>` });
+  const sync = el => { const dest = $('[data-dest]', el).value; $('[data-catw]', el).hidden = !!dest; $('[data-cpw]', el).hidden = !dest; };
+  $$('.pj-pi', h.el).forEach(el => { sync(el); $('[data-dest]', el).addEventListener('change', () => sync(el)); });
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('box', 18)} Pasar al inventario`, cls: 'pri', fn: async () => {
+    const items = $$('.pj-pi', h.el).filter(el => $('[data-sel]', el).checked).map(el => {
+      const x = pend[Number(el.dataset.i)], dest = $('[data-dest]', el).value;
+      return { id: x.id, productoId: dest, precio: num($('[data-precio]', el).value), categoria: $('[data-cat]', el).value, cambiarPrecio: $('[data-cp]', el).checked };
+    });
+    if (!items.length) throw new Error('Marca al menos un producto');
+    const r = await api('proyectoAInventario', { proyectoId: d.id, items });
+    h.cerrar(); pinta(r); S.inicio = null; toast(r.pasados === 1 ? 'Producto agregado al inventario' : r.pasados + ' productos agregados al inventario', 'ok');
+  } }]);
+}
+
+/* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
+const API_MIN = '1.2'; // versión mínima del Code.gs que necesita esta app
+const NOVEDADES = [
+  { v: '1.2', fecha: '2026-10-11', items: [
+    { i: 'layers', t: 'Proyectos', d: 'Registra todo lo que gastas para producir algo (materiales, mano de obra, comida, transporte…). Te da el costo por unidad, el precio sugerido y cuánto ganas, con colores: verde, amarillo o rojo.', ir: 'proyectos' },
+    { i: 'percent', t: 'Calculadora de precio', d: 'En Precios: escribe el costo y el % de ganancia y te da el precio de venta, con ISV y redondeo.', ir: 'precios' },
+    { i: 'wallet', t: 'Ventas de hoy en Caja', d: 'Cada venta del día con su cliente, artículos, monto y si fue pedido en línea. También el resumen por artículo.', ir: 'caja' },
+    { i: 'help', t: 'Botón de ayuda', d: 'Toca el signo de pregunta arriba, en cualquier pantalla, para ver cómo se usa.' },
+    { i: 'refresh', t: 'Aviso de actualización', d: 'Cuando haya una versión nueva te avisamos para actualizar con un solo toque.' }
+  ] }
+];
+
+/* ---------- Guías por pantalla ---------- */
+const AYUDA = {
+  inicio: { d: 'El resumen de tu negocio: lo que vendiste hoy, tu ganancia, pedidos nuevos y lo que se está agotando.',
+    p: ['Toca cualquier tarjeta para ver el detalle.', 'El botón del centro, abajo, abre <b>Vender</b>.', 'Arriba a la izquierda está el <b>menú</b> con todos los módulos.'],
+    t: ['Los números se actualizan solos cada vez que vuelves a abrir la app.'] },
+  vender: { d: 'Tu caja registradora: agrega productos, cobra y entrega el comprobante.',
+    p: ['Toca los productos para agregarlos al ticket. También puedes buscar o escanear el código y presionar Enter.', 'Toca la barra del ticket para <b>Cobrar</b>.', 'Elige el cliente (obligatorio si es al crédito) y la forma de pago. En efectivo escribe cuánto te dan: el cambio se calcula solo.', 'Pulsa <b>Cobrar</b> y envía el comprobante por WhatsApp o imprime el ticket.'],
+    t: ['Para cambiar el precio de una línea toca el precio con el lápiz ✎.', 'Descuento: en Cobrar toca «agregar» junto a Descuento (en lempiras o en %).', 'Al crédito puedes recibir un anticipo; lo demás queda en la cuenta del cliente.'] },
+  pedidos: { d: 'Los pedidos que tus clientes hacen en tu tienda en línea (plan Plus).',
+    p: ['Comparte el enlace o el código QR de tu tienda.', 'Cuando llega un pedido nuevo te avisamos. Tócalo para <b>Confirmar</b> y avisa al cliente por WhatsApp.', 'Márcalo <b>Listo</b> cuando lo tengas preparado.', 'Al entregarlo toca <b>Entregar y cobrar</b>: se registra la venta y se descuenta el inventario.'],
+    t: ['Para cancelar un pedido ábrelo con «Ver».', 'En Ajustes › Tienda en línea defines el envío, el pedido mínimo y las formas de pago.'] },
+  productos: { d: 'Tu catálogo y tus existencias.',
+    p: ['Toca <b>+</b> para agregar un producto: nombre, precio y, si lo sabes, el costo.', 'Activa <b>Controlar existencias</b> para llevar inventario; apágalo para servicios o platos.', 'Toca un producto para editarlo, <b>Ajustar</b> existencias o ver sus <b>Movimientos</b>.'],
+    t: ['Usa los filtros «Por agotarse» y «Agotados» para saber qué comprar.', 'Si no conoces el costo, deja el campo vacío: el costo promedio se calcula solo con las compras.'] },
+  precios: { d: 'Calcula precios de venta y revisa cuánto ganas en cada producto.',
+    p: ['En la <b>calculadora</b> escribe el costo y el % de ganancia: te da el precio de venta.', '<b>Sobre el costo</b>: ganas ese % de lo que te costó. <b>Sobre el precio de venta</b>: ese % del precio es ganancia (como el margen).', 'Con «Sumar ISV» y «Redondear» el precio queda listo para vender.', 'Ponle el precio a un producto o crea uno nuevo con los botones de abajo.'],
+    t: ['Toca cualquier producto de la lista para cambiar su precio y su costo.', '«Cambiar precios en bloque» calcula precios nuevos para toda una categoría y te muestra cómo quedan antes de aplicar.', 'Ganancia baja = menos de 15% sobre el costo.'] },
+  proyectos: { d: 'Calcula cuánto te cuesta producir algo y cuánto ganas: una tanda de pan, un pedido de uniformes, canastas, eventos…',
+    p: ['Toca <b>+</b> y escribe el nombre del proyecto, el producto final y cuántas unidades vas a producir.', 'Toca <b>Registrar gasto</b> por cada cosa que pagues: materiales, mano de obra, alimentación, transporte, servicios… Si usas material de tu inventario, elige «Material de mi inventario» y se descuenta solo.', 'Pon el <b>precio de venta</b> o toca «Usar» en el precio sugerido.', 'Cuando termines, toca <b>Pasar al inventario para vender</b> y luego márcalo como terminado.'],
+    t: ['<b>Verde</b>: ganas 30% o más sobre lo invertido. <b>Amarillo</b>: ganas menos de 30%. <b>Rojo</b>: pierdes.', 'Si pagaste con el efectivo de la caja, activa «Lo pagué con el efectivo de la caja» para que el cierre cuadre.', 'Si salen varios productos, usa el «Peso en el costo» para repartir el gasto.', '«Repetir este proyecto» copia productos y gastos para la siguiente tanda.'] },
+  clientes: { d: 'Tus clientes, su crédito y lo que te deben.',
+    p: ['Toca <b>+</b> para agregar un cliente con su WhatsApp y, si le das crédito, su límite.', 'Toca un cliente para ver su cuenta, registrar <b>abonos</b> y enviarle un recordatorio de cobro.', 'Usa el filtro <b>Con saldo</b> para ver quién te debe.'],
+    t: ['El mensaje del recordatorio lo cambias en Ajustes › Mensajes de WhatsApp.'] },
+  proveedores: { d: 'A quién le compras y cuánto le debes.',
+    p: ['Toca <b>+</b> para agregar un proveedor.', 'Tócalo para ver sus compras, lo que le debes y registrar <b>pagos</b>.'], t: [] },
+  compras: { d: 'Lo que compras para vender: sube tus existencias y actualiza el costo.',
+    p: ['Toca <b>+</b> y elige el proveedor.', 'Busca los productos y escribe cantidad y costo. Si quieres, cambia ahí mismo el precio de venta.', 'Elige al contado o al crédito (queda en cuentas por pagar) y guarda.'],
+    t: ['Cada compra recalcula el costo promedio del producto.', 'Solo el administrador puede anular una compra.'] },
+  gastos: { d: 'Lo que pagas para que el negocio funcione: luz, agua, alquiler, planilla, publicidad…',
+    p: ['Toca <b>+</b> y elige la categoría.', 'Escribe el detalle, el monto y cómo pagaste.', 'Los gastos en efectivo se restan de la caja.'],
+    t: ['El sistema recuerda tus categorías y detalles para que escribas menos.', 'Lo que gastas para producir algo en particular regístralo mejor en Proyectos.'] },
+  caja: { d: 'Cuánto efectivo debería haber y el cierre del día.',
+    p: ['Arriba ves el <b>efectivo esperado</b>: fondo + ventas y cobros en efectivo − gastos, compras y pagos en efectivo.', 'En <b>Ventas de hoy</b> está cada venta con su cliente, artículos, monto y si fue pedido en línea; o el resumen <b>por artículo</b>.', 'Al final del día toca <b>Hacer cierre de caja</b>, cuenta billetes y monedas y guarda: te dice si cuadró, sobró o faltó.'],
+    t: ['Comparte el resumen del día por WhatsApp con «Compartir».', 'Toca una venta para ver su comprobante.'] },
+  ventas: { d: 'Todas tus ventas por fecha.', p: ['Elige las fechas.', 'Toca una venta para ver el detalle, reenviar el comprobante o anularla (administrador).'], t: [] },
+  reportes: { d: 'Cuánto vendes y cuánto ganas de verdad.',
+    p: ['<b>Resumen</b>: ventas, costo, ganancia bruta y neta, gastos y la gráfica por día del período que elijas.', '<b>Diario</b>: el mes día por día.', '<b>Ganancias</b>: lo que ganaste cada mes y a dónde va (ahorro, reinversión, pagos).', '<b>Inventario</b> y <b>Cuentas</b>: valor de tus existencias, lo que te deben y lo que debes.'],
+    t: ['El botón de arriba descarga el reporte en CSV para abrirlo en Excel.'] },
+  usuarios: { d: 'Tu equipo y lo que puede hacer cada uno.',
+    p: ['Toca <b>+</b> y escribe el nombre, el WhatsApp y un PIN para la persona.', 'Elige el rol: <b>Administrador</b> (todo), <b>Cajero</b> (vende, cobra y cierra caja) o <b>Bodega</b> (productos, compras, inventario y proyectos).', 'Desactiva a alguien para quitarle el acceso.'], t: ['Cada persona entra con su propio WhatsApp y PIN.'] },
+  ajustes: { d: 'Datos de tu negocio y cómo se ve el sistema.',
+    p: ['<b>Mi negocio</b>: nombre, logo, teléfono, ISV y mensaje del comprobante.', '<b>Apariencia</b>: 12 colores y modo oscuro.', '<b>Tienda en línea</b> y <b>Plan Plus</b>.', '<b>Mi cuenta</b>: cambia tu PIN.'], t: [] }
+};
+
+function abrirAyuda(foco) {
+  const vista = VISTAS[foco] ? foco : S.vista;
+  const temas = Object.keys(AYUDA).filter(k => VISTAS[k] && puedeVer(k));
+  const tema = k => { const a = AYUDA[k]; return `<div class="ay-t"><p>${a.d}</p><ol>${a.p.map(x => `<li>${x}</li>`).join('')}</ol>${a.t.length ? `<div class="ay-tips">${a.t.map(x => `<p>💡 ${x}</p>`).join('')}</div>` : ''}${k !== S.vista ? `<button class="btn sm" data-a="ir" data-v="${k}">Ir a ${esc(VISTAS[k].c || VISTAS[k].t)} ${ic('arrow', 15)}</button>` : ''}</div>`; };
+  const msj = 'Hola, necesito ayuda con Gestión de Negocio VM' + (S.config.nombre ? ' (' + S.config.nombre + ')' : '') + '. Estoy en ' + (VISTAS[S.vista] ? VISTAS[S.vista].t : 'el sistema') + '.';
+  const h = hoja({ titulo: 'Ayuda', html: `<div class="srch ay-q">${ic('search', 18)}<input id="ay-q" placeholder="¿Qué quieres hacer? Ej. anular una venta"></div>
+    <div id="ay-res"></div>
+    ${AYUDA[vista] && puedeVer(vista) ? `<div class="ay-aqui" id="ay-aqui"><div class="ay-h"><i class="${colorDe(vista)}">${ic(VISTAS[vista].i, 20)}</i><div><small>En esta pantalla</small><b>${esc(VISTAS[vista].t)}</b></div></div>${tema(vista)}</div>` : ''}
+    <div class="ay-acc"><button class="btn" data-a="verNovedades">${ic('sparkle', 18)} Novedades de la versión ${APP_VER}</button><a class="btn wa" href="${waLink(CONTACTO_WA, msj)}" target="_blank" rel="noopener">${ic('wa', 18)} Escribir a soporte</a></div>
+    <div class="sec-t" id="ay-ot"><h3>Todas las guías</h3></div>
+    <div class="ay-lista" id="ay-lista">${temas.filter(k => k !== vista).map(k => `<details class="ay-d"><summary><i class="${colorDe(k)}">${ic(VISTAS[k].i, 18)}</i>${esc(VISTAS[k].t)}</summary>${tema(k)}</details>`).join('')}</div>
+    <p class="credit" style="margin-top:18px">Gestión de Negocio VM · versión ${APP_VER}${S.version ? ' · servidor ' + esc(S.version) : ''}<br>Software creado por José Vicdonio Molina</p>` });
+  $('#ay-q', h.el).addEventListener('input', e => {
+    const q = norm(e.target.value.trim()), res = $('#ay-res', h.el);
+    $('#ay-aqui', h.el) && ($('#ay-aqui', h.el).hidden = !!q); $('#ay-lista', h.el).hidden = !!q; $('#ay-ot', h.el).hidden = !!q;
+    if (!q) { res.innerHTML = ''; return; }
+    const pal = q.split(/\s+/).filter(x => x.length > 2);
+    const hits = temas.map(k => { const a = AYUDA[k], tit = norm(VISTAS[k].t), txt = norm([a.d].concat(a.p, a.t).join(' ').replace(/<[^>]+>/g, ''));
+        return { k, n: pal.reduce((s, w) => s + (tit.includes(w) ? 3 : 0) + (txt.includes(w) ? 1 : 0), 0) + (txt.includes(q) ? 2 : 0) }; })
+      .filter(x => x.n > 0).sort((a, b) => b.n - a.n).slice(0, 4);
+    res.innerHTML = hits.length ? hits.map(x => `<div class="ay-aqui"><div class="ay-h"><i class="${colorDe(x.k)}">${ic(VISTAS[x.k].i, 20)}</i><div><small>Guía</small><b>${esc(VISTAS[x.k].t)}</b></div></div>${tema(x.k)}</div>`).join('')
+      : `<div class="empty">No encontramos esa guía. <a href="${waLink(CONTACTO_WA, msj + ' Quiero saber: ' + e.target.value)}" target="_blank" rel="noopener">Pregúntanos por WhatsApp</a></div>`;
+  });
+  return h;
+}
+ACC.ayuda = () => abrirAyuda(S.vista);
+
+/* ---------- Novedades ---------- */
+function mostrarNovedades(desde) {
+  const l = NOVEDADES.filter(n => !desde || cmpVer(n.v, desde) > 0);
+  if (!l.length) return;
+  const items = [].concat.apply([], l.map(n => n.items)).filter(x => !x.ir || puedeVer(x.ir));
+  const h = hoja({ titulo: '', cls: 'nov', html: `<div class="nov-h"><div class="nov-ic">${ic('sparkle', 30)}</div><h2>¡Novedades!</h2><p>Gestión de Negocio VM · versión ${esc(l[0].v)}</p></div>
+    <div class="nov-l">${items.map(x => `<div class="nov-i"><i class="${colorDe(x.t)}">${ic(x.i, 20)}</i><div><b>${esc(x.t)}</b><p>${esc(x.d)}</p>${x.ir && S.vista !== x.ir ? `<button class="lnk" data-a="ir" data-v="${x.ir}">Ver dónde ${ic('arrow', 14)}</button>` : ''}</div></div>`).join('')}</div>` });
+  h.botones([{ t: '¡Entendido!', cls: 'pri', fn: () => h.cerrar() }]);
+}
+ACC.verNovedades = () => { cerrarHojas(); mostrarNovedades(''); };
+function revisarNovedades() {
+  const visto = LS.get('verVisto', '');
+  LS.set('verVisto', APP_VER);
+  if (visto && cmpVer(APP_VER, visto) > 0) setTimeout(() => { if (S.user && !PILA.length) mostrarNovedades(visto); }, 900);
+}
+
+/* ---------- ¿Hay una versión nueva publicada? ---------- */
+function cmpVer(a, b) { const x = String(a || '0').split('.').map(Number), y = String(b || '0').split('.').map(Number); for (let i = 0; i < Math.max(x.length, y.length); i++) { const d = (x[i] || 0) - (y[i] || 0); if (d) return d > 0 ? 1 : -1; } return 0; }
+let ultRevVer = 0;
+async function buscarActualizacion(forzar) {
+  if (!/^https?:$/.test(location.protocol) || S.enTienda || $('#upd')) return;
+  if (!forzar && Date.now() - ultRevVer < 10 * 60000) return;
+  ultRevVer = Date.now();
+  try {
+    const r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
+    if (!r.ok) return;
+    const m = (await r.text()).match(/const APP_VER = '([\d.]+)'/);
+    if (m && cmpVer(m[1], APP_VER) > 0) avisoActualizacion(m[1]);
+  } catch (e) {}
+}
+function avisoActualizacion(v) {
+  if ($('#upd')) return;
+  const d = document.createElement('div'); d.id = 'upd'; d.className = 'upd'; d.setAttribute('role', 'status');
+  d.innerHTML = `<i>${ic('sparkle', 20)}</i><div class="grow"><b>Hay una versión nueva (${esc(v)})</b><small>Actualiza para ver las mejoras. Tus datos no cambian.</small></div><button class="btn sm acc" data-a="actualizarApp">Actualizar</button>`;
+  document.body.appendChild(d); requestAnimationFrame(() => d.classList.add('in'));
+}
+ACC.actualizarApp = async el => {
+  el.disabled = true; el.textContent = 'Actualizando…';
+  try { if (navigator.serviceWorker) { const rs = await navigator.serviceWorker.getRegistrations(); await Promise.all(rs.map(r => r.update().catch(() => {}))); } } catch (e) {}
+  try { if (window.caches) { const ks = await caches.keys(); await Promise.all(ks.map(k => caches.delete(k))); } } catch (e) {}
+  location.reload();
+};
+setInterval(() => buscarActualizacion(), 30 * 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) buscarActualizacion(); });
 
 /* ===================== COMPROBANTES (imagen, impresión, WhatsApp) ===================== */
 function textoVenta(v, det) {
