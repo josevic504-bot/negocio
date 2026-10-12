@@ -1,6 +1,6 @@
 /* Gestión de Negocio VM · guarda la app en el teléfono para que abra rápido.
    Los datos SIEMPRE se piden al servidor; aquí solo se guardan la página, íconos y librerías. */
-const VERSION = 'gnvm-1.2';
+const VERSION = 'gnvm-1.3';
 const BASE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(BASE)).catch(() => {}));

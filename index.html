@@ -581,7 +581,7 @@ body.en-tienda{padding-bottom:110px}
   body{background:#fff!important;padding:0!important}
   body>*:not(#print-area){display:none!important}
   #print-area{display:block!important;color:#000;font:12px/1.35 'Courier New',monospace;width:74mm}
-  .ticket .pc{text-align:center;margin-bottom:6px}.ticket .pc img{max-width:40mm;max-height:18mm;display:block;margin:0 auto 4px}.ticket .pc b{font-size:15px;display:block}
+  .ticket .pc{text-align:center;margin-bottom:6px;display:block;border:0;border-radius:0;box-shadow:none;background:none;overflow:visible;padding:0}.ticket .pc img{max-width:40mm;max-height:18mm;display:block;margin:0 auto 4px}.ticket .pc b{font-size:15px;display:block}
   .ticket .ps{border-top:1px dashed #000;padding:5px 0}.ticket .pl{display:flex;justify-content:space-between;gap:6px}.ticket .pt{font-weight:bold;font-size:14px}
 }
 
@@ -721,6 +721,41 @@ body.en-tienda{padding-bottom:110px}
 .kpi i.neg{color:var(--bad)}
 .pj-form .f2,.pj-pi .f2{grid-template-columns:1fr 1fr}
 
+/* ===== Facturación SAR ===== */
+.cai-in{font-family:ui-monospace,'SFMono-Regular',Menlo,Consolas,monospace!important;letter-spacing:0;font-size:12.5px!important}
+#sar-f .f2{grid-template-columns:1fr 1fr}#sar-f .f3{grid-template-columns:repeat(3,minmax(0,1fr))}#sar-f .fld span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sar-box{background:color-mix(in srgb,var(--info) 7%,var(--card));border:1px solid color-mix(in srgb,var(--info) 25%,var(--line));border-radius:16px;padding:10px 12px 4px;margin-bottom:12px}
+.sar-h{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:var(--info);font-size:14px}.sar-h b{color:var(--ink);font-variant-numeric:tabular-nums}.sar-h .badge{margin-left:auto}
+.sar-box .fld{margin-bottom:8px}.sar-box .chk{margin:2px 0 8px}
+.sar-est{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin:6px 0 12px;display:flex;flex-direction:column;gap:6px}
+.sar-est small{display:block;font-size:12px}.sar-est b{font-size:18px}
+.sar-prev{font-size:13px;color:var(--mut);margin:-4px 0 12px}.sar-prev b{color:var(--ink);white-space:nowrap}
+.aj .aviso{margin:8px 0 12px}
+.lb-t{overflow-x:auto;background:var(--card);border:1px solid var(--line);border-radius:16px;margin-bottom:10px}
+.lb-t table{border-collapse:collapse;width:100%;font-size:12.5px;white-space:nowrap}
+.lb-t th{position:sticky;top:0;background:var(--bg);text-align:left;font-weight:600;color:var(--mut);padding:8px 10px;border-bottom:1px solid var(--line)}
+.lb-t td{padding:7px 10px;border-bottom:1px dashed var(--line);cursor:pointer}.lb-t td.n,.lb-t th:nth-child(n+5){text-align:right}
+.lb-t tr.anul td{opacity:.55;text-decoration:line-through}.lb-t tr.anul .badge{text-decoration:none}
+.lb-res .cj-r{font-size:14px}
+/* factura (imagen) */
+.rc.fac{width:430px;border-radius:18px;position:relative;padding:18px 20px 16px;font-size:12px;line-height:1.35;border:1px solid #e6e1e8}
+.fac-anul{position:absolute;top:120px;left:50%;transform:translateX(-50%) rotate(-18deg);font:800 54px var(--font);color:rgba(224,36,62,.22);letter-spacing:.2em;pointer-events:none}
+.fac-h{display:flex;gap:12px;align-items:center;border-bottom:2px solid var(--pri);padding-bottom:10px}
+.fac-h .rc-logo,.fac-h .rc-mono{margin:0;flex:none;width:56px;height:56px}.fac-h .rc-mono{color:var(--pri);border-color:var(--pri)}
+.fac-h h4{margin:0;font:700 17px/1.15 var(--font)}.fac-h p{margin:1px 0 0;color:#5f5866;font-size:11.5px}.fac-h .fac-nc{font-weight:600;color:#1f1a24}
+.fac-t{display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 2px}.fac-t b{font:800 20px var(--font);letter-spacing:.12em;color:var(--pri)}.fac-t span{font:700 14px var(--font);font-variant-numeric:tabular-nums}
+.fac-cai{font:600 11px ui-monospace,Menlo,Consolas,monospace;color:#3d3644;margin-bottom:8px}
+.fac-m{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;background:#f7f4f8;border-radius:10px;padding:8px 10px;margin-bottom:8px}
+.fac-m small{display:block;color:#8a8390;font-size:9.5px;text-transform:uppercase;letter-spacing:.06em}
+.fac-i{width:100%;border-collapse:collapse;font-size:11.5px}.fac-i th{text-align:left;font-size:10px;color:#8a8390;text-transform:uppercase;letter-spacing:.05em;border-bottom:1px solid #ddd5df;padding:4px 3px}
+.fac-i td{padding:4px 3px;border-bottom:1px dashed #ece6ee;vertical-align:top}.fac-i td:nth-child(n+3),.fac-i th:nth-child(n+3){text-align:right;white-space:nowrap}.fac-i td:first-child{text-align:center}
+.fac-s{margin-top:6px}.fac-s>div{display:flex;justify-content:space-between;padding:1.5px 0;color:#4d4653;font-variant-numeric:tabular-nums}
+.fac-tot{margin-top:5px!important;padding:8px 10px!important;border-radius:10px;background:linear-gradient(120deg,var(--h1),var(--h2));color:#fff!important;align-items:center}.fac-tot b{font-size:19px}
+.fac-l{margin:7px 0 4px;font-size:11px;font-weight:600}.fac-x{margin:0 0 6px;color:#6b6472;font-size:11px}
+.fac-e{border-top:1px dashed #ddd5df;padding-top:6px;font-size:10.5px;color:#5f5866}.fac-e>div{display:flex;justify-content:space-between;gap:8px}.fac-e>div span:last-child{min-width:70px;border-bottom:1px solid #cfc7d2;text-align:right}
+.fac-r{margin-top:7px;font-size:10.5px;color:#3d3644;background:#f7f4f8;border-radius:8px;padding:6px 8px}
+.fac-p{text-align:center;margin-top:8px;font-size:10.5px;color:#6b6472;display:flex;flex-direction:column;gap:2px}.fac-p b{color:#1f1a24}.fac-p em{font:italic 500 15px var(--serif);color:var(--pri)}
+
 </style>
 </head>
 <body>
@@ -743,7 +778,7 @@ body.en-tienda{padding-bottom:110px}
 <script type="text/plain" id="backend-src">
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.2 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.3 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -763,7 +798,7 @@ const MULTI_NEGOCIO = true;
 const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite en modo un solo negocio)
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.2';
+const VERSION = '1.3';
 const DIAS_FOTO = 90;               // las fotos de productos sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -785,7 +820,7 @@ const SCHEMA = {
   Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total'],
   Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado'],
   Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota'],
@@ -807,7 +842,7 @@ const NUMS = new Set(['margen','precio','costo','stock','stockMin','limite','sub
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario']);
-const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario']);
+const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -821,10 +856,12 @@ const CONFIG_DEF = {
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
   msjCobro: 'Hola {cliente} 👋, te saluda {negocio}. Te recordamos tu saldo pendiente de {saldo}. ¡Gracias por tu preferencia!',
-  seqV: '0', seqC: '0', seqP: '0', sysLimpieza: ''
+  // Facturación SAR (autoimpresor): apagada por defecto
+  sarActivo: 'no', sarRazon: '', sarRtn: '', sarDireccion: '', sarCai: '', sarEst: '000', sarPunto: '001', sarDesde: '', sarHasta: '', sarLimite: '',
+  seqV: '0', seqC: '0', seqP: '0', seqF: '', sysLimpieza: '', sysVer: ''
 };
 // Ajustes que el administrador puede cambiar desde la app
-const CONFIG_EDITABLE = Object.keys(CONFIG_DEF).filter(k => k.indexOf('seq') !== 0 && k.indexOf('sys') !== 0);
+const CONFIG_EDITABLE = Object.keys(CONFIG_DEF).filter(k => k.indexOf('seq') !== 0 && k.indexOf('sys') !== 0 && k.indexOf('sar') !== 0);
 function sinInternos_(c) { Object.keys(c).forEach(k => { if (k.indexOf('seq') === 0 || k.indexOf('sys') === 0) delete c[k]; }); return c; }
 
 const ESCRITURA = {
@@ -949,6 +986,8 @@ function route_(req) {
     case 'productoProyecto': return lock_(() => productoProyecto_(u, d));
     case 'quitarProductoProyecto': return lock_(() => quitarProductoProyecto_(u, d));
     case 'proyectoAInventario': return lock_(() => proyectoAInventario_(u, d));
+    case 'guardarSAR':      return lock_(() => guardarSAR_(u, d));
+    case 'libroSAR':        return libroSAR_(u, d);
     default: throw new Error('Acción no válida: ' + a);
   }
 }
@@ -1224,6 +1263,8 @@ function saldosProveedores_() {
 function bootstrap_(u, d) {
   // Una vez al día: borra las fotos de productos sin movimiento por más de 3 meses
   if (u.rol === 'admin' && config_().sysLimpieza !== hoy_()) { try { lock_(() => limpiarFotos_()); } catch (e) {} }
+  // Después de actualizar el sistema: agrega las columnas nuevas a las hojas de este negocio
+  if (config_().sysVer !== VERSION) { try { lock_(() => asegurarEncabezados_()); } catch (e) {} }
   const sc = u.rol === 'bodega' ? {} : saldosClientes_();
   const sp = u.rol === 'cajero' ? {} : saldosProveedores_();
   const r = {
@@ -1239,7 +1280,8 @@ function bootstrap_(u, d) {
     plus: plus_(),
     negocioId: MULTI_NEGOCIO && NEG ? NEG.id : '',
     multi: MULTI_NEGOCIO,
-    version: VERSION
+    version: VERSION,
+    sar: estadoSAR_()
   };
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG && NEG.lic._fila) { try { mSet_('Licencias', NEG.lic._fila, { ultimaConexion: ahora_().replace('T', ' ') }); } catch (e) {} }
@@ -1727,14 +1769,27 @@ function venta_(u, d) {
     Object.keys(pedido).forEach(id => { const p = pm[id]; if (p.stock < pedido[id]) throw new Error('No hay suficiente «' + p.nombre + '» (quedan ' + p.stock + ')'); });
   }
   const metodo = METODOS.indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
+  // Facturación SAR (solo si el negocio la activó en Ajustes)
+  const sar = cfg.sarActivo === 'si', fd = d.fiscal || {};
+  if (sar) {
+    const est = estadoSAR_(cfg);
+    if (est.estado === 'incompleto') throw new Error('Faltan los datos de facturación SAR. Complétalos en Ajustes › Facturación SAR.');
+    if (est.estado === 'vencido') throw new Error('La fecha límite de emisión del CAI ya pasó (' + cfg.sarLimite + '). Pide un CAI nuevo al SAR y actualízalo en Ajustes › Facturación SAR.');
+    if (est.estado === 'agotado') throw new Error('Se terminaron los números de factura autorizados. Pide un rango nuevo al SAR y actualízalo en Ajustes › Facturación SAR.');
+  }
+  const exo = sar && !!fd.exonerado;
+  if (exo && !txt_(fd.oce) && !txt_(fd.cre) && !txt_(fd.sag)) throw new Error('Para una venta exonerada escribe el número de la orden de compra exenta, de la constancia de exonerado o del registro SAG');
   const subtotal = r2_(items.reduce((a, i) => a + i.cantidad * i.precio, 0));
   const descuento = r2_(Math.min(Math.max(0, Number(d.descuento) || 0), subtotal));
   const factor = subtotal ? (subtotal - descuento) / subtotal : 1;
   let isv = 0, total = 0;
+  const F = { exento: 0, exonerado: 0, g15: 0, g18: 0, i15: 0, i18: 0 };
   items.forEach(i => {
     const base = i.cantidad * i.precio * factor, t = tasaLinea_(i.p, cfg);
-    if (incl) { total += base; isv += t ? base - base / (1 + t) : 0; }
-    else { isv += base * t; total += base * (1 + t); }
+    const neto = incl && t ? base / (1 + t) : base, imp = incl ? base - neto : base * t;
+    if (!t) { F.exento += neto; total += neto; }
+    else if (exo) { F.exonerado += neto; total += neto; }
+    else { total += neto + imp; isv += imp; if (Math.abs(t - 0.18) < 0.001) { F.g18 += neto; F.i18 += imp; } else { F.g15 += neto; F.i15 += imp; } }
   });
   total = r2_(total); isv = r2_(isv);
   const costo = r2_(items.reduce((a, i) => a + i.cantidad * (i.costo || 0), 0));
@@ -1754,11 +1809,26 @@ function venta_(u, d) {
   } else {
     recibido = total;
   }
+  // Número de factura: se toma al final, cuando ya pasaron todas las validaciones (no deja huecos)
+  let factura = '', fiscal = '';
+  if (sar) {
+    const cli = clienteId ? rows_('Clientes').find(c => c.id === clienteId) : null;
+    const rtnC = String(fd.rtn !== undefined && fd.rtn !== null ? fd.rtn : (cli && cli.rtn) || '').replace(/\D/g, '');
+    if (rtnC && rtnC.length !== 14) throw new Error('El RTN del cliente debe tener 14 números');
+    const n = Number(cfg.seqF) || Number(cfg.sarDesde);
+    factura = numFactura_(cfg, n);
+    guardarConfig_({ seqF: String(n + 1) });
+    Object.keys(F).forEach(k => { F[k] = r2_(F[k]); });
+    fiscal = JSON.stringify(Object.assign({ cai: cfg.sarCai, desde: numFactura_(cfg, Number(cfg.sarDesde)), hasta: numFactura_(cfg, Number(cfg.sarHasta)), limite: cfg.sarLimite,
+      razon: cfg.sarRazon || cfg.nombre, rtnE: cfg.sarRtn, dir: cfg.sarDireccion, nombre: txt_(fd.nombre || (cli && cli.nombre) || '', 100) || 'Consumidor Final', rtn: rtnC,
+      oce: exo ? txt_(fd.oce, 40) : '', cre: exo ? txt_(fd.cre, 40) : '', sag: exo ? txt_(fd.sag, 40) : '', letras: letras_(total) }, F));
+  }
   const fecha = ahora_();
   const venta = {
     id: newId_('Ventas'), numero: siguiente_('V'), fecha: fecha, clienteId: clienteId, usuarioId: u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
-    recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200)
+    recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200),
+    factura: factura, fiscal: fiscal
   };
   const detalle = items.map((i, k) => ({
     id: newId_('VentaDetalle') + k, ventaId: venta.id, productoId: i.productoId, descripcion: i.descripcion,
@@ -1773,7 +1843,7 @@ function venta_(u, d) {
     const pe = rows_('Pedidos').find(x => x.id === d.pedidoId);
     if (pe) upsert_('Pedidos', { id: pe.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   }
-  return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0 };
+  return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null };
 }
 
 function rango_(d) {
@@ -2114,7 +2184,7 @@ function ventasDelDia_(dia) {
   const ids = {};
   v.forEach(x => { x.detalle = []; ids[x.id] = x; });
   rows_('VentaDetalle').forEach(x => { if (ids[x.ventaId]) ids[x.ventaId].detalle.push({ descripcion: x.descripcion, cantidad: x.cantidad, total: x.total, productoId: x.productoId }); });
-  return desc_(v, 'fecha').map(x => ({ id: x.id, numero: x.numero, fecha: x.fecha, total: x.total, metodo: x.metodo, saldo: x.saldo, anulada: x.anulada,
+  return desc_(v, 'fecha').map(x => ({ id: x.id, numero: x.numero, factura: x.factura, fecha: x.fecha, total: x.total, metodo: x.metodo, saldo: x.saldo, anulada: x.anulada,
     cliente: x.clienteId && cm[x.clienteId] ? cm[x.clienteId].nombre : 'Consumidor final', usuario: us[x.usuarioId] ? us[x.usuarioId].nombre : '',
     pedido: x.pedidoId && pm[x.pedidoId] ? pm[x.pedidoId].numero : (x.pedidoId ? 'en línea' : ''), detalle: x.detalle }));
 }
@@ -2370,6 +2440,119 @@ function cuentas_(u, d) {
   const cxp = antiguedad_(rows_('Compras').filter(c => !c.anulada && c.saldo > 0.004 && c.proveedorId), 'proveedorId', 'fecha')
     .map(o => { const p = pv[o.id] || {}; o.nombre = p.nombre || 'Proveedor'; o.telefono = p.telefono || ''; return o; });
   return { cobrar: cxc, pagar: cxp };
+}
+
+/* ===================== FACTURACIÓN SAR (autoimpresor) =====================
+ * Opcional: se enciende en Ajustes › Facturación SAR. Mientras esté apagada, las ventas
+ * salen como comprobante (no fiscal), igual que siempre.
+ * Encendida: cada venta toma el siguiente número del rango autorizado (000-001-01-00000001),
+ * guarda el CAI, el rango, la fecha límite, el cliente (nombre y RTN) y el desglose del ISV.
+ */
+function pad3_(x) { return String(x || '').replace(/\D/g, '').padStart(3, '0').slice(-3); }
+function numFactura_(cfg, n) { return pad3_(cfg.sarEst) + '-' + pad3_(cfg.sarPunto) + '-01-' + String(n).padStart(8, '0'); }
+
+function estadoSAR_(cfg) {
+  cfg = cfg || config_();
+  const o = { activo: cfg.sarActivo === 'si' };
+  const desde = Number(cfg.sarDesde), hasta = Number(cfg.sarHasta);
+  if (!cfg.sarCai || !/^\d{14}$/.test(cfg.sarRtn) || !(desde >= 1) || !(hasta >= desde) || !/^\d{4}-\d{2}-\d{2}$/.test(cfg.sarLimite)) return Object.assign(o, { estado: 'incompleto' });
+  const sig = Number(cfg.seqF) || desde;
+  const dias = Math.round((new Date(cfg.sarLimite + 'T12:00:00') - new Date(hoy_() + 'T12:00:00')) / 86400000);
+  Object.assign(o, { siguiente: sig <= hasta ? numFactura_(cfg, sig) : '', quedan: Math.max(0, hasta - sig + 1), usados: Math.max(0, sig - desde), total: hasta - desde + 1,
+    dias: dias, limite: cfg.sarLimite, cai: cfg.sarCai, desde: numFactura_(cfg, desde), hasta: numFactura_(cfg, hasta) });
+  o.estado = dias < 0 ? 'vencido' : o.quedan <= 0 ? 'agotado' : (dias <= 15 || o.quedan <= 50) ? 'aviso' : 'ok';
+  return o;
+}
+
+function guardarSAR_(u, d) {
+  req_(u, ['admin']);
+  const cfg = config_(), r = d.registro || {};
+  if (!r.activo) {
+    guardarConfig_({ sarActivo: 'no' });
+    const c = config_();
+    return { config: sinInternos_(Object.assign({}, c)), sar: estadoSAR_(c) };
+  }
+  const o = {
+    sarRazon: txt_(r.razon, 100) || cfg.nombre, sarRtn: String(r.rtn || '').replace(/\D/g, ''), sarDireccion: txt_(r.direccion, 160),
+    sarCai: String(r.cai || '').toUpperCase().replace(/[^0-9A-Z-]/g, ''), sarEst: pad3_(r.est), sarPunto: pad3_(r.punto), sarLimite: String(r.limite || '').slice(0, 10)
+  };
+  const desde = parseInt(String(r.desde || '').replace(/\D/g, ''), 10), hasta = parseInt(String(r.hasta || '').replace(/\D/g, ''), 10);
+  if (!/^\d{14}$/.test(o.sarRtn)) throw new Error('El RTN del negocio debe tener 14 números');
+  if (!o.sarDireccion) throw new Error('Escribe la dirección del punto de emisión');
+  if (!/^[0-9A-F]{6}(-[0-9A-F]{6}){4}-[0-9A-F]{2}$/.test(o.sarCai)) throw new Error('Revisa el CAI: son 37 caracteres con este formato XXXXXX-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XX');
+  if (!(desde >= 1 && hasta >= desde && hasta <= 99999999)) throw new Error('Revisa el rango autorizado: el número final debe ser mayor o igual que el inicial');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(o.sarLimite)) throw new Error('Escribe la fecha límite de emisión');
+  if (o.sarLimite < hoy_()) throw new Error('La fecha límite de emisión ya pasó: pide un CAI nuevo al SAR');
+  o.sarDesde = String(desde); o.sarHasta = String(hasta);
+  // Siguiente número: si cambió la autorización empieza en el inicio del rango
+  const cambio = o.sarCai !== cfg.sarCai || o.sarDesde !== cfg.sarDesde || o.sarHasta !== cfg.sarHasta || o.sarEst !== pad3_(cfg.sarEst) || o.sarPunto !== pad3_(cfg.sarPunto);
+  let sig = cambio ? desde : (Number(cfg.seqF) || desde);
+  if (r.ultimo !== undefined && r.ultimo !== null && String(r.ultimo).trim() !== '') {
+    const ul = parseInt(String(r.ultimo).replace(/\D/g, '').slice(-8), 10);
+    if (!(ul >= desde - 1 && ul <= hasta)) throw new Error('El último número usado debe estar dentro del rango autorizado');
+    sig = ul + 1;
+  }
+  // Nunca se repite un número ya emitido con este CAI
+  const emitidas = rows_('Ventas').filter(v => v.factura && parseJ_(v.fiscal, {}).cai === o.sarCai).map(v => Number(String(v.factura).slice(-8)));
+  const max = emitidas.length ? Math.max.apply(null, emitidas) : 0;
+  if (sig <= max) throw new Error('Ya se emitió la factura ' + numFactura_(o, max) + ' con este CAI: el siguiente número tiene que ser mayor');
+  o.seqF = String(sig);
+  o.sarActivo = 'si';
+  guardarConfig_(o);
+  const c = config_();
+  return { config: sinInternos_(Object.assign({}, c)), sar: estadoSAR_(c) };
+}
+
+// Libro de ventas del mes (para la declaración del ISV)
+function libroSAR_(u, d) {
+  req_(u, ['admin']);
+  const mes = /^\d{4}-\d{2}$/.test(String(d.mes || '')) ? d.mes : hoy_().slice(0, 7);
+  const filas = rows_('Ventas').filter(v => v.factura && String(v.fecha).slice(0, 7) === mes).map(v => {
+    const f = parseJ_(v.fiscal, {});
+    return { id: v.id, factura: v.factura, fecha: v.fecha, nombre: f.nombre || 'Consumidor Final', rtn: f.rtn || '', exento: f.exento || 0, exonerado: f.exonerado || 0,
+      g15: f.g15 || 0, i15: f.i15 || 0, g18: f.g18 || 0, i18: f.i18 || 0, total: v.total, anulada: v.anulada, cai: f.cai || '' };
+  }).sort((a, b) => a.factura < b.factura ? -1 : a.factura > b.factura ? 1 : 0);
+  const tot = { exento: 0, exonerado: 0, g15: 0, i15: 0, g18: 0, i18: 0, total: 0 };
+  filas.filter(x => !x.anulada).forEach(x => Object.keys(tot).forEach(k => { tot[k] += x[k]; }));
+  Object.keys(tot).forEach(k => { tot[k] = r2_(tot[k]); });
+  return { mes: mes, filas: filas, tot: tot, emitidas: filas.filter(x => !x.anulada).length, anuladas: filas.filter(x => x.anulada).length,
+    primera: filas.length ? filas[0].factura : '', ultima: filas.length ? filas[filas.length - 1].factura : '', sar: estadoSAR_() };
+}
+
+// Total en letras para la factura: «UN MIL DOSCIENTOS TREINTA Y CINCO LEMPIRAS CON 50/100»
+function letras_(x) {
+  const cents = Math.round((Number(x) || 0) * 100), ent = Math.floor(cents / 100), cen = cents % 100;
+  const U = ['CERO','UN','DOS','TRES','CUATRO','CINCO','SEIS','SIETE','OCHO','NUEVE','DIEZ','ONCE','DOCE','TRECE','CATORCE','QUINCE','DIECISÉIS','DIECISIETE','DIECIOCHO','DIECINUEVE',
+    'VEINTE','VEINTIÚN','VEINTIDÓS','VEINTITRÉS','VEINTICUATRO','VEINTICINCO','VEINTISÉIS','VEINTISIETE','VEINTIOCHO','VEINTINUEVE'];
+  const D = ['','','','TREINTA','CUARENTA','CINCUENTA','SESENTA','SETENTA','OCHENTA','NOVENTA'];
+  const C = ['','CIENTO','DOSCIENTOS','TRESCIENTOS','CUATROCIENTOS','QUINIENTOS','SEISCIENTOS','SETECIENTOS','OCHOCIENTOS','NOVECIENTOS'];
+  const m100 = n => n < 30 ? U[n] : D[Math.floor(n / 10)] + (n % 10 ? ' Y ' + U[n % 10] : '');
+  const m1000 = n => n === 100 ? 'CIEN' : n > 100 ? C[Math.floor(n / 100)] + (n % 100 ? ' ' + m100(n % 100) : '') : m100(n);
+  let s = '';
+  if (!ent) s = 'CERO';
+  else {
+    const mill = Math.floor(ent / 1e6), mil = Math.floor(ent / 1000) % 1000, r = ent % 1000;
+    if (mill) s += mill === 1 ? 'UN MILLÓN' : m1000(mill) + ' MILLONES';
+    if (mil) s += (s ? ' ' : '') + (mil === 1 ? 'UN MIL' : m1000(mil) + ' MIL');
+    if (r) s += (s ? ' ' : '') + m1000(r);
+    if (mill && !mil && !r) s += ' DE';
+  }
+  return s + ' LEMPIRAS CON ' + String(cen).padStart(2, '0') + '/100';
+}
+
+// Agrega a las hojas existentes las columnas nuevas de esta versión (una vez por versión)
+function asegurarEncabezados_() {
+  const ss = ss_();
+  Object.keys(SCHEMA).forEach(n => {
+    const sh = ss.getSheetByName(n); if (!sh) return;
+    const h = SCHEMA[n], ancho = Math.max(1, sh.getLastColumn());
+    const actual = sh.getRange(1, 1, 1, Math.max(ancho, h.length)).getValues()[0];
+    if (h.some((k, i) => actual[i] !== k)) {
+      sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
+      h.forEach((k, i) => { if (i >= ancho && TEXTO.has(k)) sh.getRange(2, i + 1, Math.max(1, sh.getMaxRows() - 1), 1).setNumberFormat('@'); });
+    }
+  });
+  guardarConfig_({ sysVer: VERSION });
 }
 
 /* ===================== PROYECTOS =====================
@@ -3105,6 +3288,7 @@ function demoShims(DEMO) {
     this.hideSheet = () => this;
     this.getLastRow = () => ultima(n);
     this.getMaxRows = () => Math.max(1000, filas(n).length);
+    this.getLastColumn = () => filas(n).reduce((m, r) => Math.max(m, (r || []).length), 0);
     this.getRange = (r, c, nr, nc) => new Rango(n, r, c, nr || 1, nc || 1, bk);
     this.setFrozenRows = () => {};
     this.appendRow = row => { const rs = filas(n); rs.length = ultima(n); rs.push(row.slice()); return this; };
@@ -3170,7 +3354,7 @@ function demoShims(DEMO) {
 
 // Compila el código del servidor con los simuladores
 function demoCompilar(src, DEMO) {
-  const exp = ['MULTI_NEGOCIO', 'limpiarFotos_', 'route_', 'instalar', 'rows_', 'upsert_', 'hash_', 'ahora_', 'hoy_', 'sembrarEjemplo_', 'NEG_', 'negocioPorId_', 'setNegocio_', 'mRows_'];
+  const exp = ['MULTI_NEGOCIO', 'letras_', 'limpiarFotos_', 'route_', 'instalar', 'rows_', 'upsert_', 'hash_', 'ahora_', 'hoy_', 'sembrarEjemplo_', 'NEG_', 'negocioPorId_', 'setNegocio_', 'mRows_'];
   return new Function('SpreadsheetApp', 'Utilities', 'CacheService', 'LockService', 'Logger', 'ContentService', 'PropertiesService', 'DriveApp',
     src + '\nfunction NEG_(){return NEG;}\nreturn {' + exp.map(n => n + ':' + n).join(',') + '};')(...demoShims(DEMO));
 }
@@ -3184,7 +3368,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.2';
+const APP_VER = '1.3';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -3534,6 +3718,7 @@ function aplicarDatos(d) {
   if (d.multi !== undefined) { S.multi = !!d.multi; LS.set('multi', S.multi ? '1' : '0'); }
   if (d.usuario) S.user = d.usuario;
   if (d.version) S.version = d.version;
+  if (d.sar) S.sar = d.sar;
   aplicarTema(S.config.tema || LS.get('tema', TEMA_DEF));
   document.title = (S.config.nombre || 'Mi Negocio') + ' · Gestión de Negocio VM';
   LS.set('nombre', S.config.nombre || '');
@@ -3795,7 +3980,7 @@ R.inicio = () => {
   }
   const aviso = d.aviso && rol === 'admin' ? `<div class="aviso">${ic('sparkle', 20)}<div><b>${esc(fMes(d.aviso.mes))} dejó ${money(d.aviso.pendiente)} de ganancia sin destino.</b><small>Decide si va a ahorro, reinversión o a pagar algo.</small></div><button class="btn sm pri" data-a="ir" data-v="reportes" data-p='{"tab":"ganancias"}'>Decidir</button></div>` : '';
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${vacio}${aviso}${listas}</div>`;
 };
 ACC.verVenta = async el => {
   const f = el.dataset.f.slice(0, 10);
@@ -3922,17 +4107,23 @@ function abrirCobro() {
   const h = hoja({ titulo: 'Cobrar', cls: 'cobro', html: `<div id="cb"></div>` });
   const pagos = [['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer'], ['Crédito', 'cal']];
   const pinta = () => {
-    const t = calcTotales(S.ticket), cli = S.ticket.clienteId ? byId(S.clientes, S.ticket.clienteId) : null;
-    const admin = puede('admin');
+    const t0 = calcTotales(S.ticket), cli = S.ticket.clienteId ? byId(S.clientes, S.ticket.clienteId) : null;
+    const admin = puede('admin'), fz = S.ticket.fiscal || (S.ticket.fiscal = {});
+    const exo = sarOn() && fz.exonerado, t = exo ? Object.assign({}, t0, { isv: 0, total: r2(t0.total - t0.isv) }) : t0;
     $('#cb', h.el).innerHTML = `
       <div class="fld"><span>Cliente</span><div class="input-row"><input id="cb-cli" list="dl-cli" placeholder="Consumidor final" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '')}" autocomplete="off"><button class="btn icon" data-a="nuevoClienteRapido" title="Nuevo cliente">${ic('userplus')}</button></div>
       <datalist id="dl-cli">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist>
       ${cli && cli.saldo > 0 ? `<small class="hint">Saldo pendiente: <b>${money(cli.saldo)}</b>${cli.limite ? ' · límite ' + money(cli.limite) : ''}</small>` : ''}</div>
+      ${sarOn() ? `<div class="sar-box"><div class="sar-h">${ic('doc', 17)}<b>Factura ${esc(S.sar && S.sar.siguiente || '')}</b>${S.sar && S.sar.estado !== 'ok' ? `<span class="badge ${(EST_SAR[S.sar.estado] || EST_SAR.incompleto)[0]}">${(EST_SAR[S.sar.estado] || EST_SAR.incompleto)[1]}</span>` : ''}</div>
+        <div class="f2"><label class="fld"><span>RTN del cliente</span><input id="cb-rtn" inputmode="numeric" maxlength="17" value="${esc(fz.rtn !== undefined ? fz.rtn : fmtRtn(cli && cli.rtn))}" placeholder="Opcional"></label>
+        <label class="fld"><span>Nombre en la factura</span><input id="cb-nf" maxlength="100" value="${esc(fz.nombre !== undefined ? fz.nombre : (cli ? cli.nombre : ''))}" placeholder="Consumidor Final"></label></div>
+        <label class="chk"><input type="checkbox" id="cb-exo" ${exo ? 'checked' : ''}> Cliente exonerado (sin ISV)</label>
+        ${exo ? `<div class="f3" style="margin-top:8px"><label class="fld"><span>N.º orden de compra exenta</span><input id="cb-oce" value="${esc(fz.oce || '')}"></label><label class="fld"><span>N.º constancia de exonerado</span><input id="cb-cre" value="${esc(fz.cre || '')}"></label><label class="fld"><span>N.º registro SAG</span><input id="cb-sag" value="${esc(fz.sag || '')}"></label></div>` : ''}</div>` : ''}
       <div class="tks">${S.ticket.items.map((i, k) => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${admin || !i.productoId ? `<a data-a="cbPrecio" data-k="${k}">${money(i.precio)} c/u ✎</a>` : money(i.precio) + ' c/u'}</small></div>
         <div class="qty"><button data-a="cbQ" data-k="${k}" data-d="-1">−</button><span>${cant(i.cantidad)}</span><button data-a="cbQ" data-k="${k}" data-d="1">+</button></div><b class="n tkt">${money(i.cantidad * i.precio)}</b></div>`).join('')}</div>
       <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(t.subtotal)}</b></div>
         <div class="tot"><span>Descuento <a data-a="cbDesc">${t.descuento ? 'cambiar' : 'agregar'}</a></span><b class="n">${t.descuento ? '− ' + money(t.descuento) : '—'}</b></div>
-        <div class="tot"><span>ISV ${S.config.preciosConISV !== 'no' ? 'incluido' : ''} (${Math.round(num(S.config.isv) * 100)}%)</span><b class="n">${money(t.isv)}</b></div>
+        <div class="tot"><span>${exo ? 'ISV (cliente exonerado)' : `ISV ${S.config.preciosConISV !== 'no' ? 'incluido' : ''} (${Math.round(num(S.config.isv) * 100)}%)`}</span><b class="n">${money(t.isv)}</b></div>
         <div class="tot g"><span>Total</span><b class="n">${money(t.total)}</b></div></div>
       <div class="fld"><span>Forma de pago</span><div class="pays">${pagos.map(([m, i]) => `<button class="pay ${metodo === m ? 'on' : ''}" data-a="cbMet" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div></div>
       ${metodo === 'Efectivo' ? `<div class="f2"><label class="fld"><span>Recibido</span><input id="cb-rec" inputmode="decimal" placeholder="${fmtN(t.total)}" value="${esc(S.ticket.recibido || '')}"></label><div class="fld"><span>&nbsp;</span><div class="rapidos">${billetes(t.total).map(b => `<button class="chip" data-a="cbRec" data-v="${b}">${b === t.total ? 'Exacto' : fmtN(b, 0)}</button>`).join('')}</div></div></div>
@@ -3953,8 +4144,12 @@ function abrirCobro() {
       const v = ci.value.trim();
       const c = v ? S.clientes.find(x => (x.nombre + (x.telefono ? ' · ' + x.telefono : '')) === v) || S.clientes.find(x => norm(x.nombre) === norm(v)) : null;
       if (v && !c) { toast('Ese cliente no está registrado. Tócalo en la lista o créalo con el botón +', 'error'); ci.value = ''; }
-      S.ticket.clienteId = c ? c.id : ''; guardarTicket(); pinta();
+      S.ticket.clienteId = c ? c.id : ''; S.ticket.fiscal = { exonerado: (S.ticket.fiscal || {}).exonerado }; guardarTicket(); pinta();
     });
+    if (sarOn()) {
+      [['#cb-rtn', 'rtn'], ['#cb-nf', 'nombre'], ['#cb-oce', 'oce'], ['#cb-cre', 'cre'], ['#cb-sag', 'sag']].forEach(([s, k]) => { const i = $(s, h.el); if (i) i.addEventListener('input', () => { S.ticket.fiscal[k] = i.value; }); });
+      $('#cb-exo', h.el).addEventListener('change', e => { S.ticket.fiscal.exonerado = e.target.checked; guardarTicket(); pinta(); });
+    }
     $('#cb-nota', h.el).addEventListener('input', e => { S.ticket.nota = e.target.value; });
     h.botones([{ t: `${ic('check')} Cobrar ${money(t.total)}`, cls: 'pri big', fn: cobrar }]);
   };
@@ -3963,12 +4158,19 @@ function abrirCobro() {
   h.onClose = () => { guardarTicket(); S.hCobro = null; if (S.vista === 'vender') pintarGridVenta(); };
   ACC.cbMet = el => { metodo = el.dataset.m; S.ticket.metodo = metodo; pinta(); };
   const cobrar = async () => {
-    const t = calcTotales(S.ticket);
+    const t0 = calcTotales(S.ticket), fz = S.ticket.fiscal || {}, exo = sarOn() && fz.exonerado;
+    const t = exo ? Object.assign({}, t0, { total: r2(t0.total - t0.isv) }) : t0;
     const datos = { items: S.ticket.items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio })),
       clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '' };
     if (metodo === 'Efectivo') datos.recibido = S.ticket.recibido && String(S.ticket.recibido).trim() ? num(S.ticket.recibido) : t.total;
     if (metodo === 'Crédito') { if (!S.ticket.clienteId) throw new Error('Elige un cliente para vender al crédito'); datos.recibido = num(S.ticket.anticipo); }
+    if (sarOn()) {
+      const rtn = ($('#cb-rtn', h.el) || {}).value || '';
+      if (rtn.replace(/\D/g, '') && rtn.replace(/\D/g, '').length !== 14) throw new Error('El RTN del cliente debe tener 14 números');
+      datos.fiscal = { rtn: rtn.replace(/\D/g, ''), nombre: ($('#cb-nf', h.el) || {}).value || '', exonerado: !!exo, oce: fz.oce || '', cre: fz.cre || '', sag: fz.sag || '' };
+    }
     const r = await api('venta', datos);
+    if (r.sar) S.sar = r.sar;
     S.productos = r.productos;
     if (S.ticket.clienteId) { const c = byId(S.clientes, S.ticket.clienteId); if (c) c.saldo = r.saldoCliente; }
     S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket();
@@ -4014,9 +4216,9 @@ ACC.nuevoClienteRapido = () => formCliente(null, c => { S.ticket.clienteId = c.i
 
 function ventaLista(v, det) {
   const cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
-  const h = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic('check', 40)}</i><h2>¡Venta registrada!</h2><p class="mut">${esc(v.numero)} · ${esc(v.metodo)}${cli ? ' · ' + esc(cli.nombre) : ''}</p>
+  const h = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic('check', 40)}</i><h2>${v.factura ? '¡Factura emitida!' : '¡Venta registrada!'}</h2><p class="mut">${v.factura ? 'Factura ' + esc(v.factura) : esc(v.numero)} · ${esc(v.metodo)}${cli ? ' · ' + esc(cli.nombre) : ''}</p>
     <div class="ok-tot n">${money(v.total)}</div>${v.metodo === 'Efectivo' && v.cambio > 0 ? `<div class="cambio"><span>Cambio</span><b class="n">${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' ? `<div class="cambio warn"><span>Queda debiendo</span><b class="n">${money(v.saldo)}</b></div>` : ''}</div>
-    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} Comprobante</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, det))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
+    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, det))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
   S.ultVenta = { v, det };
   h.botones([{ t: `${ic('cart')} Nueva venta`, cls: 'pri big', fn: () => h.cerrar() }]);
 }
@@ -4027,16 +4229,17 @@ ACC.impVenta = () => S.ultVenta && imprimirTicket(S.ultVenta.v, S.ultVenta.det);
 function detalleVenta(v) {
   const cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
   S.ultVenta = { v, det: v.detalle };
-  const h = hoja({ titulo: 'Venta ' + esc(v.numero), html: `${v.anulada ? `<div class="aviso bad">${ic('x', 18)}<div><b>Venta anulada</b><small>${esc(v.nota)}</small></div></div>` : ''}
-    <div class="kv"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(cli ? cli.nombre : 'Consumidor final')}</div><div><small>Atendió</small>${esc(nomUsuario(v.usuarioId))}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
+  const fz = fiscalDe(v);
+  const h = hoja({ titulo: v.factura ? 'Factura ' + esc(v.factura) : 'Venta ' + esc(v.numero), html: `${v.anulada ? `<div class="aviso bad">${ic('x', 18)}<div><b>${v.factura ? 'Factura anulada' : 'Venta anulada'}</b><small>${esc(v.nota)}</small></div></div>` : ''}
+    <div class="kv"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(fz ? fz.nombre : cli ? cli.nombre : 'Consumidor final')}</div>${fz ? `<div><small>RTN del cliente</small>${esc(fmtRtn(fz.rtn)) || '—'}</div><div><small>Venta interna</small>${esc(v.numero)}</div>` : ''}<div><small>Atendió</small>${esc(nomUsuario(v.usuarioId))}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
     <div class="tks">${v.detalle.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}</small></div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
     <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(v.subtotal)}</b></div>${v.descuento ? `<div class="tot"><span>Descuento</span><b class="n">− ${money(v.descuento)}</b></div>` : ''}<div class="tot"><span>ISV</span><b class="n">${money(v.isv)}</b></div><div class="tot g"><span>Total</span><b class="n">${money(v.total)}</b></div>
     ${v.metodo === 'Efectivo' ? `<div class="tot"><span>Recibido · cambio</span><b class="n">${money(v.recibido)} · ${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' && !v.anulada ? `<div class="tot"><span>Anticipo · saldo pendiente</span><b class="n">${money(v.recibido)} · ${money(v.saldo)}</b></div>` : ''}
     ${puede('admin') ? `<div class="tot"><span>Costo · ganancia</span><b class="n">${money(v.costo)} · ${money(v.total - v.isv - v.costo)}</b></div>` : ''}</div>
     ${v.nota && !v.anulada ? `<p class="sm mut">Nota: ${esc(v.nota)}</p>` : ''}
-    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} Comprobante</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, v.detalle))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
+    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, v.detalle))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
   if (puede('admin') && !v.anulada) h.botones([{ t: 'Anular venta', cls: 'bad', fn: async () => {
-    const m = await pedirTexto('Anular ' + v.numero, { label: 'Motivo', msg: 'Las existencias vuelven al inventario. La venta queda registrada como anulada.', si: 'Anular venta', peligro: 1 });
+    const m = await pedirTexto('Anular ' + (v.factura || v.numero), { label: 'Motivo', msg: v.factura ? 'Las existencias vuelven al inventario. La factura queda anulada con su número (no se vuelve a usar) y aparece en el libro de ventas para avisarla al SAR.' : 'Las existencias vuelven al inventario. La venta queda registrada como anulada.', si: 'Anular venta', peligro: 1 });
     if (m === null) return;
     const r = await api('anularVenta', { id: v.id, motivo: m });
     S.productos = r.productos; S.inicio = null; guardarCache();
@@ -4824,7 +5027,7 @@ function ventasHoyHTML(l) {
       ? `<div class="panel cj-art"><div class="tr th"><span>Artículo</span><span>Cant.</span><span>Monto</span></div>${arts.map(x => `<div class="tr ${x.envio ? 'env' : ''}"><span>${esc(x.nombre)}</span><span class="n">${x.envio ? '' : cant(x.cantidad)}</span><span class="n">${money(x.total)}</span></div>`).join('')}<div class="tr tt"><span>Total</span><span class="n">${cant(nArt)}</span><span class="n">${money(tot)}</span></div></div>`
       : `<div class="cj-ventas">${l.map(v => `<div class="cjv ${v.anulada ? 'anul' : ''}" data-a="cjVer" data-id="${v.id}">
         <div class="cjv-h"><span class="hr">${fHora(v.fecha)}</span><b>${esc(v.cliente)}</b><span class="n am">${money(v.total)}</span></div>
-        <div class="cjv-b">${v.pedido ? `<span class="badge web">${ic('globe', 13)} Pedido en línea ${esc(v.pedido)}</span>` : ''}<span class="badge ${MET[v.metodo] || 'b-mut'}">${esc(v.metodo)}${v.metodo === 'Crédito' && v.saldo > 0 ? ' · debe ' + money(v.saldo) : ''}</span><span class="badge b-mut">${esc(v.numero)}</span>${v.anulada ? '<span class="badge b-bad">Anulada</span>' : ''}</div>
+        <div class="cjv-b">${v.pedido ? `<span class="badge web">${ic('globe', 13)} Pedido en línea ${esc(v.pedido)}</span>` : ''}<span class="badge ${MET[v.metodo] || 'b-mut'}">${esc(v.metodo)}${v.metodo === 'Crédito' && v.saldo > 0 ? ' · debe ' + money(v.saldo) : ''}</span><span class="badge b-mut">${esc(v.factura || v.numero)}</span>${v.anulada ? '<span class="badge b-bad">Anulada</span>' : ''}</div>
         <div class="cjv-i">${v.detalle.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.descripcion)}</span><span class="n">${money(i.total)}</span></div>`).join('')}</div></div>`).join('')}</div>`}`;
 }
 ACC.cjv = el => { S.f.cjv = el.dataset.m; R.caja(); };
@@ -4881,11 +5084,11 @@ R.ventas = async () => {
   S.ventasL = l; listaVentas();
 };
 function listaVentas() {
-  const q = norm(S.f.vhq || ''), l = (S.ventasL || []).filter(v => !q || norm(v.numero).includes(q) || norm(nomCliente(v.clienteId)).includes(q) || v.detalle.some(i => norm(i.descripcion).includes(q)));
+  const q = norm(S.f.vhq || ''), l = (S.ventasL || []).filter(v => !q || norm(v.numero).includes(q) || norm(v.factura).includes(q) || norm(nomCliente(v.clienteId)).includes(q) || v.detalle.some(i => norm(i.descripcion).includes(q)));
   const act = l.filter(v => !v.anulada), tot = act.reduce((a, v) => a + v.total, 0);
   const pm = {}; act.forEach(v => { pm[v.metodo] = (pm[v.metodo] || 0) + v.total; });
   $('#vh-b').innerHTML = `<div class="kpis"><div class="kpi"><small>Vendido</small><b class="n">${money(tot)}</b><i>${act.length} ventas</i></div><div class="kpi" style="--k:#00b56e"><small>Ticket promedio</small><b class="n">${money(act.length ? tot / act.length : 0)}</b></div>${Object.keys(pm).map(m => `<div class="kpi" style="--k:${{ Efectivo: '#00b56e', Tarjeta: '#1b4fd8', Transferencia: '#00a8b5', 'Crédito': '#f25c05' }[m] || 'var(--pri)'}"><small>${esc(m)}</small><b class="n">${money(pm[m])}</b></div>`).join('')}</div>
-    <div class="list">${l.map(v => `<div class="li ${v.anulada ? 'anul' : ''}" data-a="verVentaL" data-id="${v.id}"><div class="av ${colorDe(nomCliente(v.clienteId))}">${esc(iniciales(nomCliente(v.clienteId)))}</div><div class="tx"><b>${esc(v.numero)} · ${esc(nomCliente(v.clienteId))}</b><small>${esc(fFecha(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)} · ${v.detalle.length === 1 ? esc(v.detalle[0].descripcion) : v.detalle.length + ' artículos'}${v.anulada ? ' · anulada' : ''}</small></div><div class="am n">${money(v.total)}${v.saldo > 0 ? `<small class="neg">debe ${money(v.saldo)}</small>` : ''}</div></div>`).join('') || '<div class="empty">No hay ventas en este periodo</div>'}</div>`;
+    <div class="list">${l.map(v => `<div class="li ${v.anulada ? 'anul' : ''}" data-a="verVentaL" data-id="${v.id}"><div class="av ${colorDe(nomCliente(v.clienteId))}">${esc(iniciales(nomCliente(v.clienteId)))}</div><div class="tx"><b>${esc(v.factura ? 'Fact. ' + v.factura.slice(-8) : v.numero)} · ${esc(nomCliente(v.clienteId))}</b><small>${esc(fFecha(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)} · ${v.detalle.length === 1 ? esc(v.detalle[0].descripcion) : v.detalle.length + ' artículos'}${v.anulada ? ' · anulada' : ''}</small></div><div class="am n">${money(v.total)}${v.saldo > 0 ? `<small class="neg">debe ${money(v.saldo)}</small>` : ''}</div></div>`).join('') || '<div class="empty">No hay ventas en este periodo</div>'}</div>`;
 }
 ACC.vper = el => { S.f.vper = el.dataset.k; R.ventas(); };
 ACC.verVentaL = el => { const v = (S.ventasL || []).find(x => x.id === el.dataset.id); if (v) detalleVenta(v); };
@@ -4923,9 +5126,9 @@ R.reportes_bar = () => `<button class="hbtn" data-a="repCSV" aria-label="Descarg
 R.reportes = () => {
   if (S.params.tab) { S.f.rtab = S.params.tab; S.params.tab = ''; }
   const tab = S.f.rtab || 'resumen';
-  const tabs = [['resumen', 'Resumen'], ['diario', 'Diario'], ['ganancias', 'Ganancias'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']];
+  const tabs = [['resumen', 'Resumen'], ['diario', 'Diario'], ['ganancias', 'Ganancias'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']].concat(sarOn() || (S.sar && S.sar.estado !== 'incompleto') ? [['sar', 'Libro SAR']] : []);
   $('#main').innerHTML = `<div class="seg tabs">${tabs.map(([k, t]) => `<button class="${tab === k ? 'on' : ''}" data-a="rtab" data-k="${k}">${t}</button>`).join('')}</div><div id="rp"></div>`;
-  ({ resumen: repResumen, diario: repDiario, ganancias: repGanancias, inventario: repInventario, cuentas: repCuentas })[tab]();
+  ({ resumen: repResumen, diario: repDiario, ganancias: repGanancias, inventario: repInventario, cuentas: repCuentas, sar: repLibroSAR })[tab]();
 };
 ACC.rtab = el => { S.f.rtab = el.dataset.k; R.reportes(); };
 ACC.repCSV = () => { if (S.repCSV) S.repCSV(); else toast('Nada para descargar aquí', 'error'); };
@@ -5120,6 +5323,7 @@ R.ajustes = () => {
     <label class="fld"><span>Cuando el pedido está listo</span><textarea data-k="msjListo" rows="2">${v('msjListo')}</textarea></label>
     <label class="fld"><span>Recordatorio de saldo</span><textarea data-k="msjCobro" rows="2">${v('msjCobro')}</textarea></label>
     <button class="btn pri" data-a="guardarAj" data-s="mensajes">Guardar</button>`);
+  if (adm) h += sec('sar', 'doc', 'Facturación SAR', sarAjustesHTML(), sarOn() ? '<span class="badge b-ok">Activa</span>' : 'Apagada · tus ventas salen como comprobante');
   if (adm) h += sec('plus', 'sparkle', 'Plan Plus', S.plus ? `<p class="sm"><span class="plus-b">PLUS</span> Activo: tienda en línea y fotos de productos. ✦</p>` : plusCard(1));
   h += sec('cuenta', 'user', 'Mi cuenta', `<div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.multi ? fmtWA(S.user.usuario) : S.user.usuario)}</small></div></div>
     ${adm && L.estado ? `<p class="sm">${L.estado === 'prueba' ? `Prueba gratis: ${L.diasRestantes === 1 ? 'queda 1 día' : 'quedan ' + L.diasRestantes + ' días'} (vence ${esc(fFechaC(L.vence))}).` : 'Licencia activa de por vida ✓'}</p>` : ''}
@@ -5127,6 +5331,7 @@ R.ajustes = () => {
   h += `<p class="credit" style="opacity:.8">Gestión de Negocio VM · versión ${APP_VER}<br>Software creado por José Vicdonio Molina · WhatsApp <a href="https://wa.me/${CONTACTO_WA}" target="_blank" rel="noopener">+504 3313-0265</a></p>`;
   $('#main').innerHTML = h;
   const lg = $('#aj-logo'); if (lg) lg.addEventListener('change', subirLogo);
+  initSarAjustes();
   if (S.params.sec) { const el = $('#aj-' + S.params.sec); S.params.sec = ''; if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
 };
 ACC.guardarAj = async el => {
@@ -5469,9 +5674,147 @@ function pasarAInventario(d, pinta) {
   } }]);
 }
 
+/* ===================== FACTURACIÓN SAR (opcional) =====================
+   Apagada por defecto. Se enciende en Ajustes › Facturación SAR: desde ese momento
+   cada venta sale como factura con CAI, numeración autorizada y desglose del ISV. */
+const sarOn = () => S.config.sarActivo === 'si';
+const fiscalDe = v => { if (!v || !v.factura) return null; try { return JSON.parse(v.fiscal || '{}'); } catch (e) { return {}; } };
+const fNum = iso => { if (!iso) return ''; const s = String(iso); return s.slice(8, 10) + '/' + s.slice(5, 7) + '/' + s.slice(0, 4); };
+const fmtRtn = r => { const d = String(r || '').replace(/\D/g, ''); return d.length === 14 ? d.slice(0, 4) + '-' + d.slice(4, 8) + '-' + d.slice(8) : d; };
+const EST_SAR = { ok: ['b-ok', 'Vigente'], aviso: ['b-warn', 'Por agotarse'], vencido: ['b-bad', 'CAI vencido'], agotado: ['b-bad', 'Rango agotado'], incompleto: ['b-mut', 'Sin datos'] };
+
+/* ---------- Factura (imagen para WhatsApp) ---------- */
+function filasFiscales(v, f) {
+  // Precios con ISV incluido + cliente exonerado: se muestra el ISV que no se cobra para que la suma cuadre
+  const quitado = f.exonerado ? Math.round(((Number(v.subtotal) || 0) - (Number(v.descuento) || 0) - (Number(v.total) || 0)) * 100) / 100 : 0;
+  return [['Subtotal', v.subtotal], ['Descuentos y rebajas', v.descuento ? -v.descuento : 0]].concat(quitado > 0.004 ? [['ISV exonerado (no se cobra)', -quitado]] : []).concat([['Importe exonerado', f.exonerado], ['Importe exento', f.exento],
+    ['Importe gravado 15%', f.g15], ['Importe gravado 18%', f.g18], ['ISV 15%', f.i15], ['ISV 18%', f.i18]]);
+}
+function facturaHTML(v, det) {
+  const c = S.config, f = fiscalDe(v) || {};
+  const dato = (a, b) => `<div><small>${a}</small><span>${b || '—'}</span></div>`;
+  return `<div class="rc fac">${v.anulada ? '<div class="fac-anul">ANULADA</div>' : ''}
+    <div class="fac-h">${c.logo ? `<div class="rc-logo"><img src="${esc(c.logo)}" alt=""></div>` : `<div class="rc-mono">${esc(iniciales(c.nombre))}</div>`}
+      <div><h4>${esc(f.razon || c.nombre)}</h4>${f.razon && f.razon !== c.nombre ? `<p class="fac-nc">${esc(c.nombre)}</p>` : ''}<p>RTN ${esc(fmtRtn(f.rtnE))}</p><p>${esc(f.dir || c.direccion || '')}</p><p>${esc([c.telefono ? 'Tel. ' + c.telefono : '', c.correo || ''].filter(Boolean).join(' · '))}</p></div></div>
+    <div class="fac-t"><b>FACTURA</b><span>N.º ${esc(v.factura)}</span></div>
+    <div class="fac-cai">CAI: ${esc(f.cai)}</div>
+    <div class="fac-m">${dato('Fecha', fNum(v.fecha) + ' ' + fHora(v.fecha))}${dato('Forma de pago', esc(v.metodo))}${dato('Cliente', esc(f.nombre || 'Consumidor Final'))}${dato('RTN del cliente', esc(fmtRtn(f.rtn)))}</div>
+    <table class="fac-i"><thead><tr><th>Cant.</th><th>Descripción</th><th>P. unit.</th><th>Total</th></tr></thead><tbody>${det.map(i => `<tr><td>${cant(i.cantidad)}</td><td>${esc(i.descripcion)}</td><td>${fmtN(i.precio)}</td><td>${fmtN(i.total)}</td></tr>`).join('')}</tbody></table>
+    <div class="fac-s">${filasFiscales(v, f).map(([a, b]) => `<div><span>${a}</span><span>${b < 0 ? '− ' + fmtN(-b) : fmtN(b || 0)}</span></div>`).join('')}
+      <div class="fac-tot"><span>TOTAL A PAGAR</span><b>${money(v.total)}</b></div></div>
+    <p class="fac-l">SON: ${esc(f.letras || '')}</p>
+    ${v.metodo === 'Efectivo' ? `<p class="fac-x">Recibido ${money(v.recibido)} · cambio ${money(v.cambio)}</p>` : ''}${v.metodo === 'Crédito' ? `<p class="fac-x">Anticipo ${money(v.recibido)} · saldo ${money(v.saldo)}</p>` : ''}
+    <div class="fac-e"><div><span>N.º correlativo de orden de compra exenta</span><span>${esc(f.oce || '')}</span></div><div><span>N.º correlativo de constancia de registro de exonerado</span><span>${esc(f.cre || '')}</span></div><div><span>N.º identificativo del registro de la SAG</span><span>${esc(f.sag || '')}</span></div></div>
+    <div class="fac-r">Rango autorizado: ${esc(f.desde)} al ${esc(f.hasta)}<br>Fecha límite de emisión: ${esc(fNum(f.limite))}</div>
+    <div class="fac-p"><b>Original: Cliente · Copia: Emisor</b><span>La factura es beneficio de todos. ¡Exíjala!</span>${c.mensajeRecibo ? `<em>${esc(c.mensajeRecibo)}</em>` : ''}</div></div>`;
+}
+function ticketFacturaHTML(v, det, copia) {
+  const c = S.config, f = fiscalDe(v) || {};
+  const L = (a, b) => `<div class="pl"><span>${a}</span><span>${b}</span></div>`;
+  return `<div class="ticket">${v.anulada ? '<div class="pc"><b>*** ANULADA ***</b></div>' : ''}<div class="pc">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : ''}<b>${esc(f.razon || c.nombre)}</b>${f.razon && f.razon !== c.nombre ? `<div>${esc(c.nombre)}</div>` : ''}<div>RTN ${esc(fmtRtn(f.rtnE))}</div><div>${esc(f.dir || '')}</div>${c.telefono ? `<div>Tel. ${esc(c.telefono)}</div>` : ''}${c.correo ? `<div>${esc(c.correo)}</div>` : ''}</div>
+    <div class="ps pc"><b>FACTURA</b><div>N.º ${esc(v.factura)}</div><div>CAI: ${esc(f.cai)}</div></div>
+    <div class="ps">${L('Fecha', fNum(v.fecha) + ' ' + fHora(v.fecha))}${L('Cliente', esc(f.nombre || 'Consumidor Final'))}${L('RTN', esc(fmtRtn(f.rtn)) || '—')}${L('Atendió', esc(nomUsuario(v.usuarioId)))}</div>
+    <div class="ps">${det.map(i => `<div>${esc(i.descripcion)}</div>${L('&nbsp;&nbsp;' + cant(i.cantidad) + ' × ' + fmtN(i.precio), fmtN(i.total))}`).join('')}</div>
+    <div class="ps">${filasFiscales(v, f).map(([a, b]) => L(a, b < 0 ? '−' + fmtN(-b) : fmtN(b || 0))).join('')}<div class="pl pt"><span>TOTAL</span><span>${money(v.total)}</span></div>${L('Pago', esc(v.metodo))}${v.metodo === 'Efectivo' ? L('Recibido', money(v.recibido)) + L('Cambio', money(v.cambio)) : ''}${v.metodo === 'Crédito' ? L('Anticipo', money(v.recibido)) + L('Saldo', money(v.saldo)) : ''}</div>
+    <div class="ps"><div>SON: ${esc(f.letras || '')}</div></div>
+    <div class="ps"><div>N.º correlativo orden de compra exenta: ${esc(f.oce || '')}</div><div>N.º correlativo constancia de registro de exonerado: ${esc(f.cre || '')}</div><div>N.º identificativo registro SAG: ${esc(f.sag || '')}</div></div>
+    <div class="ps"><div>Rango autorizado: ${esc(f.desde)} al ${esc(f.hasta)}</div><div>Fecha límite de emisión: ${esc(fNum(f.limite))}</div></div>
+    <div class="pc"><b>${copia ? 'COPIA: EMISOR' : 'ORIGINAL: CLIENTE'}</b><div>La factura es beneficio de todos. ¡Exíjala!</div>${c.mensajeRecibo ? `<div>${esc(c.mensajeRecibo)}</div>` : ''}</div></div>`;
+}
+
+/* ---------- Ajustes › Facturación SAR ---------- */
+function sarAjustesHTML() {
+  const c = S.config, e = S.sar || { estado: 'incompleto' }, on = sarOn(), abierto = on || S.f.sarAbierto;
+  const v = k => esc(c[k] === undefined ? '' : c[k]);
+  const est = EST_SAR[e.estado] || EST_SAR.incompleto;
+  const pct = e.total ? Math.min(100, e.usados / e.total * 100) : 0;
+  const estado = on && e.estado !== 'incompleto' ? `<div class="sar-est"><div class="row sp"><div><small>Siguiente factura</small><b class="n">${esc(e.siguiente || '—')}</b></div><span class="badge ${est[0]}">${est[1]}</span></div>
+      <div class="pj-bar"><i style="width:${pct}%" class="${e.estado === 'ok' ? '' : e.estado === 'aviso' ? 'ojo' : 'mal'}"></i></div>
+      <small class="mut">Usadas ${fmtN(e.usados, 0)} de ${fmtN(e.total, 0)} · quedan ${fmtN(e.quedan, 0)} · fecha límite ${esc(fNum(e.limite))}${e.dias >= 0 ? ` (${e.dias === 1 ? '1 día' : e.dias + ' días'})` : ' (vencida)'}</small></div>` : '';
+  return `<label class="sw-row"><input type="checkbox" id="sar-on" ${abierto ? 'checked' : ''}><span class="sw"></span><div><b>Facturar con el SAR</b><small>Tus ventas salen como factura con CAI, numeración autorizada y el ISV desglosado. Apagado, salen como comprobante (no fiscal), como siempre.</small></div></label>
+    <div id="sar-f" ${abierto ? '' : 'hidden'}>${estado}
+      ${on ? '' : `<div class="aviso info sm">${ic('alert', 18)}<div><b>Antes de encenderlo</b><small>Registra este sistema como <b>autoimpresor</b> en la Oficina Virtual del SAR y pide tu CAI y tu rango de facturas. Luego copia aquí los datos tal como te los dio el SAR.</small></div></div>`}
+      <label class="fld"><span>Razón social</span><input id="sar-razon" maxlength="100" value="${esc(c.sarRazon || c.nombre)}"></label><label class="fld"><span>RTN del negocio (14 números)</span><input id="sar-rtn" inputmode="numeric" maxlength="17" value="${esc(fmtRtn(c.sarRtn))}" placeholder="0801-1990-123456"></label>
+      <label class="fld"><span>Dirección del punto de emisión</span><input id="sar-dir" maxlength="160" value="${esc(c.sarDireccion || c.direccion)}"></label>
+      <label class="fld"><span>CAI (Clave de Autorización de Impresión)</span><input id="sar-cai" class="cai-in" maxlength="37" autocapitalize="characters" spellcheck="false" value="${v('sarCai')}" placeholder="XXXXXX-XXXXXX-XXXXXX-XXXXXX-XXXXXX-XX"></label>
+      <div class="f3"><label class="fld"><span>Establec.</span><input id="sar-est" inputmode="numeric" maxlength="3" value="${esc(c.sarEst || '000')}"></label><label class="fld"><span>Punto emisión</span><input id="sar-pto" inputmode="numeric" maxlength="3" value="${esc(c.sarPunto || '001')}"></label><label class="fld"><span>Documento</span><input value="01 Factura" disabled></label></div>
+      <div class="f2"><label class="fld"><span>Rango: desde el n.º</span><input id="sar-des" inputmode="numeric" maxlength="8" value="${v('sarDesde')}" placeholder="1"></label><label class="fld"><span>hasta el n.º</span><input id="sar-has" inputmode="numeric" maxlength="8" value="${v('sarHasta')}" placeholder="5000"></label></div>
+      <div class="f2"><label class="fld"><span>Fecha límite de emisión</span><input id="sar-lim" type="date" value="${v('sarLimite')}"></label><label class="fld"><span>Último n.º ya usado</span><input id="sar-ult" inputmode="numeric" maxlength="8" placeholder="Opcional"></label></div>
+      <div class="sar-prev" id="sar-prev"></div>
+      <div class="row"><button class="btn pri" data-a="guardarSAR">${ic('check', 18)} ${on ? 'Guardar cambios' : 'Activar facturación SAR'}</button>${on ? '<button class="btn" data-a="verLibroSAR">' + ic('doc', 18) + ' Libro de ventas</button>' : ''}</div>
+      <p class="xs mut" style="margin-top:10px">Cada venta toma el siguiente número del rango y nunca se repite. Si vence la fecha límite o se acaban los números, el sistema deja de facturar hasta que pongas un CAI nuevo. Las facturas anuladas conservan su número.</p></div>`;
+}
+function initSarAjustes() {
+  const on = $('#sar-on'); if (!on) return;
+  const prev = () => {
+    const est = String($('#sar-est').value || '').padStart(3, '0'), pto = String($('#sar-pto').value || '').padStart(3, '0');
+    const d = $('#sar-des').value.replace(/\D/g, ''), hs = $('#sar-has').value.replace(/\D/g, '');
+    $('#sar-prev').innerHTML = d && hs ? `Tus facturas: <b class="n">${est}-${pto}-01-${d.padStart(8, '0')}</b> al <b class="n">${est}-${pto}-01-${hs.padStart(8, '0')}</b>` : '';
+  };
+  ['#sar-est', '#sar-pto', '#sar-des', '#sar-has'].forEach(s => $(s).addEventListener('input', prev)); prev();
+  $('#sar-cai').addEventListener('input', e => { const p = e.target.selectionStart; e.target.value = e.target.value.toUpperCase(); try { e.target.setSelectionRange(p, p); } catch (x) {} });
+  on.addEventListener('change', async () => {
+    if (on.checked) { S.f.sarAbierto = 1; $('#sar-f').hidden = false; return; }
+    if (!sarOn()) { S.f.sarAbierto = 0; $('#sar-f').hidden = true; return; }
+    if (!(await confirmar('¿Apagar la facturación SAR? Desde ahora las ventas saldrán como comprobante (no fiscal). Tus datos del CAI se conservan.', { si: 'Apagar', peligro: 1 }))) { on.checked = true; return; }
+    const r = await api('guardarSAR', { registro: { activo: false } });
+    S.config = Object.assign(S.config, r.config); S.sar = r.sar; S.f.sarAbierto = 0; guardarCache(); toast('Facturación SAR apagada', 'ok'); R.ajustes();
+  });
+}
+ACC.guardarSAR = async () => {
+  const reg = { activo: true, razon: $('#sar-razon').value, rtn: $('#sar-rtn').value, direccion: $('#sar-dir').value, cai: $('#sar-cai').value, est: $('#sar-est').value,
+    punto: $('#sar-pto').value, desde: $('#sar-des').value, hasta: $('#sar-has').value, limite: $('#sar-lim').value, ultimo: $('#sar-ult').value };
+  const nuevo = !sarOn();
+  if (nuevo && !(await confirmar('Desde ahora cada venta saldrá como <b>factura</b> con tu CAI y el siguiente número del rango. ¿Tu negocio ya está registrado como autoimpresor en el SAR?', { si: 'Sí, activar' }))) return;
+  const r = await api('guardarSAR', { registro: reg });
+  S.config = Object.assign(S.config, r.config); S.sar = r.sar; guardarCache();
+  toast(nuevo ? 'Facturación SAR activada · siguiente ' + r.sar.siguiente : 'Datos del SAR guardados', 'ok', 4500); R.ajustes();
+};
+ACC.verLibroSAR = () => ir('reportes', { tab: 'sar' });
+
+/* ---------- Aviso en Inicio ---------- */
+function avisoSAR() {
+  const e = S.sar;
+  if (!sarOn() || !e || !puede('admin') || !['aviso', 'vencido', 'agotado', 'incompleto'].includes(e.estado)) return '';
+  const t = e.estado === 'vencido' ? 'Tu CAI venció: ya no puedes facturar' : e.estado === 'agotado' ? 'Se acabaron tus números de factura' : e.estado === 'incompleto' ? 'Faltan datos de facturación SAR'
+    : e.dias <= 15 ? `Tu CAI vence en ${e.dias === 1 ? '1 día' : e.dias + ' días'}` : `Quedan ${fmtN(e.quedan, 0)} facturas en tu rango`;
+  return `<div class="aviso ${e.estado === 'aviso' ? 'warn' : 'bad'}">${ic('doc', 20)}<div><b>${t}</b><small>Pide al SAR un CAI o un rango nuevo y actualízalo en Ajustes.</small></div><button class="btn sm" data-a="ir" data-v="ajustes" data-p='{"sec":"sar"}'>Abrir</button></div>`;
+}
+
+/* ---------- Reportes › Libro de ventas SAR ---------- */
+async function repLibroSAR() {
+  const rp = $('#rp');
+  const mes = S.f.libMes || hoy().slice(0, 7);
+  rp.innerHTML = `<div class="row" style="margin:12px 0"><label class="fld" style="margin:0"><span>Mes</span><input type="month" id="lb-mes" value="${mes}" max="${hoy().slice(0, 7)}"></label></div><div id="lb">${'<div class="empty">Cargando…</div>'}</div>`;
+  $('#lb-mes').addEventListener('change', e => { S.f.libMes = e.target.value; repLibroSAR(); });
+  let d; try { d = await api('libroSAR', { mes }); } catch (e) { return err(e); }
+  if (S.vista !== 'reportes' || S.f.rtab !== 'sar') return;
+  const t = d.tot;
+  $('#lb').innerHTML = `<div class="kpis"><div class="kpi"><small>Facturas emitidas</small><b>${d.emitidas}</b><i>${d.primera ? esc(d.primera.slice(-8)) + ' a ' + esc(d.ultima.slice(-8)) : 'ninguna'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Anuladas</small><b>${d.anuladas}</b><i>avísalas al SAR</i></div>
+      <div class="kpi" style="--k:#1b4fd8"><small>Ventas facturadas</small><b class="n">${money(t.total)}</b></div><div class="kpi" style="--k:#00b56e"><small>ISV 15% + 18%</small><b class="n">${money(t.i15 + t.i18)}</b></div></div>
+    <div class="panel lb-res"><div class="cj-r"><span>Importe exento</span><b class="n">${money(t.exento)}</b></div><div class="cj-r"><span>Importe exonerado</span><b class="n">${money(t.exonerado)}</b></div><div class="cj-r"><span>Importe gravado 15%</span><b class="n">${money(t.g15)}</b></div><div class="cj-r"><span>ISV 15%</span><b class="n">${money(t.i15)}</b></div><div class="cj-r"><span>Importe gravado 18%</span><b class="n">${money(t.g18)}</b></div><div class="cj-r"><span>ISV 18%</span><b class="n">${money(t.i18)}</b></div><div class="cj-r tot"><span>Total</span><b class="n">${money(t.total)}</b></div></div>
+    <div class="lb-t"><table><thead><tr><th>Fecha</th><th>Factura</th><th>Cliente</th><th>RTN</th><th>Exento</th><th>Exonerado</th><th>Gravado 15%</th><th>ISV 15%</th><th>Gravado 18%</th><th>ISV 18%</th><th>Total</th></tr></thead>
+    <tbody>${d.filas.map(x => `<tr class="${x.anulada ? 'anul' : ''}" data-a="lbVer" data-id="${x.id}" data-f="${x.fecha}"><td>${fNum(x.fecha)}</td><td class="n">${esc(x.factura)}${x.anulada ? ' <span class="badge b-bad">Anulada</span>' : ''}</td><td>${esc(x.nombre)}</td><td class="n">${esc(fmtRtn(x.rtn))}</td>${['exento', 'exonerado', 'g15', 'i15', 'g18', 'i18', 'total'].map(k => `<td class="n">${fmtN(x[k])}</td>`).join('')}</tr>`).join('') || '<tr><td colspan="11" class="mut">No hay facturas en este mes</td></tr>'}</tbody></table></div>
+    <p class="xs mut">Las anuladas no suman en los totales. Descarga el libro con el botón de arriba para tu contador.</p>`;
+  S.repCSV = () => {
+    const cab = ['Fecha', 'Factura', 'Estado', 'Cliente', 'RTN', 'Exento', 'Exonerado', 'Gravado 15%', 'ISV 15%', 'Gravado 18%', 'ISV 18%', 'Total', 'CAI'];
+    const filas = d.filas.map(x => [fNum(x.fecha), x.factura, x.anulada ? 'Anulada' : 'Emitida', x.nombre, fmtRtn(x.rtn), x.exento, x.exonerado, x.g15, x.i15, x.g18, x.i18, x.total, x.cai]);
+    csv('libro-ventas-' + d.mes + '.csv', [cab].concat(filas));
+  };
+}
+ACC.lbVer = async el => {
+  const f = el.dataset.f.slice(0, 10);
+  const l = await api('ventas', { desde: f, hasta: f });
+  const v = l.find(x => x.id === el.dataset.id); if (v) detalleVenta(v);
+};
+
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
-const API_MIN = '1.2'; // versión mínima del Code.gs que necesita esta app
+const API_MIN = '1.3'; // versión mínima del Code.gs que necesita esta app
 const NOVEDADES = [
+  { v: '1.3', fecha: '2026-10-11', items: [
+    { i: 'doc', t: 'Facturación SAR (opcional)', d: 'Si tu negocio está registrado como autoimpresor, enciéndela en Ajustes › Facturación SAR: tus ventas salen como factura con CAI, numeración autorizada, ISV desglosado y total en letras. Si no la enciendes, todo sigue igual que siempre.', ir: 'ajustes' },
+    { i: 'chart', t: 'Libro de ventas SAR', d: 'En Reportes, el libro del mes con cada factura, sus totales y la descarga para Excel.', ir: 'reportes' }
+  ] },
   { v: '1.2', fecha: '2026-10-11', items: [
     { i: 'layers', t: 'Proyectos', d: 'Registra todo lo que gastas para producir algo (materiales, mano de obra, comida, transporte…). Te da el costo por unidad, el precio sugerido y cuánto ganas, con colores: verde, amarillo o rojo.', ir: 'proyectos' },
     { i: 'percent', t: 'Calculadora de precio', d: 'En Precios: escribe el costo y el % de ganancia y te da el precio de venta, con ISV y redondeo.', ir: 'precios' },
@@ -5517,12 +5860,13 @@ const AYUDA = {
     t: ['Comparte el resumen del día por WhatsApp con «Compartir».', 'Toca una venta para ver su comprobante.'] },
   ventas: { d: 'Todas tus ventas por fecha.', p: ['Elige las fechas.', 'Toca una venta para ver el detalle, reenviar el comprobante o anularla (administrador).'], t: [] },
   reportes: { d: 'Cuánto vendes y cuánto ganas de verdad.',
-    p: ['<b>Resumen</b>: ventas, costo, ganancia bruta y neta, gastos y la gráfica por día del período que elijas.', '<b>Diario</b>: el mes día por día.', '<b>Ganancias</b>: lo que ganaste cada mes y a dónde va (ahorro, reinversión, pagos).', '<b>Inventario</b> y <b>Cuentas</b>: valor de tus existencias, lo que te deben y lo que debes.'],
+    p: ['<b>Resumen</b>: ventas, costo, ganancia bruta y neta, gastos y la gráfica por día del período que elijas.', '<b>Diario</b>: el mes día por día.', '<b>Ganancias</b>: lo que ganaste cada mes y a dónde va (ahorro, reinversión, pagos).', '<b>Inventario</b> y <b>Cuentas</b>: valor de tus existencias, lo que te deben y lo que debes.', '<b>Libro SAR</b> (si facturas con el SAR): cada factura del mes con su exento, gravado e ISV, para tu declaración.'],
     t: ['El botón de arriba descarga el reporte en CSV para abrirlo en Excel.'] },
   usuarios: { d: 'Tu equipo y lo que puede hacer cada uno.',
     p: ['Toca <b>+</b> y escribe el nombre, el WhatsApp y un PIN para la persona.', 'Elige el rol: <b>Administrador</b> (todo), <b>Cajero</b> (vende, cobra y cierra caja) o <b>Bodega</b> (productos, compras, inventario y proyectos).', 'Desactiva a alguien para quitarle el acceso.'], t: ['Cada persona entra con su propio WhatsApp y PIN.'] },
   ajustes: { d: 'Datos de tu negocio y cómo se ve el sistema.',
-    p: ['<b>Mi negocio</b>: nombre, logo, teléfono, ISV y mensaje del comprobante.', '<b>Apariencia</b>: 12 colores y modo oscuro.', '<b>Tienda en línea</b> y <b>Plan Plus</b>.', '<b>Mi cuenta</b>: cambia tu PIN.'], t: [] }
+    p: ['<b>Mi negocio</b>: nombre, logo, teléfono, ISV y mensaje del comprobante.', '<b>Apariencia</b>: 12 colores y modo oscuro.', '<b>Tienda en línea</b> y <b>Plan Plus</b>.', '<b>Facturación SAR</b> (opcional): enciéndela solo si tu negocio está registrado como autoimpresor. Copia tu RTN, CAI, rango y fecha límite tal como te los dio el SAR.', '<b>Mi cuenta</b>: cambia tu PIN.'],
+    t: ['Con la facturación SAR apagada tus ventas salen como comprobante, como siempre.', 'El sistema te avisa cuando se acerca la fecha límite o quedan pocas facturas del rango.'] }
 };
 
 function abrirAyuda(foco) {
@@ -5599,7 +5943,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) busc
 
 /* ===================== COMPROBANTES (imagen, impresión, WhatsApp) ===================== */
 function textoVenta(v, det) {
-  const l = [`*${S.config.nombre || 'Comprobante'}*`, `Comprobante ${v.numero} · ${fFechaC(v.fecha)} ${fHora(v.fecha)}`, ''];
+  const l = [`*${S.config.nombre || 'Comprobante'}*`, v.factura ? `Factura ${v.factura} · ${fFechaC(v.fecha)} ${fHora(v.fecha)}` : `Comprobante ${v.numero} · ${fFechaC(v.fecha)} ${fHora(v.fecha)}`, ''];
   det.forEach(i => l.push(`${cant(i.cantidad)} × ${i.descripcion} — ${money(i.total)}`));
   l.push('');
   if (v.descuento) l.push('Descuento: −' + money(v.descuento));
@@ -5611,6 +5955,7 @@ function reciboHTML(tipo, d) {
   const c = S.config;
   const cab = `<div class="rc-h">${c.logo ? `<div class="rc-logo"><img src="${esc(c.logo)}" alt=""></div>` : `<div class="rc-mono">${esc(iniciales(c.nombre))}</div>`}<h4>${esc(c.nombre || '')}</h4><p>${esc(c.eslogan || giroNombre())}</p></div>`;
   const pie = `<div class="rc-f"><em>${esc(c.mensajeRecibo || '¡Gracias por su compra!')}</em>${esc([c.direccion, c.telefono ? 'Tel. ' + c.telefono : '', c.rtn ? 'RTN ' + c.rtn : ''].filter(Boolean).join(' · '))}<br><span>Este comprobante no sustituye la factura fiscal</span></div>`;
+  if (tipo === 'venta' && d.v.factura) return facturaHTML(d.v, d.det);
   if (tipo === 'venta') {
     const v = d.v, cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
     return `<div class="rc">${cab}<div class="rc-b"><div class="rc-t"><b>Comprobante de pago</b><small>N.º ${esc(v.numero)}</small></div>
@@ -5643,7 +5988,7 @@ async function imagenRecibo(tipo, d) {
   let blob;
   try { blob = await aImagen(box.firstElementChild); } catch (e) { box.innerHTML = ''; return err(e); }
   box.innerHTML = '';
-  const nombre = (tipo === 'venta' ? 'comprobante-' + d.v.numero : 'abono-' + d.c.nombre.split(' ')[0]) + '.png';
+  const nombre = (tipo === 'venta' ? (d.v.factura ? 'factura-' + d.v.factura : 'comprobante-' + d.v.numero) : 'abono-' + d.c.nombre.split(' ')[0]) + '.png';
   const url = URL.createObjectURL(blob);
   const h = hoja({ titulo: 'Comprobante', cls: 'chica', html: `<div class="rc-prev"><img src="${url}" alt="Comprobante"></div>`, onClose: () => setTimeout(() => URL.revokeObjectURL(url), 1000) });
   h.botones([{ t: `${ic('save', 18)} Descargar`, fn: () => descargar(blob, nombre) }, { t: `${ic('share', 18)} Compartir`, cls: 'pri', fn: () => compartirArchivo(blob, nombre, tipo === 'venta' ? textoVenta(d.v, d.det) : '') }]);
@@ -5659,6 +6004,7 @@ async function compartirArchivo(blob, nombre, texto) {
   descargar(blob, nombre); toast('Imagen descargada. Ahora puedes enviarla por WhatsApp.', 'ok');
 }
 function imprimirTicket(v, det) {
+  if (v.factura) { $('#print-area').innerHTML = ticketFacturaHTML(v, det); if (window.AndroidApp && AndroidApp.imprimir) { AndroidApp.imprimir(); return; } setTimeout(() => window.print(), 80); return; }
   const c = S.config, cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
   const L = (a, b) => `<div class="pl"><span>${a}</span><span>${b}</span></div>`;
   $('#print-area').innerHTML = `<div class="ticket"><div class="pc">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : ''}<b>${esc(c.nombre || '')}</b>${c.rtn ? `<div>RTN ${esc(c.rtn)}</div>` : ''}${c.direccion ? `<div>${esc(c.direccion)}</div>` : ''}${c.telefono ? `<div>Tel. ${esc(c.telefono)}</div>` : ''}</div>
