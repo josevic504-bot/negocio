@@ -1,6 +1,6 @@
 /* Gestión de Negocio VM · guarda la app en el teléfono para que abra rápido.
    Los datos SIEMPRE se piden al servidor; aquí solo se guardan la página, íconos y librerías. */
-const VERSION = 'gnvm-1.4';
+const VERSION = 'gnvm-1.5';
 const BASE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(BASE)).catch(() => {}));
@@ -11,7 +11,7 @@ self.addEventListener('activate', e => {
 });
 self.addEventListener('fetch', e => {
   const r = e.request, u = new URL(r.url);
-  if (r.method !== 'GET' || u.searchParams.has('v') || u.hostname.endsWith('script.google.com') || u.hostname.endsWith('googleusercontent.com') || u.hostname === 'drive.google.com') return;
+  if (r.method !== 'GET' || /\.apk$/i.test(u.pathname) || u.searchParams.has('v') || u.hostname.endsWith('script.google.com') || u.hostname.endsWith('googleusercontent.com') || u.hostname === 'drive.google.com') return;
   // La página: primero internet (para recibir las actualizaciones) y si no hay, la guardada
   if (r.mode === 'navigate' || (u.origin === location.origin && /\.(html|json)$|\/$/.test(u.pathname))) {
     e.respondWith(fetch(r).then(res => { const cp = res.clone(); caches.open(VERSION).then(c => c.put(r, cp)); return res; }).catch(() => caches.match(r).then(x => x || caches.match('./index.html'))));

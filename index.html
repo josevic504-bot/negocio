@@ -778,6 +778,21 @@ body.noscroll .upd{opacity:0;pointer-events:none}
 .tabla .n,.kpi b.n,.am.n,.tot b.n{white-space:nowrap}
 .qty span[data-a]{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 
+/* Aviso para descargar la app de Android */
+.apk-bar{position:fixed;left:50%;bottom:calc(92px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;z-index:44;width:min(520px,calc(100% - 24px));display:flex;align-items:center;gap:12px;
+  background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:18px;padding:11px 12px;box-shadow:0 18px 40px rgba(0,0,0,.2);transition:.3s}
+.apk-bar.in{transform:translate(-50%,0);opacity:1}
+body:not(.app) .apk-bar{bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-events:none}
+.apk-bar>i{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--h1),var(--h2));flex:none}
+.apk-bar b{display:block;font-size:14.5px}.apk-bar small{color:var(--mut);font-size:12.5px;line-height:1.25;display:block}
+.apk-go{background:linear-gradient(120deg,#0b8a57,#1fb86f)!important;color:#fff!important;border:0!important;white-space:nowrap}
+.apk-x{flex:none;width:32px;height:32px;padding:0}
+.apk-pasos{margin:0 0 16px;padding-left:20px;line-height:1.55;font-size:15px}
+.apk-dl{display:flex!important;justify-content:center;align-items:center;gap:8px;background:linear-gradient(120deg,#0b8a57,#1fb86f)!important;color:#fff!important;border:0!important;text-decoration:none!important}.apk-dl svg{stroke:#fff}
+#upd~.apk-bar,.upd.in~.apk-bar{display:none}
+@media(min-width:900px){.apk-bar{bottom:24px}}
+
 </style>
 </head>
 <body>
@@ -3632,7 +3647,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.4';
+const APP_VER = '1.5';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -4042,6 +4057,7 @@ function mostrarApp() {
   ir(VISTAS[h] ? h : 'inicio', {}, true);
   vigilarPedidos();
   revisarNovedades();
+  setTimeout(ofrecerApk, 2500);
   setTimeout(() => buscarActualizacion(true), 4000);
 }
 function salir(expirada) {
@@ -4073,6 +4089,7 @@ const creditoHTML = () => `<p class="credit">Software creado por José Vicdonio 
 
 /* Pantallas de ingreso / registro */
 function pintarLogin() {
+  setTimeout(() => { try { ofrecerApk(); } catch (e) {} }, 1500);
   $('#login').hidden = false;
   if (!S.lmodo) S.lmodo = LS.get('cuenta', '') || DEMO.on ? 'ing' : 'reg';
   if (DEMO.on && !LS.get('cuenta', '') && !S.lmodoElegido) S.lmodo = 'demo';
@@ -6213,6 +6230,9 @@ ACC.lbVer = async el => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.4'; // versión mínima del Code.gs que necesita esta app
 const NOVEDADES = [
+  { v: '1.5', fecha: '2026-10-12', items: [
+    { i: 'save', t: 'App para Android', d: 'Ahora puedes instalar Gestión de Negocio VM como app en tu Android: cuando abras el enlace en el navegador te aparece el aviso para descargarla.' }
+  ] },
   { v: '1.4', fecha: '2026-10-11', items: [
     { i: 'bag', t: 'Productos nuevos dentro de la compra', d: 'En Nueva compra, si el producto todavía no existe, escríbelo y toca «Crear»: le pones categoría, costo y precio de venta (o el % de ganancia) ahí mismo, sin salir de la compra.', ir: 'compras' },
     { i: 'percent', t: '% de ganancia en cada línea', d: 'Al comprar ves cuánto ganas en cada producto y, si escribes el %, el precio de venta se calcula solo con el costo nuevo.' },
@@ -6351,6 +6371,40 @@ ACC.actualizarApp = async el => {
 };
 setInterval(() => buscarActualizacion(), 30 * 60000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden) buscarActualizacion(); });
+
+/* ===================== APP PARA ANDROID (APK) =====================
+   En un Android que abre el sistema desde el navegador, ofrece descargar la app.
+   No sale si ya está dentro de la app instalada, en computadora, en iPhone ni en la tienda en línea.
+   El aviso solo aparece si el archivo del APK existe en el sitio (carpeta app/). */
+const APK_URL = 'app/gestion-de-negocio-vm.apk';
+const APK_PAUSA = 5 * 86400000; // si la cierran con la X, vuelve a salir en 5 días
+function enAppInstalada() {
+  try { if (document.referrer.indexOf('android-app://') === 0) sessionStorage.setItem('enApk', '1'); } catch (e) {}
+  let s = false; try { s = sessionStorage.getItem('enApk') === '1'; } catch (e) {}
+  return s || (window.matchMedia && (matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || matchMedia('(display-mode: minimal-ui)').matches)) || navigator.standalone === true;
+}
+let APK_OK = null;
+async function ofrecerApk() {
+  if (!/Android/i.test(navigator.userAgent) || enAppInstalada() || S.enTienda || $('#apk-bar')) return;
+  if (!/^https?:$/.test(location.protocol)) return;
+  if (Date.now() - num(LS.get('apkNo', '0')) < APK_PAUSA) return;
+  if (APK_OK === null) {
+    try { const r = await fetch(APK_URL, { method: 'HEAD', cache: 'no-store' }); APK_OK = r.ok; } catch (e) { APK_OK = false; }
+  }
+  if (!APK_OK || $('#apk-bar') || S.enTienda) return;
+  const d = document.createElement('div'); d.id = 'apk-bar'; d.className = 'apk-bar'; d.setAttribute('role', 'status');
+  d.innerHTML = `<i>${ic('save', 22)}</i><div class="grow"><b>Descarga la app para Android</b><small>Ábrela con un toque desde tu pantalla de inicio</small></div><button class="btn sm apk-go" data-a="apkVer">Descargar</button><button class="btn icon ghost apk-x" data-a="apkNo" aria-label="Ahora no">${ic('x', 16)}</button>`;
+  document.body.appendChild(d); requestAnimationFrame(() => d.classList.add('in'));
+}
+ACC.apkNo = () => { LS.set('apkNo', String(Date.now())); const d = $('#apk-bar'); if (d) d.remove(); };
+ACC.apkVer = () => {
+  const h = hoja({ titulo: 'App para Android', cls: 'chica apk-hoja', html: `<p class="sm mut" style="margin:0 0 10px">Gestión de Negocio VM · versión ${APP_VER}</p>
+    <ol class="apk-pasos"><li>Toca <b>Descargar APK</b>.</li><li>Abre el archivo descargado (en la notificación o en «Descargas»).</li><li>Si el teléfono lo pide, activa <b>«Permitir de esta fuente»</b> y toca <b>Instalar</b>.</li></ol>
+    <a class="btn big apk-dl" href="${APK_URL}" download="Gestion-de-Negocio-VM.apk" data-a="apkBajo">${ic('save', 20)} Descargar APK</a>
+    <p class="xs mut" style="margin:10px 0 0;text-align:center">Android puede avisar que el archivo viene de fuera de la Play Store: es normal. Tus datos son los mismos en la app y en el navegador.</p>` });
+  h.botones([{ t: 'Seguir en el navegador', fn: () => h.cerrar() }]);
+};
+ACC.apkBajo = el => { LS.set('apkNo', String(Date.now())); const d = $('#apk-bar'); if (d) d.remove(); toast('Descargando… ábrelo cuando termine', 'ok', 5000); window.location.href = el.getAttribute('href'); };
 
 /* ===================== COMPROBANTES (imagen, impresión, WhatsApp) ===================== */
 function textoVenta(v, det) {
