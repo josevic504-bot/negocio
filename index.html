@@ -1221,8 +1221,52 @@ function rows_(name) {
   return MEMO[name].map(o => Object.assign({}, o));
 }
 
+/* ===== Lectura por ventana de tiempo =====
+ * Las hojas de movimientos (Ventas, VentaDetalle, Abonos, Gastos, Pagos, Compras, ProyectoGastos, Inventario)
+ * crecen al final y cada id lleva su fecha de creación. Las pantallas que solo necesitan lo reciente
+ * (Inicio y Caja) leen únicamente la cola de la hoja: con un año de datos es varias veces más rápido. */
+const DIAS_VENTANA = 90;
+function ventanaMs_() { return msDeLocal_(diasAtras_(DIAS_VENTANA) + 'T00:00'); }
+// Primera fila de la hoja (contando desde 1) cuyo id es de desdeMs en adelante. Se recuerda unas horas.
+function filaDesde_(name, n, desdeMs) {
+  const s = sh_(name), cs = CacheService.getScriptCache(), key = 'W_' + ck_(name) + '_' + Math.floor(desdeMs / 3600000);
+  try { const c = cs.get(key); if (c && Number(c) >= 2 && Number(c) <= n + 1) return Number(c); } catch (e) {}
+  const ids = s.getRange(2, 1, n - 1, 1).getValues();
+  // De atrás hacia adelante hasta ver 50 filas seguidas más viejas que la ventana (tolera ids fuera de orden)
+  let inicio = ids.length, viejos = 0;
+  for (let i = ids.length - 1; i >= 0; i--) { const t = idMs_(ids[i][0]); if (t && t < desdeMs) { if (++viejos >= 50) break; } else { viejos = 0; inicio = i; } }
+  const fila = inicio + 2;
+  try { cs.put(key, String(fila), 21600); } catch (e) {}
+  return fila;
+}
+function rowsDesde_(name, desdeMs) {
+  const k = '_w_' + name + '_' + desdeMs;
+  if (!MEMO[k]) {
+    if (MEMO[name]) MEMO[k] = MEMO[name].filter(o => { const t = idMs_(o.id); return !t || t >= desdeMs; });
+    else {
+      const s = sh_(name), n = s.getLastRow(), h = SCHEMA[name];
+      const r0 = n < 2 ? 2 : filaDesde_(name, n, desdeMs);
+      MEMO[k] = n < r0 ? [] : s.getRange(r0, 1, n - r0 + 1, h.length).getValues().filter(r => r[0] !== '' && r[0] !== null).map(r => obj_(h, r)).filter(o => { const t = idMs_(o.id); return !t || t >= desdeMs; });
+    }
+  }
+  return MEMO[k].map(o => Object.assign({}, o));
+}
+// Una sola columna de la hoja (mucho más liviano que leerla completa)
+function columna_(name, col) {
+  const k = '_c_' + name + '_' + col;
+  if (!MEMO[k]) {
+    if (MEMO[name]) MEMO[k] = MEMO[name].map(o => o[col]);
+    else {
+      const s = sh_(name), n = s.getLastRow(), h = SCHEMA[name], ci = h.indexOf(col) + 1;
+      MEMO[k] = n < 2 || !ci ? [] : s.getRange(2, ci, n - 1, 1).getValues().map(r => { const o = obj_([col], r); return o[col]; });
+    }
+  }
+  return MEMO[k];
+}
 function invalidar_(name) {
   delete MEMO[name];
+  Object.keys(MEMO).forEach(k => { if (k.indexOf('_w_' + name + '_') === 0 || k.indexOf('_c_' + name + '_') === 0) delete MEMO[k]; });
+  if (name === 'Ventas' || name === 'Gastos' || name === 'Distribuciones') { try { CacheService.getScriptCache().remove('RM_' + (NEG ? NEG.id : '')); } catch (e) {} }
   try { const cs = CacheService.getScriptCache(); cs.remove(ck_(name)); cs.put('V' + ck_(name), String(Date.now()) + Math.random(), 21600); } catch (e) {}
 }
 
@@ -1458,7 +1502,9 @@ function siguiente_(letra) {
 
 function saldosClientes_() {
   const m = {};
-  rows_('Ventas').forEach(v => { if (!v.anulada && v.saldo > 0.004 && v.clienteId) m[v.clienteId] = r2_((m[v.clienteId] || 0) + v.saldo); });
+  // Solo tres columnas de Ventas: con miles de ventas es mucho más rápido que leer la hoja entera
+  const cli = columna_('Ventas', 'clienteId'), saldo = columna_('Ventas', 'saldo'), anul = columna_('Ventas', 'anulada');
+  for (let i = 0; i < cli.length; i++) { if (!anul[i] && saldo[i] > 0.004 && cli[i]) m[cli[i]] = r2_((m[cli[i]] || 0) + saldo[i]); }
   return m;
 }
 function saldosProveedores_() {
@@ -2492,6 +2538,8 @@ function ventanaCaja_() {
 function cajaCalc_(w) {
   const en = t => t > w.desdeMs && t <= w.hastaMs;
   const k = { ventas: 0, cobros: 0, gastos: 0, pagos: 0, compras: 0, tarjeta: 0, transferencia: 0, credito: 0, nVentas: 0, proyectos: 0, anulaciones: 0 };
+  // Solo se leen los movimientos desde el último cierre (y, por si una anulación toca algo anterior, hasta 90 días atrás)
+  const vent = Math.min(w.desdeMs, ventanaMs_()), rows_ = name => rowsDesde_(name, vent);
   // signo: +1 entra efectivo, -1 sale. Devuelve true si el movimiento se cuenta normalmente.
   const mira = (x, anulado, efectivo, aplicar) => {
     const t = idMs_(x.id), ta = Number(x.anulacion) || 0;
@@ -2527,10 +2575,11 @@ function caja_(u, d) {
 // Ventas de un día con cliente, artículos y si vinieron de un pedido en línea (para Caja)
 function ventasDelDia_(dia) {
   const cm = porId_(rows_('Clientes')), us = porId_(rows_('Usuarios')), pm = porId_(rows_('Pedidos'));
-  const v = rows_('Ventas').filter(x => String(x.fecha).slice(0, 10) === dia);
+  const vent = msDeLocal_(dia + 'T00:00') - 60000;
+  const v = rowsDesde_('Ventas', vent).filter(x => String(x.fecha).slice(0, 10) === dia);
   const ids = {};
   v.forEach(x => { x.detalle = []; ids[x.id] = x; });
-  rows_('VentaDetalle').forEach(x => { if (ids[x.ventaId]) ids[x.ventaId].detalle.push({ descripcion: x.descripcion, cantidad: x.cantidad, total: x.total, productoId: x.productoId }); });
+  rowsDesde_('VentaDetalle', vent).forEach(x => { if (ids[x.ventaId]) ids[x.ventaId].detalle.push({ descripcion: x.descripcion, cantidad: x.cantidad, total: x.total, productoId: x.productoId }); });
   return desc_(v, 'fecha').map(x => ({ id: x.id, numero: x.numero, factura: x.factura, fecha: x.fecha, total: x.total, metodo: x.metodo, saldo: x.saldo, anulada: x.anulada,
     cliente: x.clienteId && cm[x.clienteId] ? cm[x.clienteId].nombre : 'Consumidor final', usuario: us[x.usuarioId] ? us[x.usuarioId].nombre : '',
     pedido: x.pedidoId && pm[x.pedidoId] ? pm[x.pedidoId].numero : (x.pedidoId ? 'en línea' : ''), detalle: x.detalle }));
@@ -2557,9 +2606,9 @@ function cerrarCaja_(u, d) {
 /* ===================== INICIO ===================== */
 
 function inicio_(u) {
-  const h = hoy_(), mes = h.slice(0, 7), out = { rol: u.rol };
+  const h = hoy_(), mes = h.slice(0, 7), out = { rol: u.rol }, vent = ventanaMs_();
   if (u.rol === 'admin' || u.rol === 'cajero') {
-    const ventas = rows_('Ventas').filter(v => !v.anulada);
+    const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada);
     const vh = ventas.filter(v => v.fecha.slice(0, 10) === h && (u.rol === 'admin' || v.usuarioId === u.id));
     out.hoy = { ventas: r2_(vh.reduce((a, v) => a + v.total, 0)), n: vh.length };
     if (u.rol === 'admin') out.hoy.ganancia = r2_(vh.reduce((a, v) => a + v.total - v.isv - v.costo, 0));
@@ -2567,7 +2616,7 @@ function inicio_(u) {
     for (let i = 6; i >= 0; i--) { const f = diasAtras_(i); spark.push(r2_(ventas.filter(v => v.fecha.slice(0, 10) === f && (u.rol === 'admin' || v.usuarioId === u.id)).reduce((a, v) => a + v.total, 0))); }
     out.spark = spark;
     const cm = porId_(rows_('Clientes'));
-    out.ultimas = desc_(rows_('Ventas').filter(v => u.rol === 'admin' || v.usuarioId === u.id), 'fecha').slice(0, 5)
+    out.ultimas = desc_(rowsDesde_('Ventas', vent).filter(v => u.rol === 'admin' || v.usuarioId === u.id), 'fecha').slice(0, 5)
       .map(v => ({ id: v.id, numero: v.numero, fecha: v.fecha, total: v.total, metodo: v.metodo, anulada: v.anulada, cliente: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final' }));
     const ped = rows_('Pedidos').filter(p => p.estado === 'nuevo');
     out.pedidos = { nuevos: ped.length, total: r2_(ped.reduce((a, p) => a + p.total, 0)), activos: rows_('Pedidos').filter(p => ['confirmado','listo'].indexOf(p.estado) >= 0).length };
@@ -2577,8 +2626,8 @@ function inicio_(u) {
     out.caja = r2_((Number(config_().fondoCaja) || 0) + k.ventas + k.cobros - k.gastos - k.pagos - k.compras);
   }
   if (u.rol === 'admin') {
-    const ventasMes = rows_('Ventas').filter(v => !v.anulada && v.fecha.slice(0, 7) === mes);
-    const gastosMes = rows_('Gastos').filter(g => !g.anulado && g.fechaGasto.slice(0, 7) === mes);
+    const ventasMes = rowsDesde_('Ventas', vent).filter(v => !v.anulada && v.fecha.slice(0, 7) === mes);
+    const gastosMes = rowsDesde_('Gastos', vent).filter(g => !g.anulado && g.fechaGasto.slice(0, 7) === mes);
     const vs = ventasMes.reduce((a, v) => a + v.total, 0), gb = ventasMes.reduce((a, v) => a + v.total - v.isv - v.costo, 0), gs = gastosMes.reduce((a, g) => a + g.monto, 0);
     out.mes = { ventas: r2_(vs), ganancia: r2_(gb - gs), gastos: r2_(gs), n: ventasMes.length };
     const sp = saldosProveedores_();
@@ -2590,7 +2639,7 @@ function inicio_(u) {
     const bajos = prods.filter(p => p.stock <= p.stockMin);
     out.stock = { bajos: bajos.length, agotados: prods.filter(p => p.stock <= 0).length, lista: bajos.sort((a, b) => a.stock - b.stock).slice(0, 6).map(p => ({ id: p.id, nombre: p.nombre, stock: p.stock, stockMin: p.stockMin, icono: p.icono, foto: p.foto })),
       valor: r2_(prods.reduce((a, p) => a + Math.max(0, p.stock) * p.costo, 0)), productos: prods.length };
-    const cm = rows_('Compras').filter(c => !c.anulada && c.fecha.slice(0, 7) === mes);
+    const cm = rowsDesde_('Compras', vent).filter(c => !c.anulada && c.fecha.slice(0, 7) === mes);
     out.comprasMes = { total: r2_(cm.reduce((a, c) => a + c.total, 0)), n: cm.length };
     const pj = rows_('Proyectos').filter(p => p.estado === 'curso');
     if (pj.length) {
@@ -2601,7 +2650,7 @@ function inicio_(u) {
   }
   if (u.rol === 'bodega') {
     const pm = porId_(rows_('Productos'));
-    out.movimientos = desc_(rows_('Inventario'), 'fecha').slice(0, 8)
+    out.movimientos = desc_(rowsDesde_('Inventario', vent), 'fecha').slice(0, 8)
       .map(m => ({ fecha: m.fecha, tipo: m.tipo, cantidad: m.cantidad, nombre: pm[m.productoId] ? pm[m.productoId].nombre : '—', nota: m.nota }));
   }
   return out;
@@ -2668,7 +2717,14 @@ function reporte_(u, d) {
 }
 
 // Resumen por mes: ventas, ISV, costo, gastos, ganancia y cuánto de ella ya tiene destino
-function resumenMeses_() {
+function resumenMeses_(fresco) {
+  const cs = CacheService.getScriptCache(), key = 'RM_' + (NEG ? NEG.id : '');
+  if (!fresco && !EN_LOCK) { try { const c = cs.get(key); if (c) return JSON.parse(c); } catch (e) {} }
+  const r = resumenMesesCalc_();
+  try { const j = JSON.stringify(r); if (j.length < 95000) cs.put(key, j, 600); } catch (e) {}
+  return r;
+}
+function resumenMesesCalc_() {
   const m = {};
   const mes = k => m[k] || (m[k] = { mes: k, ventas: 0, isv: 0, costo: 0, gastos: 0, n: 0, nGastos: 0, asignado: 0, cuentas: 0, pagos: 0 });
   rows_('Ventas').forEach(v => { if (v.anulada || !v.fecha) return; const x = mes(v.fecha.slice(0, 7)); x.ventas += v.total; x.isv += v.isv; x.costo += v.costo; x.n++; });
@@ -2692,7 +2748,7 @@ function historial_(u) {
   const uso = t => { const n = {}; activos.filter(d => d.tipo === t).forEach(d => { n[d.destino] = (n[d.destino] || 0) + 1; }); return Object.keys(n).sort((a, b) => n[b] - n[a]); };
   const total = t => { const n = {}; activos.filter(d => d.tipo === t).forEach(d => { n[d.destino] = r2_((n[d.destino] || 0) + d.monto); }); return Object.keys(n).map(k => ({ destino: k, total: n[k] })).sort((a, b) => b.total - a.total); };
   return {
-    meses: resumenMeses_(),
+    meses: resumenMeses_(true),
     distribuciones: desc_(dist, 'creado'),
     cuentas: total('cuenta'), pagos: total('pago'),
     destinos: { cuenta: uso('cuenta'), pago: uso('pago') }
@@ -2758,7 +2814,7 @@ function diario_(u, d) {
   rows_('Pagos').filter(p => p.fecha.slice(0, 7) === mes).forEach(p => mov.push({ id: p.id, fecha: p.fecha, tipo: 'pago', numero: '', concepto: 'Pago a proveedor', categoria: 'Pago',
     tercero: pv[p.proveedorId] ? pv[p.proveedorId].nombre : '', metodo: p.metodo, usuario: us[p.usuarioId] ? us[p.usuarioId].nombre : '', monto: p.monto, cobrado: p.monto, anulado: p.anulado }));
   mov.sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0);
-  const resumen = resumenMeses_().find(x => x.mes === mes) || { mes: mes, ventas: 0, isv: 0, costo: 0, gastos: 0, n: 0, utilidad: 0, pendiente: 0, asignado: 0, enCurso: mes >= hoy_().slice(0, 7) };
+  const resumen = resumenMeses_(true).find(x => x.mes === mes) || { mes: mes, ventas: 0, isv: 0, costo: 0, gastos: 0, n: 0, utilidad: 0, pendiente: 0, asignado: 0, enCurso: mes >= hoy_().slice(0, 7) };
   return { mes: mes, movimientos: mov, resumen: resumen };
 }
 
@@ -3249,7 +3305,7 @@ function pedirLimites_(d) {
   if (!Array.isArray(d.items) || !d.items.length) throw new Error('Tu pedido está vacío');
   const c = CacheService.getScriptCache(), tel = String(d.telefono || '').replace(/\D/g, '');
   if (Number(c.get('PD_' + (NEG ? NEG.id : '') + tel.slice(-8)) || 0) >= 6) throw new Error('Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
-  if (Number(c.get('PH_' + (NEG ? NEG.id : '')) || 0) >= 60) throw new Error('La tienda está recibiendo muchos pedidos. Intenta de nuevo en unos minutos.');
+  if (Number(c.get('PH_' + (NEG ? NEG.id : '')) || 0) >= 150) throw new Error('La tienda está recibiendo muchos pedidos. Intenta de nuevo en unos minutos.');
 }
 
 function pedir_(d) {
@@ -5761,12 +5817,14 @@ function ventasHoyHTML(l) {
     ${act.length ? `<div class="seg full" style="margin:10px 0"><button class="${modo === 'venta' ? 'on' : ''}" data-a="cjv" data-m="venta">Por venta</button><button class="${modo === 'art' ? 'on' : ''}" data-a="cjv" data-m="art">Por artículo</button></div>` : ''}
     ${!l.length ? '<div class="empty">Todavía no hay ventas hoy</div>' : modo === 'art'
       ? `<div class="panel cj-art"><div class="tr th"><span>Artículo</span><span>Cant.</span><span>Monto</span></div>${arts.map(x => `<div class="tr ${x.envio ? 'env' : ''}"><span>${esc(x.nombre)}</span><span class="n">${x.envio ? '' : cant(x.cantidad)}</span><span class="n">${money(x.total)}</span></div>`).join('')}<div class="tr tt"><span>Total</span><span class="n">${cant(nArt)}</span><span class="n">${money(tot)}</span></div></div>`
-      : `<div class="cj-ventas">${l.map(v => `<div class="cjv ${v.anulada ? 'anul' : ''}" data-a="cjVer" data-id="${v.id}">
+      : `<div class="cj-ventas">${l.slice(0, S.f.cjMax || 100).map(v => `<div class="cjv ${v.anulada ? 'anul' : ''}" data-a="cjVer" data-id="${v.id}">
         <div class="cjv-h"><span class="hr">${fHora(v.fecha)}</span><b>${esc(v.cliente)}</b><span class="n am">${money(v.total)}</span></div>
         <div class="cjv-b">${v.pedido ? `<span class="badge web">${ic('globe', 13)} Pedido en línea ${esc(v.pedido)}</span>` : ''}<span class="badge ${MET[v.metodo] || 'b-mut'}">${esc(v.metodo)}${v.metodo === 'Crédito' && v.saldo > 0 ? ' · debe ' + money(v.saldo) : ''}</span><span class="badge b-mut">${esc(v.factura || v.numero)}</span>${v.anulada ? '<span class="badge b-bad">Anulada</span>' : ''}</div>
-        <div class="cjv-i">${v.detalle.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.descripcion)}</span><span class="n">${money(i.total)}</span></div>`).join('')}</div></div>`).join('')}</div>`}`;
+        <div class="cjv-i">${v.detalle.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.descripcion)}</span><span class="n">${money(i.total)}</span></div>`).join('')}</div></div>`).join('')}
+        ${l.length > (S.f.cjMax || 100) ? `<button class="btn" style="width:100%;margin-top:10px" data-a="cjMas">Ver ${Math.min(100, l.length - (S.f.cjMax || 100))} ventas más · ${l.length - (S.f.cjMax || 100)} ${l.length - (S.f.cjMax || 100) === 1 ? "pendiente" : "pendientes"} de mostrar</button>` : ''}</div>`}`;
 }
-ACC.cjv = el => { S.f.cjv = el.dataset.m; R.caja(); };
+ACC.cjv = el => { S.f.cjv = el.dataset.m; S.f.cjMax = 0; R.caja(); };
+ACC.cjMas = () => { S.f.cjMax = (S.f.cjMax || 100) + 100; R.caja(); };
 ACC.cjVer = async el => {
   const v = (S.cajaD.ventasHoy || []).find(x => x.id === el.dataset.id); if (!v) return;
   const r = await api('ventas', { desde: v.fecha.slice(0, 10), hasta: v.fecha.slice(0, 10) }), l = r.lista || r;
