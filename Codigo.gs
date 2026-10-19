@@ -630,6 +630,7 @@ function bootstrap_(u, d) {
     giros: Object.keys(GIROS).map(k => ({ id: k, n: GIROS[k].n, cats: GIROS[k].cats })),
     licencia: licencia_(),
     plus: plus_(),
+    plusIncluido: plusIncluido_(),
     negocioId: MULTI_NEGOCIO && NEG ? NEG.id : '',
     multi: MULTI_NEGOCIO,
     version: VERSION,
@@ -998,7 +999,8 @@ function autorizar() {
 
 /* ===================== PLAN PLUS ===================== */
 
-function plus_() {
+// Plus pagado (tienda en línea y fotos): columna «plus» en Licencias o propiedad PLUS
+function plusReal_() {
   if (MULTI_NEGOCIO) {
     if (!NEG) return false;
     const v = String(NEG.lic.plus || '').trim().toLowerCase();
@@ -1006,10 +1008,13 @@ function plus_() {
   }
   return PropertiesService.getScriptProperties().getProperty('PLUS') === 'activo';
 }
+// Durante la prueba gratis, Plus va incluido. Al activar la licencia, Plus se activa aparte.
+function plus_() { return plusReal_() || licencia_().estado === 'prueba'; }
+function plusIncluido_() { return !plusReal_() && licencia_().estado === 'prueba'; }
 
 function activarPlus_(u, d) {
   req_(u, ['admin']);
-  if (plus_()) return { plus: true };
+  if (plusReal_()) return { plus: true };
   const c = CacheService.getScriptCache(), k = 'FP_' + (NEG ? NEG.id : 'uno'), fallos = Number(c.get(k) || 0);
   if (fallos >= 5) throw new Error('Demasiados intentos. Espera 10 minutos.');
   const clave = PropertiesService.getScriptProperties().getProperty('PLUS_PASSWORD');
@@ -2600,7 +2605,7 @@ function instalarNegocio_(op) {
     const actual = sh.getRange(1, 1, 1, h.length).getValues()[0];
     if (h.some((k, i) => actual[i] !== k)) sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
   });
-  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '' } : {});
+  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si' } : {});
   if (rows_('Usuarios').length === 0) {
     const salt = Utilities.getUuid(), a = op.admin || { usuario: 'admin', nombre: 'Administrador', pin: 'admin123' };
     upsert_('Usuarios', { usuario: a.usuario, nombre: a.nombre, rol: 'admin', color: '#d10f6f',

@@ -1586,6 +1586,7 @@ function bootstrap_(u, d) {
     giros: Object.keys(GIROS).map(k => ({ id: k, n: GIROS[k].n, cats: GIROS[k].cats })),
     licencia: licencia_(),
     plus: plus_(),
+    plusIncluido: plusIncluido_(),
     negocioId: MULTI_NEGOCIO && NEG ? NEG.id : '',
     multi: MULTI_NEGOCIO,
     version: VERSION,
@@ -1954,7 +1955,8 @@ function autorizar() {
 
 /* ===================== PLAN PLUS ===================== */
 
-function plus_() {
+// Plus pagado (tienda en línea y fotos): columna «plus» en Licencias o propiedad PLUS
+function plusReal_() {
   if (MULTI_NEGOCIO) {
     if (!NEG) return false;
     const v = String(NEG.lic.plus || '').trim().toLowerCase();
@@ -1962,10 +1964,13 @@ function plus_() {
   }
   return PropertiesService.getScriptProperties().getProperty('PLUS') === 'activo';
 }
+// Durante la prueba gratis, Plus va incluido. Al activar la licencia, Plus se activa aparte.
+function plus_() { return plusReal_() || licencia_().estado === 'prueba'; }
+function plusIncluido_() { return !plusReal_() && licencia_().estado === 'prueba'; }
 
 function activarPlus_(u, d) {
   req_(u, ['admin']);
-  if (plus_()) return { plus: true };
+  if (plusReal_()) return { plus: true };
   const c = CacheService.getScriptCache(), k = 'FP_' + (NEG ? NEG.id : 'uno'), fallos = Number(c.get(k) || 0);
   if (fallos >= 5) throw new Error('Demasiados intentos. Espera 10 minutos.');
   const clave = PropertiesService.getScriptProperties().getProperty('PLUS_PASSWORD');
@@ -3556,7 +3561,7 @@ function instalarNegocio_(op) {
     const actual = sh.getRange(1, 1, 1, h.length).getValues()[0];
     if (h.some((k, i) => actual[i] !== k)) sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
   });
-  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '' } : {});
+  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si' } : {});
   if (rows_('Usuarios').length === 0) {
     const salt = Utilities.getUuid(), a = op.admin || { usuario: 'admin', nombre: 'Administrador', pin: 'admin123' };
     upsert_('Usuarios', { usuario: a.usuario, nombre: a.nombre, rol: 'admin', color: '#d10f6f',
@@ -4386,6 +4391,7 @@ function aplicarDatos(d) {
   ['config', 'usuarios', 'productos', 'clientes', 'proveedores', 'gastoCats', 'giros'].forEach(k => { if (d[k]) S[k] = d[k]; });
   if (d.licencia) S.licencia = d.licencia;
   if (d.plus !== undefined) S.plus = !!d.plus;
+  if (d.plusIncluido !== undefined) S.plusIncluido = !!d.plusIncluido;
   if (d.negocioId !== undefined) S.negocioId = d.negocioId;
   if (d.multi !== undefined) { S.multi = !!d.multi; LS.set('multi', S.multi ? '1' : '0'); }
   if (d.usuario) S.user = d.usuario;
@@ -4401,7 +4407,7 @@ function guardarCache() {
     const c = LS.json(cacheKey(), null);
     if (!c) return;
     ['config', 'usuarios', 'productos', 'clientes', 'proveedores', 'gastoCats'].forEach(k => { c[k] = S[k]; });
-    c.plus = S.plus;
+    c.plus = S.plus; c.plusIncluido = S.plusIncluido;
     LS.set(cacheKey(), JSON.stringify(c));
   } catch (e) {}
 }
@@ -6182,7 +6188,7 @@ R.ajustes = () => {
     <label class="fld"><span>Recordatorio de saldo</span><textarea data-k="msjCobro" rows="2">${v('msjCobro')}</textarea></label>
     <button class="btn pri" data-a="guardarAj" data-s="mensajes">Guardar</button>`);
   if (adm) h += sec('sar', 'doc', 'Facturación SAR', sarAjustesHTML(), sarOn() ? '<span class="badge b-ok">Activa</span>' : 'Apagada · tus ventas salen como comprobante');
-  if (adm) h += sec('plus', 'sparkle', 'Plan Plus', S.plus ? `<p class="sm"><span class="plus-b">PLUS</span> Activo: tienda en línea y fotos de productos. ✦</p>` : plusCard(1));
+  if (adm) h += sec('plus', 'sparkle', 'Plan Plus', S.plus ? (S.plusIncluido ? `<p class="sm"><span class="plus-b">PLUS</span> Incluido en tu prueba gratis: tienda en línea y fotos de productos. ✦</p><p class="xs mut">Cuando actives tu licencia, el plan Plus se activa por separado. Escríbenos y lo dejamos listo.</p>${plusCard(1)}` : `<p class="sm"><span class="plus-b">PLUS</span> Activo: tienda en línea y fotos de productos. ✦</p>`) : plusCard(1));
   h += sec('cuenta', 'user', 'Mi cuenta', `<div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.multi ? fmtWA(S.user.usuario) : S.user.usuario)}</small></div></div>
     ${adm && L.estado ? `<p class="sm">${L.estado === 'prueba' ? `Prueba gratis: ${L.diasRestantes === 1 ? 'queda 1 día' : 'quedan ' + L.diasRestantes + ' días'} (vence ${esc(fFechaC(L.vence))}).` : 'Licencia activa de por vida ✓'}</p>` : ''}
     <div class="row"><button class="btn" data-a="cambiarClave">${ic('key', 18)} Cambiar ${S.multi ? 'PIN' : 'contraseña'}</button><button class="btn bad" data-a="logout">${ic('logout', 18)} Cerrar sesión</button></div>`);
@@ -6203,7 +6209,7 @@ R.tienda = () => {
   const sec = (id, icn, t, html, sub) => `<section class="panel aj" id="aj-${id}"><div class="aj-h"><i class="${colorDe(id)}">${ic(icn, 20)}</i><div><h3>${t}</h3>${sub ? `<small>${sub}</small>` : ''}</div></div>${html}</section>`;
   const abierta = c.tienda === 'si', fu = c.tiendaFuente || 'elegante';
   cargarFuentes(Object.keys(FUENTES));
-  let h = `<div class="td-head"><div class="st ${abierta ? '' : 'off'}"><i></i>${abierta ? 'Tu tienda está abierta' : 'Tu tienda está apagada'}</div><div class="lnk">${esc(linkTienda())}</div>
+  let h = `${S.plusIncluido ? `<div class="aviso info" style="margin-bottom:12px">${ic('sparkle', 20)}<div><b>Plus incluido en tu prueba gratis</b><small>Al activar tu licencia, la tienda en línea se activa por separado.</small></div></div>` : ''}<div class="td-head"><div class="st ${abierta ? '' : 'off'}"><i></i>${abierta ? 'Tu tienda está abierta' : 'Tu tienda está apagada'}</div><div class="lnk">${esc(linkTienda())}</div>
       <div class="row">${abierta ? `<button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a><button class="btn sm" data-a="compartirTienda">${ic('share', 16)} Compartir</button>` : ''}</div></div>`;
   h += sec('estado', 'globe', 'Recibir pedidos', `<label class="sw-row"><input type="checkbox" data-k="tienda" data-on="si" data-off="no" ${abierta ? 'checked' : ''}><span class="sw"></span><div><b>Tienda abierta</b><small>Tus clientes ven tu catálogo y te hacen pedidos desde el enlace</small></div></label>
     <label class="sw-row"><input type="checkbox" data-k="tiendaChat" data-on="si" data-off="no" ${c.tiendaChat !== 'no' ? 'checked' : ''}><span class="sw"></span><div><b>Recibir mensajes directos</b><small>Te escriben desde la tienda y respondes en Mensajes. Se borran solos a los 2 meses.</small></div></label>
@@ -6758,6 +6764,7 @@ const NOVEDADES = [
     { i: 'user', t: 'Conoce a quien te atiende', d: 'Agrega tu foto, cargo y un mensaje para tus clientes en Ajustes › Propietario. Aparece en tu tienda antes del catálogo.', ir: 'ajustes' },
     { i: 'chat', t: 'Mensajes directos', d: 'Tus clientes te escriben desde la tienda (por un producto o en general) y respondes desde la pantalla Mensajes. Las conversaciones se borran solas a los 2 meses.', ir: 'mensajes' },
     { i: 'store', t: 'Módulo «Mi tienda en línea»', d: 'La tienda ya no se configura en Ajustes: tiene su propio módulo con el enlace, foto de portada, 6 estilos de letra para elegir, la información del negocio, el propietario y las entregas.', ir: 'tienda' },
+    { i: 'sparkle', t: 'Plus incluido en la prueba gratis', d: 'Los negocios en prueba tienen la tienda en línea y las fotos desde el primer día. Al activar la licencia, el plan Plus se activa por separado.' },
     { i: 'globe', t: 'Tu tienda como página web', d: 'Cuando la abren desde una computadora, la tienda se ve como un sitio web: barra de navegación, portada ancha, catálogo en 4 columnas y pie de página. En el celular sigue igual.' },
     { i: 'refresh', t: 'Más rápido con muchos datos', d: 'Inicio y Caja ahora leen solo los últimos 90 días de movimientos, así la app sigue abriendo rápido aunque tengas años de ventas. Tu tienda acepta hasta 150 pedidos por hora.' }
   ] },
