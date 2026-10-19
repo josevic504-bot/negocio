@@ -395,6 +395,10 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 
 /* ===== Vender ===== */
 .pos-top{display:flex;gap:8px;margin-bottom:10px}
+.ilu{display:grid;place-items:center;width:100%;height:100%;position:absolute;inset:0}
+.ilu svg{width:50%;height:50%;fill:none;stroke:#fff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;opacity:.95;filter:drop-shadow(0 2px 3px rgba(0,0,0,.2))}
+.ilu:before{content:'';position:absolute;inset:0;background:radial-gradient(60% 60% at 50% 42%,rgba(255,255,255,.18),transparent 70%)}
+.av .ilu svg{width:58%;height:58%;stroke-width:2}.av.sm .ilu svg{stroke-width:2.4}.prod-big .ph .ilu svg{width:40%;height:40%;stroke-width:1.2}
 .pc .ph .emo{font-size:44px;line-height:1}
 .pc .ph .ini{font:600 30px var(--serif)}
 .pc .st.out{background:#ffe2e6;color:#c4122f}
@@ -588,6 +592,7 @@ body.en-tienda{padding-bottom:110px}
 .shop-box.v2 .srch{background:var(--card);border:1px solid var(--line);border-radius:99px}.shop-box.v2 .srch input{background:transparent}
 .shop-box.v2 .shop-grid .pc{border-radius:20px;box-shadow:none}
 .shop-box.v2 .pc .ph{background:var(--pri2);color:var(--pri)}
+.shop-box.v2 .pc .ph .ilu svg{stroke:var(--pri);opacity:.8;filter:none;stroke-width:1.4}.shop-box.v2 .pc .ph .ilu:before{display:none}
 .shop-box.v2 .pc .cat{font-size:10px;letter-spacing:.18em;color:var(--mut);text-transform:uppercase}
 .shop-box.v2 .pc .pr{font-size:15px}
 .shop-box.v2 .sp-add{width:32px;height:32px;border-radius:50%;background:transparent;border:1px solid var(--pri);color:var(--pri)}
@@ -4078,12 +4083,62 @@ const plantilla = (t, o) => String(t || '').replace(/\{(\w+)\}/g, (m, k) => o[k]
 const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = setTimeout(() => fn(...a), ms); }; };
 const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const colorDe = s => { const c = ['t-pri', 't-azul', 't-morado', 't-cian', 't-naranja', 't-rojo', 't-verde', 't-acc']; let h = 0; String(s || '').split('').forEach(ch => { h = (h * 31 + ch.charCodeAt(0)) | 0; }); return c[Math.abs(h) % c.length]; };
+// Ilustraciones de línea por categoría/nombre, para productos sin foto (dibujos propios, 48×48)
+const ILUS = [
+  [/vestido|falda/, 'M17 5l-1 11 4 4-7 22h22l-7-22 4-4-1-11M17 5c1 4 3 6 7 6s6-2 7-6'],
+  [/pantal|jean|short|leggin/, 'M14 6h20l2 36h-8l-4-22-4 22h-8zM14 14h20'],
+  [/zapat|tenis|calzado|sandal|bota|tacon|chancl/, 'M6 36h36v3H6zM6 36c0-7 6-10 12-10l6-9 6 2c1 6 8 10 16 12v5M18 26c2 2 5 3 8 3'],
+  [/bolso|mochila|cartera|maleta/, 'M10 18h28l-2 24H12zM18 18v-4a6 6 0 0 1 12 0v4'],
+  [/gorra|sombrero/, 'M9 30a15 15 0 0 1 30 0H9zM39 30l6 3-1 4-8-2M24 15v-4'],
+  [/camis|blusa|polo|sueter|chaqueta|ropa|dama|caballero|niñ|uniforme|playera/, 'M14 8l-8 5 4 7 4-2v22h20V18l4 2 4-7-8-5c-1 3-3 5-6 5s-5-2-6-5z'],
+  [/perfum|colonia|fragan|locion/, 'M20 6h8v6h-8zM16 12h16v4H16zM14 16h20a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4z'],
+  [/labial|maquill|belleza|esmalte|crema|cosmet|sombra|rimel|mascara/, 'M19 20h10v22H19zM21 20V9l8 4v7M17 30h14'],
+  [/audif|auricul|bocina|parlante/, 'M8 30v-6a16 16 0 0 1 32 0v6M8 30h6v10H8zM34 30h6v10h-6z'],
+  [/laptop|computad|monitor|tablet/, 'M8 10h32v22H8zM4 36h40v4H4z'],
+  [/cable|cargador|usb|enchufe|extension|regleta|tomacorriente/, 'M18 6v10M30 6v10M12 16h24v6a12 12 0 0 1-24 0zM24 34v8'],
+  [/celular|telefono|tecnolog|smart|reloj inteligente/, 'M15 5h18a3 3 0 0 1 3 3v32a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM21 38h6'],
+  [/lampar|foco|led|electric|bombill|luz/, 'M24 6a12 12 0 0 0-7 22v5h14v-5a12 12 0 0 0-7-22zM19 38h10M21 42h6'],
+  [/cuaderno|libro|escolar|lapiz|papeler|agenda|libreta/, 'M10 8h22a4 4 0 0 1 4 4v28H14a4 4 0 0 1-4-4zM14 36h22M10 8v28M16 16h12'],
+  [/regalo|obsequio|detalle/, 'M8 18h32v8H8zM10 26h28v16H10zM24 18v24M24 18c-4 0-8-2-8-6s6-4 8 6c2-10 8-10 8-6s-4 6-8 6'],
+  [/cafe|te\b|taza|termo|chocolate caliente/, 'M10 14h26v16a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8zM36 18h4a4 4 0 0 1 0 8h-4M17 8c0 2 2 2 2 4M25 8c0 2 2 2 2 4'],
+  [/refresc|agua|jugo|licuad|bebida|gaseosa|cerveza|soda|vaso/, 'M20 6h8v6h-8zM18 12h12l2 8v22H16V20z'],
+  [/pastel|postre|torta|queque|cupcake|dulce|helado/, 'M10 24h28v16H10zM10 30c4 0 4 3 7 3s3-3 7-3 4 3 7 3 3-3 7-3M24 24v-8M24 10v2M22 16h4'],
+  [/pizza/, 'M24 8L8 40h32zM24 8c8 0 14 5 16 11M24 8c-8 0-14 5-16 11M22 24a1 1 0 1 0 .1 0M29 32a1 1 0 1 0 .1 0M19 34a1 1 0 1 0 .1 0'],
+  [/hamburg|burger|sandwich|hot ?dog/, 'M8 20a16 10 0 0 1 32 0zM8 24h32M8 28h32v2a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4z'],
+  [/pan\b|panad|bollo|rosquilla/, 'M8 24c0-6 8-10 16-10s16 4 16 10v14H8zM16 24v14M32 24v14'],
+  [/pollo|carne|res\b|cerdo|asado|chuleta/, 'M30 8a10 10 0 0 0-10 10c0 3 1 5 2 6L10 36l6 6 12-12c1 1 3 2 6 2a10 10 0 0 0-4-24z'],
+  [/plato|comida|desayun|almuerz|cena|baleada|combo|tipico|sopa|menu/, 'M6 34h36M10 34a14 14 0 0 1 28 0M24 20v-4M22 16h4'],
+  [/martill|herramient|desarm|alicate|sierra|taladro/, 'M10 14l10-6 6 6-10 6zM22 20l16 16-4 4-16-16zM14 8l4 4'],
+  [/llave|tuerca|repuest|motor|filtro|bujia|mecanic|taller/, 'M30 6a8 8 0 0 0-10 10L8 28l4 8 8 4 12-12a8 8 0 0 0 10-10l-6 2-4-4z'],
+  [/pintur|brocha|rodillo|barniz/, 'M6 12h26v10H6zM32 16h6v8H26v6M24 30h4v12h-4z'],
+  [/tubo|plomer|grifo|llave de agua|pvc|manguera/, 'M10 22h20v8H10zM30 26h8v-8h-6M20 22v-8M14 14h12M12 30v10M28 30v10'],
+  [/cemento|bloque|ladrillo|construc|arena|grava|varilla/, 'M6 14h36v24H6zM6 22h36M6 30h36M18 14v8M30 14v8M12 22v8M24 22v8M36 22v8M18 30v8M30 30v8'],
+  [/tornill|clavo|perno|tornilleria/, 'M20 6h8l-2 6h-4zM18 12h12v6H18zM20 18h8v22l-4 4-4-4zM20 24h8M20 30h8M20 36h8'],
+  [/medic|pastill|tablet|farmac|jarabe|vitamin|capsul|antigrip|analges|suero/, 'M12 20a8 8 0 0 1 8-8h8a8 8 0 0 1 0 16h-8a8 8 0 0 1-8-8zM24 12v16M24 34v8M20 38h8'],
+  [/bebe|pañal|biberon|infantil/, 'M20 6h8v6h-8zM18 12h12v6H18zM18 18h12v22a3 3 0 0 1-3 3h-6a3 3 0 0 1-3-3zM22 26h4M22 32h4'],
+  [/aceite|lubric|grasa/, 'M8 18h22v20H8zM30 22l10-6v6l-10 6M12 18v-6h8v6'],
+  [/llanta|rin\b|neumat|freno|rueda/, 'M24 6a18 18 0 1 0 0 36 18 18 0 0 0 0-36zM24 16a8 8 0 1 0 0 16 8 8 0 0 0 0-16zM24 6v10M24 32v10M6 24h10M32 24h10'],
+  [/bateria|pila/, 'M8 16h28v16H8zM36 20h4v8h-4M14 24h8M18 20v8'],
+  [/limpieza|jabon|deterg|cloro|desinf|spray|aromat/, 'M18 18h12v24H18zM22 18v-8h6M28 10h8l-2 5M20 10h-6'],
+  [/olla|sarten|cocina|hogar|utensil|vajilla/, 'M10 18h28v14a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8zM6 22h4M38 22h4M10 18c0-4 6-6 14-6s14 2 14 6'],
+  [/arroz|frijol|grano|azucar|harina|abarrot|maiz|sal\b|cafe molido/, 'M14 14c0-4 4-6 10-6s10 2 10 6M14 14c-6 8-6 20 0 28h20c6-8 6-20 0-28M14 14h20M24 22v12M20 26l4-4 4 4'],
+  [/leche|lacteo|queso|yogur|mantequ|crema de leche/, 'M16 6h16v8l4 6v24H12V20l4-6zM16 14h16M12 20h24'],
+  [/snack|churro|galleta|papitas|boquita|golosina|chicle/, 'M14 8h20l-2 32H16zM14 8l-4 4M34 8l4 4M16 40l-2 4M32 40l2 4M20 18h8M20 24h8'],
+  [/planta|flor|jardin|maceta|semilla/, 'M14 30h20l-2 12H16zM24 30V18M24 18c-8 0-12-6-12-10 6 0 12 4 12 10zM24 22c0-6 6-10 12-10 0 4-4 10-12 10'],
+  [/juguet|pelota|balon|muñec|juego/, 'M24 6a18 18 0 1 0 0 36 18 18 0 0 0 0-36zM10 14c8 2 20 2 28 0M10 34c8-2 20-2 28 0M24 6v36'],
+  [/reloj|joya|anillo|collar|pulsera|arete|accesori/, 'M16 6h16l2 8H14zM16 42h16l2-8H14zM24 14a10 10 0 1 0 0 20 10 10 0 0 0 0-20zM24 18v6l4 2'],
+  [/corte|peinad|tinte|cabello|salon|barber|uñas|manicur/, 'M12 10a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM12 28a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM16 18l24 14M16 30l24-14'],
+  [/servicio|mano de obra|reparac|instalac|mantenim|cita|consulta|alineado|cambio/, 'M12 36l20-20M8 40l4-4M32 16l4-4a4 4 0 0 0 6 6l-4 4M14 10l8 8-4 4-8-8z'],
+  [/carro|auto|moto|vehic/, 'M8 28l4-10h24l4 10v10H8zM8 28h32M14 38v4M34 38v4M14 32h4M30 32h4'],
+  [/cuidado|higiene|shampoo|champu|desodor|pasta|cepillo/, 'M18 12h12v30H18zM20 12V8h8v4M22 20h4M22 26h4'],
+  [/.*/, 'M8 10h14l18 18-12 12L8 22zM15 17a1.5 1.5 0 1 0 .1 0'] ];
+const iluProd = p => { const t = norm((p.categoria || '') + ' ' + (p.nombre || '')); const d = (ILUS.find(x => x[0].test(t)) || ILUS[ILUS.length - 1])[1]; return `<span class="ilu"><svg viewBox="0 0 48 48"><path d="${d}"/></svg></span>`; };
 const fotoSrc = f => !f ? '' : String(f).indexOf('data:') === 0 || String(f).indexOf('http') === 0 ? f : 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(f) + '&sz=w600';
 const fotoAncha = f => fotoSrc(f).replace('sz=w600', 'sz=w1400');
 function avatarProd(p, cls) {
   const src = fotoSrc(p.foto);
-  if (src) return `<div class="${cls || 'av'} ${colorDe(p.categoria)}"><img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">${p.icono ? `<span class="emo">${esc(p.icono)}</span>` : `<span class="ini">${esc(iniciales(p.nombre))}</span>`}</div>`;
-  return `<div class="${cls || 'av'} ${colorDe(p.categoria)}">${p.icono ? `<span class="emo">${esc(p.icono)}</span>` : `<span class="ini">${esc(iniciales(p.nombre))}</span>`}</div>`;
+  if (src) return `<div class="${cls || 'av'} ${colorDe(p.categoria)}"><img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">${iluProd(p)}</div>`;
+  return `<div class="${cls || 'av'} ${colorDe(p.categoria)}">${iluProd(p)}</div>`;
 }
 
 let cargando = 0;
@@ -4747,7 +4802,7 @@ function pintarGridVenta() {
 }
 function prodFoto(p, extra) {
   const src = fotoSrc(p.foto);
-  return `<div class="ph ${colorDe(p.categoria)}">${p.icono ? `<span class="emo">${esc(p.icono)}</span>` : `<span class="ini">${esc(iniciales(p.nombre))}</span>`}${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${extra || ''}</div>`;
+  return `<div class="ph ${colorDe(p.categoria)}">${iluProd(p)}${src ? `<img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">` : ''}${extra || ''}</div>`;
 }
 function pintarCartBar() {
   const b = $('#v-bar'); if (!b) return;
@@ -5152,8 +5207,10 @@ R.productos = () => {
   const bajos = ctrl.filter(p => p.stock <= p.stockMin), agot = ctrl.filter(p => p.stock <= 0);
   const valor = ctrl.reduce((a, p) => a + Math.max(0, p.stock) * p.costo, 0);
   const cats = catsUsadas();
-  const fil = [['', 'Todos'], ['bajos', 'Por agotarse'], ['agotados', 'Agotados'], ['tienda', 'En la tienda'], ['inactivos', 'Inactivos']].filter(x => x[0] !== 'tienda' || S.plus);
-  $('#main').innerHTML = `${puede('admin', 'bodega') ? `<div class="kpis"><div class="kpi"><small>Productos activos</small><b>${act.length}</b></div><div class="kpi" style="--k:var(--warn)"><small>Por agotarse</small><b>${bajos.length}</b><i>${agot.length} agotados</i></div>${puede('admin', 'bodega') ? `<div class="kpi" style="--k:#00b56e"><small>Inventario al costo</small><b class="n">${money(valor)}</b></div>` : ''}</div>` : ''}
+  const sinFoto = act.filter(p => !p.foto).length;
+  const fil = [['', 'Todos'], ['bajos', 'Por agotarse'], ['agotados', 'Agotados'], ['tienda', 'En la tienda'], ['sinfoto', 'Sin foto'], ['inactivos', 'Inactivos']].filter(x => (x[0] !== 'tienda' || S.plus) && (x[0] !== 'sinfoto' || sinFoto));
+  const avFoto = sinFoto && puede('admin', 'bodega') && f.pfil !== 'sinfoto' && !S.f.avFotoOff ? `<div class="aviso info sm">${ic('cam', 20)}<div><b>${sinFoto === 1 ? '1 producto no tiene foto.' : sinFoto + ' productos no tienen foto.'}</b> <small style="display:inline">Con fotos reales tu tienda y Vender se ven mucho mejor.</small></div><button class="btn sm pri" data-a="pfil" data-k="sinfoto">Ver</button><button class="btn icon ghost sm" data-a="avFotoOff" aria-label="Cerrar">${ic('x', 16)}</button></div>` : '';
+  $('#main').innerHTML = `${avFoto}${puede('admin', 'bodega') ? `<div class="kpis"><div class="kpi"><small>Productos activos</small><b>${act.length}</b></div><div class="kpi" style="--k:var(--warn)"><small>Por agotarse</small><b>${bajos.length}</b><i>${agot.length} agotados</i></div>${puede('admin', 'bodega') ? `<div class="kpi" style="--k:#00b56e"><small>Inventario al costo</small><b class="n">${money(valor)}</b></div>` : ''}</div>` : ''}
     <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="p-q" placeholder="Buscar por nombre, código o categoría…" value="${esc(f.pq || '')}"></div>
     <div class="chips">${fil.map(x => `<button class="chip ${(f.pfil || '') === x[0] ? 'on' : ''}" data-a="pfil" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
     <div class="chips" style="margin:6px 0 12px"><button class="chip ${!f.pcat ? 'on' : ''}" data-a="pcat" data-c="">Todas las categorías</button>${cats.map(c => `<button class="chip ${f.pcat === c ? 'on' : ''}" data-a="pcat" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
@@ -5167,6 +5224,7 @@ function listaProductos() {
   if (f.pfil === 'bajos') l = l.filter(p => p.tipo === 'producto' && p.stock <= p.stockMin);
   if (f.pfil === 'agotados') l = l.filter(p => p.tipo === 'producto' && p.stock <= 0);
   if (f.pfil === 'tienda') l = l.filter(p => p.tienda);
+  if (f.pfil === 'sinfoto') l = l.filter(p => !p.foto);
   if (f.pcat) l = l.filter(p => p.categoria === f.pcat);
   if (q) l = l.filter(p => norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q));
   l.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -5180,6 +5238,7 @@ function listaProductos() {
       ${puede('admin') ? `<button class="btn acc" data-a="cargarEjemplos">${ic('sparkle', 18)} Cargar productos de ejemplo</button>` : ''}${puede('admin', 'bodega') ? `<button class="btn pri" data-a="nuevoProducto">${ic('plus', 18)} Agregar el primero</button>` : ''}</div>` : '<div class="empty">No hay productos con ese filtro</div>');
 }
 ACC.pfil = el => { S.f.pfil = el.dataset.k; R.productos(); };
+ACC.avFotoOff = () => { S.f.avFotoOff = true; R.productos(); };
 ACC.pcat = el => { S.f.pcat = el.dataset.c; R.productos(); };
 ACC.cargarEjemplos = async () => {
   const r = await api('cargarEjemplos', {});
