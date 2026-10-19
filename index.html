@@ -127,15 +127,21 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .today .sub b{color:var(--ok);font-weight:600}
 .spark{width:110px;height:46px;flex:none}
 .qa{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--line)}
+
 .qa button{border:0;background:none;display:flex;flex-direction:column;align-items:center;gap:6px;font:500 12.5px var(--font);color:var(--ink);cursor:pointer;padding:2px 0}
 .qa i{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--q1),var(--q2));box-shadow:0 6px 14px color-mix(in srgb,var(--q1) 35%,transparent)}
 .tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:560px;margin:0 auto}
-.tile{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:22px;color:#fff;cursor:pointer;background:linear-gradient(135deg,var(--t1),var(--t2));box-shadow:0 10px 22px color-mix(in srgb,var(--t1) 30%,transparent);position:relative;overflow:hidden;border:0;text-align:left;font:inherit;width:100%;min-width:0}
-.tile:after{content:"";position:absolute;right:-34px;top:-34px;width:100px;height:100px;border-radius:50%;background:rgba(255,255,255,.12)}
-.tile .ti{width:40px;height:40px;border-radius:13px;background:rgba(255,255,255,.2);display:grid;place-items:center}
-.tile .tl{font-size:12.5px;opacity:.92;letter-spacing:.01em}
+.tile{display:flex;flex-direction:column;gap:10px;padding:14px;border-radius:22px;color:var(--ink);cursor:pointer;background:var(--card);border:1px solid var(--line);box-shadow:0 4px 14px rgba(0,0,0,.04);position:relative;overflow:hidden;text-align:left;font:inherit;width:100%;min-width:0}
+.tile .ti{background:linear-gradient(135deg,var(--t1),var(--t2));color:#fff;box-shadow:0 6px 14px color-mix(in srgb,var(--t1) 30%,transparent)}
+.tile .tl{color:var(--mut);opacity:1}.tile .ts{color:var(--mut);opacity:1}.tile .ta{color:var(--mut);opacity:.7}
+.tstats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.tstats button{border:0;background:var(--bg);border-radius:14px;padding:9px 8px;text-align:left;font:inherit;color:var(--ink);cursor:pointer;min-width:0}
+.tstats small{display:block;font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tstats b{display:block;font-size:13.5px;font-weight:600;margin-top:2px;letter-spacing:-.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tstats b.ok{color:var(--ok)}
+.tile .ti{width:40px;height:40px;border-radius:13px;display:grid;place-items:center}
+.tile .tl{font-size:12.5px;letter-spacing:.01em}
 .tile .tv{font-size:19px;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.tile .ts{font-size:11.5px;opacity:.82;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tile .ts{font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tile .ta{position:absolute;right:12px;top:14px;opacity:.85;z-index:1}
 .t-pri{--t1:var(--h1);--t2:var(--h2)}.t-acc{--t1:color-mix(in srgb,var(--a1) 85%,#000);--t2:var(--a1)}
 .t-verde{--t1:#00915a;--t2:#2fd58b}.t-naranja{--t1:#f25c05;--t2:#ffa83a}.t-azul{--t1:#1b4fd8;--t2:#3d9bff}
@@ -4692,18 +4698,18 @@ R.inicio = () => {
   let today = '', tiles = '', listas = '';
   if (rol === 'admin' || rol === 'cajero') {
     today = `<div class="today"><div class="today-h"><div><small>${rol === 'admin' ? 'Ventas de hoy' : 'Mis ventas de hoy'} · ${esc(hoyTxt)}</small><div class="big n">${money(d.hoy.ventas)}</div>
-      <div class="sub">${d.hoy.n === 1 ? '1 venta' : d.hoy.n + ' ventas'}${rol === 'admin' ? ` · ganancia <b>${money(d.hoy.ganancia)}</b>` : ''}</div></div>${sparkSVG(d.spark || [0, 0])}</div>
+      <div class="sub">${d.hoy.n === 1 ? '1 venta' : d.hoy.n + ' ventas'}</div></div>${sparkSVG(d.spark || [0, 0])}</div>
+      <div class="tstats">${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Ganancia hoy</small><b class="n ok">${money(d.hoy.ganancia)}</b></button>` : ''}<button data-a="ir" data-v="caja"><small>Caja ahora</small><b class="n">${money(d.caja)}</b></button>${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Este mes</small><b class="n">${money(d.mes.ganancia)}</b></button>` : `<button data-a="ir" data-v="ventas"><small>Este mes</small><b class="n">${money(d.mes.ventas)}</b></button>`}</div>
       <div class="qa">${qa('ir', 'cart', 'Vender', 'var(--h1)', 'var(--h2)', 'data-v="vender"')}${qa('nuevoGasto', 'receipt', 'Gasto', '#f25c05', '#ffa83a')}
       ${rol === 'admin' ? qa('nuevaCompra', 'truck', 'Compra', '#1b4fd8', '#3d9bff') : qa('ir', 'wallet', 'Caja', '#6a1fe0', '#b06cff', 'data-v="caja"')}${qa('cobrarCliente', 'coin', 'Cobrar', '#00915a', '#2fd58b')}</div></div>`;
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus ✦', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
     if (S.plus && S.chatsNuevos) tiles += tile('t-acc', 'chat', 'Mensajes', S.chatsNuevos === 1 ? '1 sin responder' : S.chatsNuevos + ' sin responder', 'Tus clientes te escriben desde la tienda', ['ir', 'mensajes']);
-    if (rol === 'admin') tiles += tile('t-verde', 'trend', 'Ganancia del mes', money(d.mes.ganancia), 'Ventas ' + money(d.mes.ventas), ['ir', 'reportes']);
     tiles += tile('t-naranja', 'coin', 'Por cobrar', money(d.porCobrar.total), d.porCobrar.clientes === 1 ? '1 cliente con saldo' : d.porCobrar.clientes + ' clientes con saldo', ['ir', 'clientes', { saldo: 1 }]);
     if (rol === 'admin') tiles += tile('t-azul', 'truck', 'Por pagar', money(d.porPagar.total), d.porPagar.proveedores === 1 ? '1 proveedor' : d.porPagar.proveedores + ' proveedores', ['ir', 'proveedores', { saldo: 1 }]);
     if (rol === 'admin') tiles += tile('t-rojo', 'alert', 'Por agotarse', d.stock.bajos === 1 ? '1 producto' : d.stock.bajos + ' productos', d.stock.agotados ? d.stock.agotados + ' agotados' : 'Revisa tu inventario', ['ir', 'productos', { filtro: 'bajos' }]);
-    tiles += tile('t-morado', 'wallet', 'Caja ahora', money(d.caja), 'Efectivo esperado', ['ir', 'caja']);
+    if (rol === 'admin') tiles += tile('t-verde', 'trend', 'Ventas del mes', money(d.mes.ventas), 'Ver reportes', ['ir', 'reportes']);
     if (rol === 'cajero') tiles += tile('t-cian', 'users', 'Clientes', String(S.clientes.filter(c => c.activo).length), 'Agrega o busca clientes', ['ir', 'clientes']);
     listas += `<div class="sec-t"><h3>Últimas ventas</h3><a data-a="ir" data-v="ventas">Ver todas</a></div><div class="list">${(d.ultimas || []).map(v => `<div class="li ${v.anulada ? 'anul' : ''}" data-a="verVenta" data-id="${v.id}" data-f="${v.fecha}"><div class="av ${colorDe(v.cliente)}">${esc(iniciales(v.cliente))}</div><div class="tx"><b>${esc(v.cliente)}</b><small>${esc(v.numero)} · ${esc(v.metodo)} · ${hace(v.fecha)}</small></div><div class="am n">${money(v.total)}${v.anulada ? '<small>Anulada</small>' : ''}</div></div>`).join('') || '<div class="empty">Todavía no hay ventas. ¡Haz la primera!</div>'}</div>`;
   } else {
