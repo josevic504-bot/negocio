@@ -556,6 +556,10 @@ body.en-tienda{padding-bottom:110px}
 .sp-card .nm{font:600 17px/1.15 var(--serif);min-height:0}
 .shop-hero.v2{padding:16px 18px 66px;border-radius:0;background:radial-gradient(120% 90% at 50% 0%,var(--h2),var(--h1))}
 .shop-hero.v2:after{display:none}
+.shop-hero.v2.con-portada{background:linear-gradient(180deg,color-mix(in srgb,var(--h1) 55%,transparent),color-mix(in srgb,var(--h1) 88%,transparent)),var(--portada) center/cover no-repeat;text-shadow:0 2px 12px rgba(0,0,0,.35)}
+.shop-hero.v2.con-portada .mono{background:rgba(0,0,0,.25)}
+.td-portada{position:relative;border-radius:16px;overflow:hidden;aspect-ratio:16/7;background:linear-gradient(120deg,var(--h1),var(--h2));display:grid;place-items:center;color:#fff;margin-bottom:10px}
+.td-portada img{width:100%;height:100%;object-fit:cover;position:absolute;inset:0}.td-portada span{position:relative;font-size:13px;opacity:.9;text-align:center;padding:0 16px}
 .shop-hero.v2 .top{display:flex;justify-content:space-between;position:relative;z-index:1;margin-bottom:4px}
 .shop-hero.v2 .top button{background:rgba(255,255,255,.14);border:0;color:#fff;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;cursor:pointer;position:relative}
 .shop-hero.v2 .top button b{position:absolute;top:-5px;right:-5px;background:var(--a1);color:#fff;font-size:11px;min-width:19px;height:19px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
@@ -629,6 +633,49 @@ body.en-tienda{padding-bottom:110px}
 .t-chat{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:24;width:54px;height:54px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;display:grid;place-items:center;box-shadow:0 8px 22px rgba(0,0,0,.22);cursor:pointer}
 .t-chat b{position:absolute;top:-4px;right:-4px;background:var(--a1);color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
 .t-chat.up{bottom:calc(84px + env(safe-area-inset-bottom))}
+.f-urbana .hero-name,.f-urbana .shop-h2 span,.f-urbana .owner-n,.f-urbana .prod-n{letter-spacing:.04em;font-weight:400}
+.f-manuscrita .hero-name{font-weight:400;font-size:34px;line-height:1.25}.f-manuscrita .shop-h2 span,.f-manuscrita .owner-n,.f-manuscrita .prod-n,.f-manuscrita .shop-foot .fn{font-weight:400}
+.f-manuscrita .sp-card .nm,.f-manuscrita .shop-nav .nn{font-family:var(--font);font-weight:600}
+.f-urbana .shop-about p,.f-urbana .owner-m,.f-manuscrita .shop-about p,.f-manuscrita .owner-m{font-family:var(--font);font-size:16px;line-height:1.5}.f-urbana .hero-esl,.f-manuscrita .hero-esl{font-style:normal}.f-urbana .hero-esl{letter-spacing:.06em;font-size:22px}
+.fuentes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fuente{border:1.5px solid var(--line);background:var(--card);border-radius:16px;padding:12px;text-align:left;cursor:pointer;font:inherit;color:inherit;position:relative}
+.fuente.on{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri2)}.fuente.on:after{content:"✓";position:absolute;top:8px;right:10px;width:20px;height:20px;border-radius:50%;background:var(--pri);color:var(--onpri);font-size:12px;display:grid;place-items:center}
+.fuente .ft{font-size:24px;line-height:1.1;display:block}.fuente .fn{font-weight:600;font-size:13px;margin-top:6px;display:block}.fuente .fd{font-size:11.5px;color:var(--mut);display:block}
+.td-head{background:linear-gradient(120deg,var(--h1),var(--h2));color:#fff;border-radius:22px;padding:16px;margin-bottom:14px}
+.td-head .st{display:flex;align-items:center;gap:8px;font-weight:600}.td-head .st i{width:9px;height:9px;border-radius:50%;background:#4ef08f;box-shadow:0 0 0 3px rgba(78,240,143,.3)}.td-head .st.off i{background:#ff6b7f;box-shadow:0 0 0 3px rgba(255,107,127,.3)}
+.td-head .lnk{font-size:12.5px;opacity:.9;word-break:break-all;margin:6px 0 10px}.td-head .row .btn{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.35);color:#fff}
+.shop-nav,.hero-cta,.shop-foot .fdesk{display:none}
+.shop-two{display:block}
+.shop-foot .fs a{color:var(--pri);text-decoration:none}
+@media(min-width:900px){
+  html{scroll-behavior:smooth}
+  .shop-nav{display:flex;align-items:center;gap:24px;position:sticky;top:0;z-index:30;background:color-mix(in srgb,var(--card) 92%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:10px 32px}
+  .shop-nav .brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:var(--ink)}
+  .shop-nav .nl{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font:600 15px var(--serif);background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;overflow:hidden}.shop-nav .nl img{width:100%;height:100%;object-fit:cover}
+  .shop-nav .nn{font:600 20px var(--serif)}
+  .shop-nav .links{display:flex;gap:22px;margin-left:auto}.shop-nav .links a{color:var(--ink);text-decoration:none;font-weight:500;font-size:14.5px;opacity:.85}.shop-nav .links a:hover{color:var(--pri);opacity:1}
+  .shop-nav .acts{display:flex;gap:8px}.shop-nav .acts .c{background:rgba(255,255,255,.25);border-radius:9px;padding:0 6px;font-size:12px}
+  .shop-hero.v2{padding:56px 32px 96px}.shop-hero.v2 .top{display:none}
+  .shop-hero.v2 .hero-c{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr auto;grid-template-rows:auto auto auto auto;column-gap:48px;text-align:left;align-items:center}
+  .shop-hero.v2 .mono,.shop-hero.v2 .hero-logo{grid-column:2;grid-row:1/span 4;width:180px;height:180px;font-size:72px;margin:0}
+  .shop-hero.v2 .hero-name{font-size:64px}.shop-hero.v2 .hero-giro{justify-content:flex-start}.shop-hero.v2 .hero-esl{font-size:26px}
+  .hero-cta{display:flex;gap:12px;margin-top:22px}.hero-cta .btn{width:auto;padding:13px 22px;border-radius:14px;font-size:15px;text-decoration:none;background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.35);color:#fff}
+  .hero-cta .btn.wa{background:#1fa855;border-color:#1fa855}
+  .shop-box.v2{max-width:1100px;padding:0 32px 60px;margin-top:-64px}
+  .shop-info{display:grid;grid-template-columns:1.1fr 1.6fr;column-gap:36px;padding:20px 28px}.shop-info .shop-open{grid-column:1/-1;margin-bottom:4px}
+  .shop-acts{margin:8px 0 0;grid-template-columns:repeat(auto-fit,minmax(64px,1fr))}
+  .shop-rows{border-top:0;margin-top:4px;display:grid;grid-template-columns:1fr 1fr;column-gap:16px}
+  .shop-two{display:grid;grid-template-columns:1fr 1fr;gap:24px;align-items:start;margin-top:8px}
+  .shop-two .shop-about{text-align:left;padding:24px 4px}.shop-two .shop-about .shop-sec{text-align:left}.shop-two .shop-about p{font-size:22px}
+  .shop-two .owner{margin:0}.shop-two .owner .shop-sec{text-align:left;margin-left:4px}.shop-two:has(.owner:only-child) .owner{grid-column:1/-1;max-width:620px}
+  .shop-h2{margin-top:28px}.shop-h2 span{font-size:34px}
+  .shop-box.v2 .shop-grid{grid-template-columns:repeat(4,1fr);gap:18px}.shop-box.v2 .pc .ph{aspect-ratio:1/1}
+  .shop-foot{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:24px;text-align:left;margin-top:48px;padding-top:28px}
+  .shop-foot .fdesk{display:block;font-size:13.5px;color:var(--mut)}.shop-foot .fdesk div{display:flex;gap:8px;align-items:flex-start;margin:6px 0;line-height:1.4}.shop-foot .fdesk .ic{flex:none;margin-top:2px}.shop-foot .fdesk .ic{color:var(--pri)}
+  .shop-foot .ft{font-size:10.5px;letter-spacing:.28em;color:var(--mut);text-transform:uppercase;margin-bottom:8px}.shop-foot .fdesk a{color:var(--pri);text-decoration:none}
+  .shop-foot .fl{margin:0}.shop-foot .fmob{display:none}
+  .t-chat{right:28px;bottom:28px}.cartbar.shop-cart{left:auto;right:28px;width:420px;bottom:96px}
+}
 .sp-op{font-size:11.5px;color:var(--mut);margin-top:3px;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .op-f{display:flex;align-items:center;gap:7px;margin-top:10px}
 .op-f>b,.op-l{font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:500;text-transform:uppercase}
@@ -987,7 +1034,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaPortada: '',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
@@ -1761,12 +1808,18 @@ function guardar_(u, d) {
     req_(u, ['admin']);
     const reg = {};
     Object.keys(d.registro || {}).forEach(k => { if (CONFIG_EDITABLE.indexOf(k) >= 0) reg[k] = String(d.registro[k]); });
-    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
-    if (reg.duenoFoto && (reg.duenoFoto.length > 60000 || reg.duenoFoto.indexOf('data:image/') !== 0)) throw new Error('La foto del propietario no es válida. Súbela de nuevo.');
+    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && k !== 'tiendaPortada' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
+    if (reg.duenoFoto && (reg.duenoFoto.length > 48000 || reg.duenoFoto.indexOf('data:image/') !== 0)) throw new Error('La foto del propietario no es válida. Súbela de nuevo.');
+    if (reg.tiendaPortada !== undefined) {
+      const prev = config_().tiendaPortada;
+      if (reg.tiendaPortada && !(reg.tiendaPortada.indexOf('data:image/') === 0 ? reg.tiendaPortada.length <= 160000 : fotoPropia_(reg.tiendaPortada))) throw new Error('La foto de portada no es válida. Súbela de nuevo.');
+      if (prev && prev !== reg.tiendaPortada) borrarFoto_(prev);
+    }
     ['tiendaAbre', 'tiendaCierra'].forEach(k => { if (reg[k] && !/^([01]\d|2[0-3]):[0-5]\d$/.test(reg[k])) throw new Error('Escribe la hora con el formato 08:00'); });
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
     if (reg.isv !== undefined && !(Number(reg.isv) >= 0 && Number(reg.isv) < 1)) throw new Error('ISV no válido');
     if (reg.tienda === 'si' && !plus_()) throw new Error('La tienda en línea es parte del plan Plus');
+    if (reg.tiendaFuente !== undefined && ['elegante', 'moderna', 'clasica', 'amigable', 'urbana', 'manuscrita'].indexOf(reg.tiendaFuente) < 0) reg.tiendaFuente = 'elegante';
     const c = guardarConfig_(reg);
     if (MULTI_NEGOCIO && NEG && reg.nombre) { try { mSet_('Licencias', NEG.lic, { negocio: txt_(reg.nombre, 60) }); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
     return sinInternos_(c);
@@ -3282,7 +3335,7 @@ function tiendaNeg_(d) {
     if (L.estado === 'vencida') throw new Error('La tienda en línea de este negocio no está disponible por ahora');
   }
   const cfg = config_();
-  if (cfg.tienda !== 'si' || !plus_()) throw new Error('TIENDA_CERRADA|' + JSON.stringify({ nombre: cfg.nombre, telefono: cfg.telefono, tema: cfg.tema, logo: cfg.logo }));
+  if (cfg.tienda !== 'si' || !plus_()) throw new Error('TIENDA_CERRADA|' + JSON.stringify({ nombre: cfg.nombre, telefono: cfg.telefono, tema: cfg.tema, logo: cfg.logo, fuente: cfg.tiendaFuente }));
   return cfg;
 }
 
@@ -3294,7 +3347,7 @@ function tiendaInfo_(d) {
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago,
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
-      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, chat: cfg.tiendaChat !== 'no',
+      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
         datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null },
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
@@ -4018,6 +4071,7 @@ const debounce = (fn, ms) => { let t; return (...a) => { clearTimeout(t); t = se
 const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 const colorDe = s => { const c = ['t-pri', 't-azul', 't-morado', 't-cian', 't-naranja', 't-rojo', 't-verde', 't-acc']; let h = 0; String(s || '').split('').forEach(ch => { h = (h * 31 + ch.charCodeAt(0)) | 0; }); return c[Math.abs(h) % c.length]; };
 const fotoSrc = f => !f ? '' : String(f).indexOf('data:') === 0 || String(f).indexOf('http') === 0 ? f : 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(f) + '&sz=w600';
+const fotoAncha = f => fotoSrc(f).replace('sz=w600', 'sz=w1400');
 function avatarProd(p, cls) {
   const src = fotoSrc(p.foto);
   if (src) return `<div class="${cls || 'av'} ${colorDe(p.categoria)}"><img src="${esc(src)}" alt="" loading="lazy" onerror="this.remove()">${p.icono ? `<span class="emo">${esc(p.icono)}</span>` : `<span class="ini">${esc(iniciales(p.nombre))}</span>`}</div>`;
@@ -4214,6 +4268,7 @@ const VISTAS = {
   vender:      { t: 'Vender', i: 'cart', roles: ['admin', 'cajero'] },
   pedidos:     { t: 'Pedidos en línea', c: 'Pedidos', i: 'inbox', roles: ['admin', 'cajero'] },
   mensajes:    { t: 'Mensajes', i: 'chat', roles: ['admin', 'cajero'] },
+  tienda:      { t: 'Mi tienda en línea', c: 'Tienda', i: 'store', roles: ['admin'] },
   productos:   { t: 'Productos', i: 'box', roles: TODOS },
   precios:     { t: 'Precios', i: 'tag', roles: ['admin', 'bodega'] },
   proyectos:   { t: 'Proyectos', i: 'layers', roles: ['admin', 'bodega'] },
@@ -4227,7 +4282,7 @@ const VISTAS = {
   usuarios:    { t: 'Usuarios', i: 'user', roles: ['admin'] },
   ajustes:     { t: 'Ajustes', i: 'gear', roles: TODOS }
 };
-const NAV_PC = ['inicio', 'vender', 'pedidos', 'mensajes', 'productos', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
+const NAV_PC = ['inicio', 'vender', 'pedidos', 'mensajes', 'tienda', 'productos', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
 const R = {}; // funciones que pintan cada vista
 const puedeVer = v => VISTAS[v] && VISTAS[v].roles.includes(S.user.rol);
 
@@ -4910,7 +4965,7 @@ R.pedidos = async () => {
   if (!S.plus) { m.innerHTML = plusCard() + '<div class="empty">Cuando actives Plus, aquí verás los pedidos que te hagan por internet.</div>'; return; }
   const tienda = S.config.tienda === 'si'
     ? `<div class="link-card"><div class="li-ic">${ic('store', 22)}</div><div class="tx"><b>Tu tienda en línea está abierta</b><small>${esc(linkTienda())}</small></div><div class="row"><button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a></div></div>`
-    : `<div class="aviso info">${ic('store', 20)}<div><b>Tu tienda en línea está apagada</b><small>Actívala para recibir pedidos por internet.</small></div>${puede('admin') ? `<button class="btn sm pri" data-a="ir" data-v="ajustes" data-p='{"sec":"tienda"}'>Activar</button>` : ''}</div>`;
+    : `<div class="aviso info">${ic('store', 20)}<div><b>Tu tienda en línea está apagada</b><small>Actívala para recibir pedidos por internet.</small></div>${puede('admin') ? `<button class="btn sm pri" data-a="ir" data-v="tienda">Activar</button>` : ''}</div>`;
   if (!S.pedidosL) m.innerHTML = tienda + '<div class="empty">Cargando pedidos…</div>';
   try { S.pedidosL = await api('pedidos', {}, !!S.pedidosL); } catch (e) { if (S.pedidosL && m.querySelector('.ords')) return err(e); throw e; }
   if (S.vista !== 'pedidos') return;
@@ -6120,28 +6175,7 @@ R.ajustes = () => {
   h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `<div class="temas">${Object.keys(TEMAS).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div><p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
     <div class="fld" style="margin-top:12px"><span>Modo (solo en este equipo)</span><div class="modos">${[['auto', 'auto', 'Automático'], ['claro', 'sun', 'Claro'], ['oscuro', 'moon', 'Oscuro']].map(([k, i, t]) => `<button class="pay ${modo === k ? 'on' : ''}" data-a="modoColor" data-m="${k}">${ic(i)}${t}</button>`).join('')}</div></div>
     ${adm ? `<div class="fld"><span>Logo</span><div class="row"><div class="logo-prev">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(iniciales(c.nombre))}</div><label class="btn">${ic('image', 18)} Subir logo<input type="file" accept="image/*" id="aj-logo" hidden></label>${c.logo ? `<button class="btn ghost" data-a="quitarLogo">Quitar</button>` : ''}</div></div>` : ''}`);
-  if (adm) h += sec('tienda', 'globe', 'Tienda en línea', !S.plus ? plusCard(1) : `<label class="sw-row"><input type="checkbox" data-k="tienda" data-on="si" data-off="no" ${c.tienda === 'si' ? 'checked' : ''}><span class="sw"></span><div><b>Recibir pedidos en línea</b><small>Tus clientes ven tu catálogo y te hacen pedidos</small></div></label>
-    ${c.tienda === 'si' ? `<div class="link-card sm"><div class="tx"><b>Enlace de tu tienda</b><small>${esc(linkTienda())}</small></div><div class="row"><button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a></div></div>` : ''}
-    <label class="fld"><span>Mensaje de bienvenida</span><input data-k="tiendaMensaje" value="${v('tiendaMensaje')}" maxlength="160" placeholder="¡Bienvenido! Haz tu pedido…"></label>
-    <div class="f2"><label class="fld"><span>Horario (texto)</span><input data-k="tiendaHorario" value="${v('tiendaHorario')}" placeholder="Lunes a sábado · 8 a. m. a 6 p. m."></label><label class="fld"><span>Entregas</span>${sel('tiendaEntrega', [['ambos', 'A domicilio y para recoger'], ['recoger', 'Solo para recoger'], ['domicilio', 'Solo a domicilio']])}</label></div>
-    <div class="f2"><label class="fld"><span>Costo de envío a domicilio</span><input data-k="tiendaEnvio" inputmode="decimal" value="${v('tiendaEnvio')}"></label><label class="fld"><span>Pedido mínimo</span><input data-k="tiendaMinimo" inputmode="decimal" value="${v('tiendaMinimo')}" placeholder="0 = sin mínimo"></label></div>
-    <div class="fld"><span>Formas de pago que aceptas</span><div class="row" id="aj-pagos">${['Efectivo', 'Transferencia', 'Tarjeta'].map(p => `<label class="chk"><input type="checkbox" value="${p}" ${String(c.tiendaPagos).split(',').includes(p) ? 'checked' : ''}> ${p}</label>`).join('')}</div></div>
-    <label class="fld"><span>Datos para transferencia</span><input data-k="tiendaDatosPago" value="${v('tiendaDatosPago')}" placeholder="Banco · cuenta · a nombre de…"></label>
-    <div class="f2"><label class="fld"><span>Mostrar existencias</span>${sel('tiendaMostrarStock', [['no', 'No mostrar'], ['si', 'Mostrar cuántos hay']])}</label><label class="fld"><span>Productos agotados</span>${sel('tiendaSinStock', [['no', 'No se pueden pedir'], ['si', 'Se pueden pedir igual']])}</label></div>
-    <h4 style="margin:14px 0 8px">Información que ven tus clientes</h4>
-    <div class="f3"><label class="fld"><span>Abres a las</span><input data-k="tiendaAbre" type="time" value="${v('tiendaAbre')}"></label><label class="fld"><span>Cierras a las</span><input data-k="tiendaCierra" type="time" value="${v('tiendaCierra')}"></label><label class="fld"><span>Días</span><select data-k="tiendaDias">${[['1,2,3,4,5,6', 'Lunes a sábado'], ['1,2,3,4,5', 'Lunes a viernes'], ['0,1,2,3,4,5,6', 'Todos los días'], ['1,2,3,4,5,6,0', 'Lunes a domingo'], ['2,3,4,5,6,0', 'Martes a domingo']].map(([val, t]) => `<option value="${val}" ${String(c.tiendaDias || '1,2,3,4,5,6') === val ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
-    <small class="hint" style="margin:-6px 0 10px">Con las horas, tu tienda muestra «Abierto ahora» o «Cerrado» sola.</small>
-    <label class="fld"><span>Sobre nosotros (una o dos frases)</span><textarea data-k="tiendaSobre" rows="2" maxlength="300" placeholder="Negocio familiar desde 2015…">${v('tiendaSobre')}</textarea></label>
-    <div class="f3"><label class="fld"><span>Instagram</span><input data-k="tiendaInstagram" value="${v('tiendaInstagram')}" placeholder="@tunegocio"></label><label class="fld"><span>Facebook</span><input data-k="tiendaFacebook" value="${v('tiendaFacebook')}" placeholder="tunegocio"></label><label class="fld"><span>Enlace de Google Maps</span><input data-k="tiendaMapa" value="${v('tiendaMapa')}" placeholder="Opcional"></label></div>
-    <label class="sw-row"><input type="checkbox" data-k="tiendaChat" data-on="si" data-off="no" ${c.tiendaChat !== 'no' ? 'checked' : ''}><span class="sw"></span><div><b>Recibir mensajes directos</b><small>Tus clientes te escriben desde la tienda y respondes en Mensajes. Se borran solos a los 2 meses.</small></div></label>
-    <button class="btn pri" data-a="guardarAj" data-s="tienda">Guardar</button>`, S.plus ? '<span class="plus-b">PLUS</span> activo' : '');
-  if (adm && S.plus) h += sec('dueno', 'user', 'Propietario', `<p class="xs mut">Aparece en tu tienda en línea como «Conoce a quien te atiende». Déjalo vacío si no quieres mostrarlo.</p>
-    <div class="row" style="margin-bottom:12px"><div class="logo-prev" style="border-radius:50%">${c.duenoFoto ? `<img src="${esc(c.duenoFoto)}" alt="">` : esc(iniciales(c.duenoNombre || '?'))}</div><label class="btn">${ic('cam', 18)} Foto<input type="file" accept="image/*" id="aj-dfoto" hidden></label>${c.duenoFoto ? `<button class="btn ghost" data-a="quitarDuenoFoto">Quitar</button>` : ''}</div>
-    <div class="f2"><label class="fld"><span>Nombre</span><input data-k="duenoNombre" value="${v('duenoNombre')}" maxlength="60" placeholder="Sofía Hernández"></label><label class="fld"><span>Cargo</span><input data-k="duenoCargo" value="${v('duenoCargo')}" maxlength="40" placeholder="Propietaria"></label></div>
-    <label class="fld"><span>Mensaje para tus clientes</span><textarea data-k="duenoMensaje" rows="2" maxlength="200" placeholder="Cada producto lo escojo pensando en mis clientes…">${v('duenoMensaje')}</textarea></label>
-    <label class="fld"><span>Datos destacados (hasta 3, separados por |)</span><input data-k="duenoDatos" value="${v('duenoDatos')}" maxlength="120" placeholder="10 años de experiencia | Atención personal"></label>
-    <label class="fld"><span>WhatsApp personal (si es distinto al del negocio)</span><input data-k="duenoWhatsapp" value="${v('duenoWhatsapp')}" placeholder="Opcional"></label>
-    <button class="btn pri" data-a="guardarAj" data-s="dueno">Guardar</button>`);
+  if (adm) h += sec('tienda', 'store', 'Tienda en línea', `<p class="sm" style="margin:0 0 10px">Todo lo de tu tienda (enlace, letra, información, propietario, entregas y pagos) ahora vive en su propio módulo.</p><button class="btn pri" data-a="ir" data-v="tienda">${ic('store', 18)} Abrir Mi tienda en línea</button>`, S.plus ? '<span class="plus-b">PLUS</span> activo' : '');
   if (adm) h += sec('mensajes', 'wa', 'Mensajes de WhatsApp', `<p class="xs mut">Puedes usar {cliente}, {numero}, {total}, {saldo} y {negocio}.</p>
     <label class="fld"><span>Al confirmar un pedido</span><textarea data-k="msjPedido" rows="2">${v('msjPedido')}</textarea></label>
     <label class="fld"><span>Cuando el pedido está listo</span><textarea data-k="msjListo" rows="2">${v('msjListo')}</textarea></label>
@@ -6159,10 +6193,62 @@ R.ajustes = () => {
   initSarAjustes();
   if (S.params.sec) { const el = $('#aj-' + S.params.sec); S.params.sec = ''; if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
 };
+/* ===================== MI TIENDA EN LÍNEA (módulo) ===================== */
+R.tienda_bar = () => S.plus && S.config.tienda === 'si' ? `<button class="hbtn" data-a="compartirTienda" aria-label="Compartir tienda">${ic('share', 20)}</button>` : '';
+R.tienda = () => {
+  const c = S.config, m = $('#main');
+  if (!S.plus) { m.innerHTML = plusCard() + '<div class="empty">Con Plus, tus clientes ven tu catálogo con fotos, te hacen pedidos y te escriben desde un enlace propio.</div>'; return; }
+  const v = k => esc(c[k] === undefined ? '' : c[k]);
+  const sel = (k, opts) => `<select data-k="${k}">${opts.map(([val, t]) => `<option value="${val}" ${String(c[k]) === String(val) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
+  const sec = (id, icn, t, html, sub) => `<section class="panel aj" id="aj-${id}"><div class="aj-h"><i class="${colorDe(id)}">${ic(icn, 20)}</i><div><h3>${t}</h3>${sub ? `<small>${sub}</small>` : ''}</div></div>${html}</section>`;
+  const abierta = c.tienda === 'si', fu = c.tiendaFuente || 'elegante';
+  cargarFuentes(Object.keys(FUENTES));
+  let h = `<div class="td-head"><div class="st ${abierta ? '' : 'off'}"><i></i>${abierta ? 'Tu tienda está abierta' : 'Tu tienda está apagada'}</div><div class="lnk">${esc(linkTienda())}</div>
+      <div class="row">${abierta ? `<button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a><button class="btn sm" data-a="compartirTienda">${ic('share', 16)} Compartir</button>` : ''}</div></div>`;
+  h += sec('estado', 'globe', 'Recibir pedidos', `<label class="sw-row"><input type="checkbox" data-k="tienda" data-on="si" data-off="no" ${abierta ? 'checked' : ''}><span class="sw"></span><div><b>Tienda abierta</b><small>Tus clientes ven tu catálogo y te hacen pedidos desde el enlace</small></div></label>
+    <label class="sw-row"><input type="checkbox" data-k="tiendaChat" data-on="si" data-off="no" ${c.tiendaChat !== 'no' ? 'checked' : ''}><span class="sw"></span><div><b>Recibir mensajes directos</b><small>Te escriben desde la tienda y respondes en Mensajes. Se borran solos a los 2 meses.</small></div></label>
+    <label class="fld"><span>Mensaje de bienvenida</span><input data-k="tiendaMensaje" value="${v('tiendaMensaje')}" maxlength="160" placeholder="¡Bienvenido! Haz tu pedido…"></label>
+    <button class="btn pri" data-a="guardarAj" data-s="estado">Guardar</button>`);
+  h += sec('portada', 'image', 'Foto de portada', `<div class="td-portada">${c.tiendaPortada ? `<img src="${esc(fotoAncha(c.tiendaPortada))}" alt="">` : `<span>Sin portada: se muestra el color de tu tema.<br>Una foto ancha de tu local o tus productos queda muy bien.</span>`}</div>
+    <div class="row"><label class="btn pri">${ic('cam', 18)} ${c.tiendaPortada ? 'Cambiar foto' : 'Subir foto'}<input type="file" accept="image/*" id="td-portada" hidden></label>${c.tiendaPortada ? `<button class="btn ghost" data-a="quitarPortada">Quitar</button>` : ''}</div>
+    <small class="hint">Se ve detrás del nombre de tu negocio, con tus colores encima. Mejor si es horizontal.</small>`);
+  h += sec('letra', 'palette', 'Letra de tu tienda', `<p class="xs mut">Toca un estilo para verlo. Los colores se cambian en Ajustes › Apariencia.</p>
+    <div class="fuentes" id="td-fuentes">${Object.keys(FUENTES).map(k => { const f = FUENTES[k]; return `<button type="button" class="fuente ${k === fu ? 'on' : ''}" data-f="${k}"><span class="ft" style="font-family:${f.serif}">${esc(c.nombre || 'Mi negocio')}</span><span class="fn" style="font-family:${f.sans}">${f.n}</span><span class="fd" style="font-family:${f.sans}">${f.d}</span></button>`; }).join('')}</div>`);
+  h += sec('info', 'clock', 'Información que ven tus clientes', `<div class="f3"><label class="fld"><span>Abres a las</span><input data-k="tiendaAbre" type="time" value="${v('tiendaAbre')}"></label><label class="fld"><span>Cierras a las</span><input data-k="tiendaCierra" type="time" value="${v('tiendaCierra')}"></label><label class="fld"><span>Días</span><select data-k="tiendaDias">${[['1,2,3,4,5,6', 'Lunes a sábado'], ['1,2,3,4,5', 'Lunes a viernes'], ['0,1,2,3,4,5,6', 'Todos los días'], ['1,2,3,4,5,6,0', 'Lunes a domingo'], ['2,3,4,5,6,0', 'Martes a domingo']].map(([val, t]) => `<option value="${val}" ${String(c.tiendaDias || '1,2,3,4,5,6') === val ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
+    <small class="hint" style="margin:-6px 0 10px">Con las horas, tu tienda muestra «Abierto ahora» o «Cerrado» sola.</small>
+    <label class="fld"><span>Horario (texto que se muestra)</span><input data-k="tiendaHorario" value="${v('tiendaHorario')}" placeholder="Lunes a sábado · 8 a. m. a 6 p. m."></label>
+    <label class="fld"><span>Sobre nosotros (una o dos frases)</span><textarea data-k="tiendaSobre" rows="2" maxlength="300" placeholder="Negocio familiar desde 2015…">${v('tiendaSobre')}</textarea></label>
+    <div class="f3"><label class="fld"><span>Instagram</span><input data-k="tiendaInstagram" value="${v('tiendaInstagram')}" placeholder="@tunegocio"></label><label class="fld"><span>Facebook</span><input data-k="tiendaFacebook" value="${v('tiendaFacebook')}" placeholder="tunegocio"></label><label class="fld"><span>Enlace de Google Maps</span><input data-k="tiendaMapa" value="${v('tiendaMapa')}" placeholder="Opcional"></label></div>
+    <p class="xs mut">La dirección, el teléfono y el eslogan se toman de Ajustes › Mi negocio.</p>
+    <button class="btn pri" data-a="guardarAj" data-s="info">Guardar</button>`);
+  h += sec('dueno', 'user', 'Propietario', `<p class="xs mut">Aparece en tu tienda como «Conoce a quien te atiende». Déjalo vacío si no quieres mostrarlo.</p>
+    <div class="row" style="margin-bottom:12px"><div class="logo-prev" style="border-radius:50%">${c.duenoFoto ? `<img src="${esc(c.duenoFoto)}" alt="">` : esc(iniciales(c.duenoNombre || '?'))}</div><label class="btn">${ic('cam', 18)} Foto<input type="file" accept="image/*" id="aj-dfoto" hidden></label>${c.duenoFoto ? `<button class="btn ghost" data-a="quitarDuenoFoto">Quitar</button>` : ''}</div>
+    <div class="f2"><label class="fld"><span>Nombre</span><input data-k="duenoNombre" value="${v('duenoNombre')}" maxlength="60" placeholder="Sofía Hernández"></label><label class="fld"><span>Cargo</span><input data-k="duenoCargo" value="${v('duenoCargo')}" maxlength="40" placeholder="Propietaria"></label></div>
+    <label class="fld"><span>Mensaje para tus clientes</span><textarea data-k="duenoMensaje" rows="2" maxlength="200" placeholder="Cada producto lo escojo pensando en mis clientes…">${v('duenoMensaje')}</textarea></label>
+    <label class="fld"><span>Datos destacados (hasta 3, separados por |)</span><input data-k="duenoDatos" value="${v('duenoDatos')}" maxlength="120" placeholder="10 años de experiencia | Atención personal"></label>
+    <label class="fld"><span>WhatsApp personal (si es distinto al del negocio)</span><input data-k="duenoWhatsapp" value="${v('duenoWhatsapp')}" placeholder="Opcional"></label>
+    <button class="btn pri" data-a="guardarAj" data-s="dueno">Guardar</button>`);
+  h += sec('entregas', 'truck', 'Entregas y pagos', `<div class="f2"><label class="fld"><span>Entregas</span>${sel('tiendaEntrega', [['ambos', 'A domicilio y para recoger'], ['recoger', 'Solo para recoger'], ['domicilio', 'Solo a domicilio']])}</label><label class="fld"><span>Costo de envío a domicilio</span><input data-k="tiendaEnvio" inputmode="decimal" value="${v('tiendaEnvio')}"></label></div>
+    <div class="f2"><label class="fld"><span>Pedido mínimo</span><input data-k="tiendaMinimo" inputmode="decimal" value="${v('tiendaMinimo')}" placeholder="0 = sin mínimo"></label><label class="fld"><span>Mostrar existencias</span>${sel('tiendaMostrarStock', [['no', 'No mostrar'], ['si', 'Mostrar cuántos hay']])}</label></div>
+    <div class="fld"><span>Formas de pago que aceptas</span><div class="row" id="aj-pagos">${['Efectivo', 'Transferencia', 'Tarjeta'].map(p => `<label class="chk"><input type="checkbox" value="${p}" ${String(c.tiendaPagos).split(',').includes(p) ? 'checked' : ''}> ${p}</label>`).join('')}</div></div>
+    <label class="fld"><span>Datos para transferencia</span><input data-k="tiendaDatosPago" value="${v('tiendaDatosPago')}" placeholder="Banco · cuenta · a nombre de…"></label>
+    <label class="fld"><span>Productos agotados</span>${sel('tiendaSinStock', [['no', 'No se pueden pedir'], ['si', 'Se pueden pedir igual']])}</label>
+    <button class="btn pri" data-a="guardarAj" data-s="entregas">Guardar</button>`);
+  m.innerHTML = h;
+  const df = $('#aj-dfoto'); if (df) df.addEventListener('change', subirDuenoFoto);
+  const pf = $('#td-portada'); if (pf) pf.addEventListener('change', subirPortada);
+  $('#td-fuentes').addEventListener('click', async e => {
+    const b = e.target.closest('[data-f]'); if (!b) return;
+    $$('#td-fuentes .fuente').forEach(x => x.classList.toggle('on', x === b));
+    const cf = await api('guardar', { entidad: 'Config', registro: { tiendaFuente: b.dataset.f } }, true);
+    S.config = cf; guardarCache(); toast('Letra aplicada: ' + FUENTES[b.dataset.f].n, 'ok', 1800);
+  });
+  if (S.params.sec) { const el = $('#aj-' + S.params.sec); S.params.sec = ''; if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
+};
 ACC.guardarAj = async el => {
   const s = $('#aj-' + el.dataset.s), reg = {};
   $$('[data-k]', s).forEach(i => { reg[i.dataset.k] = i.type === 'checkbox' ? (i.checked ? i.dataset.on : i.dataset.off) : i.value.trim(); });
-  if (el.dataset.s === 'tienda') { const p = $$('#aj-pagos input', s).filter(x => x.checked).map(x => x.value); if (!p.length) throw new Error('Elige al menos una forma de pago'); reg.tiendaPagos = p.join(','); }
+  if (el.dataset.s === 'tienda' || el.dataset.s === 'entregas') { const p = $$('#aj-pagos input', s).filter(x => x.checked).map(x => x.value); if (!p.length) throw new Error('Elige al menos una forma de pago'); reg.tiendaPagos = p.join(','); }
   const c = await api('guardar', { entidad: 'Config', registro: reg });
   S.config = c; guardarCache(); aplicarTema(c.tema); toast('Ajustes guardados', 'ok'); render();
 };
@@ -6173,16 +6259,27 @@ ACC.tema = async el => {
   S.config = c; guardarCache(); pintarHeader(); toast('Color aplicado: ' + TEMAS[el.dataset.t].n, 'ok', 1800);
 };
 ACC.modoColor = el => { LS.set('modoColor', el.dataset.m); aplicarTema(S.tema); $$('.modos .pay').forEach(x => x.classList.toggle('on', x === el)); };
+async function subirPortada(e) {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    loader(true);
+    const d = await comprimirImagen(f, DEMO.on ? 480 : 1400);
+    const r = await api('subirFoto', { data: d }, true);
+    const c = await api('guardar', { entidad: 'Config', registro: { tiendaPortada: r.foto } }, true);
+    S.config = c; guardarCache(); toast('Portada guardada', 'ok'); S.params.sec = 'portada'; render();
+  } catch (x) { err(x); } finally { loader(false); }
+}
+ACC.quitarPortada = async () => { const c = await api('guardar', { entidad: 'Config', registro: { tiendaPortada: '' } }); S.config = c; guardarCache(); S.params.sec = 'portada'; render(); };
 async function subirDuenoFoto(e) {
   const f = e.target.files[0]; if (!f) return;
   try {
-    let d = await comprimirImagen(f, 320);
-    if (d.length > 56000) d = await comprimirImagen(f, 220);
+    let d = await comprimirImagen(f, 300);
+    if (d.length > 46000) d = await comprimirImagen(f, 200);
     const c = await api('guardar', { entidad: 'Config', registro: { duenoFoto: d } });
-    S.config = c; guardarCache(); toast('Foto guardada', 'ok'); S.params.sec = 'dueno'; R.ajustes();
+    S.config = c; guardarCache(); toast('Foto guardada', 'ok'); S.params.sec = 'dueno'; render();
   } catch (x) { err(x); }
 }
-ACC.quitarDuenoFoto = async () => { const c = await api('guardar', { entidad: 'Config', registro: { duenoFoto: '' } }); S.config = c; guardarCache(); S.params.sec = 'dueno'; R.ajustes(); };
+ACC.quitarDuenoFoto = async () => { const c = await api('guardar', { entidad: 'Config', registro: { duenoFoto: '' } }); S.config = c; guardarCache(); S.params.sec = 'dueno'; render(); };
 async function subirLogo(e) {
   const f = e.target.files[0]; if (!f) return;
   try {
@@ -6660,6 +6757,8 @@ const NOVEDADES = [
     { i: 'store', t: 'Tu tienda, más elegante', d: 'Nueva portada con tu logo, horario con «Abierto ahora», botones de WhatsApp, cómo llegar, Instagram y Facebook, y una sección «Sobre nosotros». Llénalo en Ajustes › Tienda en línea.', ir: 'ajustes' },
     { i: 'user', t: 'Conoce a quien te atiende', d: 'Agrega tu foto, cargo y un mensaje para tus clientes en Ajustes › Propietario. Aparece en tu tienda antes del catálogo.', ir: 'ajustes' },
     { i: 'chat', t: 'Mensajes directos', d: 'Tus clientes te escriben desde la tienda (por un producto o en general) y respondes desde la pantalla Mensajes. Las conversaciones se borran solas a los 2 meses.', ir: 'mensajes' },
+    { i: 'store', t: 'Módulo «Mi tienda en línea»', d: 'La tienda ya no se configura en Ajustes: tiene su propio módulo con el enlace, foto de portada, 6 estilos de letra para elegir, la información del negocio, el propietario y las entregas.', ir: 'tienda' },
+    { i: 'globe', t: 'Tu tienda como página web', d: 'Cuando la abren desde una computadora, la tienda se ve como un sitio web: barra de navegación, portada ancha, catálogo en 4 columnas y pie de página. En el celular sigue igual.' },
     { i: 'refresh', t: 'Más rápido con muchos datos', d: 'Inicio y Caja ahora leen solo los últimos 90 días de movimientos, así la app sigue abriendo rápido aunque tengas años de ventas. Tu tienda acepta hasta 150 pedidos por hora.' }
   ] },
   { v: '1.5', fecha: '2026-10-12', items: [
@@ -6694,6 +6793,9 @@ const AYUDA = {
   vender: { d: 'Tu caja registradora: agrega productos, cobra y entrega el comprobante.',
     p: ['Toca los productos para agregarlos al ticket. También puedes buscar o escanear el código y presionar Enter.', 'Toca la barra del ticket para <b>Cobrar</b>.', 'Elige el cliente (obligatorio si es al crédito) y la forma de pago. En efectivo escribe cuánto te dan: el cambio se calcula solo.', 'Pulsa <b>Cobrar</b> y envía el comprobante por WhatsApp o imprime el ticket.'],
     t: ['Para cambiar el precio de una línea toca el precio con el lápiz ✎.', 'Descuento: en Cobrar toca «agregar» junto a Descuento (en lempiras o en %).', 'Al crédito puedes recibir un anticipo; lo demás queda en la cuenta del cliente.'] },
+  tienda: { d: 'Todo lo de tu tienda en línea en un solo lugar: enlace, letra, información, propietario, entregas y pagos (plan Plus).',
+    p: ['Enciende «Tienda abierta» y comparte el enlace o el QR.', 'Elige la <b>letra</b> que más va con tu negocio; se aplica al instante.', 'Llena la información y el propietario: lo que dejes vacío no se muestra.'],
+    t: ['Los colores de la tienda son los mismos de la app: cámbialos en Ajustes › Apariencia.'] },
   mensajes: { d: 'Los mensajes que tus clientes te escriben desde tu tienda en línea (plan Plus).',
     p: ['Toca una conversación para leerla y responder.', 'Usa las <b>respuestas rápidas</b> para contestar con un toque.', 'Desde el chat puedes <b>crear un pedido</b> o avisarle al cliente por WhatsApp.'],
     t: ['El cliente ve tu respuesta cuando vuelve a abrir la tienda; si es urgente, avísale por WhatsApp.', 'Las conversaciones sin mensajes nuevos por 2 meses se borran solas.'] },
@@ -6916,6 +7018,28 @@ function imprimirTicket(v, det) {
   setTimeout(() => window.print(), 80);
 }
 
+/* ===================== LETRAS DE LA TIENDA ===================== */
+// Cada estilo combina una letra para títulos (serif) y otra para el texto (sans). Solo cambia la tienda, no la app.
+const FUENTES = {
+  elegante:   { n: 'Elegante',   d: 'Clásica y fina, como una boutique',      serif: "'Cormorant Garamond',Georgia,serif", sans: "'Jost',system-ui,sans-serif",        gf: 'family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600;700' },
+  moderna:    { n: 'Moderna',    d: 'Limpia y directa, para tecnología',      serif: "'Montserrat',system-ui,sans-serif",  sans: "'Inter',system-ui,sans-serif",       gf: 'family=Montserrat:wght@500;600;700&family=Inter:wght@400;500;600;700' },
+  clasica:    { n: 'Clásica',    d: 'De revista, con mucha personalidad',     serif: "'Playfair Display',Georgia,serif",   sans: "'Lato',system-ui,sans-serif",        gf: 'family=Playfair+Display:wght@500;600;700&family=Lato:wght@400;700' },
+  amigable:   { n: 'Amigable',   d: 'Redondita y cercana, para comida',       serif: "'Nunito',system-ui,sans-serif",      sans: "'Nunito',system-ui,sans-serif",      gf: 'family=Nunito:wght@400;600;700;800' },
+  urbana:     { n: 'Urbana',     d: 'Fuerte y en mayúsculas, estilo street',  serif: "'Bebas Neue',Impact,sans-serif",     sans: "'Roboto',system-ui,sans-serif",      gf: 'family=Bebas+Neue&family=Roboto:wght@400;500;700' },
+  manuscrita: { n: 'Manuscrita', d: 'A mano, para pastelerías y regalos',     serif: "'Pacifico',cursive",                 sans: "'Quicksand',system-ui,sans-serif",   gf: 'family=Pacifico&family=Quicksand:wght@400;500;600;700' }
+};
+const fuenteDe = id => FUENTES[id] || FUENTES.elegante;
+function cargarFuentes(ids) {
+  ids.forEach(id => { const f = fuenteDe(id); if (document.querySelector(`link[data-fuente="${id}"]`)) return;
+    const l = document.createElement('link'); l.rel = 'stylesheet'; l.dataset.fuente = id; l.href = 'https://fonts.googleapis.com/css2?' + f.gf + '&display=swap'; document.head.appendChild(l); });
+}
+function aplicarFuenteTienda(id) {
+  const f = fuenteDe(id), r = document.documentElement.style;
+  cargarFuentes([id]);
+  r.setProperty('--serif', f.serif); r.setProperty('--font', f.sans);
+  document.body.classList.toggle('f-urbana', id === 'urbana'); document.body.classList.toggle('f-manuscrita', id === 'manuscrita');
+}
+
 /* ===================== OPCIONES SEGÚN EL TIPO DE NEGOCIO ===================== */
 // Qué se le pregunta al cliente en el catálogo según el giro del negocio
 const OPC_GIRO = {
@@ -6961,7 +7085,7 @@ async function iniciarTienda(id) {
   }
   const n = T.info.negocio;
   S.config = Object.assign({}, S.config, { moneda: n.moneda, nombre: n.nombre });
-  aplicarTema(n.tema);
+  aplicarTema(n.tema); aplicarFuenteTienda(n.fuente);
   document.title = n.nombre + ' · Pedidos en línea';
   const ids = new Set(T.info.productos.map(p => p.id));
   Object.keys(T.cart).forEach(k => { if (!ids.has(kId(k))) delete T.cart[k]; });
@@ -6972,7 +7096,7 @@ async function iniciarTienda(id) {
   misPedidosTienda();
 }
 function tiendaCerrada(x) {
-  if (x.tema) aplicarTema(x.tema);
+  if (x.tema) aplicarTema(x.tema); if (x.fuente) aplicarFuenteTienda(x.fuente);
   $('#tienda').innerHTML = `<div class="shop-hero"><div class="hero-c">${x.logo ? `<div class="hero-logo"><img src="${esc(x.logo)}" alt=""></div>` : `<div class="mono">${esc(iniciales(x.nombre || 'Tienda'))}</div>`}<div class="hero-name">${esc(x.nombre || 'Tienda')}</div><div class="hero-tag">Pedidos en línea</div></div></div>
     <div class="shop-box"><div class="panel" style="text-align:center"><h3>Por ahora no estamos recibiendo pedidos en línea</h3><p class="mut">Escríbenos y con gusto te atendemos.</p>${x.telefono ? `<a class="btn wa big" href="${waLink(x.telefono, 'Hola, quiero hacer un pedido')}" target="_blank" rel="noopener">${ic('wa')} Escribir por WhatsApp</a>` : ''}</div></div>`;
 }
@@ -7022,19 +7146,26 @@ function pintarTienda() {
       ${d.datos.length ? `<div class="owner-t">${d.datos.map(x => `<b>${ic('sparkle', 14)}${esc(x)}</b>`).join('')}</div>` : ''}
       <div class="owner-b">${n.chat ? `<button class="btn pri" data-chat="1">${ic('chat', 18)} Enviar mensaje</button>` : ''}${tel ? `<a class="btn ${n.chat ? '' : 'wa'}" href="${waLink(tel, 'Hola ' + d.nombre.split(' ')[0] + ', vi tu tienda en línea')}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>
       <div class="owner-s">${esc(d.nombre)}</div></div></div>` : '';
-  $('#tienda').innerHTML = `<div class="shop-hero v2"><div class="top"><button data-share="1" aria-label="Compartir">${ic('share', 20)}</button><button data-cart="1" aria-label="Mi pedido" id="t-bag">${ic('bag', 20)}</button></div><div class="hero-c">${n.logo ? `<div class="hero-logo"><img src="${esc(n.logo)}" alt=""></div>` : `<div class="mono">${esc(iniciales(n.nombre))}</div>`}<div class="hero-name">${esc(n.nombre)}</div>
-      ${n.giro ? `<div class="hero-giro">${esc(n.giro)}</div>` : ''}${n.eslogan ? `<div class="hero-esl">${esc(n.eslogan)}</div>` : ''}</div></div>
+  const logoChico = n.logo ? `<img src="${esc(n.logo)}" alt="">` : esc(iniciales(n.nombre));
+  const nav = `<nav class="shop-nav"><a class="brand" href="#t-top"><span class="nl">${logoChico}</span><span class="nn">${esc(n.nombre)}</span></a>
+      <div class="links"><a href="#t-cat">Catálogo</a>${n.sobre || d ? '<a href="#t-sobre">Nosotros</a>' : ''}<a href="#t-contacto">Contacto</a></div>
+      <div class="acts">${n.telefono ? `<a class="btn sm wa" href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a>` : ''}<button class="btn sm pri" data-cart="1" id="t-bag2">${ic('bag', 16)} Mi pedido</button></div></nav>`;
+  $('#tienda').innerHTML = `${nav}<div class="shop-hero v2 ${n.portada ? 'con-portada' : ''}" id="t-top" ${n.portada ? `style="--portada:url('${esc(fotoAncha(n.portada))}')"` : ''}><div class="top"><button data-share="1" aria-label="Compartir">${ic('share', 20)}</button><button data-cart="1" aria-label="Mi pedido" id="t-bag">${ic('bag', 20)}</button></div><div class="hero-c">${n.logo ? `<div class="hero-logo"><img src="${esc(n.logo)}" alt=""></div>` : `<div class="mono">${esc(iniciales(n.nombre))}</div>`}<div class="hero-name">${esc(n.nombre)}</div>
+      ${n.giro ? `<div class="hero-giro">${esc(n.giro)}</div>` : ''}${n.eslogan ? `<div class="hero-esl">${esc(n.eslogan)}</div>` : ''}
+      <div class="hero-cta"><a class="btn big" href="#t-cat">${ic('bag', 18)} Ver catálogo</a>${n.telefono ? `<a class="btn big wa" href="${waLink(n.telefono, 'Hola, quiero hacer un pedido')}" target="_blank" rel="noopener">${ic('wa', 18)} Pedir por WhatsApp</a>` : ''}</div></div></div>
     <div class="shop-box v2">
       <div class="shop-info">${ab ? `<div class="shop-open ${ab.on ? '' : 'off'}"><i></i><b>${ab.on ? 'Abierto ahora' : 'Cerrado'}</b>${ab.t ? `<span>· ${esc(ab.t)}</span>` : ''}</div>` : n.horario ? `<div class="shop-open"><i></i><span>${esc(n.horario)}</span></div>` : ''}
         ${acts.length ? `<div class="shop-acts">${acts.join('')}</div>` : ''}<div class="shop-rows">${rows.join('')}</div></div>
       ${n.mensaje ? `<div class="shop-msg">${esc(n.mensaje)}</div>` : ''}<div id="t-mis"></div><div id="t-chatmis"></div>
-      ${n.sobre ? `<div class="shop-about"><div class="shop-sec">Sobre nosotros</div><p>${esc(n.sobre)}</p></div>` : ''}
-      ${owner}
-      <div class="shop-h2"><span>Nuestro catálogo</span><small>${ps.length} ${ps.length === 1 ? 'producto' : 'productos'}</small></div>
+      <div class="shop-two" id="t-sobre">${n.sobre ? `<div class="shop-about"><div class="shop-sec">Sobre nosotros</div><p>${esc(n.sobre)}</p></div>` : ''}${owner}</div>
+      <div class="shop-h2" id="t-cat"><span>Nuestro catálogo</span><small>${ps.length} ${ps.length === 1 ? 'producto' : 'productos'}</small></div>
       <div class="shop-srch"><div class="srch">${ic('search', 18)}<input id="t-q" placeholder="¿Qué estás buscando?" value="${esc(T.q)}"></div>
       ${cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${filtroTienda()}</div>
       <div class="pgrid shop-grid" id="t-grid"></div>
-      <div class="shop-foot"><div class="fl">${n.logo ? `<img src="${esc(n.logo)}" alt="">` : esc(iniciales(n.nombre))}</div><div class="fn">${esc(n.nombre)}</div><div class="fs">Pedidos en línea · Gracias por preferirnos</div>${n.telefono ? `<div class="fs" style="margin-top:6px"><a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}</div></div>
+      <div class="shop-foot" id="t-contacto"><div class="fcol fbrand"><div class="fl">${logoChico}</div><div class="fn">${esc(n.nombre)}</div>${n.eslogan ? `<div class="fs">${esc(n.eslogan)}</div>` : ''}<div class="fs">Pedidos en línea · Gracias por preferirnos</div></div>
+        <div class="fcol fdesk"><div class="ft">Contacto</div>${n.direccion ? `<div>${ic('map', 15)} ${esc(n.direccion)}</div>` : ''}${n.telefono ? `<div>${ic('wa', 15)} <a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}${n.horario ? `<div>${ic('clock', 15)} ${esc(n.horario)}</div>` : ''}</div>
+        <div class="fcol fdesk"><div class="ft">Síguenos</div>${insta ? `<div>${ic('insta', 15)} <a href="${esc(insta)}" target="_blank" rel="noopener">Instagram</a></div>` : ''}${fb ? `<div>${ic('fb', 15)} <a href="${esc(fb)}" target="_blank" rel="noopener">Facebook</a></div>` : ''}${mapa ? `<div>${ic('pin', 15)} <a href="${esc(mapa)}" target="_blank" rel="noopener">Cómo llegar</a></div>` : ''}<div>${ic('truck', 15)} <span>${entTxt}</span></div></div>
+        ${n.telefono ? `<div class="fs fmob"><a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}</div></div>
     <div id="t-bar"></div>${n.chat ? `<button class="t-chat" id="t-chatbtn" aria-label="Mensajes">${ic('chat', 24)}</button>` : ''}`;
   $('#t-q').addEventListener('input', debounce(e => { T.q = e.target.value; gridTienda(); }, 150));
   const tf = $('#t-f'); if (tf) tf.addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; T.f = T.f === b.dataset.f ? '' : b.dataset.f; $$('#t-f .chip').forEach(x => x.classList.toggle('on', x.dataset.f === T.f)); gridTienda(); });
@@ -7086,6 +7217,7 @@ function barTienda() {
   b.innerHTML = n ? `<button class="cartbar shop-cart" id="t-ver"><span class="ci">${ic('bag', 22)}<b>${n}</b></span><span class="ct"><small>Mi pedido · ${n === 1 ? '1 artículo' : n + ' artículos'}</small><strong class="n">${money(tSub())}</strong></span><span class="go">Ver pedido ${ic('arrow', 18)}</span></button>` : '';
   const v = $('#t-ver'); if (v) v.onclick = tCarrito;
   const bag = $('#t-bag'); if (bag) bag.innerHTML = ic('bag', 20) + (n ? `<b>${n}</b>` : '');
+  const bag2 = $('#t-bag2'); if (bag2) bag2.innerHTML = ic('bag', 16) + ' Mi pedido' + (n ? ` <span class="c">${n}</span>` : '');
   const cb = $('#t-chatbtn'); if (cb) cb.classList.toggle('up', n > 0);
 }
 function tProducto(id) {
