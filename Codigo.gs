@@ -2378,10 +2378,10 @@ function tiendaNeg_(d) {
     if (!lic) throw new Error('Este enlace de tienda no es válido');
     setNegocio_(lic);
     const L = licencia_();
-    if (L.estado === 'vencida' || L.estado === 'bloqueada') throw new Error('La tienda en línea de este negocio no está disponible por ahora');
+    if (L.estado === 'vencida' || L.estado === 'bloqueada') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: L.estado, nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, contacto: CONTACTO_WA })); }
   } else {
     const L = licencia_();
-    if (L.estado === 'vencida') throw new Error('La tienda en línea de este negocio no está disponible por ahora');
+    if (L.estado === 'vencida') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: 'vencida', nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, contacto: CONTACTO_WA })); }
   }
   const cfg = config_();
   if (cfg.tienda !== 'si' || !plus_()) throw new Error('TIENDA_CERRADA|' + JSON.stringify({ nombre: cfg.nombre, telefono: cfg.telefono, tema: cfg.tema, logo: cfg.logo, fuente: cfg.tiendaFuente }));

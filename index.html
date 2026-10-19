@@ -3334,10 +3334,10 @@ function tiendaNeg_(d) {
     if (!lic) throw new Error('Este enlace de tienda no es válido');
     setNegocio_(lic);
     const L = licencia_();
-    if (L.estado === 'vencida' || L.estado === 'bloqueada') throw new Error('La tienda en línea de este negocio no está disponible por ahora');
+    if (L.estado === 'vencida' || L.estado === 'bloqueada') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: L.estado, nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, contacto: CONTACTO_WA })); }
   } else {
     const L = licencia_();
-    if (L.estado === 'vencida') throw new Error('La tienda en línea de este negocio no está disponible por ahora');
+    if (L.estado === 'vencida') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: 'vencida', nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, contacto: CONTACTO_WA })); }
   }
   const cfg = config_();
   if (cfg.tienda !== 'si' || !plus_()) throw new Error('TIENDA_CERRADA|' + JSON.stringify({ nombre: cfg.nombre, telefono: cfg.telefono, tema: cfg.tema, logo: cfg.logo, fuente: cfg.tiendaFuente }));
@@ -7105,7 +7105,10 @@ async function iniciarTienda(id) {
 function tiendaCerrada(x) {
   if (x.tema) aplicarTema(x.tema); if (x.fuente) aplicarFuenteTienda(x.fuente);
   $('#tienda').innerHTML = `<div class="shop-hero"><div class="hero-c">${x.logo ? `<div class="hero-logo"><img src="${esc(x.logo)}" alt=""></div>` : `<div class="mono">${esc(iniciales(x.nombre || 'Tienda'))}</div>`}<div class="hero-name">${esc(x.nombre || 'Tienda')}</div><div class="hero-tag">Pedidos en línea</div></div></div>
-    <div class="shop-box"><div class="panel" style="text-align:center"><h3>Por ahora no estamos recibiendo pedidos en línea</h3><p class="mut">Escríbenos y con gusto te atendemos.</p>${x.telefono ? `<a class="btn wa big" href="${waLink(x.telefono, 'Hola, quiero hacer un pedido')}" target="_blank" rel="noopener">${ic('wa')} Escribir por WhatsApp</a>` : ''}</div></div>`;
+    <div class="shop-box"><div class="panel" style="text-align:center">${x.vencida ? `<h3>${x.vencida === 'bloqueada' ? 'Esta tienda está pausada' : 'La prueba gratis de esta tienda terminó'}</h3><p class="mut">Para seguir recibiendo pedidos en línea hay que activar la versión de pago de Gestión de Negocio VM.</p>
+      <a class="btn pri big" href="${waLink(x.contacto || CONTACTO_WA, 'Hola, quiero activar la versión de pago de Gestión de Negocio VM para ' + (x.nombre || 'mi negocio'))}" target="_blank" rel="noopener">${ic('sparkle')} Contactar para activar la versión de pago</a>
+      ${x.telefono ? `<a class="btn wa big" style="margin-top:8px" href="${waLink(x.telefono, 'Hola, quiero hacer un pedido')}" target="_blank" rel="noopener">${ic('wa')} Escribir al negocio por WhatsApp</a>` : ''}`
+      : `<h3>Por ahora no estamos recibiendo pedidos en línea</h3><p class="mut">Escríbenos y con gusto te atendemos.</p>${x.telefono ? `<a class="btn wa big" href="${waLink(x.telefono, 'Hola, quiero hacer un pedido')}" target="_blank" rel="noopener">${ic('wa')} Escribir por WhatsApp</a>` : ''}`}</div></div>`;
 }
 const tCant = () => Object.values(T.cart).reduce((a, x) => a + x, 0);
 const tSub = () => Object.keys(T.cart).reduce((a, k) => { const p = T.info.productos.find(x => x.id === kId(k)); return a + (p ? p.precio * T.cart[k] : 0); }, 0);
