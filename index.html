@@ -1709,7 +1709,7 @@ function guardar_(u, d) {
     Object.keys(d.registro || {}).forEach(k => { if (CONFIG_EDITABLE.indexOf(k) >= 0) reg[k] = String(d.registro[k]); });
     Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
     if (reg.duenoFoto && (reg.duenoFoto.length > 60000 || reg.duenoFoto.indexOf('data:image/') !== 0)) throw new Error('La foto del propietario no es válida. Súbela de nuevo.');
-    ['tiendaAbre', 'tiendaCierra'].forEach(k => { if (reg[k] && !/^\d{2}:\d{2}$/.test(reg[k])) throw new Error('Escribe la hora con el formato 08:00'); });
+    ['tiendaAbre', 'tiendaCierra'].forEach(k => { if (reg[k] && !/^([01]\d|2[0-3]):[0-5]\d$/.test(reg[k])) throw new Error('Escribe la hora con el formato 08:00'); });
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
     if (reg.isv !== undefined && !(Number(reg.isv) >= 0 && Number(reg.isv) < 1)) throw new Error('ISV no válido');
     if (reg.tienda === 'si' && !plus_()) throw new Error('La tienda en línea es parte del plan Plus');
