@@ -4724,7 +4724,7 @@ R.inicio = () => {
   if (rol === 'admin' || rol === 'cajero') {
     today = `<div class="today"><div class="today-h"><div><small>${rol === 'admin' ? 'Ventas de hoy' : 'Mis ventas de hoy'} · ${esc(hoyTxt)}</small><div class="big n">${money(d.hoy.ventas)}</div>
       <div class="sub">${d.hoy.n === 1 ? '1 venta' : d.hoy.n + ' ventas'}</div></div>${sparkSVG(d.spark || [0, 0])}</div>
-      <div class="tstats">${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Ganancia hoy</small><b class="n ok">${money(d.hoy.ganancia)}</b></button>` : ''}<button data-a="ir" data-v="caja"><small>Caja ahora</small><b class="n">${money(d.caja)}</b></button>${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Este mes</small><b class="n">${money(d.mes.ganancia)}</b></button>` : `<button data-a="ir" data-v="ventas"><small>Este mes</small><b class="n">${money(d.mes.ventas)}</b></button>`}</div>
+      <div class="tstats">${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Ganancia hoy</small><b class="n ok">${money(d.hoy.ganancia)}</b></button>` : ''}<button data-a="ir" data-v="caja"><small>Caja ahora</small><b class="n">${money(d.caja)}</b></button>${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Este mes</small><b class="n">${money(d.mes.ganancia)}</b></button>` : `<button data-a="ir" data-v="pedidos"><small>Pedidos</small><b class="n">${S.plus ? (d.pedidos.nuevos ? d.pedidos.nuevos + ' nuevos' : 'Al día') : '—'}</b></button>`}</div>
       <div class="qa">${qa('ir', 'cart', 'Vender', 'var(--h1)', 'var(--h2)', 'data-v="vender"')}${qa('nuevoGasto', 'receipt', 'Gasto', '#f25c05', '#ffa83a')}
       ${rol === 'admin' ? qa('nuevaCompra', 'truck', 'Compra', '#1b4fd8', '#3d9bff') : qa('ir', 'wallet', 'Caja', '#6a1fe0', '#b06cff', 'data-v="caja"')}${qa('cobrarCliente', 'coin', 'Cobrar', '#00915a', '#2fd58b')}</div></div>`;
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
@@ -6860,6 +6860,11 @@ const API_MIN = '1.4'; // versión mínima del Code.gs que necesita esta app
 const NOVEDADES = [
   { v: '1.6', fecha: '2026-10-19', items: [
     { i: 'store', t: 'Catálogo según tu tipo de negocio', d: 'En cada producto puedes poner las opciones que elige el cliente en tu tienda: talla y color en ropa, capacidad en tecnología, sabor en panadería, carne en comida y más. El pedido te llega con lo que eligió.', ir: 'productos' },
+    { i: 'image', t: 'Ilustraciones en vez de emojis', d: 'Los productos sin foto muestran un dibujo limpio según su categoría, en Vender y en tu tienda. En Productos verás cuántos no tienen foto: con fotos reales todo se ve mejor.', ir: 'productos' },
+    { i: 'moon', t: 'Tu tienda, clara u oscura', d: 'En Mi tienda eliges si tu catálogo se ve siempre claro, siempre oscuro o como el teléfono del cliente.', ir: 'tienda' },
+    { i: 'home', t: 'Inicio más limpio', d: 'Ganancia de hoy, caja y el mes van juntos en la tarjeta del día; las demás tarjetas son más ligeras.' },
+    { i: 'cart', t: 'Detalles que se sienten', d: 'En la tienda el producto vuela al carrito; la app abre con tu logo y vibra al cobrar.' },
+    { i: 'receipt', t: 'Comprobante con QR de tu tienda', d: 'La imagen del comprobante lleva al pie el código QR de tu tienda en línea para que el cliente vuelva a pedir.' },
     { i: 'tag', t: 'Filtro por talla', d: 'En boutiques y tiendas de variedades, tus clientes pueden filtrar el catálogo por talla.' },
     { i: 'clock', t: 'Notas y citas', d: 'Los restaurantes reciben la nota para la cocina; los negocios de servicios, la fecha y hora que prefiere el cliente.' },
     { i: 'store', t: 'Tu tienda, más elegante', d: 'Nueva portada con tu logo, horario con «Abierto ahora», botones de WhatsApp, cómo llegar, Instagram y Facebook, y una sección «Sobre nosotros». Llénalo en Ajustes › Tienda en línea.', ir: 'ajustes' },

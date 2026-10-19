@@ -78,7 +78,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaPortada: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
@@ -865,6 +865,7 @@ function guardar_(u, d) {
     if (reg.isv !== undefined && !(Number(reg.isv) >= 0 && Number(reg.isv) < 1)) throw new Error('ISV no válido');
     if (reg.tienda === 'si' && !plus_()) throw new Error('La tienda en línea es parte del plan Plus');
     if (reg.tiendaFuente !== undefined && ['elegante', 'moderna', 'clasica', 'amigable', 'urbana', 'manuscrita'].indexOf(reg.tiendaFuente) < 0) reg.tiendaFuente = 'elegante';
+    if (reg.tiendaModo !== undefined && ['auto', 'claro', 'oscuro'].indexOf(reg.tiendaModo) < 0) reg.tiendaModo = 'auto';
     const c = guardarConfig_(reg);
     if (MULTI_NEGOCIO && NEG && reg.nombre) { try { mSet_('Licencias', NEG.lic, { negocio: txt_(reg.nombre, 60) }); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
     return sinInternos_(c);
@@ -2378,13 +2379,13 @@ function tiendaNeg_(d) {
     if (!lic) throw new Error('Este enlace de tienda no es válido');
     setNegocio_(lic);
     const L = licencia_();
-    if (L.estado === 'vencida' || L.estado === 'bloqueada') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: L.estado, nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, contacto: CONTACTO_WA })); }
+    if (L.estado === 'vencida' || L.estado === 'bloqueada') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: L.estado, nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, modo: c0.tiendaModo, contacto: CONTACTO_WA })); }
   } else {
     const L = licencia_();
-    if (L.estado === 'vencida') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: 'vencida', nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, contacto: CONTACTO_WA })); }
+    if (L.estado === 'vencida') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: 'vencida', nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, modo: c0.tiendaModo, contacto: CONTACTO_WA })); }
   }
   const cfg = config_();
-  if (cfg.tienda !== 'si' || !plus_()) throw new Error('TIENDA_CERRADA|' + JSON.stringify({ nombre: cfg.nombre, telefono: cfg.telefono, tema: cfg.tema, logo: cfg.logo, fuente: cfg.tiendaFuente }));
+  if (cfg.tienda !== 'si' || !plus_()) throw new Error('TIENDA_CERRADA|' + JSON.stringify({ nombre: cfg.nombre, telefono: cfg.telefono, tema: cfg.tema, logo: cfg.logo, fuente: cfg.tiendaFuente, modo: cfg.tiendaModo }));
   return cfg;
 }
 
@@ -2396,7 +2397,7 @@ function tiendaInfo_(d) {
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago,
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
-      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', portada: cfg.tiendaPortada || '',
+      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
         datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null },
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
@@ -2807,3 +2808,4 @@ function sembrarEjemplo_(adminId) {
   } finally { ahora_ = origAhora; RELOJ_ = null; }
   return true;
 }
+
