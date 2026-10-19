@@ -356,6 +356,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .lg-t{font:600 26px var(--serif);margin:0 0 4px}.lg-p{color:var(--mut);margin:0 0 16px;font-size:14.5px;line-height:1.5}.lg-p.sm{font-size:13px;text-align:center;margin:10px 0}
 .lg-err{color:var(--bad);font-size:13.5px;min-height:20px;margin-top:8px;text-align:center}
 .lg-card .btn.ghost.big{font-size:14.5px;padding:10px;margin-top:4px}
+.lg-sig{display:flex;align-items:center;justify-content:center;gap:5px;margin:10px 0 0;font-size:11.5px;color:var(--mut);letter-spacing:.04em}
 
 /* ===== Hojas ===== */
 #capa .sheet-bg{opacity:0;transition:opacity .2s}
@@ -4476,6 +4477,7 @@ function aplicarDatos(d) {
   document.title = (S.config.nombre || 'Mi Negocio') + ' · Gestión de Negocio VM';
   LS.set('nombre', S.config.nombre || '');
   if (S.config.logo) LS.set('logo', S.config.logo); else LS.del('logo');
+  LS.set('eslogan', S.config.eslogan || '');
 }
 function guardarCache() {
   try {
@@ -4546,11 +4548,12 @@ function pintarLogin() {
   if (DEMO.on && !LS.get('cuenta', '') && !S.lmodoElegido) S.lmodo = 'demo';
   if (!S.multi && S.lmodo === 'reg') S.lmodo = 'ing';
   const reg = S.lmodo === 'reg', demo = S.lmodo === 'demo';
-  const nombre = LS.get('nombre', ''), logo = LS.get('logo', '');
+  const nombre = LS.get('nombre', ''), logo = LS.get('logo', ''), eslogan = LS.get('eslogan', '');
+  const marca = !reg && !demo && nombre;
   const multi = S.multi;
   const giros = (S.giros.length ? S.giros : GIROS_LOCAL);
   $('#login').innerHTML = `<div class="lg-hero">${logo && !reg ? `<div class="hero-logo"><img src="${esc(logo)}" alt=""></div>` : `<div class="mono">${ic('store', 30)}</div>`}
-      <div class="hero-name">${esc(!reg && !demo && nombre ? nombre : 'Gestión de Negocio VM')}</div><div class="hero-tag">${reg ? 'Prueba gratis ' + DIAS_PRUEBA_REG + ' días' : demo ? 'Modo prueba' : 'Administra tu negocio'}</div>
+      <div class="hero-name">${esc(!reg && !demo && nombre ? nombre : 'Gestión de Negocio VM')}</div><div class="hero-tag">${reg ? 'Prueba gratis ' + DIAS_PRUEBA_REG + ' días' : demo ? 'Modo prueba' : marca && eslogan ? esc(eslogan) : 'Administra tu negocio'}</div>
       ${DEMO.on && !demo ? '<span class="demo-tag" style="position:relative;z-index:1">MODO PRUEBA</span>' : ''}</div>
     <div class="lg-card">
     ${demo ? `<h3 class="lg-t">Conoce el sistema</h3><p class="lg-p">Entra a un <b>negocio de ejemplo</b> con productos, ventas, clientes, pedidos en línea y reportes. Todo queda solo en este navegador.</p>
@@ -4573,6 +4576,7 @@ function pintarLogin() {
         <button class="btn pri big" type="submit">Ingresar</button><div class="lg-err" id="l-err"></div></form>`}
     ${multi && !demo ? `<button class="btn ghost big" data-a="lmodo" data-m="${reg ? 'ing' : 'reg'}">${reg ? 'Ya tengo cuenta · Ingresar' : `Soy nuevo · Probar ${DIAS_PRUEBA_REG} días gratis`}</button>` : ''}
     ${demo ? `<button class="btn ghost big" data-a="lmodo" data-m="ing">Ya registré un negocio de prueba · Ingresar</button>` : ''}
+    ${marca ? `<p class="lg-sig">${ic('store', 14)} Gestión de Negocio VM</p>` : ''}
     <div class="row" style="justify-content:center;margin-top:6px">${!API_URL_DEFAULT || DEMO.on ? `<button class="btn ghost sm" data-a="alternarDemo">${DEMO.on ? 'Salir del modo prueba' : 'Probar en modo prueba'}</button>` : ''}${!API_URL_DEFAULT && !DEMO.on ? `<button class="btn ghost sm" data-a="configServidor">Configurar servidor</button>` : ''}${DEMO.on && !demo ? `<button class="btn ghost sm" data-a="lmodo" data-m="demo">Negocio de ejemplo</button>` : ''}</div>
     </div>${creditoHTML()}`;
   const fr = $('#f-reg'); if (fr) fr.onsubmit = registrarse;
