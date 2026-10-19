@@ -775,6 +775,11 @@ body.en-tienda{padding-bottom:110px}
 .ay-acc{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:6px}.ay-acc .btn{flex:1 1 200px}
 .ay-lista{display:flex;flex-direction:column;gap:8px}
 .ay-d{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:0 12px}
+.pf-more{border:1px dashed var(--line);border-radius:16px;padding:0 12px;margin:4px 0 12px}
+.pf-more summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:8px;padding:12px 2px;font-weight:600;color:var(--pri)}
+.pf-more summary::-webkit-details-marker{display:none}.pf-more summary .ic{margin-left:auto;transition:transform .2s}.pf-more[open] summary .ic{transform:rotate(180deg)}
+.pf-more summary small{font-weight:400;color:var(--mut);font-size:12px}
+.pf-more[open] summary{border-bottom:1px dashed var(--line);margin-bottom:12px}
 .ay-d summary{display:flex;align-items:center;gap:12px;padding:9px 0;cursor:pointer;font-weight:600;list-style:none}
 .ay-d summary::-webkit-details-marker{display:none}
 .ay-d summary i{width:34px;height:34px;border-radius:11px}
@@ -5106,7 +5111,7 @@ function listaProductos() {
   el.innerHTML = l.map(p => {
     const ctrl = p.tipo === 'producto';
     const st = ctrl ? `<span class="badge ${p.stock <= 0 ? 'b-bad' : p.stock <= p.stockMin ? 'b-warn' : 'b-ok'}">${p.stock <= 0 ? 'Agotado' : cant(p.stock) + ' ' + (p.unidad && p.unidad !== 'unidad' ? esc(p.unidad) : 'disp.')}</span>` : '<span class="badge b-mut">Sin inventario</span>';
-    return `<div class="li" data-a="verProducto" data-id="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.categoria)}${p.codigo ? ' · ' + esc(p.codigo) : ''}${S.plus && p.tienda ? ' · 🛍️' : ''}</small></div><div class="am"><span class="n">${money(p.precio)}</span><small>${st}</small></div></div>`;
+    return `<div class="li" data-a="verProducto" data-id="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${[esc(p.categoria), p.codigo ? esc(p.codigo) : '', S.plus && p.tienda ? '🛍️ tienda' : ''].filter(Boolean).join(' · ')}</small></div><div class="am"><span class="n">${money(p.precio)}</span><small>${st}</small></div></div>`;
   }).join('') || (vacio ? `<div class="empty-big">${ic('box', 40)}<h3>Agrega tus productos</h3><p>Puedes empezar con productos de ejemplo de tu tipo de negocio y luego editarlos.</p>
       ${puede('admin') ? `<button class="btn acc" data-a="cargarEjemplos">${ic('sparkle', 18)} Cargar productos de ejemplo</button>` : ''}${puede('admin', 'bodega') ? `<button class="btn pri" data-a="nuevoProducto">${ic('plus', 18)} Agregar el primero</button>` : ''}</div>` : '<div class="empty">No hay productos con ese filtro</div>');
 }
@@ -5145,8 +5150,9 @@ function formProducto(p, onSave, pre) {
         : `<div class="row"><span class="badge b-mut">${ic('lock', 13)} Fotos con Plus</span><button class="btn sm ghost" data-a="plusInfo">Ver Plus</button></div>`}
       <div class="emojis" id="pf-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${st.icono === e ? 'on' : ''}">${e}</button>`).join('')}<input id="pf-emo-in" maxlength="4" placeholder="Otro" value="${EMOJIS.includes(st.icono) ? '' : esc(st.icono)}"></div></div></div>
     <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. Camiseta básica"></label>
-    <div class="f2"><label class="fld"><span>Código</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional">${'BarcodeDetector' in window ? `<button class="btn icon" type="button" data-a="pfScan">${ic('barcode')}</button>` : ''}</div></label>
+    <div class="f2"><label class="fld"><span>Código de barras</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div></label>
       <label class="fld"><span>Categoría</span><input id="pf-cat" list="dl-cat" maxlength="40" value="${esc(p.categoria || '')}" placeholder="General"><datalist id="dl-cat">${catsSugeridas().map(c => `<option value="${esc(c)}">`).join('')}</datalist></label></div>
+    ${S.plus && opcGiro(S.config.giro).filtro ? opcForm(p) : ''}
     <div class="precio-box"><h4>${ic('tag', 18)} Precio de venta</h4>
       <div class="f2"><label class="fld"><span>Costo ${nuevo ? '(opcional)' : 'promedio'}</span><input id="pf-costo" inputmode="decimal" value="${p.costo ? p.costo : ''}" placeholder="¿Cuánto te cuesta?"></label>
       <label class="fld"><span>Precio de venta *</span><input id="pf-precio" inputmode="decimal" value="${p.precio ? p.precio : ''}" placeholder="0.00"></label></div>
@@ -5159,16 +5165,19 @@ function formProducto(p, onSave, pre) {
         <label class="chk"><input type="checkbox" id="pf-conisv" ${S.config.preciosConISV !== 'no' ? 'checked' : ''}> Sumar el ISV al precio</label>
         <div class="sug" id="pf-sug"></div></div>
       ${!nuevo ? `<small class="hint">El costo promedio se actualiza solo con cada compra.</small>` : `<small class="hint">¿No sabes el costo? Déjalo vacío y escribe solo el precio.</small>`}</div>
-    <div class="f2"><label class="fld"><span>ISV</span><select id="pf-isv"><option value="">General (${isvG}%)</option><option value="0">Exento</option><option value="15">15%</option><option value="18">18%</option></select></label>
-      <label class="fld"><span>Se vende por</span><select id="pf-uni">${UNIDADES.map(u => `<option ${p.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
     <label class="sw-row"><input type="checkbox" id="pf-ctrl" ${p.tipo === 'producto' ? 'checked' : ''}><span class="sw"></span><div><b>Controlar existencias</b><small>Apágalo para servicios o platos que no llevan inventario</small></div></label>
     <div id="pf-stk" class="f2">${nuevo ? `<label class="fld"><span>Existencia inicial</span><input id="pf-stock" inputmode="decimal" placeholder="0"></label>` : `<div class="fld"><span>Existencias</span><div class="stk-now"><b>${cant(p.stock)}</b><button class="btn sm" type="button" data-a="pfAjuste">Ajustar</button><button class="btn sm ghost" type="button" data-a="pfKardex">Movimientos</button></div></div>`}
       <label class="fld"><span>Avisar cuando queden</span><input id="pf-min" inputmode="decimal" value="${p.stockMin || ''}" placeholder="0"></label></div>
+    <details class="pf-more" id="pf-more"><summary>${ic('dots', 18)} Más detalles <small>ISV · unidad · tienda en línea</small>${ic('down', 18)}</summary>
+    <div class="f2"><label class="fld"><span>ISV</span><select id="pf-isv"><option value="">General (${isvG}%)</option><option value="0">Exento</option><option value="15">15%</option><option value="18">18%</option></select></label>
+      <label class="fld"><span>Se vende por</span><select id="pf-uni">${UNIDADES.map(u => `<option ${p.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
     ${S.plus ? `<label class="sw-row"><input type="checkbox" id="pf-tienda" ${p.tienda ? 'checked' : ''}><span class="sw"></span><div><b>Mostrar en la tienda en línea</b><small>Tus clientes lo verán en tu catálogo</small></div></label>
       <label class="fld"><span>Descripción para la tienda</span><textarea id="pf-desc" rows="2" maxlength="300" placeholder="Opcional: material, detalles…">${esc(p.descripcion || '')}</textarea></label>
-      ${opcForm(p)}` : ''}
-    ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="pf-act" ${p.activo ? 'checked' : ''}><span class="sw"></span><div><b>Producto activo</b><small>Los inactivos no aparecen para vender</small></div></label>` : ''}` });
+      ${opcGiro(S.config.giro).filtro ? '' : opcForm(p)}` : ''}
+    ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="pf-act" ${p.activo ? 'checked' : ''}><span class="sw"></span><div><b>Producto activo</b><small>Los inactivos no aparecen para vender</small></div></label>` : ''}
+    </details>` });
   $('#pf-isv', h.el).value = p.tasaIsv || '';
+  if (!nuevo && (p.tasaIsv || (p.unidad && p.unidad !== 'unidad') || !p.activo || (S.plus && !p.tienda))) $('#pf-more', h.el).open = true;
   const img = () => { const src = st.fotoNueva || fotoSrc(st.foto); $('#pf-img', h.el).innerHTML = src ? `<img src="${esc(src)}" alt="">` : `<span class="${colorDe($('#pf-cat', h.el).value || p.categoria)}">${st.icono ? esc(st.icono) : esc(iniciales($('#pf-nom', h.el).value || '?'))}</span>`; const q = $('#pf-qf', h.el); if (q) q.hidden = !(st.foto || st.fotoNueva); };
   img();
   $('#pf-emo', h.el).addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; st.icono = st.icono === b.dataset.e ? '' : b.dataset.e; $$('#pf-emo [data-e]', h.el).forEach(x => x.classList.toggle('on', x.dataset.e === st.icono)); $('#pf-emo-in', h.el).value = ''; img(); });
