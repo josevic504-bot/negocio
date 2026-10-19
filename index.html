@@ -492,6 +492,9 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .cjv-b{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 6px 72px}
 .cjv-i{margin-left:72px;font-size:13px;color:var(--mut)}.cjv-i div{display:flex;justify-content:space-between;gap:10px;padding:1px 0}
 .cjv.anul{opacity:.55}.cjv.anul b{text-decoration:line-through}
+.cjv .cjv-i{display:none;margin-top:4px;padding-top:6px;border-top:1px dashed var(--line)}.cjv.open .cjv-i{display:block}
+.cjv .cjv-t{margin-left:auto;display:inline-flex;align-items:center;gap:4px;color:var(--mut);font-size:12px;white-space:nowrap}.cjv .cjv-t .ic{transition:transform .2s}.cjv.open .cjv-t .ic{transform:rotate(180deg)}
+.cjv .cjv-vc{margin:6px 0 0;display:flex;justify-content:flex-end}.cjv .cjv-vc a{color:var(--pri);font-size:12.5px;font-weight:500;display:inline-flex;gap:4px;align-items:center}
 .badge.web{background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff}
 .cj-art .tr{grid-template-columns:minmax(0,2fr) .6fr 1fr}.cj-art .tt{font-weight:700;border-bottom:0}
 @media(max-width:420px){.cjv-b,.cjv-i{margin-left:0}}
@@ -5817,13 +5820,14 @@ function ventasHoyHTML(l) {
     ${act.length ? `<div class="seg full" style="margin:10px 0"><button class="${modo === 'venta' ? 'on' : ''}" data-a="cjv" data-m="venta">Por venta</button><button class="${modo === 'art' ? 'on' : ''}" data-a="cjv" data-m="art">Por artículo</button></div>` : ''}
     ${!l.length ? '<div class="empty">Todavía no hay ventas hoy</div>' : modo === 'art'
       ? `<div class="panel cj-art"><div class="tr th"><span>Artículo</span><span>Cant.</span><span>Monto</span></div>${arts.map(x => `<div class="tr ${x.envio ? 'env' : ''}"><span>${esc(x.nombre)}</span><span class="n">${x.envio ? '' : cant(x.cantidad)}</span><span class="n">${money(x.total)}</span></div>`).join('')}<div class="tr tt"><span>Total</span><span class="n">${cant(nArt)}</span><span class="n">${money(tot)}</span></div></div>`
-      : `<div class="cj-ventas">${l.slice(0, S.f.cjMax || 100).map(v => `<div class="cjv ${v.anulada ? 'anul' : ''}" data-a="cjVer" data-id="${v.id}">
+      : `<div class="cj-ventas">${l.slice(0, S.f.cjMax || 100).map(v => `<div class="cjv ${v.anulada ? 'anul' : ''} ${(S.f.cjOpen || []).includes(v.id) ? 'open' : ''}" data-a="cjTg" data-id="${v.id}">
         <div class="cjv-h"><span class="hr">${fHora(v.fecha)}</span><b>${esc(v.cliente)}</b><span class="n am">${money(v.total)}</span></div>
-        <div class="cjv-b">${v.pedido ? `<span class="badge web">${ic('globe', 13)} Pedido en línea ${esc(v.pedido)}</span>` : ''}<span class="badge ${MET[v.metodo] || 'b-mut'}">${esc(v.metodo)}${v.metodo === 'Crédito' && v.saldo > 0 ? ' · debe ' + money(v.saldo) : ''}</span><span class="badge b-mut">${esc(v.factura || v.numero)}</span>${v.anulada ? '<span class="badge b-bad">Anulada</span>' : ''}</div>
-        <div class="cjv-i">${v.detalle.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.descripcion)}</span><span class="n">${money(i.total)}</span></div>`).join('')}</div></div>`).join('')}
+        <div class="cjv-b">${v.pedido ? `<span class="badge web">${ic('globe', 13)} Pedido en línea ${esc(v.pedido)}</span>` : ''}<span class="badge ${MET[v.metodo] || 'b-mut'}">${esc(v.metodo)}${v.metodo === 'Crédito' && v.saldo > 0 ? ' · debe ' + money(v.saldo) : ''}</span><span class="badge b-mut">${esc(v.factura || v.numero)}</span>${v.anulada ? '<span class="badge b-bad">Anulada</span>' : ''}<span class="cjv-t">${(n => n === 1 ? '1 artículo' : n + ' artículos')(v.detalle.reduce((a, i) => a + (i.productoId ? i.cantidad : 0), 0) || v.detalle.length)}${ic('down', 14)}</span></div>
+        <div class="cjv-i">${v.detalle.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.descripcion)}</span><span class="n">${money(i.total)}</span></div>`).join('')}<div class="cjv-vc"><a data-a="cjVer" data-id="${v.id}">${ic('receipt', 14)} Ver comprobante</a></div></div></div>`).join('')}
         ${l.length > (S.f.cjMax || 100) ? `<button class="btn" style="width:100%;margin-top:10px" data-a="cjMas">Ver ${Math.min(100, l.length - (S.f.cjMax || 100))} ventas más · ${l.length - (S.f.cjMax || 100)} ${l.length - (S.f.cjMax || 100) === 1 ? "pendiente" : "pendientes"} de mostrar</button>` : ''}</div>`}`;
 }
 ACC.cjv = el => { S.f.cjv = el.dataset.m; S.f.cjMax = 0; R.caja(); };
+ACC.cjTg = el => { const ab = el.classList.toggle('open'); const l = S.f.cjOpen || (S.f.cjOpen = []); const i = l.indexOf(el.dataset.id); if (ab && i < 0) l.push(el.dataset.id); if (!ab && i >= 0) l.splice(i, 1); };
 ACC.cjMas = () => { S.f.cjMax = (S.f.cjMax || 100) + 100; R.caja(); };
 ACC.cjVer = async el => {
   const v = (S.cajaD.ventasHoy || []).find(x => x.id === el.dataset.id); if (!v) return;
