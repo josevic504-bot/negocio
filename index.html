@@ -549,6 +549,16 @@ body.en-tienda{padding-bottom:110px}
 .prod-big .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .prod-n{font:600 26px/1.15 var(--serif);margin:14px 0 4px}.prod-p{font-size:22px;font-weight:700;color:var(--pri)}.prod-p small{font-size:13px;color:var(--mut);font-weight:400}
 .prod-d{color:var(--mut);line-height:1.5}
+.sp-card .nm{font:600 17px/1.15 var(--serif)}
+.sp-op{font-size:11.5px;color:var(--mut);margin-top:3px;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.op-f{display:flex;align-items:center;gap:7px;margin-top:10px}
+.op-f>b,.op-l{font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:500;text-transform:uppercase}
+.op-f>b{flex:none}
+.op-l{display:block;margin:14px 0 7px}
+.op-g{display:flex;flex-wrap:wrap;gap:7px}
+.op-g .chip{min-width:44px;justify-content:center}
+.tk .tx .op{display:block;color:var(--pri);font-size:12px}
+.opc-row{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,2fr);gap:8px}
 .qty.big button{width:46px;height:46px;font-size:24px}.qty.big span{min-width:44px;font-size:20px}
 .sheet.prod-h .sheet-h{position:absolute;right:6px;z-index:3;padding:0}.sheet.prod-h .sheet-h .btn{background:var(--card);box-shadow:0 2px 8px rgba(0,0,0,.15)}
 .sheet.prod-h .sheet-b{padding-top:12px}.sheet.prod-h .grab{display:none}
@@ -815,7 +825,7 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 <script type="text/plain" id="backend-src">
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.4 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.5 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -835,7 +845,7 @@ const MULTI_NEGOCIO = true;
 const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite en modo un solo negocio)
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.4';
+const VERSION = '1.5';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -854,7 +864,7 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
   Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion'],
@@ -879,7 +889,7 @@ const NUMS = new Set(['margen','precio','costo','stock','stockMin','limite','sub
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario']);
-const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca']);
+const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -910,27 +920,27 @@ const ESCRITURA = {
 /* Categorías sugeridas y productos de ejemplo por tipo de negocio */
 const GIROS = {
   tienda:     { n: 'Tienda / pulpería', cats: ['Abarrotes','Bebidas','Lácteos','Snacks','Limpieza','Higiene','Panadería'],
-    ej: [['Arroz 1 lb','Abarrotes','🍚',18,13,40],['Frijoles rojos 1 lb','Abarrotes','🫘',25,19,35],['Aceite 750 ml','Abarrotes','🫗',68,55,15],['Refresco 2 L','Bebidas','🥤',55,42,24],['Agua purificada 1 L','Bebidas','💧',15,9,30],['Leche entera 1 L','Lácteos','🥛',34,27,18],['Churros de maíz','Snacks','🌽',12,8,40],['Jabón de lavar','Limpieza','🧼',22,16,20]] },
+    ej: [['Arroz 1 lb','Abarrotes','🍚',18,13,40],['Frijoles rojos 1 lb','Abarrotes','🫘',25,19,35],['Aceite 750 ml','Abarrotes','🫗',68,55,15],['Refresco 2 L','Bebidas','🥤',55,42,24,'Sabor: Cola, Naranja, Uva'],['Agua purificada 1 L','Bebidas','💧',15,9,30],['Leche entera 1 L','Lácteos','🥛',34,27,18],['Churros de maíz','Snacks','🌽',12,8,40],['Jabón de lavar','Limpieza','🧼',22,16,20]] },
   variedades: { n: 'Tienda de variedades', cats: ['Ropa','Belleza','Hogar','Tecnología','Escolar','Regalos'],
-    ej: [['Camiseta básica','Ropa','👕',250,140,24],['Perfume Brisa 100 ml','Belleza','🧴',480,290,8],['Termo de acero 750 ml','Hogar','🥤',320,190,15],['Audífonos inalámbricos','Tecnología','🎧',650,410,6],['Mochila escolar','Escolar','🎒',590,350,11],['Set de maquillaje','Belleza','💄',420,240,9],['Lámpara LED recargable','Hogar','💡',280,160,20],['Cargador rápido USB-C','Tecnología','🔌',230,120,14]] },
+    ej: [['Camiseta básica','Ropa','👕',250,140,24,'Talla: S, M, L, XL | Color: Blanco, Negro, Gris'],['Perfume Brisa 100 ml','Belleza','🧴',480,290,8],['Termo de acero 750 ml','Hogar','🥤',320,190,15],['Audífonos inalámbricos','Tecnología','🎧',650,410,6,'Color: Negro, Blanco'],['Mochila escolar','Escolar','🎒',590,350,11],['Set de maquillaje','Belleza','💄',420,240,9],['Lámpara LED recargable','Hogar','💡',280,160,20],['Cargador rápido USB-C','Tecnología','🔌',230,120,14]] },
   ferreteria: { n: 'Ferretería', cats: ['Herramientas','Electricidad','Plomería','Pintura','Construcción','Tornillería'],
-    ej: [['Martillo de uña 16 oz','Herramientas','🔨',220,140,10],['Desarmador de estrías','Herramientas','🪛',85,50,20],['Cinta métrica 5 m','Herramientas','📏',120,70,12],['Foco LED 9 W','Electricidad','💡',45,28,50],['Cable eléctrico #12 (m)','Electricidad','🔌',18,11,200],['Tubo PVC 1/2"','Plomería','🚰',95,62,30],['Pintura galón blanco','Pintura','🎨',620,430,8],['Cemento bolsa 42.5 kg','Construcción','🧱',245,215,40]] },
+    ej: [['Martillo de uña 16 oz','Herramientas','🔨',220,140,10],['Desarmador de estrías','Herramientas','🪛',85,50,20],['Cinta métrica 5 m','Herramientas','📏',120,70,12],['Foco LED 9 W','Electricidad','💡',45,28,50],['Cable eléctrico #12 (m)','Electricidad','🔌',18,11,200,'Color: Negro, Rojo, Blanco'],['Tubo PVC 1/2"','Plomería','🚰',95,62,30],['Pintura galón blanco','Pintura','🎨',620,430,8],['Cemento bolsa 42.5 kg','Construcción','🧱',245,215,40]] },
   comida:     { n: 'Restaurante / comida', cats: ['Platos','Desayunos','Bebidas','Postres','Combos','Extras'],
-    ej: [['Baleada sencilla','Desayunos','🌮',25,10,0],['Baleada con todo','Desayunos','🌯',45,20,0],['Plato típico','Platos','🍛',150,70,0],['Pollo frito (2 piezas)','Platos','🍗',120,55,0],['Licuado de frutas','Bebidas','🥤',50,20,0],['Café','Bebidas','☕',20,6,0],['Pastel de chocolate','Postres','🍰',60,25,0],['Combo familiar','Combos','🍽️',420,200,0]] },
+    ej: [['Baleada sencilla','Desayunos','🌮',25,10,0],['Baleada con todo','Desayunos','🌯',45,20,0],['Plato típico','Platos','🍛',150,70,0,'Carne: Res, Pollo, Cerdo'],['Pollo frito (2 piezas)','Platos','🍗',120,55,0],['Licuado de frutas','Bebidas','🥤',50,20,0],['Café','Bebidas','☕',20,6,0],['Pastel de chocolate','Postres','🍰',60,25,0],['Combo familiar','Combos','🍽️',420,200,0]] },
   boutique:   { n: 'Boutique / ropa y calzado', cats: ['Damas','Caballeros','Niños','Calzado','Accesorios'],
-    ej: [['Blusa casual','Damas','👚',380,210,12],['Vestido de verano','Damas','👗',650,360,8],['Camisa formal','Caballeros','👔',520,290,10],['Jeans','Caballeros','👖',690,400,14],['Tenis deportivos','Calzado','👟',1150,700,6],['Sandalias','Calzado','👡',450,250,10],['Bolso de mano','Accesorios','👜',780,420,5],['Gorra','Accesorios','🧢',220,110,15]] },
+    ej: [['Blusa casual','Damas','👚',380,210,12,'Talla: S, M, L | Color: Blanco, Rosa'],['Vestido de verano','Damas','👗',650,360,8],['Camisa formal','Caballeros','👔',520,290,10],['Jeans','Caballeros','👖',690,400,14,'Talla: 28, 30, 32, 34, 36'],['Tenis deportivos','Calzado','👟',1150,700,6,'Talla: 38, 39, 40, 41, 42'],['Sandalias','Calzado','👡',450,250,10],['Bolso de mano','Accesorios','👜',780,420,5],['Gorra','Accesorios','🧢',220,110,15]] },
   farmacia:   { n: 'Farmacia', cats: ['Medicamentos','Vitaminas','Cuidado personal','Bebé','Primeros auxilios'],
-    ej: [['Acetaminofén 500 mg (10)','Medicamentos','💊',35,20,40],['Antigripal (sobre)','Medicamentos','🤧',18,10,60],['Vitamina C 1 g (10)','Vitaminas','🍊',95,55,25],['Suero oral','Medicamentos','🧃',42,26,30],['Alcohol 250 ml','Primeros auxilios','🧴',48,30,20],['Curitas (caja)','Primeros auxilios','🩹',55,32,15],['Pañales talla M (20)','Bebé','👶',260,190,10],['Protector solar','Cuidado personal','🧴',320,200,8]] },
+    ej: [['Acetaminofén 500 mg (10)','Medicamentos','💊',35,20,40],['Antigripal (sobre)','Medicamentos','🤧',18,10,60],['Vitamina C 1 g (10)','Vitaminas','🍊',95,55,25,'Presentación: Tabletas, Efervescente'],['Suero oral','Medicamentos','🧃',42,26,30],['Alcohol 250 ml','Primeros auxilios','🧴',48,30,20],['Curitas (caja)','Primeros auxilios','🩹',55,32,15],['Pañales talla M (20)','Bebé','👶',260,190,10],['Protector solar','Cuidado personal','🧴',320,200,8]] },
   repuestos:  { n: 'Repuestos / taller', cats: ['Motor','Frenos','Eléctrico','Aceites','Llantas','Servicios'],
-    ej: [['Aceite 20W-50 (litro)','Aceites','🛢️',190,130,30],['Filtro de aceite','Motor','🧰',150,90,20],['Pastillas de freno','Frenos','🛞',650,420,8],['Bujía','Motor','⚡',95,55,40],['Batería 12 V','Eléctrico','🔋',2300,1700,4],['Cambio de aceite (mano de obra)','Servicios','🔧',250,0,0],['Alineado y balanceo','Servicios','🛠️',450,0,0],['Llanta rin 14','Llantas','🛞',1650,1150,6]] },
+    ej: [['Aceite 20W-50 (litro)','Aceites','🛢️',190,130,30],['Filtro de aceite','Motor','🧰',150,90,20,'Vehículo: Toyota, Nissan, Honda'],['Pastillas de freno','Frenos','🛞',650,420,8],['Bujía','Motor','⚡',95,55,40],['Batería 12 V','Eléctrico','🔋',2300,1700,4],['Cambio de aceite (mano de obra)','Servicios','🔧',250,0,0],['Alineado y balanceo','Servicios','🛠️',450,0,0],['Llanta rin 14','Llantas','🛞',1650,1150,6]] },
   tecnologia: { n: 'Tecnología / celulares', cats: ['Celulares','Accesorios','Audio','Cargadores','Reparaciones'],
-    ej: [['Celular gama media','Celulares','📱',4800,3600,5],['Protector de pantalla','Accesorios','📲',150,40,40],['Funda de silicona','Accesorios','🛡️',180,60,30],['Cargador 20 W','Cargadores','🔌',350,180,15],['Audífonos Bluetooth','Audio','🎧',690,400,10],['Bocina portátil','Audio','🔊',950,580,6],['Memoria USB 64 GB','Accesorios','💾',260,150,20],['Cambio de pantalla','Reparaciones','🧑‍🔧',1200,600,0]] },
+    ej: [['Celular gama media','Celulares','📱',4800,3600,5,'Capacidad: 128 GB, 256 GB | Color: Negro, Azul'],['Protector de pantalla','Accesorios','📲',150,40,40],['Funda de silicona','Accesorios','🛡️',180,60,30],['Cargador 20 W','Cargadores','🔌',350,180,15],['Audífonos Bluetooth','Audio','🎧',690,400,10],['Bocina portátil','Audio','🔊',950,580,6],['Memoria USB 64 GB','Accesorios','💾',260,150,20],['Cambio de pantalla','Reparaciones','🧑‍🔧',1200,600,0]] },
   belleza:    { n: 'Belleza / cosméticos', cats: ['Maquillaje','Cuidado de piel','Cabello','Uñas','Perfumes'],
-    ej: [['Base líquida','Maquillaje','💄',420,250,10],['Labial mate','Maquillaje','💋',180,90,20],['Crema hidratante','Cuidado de piel','🧴',350,200,12],['Shampoo 500 ml','Cabello','🧴',260,150,15],['Esmalte de uñas','Uñas','💅',95,45,30],['Perfume 100 ml','Perfumes','🌸',890,520,6],['Mascarilla facial','Cuidado de piel','🧖',120,60,25],['Delineador','Maquillaje','✏️',150,75,18]] },
+    ej: [['Base líquida','Maquillaje','💄',420,250,10,'Tono: Claro, Medio, Oscuro'],['Labial mate','Maquillaje','💋',180,90,20],['Crema hidratante','Cuidado de piel','🧴',350,200,12],['Shampoo 500 ml','Cabello','🧴',260,150,15],['Esmalte de uñas','Uñas','💅',95,45,30],['Perfume 100 ml','Perfumes','🌸',890,520,6],['Mascarilla facial','Cuidado de piel','🧖',120,60,25],['Delineador','Maquillaje','✏️',150,75,18]] },
   panaderia:  { n: 'Panadería / repostería', cats: ['Pan dulce','Pan salado','Pasteles','Galletas','Bebidas'],
-    ej: [['Pan blanco (bolsa)','Pan salado','🍞',35,18,30],['Semita','Pan dulce','🥯',15,6,40],['Cachitos','Pan dulce','🥐',12,5,50],['Rosquillas (bolsa)','Galletas','🍩',45,22,25],['Pastel de cumpleaños','Pasteles','🎂',650,300,3],['Galletas de mantequilla','Galletas','🍪',60,28,20],['Café con leche','Bebidas','☕',25,8,0],['Pan de coco','Pan dulce','🥥',20,9,30]] },
+    ej: [['Pan blanco (bolsa)','Pan salado','🍞',35,18,30],['Semita','Pan dulce','🥯',15,6,40],['Cachitos','Pan dulce','🥐',12,5,50],['Rosquillas (bolsa)','Galletas','🍩',45,22,25],['Pastel de cumpleaños','Pasteles','🎂',650,300,3,'Sabor: Chocolate, Vainilla, Tres leches'],['Galletas de mantequilla','Galletas','🍪',60,28,20],['Café con leche','Bebidas','☕',25,8,0],['Pan de coco','Pan dulce','🥥',20,9,30]] },
   servicios:  { n: 'Servicios', cats: ['Servicios','Paquetes','Materiales'],
-    ej: [['Servicio básico','Servicios','🛎️',300,0,0],['Servicio premium','Servicios','⭐',650,0,0],['Visita a domicilio','Servicios','🏠',200,0,0],['Paquete mensual','Paquetes','📦',1500,0,0],['Materiales','Materiales','🧰',120,70,20]] },
+    ej: [['Servicio básico','Servicios','🛎️',300,0,0],['Servicio premium','Servicios','⭐',650,0,0],['Visita a domicilio','Servicios','🏠',200,0,0,'Modalidad: A domicilio, En el local'],['Paquete mensual','Paquetes','📦',1500,0,0],['Materiales','Materiales','🧰',120,70,20]] },
   otro:       { n: 'Otro tipo de negocio', cats: ['General'],
     ej: [['Producto de ejemplo 1','General','📦',100,60,10],['Producto de ejemplo 2','General','🛍️',250,150,10],['Servicio de ejemplo','General','🛎️',300,0,0]] }
 };
@@ -1205,6 +1215,14 @@ function idMs_(id) { const n = parseInt(String(id || '').slice(1, 9), 36); retur
 // 'YYYY-MM-DDTHH:MM[:SS]' (hora de Honduras, sin horario de verano) → ms
 function msDeLocal_(f) { const x = String(f || ''); if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(x)) return 0; return Date.parse(x.slice(0, 16) + ':' + (x.slice(17, 19) || '00') + '-06:00') || 0; }
 function marca_() { return String(RELOJ_ && RELOJ_.f ? msDeLocal_(RELOJ_.f) : Date.now()); }
+// Opciones del producto para la tienda: «Talla: S, M, L | Color: Negro, Blanco»
+function opciones_(t) {
+  return String(t || '').split('|').map(g => {
+    const i = g.indexOf(':'); if (i < 0) return '';
+    const n = txt_(g.slice(0, i), 30), v = g.slice(i + 1).split(',').map(x => txt_(x, 30)).filter(Boolean).slice(0, 20);
+    return n && v.length ? n + ': ' + v.join(', ') : '';
+  }).filter(Boolean).slice(0, 3).join(' | ').slice(0, 400);
+}
 function txt_(s, max) { return String(s === undefined || s === null ? '' : s).trim().replace(/\s+/g, ' ').slice(0, max || 200); }
 function tel8_(t) { return String(t || '').replace(/\D/g, '').slice(-8); }
 function porId_(lista) { const m = Object.create(null); lista.forEach(x => { m[x.id] = x; }); return m; }
@@ -1632,6 +1650,7 @@ function guardar_(u, d) {
     if (r.foto && String(r.foto).length > 60000) throw new Error('La foto es muy pesada');
     if (r.foto && (!prev || r.foto !== prev.foto)) { if (!plus_()) throw new Error('Las fotos de productos son parte del plan Plus'); if (!fotoPropia_(r.foto)) throw new Error('La foto no es válida. Súbela de nuevo.'); r.fotoFecha = ahora_(); }
     if (r.foto === '') r.fotoFecha = '';
+    if (r.opciones !== undefined) r.opciones = opciones_(r.opciones);
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
     const stockIni = r.stock;
     delete r.stock;
@@ -1689,7 +1708,7 @@ function cargarEjemplos_(u, d) {
     if (existentes.indexOf(x[0].toLowerCase()) >= 0) return;
     const p = upsert_('Productos', { codigo: 'EJ' + String(i + 1).padStart(3, '0'), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
-      tasaIsv: '', foto: '', descripcion: '', tienda: true, activo: true, creado: ahora_() });
+      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_() });
     if (p.tipo === 'producto' && x[5] > 0) moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
     n++;
   });
@@ -3117,11 +3136,11 @@ function tiendaInfo_(d) {
   const cfg = tiendaNeg_(d);
   const ver = cfg.tiendaMostrarStock === 'si', sin = cfg.tiendaSinStock === 'si';
   return {
-    negocio: { nombre: cfg.nombre, giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
+    negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago },
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
-      const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad };
+      const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '' };
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
       return o;
     }).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre)),
@@ -3160,9 +3179,10 @@ function pedir_(d) {
     if (cant < 1 || cant > 999) throw new Error('Cantidad no válida en «' + p.nombre + '»');
     suma[p.id] = (suma[p.id] || 0) + cant;
     if (p.tipo === 'producto' && !sin && p.stock < suma[p.id]) throw new Error(p.stock > 0 ? 'Solo quedan ' + Math.floor(p.stock) + ' de «' + p.nombre + '»' : '«' + p.nombre + '» se agotó');
-    const ya = items.find(x => x.productoId === p.id);
+    const op = txt_(i.opcion, 160), nom = op ? txt_(p.nombre + ' (' + op + ')', 240) : p.nombre;
+    const ya = items.find(x => x.productoId === p.id && x.nombre === nom);
     if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * p.precio); }
-    else items.push({ productoId: p.id, nombre: p.nombre, cantidad: cant, precio: p.precio, total: r2_(cant * p.precio) });
+    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: p.precio, total: r2_(cant * p.precio) });
   });
   if (!items.length) throw new Error('Tu pedido está vacío');
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
@@ -3262,11 +3282,11 @@ function sembrarEjemplo_(adminId) {
     // Productos
     reloj.f = fechaHace(60, 8, 0);
     const extra = [['Peluche osito','Regalos','🧸',350,190,10],['Taza decorada','Regalos','☕',150,70,18],['Cuaderno profesional','Escolar','📓',85,45,40],
-      ['Gorra deportiva','Ropa','🧢',220,110,12],['Bocina portátil','Tecnología','🔊',890,560,5],['Envoltura de regalo','Regalos','🎁',40,10,0]];
+      ['Gorra deportiva','Ropa','🧢',220,110,12,'Color: Negro, Azul, Rojo'],['Bocina portátil','Tecnología','🔊',890,560,5],['Envoltura de regalo','Regalos','🎁',40,10,0]];
     GIROS.variedades.ej.concat(extra).forEach((x, i) => {
       upsert_('Productos', { codigo: '750' + String(1000 + i * 37), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
         tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(2, Math.round(x[5] / 4)) : 0, tasaIsv: '', foto: '',
-        descripcion: '', tienda: true, activo: true, creado: reloj.f });
+        descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: reloj.f });
     });
     const prods = rows_('Productos');
     const ini = {};
@@ -3647,7 +3667,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.5';
+const APP_VER = '1.6';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -4791,7 +4811,8 @@ function formProducto(p, onSave, pre) {
     <div id="pf-stk" class="f2">${nuevo ? `<label class="fld"><span>Existencia inicial</span><input id="pf-stock" inputmode="decimal" placeholder="0"></label>` : `<div class="fld"><span>Existencias</span><div class="stk-now"><b>${cant(p.stock)}</b><button class="btn sm" type="button" data-a="pfAjuste">Ajustar</button><button class="btn sm ghost" type="button" data-a="pfKardex">Movimientos</button></div></div>`}
       <label class="fld"><span>Avisar cuando queden</span><input id="pf-min" inputmode="decimal" value="${p.stockMin || ''}" placeholder="0"></label></div>
     ${S.plus ? `<label class="sw-row"><input type="checkbox" id="pf-tienda" ${p.tienda ? 'checked' : ''}><span class="sw"></span><div><b>Mostrar en la tienda en línea</b><small>Tus clientes lo verán en tu catálogo</small></div></label>
-      <label class="fld"><span>Descripción para la tienda</span><textarea id="pf-desc" rows="2" maxlength="300" placeholder="Opcional: tallas, colores, detalles…">${esc(p.descripcion || '')}</textarea></label>` : ''}
+      <label class="fld"><span>Descripción para la tienda</span><textarea id="pf-desc" rows="2" maxlength="300" placeholder="Opcional: material, detalles…">${esc(p.descripcion || '')}</textarea></label>
+      ${opcForm(p)}` : ''}
     ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="pf-act" ${p.activo ? 'checked' : ''}><span class="sw"></span><div><b>Producto activo</b><small>Los inactivos no aparecen para vender</small></div></label>` : ''}` });
   $('#pf-isv', h.el).value = p.tasaIsv || '';
   const img = () => { const src = st.fotoNueva || fotoSrc(st.foto); $('#pf-img', h.el).innerHTML = src ? `<img src="${esc(src)}" alt="">` : `<span class="${colorDe($('#pf-cat', h.el).value || p.categoria)}">${st.icono ? esc(st.icono) : esc(iniciales($('#pf-nom', h.el).value || '?'))}</span>`; const q = $('#pf-qf', h.el); if (q) q.hidden = !(st.foto || st.fotoNueva); };
@@ -4841,7 +4862,7 @@ function formProducto(p, onSave, pre) {
       costo: r2(costo.value), margen: pct.value ? r2(pct.value) : (p.margen || 0), tasaIsv: isvSel.value, unidad: $('#pf-uni', h.el).value, icono: st.icono,
       tipo: ctrl.checked ? 'producto' : 'servicio', stockMin: num($('#pf-min', h.el).value) };
     if (nuevo) reg.stock = num(($('#pf-stock', h.el) || {}).value);
-    if ($('#pf-tienda', h.el)) { reg.tienda = $('#pf-tienda', h.el).checked; reg.descripcion = $('#pf-desc', h.el).value.trim(); }
+    if ($('#pf-tienda', h.el)) { reg.tienda = $('#pf-tienda', h.el).checked; reg.descripcion = $('#pf-desc', h.el).value.trim(); reg.opciones = opcLeerForm(h.el); }
     if ($('#pf-act', h.el)) reg.activo = $('#pf-act', h.el).checked;
     if (st.fotoNueva) { const f = await api('subirFoto', { data: st.fotoNueva }); reg.foto = f.foto; }
     else if (!st.foto && p.foto) reg.foto = '';
@@ -4853,6 +4874,18 @@ function formProducto(p, onSave, pre) {
     if (onSave) onSave(g); else if (S.vista === 'productos') listaProductos(); else if (S.vista === 'precios') R.precios(); else if (S.vista === 'inicio') R.inicio();
   } });
   h.botones(bs);
+}
+// Opciones que el cliente elige en la tienda (según el tipo de negocio)
+function opcForm(p) {
+  const cfg = opcGiro(S.config.giro), act = leerOpc(p.opciones);
+  const filas = (act.length ? act : cfg.g.map(n => ({ n, v: [] }))).slice(0, 3); while (filas.length < 3) filas.push({ n: '', v: [] });
+  return `<div class="precio-box"><h4>${ic('layers', 18)} Opciones que elige el cliente</h4><small class="hint">Escribe cada opción separada por comas. Deja en blanco las que no uses.</small>
+    ${filas.map((f, i) => `<div class="opc-row"><label class="fld"><span>Nombre</span><input class="pf-on" maxlength="30" value="${esc(f.n)}" placeholder="${esc(cfg.g[i] || 'Opción')}"></label>
+      <label class="fld"><span>Opciones</span><input class="pf-ov" maxlength="200" value="${esc(f.v.join(', '))}" placeholder="${esc(cfg.ej[i] || '')}"></label></div>`).join('')}</div>`;
+}
+function opcLeerForm(el) {
+  const ns = $$('.pf-on', el), vs = $$('.pf-ov', el);
+  return juntarOpc(ns.map((n, i) => ({ n: n.value.trim() || n.placeholder, v: vs[i].value.split(',').map(x => x.trim()).filter(Boolean) })).filter(x => x.n));
 }
 function ajusteStock(p, cb) {
   const h = hoja({ titulo: 'Ajustar existencias', cls: 'chica', html: `<p class="conf"><b>${esc(p.nombre)}</b> · hay <b>${cant(p.stock)}</b></p>
@@ -6230,6 +6263,11 @@ ACC.lbVer = async el => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.4'; // versión mínima del Code.gs que necesita esta app
 const NOVEDADES = [
+  { v: '1.6', fecha: '2026-10-19', items: [
+    { i: 'store', t: 'Catálogo según tu tipo de negocio', d: 'En cada producto puedes poner las opciones que elige el cliente en tu tienda: talla y color en ropa, capacidad en tecnología, sabor en panadería, carne en comida y más. El pedido te llega con lo que eligió.', ir: 'productos' },
+    { i: 'tag', t: 'Filtro por talla', d: 'En boutiques y tiendas de variedades, tus clientes pueden filtrar el catálogo por talla.' },
+    { i: 'clock', t: 'Notas y citas', d: 'Los restaurantes reciben la nota para la cocina; los negocios de servicios, la fecha y hora que prefiere el cliente.' }
+  ] },
   { v: '1.5', fecha: '2026-10-12', items: [
     { i: 'save', t: 'App para Android', d: 'Ahora puedes instalar Gestión de Negocio VM como app en tu Android: cuando abras el enlace en el navegador te aparece el aviso para descargarla.' }
   ] },
@@ -6481,8 +6519,34 @@ function imprimirTicket(v, det) {
   setTimeout(() => window.print(), 80);
 }
 
+/* ===================== OPCIONES SEGÚN EL TIPO DE NEGOCIO ===================== */
+// Qué se le pregunta al cliente en el catálogo según el giro del negocio
+const OPC_GIRO = {
+  boutique:   { g: ['Talla', 'Color'], ej: ['S, M, L, XL', 'Negro, Blanco'], filtro: 'Talla' },
+  variedades: { g: ['Talla', 'Color'], ej: ['S, M, L, XL', 'Negro, Blanco'], filtro: 'Talla' },
+  tecnologia: { g: ['Capacidad', 'Color'], ej: ['128 GB, 256 GB', 'Negro, Azul'] },
+  farmacia:   { g: ['Presentación'], ej: ['Tabletas, Jarabe'] },
+  ferreteria: { g: ['Medida', 'Color'], ej: ['1/2", 3/4"', 'Negro, Rojo'] },
+  repuestos:  { g: ['Vehículo', 'Marca'], ej: ['Toyota, Nissan', 'Bosch, NGK'] },
+  belleza:    { g: ['Tono', 'Tamaño'], ej: ['Claro, Medio, Oscuro', '50 ml, 100 ml'] },
+  comida:     { g: ['Elige', 'Tamaño'], ej: ['Res, Pollo, Cerdo', 'Normal, Grande'], nota: 'Nota para la cocina', notaEj: 'Sin cebolla, bien cocido…' },
+  panaderia:  { g: ['Sabor', 'Tamaño'], ej: ['Chocolate, Vainilla', 'Pequeño, Grande'], nota: 'Dedicatoria o detalle', notaEj: 'Feliz cumpleaños, Ana' },
+  servicios:  { g: ['Modalidad'], ej: ['A domicilio, En el local'], cita: true },
+  tienda:     { g: ['Presentación', 'Sabor'], ej: ['Unidad, Paquete', 'Cola, Naranja'] },
+  otro:       { g: ['Opción', 'Color'], ej: ['Pequeño, Grande', 'Negro, Blanco'] }
+};
+const opcGiro = g => OPC_GIRO[g] || OPC_GIRO.otro;
+// «Talla: S, M | Color: Negro» → [{ n: 'Talla', v: ['S','M'] }, { n: 'Color', v: ['Negro'] }]
+function leerOpc(t) {
+  return String(t || '').split('|').map(x => { const i = x.indexOf(':'); return i < 0 ? null : { n: x.slice(0, i).trim(), v: x.slice(i + 1).split(',').map(y => y.trim()).filter(Boolean) }; }).filter(x => x && x.n && x.v.length);
+}
+const juntarOpc = l => l.filter(x => x.n && x.v.length).map(x => x.n + ': ' + x.v.join(', ')).join(' | ');
+
 /* ===================== TIENDA EN LÍNEA (lo que ve el cliente) ===================== */
-const T = { info: null, id: '', cat: '', q: '', cart: {}, entrega: '' };
+const T = { info: null, id: '', cat: '', q: '', f: '', cart: {}, entrega: '' };
+const SEP = '\u0001';                       // carrito: «id» o «id␁Talla: M, Color: Negro»
+const kId = k => k.split(SEP)[0], kOp = k => k.split(SEP)[1] || '';
+const enCarrito = id => Object.keys(T.cart).reduce((a, k) => a + (kId(k) === id ? T.cart[k] : 0), 0);
 const tKey = k => k + '_' + T.id;
 async function iniciarTienda(id) {
   T.id = id || '1';
@@ -6503,7 +6567,9 @@ async function iniciarTienda(id) {
   aplicarTema(n.tema);
   document.title = n.nombre + ' · Pedidos en línea';
   const ids = new Set(T.info.productos.map(p => p.id));
-  Object.keys(T.cart).forEach(k => { if (!ids.has(k)) delete T.cart[k]; });
+  Object.keys(T.cart).forEach(k => { if (!ids.has(kId(k))) delete T.cart[k]; });
+  T.info.productos.forEach(p => { p.ops = leerOpc(p.opciones); });
+  T.cfg = opcGiro(n.gid);
   T.entrega = n.entrega === 'domicilio' ? 'domicilio' : 'recoger';
   pintarTienda();
   misPedidosTienda();
@@ -6514,7 +6580,7 @@ function tiendaCerrada(x) {
     <div class="shop-box"><div class="panel" style="text-align:center"><h3>Por ahora no estamos recibiendo pedidos en línea</h3><p class="mut">Escríbenos y con gusto te atendemos.</p>${x.telefono ? `<a class="btn wa big" href="${waLink(x.telefono, 'Hola, quiero hacer un pedido')}" target="_blank" rel="noopener">${ic('wa')} Escribir por WhatsApp</a>` : ''}</div></div>`;
 }
 const tCant = () => Object.values(T.cart).reduce((a, x) => a + x, 0);
-const tSub = () => Object.keys(T.cart).reduce((a, id) => { const p = T.info.productos.find(x => x.id === id); return a + (p ? p.precio * T.cart[id] : 0); }, 0);
+const tSub = () => Object.keys(T.cart).reduce((a, k) => { const p = T.info.productos.find(x => x.id === kId(k)); return a + (p ? p.precio * T.cart[k] : 0); }, 0);
 function guardarCarrito() { LS.set(tKey('carrito'), JSON.stringify(T.cart)); }
 function pintarTienda() {
   const n = T.info.negocio, ps = T.info.productos;
@@ -6524,31 +6590,44 @@ function pintarTienda() {
       <div class="shop-st"><i></i>${esc(n.horario || ent)}</div></div></div>
     <div class="shop-box">${n.mensaje ? `<div class="shop-msg">${esc(n.mensaje)}</div>` : ''}<div id="t-mis"></div>
       <div class="shop-srch"><div class="srch">${ic('search', 18)}<input id="t-q" placeholder="¿Qué estás buscando?" value="${esc(T.q)}"></div>
-      ${cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}</div>
+      ${cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${filtroTienda()}</div>
       <div class="pgrid shop-grid" id="t-grid"></div>
       <div class="shop-pie">${n.direccion ? `<div>${ic('pin', 15)} ${esc(n.direccion)}</div>` : ''}${n.telefono ? `<a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${ic('wa', 15)} ${esc(n.telefono)}</a>` : ''}<div>${esc(ent)}${n.envio ? ' · envío ' + money(n.envio) : ''}${n.minimo ? ' · pedido mínimo ' + money(n.minimo) : ''}</div></div></div>
     <div id="t-bar"></div>`;
   $('#t-q').addEventListener('input', debounce(e => { T.q = e.target.value; gridTienda(); }, 150));
+  const tf = $('#t-f'); if (tf) tf.addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; T.f = T.f === b.dataset.f ? '' : b.dataset.f; $$('#t-f .chip').forEach(x => x.classList.toggle('on', x.dataset.f === T.f)); gridTienda(); });
   const tc = $('#t-cats'); if (tc) tc.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; T.cat = b.dataset.c; $$('#t-cats .chip').forEach(x => x.classList.toggle('on', x === b)); gridTienda(); });
   $('#t-grid').addEventListener('click', e => {
-    const add = e.target.closest('[data-add]'); if (add) { e.stopPropagation(); return tAgregar(add.dataset.add, 1); }
+    const add = e.target.closest('[data-add]'); if (add) { e.stopPropagation(); const p = T.info.productos.find(x => x.id === add.dataset.add); return p && (p.ops.length || T.cfg.cita) ? tProducto(p.id) : tAgregar(add.dataset.add, 1); }
     const c = e.target.closest('[data-p]'); if (c) tProducto(c.dataset.p);
   });
   gridTienda();
 }
+// Fila de filtro por la opción principal del giro (ej. Talla en boutique)
+function filtroTienda() {
+  const fn = T.cfg && T.cfg.filtro; if (!fn) return '';
+  const vals = [];
+  T.info.productos.forEach(p => p.ops.forEach(o => { if (norm(o.n) === norm(fn)) o.v.forEach(v => { if (!vals.includes(v)) vals.push(v); }); }));
+  if (vals.length < 2) { T.f = ''; return ''; }
+  const ORD = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL'], pos = v => { const i = ORD.indexOf(String(v).toUpperCase()); return i >= 0 ? i : isNaN(parseFloat(v)) ? 900 : 100 + parseFloat(v); };
+  vals.sort((a, b) => pos(a) - pos(b));
+  if (T.f && !vals.includes(T.f)) T.f = '';
+  return `<div class="op-f"><b>${esc(fn)}</b><div class="chips" id="t-f">${vals.map(v => `<button class="chip ${T.f === v ? 'on' : ''}" data-f="${esc(v)}">${esc(v)}</button>`).join('')}</div></div>`;
+}
+const tieneValor = (p, n, v) => p.ops.some(o => norm(o.n) === norm(n) && o.v.includes(v));
 function gridTienda() {
   const q = norm(T.q);
-  const l = T.info.productos.filter(p => (!T.cat || p.categoria === T.cat) && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q) || norm(p.descripcion).includes(q)));
-  $('#t-grid').innerHTML = l.map(p => `<div class="pc sp-card ${p.agotado ? 'dis' : ''}" data-p="${p.id}">${prodFoto(p, (T.cart[p.id] ? `<span class="qn">${T.cart[p.id]}</span>` : '') + (p.agotado ? '<span class="st out">Agotado</span>' : p.stock !== undefined ? `<span class="st">${cant(p.stock)} disp.</span>` : ''))}
-    <div class="bd"><div class="nm">${esc(p.nombre)}</div><div class="row"><div class="pr n">${money(p.precio)}</div>${p.agotado ? '' : `<button class="sp-add" data-add="${p.id}" aria-label="Agregar">${ic('plus', 16)}</button>`}</div></div></div>`).join('') || '<div class="empty" style="grid-column:1/-1">No encontramos productos con esa búsqueda</div>';
+  const l = T.info.productos.filter(p => (!T.cat || p.categoria === T.cat) && (!T.f || tieneValor(p, T.cfg.filtro, T.f)) && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q) || norm(p.descripcion).includes(q) || norm(p.opciones).includes(q)));
+  $('#t-grid').innerHTML = l.map(p => `<div class="pc sp-card ${p.agotado ? 'dis' : ''}" data-p="${p.id}">${prodFoto(p, (enCarrito(p.id) ? `<span class="qn">${enCarrito(p.id)}</span>` : '') + (p.agotado ? '<span class="st out">Agotado</span>' : p.stock !== undefined ? `<span class="st">${cant(p.stock)} disp.</span>` : ''))}
+    <div class="bd"><div class="nm">${esc(p.nombre)}</div>${p.ops.length ? `<div class="sp-op">${esc(p.ops[0].v.join(' · '))}</div>` : ''}<div class="row"><div class="pr n">${money(p.precio)}</div>${p.agotado ? '' : `<button class="sp-add" data-add="${p.id}" aria-label="Agregar">${ic('plus', 16)}</button>`}</div></div></div>`).join('') || '<div class="empty" style="grid-column:1/-1">No encontramos productos con esa búsqueda</div>';
   barTienda();
 }
 function maxDe(p) { return p.agotado ? 0 : p.max !== undefined ? p.max : p.stock !== undefined ? Math.floor(p.stock) : 999; }
-function tAgregar(id, n) {
-  const p = T.info.productos.find(x => x.id === id); if (!p) return;
-  const nuevo = (T.cart[id] || 0) + n;
-  if (n > 0 && nuevo > maxDe(p)) { toast(maxDe(p) ? 'Solo tenemos ' + maxDe(p) + ' disponibles' : 'Producto agotado', 'error'); return; }
-  if (nuevo <= 0) delete T.cart[id]; else T.cart[id] = nuevo;
+function tAgregar(k, n) {
+  const p = T.info.productos.find(x => x.id === kId(k)); if (!p) return;
+  const nuevo = (T.cart[k] || 0) + n;
+  if (n > 0 && enCarrito(p.id) + n > maxDe(p)) { toast(maxDe(p) ? 'Solo tenemos ' + maxDe(p) + ' disponibles' : 'Producto agotado', 'error'); return; }
+  if (nuevo <= 0) delete T.cart[k]; else T.cart[k] = nuevo;
   guardarCarrito();
   try { navigator.vibrate && navigator.vibrate(10); } catch (e) {}
   gridTienda();
@@ -6560,23 +6639,51 @@ function barTienda() {
 }
 function tProducto(id) {
   const p = T.info.productos.find(x => x.id === id); if (!p) return;
-  let n = 1;
+  const cfg = T.cfg || OPC_GIRO.otro, sel = {};
+  p.ops.forEach(o => { if (o.v.length === 1) sel[o.n] = o.v[0]; });
+  if (T.f && cfg.filtro) { const o = p.ops.find(x => norm(x.n) === norm(cfg.filtro)); if (o && o.v.includes(T.f)) sel[o.n] = T.f; }
+  let n = 1, turno = '';
+  const opsHTML = p.ops.map((o, i) => `<span class="op-l">${esc(o.n)}</span><div class="op-g" data-g="${i}">${o.v.map(v => `<button type="button" class="chip ${sel[o.n] === v ? 'on' : ''}" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div>`).join('');
+  const citaHTML = cfg.cita ? `<label class="fld" style="margin-top:14px"><span>Fecha que prefieres</span><input type="date" id="tp-fe" min="${hoy()}"></label>
+    <span class="op-l">Hora</span><div class="op-g" id="tp-tu">${['Mañana', 'Tarde'].map(v => `<button type="button" class="chip" data-t="${v}">${v}</button>`).join('')}</div>` : '';
+  const notaHTML = cfg.nota ? `<label class="fld" style="margin-top:14px"><span>${esc(cfg.nota)} (opcional)</span><input id="tp-no" maxlength="80" placeholder="${esc(cfg.notaEj || '')}"></label>` : '';
   const h = hoja({ titulo: '', cls: 'prod-h', html: `<div class="prod-big">${prodFoto(p)}</div><h2 class="prod-n">${esc(p.nombre)}</h2><div class="prod-p n">${money(p.precio)}${p.unidad && p.unidad !== 'unidad' ? ` <small>por ${esc(p.unidad)}</small>` : ''}</div>
     ${p.descripcion ? `<p class="prod-d">${esc(p.descripcion)}</p>` : ''}${p.agotado ? '<p class="neg"><b>Agotado por ahora</b></p>' : p.stock !== undefined ? `<p class="sm mut">${cant(p.stock)} disponibles</p>` : ''}
-    ${p.agotado ? '' : `<div class="row" style="justify-content:center;margin:14px 0 4px"><div class="qty big"><button data-d="-1">−</button><span id="tp-n">1</span><button data-d="1">+</button></div></div>`}` });
+    ${p.agotado ? '' : `${opsHTML}${citaHTML}${notaHTML}<div class="row" style="justify-content:center;margin:16px 0 4px"><div class="qty big"><button data-d="-1">−</button><span id="tp-n">1</span><button data-d="1">+</button></div></div>`}` });
   if (p.agotado) return;
-  const pinta = () => { $('#tp-n', h.el).textContent = n; h.botones([{ t: `${ic('bag', 18)} Agregar · ${money(p.precio * n)}`, cls: 'acc big', fn: () => { const ya = T.cart[p.id] || 0; if (ya + n > maxDe(p)) throw new Error('Solo tenemos ' + maxDe(p) + ' disponibles'); tAgregar(p.id, n); h.cerrar(); toast('Agregado a tu pedido', 'ok', 1500); } }]); };
-  $('.qty', h.el).addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; n = Math.max(1, Math.min(maxDe(p) - (T.cart[p.id] || 0) || 1, n + Number(b.dataset.d))); pinta(); });
+  const falta = () => p.ops.find(o => !sel[o.n]);
+  const opcion = () => {
+    const l = p.ops.map(o => o.n + ': ' + sel[o.n]);
+    const fe = $('#tp-fe', h.el); if (fe && fe.value) l.push('Fecha: ' + fFechaC(fe.value) + (turno ? ', ' + turno.toLowerCase() : ''));
+    else if (turno) l.push('Hora: ' + turno.toLowerCase());
+    const no = $('#tp-no', h.el); if (no && no.value.trim()) l.push('Nota: ' + no.value.trim());
+    return l.join(', ');
+  };
+  const pinta = () => {
+    $('#tp-n', h.el).textContent = n;
+    const f = falta();
+    h.botones([{ t: f ? `Elige ${esc(f.n.toLowerCase())}` : `${ic('bag', 18)} ${cfg.cita ? 'Solicitar' : 'Agregar'} · ${money(p.precio * n)}`, cls: 'acc big', fn: () => {
+      const x = falta(); if (x) throw new Error('Elige ' + x.n.toLowerCase());
+      if (cfg.cita && !($('#tp-fe', h.el) || {}).value) throw new Error('Elige la fecha que prefieres');
+      if (enCarrito(p.id) + n > maxDe(p)) throw new Error('Solo tenemos ' + maxDe(p) + ' disponibles');
+      const op = opcion(); tAgregar(op ? p.id + SEP + op : p.id, n); h.cerrar(); toast('Agregado a tu pedido', 'ok', 1500);
+    } }]);
+  };
+  h.el.addEventListener('click', e => {
+    const v = e.target.closest('[data-v]'); if (v) { const o = p.ops[Number(v.parentNode.dataset.g)]; sel[o.n] = v.dataset.v; $$('.chip', v.parentNode).forEach(c => c.classList.toggle('on', c === v)); pinta(); return; }
+    const t = e.target.closest('[data-t]'); if (t) { turno = turno === t.dataset.t ? '' : t.dataset.t; $$('#tp-tu .chip', h.el).forEach(c => c.classList.toggle('on', c.dataset.t === turno)); return; }
+    const b = e.target.closest('.qty [data-d]'); if (b) { n = Math.max(1, Math.min(maxDe(p) - enCarrito(p.id) || 1, n + Number(b.dataset.d))); pinta(); }
+  });
   pinta();
 }
 function tCarrito() {
   const n = T.info.negocio, cli = LS.json('cliente_tienda', {}) || {};
   const h = hoja({ titulo: 'Tu pedido', html: '<div id="tc"></div>', cls: 'checkout' });
   const pinta = () => {
-    const sub = tSub(), env = T.entrega === 'domicilio' ? n.envio : 0, items = Object.keys(T.cart).map(id => ({ p: T.info.productos.find(x => x.id === id), q: T.cart[id] })).filter(x => x.p);
+    const sub = tSub(), env = T.entrega === 'domicilio' ? n.envio : 0, items = Object.keys(T.cart).map(k => ({ k, op: kOp(k), p: T.info.productos.find(x => x.id === kId(k)), q: T.cart[k] })).filter(x => x.p);
     if (!items.length) { h.cerrar(); return; }
     const valores = { nom: ($('#tc-n', h.el) || {}).value, tel: ($('#tc-t', h.el) || {}).value, dir: ($('#tc-d', h.el) || {}).value, pago: ($('#tc-p', h.el) || {}).value, nota: ($('#tc-o', h.el) || {}).value };
-    $('#tc', h.el).innerHTML = `${items.map(x => `<div class="tk"><div class="tx"><b>${esc(x.p.nombre)}</b><small>${money(x.p.precio)} c/u</small></div><div class="qty"><button data-id="${x.p.id}" data-d="-1">−</button><span>${x.q}</span><button data-id="${x.p.id}" data-d="1">+</button></div><b class="n tkt">${money(x.p.precio * x.q)}</b></div>`).join('')}
+    $('#tc', h.el).innerHTML = `${items.map(x => `<div class="tk"><div class="tx"><b>${esc(x.p.nombre)}</b>${x.op ? `<small class="op">${esc(x.op)}</small>` : ''}<small>${money(x.p.precio)} c/u</small></div><div class="qty"><button data-id="${esc(x.k)}" data-d="-1">−</button><span>${x.q}</span><button data-id="${esc(x.k)}" data-d="1">+</button></div><b class="n tkt">${money(x.p.precio * x.q)}</b></div>`).join('')}
       <div class="tots"><div class="tot"><span>Productos</span><b class="n">${money(sub)}</b></div>${T.entrega === 'domicilio' ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${env ? money(env) : 'Gratis'}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(sub + env)}</b></div></div>
       ${n.minimo && sub < n.minimo ? `<div class="aviso warn sm">${ic('alert', 18)}<div>El pedido mínimo es de ${money(n.minimo)}</div></div>` : ''}
       ${n.entrega === 'ambos' ? `<div class="seg full" id="tc-e" style="margin-bottom:12px"><button class="${T.entrega === 'recoger' ? 'on' : ''}" data-e="recoger">${ic('store', 16)} Recoger</button><button class="${T.entrega === 'domicilio' ? 'on' : ''}" data-e="domicilio">${ic('truck', 16)} A domicilio</button></div>` : `<p class="sm mut">${n.entrega === 'domicilio' ? 'Te lo llevamos a domicilio' : 'Lo recoges en el negocio'}${n.direccion && n.entrega !== 'domicilio' ? ': ' + esc(n.direccion) : ''}</p>`}
@@ -6584,7 +6691,7 @@ function tCarrito() {
       ${T.entrega === 'domicilio' ? `<label class="fld"><span>Dirección de entrega</span><input id="tc-d" autocomplete="street-address" placeholder="Colonia, calle, casa, referencia" value="${esc(valores.dir !== undefined ? valores.dir : cli.direccion || '')}"></label>` : ''}
       <label class="fld"><span>¿Cómo vas a pagar?</span><select id="tc-p">${n.pagos.map(x => `<option value="${esc(x)}" ${valores.pago === x ? 'selected' : ''}>${esc(x === 'Efectivo' && T.entrega === 'domicilio' ? 'Efectivo al recibir' : x)}</option>`).join('')}</select></label>
       <div id="tc-dp"></div>
-      <label class="fld"><span>Nota (opcional)</span><input id="tc-o" placeholder="Ej. color, talla, hora preferida" value="${esc(valores.nota || '')}"></label>`;
+      <label class="fld"><span>Nota (opcional)</span><input id="tc-o" placeholder="Algo más que debamos saber" value="${esc(valores.nota || '')}"></label>`;
     const dp = () => { $('#tc-dp', h.el).innerHTML = $('#tc-p', h.el).value === 'Transferencia' && n.datosPago ? `<div class="aviso info sm">${ic('bank', 18)}<div>${esc(n.datosPago)}</div></div>` : ''; };
     $('#tc-p', h.el).addEventListener('change', dp); dp();
     h.botones([{ t: `${ic('send', 18)} Enviar pedido · ${money(sub + env)}`, cls: 'wa big', fn: enviar }]);
@@ -6599,7 +6706,7 @@ function tCarrito() {
     if (tel.replace(/\D/g, '').length < 8) throw new Error('Escribe tu número de WhatsApp');
     if (T.entrega === 'domicilio' && dir.trim().length < 5) throw new Error('Escribe la dirección de entrega');
     LS.set('cliente_tienda', JSON.stringify({ nombre, telefono: tel, direccion: dir || cli.direccion || '' }));
-    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, items: Object.keys(T.cart).map(id => ({ id, cantidad: T.cart[id] })) });
+    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, items: Object.keys(T.cart).map(k => ({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) })) });
     const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 10)));
     T.cart = {}; guardarCarrito(); h.cerrar(); gridTienda(); pedidoEnviado(r, nombre, tel); misPedidosTienda();
   };
