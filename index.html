@@ -549,7 +549,83 @@ body.en-tienda{padding-bottom:110px}
 .prod-big .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
 .prod-n{font:600 26px/1.15 var(--serif);margin:14px 0 4px}.prod-p{font-size:22px;font-weight:700;color:var(--pri)}.prod-p small{font-size:13px;color:var(--mut);font-weight:400}
 .prod-d{color:var(--mut);line-height:1.5}
-.sp-card .nm{font:600 17px/1.15 var(--serif)}
+/* ===== Tienda en línea · diseño elegante ===== */
+.sp-card .nm{font:600 17px/1.15 var(--serif);min-height:0}
+.shop-hero.v2{padding:16px 18px 66px;border-radius:0;background:radial-gradient(120% 90% at 50% 0%,var(--h2),var(--h1))}
+.shop-hero.v2:after{display:none}
+.shop-hero.v2 .top{display:flex;justify-content:space-between;position:relative;z-index:1;margin-bottom:4px}
+.shop-hero.v2 .top button{background:rgba(255,255,255,.14);border:0;color:#fff;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;cursor:pointer;position:relative}
+.shop-hero.v2 .top button b{position:absolute;top:-5px;right:-5px;background:var(--a1);color:#fff;font-size:11px;min-width:19px;height:19px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
+.shop-hero.v2 .mono{width:84px;height:84px;font-size:34px;box-shadow:0 0 0 6px rgba(255,255,255,.08)}
+.shop-hero.v2 .hero-logo{width:88px;height:88px;border-radius:50%;box-shadow:0 0 0 6px rgba(255,255,255,.12),0 8px 20px rgba(0,0,0,.18)}
+.shop-hero.v2 .hero-giro{font-size:10.5px;letter-spacing:.32em;text-transform:uppercase;margin-top:10px;opacity:.9;display:flex;align-items:center;justify-content:center;gap:10px}
+.shop-hero.v2 .hero-giro:before,.shop-hero.v2 .hero-giro:after{content:"";width:22px;height:1px;background:var(--tag);opacity:.8}
+.shop-hero.v2 .hero-esl{font:italic 500 19px var(--serif);color:var(--tag);margin-top:8px}
+.shop-box.v2{margin-top:-46px;padding-bottom:130px}
+.shop-info{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:14px 16px;box-shadow:0 10px 30px rgba(0,0,0,.08);margin-bottom:14px}
+.shop-open{display:flex;align-items:center;gap:6px;font-size:13.5px}.shop-open i{width:8px;height:8px;border-radius:50%;background:#2fd58b;box-shadow:0 0 0 4px rgba(47,213,139,.18)}
+.shop-open.off i{background:#ff6b7f;box-shadow:0 0 0 4px rgba(255,107,127,.18)}.shop-open b{font-weight:600;color:#0f9d63}.shop-open.off b{color:#e0243e}.shop-open span{color:var(--mut)}
+.shop-acts{display:grid;grid-template-columns:repeat(auto-fit,minmax(56px,1fr));gap:6px;margin:14px 0 6px}
+.shop-acts a{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--mut);text-decoration:none;cursor:pointer}
+.shop-acts a i{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;background:var(--pri2);color:var(--pri)}
+.shop-acts a.wa i{background:#1fa855;color:#fff}
+.shop-rows{border-top:1px solid var(--line);margin-top:10px;padding-top:6px}
+.shop-rows div{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:13.5px}.shop-rows .ic{color:var(--pri);flex:none}.shop-rows b{font-weight:600}
+.shop-sec{text-align:center;font-size:10.5px;letter-spacing:.28em;color:var(--mut);text-transform:uppercase;font-weight:500}
+.shop-about{text-align:center;padding:6px 10px 4px}.shop-about p{font:500 18px/1.35 var(--serif);margin:8px 0 0}
+.shop-h2{display:flex;justify-content:space-between;align-items:baseline;margin:18px 2px 10px;border-top:1px solid var(--line);padding-top:16px}
+.shop-h2 span{font:600 25px var(--serif)}.shop-h2 small{font-size:11px;letter-spacing:.2em;color:var(--mut);text-transform:uppercase}
+.shop-box.v2 .shop-srch{box-shadow:none;border:1px solid var(--line);padding:0;background:none}
+.shop-box.v2 .srch{background:var(--card);border:1px solid var(--line);border-radius:99px}.shop-box.v2 .srch input{background:transparent}
+.shop-box.v2 .shop-grid .pc{border-radius:20px;box-shadow:none}
+.shop-box.v2 .pc .ph{background:var(--pri2);color:var(--pri)}
+.shop-box.v2 .pc .cat{font-size:10px;letter-spacing:.18em;color:var(--mut);text-transform:uppercase}
+.shop-box.v2 .pc .pr{font-size:15px}
+.shop-box.v2 .sp-add{width:32px;height:32px;border-radius:50%;background:transparent;border:1px solid var(--pri);color:var(--pri)}
+.shop-box.v2 .pc .nw{position:absolute;top:9px;left:9px;z-index:2;font:600 10px var(--font);letter-spacing:.08em;background:var(--tag);color:#3a2a00;border-radius:99px;padding:2px 8px}
+.shop-foot{text-align:center;margin-top:24px;padding-top:18px;border-top:1px solid var(--line)}
+.shop-foot .fl{width:42px;height:42px;border-radius:50%;margin:0 auto;display:grid;place-items:center;font:600 17px var(--serif);color:var(--pri);border:1px solid var(--pri);overflow:hidden}
+.shop-foot .fl img{width:100%;height:100%;object-fit:cover}
+.shop-foot .fn{font:600 20px var(--serif);margin-top:6px}.shop-foot .fs{font-size:11px;color:var(--mut);letter-spacing:.1em;margin-top:2px}
+.shop-foot .fs a{color:var(--pri);text-decoration:none}
+/* Propietario */
+.owner{margin:18px 0 4px}.owner .shop-sec{margin-bottom:10px}
+.owner-c{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 18px 18px;text-align:center;position:relative;overflow:hidden}
+.owner-c:before{content:"";position:absolute;left:0;right:0;top:0;height:58px;background:linear-gradient(120deg,var(--h1),var(--h2));opacity:.9}
+.owner-f{position:relative;width:92px;height:92px;margin:0 auto;border-radius:50%;padding:3px;background:linear-gradient(135deg,var(--tag),var(--pri))}
+.owner-f span,.owner-f img{width:100%;height:100%;border-radius:50%;display:grid;place-items:center;font:600 34px var(--serif);color:var(--pri);background:var(--pri2);border:3px solid var(--card);box-sizing:border-box;object-fit:cover}
+.owner-n{font:600 25px var(--serif);margin-top:8px}.owner-r{font-size:10.5px;letter-spacing:.28em;color:var(--pri);text-transform:uppercase;margin-top:2px}
+.owner-m{font:italic 500 18px/1.35 var(--serif);margin:12px 4px 0}
+.owner-t{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:12px}
+.owner-t b{font-weight:500;font-size:11.5px;border-radius:99px;padding:4px 10px;background:var(--pri2);color:var(--ink);display:inline-flex;gap:5px;align-items:center}
+.owner-b{display:flex;gap:8px;margin-top:14px}.owner-b .btn{flex:1}
+.owner-s{font:italic 500 26px var(--serif);color:var(--pri);margin-top:10px;opacity:.85}
+/* Chat en la tienda y en el programa */
+.chat-h{display:flex;gap:10px;align-items:center;padding:0 0 12px;border-bottom:1px solid var(--line);margin-bottom:10px}
+.chat-h .av{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font:600 18px var(--serif);background:var(--pri2);color:var(--pri);border:2px solid var(--pri);overflow:hidden;flex:none}
+.chat-h .av img{width:100%;height:100%;object-fit:cover}.chat-h b{font:600 19px var(--serif);display:block}.chat-h small{color:var(--mut);font-size:12px;display:flex;gap:5px;align-items:center}
+.chat-ctx{display:flex;gap:10px;align-items:center;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 10px;margin-bottom:8px;cursor:pointer}
+.chat-ctx .ph{width:38px;height:38px;border-radius:10px;font-size:22px;background:var(--pri2);display:grid;place-items:center;overflow:hidden;flex:none}.chat-ctx .ph img{width:100%;height:100%;object-fit:cover}
+.chat-ctx small{display:block;font-size:10.5px;color:var(--mut);letter-spacing:.1em;text-transform:uppercase}.chat-ctx b{font-weight:500;font-size:13px}
+.msgs{display:flex;flex-direction:column;gap:8px;padding:8px 0;min-height:120px}
+.msgs .day{align-self:center;font-size:11px;color:var(--mut);background:var(--pri2);border-radius:99px;padding:2px 10px}
+.msg{max-width:80%;display:flex;flex-direction:column}.msg small{font-size:10.5px;color:var(--mut);margin-top:2px}
+.msg .bt{padding:9px 12px;border-radius:18px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
+.msg.yo{align-self:flex-end;align-items:flex-end}.msg.yo .bt{background:var(--pri);color:var(--onpri);border-bottom-right-radius:5px}
+.msg.el{align-self:flex-start}.msg.el .bt{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:5px}
+.chat-in{display:flex;gap:8px;align-items:flex-end;margin-top:6px}.chat-in textarea{flex:1;border-radius:20px;min-height:44px;max-height:120px;resize:none;padding:11px 14px}
+.chat-in button{width:44px;height:44px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
+.chat-nota{font-size:11.5px;color:var(--mut);display:flex;gap:6px;align-items:center;justify-content:center;margin:6px 0}
+.rapidas{display:flex;gap:6px;overflow-x:auto;padding:2px 0 6px;scrollbar-width:none}.rapidas button{white-space:nowrap;border:1px solid var(--pri);color:var(--pri);background:none;border-radius:99px;padding:5px 11px;font:500 12.5px var(--font);cursor:pointer}
+.chat-acts{display:flex;gap:8px;margin-top:8px}.chat-acts .btn{flex:1}
+.ch-sum{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}.ch-sum div{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:8px 10px}
+.ch-sum b{font-size:18px;color:var(--pri);display:block}.ch-sum small{font-size:10.5px;color:var(--mut)}
+.li.ch .av{border-radius:50%}.li.ch.nv .tx small{color:var(--ink);font-weight:500}.li.ch .cnt{background:var(--pri);color:#fff;border-radius:10px;font-size:11px;padding:1px 7px;font-weight:600}
+.li.ch .tag{display:inline-block;font-size:10.5px;background:var(--pri2);color:var(--pri);border-radius:6px;padding:0 6px;margin:1px 0;font-weight:500}
+.li.ch .hr{font-size:11px;color:var(--mut);white-space:nowrap}.li.ch.nv .hr{color:var(--pri);font-weight:600}
+.t-chat{position:fixed;right:14px;bottom:calc(14px + env(safe-area-inset-bottom));z-index:24;width:54px;height:54px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;display:grid;place-items:center;box-shadow:0 8px 22px rgba(0,0,0,.22);cursor:pointer}
+.t-chat b{position:absolute;top:-4px;right:-4px;background:var(--a1);color:#fff;font-size:11px;min-width:20px;height:20px;border-radius:10px;display:grid;place-items:center;padding:0 5px}
+.t-chat.up{bottom:calc(84px + env(safe-area-inset-bottom))}
 .sp-op{font-size:11.5px;color:var(--mut);margin-top:3px;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .op-f{display:flex;align-items:center;gap:7px;margin-top:10px}
 .op-f>b,.op-l{font-size:11px;letter-spacing:2px;color:var(--mut);font-weight:500;text-transform:uppercase}
@@ -825,7 +901,7 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 <script type="text/plain" id="backend-src">
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.5 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.6 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -845,7 +921,7 @@ const MULTI_NEGOCIO = true;
 const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite en modo un solo negocio)
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.5';
+const VERSION = '1.6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -881,15 +957,17 @@ const SCHEMA = {
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado'],
   ProyectoGastos: ['id','proyectoId','dia','categoria','descripcion','cantidad','costoUnit','monto','productoId','caja','usuarioId','anulado','creado','anulacion'],
   ProyectoProductos: ['id','proyectoId','nombre','cantidad','unidad','peso','precio','productoId','inventario','creado'],
+  Chats:          ['id','telefono','nombre','clienteId','clave','productoId','producto','ultimo','ultimoTexto','deCliente','sinLeer','creado'],
+  Mensajes:       ['id','chatId','de','texto','usuarioId','fecha'],
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W' };
-const NUMS = new Set(['margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M' };
+const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt']);
-const BOOLS = new Set(['activo','anulada','anulado','tienda','caja']);
+const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario']);
-const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones']);
+const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -900,12 +978,15 @@ const CONFIG_DEF = {
   mensajeRecibo: '¡Gracias por su compra!', tema: 'fucsia', logo: '', fondoCaja: '0',
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
+  // Información del negocio en la tienda y sección del propietario
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si',
+  duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
   msjCobro: 'Hola {cliente} 👋, te saluda {negocio}. Te recordamos tu saldo pendiente de {saldo}. ¡Gracias por tu preferencia!',
   // Facturación SAR (autoimpresor): apagada por defecto
   sarActivo: 'no', sarRazon: '', sarRtn: '', sarDireccion: '', sarCai: '', sarEst: '000', sarPunto: '001', sarDesde: '', sarHasta: '', sarLimite: '',
-  seqV: '0', seqC: '0', seqP: '0', seqF: '', sysLimpieza: '', sysVer: ''
+  seqV: '0', seqC: '0', seqP: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
 };
 // Ajustes que el administrador puede cambiar desde la app
 const CONFIG_EDITABLE = Object.keys(CONFIG_DEF).filter(k => k.indexOf('seq') !== 0 && k.indexOf('sys') !== 0 && k.indexOf('sar') !== 0);
@@ -970,7 +1051,7 @@ function route_(req) {
   Object.keys(MEMO).forEach(k => { delete MEMO[k]; });
   NEG = null;
   const a = req.action, d = req.data || {};
-  if (!MULTI_NEGOCIO && a !== 'tiendaInfo' && a !== 'pedir' && a !== 'misPedidos') {
+  if (!MULTI_NEGOCIO && ['tiendaInfo', 'pedir', 'misPedidos', 'chatEnviar', 'chatVer'].indexOf(a) < 0) {
     const lic = licencia_();
     if (lic.estado === 'vencida') throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: config_().nombre }));
   }
@@ -981,6 +1062,8 @@ function route_(req) {
   if (a === 'tiendaInfo') return tiendaInfo_(d);
   if (a === 'pedir') { pedirLimites_(d); return lock_(() => pedir_(d)); }
   if (a === 'misPedidos') return misPedidos_(d);
+  if (a === 'chatEnviar') { chatLimites_(d); return lock_(() => chatEnviar_(d)); }
+  if (a === 'chatVer') return chatVer_(d);
   const u = auth_(req.token);
   const res = rutaUsuario_(a, u, d, req);
   return u.rol === 'cajero' ? sinCostos_(res) : res;
@@ -1027,6 +1110,10 @@ function rutaUsuario_(a, u, d, req) {
     case 'anularGasto':     return lock_(() => anularGasto_(u, d));
     case 'pedidos':         return pedidos_(u, d);
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
+    case 'chats':           return chats_(u);
+    case 'chat':            return lock_(() => chat_(u, d));
+    case 'chatResponder':   return lock_(() => chatResponder_(u, d));
+    case 'chatBorrar':      return lock_(() => chatBorrar_(u, d));
     case 'caja':            return caja_(u, d);
     case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
     case 'reporte':         return reporte_(u, d);
@@ -1620,7 +1707,9 @@ function guardar_(u, d) {
     req_(u, ['admin']);
     const reg = {};
     Object.keys(d.registro || {}).forEach(k => { if (CONFIG_EDITABLE.indexOf(k) >= 0) reg[k] = String(d.registro[k]); });
-    Object.keys(reg).forEach(k => { if (k !== 'logo' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
+    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
+    if (reg.duenoFoto && (reg.duenoFoto.length > 60000 || reg.duenoFoto.indexOf('data:image/') !== 0)) throw new Error('La foto del propietario no es válida. Súbela de nuevo.');
+    ['tiendaAbre', 'tiendaCierra'].forEach(k => { if (reg[k] && !/^\d{2}:\d{2}$/.test(reg[k])) throw new Error('Escribe la hora con el formato 08:00'); });
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
     if (reg.isv !== undefined && !(Number(reg.isv) >= 0 && Number(reg.isv) < 1)) throw new Error('ISV no válido');
     if (reg.tienda === 'si' && !plus_()) throw new Error('La tienda en línea es parte del plan Plus');
@@ -2369,9 +2458,10 @@ function pedidos_(u, d) {
 }
 
 function pendientes_(u) {
-  if (u.rol === 'bodega') return { nuevos: 0 };
+  if (u.rol === 'bodega') return { nuevos: 0, mensajes: 0 };
+  if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
   const n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
-  return { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '' };
+  return { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length };
 }
 
 function estadoPedido_(u, d) {
@@ -3134,13 +3224,18 @@ function tiendaNeg_(d) {
 
 function tiendaInfo_(d) {
   const cfg = tiendaNeg_(d);
-  const ver = cfg.tiendaMostrarStock === 'si', sin = cfg.tiendaSinStock === 'si';
+  const ver = cfg.tiendaMostrarStock === 'si', sin = cfg.tiendaSinStock === 'si', nuevoDesde = diasAtras_(15);
   return {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
-      minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago },
+      minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago,
+      sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
+      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, chat: cfg.tiendaChat !== 'no',
+      dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
+        datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null },
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
       const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '' };
+      if (String(p.creado).slice(0, 10) >= nuevoDesde) o.nuevo = true;
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
       return o;
     }).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre)),
@@ -3205,6 +3300,109 @@ function pedir_(d) {
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
   return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, items: items, entrega: entrega, pago: pago,
     negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : '' };
+}
+
+/* ===================== MENSAJES DIRECTOS (tienda ↔ negocio) =====================
+ * El cliente escribe desde la tienda en línea y el negocio responde desde el programa.
+ * Cada conversación tiene una clave que solo guarda el teléfono del cliente (nadie más la puede leer).
+ * Las conversaciones sin mensajes nuevos en 2 meses se borran solas (una revisión al día).
+ */
+const DIAS_CHAT = 60;
+function venceChat_(ultimo) { return Utilities.formatDate(new Date((msDeLocal_(ultimo) || Date.now()) + DIAS_CHAT * 86400000), TZ, 'yyyy-MM-dd'); }
+function mensajesDe_(id) { return rows_('Mensajes').filter(m => m.chatId === id).sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0); }
+function chatPublico_(c) {
+  return { nombre: c.nombre, producto: c.producto, productoId: c.productoId, vence: venceChat_(c.ultimo),
+    mensajes: mensajesDe_(c.id).map(m => ({ id: m.id, de: m.de, texto: m.texto, fecha: m.fecha })) };
+}
+function chatLimites_(d) {
+  const cfg = tiendaNeg_(d);
+  if (cfg.tiendaChat === 'no') throw new Error('Este negocio no recibe mensajes por aquí. Escríbele por WhatsApp.');
+  const c = CacheService.getScriptCache(), nid = NEG ? NEG.id : '', tel = String(d.telefono || d.clave || '').replace(/[^0-9a-z]/gi, '').slice(-12);
+  if (Number(c.get('CM_' + nid + tel) || 0) >= 40) throw new Error('Enviaste muchos mensajes seguidos. Espera un rato o escríbele al negocio por WhatsApp.');
+  if (Number(c.get('CN_' + nid) || 0) >= 400) throw new Error('El negocio está recibiendo muchos mensajes. Intenta de nuevo en unos minutos.');
+}
+function chatEnviar_(d) {
+  const cfg = tiendaNeg_(d);
+  if (cfg.tiendaChat === 'no') throw new Error('Este negocio no recibe mensajes por aquí. Escríbele por WhatsApp.');
+  const texto = String(d.texto || '').trim().replace(/\n{3,}/g, '\n\n').slice(0, 600);
+  if (!texto) throw new Error('Escribe tu mensaje');
+  let c = d.clave ? rows_('Chats').find(x => x.clave === String(d.clave)) : null;
+  const f = ahora_(), prod = d.productoId ? rows_('Productos').find(x => x.id === d.productoId && x.activo && x.tienda) : null;
+  if (!c) {
+    const nombre = txt_(d.nombre, 60); let tel = String(d.telefono || '').replace(/\D/g, '');
+    if (nombre.length < 3) throw new Error('Escribe tu nombre');
+    if (tel.length < 8) throw new Error('Escribe tu número de WhatsApp');
+    if (tel.length === 8) tel = '504' + tel;
+    const cli = rows_('Clientes').find(x => tel8_(x.telefono) && tel8_(x.telefono) === tel.slice(-8));
+    c = upsert_('Chats', { telefono: tel, nombre: nombre, clienteId: cli ? cli.id : '', clave: Utilities.getUuid().replace(/-/g, ''), productoId: '', producto: '',
+      ultimo: f, ultimoTexto: '', deCliente: true, sinLeer: 0, creado: f });
+  }
+  upsert_('Mensajes', { chatId: c.id, de: 'cliente', texto: texto, usuarioId: '', fecha: f });
+  const upd = { id: c.id, ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: true, sinLeer: (Number(c.sinLeer) || 0) + 1 };
+  if (prod) { upd.productoId = prod.id; upd.producto = prod.nombre; }
+  c = upsert_('Chats', upd);
+  const cs = CacheService.getScriptCache(), nid = NEG ? NEG.id : '', k1 = 'CM_' + nid + String(d.telefono || d.clave || '').replace(/[^0-9a-z]/gi, '').slice(-12), k2 = 'CN_' + nid;
+  cs.put(k1, String(Number(cs.get(k1) || 0) + 1), 3600); cs.put(k2, String(Number(cs.get(k2) || 0) + 1), 3600);
+  return Object.assign(chatPublico_(c), { clave: c.clave });
+}
+function chatVer_(d) {
+  tiendaNeg_(d);
+  const c = d.clave ? rows_('Chats').find(x => x.clave === String(d.clave)) : null;
+  return c ? chatPublico_(c) : { borrado: true };
+}
+function chatAdmin_(c) {
+  const o = Object.assign({}, c); delete o.clave; o.vence = venceChat_(c.ultimo); return o;
+}
+function chats_(u) {
+  req_(u, ['admin', 'cajero']);
+  if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
+  return rows_('Chats').sort((a, b) => a.ultimo < b.ultimo ? 1 : a.ultimo > b.ultimo ? -1 : 0).map(chatAdmin_);
+}
+function chat_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  let c = rows_('Chats').find(x => x.id === d.id);
+  if (!c) throw new Error('Esta conversación ya no existe (se borra a los 2 meses)');
+  if (c.sinLeer > 0) c = upsert_('Chats', { id: c.id, sinLeer: 0 });
+  const us = porId_(rows_('Usuarios')), p = c.productoId ? rows_('Productos').find(x => x.id === c.productoId) : null;
+  return { chat: chatAdmin_(c), mensajes: mensajesDe_(c.id).map(m => Object.assign(m, { quien: m.usuarioId && us[m.usuarioId] ? us[m.usuarioId].nombre : '' })),
+    producto: p ? { id: p.id, nombre: p.nombre, precio: p.precio, stock: p.tipo === 'producto' ? p.stock : null, icono: p.icono, foto: p.foto, categoria: p.categoria } : null };
+}
+function chatResponder_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const c = rows_('Chats').find(x => x.id === d.id);
+  if (!c) throw new Error('Esta conversación ya no existe (se borra a los 2 meses)');
+  const texto = String(d.texto || '').trim().slice(0, 600);
+  if (!texto) throw new Error('Escribe tu respuesta');
+  const f = ahora_();
+  upsert_('Mensajes', { chatId: c.id, de: 'negocio', texto: texto, usuarioId: u.id, fecha: f });
+  upsert_('Chats', { id: c.id, ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: false, sinLeer: 0 });
+  return chat_(u, d);
+}
+function chatBorrar_(u, d) {
+  req_(u, ['admin']);
+  if (!rows_('Chats').some(x => x.id === d.id)) throw new Error('Esta conversación ya no existe');
+  reescribir_('Mensajes', rows_('Mensajes').filter(m => m.chatId !== d.id));
+  reescribir_('Chats', rows_('Chats').filter(c => c.id !== d.id));
+  return true;
+}
+// Borra las conversaciones sin mensajes en los últimos 2 meses (una vez al día)
+function limpiarChats_(forzar) {
+  const h = hoy_();
+  if (!forzar && config_().sysChats === h) return 0;
+  guardarConfig_({ sysChats: h });
+  const lim = diasAtras_(DIAS_CHAT), chats = rows_('Chats');
+  const viejos = new Set(chats.filter(c => String(c.ultimo).slice(0, 10) < lim).map(c => c.id));
+  if (!viejos.size) return 0;
+  reescribir_('Mensajes', rows_('Mensajes').filter(m => !viejos.has(m.chatId)));
+  reescribir_('Chats', chats.filter(c => !viejos.has(c.id)));
+  return viejos.size;
+}
+// Vuelve a escribir toda la hoja con las filas que quedan (más rápido que borrar fila por fila)
+function reescribir_(name, objs) {
+  const s = sh_(name), h = SCHEMA[name], n = s.getLastRow();
+  if (n > 1) s.getRange(2, 1, n - 1, h.length).clearContent();
+  if (objs.length) s.getRange(2, 1, objs.length, h.length).setValues(objs.map(o => h.map(k => cell_(o[k], k))));
+  invalidar_(name);
 }
 
 function misPedidos_(d) {
@@ -3273,7 +3471,11 @@ function sembrarEjemplo_(adminId) {
     guardarConfig_({ eslogan: 'Todo lo que buscas, en un solo lugar', direccion: 'Barrio Guamilito, 5 calle, San Pedro Sula', telefono: '9999-0000',
       tienda: 'si', tiendaEnvio: '60', tiendaMinimo: '100', tiendaHorario: 'Lunes a sábado · 8:00 a. m. a 7:00 p. m.',
       tiendaMensaje: '¡Bienvenido! Arma tu pedido y te lo llevamos a tu casa o pasas a recogerlo.',
-      tiendaDatosPago: 'BAC Credomatic · Cuenta 7300-1234-5 · a nombre de Sofía Hernández', fondoCaja: '500' });
+      tiendaDatosPago: 'BAC Credomatic · Cuenta 7300-1234-5 · a nombre de Sofía Hernández', fondoCaja: '500',
+      tiendaSobre: 'Negocio familiar desde 2015. Ropa, belleza y regalos con precios justos y atención de casa.', tiendaInstagram: 'variedadessofia',
+      tiendaMapa: 'https://maps.google.com/?q=Barrio+Guamilito+San+Pedro+Sula', tiendaAbre: '08:00', tiendaCierra: '19:00', tiendaDias: '1,2,3,4,5,6',
+      duenoNombre: 'Sofía Hernández', duenoCargo: 'Propietaria', duenoMensaje: 'Cada producto lo escojo pensando en mis clientes. Si no encuentras algo, escríbeme y te lo consigo.',
+      duenoDatos: '10 años de experiencia | Atención personal | San Pedro Sula' });
     // Equipo
     const wa = MULTI_NEGOCIO ? n => '504' + n : n => n;
     guardarUsuario_(admin, { registro: { usuario: wa(MULTI_NEGOCIO ? '88881111' : 'carla'), nombre: 'Carla Mejía', rol: 'cajero', color: '#1f7cff', activo: true }, clave: MULTI_NEGOCIO ? '1111' : 'carla123' });
@@ -3374,6 +3576,19 @@ function sembrarEjemplo_(adminId) {
     pe(31, C[3], [['Perfume Brisa 100 ml', 1]], 'recoger', 'nuevo');
     pe(12, C[6], [['Set de maquillaje', 1], ['Peluche osito', 1], ['Envoltura de regalo', 1]], 'domicilio', 'nuevo');
     pe(4, C[0], [['Camiseta básica', 2], ['Audífonos inalámbricos', 1]], 'domicilio', 'nuevo');
+    // Mensajes directos desde la tienda
+    const hace = m => Utilities.formatDate(new Date(Date.now() - m * 60000), TZ, "yyyy-MM-dd'T'HH:mm");
+    const ch = (cli, prod, msgs) => {
+      const p = prod ? rows_('Productos').find(x => x.nombre === prod) : null, ult = msgs[msgs.length - 1];
+      let sin = 0; for (let i = msgs.length - 1; i >= 0 && msgs[i][1] === 'cliente'; i--) sin++;
+      reloj.f = hace(msgs[0][0]);
+      const c = upsert_('Chats', { telefono: '504' + cli.telefono.replace(/\D/g, ''), nombre: cli.nombre, clienteId: cli.id, clave: Utilities.getUuid().replace(/-/g, ''),
+        productoId: p ? p.id : '', producto: p ? p.nombre : '', ultimo: hace(ult[0]), ultimoTexto: ult[2].slice(0, 120), deCliente: ult[1] === 'cliente', sinLeer: sin, creado: reloj.f });
+      msgs.forEach(([m, de, t]) => { reloj.f = hace(m); upsert_('Mensajes', { chatId: c.id, de: de, texto: t, usuarioId: de === 'negocio' ? admin.id : '', fecha: reloj.f }); });
+    };
+    ch(C[0], 'Camiseta básica', [[18, 'cliente', 'Hola, ¿la camiseta negra talla M la tienen disponible?'], [10, 'negocio', '¡Hola! Sí, me quedan 4 en talla M. ¿Te la aparto?'], [9, 'cliente', 'Sí por favor, paso hoy en la tarde 🙌']]);
+    ch(C[5], '', [[52, 'cliente', 'Buenas, ¿hacen envíos a Choloma?'], [50, 'cliente', '¿Cuánto sale el envío?']]);
+    ch(C[3], 'Perfume Brisa 100 ml', [[1500, 'cliente', '¿El perfume viene también en 50 ml?'], [1440, 'negocio', 'Por ahora solo en 100 ml, pero la otra semana nos llega el de 50 ml 😊'], [1430, 'cliente', 'Perfecto, muchas gracias']]);
     // Ganancia de hace dos meses ya distribuida
     const meses = resumenMeses_().filter(m => !m.enCurso && m.utilidad > 0);
     if (meses.length > 1) {
@@ -3527,6 +3742,11 @@ const ICP = {
   percent: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
   key: '<circle cx="8" cy="15" r="4"/><path d="M11 12l9-9M17 6l3 3M14.5 8.5l2 2"/>',
   layers: '<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+  chat: '<path d="M4 5.5h16v10H9l-5 4z"/><path d="M8 9.5h8M8 12.5h5"/>',
+  insta: '<rect x="3.5" y="3.5" width="17" height="17" rx="4.5"/><circle cx="12" cy="12" r="3.8"/><circle cx="17" cy="7" r=".9" fill="currentColor"/>',
+  fb: '<path d="M14 21v-7h2.5l.5-3.5h-3V8.6c0-1 .4-1.6 1.7-1.6H17V3.9C16.6 3.8 15.6 3.7 14.6 3.7 12.2 3.7 10.5 5.2 10.5 7.9v2.6H8V14h2.5v7"/>',
+  map: '<path d="M3 6.5l6-2.5 6 2.5 6-2.5v14l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v14M15 6.5v14"/>',
+  share: '<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1"/>',
   undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'
 };
 const ic = (n, sz = 22) => `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICP[n] || ''}</svg>`;
@@ -3686,7 +3906,7 @@ const cacheKey = () => 'cache_' + (DEMO.on ? 'demo' : 'real');
 const S = {
   token: LS.get(tokenKey(), ''), user: null, config: {}, usuarios: [], productos: [], clientes: [], proveedores: [], gastoCats: [], giros: [],
   licencia: null, plus: false, negocioId: '', multi: LS.get('multi', '1') === '1', vista: 'inicio', params: {}, inicio: null,
-  ticket: LS.json('ticket', { items: [], clienteId: '', pedidoId: '', descuento: 0 }), pedidosNuevos: 0, charts: {}, f: {}
+  ticket: LS.json('ticket', { items: [], clienteId: '', pedidoId: '', descuento: 0 }), pedidosNuevos: 0, chatsNuevos: 0, charts: {}, f: {}
 };
 
 /* ===================== UTILIDADES ===================== */
@@ -3929,6 +4149,7 @@ const VISTAS = {
   inicio:      { t: 'Inicio', i: 'home', roles: TODOS },
   vender:      { t: 'Vender', i: 'cart', roles: ['admin', 'cajero'] },
   pedidos:     { t: 'Pedidos en línea', c: 'Pedidos', i: 'inbox', roles: ['admin', 'cajero'] },
+  mensajes:    { t: 'Mensajes', i: 'chat', roles: ['admin', 'cajero'] },
   productos:   { t: 'Productos', i: 'box', roles: TODOS },
   precios:     { t: 'Precios', i: 'tag', roles: ['admin', 'bodega'] },
   proyectos:   { t: 'Proyectos', i: 'layers', roles: ['admin', 'bodega'] },
@@ -3942,7 +4163,7 @@ const VISTAS = {
   usuarios:    { t: 'Usuarios', i: 'user', roles: ['admin'] },
   ajustes:     { t: 'Ajustes', i: 'gear', roles: TODOS }
 };
-const NAV_PC = ['inicio', 'vender', 'pedidos', 'productos', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
+const NAV_PC = ['inicio', 'vender', 'pedidos', 'mensajes', 'productos', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
 const R = {}; // funciones que pintan cada vista
 const puedeVer = v => VISTAS[v] && VISTAS[v].roles.includes(S.user.rol);
 
@@ -3991,12 +4212,12 @@ function pintarHeader() {
 function pintarNav() {
   const rol = S.user.rol;
   const pc = NAV_PC.filter(puedeVer);
-  $('#tnav').innerHTML = pc.map(k => `<button class="${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}">${esc(VISTAS[k].c || VISTAS[k].t)}${k === 'pedidos' && S.pedidosNuevos ? ` <span class="cnt">${S.pedidosNuevos}</span>` : ''}</button>`).join('') +
+  $('#tnav').innerHTML = pc.map(k => `<button class="${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}">${esc(VISTAS[k].c || VISTAS[k].t)}${k === 'pedidos' && S.pedidosNuevos ? ` <span class="cnt">${S.pedidosNuevos}</span>` : k === 'mensajes' && S.chatsNuevos ? ` <span class="cnt">${S.chatsNuevos}</span>` : ''}</button>`).join('') +
     `<button class="${pc.includes(S.vista) ? '' : 'on'}" data-a="mas">${pc.includes(S.vista) ? 'Más' : esc(VISTAS[S.vista].c || VISTAS[S.vista].t)} ▾</button>`;
   const b = (k, lbl, icn) => `<button class="${S.vista === k ? 'on' : ''}" data-a="ir" data-v="${k}">${ic(icn)}${k === 'pedidos' && S.pedidosNuevos ? `<span class="cnt">${S.pedidosNuevos}</span>` : ''}${lbl}</button>`;
   const centro = (k, lbl, icn) => `<button class="sell ${S.vista === k ? 'on' : ''}" data-a="ir" data-v="${k}"><i>${ic(icn, 26)}</i>${lbl}</button>`;
   const masOn = !['inicio', 'pedidos', 'vender', 'productos', 'precios', 'compras'].includes(S.vista);
-  const mas = `<button class="${masOn ? 'on' : ''}" data-a="mas">${ic('grid')}Más</button>`;
+  const mas = `<button class="${masOn ? 'on' : ''}" data-a="mas">${ic('grid')}${S.chatsNuevos && rol !== 'bodega' ? `<span class="cnt">${S.chatsNuevos}</span>` : ''}Más</button>`;
   $('#bnav').innerHTML = rol === 'bodega'
     ? b('inicio', 'Inicio', 'home') + b('precios', 'Precios', 'tag') + centro('compras', 'Compras', 'bag') + b('productos', 'Productos', 'box') + mas
     : b('inicio', 'Inicio', 'home') + b('pedidos', 'Pedidos', 'inbox') + centro('vender', 'Vender', 'cart') + b('productos', 'Productos', 'box') + mas;
@@ -4020,7 +4241,7 @@ function pintarBanner() {
 ACC.ir = el => { cerrarHojas(); ir(el.dataset.v, el.dataset.p ? JSON.parse(el.dataset.p) : {}); };
 ACC.mas = () => {
   const items = Object.keys(VISTAS).filter(k => k !== 'inicio' && puedeVer(k));
-  const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}"><i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i><span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : ''}</button>`).join('')}</div>
+  const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}"><i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i><span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : k === 'mensajes' && S.chatsNuevos ? `<b class="cnt">${S.chatsNuevos}</b>` : ''}</button>`).join('')}</div>
     <button class="me-ay" data-a="ayuda">${ic('help', 20)}<span><b>Ayuda y novedades</b><small>Cómo se usa cada pantalla · versión ${APP_VER}</small></span>${ic('right', 18)}</button>
     <div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.config.nombre || '')}</small></div><button class="btn sm bad" data-a="logout">${ic('logout', 16)} Salir</button></div>` });
   return h;
@@ -4091,7 +4312,7 @@ function salir(expirada) {
 function limpiarSesion() {
   S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; try { guardarTicket(); } catch (e) {} // el ticket no pasa al siguiente usuario
   S.hProv = null;
-  S.pedidosNuevos = 0; S.pedidosL = null; S.cajaD = null; S.proyL = null; S.hProy = null; S.f = {}; S.yaReviso = false; S.ventasL = null; S.gastosL = null; S.comprasL = null; S.hist = null; S.inicioT = 0;
+  S.pedidosNuevos = 0; S.chatsNuevos = 0; S.chatsL = null; S.pedidosL = null; S.cajaD = null; S.proyL = null; S.hProy = null; S.f = {}; S.yaReviso = false; S.ventasL = null; S.gastosL = null; S.comprasL = null; S.hist = null; S.inicioT = 0;
   try { history.replaceState(null, '', '#inicio'); } catch (e) {}
 }
 function mostrarVencida(info) {
@@ -4236,15 +4457,16 @@ function vigilarPedidos() {
     if (!S.user || document.hidden || !puede('admin', 'cajero')) return;
     try {
       const r = await api('pendientes', {}, true);
-      const antes = S.pedidosNuevos;
-      S.pedidosNuevos = r.nuevos || 0;
+      const antes = S.pedidosNuevos, antesM = S.chatsNuevos;
+      S.pedidosNuevos = r.nuevos || 0; S.chatsNuevos = r.mensajes || 0;
+      if (S.chatsNuevos > antesM && S.yaReviso) { toast('💬 Tienes un mensaje nuevo en tu tienda', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) {} if (S.vista === 'mensajes' && !PILA.length) R.mensajes(); }
       if (S.pedidosNuevos > antes && antes >= 0 && S.yaReviso) { toast('🛍️ ¡Nuevo pedido en línea!', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) {} if (S.vista === 'pedidos') R.pedidos(); }
       S.yaReviso = true;
-      if (S.pedidosNuevos !== antes) { pintarHeader(); pintarNav(); }
+      if (S.pedidosNuevos !== antes || S.chatsNuevos !== antesM) { pintarHeader(); pintarNav(); }
     } catch (e) {}
   };
   revisar();
-  vigilando = setInterval(revisar, 60000);
+  vigilando = setInterval(revisar, 30000);
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.user && !S.enTienda) { recargar(true).then(() => { if (['productos', 'clientes', 'proveedores'].includes(S.vista) && !PILA.length) render(); }).catch(() => {}); } });
 
@@ -4292,6 +4514,7 @@ R.inicio = () => {
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus ✦', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
+    if (S.plus && S.chatsNuevos) tiles += tile('t-acc', 'chat', 'Mensajes', S.chatsNuevos === 1 ? '1 sin responder' : S.chatsNuevos + ' sin responder', 'Tus clientes te escriben desde la tienda', ['ir', 'mensajes']);
     if (rol === 'admin') tiles += tile('t-verde', 'trend', 'Ganancia del mes', money(d.mes.ganancia), 'Ventas ' + money(d.mes.ventas), ['ir', 'reportes']);
     tiles += tile('t-naranja', 'coin', 'Por cobrar', money(d.porCobrar.total), d.porCobrar.clientes === 1 ? '1 cliente con saldo' : d.porCobrar.clientes + ' clientes con saldo', ['ir', 'clientes', { saldo: 1 }]);
     if (rol === 'admin') tiles += tile('t-azul', 'truck', 'Por pagar', money(d.porPagar.total), d.porPagar.proveedores === 1 ? '1 proveedor' : d.porPagar.proveedores + ' proveedores', ['ir', 'proveedores', { saldo: 1 }]);
@@ -4672,6 +4895,78 @@ function cobrarPedido(p) {
   guardarTicket();
   cerrarHojas();
   ir('vender', { cobrar: 1 });
+}
+/* ===================== MENSAJES (chat con los clientes de la tienda) ===================== */
+R.mensajes = async () => {
+  const m = $('#main');
+  if (!S.plus) { m.innerHTML = plusCard() + '<div class="empty">Con Plus, tus clientes te escriben desde tu tienda en línea y respondes desde aquí.</div>'; return; }
+  if (!S.chatsL) m.innerHTML = '<div class="empty">Cargando mensajes…</div>';
+  try { S.chatsL = await api('chats', {}, !!S.chatsL); } catch (e) { if (S.chatsL) return err(e); throw e; }
+  if (S.vista !== 'mensajes') return;
+  const l = S.chatsL, sin = l.filter(c => c.sinLeer > 0), sem = l.filter(c => c.ultimo >= diasAtrasLocal(7));
+  S.chatsNuevos = sin.length; pintarNav();
+  if (!S.f.chf) S.f.chf = sin.length ? 'sin' : 'todos';
+  const vis = S.f.chf === 'sin' ? sin : S.f.chf === 'resp' ? l.filter(c => !c.sinLeer && !c.deCliente) : l;
+  const apagado = S.config.tiendaChat === 'no' ? `<div class="aviso info">${ic('chat', 20)}<div><b>Los mensajes están apagados</b><small>Tus clientes solo ven tu WhatsApp. Enciéndelos en Ajustes › Tienda en línea.</small></div></div>` : '';
+  m.innerHTML = apagado + `<div class="ch-sum"><div><b>${sin.length}</b><small>sin responder</small></div><div><b>${sem.length}</b><small>esta semana</small></div><div><b>${l.length}</b><small>conversaciones</small></div></div>
+    <div class="chips" style="margin-bottom:10px">${[['sin', 'Sin responder', sin.length], ['todos', 'Todos', 0], ['resp', 'Respondidos', 0]].map(([k, t, c]) => `<button class="chip ${S.f.chf === k ? 'on' : ''}" data-a="chf" data-k="${k}">${t}${c ? ` <span class="c">${c}</span>` : ''}</button>`).join('')}</div>
+    <div class="list">${vis.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="verChat" data-id="${c.id}"><div class="av ${colorDe(c.nombre)}">${esc(iniciales(c.nombre))}</div><div class="tx"><div class="row sp"><b>${esc(c.nombre)}</b><span class="hr">${hace(c.ultimo)}</span></div>${c.producto ? `<span class="tag">${esc(c.producto)}</span>` : ''}<small>${c.deCliente ? '' : '<span class="mut">Tú: </span>'}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="cnt">${c.sinLeer}</span>` : ''}</div>`).join('') || `<div class="empty">${S.f.chf === 'sin' ? 'No tienes mensajes sin responder 🎉' : 'Todavía nadie te ha escrito. Tus clientes pueden hacerlo desde el botón de mensajes de tu tienda en línea.'}</div>`}</div>
+    <p class="chat-nota" style="margin-top:14px">${ic('trash', 14)} Las conversaciones sin mensajes nuevos por 2 meses se borran solas.</p>`;
+  clearTimeout(S.tCh);
+  S.tCh = setTimeout(() => { if (S.vista === 'mensajes' && !PILA.length && !document.hidden) R.mensajes(); }, 30000);
+};
+const diasAtrasLocal = n => toLocal(new Date(Date.now() - n * 86400000));
+ACC.chf = el => { S.f.chf = el.dataset.k; R.mensajes(); };
+ACC.verChat = el => verChat(el.dataset.id);
+const RAPIDAS = ['Sí, lo tenemos disponible 😊', 'Queda apartado a tu nombre', 'Te paso el precio en un momento', 'Puedes pasar a recogerlo hoy', '¡Gracias por escribirnos!'];
+async function verChat(id) {
+  let d = null, timer = null, enviando = false;
+  const h = hoja({ titulo: '', cls: 'chat-h2', html: '<div class="empty">Cargando…</div>', onClose: () => { clearInterval(timer); if (S.vista === 'mensajes') R.mensajes(); } });
+  const pintaMsgs = () => {
+    const box = $('#ch-m', h.el); if (!box) return;
+    let dia = '';
+    box.innerHTML = d.mensajes.map(x => { const f = String(x.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
+      return sep + `<div class="msg ${x.de === 'negocio' ? 'yo' : 'el'}"><div class="bt">${esc(x.texto)}</div><small>${fHora(x.fecha)}${x.de === 'negocio' && x.quien ? ' · ' + esc(x.quien) : ''}</small></div>`; }).join('') || '<div class="empty">Sin mensajes</div>';
+    box.scrollTop = box.scrollHeight;
+  };
+  const pinta = () => {
+    const c = d.chat, p = d.producto, cli = c.clienteId ? byId(S.clientes, c.clienteId) : null;
+    h.b.innerHTML = `<div class="chat-h"><div class="av ${colorDe(c.nombre)}" style="background:linear-gradient(135deg,var(--t1),var(--t2));color:#fff;border:0">${esc(iniciales(c.nombre))}</div><div><b>${esc(c.nombre)}</b><small>${esc(fmtWA(c.telefono))}${cli ? ' · cliente desde ' + esc(fFechaC(cli.creado)) : ''}</small></div><a class="btn icon wa" style="margin-left:auto" href="${waLink(c.telefono, 'Hola ' + c.nombre.split(' ')[0] + ', te escribo de ' + (S.config.nombre || 'la tienda') + ' por tu mensaje en nuestra tienda en línea.')}" target="_blank" rel="noopener" aria-label="WhatsApp">${ic('wa', 18)}</a></div>
+      ${p ? `<div class="chat-ctx" data-a="verProducto" data-id="${p.id}"><div class="ph">${p.foto ? `<img src="${esc(fotoSrc(p.foto))}" alt="">` : esc(p.icono || iniciales(p.nombre))}</div><div><small>Pregunta por</small><b>${esc(p.nombre)} · ${money(p.precio)}${p.stock !== null ? ' · ' + (p.stock > 0 ? 'quedan ' + cant(p.stock) : 'agotado') : ''}</b></div>${ic('right', 18)}</div>` : ''}
+      <div class="msgs" id="ch-m"></div>
+      <div class="rapidas" id="ch-r">${RAPIDAS.map(t => `<button type="button" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+      <div class="chat-in"><textarea id="ch-in" rows="1" placeholder="Escribe tu respuesta…" maxlength="600"></textarea><button id="ch-send" aria-label="Enviar">${ic('send', 20)}</button></div>
+      <div class="chat-acts"><button class="btn sm" data-a="chPedido">${ic('receipt', 16)} Crear pedido</button>${puede('admin') ? `<button class="btn sm ghost bad" data-a="chBorrar">${ic('trash', 16)} Borrar</button>` : ''}</div>
+      <p class="chat-nota">${ic('clock', 14)} Esta conversación se borra el ${esc(fFechaC(c.vence))} si no hay mensajes nuevos.</p>`;
+    pintaMsgs();
+    const inp = $('#ch-in', h.el);
+    inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(120, inp.scrollHeight) + 'px'; });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 700) { e.preventDefault(); enviar().catch(err); } });
+    $('#ch-r', h.el).addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; inp.value = (inp.value ? inp.value + ' ' : '') + b.dataset.t; inp.focus(); inp.dispatchEvent(new Event('input')); });
+    $('#ch-send', h.el).onclick = () => enviar().catch(err);
+  };
+  const enviar = async () => {
+    if (enviando) return;
+    const inp = $('#ch-in', h.el), texto = inp.value.trim();
+    if (!texto) throw new Error('Escribe tu respuesta');
+    enviando = true; $('#ch-send', h.el).disabled = true;
+    try { d = await api('chatResponder', { id, texto }, true); inp.value = ''; inp.style.height = ''; pintaMsgs(); }
+    finally { enviando = false; $('#ch-send', h.el).disabled = false; }
+  };
+  ACC.chPedido = () => {
+    const c = d.chat;
+    S.ticket = { items: d.producto ? [{ productoId: d.producto.id, descripcion: d.producto.nombre, cantidad: 1, precio: d.producto.precio }] : [], clienteId: c.clienteId || '', pedidoId: '', descuento: 0 };
+    guardarTicket(); h.cerrar(); ir('vender'); toast(d.producto ? 'Producto agregado al ticket' : 'Ticket listo para ' + c.nombre, 'ok', 2500);
+  };
+  ACC.chBorrar = async () => {
+    if (!(await confirmar(`¿Borrar la conversación con ${esc(d.chat.nombre)}?`, { si: 'Borrar', peligro: 1 }))) return;
+    await api('chatBorrar', { id }); S.chatsL = (S.chatsL || []).filter(x => x.id !== id); h.cerrar(); toast('Conversación borrada', 'ok');
+  };
+  try { d = await api('chat', { id }, true); } catch (e) { h.cerrar(); throw e; }
+  const c0 = (S.chatsL || []).find(x => x.id === id); if (c0 && c0.sinLeer) { c0.sinLeer = 0; S.chatsNuevos = Math.max(0, S.chatsNuevos - 1); pintarNav(); }
+  pinta();
+  timer = setInterval(async () => { if (document.hidden || enviando) return; try { const n = await api('chat', { id }, true); if (n.mensajes.length !== d.mensajes.length) { d = n; pintaMsgs(); } } catch (e) {} }, 20000);
+  h.botones([]);
 }
 ACC.verPedido = el => {
   const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
@@ -5762,7 +6057,20 @@ R.ajustes = () => {
     <div class="fld"><span>Formas de pago que aceptas</span><div class="row" id="aj-pagos">${['Efectivo', 'Transferencia', 'Tarjeta'].map(p => `<label class="chk"><input type="checkbox" value="${p}" ${String(c.tiendaPagos).split(',').includes(p) ? 'checked' : ''}> ${p}</label>`).join('')}</div></div>
     <label class="fld"><span>Datos para transferencia</span><input data-k="tiendaDatosPago" value="${v('tiendaDatosPago')}" placeholder="Banco · cuenta · a nombre de…"></label>
     <div class="f2"><label class="fld"><span>Mostrar existencias</span>${sel('tiendaMostrarStock', [['no', 'No mostrar'], ['si', 'Mostrar cuántos hay']])}</label><label class="fld"><span>Productos agotados</span>${sel('tiendaSinStock', [['no', 'No se pueden pedir'], ['si', 'Se pueden pedir igual']])}</label></div>
+    <h4 style="margin:14px 0 8px">Información que ven tus clientes</h4>
+    <div class="f3"><label class="fld"><span>Abres a las</span><input data-k="tiendaAbre" type="time" value="${v('tiendaAbre')}"></label><label class="fld"><span>Cierras a las</span><input data-k="tiendaCierra" type="time" value="${v('tiendaCierra')}"></label><label class="fld"><span>Días</span><select data-k="tiendaDias">${[['1,2,3,4,5,6', 'Lunes a sábado'], ['1,2,3,4,5', 'Lunes a viernes'], ['0,1,2,3,4,5,6', 'Todos los días'], ['1,2,3,4,5,6,0', 'Lunes a domingo'], ['2,3,4,5,6,0', 'Martes a domingo']].map(([val, t]) => `<option value="${val}" ${String(c.tiendaDias || '1,2,3,4,5,6') === val ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
+    <small class="hint" style="margin:-6px 0 10px">Con las horas, tu tienda muestra «Abierto ahora» o «Cerrado» sola.</small>
+    <label class="fld"><span>Sobre nosotros (una o dos frases)</span><textarea data-k="tiendaSobre" rows="2" maxlength="300" placeholder="Negocio familiar desde 2015…">${v('tiendaSobre')}</textarea></label>
+    <div class="f3"><label class="fld"><span>Instagram</span><input data-k="tiendaInstagram" value="${v('tiendaInstagram')}" placeholder="@tunegocio"></label><label class="fld"><span>Facebook</span><input data-k="tiendaFacebook" value="${v('tiendaFacebook')}" placeholder="tunegocio"></label><label class="fld"><span>Enlace de Google Maps</span><input data-k="tiendaMapa" value="${v('tiendaMapa')}" placeholder="Opcional"></label></div>
+    <label class="sw-row"><input type="checkbox" data-k="tiendaChat" data-on="si" data-off="no" ${c.tiendaChat !== 'no' ? 'checked' : ''}><span class="sw"></span><div><b>Recibir mensajes directos</b><small>Tus clientes te escriben desde la tienda y respondes en Mensajes. Se borran solos a los 2 meses.</small></div></label>
     <button class="btn pri" data-a="guardarAj" data-s="tienda">Guardar</button>`, S.plus ? '<span class="plus-b">PLUS</span> activo' : '');
+  if (adm && S.plus) h += sec('dueno', 'user', 'Propietario', `<p class="xs mut">Aparece en tu tienda en línea como «Conoce a quien te atiende». Déjalo vacío si no quieres mostrarlo.</p>
+    <div class="row" style="margin-bottom:12px"><div class="logo-prev" style="border-radius:50%">${c.duenoFoto ? `<img src="${esc(c.duenoFoto)}" alt="">` : esc(iniciales(c.duenoNombre || '?'))}</div><label class="btn">${ic('cam', 18)} Foto<input type="file" accept="image/*" id="aj-dfoto" hidden></label>${c.duenoFoto ? `<button class="btn ghost" data-a="quitarDuenoFoto">Quitar</button>` : ''}</div>
+    <div class="f2"><label class="fld"><span>Nombre</span><input data-k="duenoNombre" value="${v('duenoNombre')}" maxlength="60" placeholder="Sofía Hernández"></label><label class="fld"><span>Cargo</span><input data-k="duenoCargo" value="${v('duenoCargo')}" maxlength="40" placeholder="Propietaria"></label></div>
+    <label class="fld"><span>Mensaje para tus clientes</span><textarea data-k="duenoMensaje" rows="2" maxlength="200" placeholder="Cada producto lo escojo pensando en mis clientes…">${v('duenoMensaje')}</textarea></label>
+    <label class="fld"><span>Datos destacados (hasta 3, separados por |)</span><input data-k="duenoDatos" value="${v('duenoDatos')}" maxlength="120" placeholder="10 años de experiencia | Atención personal"></label>
+    <label class="fld"><span>WhatsApp personal (si es distinto al del negocio)</span><input data-k="duenoWhatsapp" value="${v('duenoWhatsapp')}" placeholder="Opcional"></label>
+    <button class="btn pri" data-a="guardarAj" data-s="dueno">Guardar</button>`);
   if (adm) h += sec('mensajes', 'wa', 'Mensajes de WhatsApp', `<p class="xs mut">Puedes usar {cliente}, {numero}, {total}, {saldo} y {negocio}.</p>
     <label class="fld"><span>Al confirmar un pedido</span><textarea data-k="msjPedido" rows="2">${v('msjPedido')}</textarea></label>
     <label class="fld"><span>Cuando el pedido está listo</span><textarea data-k="msjListo" rows="2">${v('msjListo')}</textarea></label>
@@ -5776,6 +6084,7 @@ R.ajustes = () => {
   h += `<p class="credit" style="opacity:.8">Gestión de Negocio VM · versión ${APP_VER}<br>Software creado por José Vicdonio Molina · WhatsApp <a href="https://wa.me/${CONTACTO_WA}" target="_blank" rel="noopener">+504 3313-0265</a></p>`;
   $('#main').innerHTML = h;
   const lg = $('#aj-logo'); if (lg) lg.addEventListener('change', subirLogo);
+  const df = $('#aj-dfoto'); if (df) df.addEventListener('change', subirDuenoFoto);
   initSarAjustes();
   if (S.params.sec) { const el = $('#aj-' + S.params.sec); S.params.sec = ''; if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
 };
@@ -5793,6 +6102,16 @@ ACC.tema = async el => {
   S.config = c; guardarCache(); pintarHeader(); toast('Color aplicado: ' + TEMAS[el.dataset.t].n, 'ok', 1800);
 };
 ACC.modoColor = el => { LS.set('modoColor', el.dataset.m); aplicarTema(S.tema); $$('.modos .pay').forEach(x => x.classList.toggle('on', x === el)); };
+async function subirDuenoFoto(e) {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    let d = await comprimirImagen(f, 320);
+    if (d.length > 56000) d = await comprimirImagen(f, 220);
+    const c = await api('guardar', { entidad: 'Config', registro: { duenoFoto: d } });
+    S.config = c; guardarCache(); toast('Foto guardada', 'ok'); S.params.sec = 'dueno'; R.ajustes();
+  } catch (x) { err(x); }
+}
+ACC.quitarDuenoFoto = async () => { const c = await api('guardar', { entidad: 'Config', registro: { duenoFoto: '' } }); S.config = c; guardarCache(); S.params.sec = 'dueno'; R.ajustes(); };
 async function subirLogo(e) {
   const f = e.target.files[0]; if (!f) return;
   try {
@@ -6266,7 +6585,10 @@ const NOVEDADES = [
   { v: '1.6', fecha: '2026-10-19', items: [
     { i: 'store', t: 'Catálogo según tu tipo de negocio', d: 'En cada producto puedes poner las opciones que elige el cliente en tu tienda: talla y color en ropa, capacidad en tecnología, sabor en panadería, carne en comida y más. El pedido te llega con lo que eligió.', ir: 'productos' },
     { i: 'tag', t: 'Filtro por talla', d: 'En boutiques y tiendas de variedades, tus clientes pueden filtrar el catálogo por talla.' },
-    { i: 'clock', t: 'Notas y citas', d: 'Los restaurantes reciben la nota para la cocina; los negocios de servicios, la fecha y hora que prefiere el cliente.' }
+    { i: 'clock', t: 'Notas y citas', d: 'Los restaurantes reciben la nota para la cocina; los negocios de servicios, la fecha y hora que prefiere el cliente.' },
+    { i: 'store', t: 'Tu tienda, más elegante', d: 'Nueva portada con tu logo, horario con «Abierto ahora», botones de WhatsApp, cómo llegar, Instagram y Facebook, y una sección «Sobre nosotros». Llénalo en Ajustes › Tienda en línea.', ir: 'ajustes' },
+    { i: 'user', t: 'Conoce a quien te atiende', d: 'Agrega tu foto, cargo y un mensaje para tus clientes en Ajustes › Propietario. Aparece en tu tienda antes del catálogo.', ir: 'ajustes' },
+    { i: 'chat', t: 'Mensajes directos', d: 'Tus clientes te escriben desde la tienda (por un producto o en general) y respondes desde la pantalla Mensajes. Las conversaciones se borran solas a los 2 meses.', ir: 'mensajes' }
   ] },
   { v: '1.5', fecha: '2026-10-12', items: [
     { i: 'save', t: 'App para Android', d: 'Ahora puedes instalar Gestión de Negocio VM como app en tu Android: cuando abras el enlace en el navegador te aparece el aviso para descargarla.' }
@@ -6300,6 +6622,9 @@ const AYUDA = {
   vender: { d: 'Tu caja registradora: agrega productos, cobra y entrega el comprobante.',
     p: ['Toca los productos para agregarlos al ticket. También puedes buscar o escanear el código y presionar Enter.', 'Toca la barra del ticket para <b>Cobrar</b>.', 'Elige el cliente (obligatorio si es al crédito) y la forma de pago. En efectivo escribe cuánto te dan: el cambio se calcula solo.', 'Pulsa <b>Cobrar</b> y envía el comprobante por WhatsApp o imprime el ticket.'],
     t: ['Para cambiar el precio de una línea toca el precio con el lápiz ✎.', 'Descuento: en Cobrar toca «agregar» junto a Descuento (en lempiras o en %).', 'Al crédito puedes recibir un anticipo; lo demás queda en la cuenta del cliente.'] },
+  mensajes: { d: 'Los mensajes que tus clientes te escriben desde tu tienda en línea (plan Plus).',
+    p: ['Toca una conversación para leerla y responder.', 'Usa las <b>respuestas rápidas</b> para contestar con un toque.', 'Desde el chat puedes <b>crear un pedido</b> o avisarle al cliente por WhatsApp.'],
+    t: ['El cliente ve tu respuesta cuando vuelve a abrir la tienda; si es urgente, avísale por WhatsApp.', 'Las conversaciones sin mensajes nuevos por 2 meses se borran solas.'] },
   pedidos: { d: 'Los pedidos que tus clientes hacen en tu tienda en línea (plan Plus).',
     p: ['Comparte el enlace o el código QR de tu tienda.', 'Cuando llega un pedido nuevo te avisamos. Tócalo para <b>Confirmar</b> y avisa al cliente por WhatsApp.', 'Márcalo <b>Listo</b> cuando lo tengas preparado.', 'Al entregarlo toca <b>Entregar y cobrar</b>: se registra la venta y se descuenta el inventario.'],
     t: ['Para cancelar un pedido ábrelo con «Ver».', 'En Ajustes › Tienda en línea defines el envío, el pedido mínimo y las formas de pago.'] },
@@ -6582,18 +6907,63 @@ function tiendaCerrada(x) {
 const tCant = () => Object.values(T.cart).reduce((a, x) => a + x, 0);
 const tSub = () => Object.keys(T.cart).reduce((a, k) => { const p = T.info.productos.find(x => x.id === kId(k)); return a + (p ? p.precio * T.cart[k] : 0); }, 0);
 function guardarCarrito() { LS.set(tKey('carrito'), JSON.stringify(T.cart)); }
+// ¿Está abierto ahora? (según horario y días de Ajustes)
+function abiertoAhora(n) {
+  if (!n.abre || !n.cierra) return null;
+  const d = new Date(), dias = String(n.dias || '1,2,3,4,5,6').split(',').map(Number), hoyD = d.getDay();
+  const hm = pad(d.getHours()) + ':' + pad(d.getMinutes());
+  const h12 = t => { const h = Number(t.slice(0, 2)), m = t.slice(3, 5); return (h % 12 || 12) + ':' + m + (h < 12 ? ' a. m.' : ' p. m.'); };
+  const abierto = dias.includes(hoyD) && hm >= n.abre && hm < n.cierra;
+  if (abierto) return { on: true, t: 'cierra a las ' + h12(n.cierra) };
+  if (dias.includes(hoyD) && hm < n.abre) return { on: false, t: 'abre hoy a las ' + h12(n.abre) };
+  const NOM = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  for (let i = 1; i <= 7; i++) { const dd = (hoyD + i) % 7; if (dias.includes(dd)) return { on: false, t: 'abre ' + (i === 1 ? 'mañana' : 'el ' + NOM[dd]) + ' a las ' + h12(n.abre) }; }
+  return { on: false, t: '' };
+}
+const redSocial = (v, base) => { v = String(v || '').trim(); if (!v) return ''; return /^https?:\/\//i.test(v) ? v : base + v.replace(/^@/, '').replace(/^.*\//, ''); };
 function pintarTienda() {
   const n = T.info.negocio, ps = T.info.productos;
   const cats = [...new Set(ps.map(p => p.categoria))];
-  const ent = n.entrega === 'ambos' ? 'Entrega a domicilio y para recoger' : n.entrega === 'domicilio' ? 'Entrega a domicilio' : 'Para recoger en el negocio';
-  $('#tienda').innerHTML = `<div class="shop-hero"><div class="hero-c">${n.logo ? `<div class="hero-logo"><img src="${esc(n.logo)}" alt=""></div>` : `<div class="mono">${esc(iniciales(n.nombre))}</div>`}<div class="hero-name">${esc(n.nombre)}</div><div class="hero-tag">${esc(n.eslogan || n.giro || 'Pedidos en línea')}</div>
-      <div class="shop-st"><i></i>${esc(n.horario || ent)}</div></div></div>
-    <div class="shop-box">${n.mensaje ? `<div class="shop-msg">${esc(n.mensaje)}</div>` : ''}<div id="t-mis"></div>
+  const entTxt = n.entrega === 'ambos' ? `A domicilio <b>${n.envio ? money(n.envio) : 'gratis'}</b> · o recoges en el negocio` : n.entrega === 'domicilio' ? `Entrega a domicilio <b>${n.envio ? money(n.envio) : 'gratis'}</b>` : 'Para recoger en el negocio';
+  const ab = abiertoAhora(n);
+  const insta = redSocial(n.instagram, 'https://instagram.com/'), fb = redSocial(n.facebook, 'https://facebook.com/'), mapa = n.mapa || (n.direccion ? 'https://maps.google.com/?q=' + encodeURIComponent(n.direccion) : '');
+  const acts = [
+    n.telefono ? `<a class="wa" href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener"><i>${ic('wa', 21)}</i>WhatsApp</a>` : '',
+    mapa ? `<a href="${esc(mapa)}" target="_blank" rel="noopener"><i>${ic('pin', 21)}</i>Cómo llegar</a>` : '',
+    n.telefono ? `<a href="tel:${esc(String(n.telefono).replace(/\D/g, ''))}"><i>${ic('phone', 21)}</i>Llamar</a>` : '',
+    insta ? `<a href="${esc(insta)}" target="_blank" rel="noopener"><i>${ic('insta', 21)}</i>Instagram</a>` : '',
+    fb ? `<a href="${esc(fb)}" target="_blank" rel="noopener"><i>${ic('fb', 21)}</i>Facebook</a>` : ''
+  ].filter(Boolean);
+  const rows = [
+    n.direccion ? `<div>${ic('map', 18)}<span>${esc(n.direccion)}</span></div>` : '',
+    n.horario ? `<div>${ic('clock', 18)}<span>${esc(n.horario)}</span></div>` : '',
+    `<div>${ic('truck', 18)}<span>${entTxt}</span></div>`,
+    n.minimo ? `<div>${ic('receipt', 18)}<span>Pedido mínimo <b>${money(n.minimo)}</b></span></div>` : '',
+    n.pagos && n.pagos.length ? `<div>${ic('card', 18)}<span>${n.pagos.map(esc).join(' · ')}</span></div>` : ''
+  ].filter(Boolean);
+  const d = n.dueno, iniD = d ? iniciales(d.nombre) : '';
+  const tel = (d && d.whatsapp) || n.telefono;
+  const owner = d ? `<div class="owner"><div class="shop-sec">Conoce a quien te atiende</div><div class="owner-c">
+      <div class="owner-f">${d.foto ? `<img src="${esc(d.foto)}" alt="">` : `<span>${esc(iniD)}</span>`}</div>
+      <div class="owner-n">${esc(d.nombre)}</div>${d.cargo ? `<div class="owner-r">${esc(d.cargo)}</div>` : ''}
+      ${d.mensaje ? `<p class="owner-m">“${esc(d.mensaje)}”</p>` : ''}
+      ${d.datos.length ? `<div class="owner-t">${d.datos.map(x => `<b>${ic('sparkle', 14)}${esc(x)}</b>`).join('')}</div>` : ''}
+      <div class="owner-b">${n.chat ? `<button class="btn pri" data-chat="1">${ic('chat', 18)} Enviar mensaje</button>` : ''}${tel ? `<a class="btn ${n.chat ? '' : 'wa'}" href="${waLink(tel, 'Hola ' + d.nombre.split(' ')[0] + ', vi tu tienda en línea')}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>
+      <div class="owner-s">${esc(d.nombre)}</div></div></div>` : '';
+  $('#tienda').innerHTML = `<div class="shop-hero v2"><div class="top"><button data-share="1" aria-label="Compartir">${ic('share', 20)}</button><button data-cart="1" aria-label="Mi pedido" id="t-bag">${ic('bag', 20)}</button></div><div class="hero-c">${n.logo ? `<div class="hero-logo"><img src="${esc(n.logo)}" alt=""></div>` : `<div class="mono">${esc(iniciales(n.nombre))}</div>`}<div class="hero-name">${esc(n.nombre)}</div>
+      ${n.giro ? `<div class="hero-giro">${esc(n.giro)}</div>` : ''}${n.eslogan ? `<div class="hero-esl">${esc(n.eslogan)}</div>` : ''}</div></div>
+    <div class="shop-box v2">
+      <div class="shop-info">${ab ? `<div class="shop-open ${ab.on ? '' : 'off'}"><i></i><b>${ab.on ? 'Abierto ahora' : 'Cerrado'}</b>${ab.t ? `<span>· ${esc(ab.t)}</span>` : ''}</div>` : n.horario ? `<div class="shop-open"><i></i><span>${esc(n.horario)}</span></div>` : ''}
+        ${acts.length ? `<div class="shop-acts">${acts.join('')}</div>` : ''}<div class="shop-rows">${rows.join('')}</div></div>
+      ${n.mensaje ? `<div class="shop-msg">${esc(n.mensaje)}</div>` : ''}<div id="t-mis"></div><div id="t-chatmis"></div>
+      ${n.sobre ? `<div class="shop-about"><div class="shop-sec">Sobre nosotros</div><p>${esc(n.sobre)}</p></div>` : ''}
+      ${owner}
+      <div class="shop-h2"><span>Nuestro catálogo</span><small>${ps.length} ${ps.length === 1 ? 'producto' : 'productos'}</small></div>
       <div class="shop-srch"><div class="srch">${ic('search', 18)}<input id="t-q" placeholder="¿Qué estás buscando?" value="${esc(T.q)}"></div>
       ${cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${filtroTienda()}</div>
       <div class="pgrid shop-grid" id="t-grid"></div>
-      <div class="shop-pie">${n.direccion ? `<div>${ic('pin', 15)} ${esc(n.direccion)}</div>` : ''}${n.telefono ? `<a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${ic('wa', 15)} ${esc(n.telefono)}</a>` : ''}<div>${esc(ent)}${n.envio ? ' · envío ' + money(n.envio) : ''}${n.minimo ? ' · pedido mínimo ' + money(n.minimo) : ''}</div></div></div>
-    <div id="t-bar"></div>`;
+      <div class="shop-foot"><div class="fl">${n.logo ? `<img src="${esc(n.logo)}" alt="">` : esc(iniciales(n.nombre))}</div><div class="fn">${esc(n.nombre)}</div><div class="fs">Pedidos en línea · Gracias por preferirnos</div>${n.telefono ? `<div class="fs" style="margin-top:6px"><a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}</div></div>
+    <div id="t-bar"></div>${n.chat ? `<button class="t-chat" id="t-chatbtn" aria-label="Mensajes">${ic('chat', 24)}</button>` : ''}`;
   $('#t-q').addEventListener('input', debounce(e => { T.q = e.target.value; gridTienda(); }, 150));
   const tf = $('#t-f'); if (tf) tf.addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; T.f = T.f === b.dataset.f ? '' : b.dataset.f; $$('#t-f .chip').forEach(x => x.classList.toggle('on', x.dataset.f === T.f)); gridTienda(); });
   const tc = $('#t-cats'); if (tc) tc.addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; T.cat = b.dataset.c; $$('#t-cats .chip').forEach(x => x.classList.toggle('on', x === b)); gridTienda(); });
@@ -6601,7 +6971,14 @@ function pintarTienda() {
     const add = e.target.closest('[data-add]'); if (add) { e.stopPropagation(); const p = T.info.productos.find(x => x.id === add.dataset.add); return p && (p.ops.length || T.cfg.cita) ? tProducto(p.id) : tAgregar(add.dataset.add, 1); }
     const c = e.target.closest('[data-p]'); if (c) tProducto(c.dataset.p);
   });
+  $('#tienda').onclick = e => {
+    if (e.target.closest('[data-chat]')) return chatTienda('');
+    if (e.target.closest('#t-chatbtn')) return chatTienda('');
+    if (e.target.closest('[data-cart]')) return tCant() ? tCarrito() : toast('Todavía no has agregado productos', 'ok', 1800);
+    if (e.target.closest('[data-share]')) { const u = location.href.split('#')[0]; if (navigator.share) navigator.share({ title: n.nombre, text: 'Mira la tienda en línea de ' + n.nombre, url: u }).catch(() => {}); else { navigator.clipboard && navigator.clipboard.writeText(u); toast('Enlace copiado', 'ok', 1800); } }
+  };
   gridTienda();
+  chatBadgeTienda();
 }
 // Fila de filtro por la opción principal del giro (ej. Talla en boutique)
 function filtroTienda() {
@@ -6618,8 +6995,8 @@ const tieneValor = (p, n, v) => p.ops.some(o => norm(o.n) === norm(n) && o.v.inc
 function gridTienda() {
   const q = norm(T.q);
   const l = T.info.productos.filter(p => (!T.cat || p.categoria === T.cat) && (!T.f || tieneValor(p, T.cfg.filtro, T.f)) && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q) || norm(p.descripcion).includes(q) || norm(p.opciones).includes(q)));
-  $('#t-grid').innerHTML = l.map(p => `<div class="pc sp-card ${p.agotado ? 'dis' : ''}" data-p="${p.id}">${prodFoto(p, (enCarrito(p.id) ? `<span class="qn">${enCarrito(p.id)}</span>` : '') + (p.agotado ? '<span class="st out">Agotado</span>' : p.stock !== undefined ? `<span class="st">${cant(p.stock)} disp.</span>` : ''))}
-    <div class="bd"><div class="nm">${esc(p.nombre)}</div>${p.ops.length ? `<div class="sp-op">${esc(p.ops[0].v.join(' · '))}</div>` : ''}<div class="row"><div class="pr n">${money(p.precio)}</div>${p.agotado ? '' : `<button class="sp-add" data-add="${p.id}" aria-label="Agregar">${ic('plus', 16)}</button>`}</div></div></div>`).join('') || '<div class="empty" style="grid-column:1/-1">No encontramos productos con esa búsqueda</div>';
+  $('#t-grid').innerHTML = l.map(p => `<div class="pc sp-card ${p.agotado ? 'dis' : ''}" data-p="${p.id}">${prodFoto(p, (p.nuevo && !p.agotado ? '<span class="nw">Nuevo</span>' : '') + (enCarrito(p.id) ? `<span class="qn">${enCarrito(p.id)}</span>` : '') + (p.agotado ? '<span class="st out">Agotado</span>' : p.stock !== undefined ? `<span class="st">${cant(p.stock)} disp.</span>` : ''))}
+    <div class="bd">${p.categoria ? `<div class="cat">${esc(p.categoria)}</div>` : ''}<div class="nm">${esc(p.nombre)}</div>${p.ops.length ? `<div class="sp-op">${esc(p.ops[0].v.join(' · '))}</div>` : ''}<div class="row"><div class="pr n">${money(p.precio)}</div>${p.agotado ? '' : `<button class="sp-add" data-add="${p.id}" aria-label="Agregar">${ic('plus', 16)}</button>`}</div></div></div>`).join('') || '<div class="empty" style="grid-column:1/-1">No encontramos productos con esa búsqueda</div>';
   barTienda();
 }
 function maxDe(p) { return p.agotado ? 0 : p.max !== undefined ? p.max : p.stock !== undefined ? Math.floor(p.stock) : 999; }
@@ -6636,6 +7013,8 @@ function barTienda() {
   const n = tCant(), b = $('#t-bar'); if (!b) return;
   b.innerHTML = n ? `<button class="cartbar shop-cart" id="t-ver"><span class="ci">${ic('bag', 22)}<b>${n}</b></span><span class="ct"><small>Mi pedido · ${n === 1 ? '1 artículo' : n + ' artículos'}</small><strong class="n">${money(tSub())}</strong></span><span class="go">Ver pedido ${ic('arrow', 18)}</span></button>` : '';
   const v = $('#t-ver'); if (v) v.onclick = tCarrito;
+  const bag = $('#t-bag'); if (bag) bag.innerHTML = ic('bag', 20) + (n ? `<b>${n}</b>` : '');
+  const cb = $('#t-chatbtn'); if (cb) cb.classList.toggle('up', n > 0);
 }
 function tProducto(id) {
   const p = T.info.productos.find(x => x.id === id); if (!p) return;
@@ -6662,7 +7041,7 @@ function tProducto(id) {
   const pinta = () => {
     $('#tp-n', h.el).textContent = n;
     const f = falta();
-    h.botones([{ t: f ? `Elige ${esc(f.n.toLowerCase())}` : `${ic('bag', 18)} ${cfg.cita ? 'Solicitar' : 'Agregar'} · ${money(p.precio * n)}`, cls: 'acc big', fn: () => {
+    h.botones([...(T.info.negocio.chat ? [{ t: ic('chat', 18), cls: 'icon', fn: () => { h.cerrar(); chatTienda(p.id); } }] : []), { t: f ? `Elige ${esc(f.n.toLowerCase())}` : `${ic('bag', 18)} ${cfg.cita ? 'Solicitar' : 'Agregar'} · ${money(p.precio * n)}`, cls: 'acc big', fn: () => {
       const x = falta(); if (x) throw new Error('Elige ' + x.n.toLowerCase());
       if (cfg.cita && !($('#tp-fe', h.el) || {}).value) throw new Error('Elige la fecha que prefieres');
       if (enCarrito(p.id) + n > maxDe(p)) throw new Error('Solo tenemos ' + maxDe(p) + ' disponibles');
@@ -6721,6 +7100,74 @@ function pedidoEnviado(r, nombre, tel) {
   if (n.telefono) bs.push({ t: `${ic('wa', 18)} Avisar por WhatsApp`, cls: 'wa', fn: () => { window.open(waLink(n.telefono, txt), '_blank'); } });
   bs.push({ t: 'Seguir viendo', cls: 'pri', fn: () => h.cerrar() });
   h.botones(bs);
+}
+/* ===== Mensajes directos (lado del cliente) ===== */
+const chatClave = () => LS.get(tKey('chat'), '');
+function chatBadgeTienda() {
+  const b = $('#t-chatbtn'); if (!b || !chatClave()) return;
+  api('chatVer', { negocio: T.id, clave: chatClave() }, true).then(c => {
+    if (c.borrado) { LS.set(tKey('chat'), ''); LS.set(tKey('chatVisto'), ''); return; }
+    const visto = LS.get(tKey('chatVisto'), ''), nuevos = c.mensajes.filter(m => m.de === 'negocio' && m.fecha > visto).length;
+    b.innerHTML = ic('chat', 24) + (nuevos ? `<b>${nuevos}</b>` : '');
+    const box = $('#t-chatmis');
+    if (box && nuevos) box.innerHTML = `<div class="mis" data-chat="1" style="cursor:pointer"><b>Mensajes</b><div class="mis-r"><span>${ic('chat', 16)} ${esc(T.info.negocio.nombre)} te respondió</span><span class="badge">${nuevos} ${nuevos === 1 ? 'nuevo' : 'nuevos'}</span></div></div>`;
+    else if (box) box.innerHTML = '';
+  }).catch(() => {});
+}
+function chatTienda(productoId) {
+  const n = T.info.negocio, d = n.dueno, cli = LS.json('cliente_tienda', {}) || {};
+  const prod = productoId ? T.info.productos.find(x => x.id === productoId) : null;
+  let chat = null, timer = null, enviando = false;
+  const h = hoja({ titulo: '', cls: 'chat-h2', html: `<div class="chat-h"><div class="av">${d && d.foto ? `<img src="${esc(d.foto)}" alt="">` : n.logo ? `<img src="${esc(n.logo)}" alt="">` : esc(iniciales(d ? d.nombre : n.nombre))}</div><div><b>${esc(d ? d.nombre : n.nombre)}</b><small>${d && d.cargo ? esc(d.cargo) + ' · ' : ''}${esc(n.nombre)}</small></div></div>
+    ${prod ? `<div class="chat-ctx"><div class="ph">${prod.foto ? `<img src="${esc(fotoSrc(prod.foto))}" alt="">` : esc(prod.icono || iniciales(prod.nombre))}</div><div><small>Preguntas por</small><b>${esc(prod.nombre)} · ${money(prod.precio)}</b></div></div>` : ''}
+    <div class="msgs" id="tch-m"><div class="empty">Cargando…</div></div>
+    <div id="tch-datos" hidden><div class="f2"><label class="fld"><span>Tu nombre</span><input id="tch-n" autocomplete="name" value="${esc(cli.nombre || '')}"></label><label class="fld"><span>Tu WhatsApp</span><input id="tch-t" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" value="${esc(cli.telefono || '')}"></label></div></div>
+    <div class="chat-nota">${ic('clock', 14)} Los mensajes se borran solos a los 2 meses.</div>
+    <div class="chat-in"><textarea id="tch-in" rows="1" placeholder="Escribe tu mensaje…" maxlength="600"></textarea><button id="tch-send" aria-label="Enviar">${ic('send', 20)}</button></div>`,
+    onClose: () => { clearInterval(timer); } });
+  const pinta = () => {
+    const box = $('#tch-m', h.el); if (!box) return;
+    const ms = chat ? chat.mensajes : [];
+    if (!ms.length) { box.innerHTML = `<div class="empty">${d ? esc(d.nombre.split(' ')[0]) + ' te responde por aquí.' : 'Escríbenos y te respondemos por aquí.'}${prod ? '' : '<br>Cuéntanos qué necesitas.'}</div>`; return; }
+    let dia = '';
+    box.innerHTML = ms.map(m => { const f = String(m.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
+      return sep + `<div class="msg ${m.de === 'cliente' ? 'yo' : 'el'}"><div class="bt">${esc(m.texto)}</div><small>${fHora(m.fecha)}</small></div>`; }).join('');
+    box.scrollTop = box.scrollHeight;
+    const ult = ms.filter(m => m.de === 'negocio').map(m => m.fecha).sort().pop(); if (ult) LS.set(tKey('chatVisto'), ult);
+  };
+  const cargar = async () => {
+    if (!chatClave()) { chat = null; $('#tch-datos', h.el).hidden = false; pinta(); return; }
+    try { const c = await api('chatVer', { negocio: T.id, clave: chatClave() }, true); if (c.borrado) { LS.set(tKey('chat'), ''); chat = null; $('#tch-datos', h.el).hidden = false; } else chat = c; }
+    catch (e) {}
+    pinta();
+  };
+  const enviar = async () => {
+    if (enviando) return;
+    const inp = $('#tch-in', h.el), texto = inp.value.trim();
+    if (!texto) throw new Error('Escribe tu mensaje');
+    const datos = { negocio: T.id, texto, productoId: prod ? prod.id : '' };
+    if (chatClave()) datos.clave = chatClave();
+    else {
+      const nombre = $('#tch-n', h.el).value.trim(), tel = $('#tch-t', h.el).value.trim();
+      if (nombre.length < 3) throw new Error('Escribe tu nombre');
+      if (tel.replace(/\D/g, '').length < 8) throw new Error('Escribe tu número de WhatsApp');
+      Object.assign(datos, { nombre, telefono: tel });
+      LS.set('cliente_tienda', JSON.stringify(Object.assign({}, cli, { nombre, telefono: tel })));
+    }
+    enviando = true; $('#tch-send', h.el).disabled = true;
+    try {
+      const c = await api('chatEnviar', datos, true);
+      if (c.clave) LS.set(tKey('chat'), c.clave);
+      chat = c; inp.value = ''; inp.style.height = ''; $('#tch-datos', h.el).hidden = true; pinta();
+    } finally { enviando = false; $('#tch-send', h.el).disabled = false; }
+  };
+  $('#tch-send', h.el).onclick = () => enviar().catch(err);
+  const inp = $('#tch-in', h.el);
+  inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(120, inp.scrollHeight) + 'px'; });
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 700) { e.preventDefault(); enviar().catch(err); } });
+  cargar();
+  timer = setInterval(() => { if (!document.hidden && chatClave()) cargar(); }, 20000);
+  h.botones([]);
 }
 async function misPedidosTienda() {
   const ids = LS.json(tKey('pedidos'), []) || [], cli = LS.json('cliente_tienda', {}) || {};
