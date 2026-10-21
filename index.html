@@ -431,6 +431,8 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .link-card{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:12px 14px;box-shadow:var(--sh);flex-wrap:wrap}
 .link-card .tx{flex:1;min-width:180px}.link-card b{display:block;font-weight:600}.link-card small{color:var(--mut);font-size:12px;word-break:break-all}
 .link-card.sm{box-shadow:none;margin-bottom:12px;background:var(--bg)}
+.pw{position:relative}.pw input{width:100%;padding-right:46px}.pw .ojo{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:38px;height:38px;border:0;background:none;color:var(--mut);display:grid;place-items:center;border-radius:12px;cursor:pointer}.pw .ojo:active{background:var(--pri2)}
+.clave-v{cursor:pointer;color:var(--pri);font-weight:600}
 .plat-chips .chip{display:inline-flex;align-items:center;gap:6px}.plat-chips .chip i{width:14px;height:14px;border-radius:4px;display:inline-block;flex:none}
 .sus-box{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--bg)}.sus-box>b{display:flex;align-items:center;gap:6px;margin-bottom:8px}.sus-box .hint a{color:var(--pri);font-weight:600;cursor:pointer}
 .avi-sus{margin-bottom:12px}
@@ -1941,6 +1943,8 @@ function susRegistrar_(u, d, venta, items, pm) {
     entregas.forEach(e => {
       for (let i = 0; i < e.n * veces; i++) {
         const a = asig[k++] || {};
+        const venceA = /^\d{4}-\d{2}-\d{2}$/.test(String(a.vence || '')) ? String(a.vence) : vence;
+        if (venceA < h) throw new Error('La fecha de vencimiento de ' + e.plataforma + ' ya pasó');
         const c = a.cuentaId ? cu[a.cuentaId] : null;
         if (a.cuentaId && !c) throw new Error('La cuenta elegida para ' + e.plataforma + ' ya no existe');
         const perfil = c ? (e.entrega === 'cuenta' ? 0 : Math.max(1, Math.min(Number(c.perfiles) || 1, parseInt(a.perfil, 10) || 1))) : '';
@@ -1951,7 +1955,7 @@ function susRegistrar_(u, d, venta, items, pm) {
           (oc[c.id] = oc[c.id] || {})[String(perfil)] = { id: '_', cliente: cli ? cli.nombre : '' };
         }
         const s = upsert_('Suscripciones', { ventaId: venta.id, clienteId: venta.clienteId || '', cliente: cli ? cli.nombre : txt_(sd.cliente, 60), telefono: cli ? cli.telefono : '',
-          productoId: it.p.id, producto: it.p.nombre, plataforma: e.plataforma, cuentaId: c ? c.id : '', perfil: perfil, pin: txt_(a.pin, 12), inicio: h, vence: vence, meses: meses,
+          productoId: it.p.id, producto: it.p.nombre, plataforma: e.plataforma, cuentaId: c ? c.id : '', perfil: perfil, pin: txt_(a.pin, 12), inicio: h, vence: venceA, meses: meses,
           precio: r2_(it.precio * it.cantidad / total), estado: 'activa', nota: '', creado: ahora_() });
         nuevas.push(s);
       }
@@ -4248,6 +4252,7 @@ const ICP = {
   edit: '<path d="M4 20h4L19 9a2.8 2.8 0 0 0-4-4L4 16z"/><path d="M13.5 6.5l4 4"/>',
   trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/>',
   eye: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  eyeoff: '<path d="M3 3l18 18M10.6 10.6a2 2 0 0 0 2.8 2.8M6.7 6.7C4 8.4 2 12 2 12s3.6 7 10 7c1.8 0 3.4-.5 4.7-1.2M9.9 5.2A10 10 0 0 1 12 5c6.4 0 10 7 10 7a16 16 0 0 1-2.6 3.4"/>',
   left: '<path d="M15 5l-7 7 7 7"/>', right: '<path d="M9 5l7 7-7 7"/>', arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
   up: '<path d="M6 15l6-6 6 6"/>', down: '<path d="M6 9l6 6 6-6"/>', x: '<path d="M6 6l12 12M18 6L6 18"/>', check: '<path d="M4.5 12.5l5 5 10-11"/>',
   logout: '<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 16l-4-4 4-4M6 12h10"/>',
@@ -4708,6 +4713,11 @@ function pedirTexto(titulo, o) {
 
 /* ===================== ACCIONES (delegación de clics) ===================== */
 const ACC = {};
+// Campo de contraseña con botón para mostrarla
+const pw = attrs => `<div class="pw"><input type="password" ${attrs}><button type="button" class="ojo" data-a="ojo" aria-label="Mostrar">${ic('eye', 20)}</button></div>`;
+ACC.ojo = el => { const i = el.parentElement.querySelector('input'); if (!i) return; const ver = i.type === 'password'; i.type = ver ? 'text' : 'password'; el.innerHTML = ic(ver ? 'eyeoff' : 'eye', 20); el.setAttribute('aria-label', ver ? 'Ocultar' : 'Mostrar'); };
+ACC.verClave = el => { const v = el.dataset.v; el.outerHTML = el.dataset.on ? `<a class="clave-v" data-a="verClave" data-v="${esc(v)}">••••</a>` : `<a class="clave-v" data-a="verClave" data-v="${esc(v)}" data-on="1">${esc(v)}</a>`; };
+const claveOculta = v => v ? `<a class="clave-v" data-a="verClave" data-v="${esc(v)}">••••</a>` : '—';
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-a]');
   if (!el || el.disabled || el.dataset.ocupado) return;
@@ -4963,14 +4973,14 @@ function pintarLogin() {
         <label class="fld"><span>Tipo de negocio</span><select id="r-giro">${giros.map(g => `<option value="${g.id}">${esc(g.n)}</option>`).join('')}</select></label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
-        <label class="fld"><span>Crea un PIN (4 a 6 números)</span><input id="r-pin" type="password" inputmode="numeric" maxlength="6" autocomplete="new-password" required></label></div>
+        <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
         <button class="btn pri big" type="submit">Comenzar prueba gratis</button><div class="lg-err" id="r-err"></div></form>`
     : `<h3 class="lg-t">${nombre ? 'Hola de nuevo' : 'Ingresar'}</h3>
       <form id="f-log" autocomplete="on">
         ${multi ? `<label class="fld"><span>Tu WhatsApp</span><input id="l-user" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
-        <label class="fld"><span>PIN</span><input id="l-pass" type="password" inputmode="numeric" maxlength="6" autocomplete="current-password" required></label>`
+        <label class="fld"><span>PIN</span>${pw('id="l-pass" inputmode="numeric" maxlength="6" autocomplete="current-password" required')}</label>`
         : `<label class="fld"><span>Usuario</span><input id="l-user" autocomplete="username" autocapitalize="none" required></label>
-        <label class="fld"><span>Contraseña</span><input id="l-pass" type="password" autocomplete="current-password" required></label>`}
+        <label class="fld"><span>Contraseña</span>${pw('id="l-pass" autocomplete="current-password" required')}</label>`}
         <button class="btn pri big" type="submit">Ingresar</button><div class="lg-err" id="l-err"></div></form>`}
     ${multi && !demo ? `<button class="btn ghost big" data-a="lmodo" data-m="${reg ? 'ing' : 'reg'}">${reg ? 'Ya tengo cuenta · Ingresar' : `Soy nuevo · Probar ${DIAS_PRUEBA_REG} días gratis`}</button>` : ''}
     ${demo ? `<button class="btn ghost big" data-a="lmodo" data-m="ing">Ya registré un negocio de prueba · Ingresar</button>` : ''}
@@ -5182,7 +5192,7 @@ function panelCab(t, atras) {
 function panelLogin() {
   P.tok = ''; LS.del('panelTok'); panelCab('Panel Molina');
   $('#main').innerHTML = `<div class="panel" style="max-width:420px;margin:30px auto"><h3 style="margin-bottom:6px">Súper administrador</h3><p class="sm mut" style="margin-bottom:12px">Administra todos los negocios de Gestión de Negocio VM: licencias, pruebas, pagos, seguimiento y soporte.</p>
-    <form id="f-panel"><label class="fld"><span>Clave del panel</span><input id="pn-clave" type="password" autocomplete="current-password" required></label><button class="btn pri big" type="submit">Entrar</button><div class="lg-err" id="pn-err"></div></form>
+    <form id="f-panel"><label class="fld"><span>Clave del panel</span>${pw('id="pn-clave" autocomplete="current-password" required')}</label><button class="btn pri big" type="submit">Entrar</button><div class="lg-err" id="pn-err"></div></form>
     <p class="credit" style="margin-top:16px">La clave se define en el Apps Script: Propiedades del script → PANEL_CLAVE</p></div>`;
   $('#f-panel').addEventListener('submit', async e => { e.preventDefault(); try { const r = await api('panelLogin', { clave: $('#pn-clave').value }); P.tok = r.token; LS.set('panelTok', r.token); P.pl = r.plantillas || {}; await panelResumen(); } catch (x) { $('#pn-err').textContent = x.message; } });
 }
@@ -6880,7 +6890,7 @@ function formUsuario(u) {
     <label class="fld"><span>${S.multi ? 'WhatsApp (con este entra)' : 'Usuario'}</span><input id="uf-u" ${S.multi ? 'type="tel" inputmode="tel" placeholder="9876-5432"' : 'autocapitalize="none"'} value="${esc(S.multi && u.usuario ? fmtWA(u.usuario).replace('+504 ', '') : u.usuario || '')}"></label>
     <div class="fld"><span>Rol</span><div class="roles" id="uf-r">${Object.keys(ROLES).map(r => `<button type="button" class="rol ${rol === r ? 'on' : ''}" data-r="${r}"><b>${ROLES[r]}</b><small>${ROL_DESC[r]}</small></button>`).join('')}</div></div>
     <div class="fld"><span>Color</span><div class="cols" id="uf-c">${cols.map(c => `<button type="button" style="background:${c}" class="${c === color ? 'on' : ''}" data-c="${c}"></button>`).join('')}</div></div>
-    <label class="fld"><span>${nuevo ? (S.multi ? 'PIN (4 a 6 números)' : 'Contraseña') : (S.multi ? 'Nuevo PIN (déjalo vacío para no cambiarlo)' : 'Nueva contraseña (opcional)')}</span><input id="uf-p" type="password" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''} autocomplete="new-password"></label>
+    <label class="fld"><span>${nuevo ? (S.multi ? 'PIN (4 a 6 números)' : 'Contraseña') : (S.multi ? 'Nuevo PIN (déjalo vacío para no cambiarlo)' : 'Nueva contraseña (opcional)')}</span>${pw(`id="uf-p" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''} autocomplete="new-password"`)}</label>
     ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="uf-a" ${u.activo ? 'checked' : ''}><span class="sw"></span><div><b>Puede entrar al sistema</b></div></label>` : ''}` });
   $('#uf-r', h.el).addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (!b) return; rol = b.dataset.r; $$('#uf-r .rol', h.el).forEach(x => x.classList.toggle('on', x === b)); });
   $('#uf-c', h.el).addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; color = b.dataset.c; $$('#uf-c button', h.el).forEach(x => x.classList.toggle('on', x === b)); });
@@ -7037,7 +7047,7 @@ async function subirLogo(e) {
 ACC.quitarLogo = async () => { const c = await api('guardar', { entidad: 'Config', registro: { logo: '' } }); S.config = c; aplicarDatos({ config: c }); guardarCache(); render(); };
 ACC.cambiarClave = () => {
   const P = S.multi ? 'PIN' : 'contraseña';
-  const h = hoja({ titulo: 'Cambiar ' + P, cls: 'chica', html: `<label class="fld"><span>${cap(P)} actual</span><input id="cc-a" type="password" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''}></label><label class="fld"><span>Nuevo ${P}</span><input id="cc-n" type="password" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''}></label>` });
+  const h = hoja({ titulo: 'Cambiar ' + P, cls: 'chica', html: `<label class="fld"><span>${cap(P)} actual</span>${pw(`id="cc-a" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''}`)}</label><label class="fld"><span>Nuevo ${P}</span>${pw(`id="cc-n" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''}`)}</label>` });
   h.botones([{ t: 'Cambiar', cls: 'pri', fn: async () => { await api('cambiarClave', { actual: $('#cc-a', h.el).value, nueva: $('#cc-n', h.el).value }); h.cerrar(); toast(cap(P) + ' cambiado', 'ok'); } }]);
 };
 
@@ -7581,7 +7591,7 @@ ACC.susVer = el => {
   const viva = s.estadoR === 'activa' || s.estadoR === 'vencida';
   const h = hoja({ titulo: esc(s.plataforma), html: `<div class="cli-h">${platAv(s.plataforma, 'av lg')}<div class="tx"><b>${esc(s.cliente || 'Sin cliente')}</b><small>${esc(s.producto)} · ${esc(s.telefono || '')}</small></div></div>
     <div class="kv"><div><small>Inicio</small>${esc(fFechaC(s.inicio))}</div><div><small>Vence</small><b>${esc(fFechaC(s.vence))}</b> · ${viva ? venceTxt(s) : s.estadoR}</div><div><small>Plan</small>${s.meses} ${s.meses === 1 ? 'mes' : 'meses'} · ${money(s.precio)}</div><div><small>Estado</small>${esc(cap(s.estadoR))}</div></div>
-    ${s.cuentaId ? `<div class="precio-box"><h4>${ic('key', 18)} Acceso entregado</h4><div class="kv"><div><small>Cuenta</small>${esc(s.cuentaNombre || '')}</div><div><small>${s.perfil ? 'Perfil' : 'Entrega'}</small>${s.perfil ? 'Perfil ' + s.perfil : 'Cuenta completa'}</div><div><small>Correo</small>${esc(s.correo || '—')}</div><div><small>Clave</small>${esc(s.clave || '—')}</div>${s.pin ? `<div><small>PIN</small>${esc(s.pin)}</div>` : ''}</div>${s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoAcceso(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Reenviar acceso</a>` : ''}</div>` : '<p class="sm mut">Sin cuenta asignada.</p>'}
+    ${s.cuentaId ? `<div class="precio-box"><h4>${ic('key', 18)} Acceso entregado</h4><div class="kv"><div><small>Cuenta</small>${esc(s.cuentaNombre || '')}</div><div><small>${s.perfil ? 'Perfil' : 'Entrega'}</small>${s.perfil ? 'Perfil ' + s.perfil : 'Cuenta completa'}</div><div><small>Correo</small>${esc(s.correo || '—')}</div><div><small>Clave</small>${claveOculta(s.clave)}</div>${s.pin ? `<div><small>PIN</small>${esc(s.pin)}</div>` : ''}</div>${s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoAcceso(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Reenviar acceso</a>` : ''}</div>` : '<p class="sm mut">Sin cuenta asignada.</p>'}
     ${s.nota ? `<p class="sm mut">Nota: ${esc(s.nota)}</p>` : ''}` });
   const bs = [];
   if (viva) {
@@ -7627,7 +7637,7 @@ function tarjetaCuenta(c) {
   const n = c.perfilesL.length, oc = c.completa ? n : c.ocupados, h = hoy();
   const estado = c.completa ? `<span class="badge ${c.completa.estado === 'vencida' ? 'b-bad' : 'b-ok'}">Completa</span>` : `<span class="badge ${oc >= n ? 'b-warn' : 'b-ok'}">${oc}/${n}</span>`;
   const prov = c.vence ? (c.vence < h ? `<b style="color:var(--bad)">venció con el proveedor el ${fFechaC(c.vence)}</b>` : 'vence con el proveedor el ' + fFechaC(c.vence)) : '';
-  return `<div class="ord ${c.activo ? '' : 'anul'}"><div class="ord-h" data-a="editCuenta" data-id="${c.id}">${platAv(c.plataforma, 'oav')}<div class="tx"><b>${esc(c.nombre)}${c.correo ? ' · ' + esc(c.correo) : ''}</b><small>${c.clave ? 'Clave ' + esc(c.clave) + (prov ? ' · ' : '') : ''}${prov}${!c.clave && !prov ? (c.nota || 'Toca para editar') : ''}</small></div>${estado}</div>
+  return `<div class="ord ${c.activo ? '' : 'anul'}"><div class="ord-h" data-a="editCuenta" data-id="${c.id}">${platAv(c.plataforma, 'oav')}<div class="tx"><b>${esc(c.nombre)}${c.correo ? ' · ' + esc(c.correo) : ''}</b><small>${c.clave ? 'Clave ' + claveOculta(c.clave) + (prov ? ' · ' : '') : ''}${prov}${!c.clave && !prov ? (c.nota || 'Toca para editar') : ''}</small></div>${estado}</div>
     <div class="list" style="margin-top:8px">${c.completa ? `<div class="li"><div class="av t-pri">${ic('user', 18)}</div><div class="tx"><b>${esc(c.completa.cliente || 'Cliente')}</b><small>Cuenta completa · ${c.completa.estado === 'vencida' ? 'venció' : 'vence'} ${fFechaC(c.completa.vence)}</small></div>${c.completa.estado === 'vencida' ? '<span class="badge b-bad">Vencido</span>' : ''}</div>`
       : c.perfilesL.map(p => p.susId ? `<div class="li" data-a="susAbrir" data-id="${p.susId}"><div class="av t-pri">${p.n}</div><div class="tx"><b>${esc(p.cliente || 'Cliente')}</b><small>${p.pin ? 'PIN ' + esc(p.pin) + ' · ' : ''}${p.estado === 'vencida' ? 'venció' : 'vence'} ${fFechaC(p.vence)}</small></div>${p.estado === 'vencida' ? '<span class="badge b-bad">Vencido</span>' : ''}</div>`
         : `<div class="li"><div class="av t-verde">${p.n}</div><div class="tx"><b>Libre</b><small>Disponible para vender</small></div>${c.activo && puede('admin', 'cajero') ? `<button class="btn sm pri" data-a="venderPerfil" data-id="${c.id}" data-n="${p.n}">Vender</button>` : ''}</div>`).join('')}</div></div>`;
@@ -7648,7 +7658,7 @@ function formCuenta(c, platPre) {
   const st = { v: c.plataforma };
   const h = hoja({ titulo: nuevo ? 'Nueva cuenta' : 'Editar cuenta', ancho: 1, html: `<div class="fld"><span>Plataforma</span>${platChips(st.v, 'cu-pl')}</div>
     <div class="f2"><label class="fld"><span>Nombre para identificarla *</span><input id="cu-nom" maxlength="80" value="${esc(c.nombre)}" placeholder="Ej. Netflix 3"></label><label class="fld"><span>Perfiles que se venden</span><input id="cu-per" inputmode="numeric" value="${esc(c.perfiles)}"></label></div>
-    <div class="f2"><label class="fld"><span>Correo de la cuenta</span><input id="cu-cor" maxlength="80" value="${esc(c.correo)}" autocomplete="off"></label><label class="fld"><span>Clave</span><input id="cu-cla" maxlength="80" value="${esc(c.clave)}" autocomplete="off"></label></div>
+    <div class="f2"><label class="fld"><span>Correo de la cuenta</span><input id="cu-cor" maxlength="80" value="${esc(c.correo)}" autocomplete="off"></label><label class="fld"><span>Clave</span>${pw(`id="cu-cla" maxlength="80" value="${esc(c.clave)}" autocomplete="off"`)}</label></div>
     <div class="f2"><label class="fld"><span>Me cuesta al mes</span><input id="cu-cos" inputmode="decimal" value="${c.costo ? c.costo : ''}" placeholder="0.00"></label><label class="fld"><span>Vence con el proveedor</span><input id="cu-ven" type="date" value="${esc(c.vence || '')}"></label></div>
     <label class="fld"><span>Nota</span><input id="cu-nota" maxlength="200" value="${esc(c.nota)}" placeholder="Ej. comprada a Juan, pago por Tigo Money"></label>
     ${nuevo ? `<div class="aviso info sm">${ic('info', 18)}<div>Los perfiles quedan <b>libres</b> hasta que vendas uno. Al vender ${st.v || 'esa plataforma'}, la app te ofrece el primer perfil libre.</div></div>` : `<label class="sw-row"><input type="checkbox" id="cu-act" ${c.activo ? 'checked' : ''}><span class="sw"></span><div><b>Cuenta activa</b><small>Las inactivas no se ofrecen al vender</small></div></label>`}` });
@@ -7693,14 +7703,15 @@ function susBloqueCobro(k) {
     return o;
   };
   return `<div class="sus-box" data-k="${k}"><b>${ic('tv', 18)} Suscripción · ${esc(it.descripcion)}${d.renuevaId ? ' <span class="badge b-ok">Renovación</span>' : ''}</b>
-    <div class="f2"><label class="fld"><span>Plan${p && p.precio ? ' · ' + money(p.precio) + ' por mes' : ''}</span><select class="sus-m" data-k="${k}">${[1, 2, 3, 6, 12].map(n => `<option value="${n}" ${Number(d.meses) === n ? 'selected' : ''}>${n} ${n === 1 ? 'mes' : 'meses'}</option>`).join('')}</select></label><label class="fld"><span>Vence el</span><input type="date" class="sus-v" data-k="${k}" value="${esc(d.vence)}"></label></div>
-    ${cu ? filas.map((e, j) => `<div class="f2 sus-f"><label class="fld"><span>${esc(e.plataforma)} · ${e.entrega === 'cuenta' ? 'cuenta' : 'perfil'}</span><select class="sus-c" data-k="${k}" data-j="${j}">${opciones(e, j)}</select></label><label class="fld"><span>PIN del perfil</span><input class="sus-pin" data-k="${k}" data-j="${j}" maxlength="12" value="${esc((d.asig[j] || {}).pin || '')}" placeholder="Opcional"></label></div>`).join('') : '<small class="hint">Cargando cuentas…</small>'}
+    <div class="f2"><label class="fld"><span>Plan${p && p.precio ? ' · ' + money(p.precio) + ' por mes' : ''}</span><select class="sus-m" data-k="${k}">${[1, 2, 3, 6, 12].map(n => `<option value="${n}" ${Number(d.meses) === n ? 'selected' : ''}>${n} ${n === 1 ? 'mes' : 'meses'}</option>`).join('')}</select></label><label class="fld"><span>${filas.length > 1 ? 'Vencen el (todas)' : 'Vence el'}</span><input type="date" class="sus-v" data-k="${k}" value="${esc(d.vence)}"></label></div>
+    ${cu ? filas.map((e, j) => `<div class="sus-f"><div class="f2"><label class="fld"><span>${esc(e.plataforma)} · ${e.entrega === 'cuenta' ? 'cuenta' : 'perfil'}</span><select class="sus-c" data-k="${k}" data-j="${j}">${opciones(e, j)}</select></label><label class="fld"><span>PIN del perfil</span><input class="sus-pin" data-k="${k}" data-j="${j}" maxlength="12" value="${esc((d.asig[j] || {}).pin || '')}" placeholder="Opcional"></label></div>${filas.length > 1 ? `<label class="fld sus-fv"><span>${esc(e.plataforma)} vence el</span><input type="date" class="sus-vp" data-k="${k}" data-j="${j}" value="${esc((d.asig[j] || {}).vence || d.vence)}"></label>` : ''}</div>`).join('') : '<small class="hint">Cargando cuentas…</small>'}
     ${cu && !cu.some(c => c.activo && filas.some(e => e.plataforma.toLowerCase() === c.plataforma.toLowerCase())) ? `<small class="hint">No tienes cuentas de ${esc([...new Set(filas.map(e => e.plataforma))].join(' / '))}. <a data-a="nuevaCuenta" data-p="${esc(filas[0].plataforma)}">Crear cuenta</a> o cobra sin asignar.</small>` : '<small class="hint">Los datos de acceso del perfil van en el comprobante por WhatsApp.</small>'}</div>`;
 }
 function susBindCobro(el, pinta) {
   const sus = S.ticket.sus || {};
   $$('.sus-m', el).forEach(s => s.addEventListener('change', () => { const d = sus[s.dataset.k], it = S.ticket.items[s.dataset.k], p = it && byId(S.productos, it.productoId); d.meses = Number(s.value); d.vence = mesesSumar(d.inicio || hoy(), d.meses); if (p && !it.precioMan) it.precio = r2(p.precio * d.meses); guardarTicket(); pinta(); }));
-  $$('.sus-v', el).forEach(i => i.addEventListener('change', () => { sus[i.dataset.k].vence = i.value; guardarTicket(); }));
+  $$('.sus-v', el).forEach(i => i.addEventListener('change', () => { const d = sus[i.dataset.k]; d.vence = i.value; (d.asig || []).forEach(a => { delete a.vence; }); $$('.sus-vp[data-k="' + i.dataset.k + '"]', el).forEach(x => { x.value = i.value; }); guardarTicket(); }));
+  $$('.sus-vp', el).forEach(i => i.addEventListener('change', () => { const d = sus[i.dataset.k], j = Number(i.dataset.j); d.asig[j] = Object.assign({ plataforma: '' }, d.asig[j] || {}, { vence: i.value }); guardarTicket(); }));
   $$('.sus-c', el).forEach(s => s.addEventListener('change', () => {
     const d = sus[s.dataset.k], j = Number(s.dataset.j), it = S.ticket.items[s.dataset.k], ent = susDeProducto(byId(S.productos, it.productoId));
     const filas = []; const veces = Math.max(1, Math.round(it.cantidad) || 1); ent.forEach(e => { for (let i = 0; i < e.n * veces; i++) filas.push(e); });
@@ -7718,7 +7729,7 @@ function susDatosVenta() {
     const ent = susDeProducto(byId(S.productos, it.productoId)); if (!ent.length) return;
     const d = sus[k] || { meses: 1 }, veces = Math.max(1, Math.round(it.cantidad) || 1), filas = []; ent.forEach(e => { for (let i = 0; i < e.n * veces; i++) filas.push(e); });
     if (!/^\d{4}-\d{2}-\d{2}$/.test(d.vence || '')) throw new Error('Revisa la fecha de vencimiento de «' + it.descripcion + '»');
-    out.push({ idx: k, meses: d.meses || 1, vence: d.vence, renuevaId: d.renuevaId || '', asig: filas.map((e, j) => { const a = (d.asig || [])[j] || {}; return { plataforma: e.plataforma, cuentaId: a.cuentaId || '', perfil: a.perfil === undefined ? '' : a.perfil, pin: a.pin || '' }; }) });
+    out.push({ idx: k, meses: d.meses || 1, vence: d.vence, renuevaId: d.renuevaId || '', asig: filas.map((e, j) => { const a = (d.asig || [])[j] || {}; return { plataforma: e.plataforma, cuentaId: a.cuentaId || '', perfil: a.perfil === undefined ? '' : a.perfil, pin: a.pin || '', vence: a.vence || '' }; }) });
   });
   return out;
 }
@@ -7728,7 +7739,7 @@ function textoAccesos(acc) {
 }
 function accesosHTML(acc) {
   if (!acc || !acc.length) return '';
-  return `<div class="precio-box" style="text-align:left"><h4>${ic('key', 18)} Accesos entregados</h4>${acc.map(a => `<div class="li" style="padding:6px 0">${platAv(a.plataforma)}<div class="tx"><b>${esc(a.plataforma)}${a.perfil ? ' · perfil ' + a.perfil : a.cuenta ? ' · cuenta completa' : ' · sin asignar'}</b><small>${a.correo ? esc(a.correo) + (a.clave ? ' · ' + esc(a.clave) : '') + (a.pin ? ' · PIN ' + esc(a.pin) : '') + ' · ' : ''}vence ${fFechaC(a.vence)}</small></div></div>`).join('')}</div>`;
+  return `<div class="precio-box" style="text-align:left"><h4>${ic('key', 18)} Accesos entregados</h4>${acc.map(a => `<div class="li" style="padding:6px 0">${platAv(a.plataforma)}<div class="tx"><b>${esc(a.plataforma)}${a.perfil ? ' · perfil ' + a.perfil : a.cuenta ? ' · cuenta completa' : ' · sin asignar'}</b><small>${a.correo ? esc(a.correo) + (a.clave ? ' · ' + claveOculta(a.clave) : '') + (a.pin ? ' · PIN ' + esc(a.pin) : '') + ' · ' : ''}vence ${fFechaC(a.vence)}</small></div></div>`).join('')}</div>`;
 }
 
 /* ---- Producto: suscripción o paquete ---- */
@@ -7783,6 +7794,7 @@ const NOVEDADES = [
     { i: 'tv', t: 'Negocios de streaming y suscripciones', d: 'Nuevo tipo de negocio. Tus productos pueden ser una suscripción (Netflix, Disney+, IPTV…) o un paquete con varias plataformas. Al cobrar eliges el plan, la fecha de vencimiento y el perfil que entregas; los accesos van en el comprobante por WhatsApp.', ir: 'productos' },
     { i: 'clock', t: 'Vencimientos', d: 'Qué suscripciones vencen hoy, esta semana o ya vencieron. Con un toque mandas el recordatorio por WhatsApp o renuevas un mes más.', ir: 'vencimientos' },
     { i: 'key', t: 'Cuentas y perfiles', d: 'Registra tus cuentas madre con sus perfiles; la app te dice cuáles están libres y a quién le diste cada uno.', ir: 'cuentas' },
+    { i: 'eye', t: 'Botón para ver la contraseña', d: 'En el PIN de entrada, las claves de usuarios y la clave de cada cuenta madre hay un ojo para mostrarla u ocultarla. En las listas las claves salen tapadas: tócalas para verlas.' },
     { i: 'store', t: 'Cambia el tipo de negocio cuando quieras', d: 'En Ajustes › Mi negocio › Cambiar. Tus datos se conservan; puedes cargar productos de ejemplo del nuevo tipo y ocultar los del anterior. Si no eres de streaming pero vendes mensualidades, enciende «Vender suscripciones» en Ajustes.', ir: 'ajustes' },
   ] },
   { v: '1.7', fecha: '2026-10-21', items: [
