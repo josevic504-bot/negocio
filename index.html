@@ -38,6 +38,7 @@ a{color:var(--pri)}
 .hero-top{display:flex;justify-content:space-between;align-items:center;max-width:1100px;margin:0 auto;position:relative;z-index:1}
 .hero-top .grp{display:flex;gap:8px}
 .hbtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;cursor:pointer;position:relative}
+body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{padding-bottom:40px}
 .hbtn .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:11px;font-weight:600;line-height:18px;padding:0 5px;box-shadow:0 0 0 2px var(--h1)}
 .hero-c{position:relative;z-index:1}
 .mono{width:64px;height:64px;border-radius:50%;margin:2px auto 6px;display:grid;place-items:center;border:1.5px solid color-mix(in srgb,var(--tag) 80%,transparent);color:var(--tag);font:600 28px var(--serif);background:rgba(255,255,255,.08)}
@@ -981,7 +982,7 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 <script type="text/plain" id="backend-src">
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.6 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.7 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -1000,8 +1001,9 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 const MULTI_NEGOCIO = true;
 const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite en modo un solo negocio)
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
+const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.6';
+const VERSION = '1.7';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -1010,9 +1012,17 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias: ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus'],
-  Accesos:   ['whatsapp','negocioId','usuarioId','activo']
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas'],
+  Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
+  // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
+  Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
+  SoporteMsg:  ['id','chatId','de','texto','foto','quien','fecha'],
+  Seguimiento: ['id','negocioId','tipo','fecha','nota'],
+  PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota']
 };
+const PANEL_SEG = 21600;
+// Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
+const MOTIVOS = { error: 'Error del programa', duda: 'No sé cómo hacer algo', prueba: 'Prueba y activación', idea: 'Sugerencia', app: 'App Android / instalación', otro: 'Otro' };
 let NEG = null; // negocio de la solicitud actual (modo multi)
 
 const TZ = 'America/Tegucigalpa';
@@ -1144,6 +1154,9 @@ function route_(req) {
   if (a === 'misPedidos') return misPedidos_(d);
   if (a === 'chatEnviar') { chatLimites_(d); return lock_(() => chatEnviar_(d)); }
   if (a === 'chatVer') return chatVer_(d);
+  // Panel Molina (súper admin)
+  if (a === 'panelLogin') return panelLogin_(d);
+  if (a.indexOf('panel') === 0) { panelAuth_(req); return lock_(() => rutaPanel_(a, d)); }
   const u = auth_(req.token);
   const res = rutaUsuario_(a, u, d, req);
   return u.rol === 'cajero' ? sinCostos_(res) : res;
@@ -1194,6 +1207,10 @@ function rutaUsuario_(a, u, d, req) {
     case 'chat':            return lock_(() => chat_(u, d));
     case 'chatResponder':   return lock_(() => chatResponder_(u, d));
     case 'chatBorrar':      return lock_(() => chatBorrar_(u, d));
+    case 'soporteCrear':    return lock_(() => soporteCrear_(u, d));
+    case 'soporteLista':    return soporteLista_(u);
+    case 'soporteVer':      return soporteVer_(u, d);
+    case 'soporteEnviar':   return lock_(() => soporteEnviar_(u, d));
     case 'caja':            return caja_(u, d);
     case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
     case 'reporte':         return reporte_(u, d);
@@ -1660,13 +1677,21 @@ function master_() { return SpreadsheetApp.getActiveSpreadsheet(); }
 function masterSheet_(name) {
   const m = master_();
   let s = m.getSheetByName(name);
+  if (s && !MEMO['_hm_' + name]) {
+    // Después de actualizar el sistema: agrega al final las columnas nuevas del esquema
+    MEMO['_hm_' + name] = 1;
+    try {
+      const h = SCHEMA_M[name], nc = s.getLastColumn(), cur = nc ? s.getRange(1, 1, 1, nc).getValues()[0].filter(x => x !== '') : [];
+      if (cur.length && cur.length < h.length && cur.every((k, i) => k === h[i])) s.getRange(1, cur.length + 1, 1, h.length - cur.length).setValues([h.slice(cur.length)]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
+    } catch (e) {}
+  }
   if (!s) {
     s = m.insertSheet(name);
     const h = SCHEMA_M[name];
     s.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
     s.setFrozenRows(1);
-    h.forEach((k, i) => { if (['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion'].indexOf(k) >= 0) s.getRange(2, i + 1, s.getMaxRows() - 1, 1).setNumberFormat('@'); });
-    if (name === 'Accesos') { try { s.hideSheet(); } catch (e) {} }
+    h.forEach((k, i) => { if (M_TEXTO.indexOf(k) >= 0) s.getRange(2, i + 1, s.getMaxRows() - 1, 1).setNumberFormat('@'); });
+    if (['Accesos', 'SoporteMsg', 'Seguimiento'].indexOf(name) >= 0) { try { s.hideSheet(); } catch (e) {} }
     if (name === 'Licencias') {
       try {
         const regla = SpreadsheetApp.newDataValidation().requireValueInList(['Prueba', 'Activa', 'Vencida', 'Bloqueada'], true).build();
@@ -1695,7 +1720,10 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion'];
+const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','chatId','fecha','ultimo','creado','version'];
+function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
+// Día de prueba en que va el negocio (1 = el día que se registró)
+function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
 function mCell_(v, k) {
   if (v === undefined || v === null) return '';
   if (typeof v === 'string' && /^[=+\-@]/.test(v) && M_TEXTO.indexOf(k) < 0) return "'" + v;
@@ -1704,7 +1732,7 @@ function mCell_(v, k) {
 // Busca la fila del registro en la hoja maestra (la fila guardada puede haber cambiado si alguien borró filas)
 function mFila_(name, rec) {
   if (!rec) return 0;
-  const s = masterSheet_(name), h = SCHEMA_M[name], claves = name === 'Licencias' ? ['id'] : ['negocioId', 'usuarioId'];
+  const s = masterSheet_(name), h = SCHEMA_M[name], claves = name === 'Accesos' ? ['negocioId', 'usuarioId'] : ['id'];
   const coincide = r => claves.every(k => String(r[h.indexOf(k)]) === String(rec[k]));
   const f = Number(rec._fila);
   if (f >= 2 && f <= s.getLastRow() && coincide(s.getRange(f, 1, 1, h.length).getValues()[0])) return f;
@@ -1753,7 +1781,7 @@ function licNegocio_(l) {
   const vence = String(l.vencePrueba || '').slice(0, 10);
   const fin = /^\d{4}-\d{2}-\d{2}$/.test(vence) ? new Date(vence + 'T00:00:00').getTime() : 0;
   const resta = Math.ceil((fin - Date.now()) / 86400000);
-  const r = { estado: resta > 0 ? 'prueba' : 'vencida', diasRestantes: Math.max(0, resta), vence: vence, contacto: CONTACTO_WA };
+  const r = { estado: resta > 0 ? 'prueba' : 'vencida', diasRestantes: Math.max(0, resta), vence: vence, dia: diaPrueba_(l), contacto: CONTACTO_WA };
   const debe = r.estado === 'prueba' ? 'Prueba' : 'Vencida';
   if (l.estado !== debe && l.id) {
     try { mSet_('Licencias', l, { estado: debe }); CacheService.getScriptCache().remove('L_' + l.id); } catch (e) {}
@@ -1824,6 +1852,215 @@ function registrar_(d) {
     cs.put('REG_H', String(nReg + 1), 3600);
     return { token: nuevoToken_(id + '|' + adm.id + '|' + String(adm.salt).slice(0, 8)), usuario: publico_(adm) };
   });
+}
+
+/* ===================== PANEL MOLINA (súper admin) Y SOPORTE ===================== */
+/* El panel se abre en …/?panel con la clave guardada en Propiedades del script → PANEL_CLAVE.
+ * Desde ahí se administran todos los negocios: licencias, Plus, prueba, pagos, seguimiento y el chat de soporte. */
+function panelClave_() { return String(PropertiesService.getScriptProperties().getProperty('PANEL_CLAVE') || ''); }
+function panelLogin_(d) {
+  if (!MULTI_NEGOCIO) throw new Error('El panel solo funciona en modo multi-negocio');
+  const c = CacheService.getScriptCache(), fallos = Number(c.get('FPANEL') || 0);
+  if (fallos >= 5) throw new Error('Demasiados intentos. Espera 10 minutos.');
+  const clave = panelClave_();
+  if (!clave) throw new Error('Falta la clave del panel: en el Apps Script, Configuración del proyecto → Propiedades del script, crea PANEL_CLAVE.');
+  if (String(d.clave || '') !== clave) { c.put('FPANEL', String(fallos + 1), 600); throw new Error('Clave incorrecta'); }
+  c.remove('FPANEL');
+  const tok = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  c.put('P_' + tok, '1', PANEL_SEG);
+  return { token: tok, plantillas: plantillas_() };
+}
+function panelAuth_(req) {
+  const t = String(req.panel || ''), c = CacheService.getScriptCache();
+  if (!t || !c.get('P_' + t)) throw new Error('PANEL');
+  c.put('P_' + t, '1', PANEL_SEG);
+}
+function rutaPanel_(a, d) {
+  switch (a) {
+    case 'panelResumen':           return panelResumen_();
+    case 'panelNegocio':           return panelNegocio_(d);
+    case 'panelAccion':            return panelAccion_(d);
+    case 'panelContacto':          return panelContacto_(d);
+    case 'panelPago':              return panelPago_(d);
+    case 'panelNota':              return panelNota_(d);
+    case 'panelPlantillas':        return plantillas_();
+    case 'panelPlantillasGuardar': return plantillasGuardar_(d);
+    case 'panelSoporte':           return panelSoporte_();
+    case 'panelSoporteVer':        return panelSoporteVer_(d);
+    case 'panelSoporteResponder':  return panelSoporteResponder_(d);
+    case 'panelSoporteEstado':     return panelSoporteEstado_(d);
+    case 'panelSalir':             return true;
+  }
+  throw new Error('Acción no válida: ' + a);
+}
+const PLANTILLAS_DEF = {
+  dia3: 'Hola {dueno}, ¿qué tal te ha parecido Gestión de Negocio VM en {negocio}? Si algo no te cuadra, me decís y lo vemos 🙂',
+  vence: 'Hola {dueno}, mañana termina tu prueba gratis de Gestión de Negocio VM. Si querés seguir usándolo en {negocio}, activamos tu licencia hoy mismo: es pago único, sin mensualidades.',
+  inactivo: 'Hola {dueno}, vi que no has vuelto a entrar a Gestión de Negocio VM. ¿Te trabó algo? Te ayudo por acá.',
+  vencida: 'Hola {dueno}, tu prueba de Gestión de Negocio VM ya terminó, pero tus datos de {negocio} siguen guardados. Cuando querás, activamos tu licencia y seguís donde lo dejaste.',
+  activada: '¡Listo {dueno}! Tu licencia de Gestión de Negocio VM para {negocio} ya está activa. Gracias por confiar 🙌 Cualquier duda, me escribís.',
+  bienvenida: '¡Bienvenido a Gestión de Negocio VM, {dueno}! Tenés 7 días para probarlo todo en {negocio}, incluida la tienda en línea. Si necesitás ayuda, escribime por aquí o desde Ayuda en la app.'
+};
+function plantillas_() {
+  let p = {}; try { p = JSON.parse(PropertiesService.getScriptProperties().getProperty('PANEL_PLANTILLAS') || '{}'); } catch (e) { p = {}; }
+  return Object.assign({}, PLANTILLAS_DEF, p);
+}
+function plantillasGuardar_(d) {
+  const p = {}; Object.keys(PLANTILLAS_DEF).forEach(k => { if (d.plantillas && d.plantillas[k] !== undefined) p[k] = txt_(d.plantillas[k], 600); });
+  PropertiesService.getScriptProperties().setProperty('PANEL_PLANTILLAS', JSON.stringify(p));
+  return plantillas_();
+}
+function diasDesde_(f) { const ms = msDeLocal_(String(f || '').replace(' ', 'T')); return ms ? (Date.now() - ms) / 86400000 : 9999; }
+// Ficha resumida de un negocio para el panel
+function panelFicha_(l, segs) {
+  const lic = licNegocio_(l), mis = segs.filter(x => x.negocioId === l.id);
+  const hecho = tipo => mis.filter(x => x.tipo === tipo).map(x => x.fecha).sort().pop() || '';
+  const est = lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
+  const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
+    usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, notas: l.notas || '', contactar: '' };
+  // ¿Toca contactarlo hoy?
+  if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
+  else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
+  else if (est === 'vencida' && diasDesde_(hecho('vencida')) > 14) o.contactar = 'vencida';
+  else if ((est === 'prueba' || est === 'activa') && sin >= 5 && diasDesde_(hecho('inactivo')) > 7) o.contactar = 'inactivo';
+  return o;
+}
+function panelResumen_() {
+  const segs = mRows_('Seguimiento'), lics = mRows_('Licencias').map(l => panelFicha_(l, segs));
+  lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
+  const mes = hoy_().slice(0, 7), pagos = mRows_('PagosLic').filter(p => String(p.fecha).slice(0, 7) === mes);
+  const sop = mRows_('Soporte');
+  const n = k => lics.filter(x => x.estado === k).length;
+  const orden = { dia3: 0, vence: 1, inactivo: 2, vencida: 3 };
+  return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
+      ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length },
+    contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
+    negocios: lics, soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
+}
+function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
+function panelNegocio_(d) {
+  const l = licDe_(d.id), f = panelFicha_(l, mRows_('Seguimiento'));
+  f.seguimiento = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+  f.pagos = mRows_('PagosLic').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+  f.soporte = mRows_('Soporte').filter(x => x.negocioId === l.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm'));
+  // Uso (solo conteos, nunca sus datos): se lee la hoja del negocio
+  f.uso = null;
+  try {
+    Object.keys(MEMO).forEach(k => { if (k.indexOf('_m_') !== 0 && k.indexOf('_hm_') !== 0) delete MEMO[k]; });
+    setNegocio_(l);
+    const lim = Date.now() - 30 * 86400000, v30 = rowsDesde_('Ventas', lim).filter(v => !v.anulada && msDeLocal_(v.fecha) >= lim);
+    f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
+      pedidos: rows_('Pedidos').length, tienda: config_().tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+  } catch (e) { f.usoError = String(e.message || e); }
+  NEG = null; delete MEMO._ss;
+  return f;
+}
+function panelAccion_(d) {
+  const l = licDe_(d.id), f = ahora_().replace('T', ' ');
+  const upd = {}; let nota = '';
+  const pago = (concepto) => { if (Number(d.monto) > 0) mAppend_('PagosLic', { id: mId_('G'), negocioId: l.id, fecha: f, monto: r2_(Number(d.monto)), concepto: txt_(d.concepto, 60) || concepto, metodo: txt_(d.metodo, 20) || 'Efectivo', nota: '' }); };
+  switch (d.accion) {
+    case 'activar':    upd.estado = 'Activa'; nota = 'Licencia activada'; pago('Licencia'); break;
+    case 'plus':       upd.plus = 'Sí'; nota = 'Plus activado'; pago('Plus'); break;
+    case 'quitarPlus': upd.plus = ''; nota = 'Plus desactivado'; break;
+    case 'extender': { const dias = Math.max(1, Math.min(90, Number(d.dias) || 7)); const base = Math.max(Date.now(), msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T00:00') || 0);
+      upd.vencePrueba = Utilities.formatDate(new Date(base + dias * 86400000), TZ, 'yyyy-MM-dd'); upd.estado = 'Prueba'; nota = 'Prueba extendida ' + dias + ' días'; break; }
+    case 'pausar':     upd.estado = 'Bloqueada'; nota = 'Acceso pausado'; break;
+    case 'reanudar':   upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Activa'; nota = 'Acceso reanudado'; break;
+    default: throw new Error('Acción no válida');
+  }
+  mSet_('Licencias', l, upd);
+  CacheService.getScriptCache().remove('L_' + l.id);
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: f, nota: nota + (d.nota ? ' · ' + txt_(d.nota, 120) : '') });
+  return panelNegocio_({ id: l.id });
+}
+function panelContacto_(d) {
+  const l = licDe_(d.id), tipo = String(d.tipo || 'manual').replace(/[^a-z0-9]/gi, '').slice(0, 20);
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: tipo, fecha: ahora_().replace('T', ' '), nota: txt_(d.nota, 160) || 'Contactado por WhatsApp' });
+  return panelNegocio_({ id: l.id });
+}
+function panelPago_(d) {
+  const l = licDe_(d.id), monto = r2_(Number(d.monto) || 0);
+  if (!(monto > 0)) throw new Error('Escribe el monto');
+  mAppend_('PagosLic', { id: mId_('G'), negocioId: l.id, fecha: ahora_().replace('T', ' '), monto: monto, concepto: txt_(d.concepto, 60) || 'Pago', metodo: txt_(d.metodo, 20) || 'Efectivo', nota: txt_(d.nota, 120) });
+  return panelNegocio_({ id: l.id });
+}
+function panelNota_(d) { const l = licDe_(d.id); mSet_('Licencias', l, { notas: txt_(d.notas, 500) }); return panelNegocio_({ id: l.id }); }
+
+/* ---- Soporte: chat del negocio con el administrador ---- */
+function sopPublico_(c, lado) {
+  return { id: c.id, negocioId: c.negocioId, negocio: c.negocio, dueno: c.dueno, whatsapp: c.whatsapp, motivo: c.motivo, motivoT: MOTIVOS[c.motivo] || c.motivo, modulo: c.modulo, estado: c.estado || 'abierto', version: c.version, diaPrueba: c.diaPrueba,
+    ultimo: c.ultimo, ultimoTexto: c.ultimoTexto, deCliente: String(c.deCliente) === 'true', sinLeer: Number(lado === 'adm' ? c.sinLeerAdm : c.sinLeerCli) || 0, creado: c.creado };
+}
+function sopMsgs_(id) { return mRows_('SoporteMsg').filter(m => m.chatId === id).sort((a, b) => a.fecha < b.fecha ? -1 : 1).map(m => ({ id: m.id, de: m.de, texto: m.texto, foto: m.foto || '', quien: m.quien, fecha: m.fecha })); }
+function fotoChat_(f) { f = String(f || ''); if (!f) return ''; if (f.indexOf('data:image/') !== 0 || f.length > 48000) throw new Error('La captura es muy grande. Prueba con una más pequeña.'); return f; }
+function soporteCrear_(u, d) {
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('El chat con el administrador solo funciona en la versión multi-negocio');
+  const motivo = own_(MOTIVOS, d.motivo) ? d.motivo : 'otro', texto = String(d.texto || '').trim().slice(0, 800);
+  if (texto.length < 3) throw new Error('Cuéntanos qué pasó');
+  if (mRows_('Soporte').filter(c => c.negocioId === NEG.id && c.estado !== 'resuelto').length >= 5) throw new Error('Ya tienes 5 conversaciones abiertas. Continúa en una de ellas.');
+  const f = ahora_().replace('T', ' '), lic = NEG.lic, id = mId_('T');
+  const c = { id: id, negocioId: NEG.id, negocio: lic.negocio, dueno: u.nombre || lic.dueno, whatsapp: lic.whatsapp, motivo: motivo, modulo: txt_(d.modulo, 40), estado: 'abierto', version: txt_(d.version, 12),
+    diaPrueba: licNegocio_(lic).estado === 'prueba' ? diaPrueba_(lic) : '', ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: true, sinLeerAdm: 1, sinLeerCli: 0, creado: f };
+  mAppend_('Soporte', c);
+  mAppend_('SoporteMsg', { id: mId_('M'), chatId: id, de: 'cli', texto: texto, foto: fotoChat_(d.foto), quien: u.nombre || '', fecha: f });
+  return { chat: sopPublico_(c, 'cli'), mensajes: sopMsgs_(id) };
+}
+function soporteLista_(u) {
+  if (!MULTI_NEGOCIO || !NEG) return [];
+  return mRows_('Soporte').filter(c => c.negocioId === NEG.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'cli'));
+}
+function sopDe_(id, negocioId) { const c = mRows_('Soporte').find(x => x.id === id && (!negocioId || x.negocioId === negocioId)); if (!c) throw new Error('Esta conversación ya no existe'); return c; }
+function soporteVer_(u, d) {
+  const c = sopDe_(d.id, NEG ? NEG.id : '');
+  if (Number(c.sinLeerCli) > 0) { mSet_('Soporte', c, { sinLeerCli: 0 }); c.sinLeerCli = 0; }
+  return { chat: sopPublico_(c, 'cli'), mensajes: sopMsgs_(c.id) };
+}
+function soporteEnviar_(u, d) {
+  const c = sopDe_(d.id, NEG ? NEG.id : ''), texto = String(d.texto || '').trim().slice(0, 800);
+  if (!texto && !d.foto) throw new Error('Escribe tu mensaje');
+  const f = ahora_().replace('T', ' ');
+  mAppend_('SoporteMsg', { id: mId_('M'), chatId: c.id, de: 'cli', texto: texto, foto: fotoChat_(d.foto), quien: u.nombre || '', fecha: f });
+  mSet_('Soporte', c, { ultimo: f, ultimoTexto: (texto || '📷 Captura').slice(0, 120), deCliente: true, sinLeerAdm: (Number(c.sinLeerAdm) || 0) + 1, sinLeerCli: 0, estado: 'abierto' });
+  return soporteVer_(u, { id: c.id });
+}
+function panelSoporte_() { return mRows_('Soporte').sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm')); }
+function panelSoporteVer_(d) {
+  const c = sopDe_(d.id);
+  if (Number(c.sinLeerAdm) > 0) { mSet_('Soporte', c, { sinLeerAdm: 0 }); c.sinLeerAdm = 0; }
+  const l = mRows_('Licencias').find(x => x.id === c.negocioId);
+  return { chat: sopPublico_(c, 'adm'), mensajes: sopMsgs_(c.id), negocio: l ? panelFicha_(l, mRows_('Seguimiento')) : null };
+}
+function panelSoporteResponder_(d) {
+  const c = sopDe_(d.id), texto = String(d.texto || '').trim().slice(0, 800);
+  if (!texto) throw new Error('Escribe tu respuesta');
+  const f = ahora_().replace('T', ' ');
+  mAppend_('SoporteMsg', { id: mId_('M'), chatId: c.id, de: 'adm', texto: texto, foto: '', quien: 'Soporte', fecha: f });
+  mSet_('Soporte', c, { ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: false, sinLeerAdm: 0, sinLeerCli: (Number(c.sinLeerCli) || 0) + 1 });
+  return panelSoporteVer_({ id: c.id });
+}
+function panelSoporteEstado_(d) { const c = sopDe_(d.id); mSet_('Soporte', c, { estado: d.estado === 'resuelto' ? 'resuelto' : 'abierto' }); return panelSoporteVer_({ id: c.id }); }
+
+/* ---- Correo diario al administrador: a quién contactar y soporte pendiente ---- */
+function resumenPanelDiario() {
+  const r = panelResumen_(), P = r.plantillas;
+  const correo = PropertiesService.getScriptProperties().getProperty('PANEL_CORREO') || Session.getEffectiveUser().getEmail();
+  const sop = mRows_('Soporte').filter(c => Number(c.sinLeerAdm) > 0);
+  if (!r.contactar.length && !sop.length) return;
+  const wa = (x, t) => 'https://wa.me/' + x.whatsapp + '?text=' + encodeURIComponent(String(P[t] || '').replace(/\{dueno\}/g, String(x.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, x.negocio));
+  const T = { dia3: 'Día 3 de prueba · ¿qué tal?', vence: 'Vence mañana', inactivo: 'Sin entrar hace días', vencida: 'Prueba vencida' };
+  let h = '<h2 style="font-family:sans-serif">Gestión de Negocio VM · ' + r.hoy + '</h2>';
+  h += '<p style="font-family:sans-serif">Activos ' + r.kpis.activos + ' · En prueba ' + r.kpis.prueba + ' · Vencidos ' + r.kpis.vencidos + ' · Ingresos del mes L ' + r.kpis.ingresosMes + '</p>';
+  if (r.contactar.length) h += '<h3 style="font-family:sans-serif">Para contactar hoy</h3><ul style="font-family:sans-serif">' + r.contactar.map(x => '<li><b>' + x.negocio + '</b> (' + x.dueno + ') · ' + T[x.contactar] + ' · <a href="' + wa(x, x.contactar) + '">WhatsApp</a></li>').join('') + '</ul>';
+  if (sop.length) h += '<h3 style="font-family:sans-serif">Soporte sin responder</h3><ul style="font-family:sans-serif">' + sop.map(c => '<li><b>' + c.negocio + '</b> · ' + (MOTIVOS[c.motivo] || c.motivo) + (c.modulo ? ' · ' + c.modulo : '') + ': ' + c.ultimoTexto + '</li>').join('') + '</ul>';
+  h += '<p style="font-family:sans-serif"><a href="' + URL_APP + '?panel">Abrir el Panel Molina</a></p>';
+  MailApp.sendEmail({ to: correo, subject: 'Negocio VM · ' + r.contactar.length + ' por contactar · ' + sop.length + ' en soporte', htmlBody: h });
+}
+// Ejecútala una vez: el resumen llega cada mañana a las 7
+function instalarResumenDiario() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'resumenPanelDiario').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('resumenPanelDiario').timeBased().everyDays(1).atHour(7).create();
+  Logger.log('Listo: el resumen del panel llegará cada día a las 7 a. m.');
 }
 
 /* ===================== CATÁLOGOS (productos, clientes, proveedores) ===================== */
@@ -2599,7 +2836,8 @@ function pendientes_(u) {
   if (u.rol === 'bodega') return { nuevos: 0, mensajes: 0 };
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
   const n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
-  return { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length };
+  let sop = 0; try { if (MULTI_NEGOCIO && NEG) sop = mRows_('Soporte').filter(c => c.negocioId === NEG.id && Number(c.sinLeerCli) > 0).length; } catch (e) {}
+  return { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
 }
 
 function estadoPedido_(u, d) {
@@ -3885,6 +4123,7 @@ const ICP = {
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>', sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M2.5 12h2M19.5 12h2M5.3 5.3l1.4 1.4M17.3 17.3l1.4 1.4M5.3 18.7l1.4-1.4M17.3 6.7l1.4-1.4"/>',
   auto: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/>',
   barcode: '<path d="M4 5v14M7 5v14M10.5 5v14M13 5v14M16.5 5v14M20 5v14"/>',
+  info: '<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.5"/>',
   alert: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.3v.1"/>',
   inbox: '<path d="M3 13l2.5-8h13L21 13v6H3z"/><path d="M3 13h5l1.5 2.5h5L16 13h5"/>',
   percent: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
@@ -4035,7 +4274,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.6';
+const APP_VER = '1.7';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -4178,7 +4417,7 @@ async function api(action, data, silent) {
   try {
     let r;
     try {
-      r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, data: data || {} }), redirect: 'follow' });
+      r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, panel: S.enPanel ? P.tok : undefined, data: data || {} }), redirect: 'follow' });
     } catch (e) { throw new Error('Sin conexión con el servidor. Revisa tu internet.'); }
     let j;
     try { j = await r.json(); } catch (e) { throw new Error('Respuesta inválida del servidor. Verifica que la App web esté implementada con acceso «Cualquier usuario».'); }
@@ -4190,6 +4429,7 @@ function manejarError(m) {
   m = String(m || 'Error');
   if (m.indexOf('PRUEBA_VENCIDA|') === 0) { let info = {}; try { info = JSON.parse(m.slice(15)); } catch (e) {} if (!S.enTienda) mostrarVencida(info); throw new Error('Tu período de prueba terminó'); }
   if (m === 'SESION') { if (!S.enTienda) salir(true); throw new Error('Tu sesión expiró. Ingresa de nuevo.'); }
+  if (m === 'PANEL') { if (S.enPanel) { cerrarHojas(); panelLogin(); } throw new Error('Tu sesión del panel expiró. Entra de nuevo.'); }
   if (m.indexOf('Acción no válida') === 0) throw new Error('Esta función necesita la versión nueva del servidor. Escríbenos por WhatsApp al +504 3313-0265 para activarla.');
   throw new Error(m);
 }
@@ -4199,7 +4439,7 @@ async function demoApi(action, data, silent) {
     await new Promise(r => setTimeout(r, 120));
     const route = demoBackend();
     let res;
-    try { res = route({ action, token: S.token, data: JSON.parse(JSON.stringify(data || {})) }); }
+    try { res = route({ action, token: S.token, panel: S.enPanel ? P.tok : undefined, data: JSON.parse(JSON.stringify(data || {})) }); }
     catch (e) { demoGuardar(); return manejarError(e && e.message ? e.message : e); }
     demoGuardar();
     return res === undefined ? null : JSON.parse(JSON.stringify(res));
@@ -4219,6 +4459,7 @@ function demoBackend() {
   if (nuevo) DEMO.db = { sheets: {}, order: [] };
   DEMO.B = demoCompilar($('#backend-src').textContent, DEMO);
   if (nuevo) { DEMO.B.instalar(); demoGuardar(); }
+  if (!(DEMO.db.props || {}).PANEL_CLAVE) { (DEMO.db.props = DEMO.db.props || {}).PANEL_CLAVE = '1234'; demoGuardar(); }
   DEMO.route = DEMO.B.route_;
   return DEMO.route;
 }
@@ -4402,11 +4643,11 @@ function pintarHeader() {
   const demo = DEMO.on ? `<button class="demo-tag" data-a="menuDemo">MODO PRUEBA</button>` : '';
   const bell = puede('admin', 'cajero') ? `<button class="hbtn" data-a="ir" data-v="pedidos" aria-label="Pedidos">${ic('bell', 20)}${S.pedidosNuevos ? `<span class="dot">${S.pedidosNuevos}</span>` : ''}</button>` : '';
   if (S.vista === 'inicio') {
-    $('#hdr').innerHTML = `<div class="hero"><div class="hero-top"><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button>${demo}<div class="grp">${bell}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}</button><button class="hbtn" data-a="ir" data-v="ajustes" aria-label="Ajustes">${ic('gear', 20)}</button></div></div>
+    $('#hdr').innerHTML = `<div class="hero"><div class="hero-top"><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button>${demo}<div class="grp">${bell}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}${S.soporteNuevos ? `<span class="dot">${S.soporteNuevos}</span>` : ''}</button><button class="hbtn" data-a="ir" data-v="ajustes" aria-label="Ajustes">${ic('gear', 20)}</button></div></div>
       <div class="hero-c">${monograma()}<div class="hero-name">${esc(S.config.nombre || 'Mi Negocio')}</div><div class="hero-tag">${esc(S.config.eslogan || giroNombre() || 'Gestión de negocio')}</div></div></div>`;
   } else {
     const extra = (R[S.vista + '_bar'] && R[S.vista + '_bar']()) || '';
-    $('#hdr').innerHTML = `<div class="bar"><div class="bar-in"><button class="hbtn" data-a="ir" data-v="inicio" aria-label="Volver">${ic('left', 22)}</button><div class="bar-t">${esc(v.t)}</div>${demo}${extra}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}</button><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button></div></div>`;
+    $('#hdr').innerHTML = `<div class="bar"><div class="bar-in"><button class="hbtn" data-a="ir" data-v="inicio" aria-label="Volver">${ic('left', 22)}</button><div class="bar-t">${esc(v.t)}</div>${demo}${extra}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}${S.soporteNuevos ? `<span class="dot">${S.soporteNuevos}</span>` : ''}</button><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button></div></div>`;
   }
 }
 function pintarNav() {
@@ -4671,18 +4912,245 @@ function vigilarPedidos() {
     if (!S.user || document.hidden || !puede('admin', 'cajero')) return;
     try {
       const r = await api('pendientes', {}, true);
-      const antes = S.pedidosNuevos, antesM = S.chatsNuevos;
-      S.pedidosNuevos = r.nuevos || 0; S.chatsNuevos = r.mensajes || 0;
+      const antes = S.pedidosNuevos, antesM = S.chatsNuevos, antesS = S.soporteNuevos || 0;
+      S.pedidosNuevos = r.nuevos || 0; S.chatsNuevos = r.mensajes || 0; S.soporteNuevos = r.soporte || 0;
+      if (S.soporteNuevos > antesS && S.yaReviso) { toast('💬 El administrador te respondió. Ábrelo en Ayuda.', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) {} }
       if (S.chatsNuevos > antesM && S.yaReviso) { toast('💬 Tienes un mensaje nuevo en tu tienda', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) {} if (S.vista === 'mensajes' && !PILA.length) R.mensajes(); }
       if (S.pedidosNuevos > antes && antes >= 0 && S.yaReviso) { toast('🛍️ ¡Nuevo pedido en línea!', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) {} if (S.vista === 'pedidos') R.pedidos(); }
       S.yaReviso = true;
-      if (S.pedidosNuevos !== antes || S.chatsNuevos !== antesM) { pintarHeader(); pintarNav(); }
+      if (S.pedidosNuevos !== antes || S.chatsNuevos !== antesM || S.soporteNuevos !== antesS) { pintarHeader(); pintarNav(); }
     } catch (e) {}
   };
   revisar();
   vigilando = setInterval(revisar, 30000);
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.user && !S.enTienda) { recargar(true).then(() => { if (['productos', 'clientes', 'proveedores'].includes(S.vista) && !PILA.length) render(); }).catch(() => {}); } });
+
+
+/* ===================== SOPORTE: contactar al administrador ===================== */
+const MOTIVOS_UI = [['error', '🐞', 'Error del programa', 'Algo no funciona o muestra un mensaje raro'], ['duda', '🎓', 'No sé cómo hacer algo', 'Una duda de uso'], ['prueba', '🔑', 'Prueba y activación', 'Días de prueba, licencia, Plus, pago'],
+  ['idea', '💡', 'Sugerencia', 'Algo que te gustaría que tuviera'], ['app', '📱', 'App Android / instalación', 'APK, actualización, no abre'], ['otro', '💬', 'Otro', 'Cualquier otra cosa']];
+const MODULOS_UI = ['🛒 Vender y cobrar', '📦 Productos e inventario', '👥 Clientes y crédito', '🚚 Compras y proveedores', '💵 Caja y gastos', '🛍️ Tienda en línea y pedidos', '💬 Mensajes', '📊 Reportes', '🧾 Facturación SAR', '⚙️ Ajustes y usuarios', '📱 La app en general'];
+const motivoTxt = k => (MOTIVOS_UI.find(m => m[0] === k) || ['', '💬', k])[1] + ' ' + (MOTIVOS_UI.find(m => m[0] === k) || ['', '', k])[2];
+function soporteMotivo() {
+  const h = hoja({ titulo: 'Contactar al administrador', html: `<p class="sm mut" style="margin-bottom:10px">Elige el motivo para atenderte mejor:</p><div class="list">${MOTIVOS_UI.map(m => `<div class="li" data-mot="${m[0]}"><div class="av t-pri"><span class="emo">${m[1]}</span></div><div class="tx"><b>${m[2]}</b><small>${m[3]}</small></div><div class="am mut">›</div></div>`).join('')}</div>` });
+  h.b.addEventListener('click', e => { const li = e.target.closest('[data-mot]'); if (!li) return; const m = li.dataset.mot; h.cerrar(); if (m === 'error' || m === 'duda') soporteModulo(m); else soporteDetalle(m, ''); });
+}
+function soporteModulo(motivo) {
+  const h = hoja({ titulo: motivoTxt(motivo).slice(3), html: `<div class="chips" style="margin-bottom:10px"><span class="chip on">${esc(motivoTxt(motivo))}</span></div><p class="sm mut" style="margin-bottom:10px">¿En qué parte ${motivo === 'error' ? 'pasó' : 'necesitas ayuda'}?</p><div class="list">${MODULOS_UI.map(m => `<div class="li" data-mod="${esc(m)}"><div class="tx"><b>${esc(m)}</b></div><div class="am mut">›</div></div>`).join('')}</div>` });
+  h.b.addEventListener('click', e => { const li = e.target.closest('[data-mod]'); if (!li) return; const m = li.dataset.mod; h.cerrar(); soporteDetalle(motivo, m); });
+}
+function soporteDetalle(motivo, modulo, textoIni) {
+  let foto = '';
+  const L = S.licencia || {};
+  const h = hoja({ titulo: motivo === 'error' ? 'Cuéntanos qué pasó' : 'Escríbenos', html: `<div class="chips" style="margin-bottom:12px"><span class="chip on">${esc(motivoTxt(motivo))}</span>${modulo ? `<span class="chip on">${esc(modulo)}</span>` : ''}</div>
+    <label class="fld"><span>${motivo === 'error' ? '¿Qué pasó?' : motivo === 'idea' ? '¿Qué te gustaría que tuviera?' : 'Tu mensaje'}</span><textarea id="sp-t" rows="4" maxlength="800" placeholder="${motivo === 'error' ? 'Qué hiciste, qué esperabas y qué mensaje salió' : 'Escribe aquí…'}">${esc(textoIni || '')}</textarea></label>
+    <div class="row" style="margin:6px 0 12px"><label class="btn">${ic('cam', 18)} Adjuntar captura<input type="file" accept="image/*" id="sp-f" hidden></label><span class="sm mut" id="sp-fn">Opcional, ayuda mucho</span></div>
+    <div class="aviso info sm">${ic('info', 18)}<div>Se envía junto con tu mensaje: el nombre de tu negocio, la versión de la app (${APP_VER})${L.estado === 'prueba' ? ', tu día de prueba' : ''} y tu WhatsApp. Nunca tus ventas ni tus datos.</div></div>` });
+  $('#sp-f', h.el).addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { foto = await comprimirImagen(f, 640); if (foto.length > 48000) foto = await comprimirImagen(f, 420); $('#sp-fn', h.el).textContent = '📷 Captura lista'; } catch (x) { toast('No se pudo leer la imagen', 'error'); } });
+  h.botones([{ t: `${ic('send', 18)} Enviar y abrir chat`, cls: 'pri big', fn: async () => {
+    const texto = $('#sp-t', h.el).value.trim(); if (texto.length < 3) throw new Error('Cuéntanos un poco más');
+    const r = await api('soporteCrear', { motivo, modulo, texto, foto, version: APP_VER });
+    h.cerrar(); toast('Enviado. Te respondemos aquí mismo.', 'ok'); verSoporte(r.chat.id, r);
+  } }]);
+}
+async function verSoporte(id, inicial) {
+  let d = inicial || null, timer = null, enviando = false, foto = '';
+  const h = hoja({ titulo: '', cls: 'chat-h2', html: '<div class="empty">Cargando…</div>', onClose: () => { clearInterval(timer); S.soporteNuevos = 0; pintarHeader(); } });
+  const pintaMsgs = () => {
+    const box = $('#sp-m', h.el); if (!box) return; let dia = '';
+    box.innerHTML = d.mensajes.map(x => { const f = String(x.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
+      return sep + `<div class="msg ${x.de === 'cli' ? 'yo' : 'el'}"><div class="bt">${x.foto ? `<img src="${esc(x.foto)}" alt="" style="max-width:100%;border-radius:12px;display:block;margin-bottom:6px">` : ''}${esc(x.texto)}</div><small>${fHora(String(x.fecha).replace(' ', 'T'))}${x.de === 'adm' ? ' · Soporte' : ''}</small></div>`; }).join('') || '<div class="empty">Sin mensajes</div>';
+    box.scrollTop = box.scrollHeight;
+  };
+  const pinta = () => {
+    const c = d.chat;
+    h.b.innerHTML = `<div class="chat-h"><div class="av t-pri" style="background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;border:0">VM</div><div><b>Soporte · Molina Soluciones Digitales</b><small>Te respondemos en la app${c.estado === 'resuelto' ? ' · resuelto ✓' : ''}</small></div></div>
+      <div class="chips" style="margin-bottom:8px"><span class="chip">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</span></div>
+      <div class="msgs" id="sp-m"></div>
+      <div class="chat-in"><label class="btn icon ghost" style="flex:none" aria-label="Adjuntar captura">${ic('cam', 20)}<input type="file" accept="image/*" id="sp-f2" hidden></label><textarea id="sp-in" rows="1" placeholder="Escribe tu mensaje…" maxlength="800"></textarea><button id="sp-send" aria-label="Enviar">${ic('send', 20)}</button></div>
+      <p class="chat-nota">${ic('wa', 14)} ¿Urgente? <a href="${waLink(CONTACTO_WA, 'Hola, escribo desde ' + (S.config.nombre || 'mi negocio') + ' sobre: ' + motivoTxt(c.motivo).slice(3))}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></p>`;
+    pintaMsgs();
+    const inp = $('#sp-in', h.el);
+    inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(120, inp.scrollHeight) + 'px'; });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 700) { e.preventDefault(); enviar().catch(err); } });
+    $('#sp-f2', h.el).addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return; try { foto = await comprimirImagen(f, 640); if (foto.length > 48000) foto = await comprimirImagen(f, 420); toast('Captura lista, toca enviar', 'ok', 1500); } catch (x) { toast('No se pudo leer la imagen', 'error'); } });
+    $('#sp-send', h.el).onclick = () => enviar().catch(err);
+  };
+  const enviar = async () => {
+    if (enviando) return; const inp = $('#sp-in', h.el), texto = inp.value.trim();
+    if (!texto && !foto) throw new Error('Escribe tu mensaje');
+    enviando = true; $('#sp-send', h.el).disabled = true;
+    try { d = await api('soporteEnviar', { id, texto, foto }, true); foto = ''; inp.value = ''; inp.style.height = ''; pintaMsgs(); } finally { enviando = false; $('#sp-send', h.el).disabled = false; }
+  };
+  try { if (!d) d = await api('soporteVer', { id }); pinta(); } catch (e) { h.cerrar(); throw e; }
+  timer = setInterval(async () => { if (document.hidden || enviando) return; try { const n = await api('soporteVer', { id }, true); if (n.mensajes.length !== d.mensajes.length) { d = n; pintaMsgs(); } } catch (e) {} }, 20000);
+}
+ACC.soporteNuevo = () => soporteMotivo();
+ACC.verSoporte = el => verSoporte(el.dataset.id);
+// Lista de mis conversaciones con soporte (dentro de Ayuda)
+async function listaSoporte(box) {
+  try {
+    const l = await api('soporteLista', {}, true);
+    box.innerHTML = l.length ? `<div class="sec-t"><h3>Tus conversaciones</h3></div><div class="list">${l.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="verSoporte" data-id="${c.id}"><div class="av t-pri">VM</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo).slice(3))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^\\S+ /, '')) : ''}</b><span class="h">${hace(String(c.ultimo).replace(' ', 'T'))}</span></div><small>${c.deCliente ? 'Tú: ' : ''}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : ''}</div>`).join('')}</div>` : '';
+  } catch (e) { box.innerHTML = ''; }
+}
+// Tarjeta en Inicio durante la prueba: día 3 (¿qué tal?) y día 6 (vence mañana)
+function tarjetaPrueba() {
+  const L = S.licencia; if (!(L && L.estado === 'prueba' && puede('admin') && S.multi)) return '';
+  const dia = Number(L.dia) || 0, k = dia >= 6 ? 'enc6_' : dia >= 3 ? 'enc3_' : '';
+  if (!k || LS.get(k + S.negocioId, '')) return '';
+  return dia >= 6
+    ? `<div class="aviso" style="margin-bottom:12px">${ic('sparkle', 20)}<div><b>${L.diasRestantes <= 1 ? 'Mañana termina tu prueba' : 'Tu prueba termina en ' + L.diasRestantes + ' días'}</b><small>¿Activamos tu licencia? Es pago único y te quedas con todo lo que ya registraste.</small></div><button class="btn sm pri" data-a="encPrueba" data-k="${k}" data-t="activar">Sí, quiero</button><button class="btn icon ghost sm" data-a="encCerrar" data-k="${k}" aria-label="Cerrar">${ic('x', 16)}</button></div>`
+    : `<div class="aviso info" style="margin-bottom:12px">${ic('chat', 20)}<div><b>¿Qué tal va la prueba?</b><small>Llevas ${dia} días con Gestión de Negocio VM. Cuéntanos qué te gustó o qué te falta.</small></div><button class="btn sm pri" data-a="encPrueba" data-k="${k}" data-t="opinar">Escribir</button><button class="btn icon ghost sm" data-a="encCerrar" data-k="${k}" aria-label="Cerrar">${ic('x', 16)}</button></div>`;
+}
+ACC.encCerrar = el => { LS.set(el.dataset.k + S.negocioId, '1'); if (S.vista === 'inicio') R.inicio(); };
+ACC.encPrueba = el => { LS.set(el.dataset.k + S.negocioId, '1'); soporteDetalle('prueba', '', el.dataset.t === 'activar' ? 'Hola, mi prueba está por terminar y quiero activar la licencia de ' + (S.config.nombre || 'mi negocio') + '.' : 'Hola, llevo ' + (S.licencia.dia || 3) + ' días probando el programa y '); if (S.vista === 'inicio') R.inicio(); };
+
+/* ===================== PANEL MOLINA (súper admin) ===================== */
+const P = { tok: LS.get('panelTok', ''), d: null, f: {}, pl: {} };
+const CONTACTAR_T = { dia3: ['¿Qué tal la prueba?', 'b-warn', 'Día 3 de prueba'], vence: ['Vence mañana', 'b-bad', 'Última oportunidad en prueba'], inactivo: ['Sin entrar', 'b-mut', 'No entra hace días'], vencida: ['Seguimiento', 'b-mut', 'Prueba vencida, no activó'] };
+const EST_L = { activa: ['b-ok', 'Activa'], prueba: ['b-warn', 'Prueba'], vencida: ['b-bad', 'Vencida'], bloqueada: ['b-mut', 'Pausada'] };
+const waPlantilla = (n, k, texto) => waLink(n.whatsapp, (texto || P.pl[k] || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio));
+const cuandoP = f => f ? hace(String(f).replace(' ', 'T')) : 'nunca';
+function iniciarPanel() {
+  S.enPanel = true; document.title = 'Panel Molina · Gestión de Negocio VM';
+  $('#login').hidden = true; $('#tienda').hidden = true; $('#app').hidden = false; document.body.classList.add('app', 'panel');
+  $('#bnav').style.display = 'none'; $('#tnav').style.display = 'none';
+  if (P.tok) panelResumen().catch(() => panelLogin()); else panelLogin();
+}
+function panelCab(t, atras) {
+  $('#hdr').innerHTML = `<div class="bar"><div class="bar-in">${atras ? `<button class="hbtn" data-a="panelInicio" aria-label="Volver">${ic('left', 22)}</button>` : `<span class="hbtn" style="pointer-events:none">${ic('store', 20)}</span>`}<div class="bar-t">${esc(t)}</div>${P.tok ? `<button class="hbtn" data-a="panelSoporteLista" aria-label="Soporte">${ic('chat', 20)}${P.d && P.d.soporteSin ? `<span class="dot">${P.d.soporteSin}</span>` : ''}</button><button class="hbtn" data-a="panelPlantillas" aria-label="Plantillas">${ic('edit', 20)}</button><button class="hbtn" data-a="panelSalir" aria-label="Salir">${ic('logout', 20)}</button>` : ''}</div></div>`;
+}
+function panelLogin() {
+  P.tok = ''; LS.del('panelTok'); panelCab('Panel Molina');
+  $('#main').innerHTML = `<div class="panel" style="max-width:420px;margin:30px auto"><h3 style="margin-bottom:6px">Súper administrador</h3><p class="sm mut" style="margin-bottom:12px">Administra todos los negocios de Gestión de Negocio VM: licencias, pruebas, pagos, seguimiento y soporte.</p>
+    <form id="f-panel"><label class="fld"><span>Clave del panel</span><input id="pn-clave" type="password" autocomplete="current-password" required></label><button class="btn pri big" type="submit">Entrar</button><div class="lg-err" id="pn-err"></div></form>
+    <p class="credit" style="margin-top:16px">La clave se define en el Apps Script: Propiedades del script → PANEL_CLAVE</p></div>`;
+  $('#f-panel').addEventListener('submit', async e => { e.preventDefault(); try { const r = await api('panelLogin', { clave: $('#pn-clave').value }); P.tok = r.token; LS.set('panelTok', r.token); P.pl = r.plantillas || {}; await panelResumen(); } catch (x) { $('#pn-err').textContent = x.message; } });
+}
+ACC.panelSalir = async () => { try { await api('panelSalir', {}, true); } catch (e) {} panelLogin(); };
+ACC.panelInicio = () => panelResumen();
+const fichaLi = n => `<div class="li" data-a="panelVer" data-id="${n.id}"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}${n.plus ? ' <span class="plus-b" style="font-size:9px;padding:2px 6px">PLUS</span>' : ''}</b><small>${esc(n.giro)} · ${esc(n.dueno)} · ${n.usuarios} usuario${n.usuarios > 1 ? 's' : ''} · entró ${cuandoP(n.ultimaConexion)}</small>${n.estado === 'prueba' ? `<small style="color:var(--warn)">Día ${n.dia} · ${n.diasRestantes === 1 ? 'vence mañana' : 'vence en ' + n.diasRestantes + ' días'}</small>` : ''}</div><div class="am"><span class="badge ${EST_L[n.estado][0]}">${EST_L[n.estado][1]}</span></div></div>`;
+function cardContactar(n) {
+  const t = CONTACTAR_T[n.contactar];
+  return `<div class="ord ${n.contactar === 'dia3' || n.contactar === 'vence' ? 'new' : ''}"><div class="ord-h"><span class="oav ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</span><div class="tx"><b>${esc(n.negocio)}</b><small>${t[2]} · ${esc(n.dueno)}${n.sinEntrar >= 2 ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><span class="badge ${t[1]}">${t[0]}</span></div>
+    <div class="msg-prev">${esc((P.pl[n.contactar] || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio))}</div>
+    <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waPlantilla(n, n.contactar)}" target="_blank" rel="noopener" data-a="panelWa" data-id="${n.id}" data-t="${n.contactar}">${ic('wa', 16)} WhatsApp</a>${n.contactar === 'vence' || n.contactar === 'vencida' ? `<button class="btn sm" data-a="panelAccion" data-id="${n.id}" data-x="extender">+7 días</button>` : ''}<button class="btn sm pri" style="margin-left:auto" data-a="panelContactado" data-id="${n.id}" data-t="${n.contactar}">Marcar contactado ✓</button></div></div>`;
+}
+async function panelResumen() {
+  panelCab('Panel Molina');
+  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
+  const d = await api('panelResumen', {}); P.d = d; P.pl = d.plantillas || P.pl; panelCab('Panel Molina');
+  const k = d.kpis, f = P.f;
+  $('#main').innerHTML = `<div class="kpis k4"><div class="kpi"><small>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></div><div class="kpi" style="--k:var(--warn)"><small>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b></div><div class="kpi" style="--k:#00b56e"><small>Ingresos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'}</i></div></div>
+    ${d.soporteSin ? `<div class="aviso info">${ic('chat', 20)}<div><b>${d.soporteSin} conversación${d.soporteSin > 1 ? 'es' : ''} de soporte sin responder</b>${d.erroresAbiertos ? `<small>${d.erroresAbiertos} error${d.erroresAbiertos > 1 ? 'es' : ''} abierto${d.erroresAbiertos > 1 ? 's' : ''}</small>` : ''}</div><button class="btn sm pri" data-a="panelSoporteLista">Ver</button></div>` : ''}
+    <div class="sec-t"><h3>Para contactar hoy</h3><a>${d.contactar.length}</a></div>${d.contactar.map(cardContactar).join('') || '<div class="empty">Nadie pendiente hoy 🎉</div>'}
+    <div class="sec-t"><h3>Clientes</h3><a>${d.negocios.length} negocio${d.negocios.length === 1 ? '' : 's'}</a></div>
+    <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="pn-q" placeholder="Buscar negocio, dueño o WhatsApp…" value="${esc(f.q || '')}"></div>
+    <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['prueba', 'En prueba'], ['activa', 'Activos'], ['vencida', 'Vencidos'], ['bloqueada', 'Pausados'], ['sin', 'Sin entrar 7 días']].map(x => `<button class="chip ${(f.est || '') === x[0] ? 'on' : ''}" data-a="panelFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+    <div class="list" id="pn-list"></div>`;
+  const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'sin' ? n.sinEntrar >= 7 : n.estado === f.est)) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); $('#pn-list').innerHTML = l.map(fichaLi).join('') || '<div class="empty">Sin resultados</div>'; };
+  $('#pn-q').addEventListener('input', debounce(e => { f.q = e.target.value; pinta(); }, 150)); P.pinta = pinta; pinta();
+}
+ACC.panelFiltro = el => { P.f.est = el.dataset.k; panelResumen(); };
+ACC.panelWa = () => {}; // el enlace abre WhatsApp; se marca con «Marcar contactado»
+ACC.panelContactado = async el => { await api('panelContacto', { id: el.dataset.id, tipo: el.dataset.t, nota: 'Contactado por WhatsApp · ' + (CONTACTAR_T[el.dataset.t] || [''])[0] }); toast('Marcado como contactado', 'ok'); panelResumen(); };
+ACC.panelVer = el => panelFicha(el.dataset.id);
+ACC.panelAccion = async el => { const r = await panelEjecutar(el.dataset.id, el.dataset.x); if (r && !PILA.length) panelResumen(); };
+async function panelEjecutar(id, accion, extra) {
+  const n = (P.d && P.d.negocios.find(x => x.id === id)) || { negocio: '' };
+  const preg = { activar: '¿Activar la licencia de ' + n.negocio + '?', plus: '¿Activar Plus (tienda en línea) para ' + n.negocio + '?', quitarPlus: '¿Quitar Plus a ' + n.negocio + '?', extender: '¿Dar 7 días más de prueba a ' + n.negocio + '?', pausar: '¿Pausar el acceso de ' + n.negocio + '? No podrán entrar hasta reanudar.', reanudar: '¿Reanudar el acceso de ' + n.negocio + '?' }[accion];
+  let datos = { id, accion, dias: 7 };
+  if (accion === 'activar' || accion === 'plus') {
+    const r = await panelFormPago(accion === 'activar' ? 'Activar licencia' : 'Activar Plus', accion === 'activar' ? 'Licencia' : 'Plus'); if (!r) return null; Object.assign(datos, r);
+  } else if (!(await confirmar(preg, { si: 'Sí', peligro: accion === 'pausar' }))) return null;
+  const f = await api('panelAccion', datos); toast('Listo', 'ok'); return f;
+}
+function panelFormPago(titulo, concepto) {
+  return new Promise(ok => {
+    const h = hoja({ titulo, cls: 'chica', html: `<p class="sm mut" style="margin-bottom:10px">Si ya te pagó, anota el monto para que cuente en tus ingresos. Si no, deja el monto vacío.</p><div class="f2"><label class="fld"><span>Monto recibido</span><input id="pp-m" inputmode="decimal" placeholder="0.00"></label><label class="fld"><span>Forma de pago</span><select id="pp-f"><option>Efectivo</option><option>Transferencia</option><option>Tigo Money</option><option>Otro</option></select></label></div><label class="fld"><span>Concepto</span><input id="pp-c" value="${esc(concepto)}"></label>`, onClose: () => ok(null) });
+    h.botones([{ t: '✓ ' + titulo, cls: 'pri', fn: () => { const r = { monto: num($('#pp-m', h.el).value), metodo: $('#pp-f', h.el).value, concepto: $('#pp-c', h.el).value.trim() }; h.onClose = null; h.cerrar(); ok(r); } }]);
+  });
+}
+async function panelFicha(id) {
+  const h = hoja({ titulo: 'Cargando…', ancho: 1, html: '<div class="empty">Cargando…</div>', onClose: () => { if (S.enPanel) panelResumen(); } });
+  let n;
+  const pinta = async () => {
+    n = await api('panelNegocio', { id }); $('.sheet-h h3', h.el).textContent = n.negocio;
+    const u = n.uso, e = EST_L[n.estado];
+    h.b.innerHTML = `<div class="cli-h"><div class="av ${colorDe(n.negocio)} lg">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.dueno)} · ${esc(fmtWA(n.whatsapp))}</b><small>${esc(n.giro)} · registrado el ${esc(fFechaC(String(n.registro).slice(0, 10)))} · ${n.usuarios} usuario${n.usuarios > 1 ? 's' : ''}</small></div></div>
+      <div class="kpis"><div class="kpi" style="--k:${n.estado === 'activa' ? '#00b56e' : n.estado === 'prueba' ? 'var(--warn)' : 'var(--bad)'}"><small>Estado</small><b>${e[1]}</b><i>${n.estado === 'prueba' ? `día ${n.dia} · vence ${esc(fFechaC(n.vencePrueba))}` : n.estado === 'vencida' ? 'venció el ' + esc(fFechaC(n.vencePrueba)) : n.plus ? 'con Plus' : 'sin Plus'}</i></div><div class="kpi"><small>Última conexión</small><b>${n.sinEntrar === 0 ? 'Hoy' : n.sinEntrar === 1 ? 'Ayer' : 'Hace ' + n.sinEntrar + ' días'}</b><i>${esc(String(n.ultimaConexion).slice(11))}</i></div>
+      ${u ? `<div class="kpi"><small>Uso en 30 días</small><b>${u.ventas30} venta${u.ventas30 === 1 ? '' : 's'}</b><i>${u.productos} productos · ${u.clientes} clientes · ${u.pedidos} pedidos</i></div>` : `<div class="kpi"><small>Uso</small><b>—</b><i>${esc(n.usoError || 'sin datos')}</i></div>`}<div class="kpi"><small>Plus · tienda</small><b>${n.plus ? 'Activo' : n.estado === 'prueba' ? 'Incluido' : 'No'}</b><i>${u && u.tienda ? 'tienda abierta' : 'tienda apagada'}</i></div></div>
+      <div class="acciones">${n.estado === 'bloqueada' ? `<button class="btn pri" data-x="reanudar">▶ Reanudar acceso</button>` : n.estado === 'activa' ? '' : `<button class="btn pri" data-x="activar">✓ Activar licencia</button>`}${n.plus ? `<button class="btn ghost" data-x="quitarPlus">Quitar Plus</button>` : `<button class="btn acc" data-x="plus">✦ Activar Plus</button>`}${n.estado === 'activa' ? '' : `<button class="btn" data-x="extender">+7 días de prueba</button>`}${n.estado === 'bloqueada' ? '' : `<button class="btn ghost" data-x="pausar">⏸ Pausar</button>`}</div>
+      <div class="sec-t"><h3>Escribirle por WhatsApp</h3></div>
+      <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['bienvenida', 'Bienvenida'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<a class="btn sm" href="${esc(location.href.split('?')[0] + '?tienda=' + encodeURIComponent(n.id))}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
+      <div class="sec-t"><h3>Pagos</h3><a data-x="pago">+ Anotar pago</a></div>
+      <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small></div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
+      ${n.soporte.length ? `<div class="sec-t"><h3>Soporte</h3></div><div class="list">${n.soporte.slice(0, 5).map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av t-pri">${ic('chat', 18)}</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small>${esc(c.ultimoTexto)}</small></div>${c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : ''}</div>`).join('')}</div>` : ''}
+      <div class="sec-t"><h3>Historial</h3></div>
+      <div class="list">${n.seguimiento.map(x => `<div class="li"><div class="av ${x.tipo === 'accion' ? 't-pri' : 't-verde'}">${ic(x.tipo === 'accion' ? 'check' : 'wa', 18)}</div><div class="tx"><b>${esc(x.nota)}</b><small>${esc(fFechaC(String(x.fecha).slice(0, 10)))} ${esc(String(x.fecha).slice(11, 16))}</small></div></div>`).join('')}<div class="li"><div class="av t-cian">${ic('plus', 18)}</div><div class="tx"><b>Se registró</b><small>${esc(fFechaC(String(n.registro).slice(0, 10)))} · prueba de ${DIAS_PRUEBA_REG} días</small></div></div></div>
+      <label class="fld" style="margin-top:12px"><span>Notas internas</span><textarea id="pn-notas" rows="2" maxlength="500">${esc(n.notas)}</textarea></label><button class="btn sm" data-x="nota">Guardar notas</button>`;
+    h.b.onclick = async e => {
+      const b = e.target.closest('[data-x]'); if (!b) return; const x = b.dataset.x;
+      try {
+        if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
+        else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }
+        else { if (!(await panelEjecutar(id, x))) return; }
+        await pinta();
+      } catch (er) { err(er); }
+    };
+    h.b.addEventListener('click', e => { const a = e.target.closest('a[data-t]'); if (a) api('panelContacto', { id, tipo: a.dataset.t, nota: 'WhatsApp · ' + a.textContent.trim() }, true).then(() => setTimeout(pinta, 1500)).catch(() => {}); });
+  };
+  try { await pinta(); } catch (e) { h.cerrar(); throw e; }
+}
+ACC.panelSoporteLista = async () => {
+  panelCab('Soporte', true);
+  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
+  const l = await api('panelSoporte', {}); P.sop = l; const f = P.f;
+  const sin = l.filter(c => c.sinLeer), err_ = l.filter(c => c.motivo === 'error' && c.estado !== 'resuelto');
+  const vis = l.filter(c => !f.mot || (f.mot === 'sin' ? c.sinLeer : c.motivo === f.mot));
+  $('#main').innerHTML = `<div class="ch-sum"><div><b>${sin.length}</b><small>sin responder</small></div><div><b>${err_.length}</b><small>error${err_.length === 1 ? '' : 'es'} abierto${err_.length === 1 ? '' : 's'}</small></div><div><b>${l.length}</b><small>conversaciones</small></div></div>
+    <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['sin', 'Sin responder']].concat(MOTIVOS_UI.map(m => [m[0], m[1] + ' ' + m[2].split(' ')[0]])).map(x => `<button class="chip ${(f.mot || '') === x[0] ? 'on' : ''}" data-a="panelSopFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+    <div class="list">${vis.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av ${colorDe(c.negocio)}">${esc(iniciales(c.negocio))}</div><div class="tx"><div class="row sp"><b>${esc(c.negocio)}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small><span class="badge ${c.motivo === 'error' ? 'b-bad' : c.motivo === 'prueba' ? 'b-warn' : c.motivo === 'idea' ? 'b-ok' : 'b-info'}">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^\\S+ /, '')) : ''}</span> ${c.deCliente ? '' : 'Tú: '}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">✓</span>' : ''}</div>`).join('') || '<div class="empty">Sin conversaciones</div>'}</div>`;
+};
+ACC.panelSopFiltro = el => { P.f.mot = el.dataset.k; ACC.panelSoporteLista(); };
+ACC.panelSoporteVer = el => panelChat(el.dataset.id);
+async function panelChat(id) {
+  let d = null, timer = null, enviando = false;
+  const RAP = ['Lo reviso y te aviso por aquí', 'Te mando un video corto de cómo se hace', '¿Me pasás una captura?', 'Ya quedó corregido, actualiza la app', '¿Te activo la licencia?'];
+  const h = hoja({ titulo: '', cls: 'chat-h2', html: '<div class="empty">Cargando…</div>', onClose: () => { clearInterval(timer); if (S.enPanel && !PILA.length) { if ($('#pn-list')) panelResumen(); else ACC.panelSoporteLista(); } } });
+  const pintaMsgs = () => { const box = $('#pc-m', h.el); if (!box) return; let dia = '';
+    box.innerHTML = d.mensajes.map(x => { const f = String(x.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
+      return sep + `<div class="msg ${x.de === 'adm' ? 'yo' : 'el'}"><div class="bt">${x.foto ? `<a href="${esc(x.foto)}" target="_blank"><img src="${esc(x.foto)}" alt="" style="max-width:100%;border-radius:12px;display:block;margin-bottom:6px"></a>` : ''}${esc(x.texto)}</div><small>${fHora(String(x.fecha).replace(' ', 'T'))}${x.quien && x.de === 'cli' ? ' · ' + esc(x.quien) : ''}</small></div>`; }).join('');
+    box.scrollTop = box.scrollHeight; };
+  const pinta = () => {
+    const c = d.chat, n = d.negocio;
+    h.b.innerHTML = `<div class="chat-h"><div class="av ${colorDe(c.negocio)}" style="background:linear-gradient(135deg,var(--t1),var(--t2));color:#fff;border:0">${esc(iniciales(c.negocio))}</div><div><b>${esc(c.dueno)} · ${esc(c.negocio)}</b><small>${n ? (n.estado === 'prueba' ? 'Día ' + n.dia + ' de prueba · ' : EST_L[n.estado][1] + ' · ') : ''}${esc(fmtWA(c.whatsapp))}${c.version ? ' · app ' + esc(c.version) : ''}</small></div><a class="btn icon wa" href="${waLink(c.whatsapp, 'Hola ' + String(c.dueno).split(' ')[0] + ', te escribo por tu mensaje en Gestión de Negocio VM:')}" target="_blank" rel="noopener" style="margin-left:auto" aria-label="WhatsApp">${ic('wa', 18)}</a></div>
+      <div class="chips" style="margin-bottom:8px"><span class="chip">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</span>${c.estado === 'resuelto' ? '<span class="chip on">Resuelto ✓</span>' : ''}</div>
+      <div class="msgs" id="pc-m"></div>
+      <div class="rapidas" id="pc-r">${RAP.map(t => `<button type="button" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>
+      <div class="chat-in"><textarea id="pc-in" rows="1" placeholder="Escribe tu respuesta…" maxlength="800"></textarea><button id="pc-send" aria-label="Enviar">${ic('send', 20)}</button></div>
+      <div class="chat-acts"><button class="btn sm" data-x="${c.estado === 'resuelto' ? 'abierto' : 'resuelto'}">${c.estado === 'resuelto' ? 'Reabrir' : '✓ Marcar resuelto'}</button>${n ? `<button class="btn sm" data-x="ficha">Ver negocio</button>` : ''}</div>`;
+    pintaMsgs();
+    const inp = $('#pc-in', h.el);
+    inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(120, inp.scrollHeight) + 'px'; });
+    inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 700) { e.preventDefault(); enviar().catch(err); } });
+    $('#pc-r', h.el).addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; inp.value = (inp.value ? inp.value + ' ' : '') + b.dataset.t; inp.focus(); inp.dispatchEvent(new Event('input')); });
+    $('#pc-send', h.el).onclick = () => enviar().catch(err);
+    h.b.querySelectorAll('[data-x]').forEach(b => b.onclick = async () => { try { if (b.dataset.x === 'ficha') { panelFicha(c.negocioId); return; } d = await api('panelSoporteEstado', { id, estado: b.dataset.x }); toast(b.dataset.x === 'resuelto' ? 'Marcado como resuelto' : 'Reabierto', 'ok'); pinta(); } catch (e) { err(e); } });
+  };
+  const enviar = async () => { if (enviando) return; const inp = $('#pc-in', h.el), texto = inp.value.trim(); if (!texto) throw new Error('Escribe tu respuesta'); enviando = true; $('#pc-send', h.el).disabled = true;
+    try { d = await api('panelSoporteResponder', { id, texto }, true); inp.value = ''; inp.style.height = ''; pintaMsgs(); } finally { enviando = false; $('#pc-send', h.el).disabled = false; } };
+  try { d = await api('panelSoporteVer', { id }); pinta(); } catch (e) { h.cerrar(); throw e; }
+  timer = setInterval(async () => { if (document.hidden || enviando) return; try { const n = await api('panelSoporteVer', { id }, true); if (n.mensajes.length !== d.mensajes.length) { d = n; pintaMsgs(); } } catch (e) {} }, 20000);
+}
+ACC.panelPlantillas = async () => {
+  const pl = await api('panelPlantillas', {}); P.pl = pl;
+  const N = { dia3: 'Día 3 · ¿qué tal la prueba?', vence: 'Vence mañana', inactivo: 'Sin entrar hace días', vencida: 'Prueba vencida', activada: 'Licencia activada', bienvenida: 'Bienvenida' };
+  const h = hoja({ titulo: 'Mensajes de WhatsApp', ancho: 1, html: `<p class="sm mut" style="margin-bottom:10px">Usa <b>{dueno}</b> y <b>{negocio}</b> y se rellenan solos.</p>${Object.keys(N).map(k => `<label class="fld"><span>${N[k]}</span><textarea data-k="${k}" rows="3" maxlength="600">${esc(pl[k] || '')}</textarea></label>`).join('')}` });
+  h.botones([{ t: 'Guardar', cls: 'pri', fn: async () => { const p = {}; $$('[data-k]', h.el).forEach(t => { p[t.dataset.k] = t.value; }); P.pl = await api('panelPlantillasGuardar', { plantillas: p }); h.cerrar(); toast('Mensajes guardados', 'ok'); if ($('#pn-list')) panelResumen(); } }]);
+};
 
 /* ===================== ARRANQUE ===================== */
 document.addEventListener('DOMContentLoaded', async () => {
@@ -4691,6 +5159,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Enlace de demostración: …/?demo abre el negocio de ejemplo
   if (q.has('demo')) { LS.set('modo', 'demo'); if (!LS.get('cuenta', '')) S.lmodo = 'demo'; history.replaceState(null, '', location.pathname); if (!DEMO.on) { location.reload(); return; } }
   if (q.has('tienda')) { S.enTienda = true; return iniciarTienda(q.get('tienda')); }
+  if (q.has('panel')) { if (DEMO.on) demoBackend(); return iniciarPanel(); }
   if ('serviceWorker' in navigator && location.protocol === 'https:') { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }
   if (S.token) {
     if (!LS.json(cacheKey(), null)) mostrarSplash();
@@ -4754,7 +5223,7 @@ R.inicio = () => {
   }
   const aviso = d.aviso && rol === 'admin' ? `<div class="aviso">${ic('sparkle', 20)}<div><b>${esc(fMes(d.aviso.mes))} dejó ${money(d.aviso.pendiente)} de ganancia sin destino.</b><small>Decide si va a ahorro, reinversión o a pagar algo.</small></div><button class="btn sm pri" data-a="ir" data-v="reportes" data-p='{"tab":"ganancias"}'>Decidir</button></div>` : '';
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${vacio}${aviso}${listas}</div>`;
 };
 ACC.verVenta = async el => {
   const f = el.dataset.f.slice(0, 10);
@@ -6858,6 +7327,10 @@ ACC.lbVer = async el => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.4'; // versión mínima del Code.gs que necesita esta app
 const NOVEDADES = [
+  { v: '1.7', fecha: '2026-10-21', items: [
+    { i: 'chat', t: 'Contactar al administrador desde la app', d: 'En Ayuda › Contactar al administrador eliges el motivo (error, duda, prueba y activación, sugerencia…), cuentas qué pasó, adjuntas una captura y te respondemos ahí mismo. Te avisamos con un punto en el botón de Ayuda.' },
+    { i: 'sparkle', t: 'Te preguntamos qué tal la prueba', d: 'Al tercer día de prueba aparece en Inicio una tarjeta para contarnos qué te gustó o qué te falta; el día antes de vencer, una para activar tu licencia.' },
+  ] },
   { v: '1.6', fecha: '2026-10-19', items: [
     { i: 'store', t: 'Catálogo según tu tipo de negocio', d: 'En cada producto puedes poner las opciones que elige el cliente en tu tienda: talla y color en ropa, capacidad en tecnología, sabor en panadería, carne en comida y más. El pedido te llega con lo que eligió.', ir: 'productos' },
     { i: 'image', t: 'Ilustraciones en vez de emojis', d: 'Los productos sin foto muestran un dibujo limpio según su categoría, en Vender y en tu tienda. En Productos verás cuántos no tienen foto: con fotos reales todo se ve mejor.', ir: 'productos' },
@@ -6958,10 +7431,12 @@ function abrirAyuda(foco) {
   const h = hoja({ titulo: 'Ayuda', html: `<div class="srch ay-q">${ic('search', 18)}<input id="ay-q" placeholder="¿Qué quieres hacer? Ej. anular una venta"></div>
     <div id="ay-res"></div>
     ${AYUDA[vista] && puedeVer(vista) ? `<div class="ay-aqui" id="ay-aqui"><div class="ay-h"><i class="${colorDe(vista)}">${ic(VISTAS[vista].i, 20)}</i><div><small>En esta pantalla</small><b>${esc(VISTAS[vista].t)}</b></div></div>${tema(vista)}</div>` : ''}
-    <div class="ay-acc"><button class="btn" data-a="verNovedades">${ic('sparkle', 18)} Novedades de la versión ${APP_VER}</button><a class="btn wa" href="${waLink(CONTACTO_WA, msj)}" target="_blank" rel="noopener">${ic('wa', 18)} Escribir a soporte</a></div>
+    ${S.multi ? `<div class="link-card" style="margin-bottom:12px"><div class="li-ic">${ic('chat', 22)}</div><div class="tx"><b>Contactar al administrador</b><small>Errores, dudas, prueba y activación o sugerencias. Te respondemos en la app.</small></div><button class="btn sm pri" data-a="soporteNuevo">Escribir</button></div><div id="ay-sop"></div>` : ''}
+    <div class="ay-acc"><button class="btn" data-a="verNovedades">${ic('sparkle', 18)} Novedades de la versión ${APP_VER}</button><a class="btn wa" href="${waLink(CONTACTO_WA, msj)}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a></div>
     <div class="sec-t" id="ay-ot"><h3>Todas las guías</h3></div>
     <div class="ay-lista" id="ay-lista">${temas.filter(k => k !== vista).map(k => `<details class="ay-d"><summary><i class="${colorDe(k)}">${ic(VISTAS[k].i, 18)}</i>${esc(VISTAS[k].t)}</summary>${tema(k)}</details>`).join('')}</div>
     <p class="credit" style="margin-top:18px">Gestión de Negocio VM · versión ${APP_VER}${S.version ? ' · servidor ' + esc(S.version) : ''}<br>Software creado por José Vicdonio Molina</p>` });
+  if ($('#ay-sop', h.el)) listaSoporte($('#ay-sop', h.el));
   $('#ay-q', h.el).addEventListener('input', e => {
     const q = norm(e.target.value.trim()), res = $('#ay-res', h.el);
     $('#ay-aqui', h.el) && ($('#ay-aqui', h.el).hidden = !!q); $('#ay-lista', h.el).hidden = !!q; $('#ay-ot', h.el).hidden = !!q;

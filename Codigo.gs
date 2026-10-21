@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.6 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.7 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -19,8 +19,9 @@
 const MULTI_NEGOCIO = true;
 const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite en modo un solo negocio)
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
+const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.6';
+const VERSION = '1.7';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -29,9 +30,17 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias: ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus'],
-  Accesos:   ['whatsapp','negocioId','usuarioId','activo']
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas'],
+  Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
+  // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
+  Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
+  SoporteMsg:  ['id','chatId','de','texto','foto','quien','fecha'],
+  Seguimiento: ['id','negocioId','tipo','fecha','nota'],
+  PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota']
 };
+const PANEL_SEG = 21600;
+// Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
+const MOTIVOS = { error: 'Error del programa', duda: 'No sé cómo hacer algo', prueba: 'Prueba y activación', idea: 'Sugerencia', app: 'App Android / instalación', otro: 'Otro' };
 let NEG = null; // negocio de la solicitud actual (modo multi)
 
 const TZ = 'America/Tegucigalpa';
@@ -163,6 +172,9 @@ function route_(req) {
   if (a === 'misPedidos') return misPedidos_(d);
   if (a === 'chatEnviar') { chatLimites_(d); return lock_(() => chatEnviar_(d)); }
   if (a === 'chatVer') return chatVer_(d);
+  // Panel Molina (súper admin)
+  if (a === 'panelLogin') return panelLogin_(d);
+  if (a.indexOf('panel') === 0) { panelAuth_(req); return lock_(() => rutaPanel_(a, d)); }
   const u = auth_(req.token);
   const res = rutaUsuario_(a, u, d, req);
   return u.rol === 'cajero' ? sinCostos_(res) : res;
@@ -213,6 +225,10 @@ function rutaUsuario_(a, u, d, req) {
     case 'chat':            return lock_(() => chat_(u, d));
     case 'chatResponder':   return lock_(() => chatResponder_(u, d));
     case 'chatBorrar':      return lock_(() => chatBorrar_(u, d));
+    case 'soporteCrear':    return lock_(() => soporteCrear_(u, d));
+    case 'soporteLista':    return soporteLista_(u);
+    case 'soporteVer':      return soporteVer_(u, d);
+    case 'soporteEnviar':   return lock_(() => soporteEnviar_(u, d));
     case 'caja':            return caja_(u, d);
     case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
     case 'reporte':         return reporte_(u, d);
@@ -679,13 +695,21 @@ function master_() { return SpreadsheetApp.getActiveSpreadsheet(); }
 function masterSheet_(name) {
   const m = master_();
   let s = m.getSheetByName(name);
+  if (s && !MEMO['_hm_' + name]) {
+    // Después de actualizar el sistema: agrega al final las columnas nuevas del esquema
+    MEMO['_hm_' + name] = 1;
+    try {
+      const h = SCHEMA_M[name], nc = s.getLastColumn(), cur = nc ? s.getRange(1, 1, 1, nc).getValues()[0].filter(x => x !== '') : [];
+      if (cur.length && cur.length < h.length && cur.every((k, i) => k === h[i])) s.getRange(1, cur.length + 1, 1, h.length - cur.length).setValues([h.slice(cur.length)]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
+    } catch (e) {}
+  }
   if (!s) {
     s = m.insertSheet(name);
     const h = SCHEMA_M[name];
     s.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
     s.setFrozenRows(1);
-    h.forEach((k, i) => { if (['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion'].indexOf(k) >= 0) s.getRange(2, i + 1, s.getMaxRows() - 1, 1).setNumberFormat('@'); });
-    if (name === 'Accesos') { try { s.hideSheet(); } catch (e) {} }
+    h.forEach((k, i) => { if (M_TEXTO.indexOf(k) >= 0) s.getRange(2, i + 1, s.getMaxRows() - 1, 1).setNumberFormat('@'); });
+    if (['Accesos', 'SoporteMsg', 'Seguimiento'].indexOf(name) >= 0) { try { s.hideSheet(); } catch (e) {} }
     if (name === 'Licencias') {
       try {
         const regla = SpreadsheetApp.newDataValidation().requireValueInList(['Prueba', 'Activa', 'Vencida', 'Bloqueada'], true).build();
@@ -714,7 +738,10 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion'];
+const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','chatId','fecha','ultimo','creado','version'];
+function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
+// Día de prueba en que va el negocio (1 = el día que se registró)
+function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
 function mCell_(v, k) {
   if (v === undefined || v === null) return '';
   if (typeof v === 'string' && /^[=+\-@]/.test(v) && M_TEXTO.indexOf(k) < 0) return "'" + v;
@@ -723,7 +750,7 @@ function mCell_(v, k) {
 // Busca la fila del registro en la hoja maestra (la fila guardada puede haber cambiado si alguien borró filas)
 function mFila_(name, rec) {
   if (!rec) return 0;
-  const s = masterSheet_(name), h = SCHEMA_M[name], claves = name === 'Licencias' ? ['id'] : ['negocioId', 'usuarioId'];
+  const s = masterSheet_(name), h = SCHEMA_M[name], claves = name === 'Accesos' ? ['negocioId', 'usuarioId'] : ['id'];
   const coincide = r => claves.every(k => String(r[h.indexOf(k)]) === String(rec[k]));
   const f = Number(rec._fila);
   if (f >= 2 && f <= s.getLastRow() && coincide(s.getRange(f, 1, 1, h.length).getValues()[0])) return f;
@@ -772,7 +799,7 @@ function licNegocio_(l) {
   const vence = String(l.vencePrueba || '').slice(0, 10);
   const fin = /^\d{4}-\d{2}-\d{2}$/.test(vence) ? new Date(vence + 'T00:00:00').getTime() : 0;
   const resta = Math.ceil((fin - Date.now()) / 86400000);
-  const r = { estado: resta > 0 ? 'prueba' : 'vencida', diasRestantes: Math.max(0, resta), vence: vence, contacto: CONTACTO_WA };
+  const r = { estado: resta > 0 ? 'prueba' : 'vencida', diasRestantes: Math.max(0, resta), vence: vence, dia: diaPrueba_(l), contacto: CONTACTO_WA };
   const debe = r.estado === 'prueba' ? 'Prueba' : 'Vencida';
   if (l.estado !== debe && l.id) {
     try { mSet_('Licencias', l, { estado: debe }); CacheService.getScriptCache().remove('L_' + l.id); } catch (e) {}
@@ -843,6 +870,215 @@ function registrar_(d) {
     cs.put('REG_H', String(nReg + 1), 3600);
     return { token: nuevoToken_(id + '|' + adm.id + '|' + String(adm.salt).slice(0, 8)), usuario: publico_(adm) };
   });
+}
+
+/* ===================== PANEL MOLINA (súper admin) Y SOPORTE ===================== */
+/* El panel se abre en …/?panel con la clave guardada en Propiedades del script → PANEL_CLAVE.
+ * Desde ahí se administran todos los negocios: licencias, Plus, prueba, pagos, seguimiento y el chat de soporte. */
+function panelClave_() { return String(PropertiesService.getScriptProperties().getProperty('PANEL_CLAVE') || ''); }
+function panelLogin_(d) {
+  if (!MULTI_NEGOCIO) throw new Error('El panel solo funciona en modo multi-negocio');
+  const c = CacheService.getScriptCache(), fallos = Number(c.get('FPANEL') || 0);
+  if (fallos >= 5) throw new Error('Demasiados intentos. Espera 10 minutos.');
+  const clave = panelClave_();
+  if (!clave) throw new Error('Falta la clave del panel: en el Apps Script, Configuración del proyecto → Propiedades del script, crea PANEL_CLAVE.');
+  if (String(d.clave || '') !== clave) { c.put('FPANEL', String(fallos + 1), 600); throw new Error('Clave incorrecta'); }
+  c.remove('FPANEL');
+  const tok = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  c.put('P_' + tok, '1', PANEL_SEG);
+  return { token: tok, plantillas: plantillas_() };
+}
+function panelAuth_(req) {
+  const t = String(req.panel || ''), c = CacheService.getScriptCache();
+  if (!t || !c.get('P_' + t)) throw new Error('PANEL');
+  c.put('P_' + t, '1', PANEL_SEG);
+}
+function rutaPanel_(a, d) {
+  switch (a) {
+    case 'panelResumen':           return panelResumen_();
+    case 'panelNegocio':           return panelNegocio_(d);
+    case 'panelAccion':            return panelAccion_(d);
+    case 'panelContacto':          return panelContacto_(d);
+    case 'panelPago':              return panelPago_(d);
+    case 'panelNota':              return panelNota_(d);
+    case 'panelPlantillas':        return plantillas_();
+    case 'panelPlantillasGuardar': return plantillasGuardar_(d);
+    case 'panelSoporte':           return panelSoporte_();
+    case 'panelSoporteVer':        return panelSoporteVer_(d);
+    case 'panelSoporteResponder':  return panelSoporteResponder_(d);
+    case 'panelSoporteEstado':     return panelSoporteEstado_(d);
+    case 'panelSalir':             return true;
+  }
+  throw new Error('Acción no válida: ' + a);
+}
+const PLANTILLAS_DEF = {
+  dia3: 'Hola {dueno}, ¿qué tal te ha parecido Gestión de Negocio VM en {negocio}? Si algo no te cuadra, me decís y lo vemos 🙂',
+  vence: 'Hola {dueno}, mañana termina tu prueba gratis de Gestión de Negocio VM. Si querés seguir usándolo en {negocio}, activamos tu licencia hoy mismo: es pago único, sin mensualidades.',
+  inactivo: 'Hola {dueno}, vi que no has vuelto a entrar a Gestión de Negocio VM. ¿Te trabó algo? Te ayudo por acá.',
+  vencida: 'Hola {dueno}, tu prueba de Gestión de Negocio VM ya terminó, pero tus datos de {negocio} siguen guardados. Cuando querás, activamos tu licencia y seguís donde lo dejaste.',
+  activada: '¡Listo {dueno}! Tu licencia de Gestión de Negocio VM para {negocio} ya está activa. Gracias por confiar 🙌 Cualquier duda, me escribís.',
+  bienvenida: '¡Bienvenido a Gestión de Negocio VM, {dueno}! Tenés 7 días para probarlo todo en {negocio}, incluida la tienda en línea. Si necesitás ayuda, escribime por aquí o desde Ayuda en la app.'
+};
+function plantillas_() {
+  let p = {}; try { p = JSON.parse(PropertiesService.getScriptProperties().getProperty('PANEL_PLANTILLAS') || '{}'); } catch (e) { p = {}; }
+  return Object.assign({}, PLANTILLAS_DEF, p);
+}
+function plantillasGuardar_(d) {
+  const p = {}; Object.keys(PLANTILLAS_DEF).forEach(k => { if (d.plantillas && d.plantillas[k] !== undefined) p[k] = txt_(d.plantillas[k], 600); });
+  PropertiesService.getScriptProperties().setProperty('PANEL_PLANTILLAS', JSON.stringify(p));
+  return plantillas_();
+}
+function diasDesde_(f) { const ms = msDeLocal_(String(f || '').replace(' ', 'T')); return ms ? (Date.now() - ms) / 86400000 : 9999; }
+// Ficha resumida de un negocio para el panel
+function panelFicha_(l, segs) {
+  const lic = licNegocio_(l), mis = segs.filter(x => x.negocioId === l.id);
+  const hecho = tipo => mis.filter(x => x.tipo === tipo).map(x => x.fecha).sort().pop() || '';
+  const est = lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
+  const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
+    usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, notas: l.notas || '', contactar: '' };
+  // ¿Toca contactarlo hoy?
+  if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
+  else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
+  else if (est === 'vencida' && diasDesde_(hecho('vencida')) > 14) o.contactar = 'vencida';
+  else if ((est === 'prueba' || est === 'activa') && sin >= 5 && diasDesde_(hecho('inactivo')) > 7) o.contactar = 'inactivo';
+  return o;
+}
+function panelResumen_() {
+  const segs = mRows_('Seguimiento'), lics = mRows_('Licencias').map(l => panelFicha_(l, segs));
+  lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
+  const mes = hoy_().slice(0, 7), pagos = mRows_('PagosLic').filter(p => String(p.fecha).slice(0, 7) === mes);
+  const sop = mRows_('Soporte');
+  const n = k => lics.filter(x => x.estado === k).length;
+  const orden = { dia3: 0, vence: 1, inactivo: 2, vencida: 3 };
+  return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
+      ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length },
+    contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
+    negocios: lics, soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
+}
+function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
+function panelNegocio_(d) {
+  const l = licDe_(d.id), f = panelFicha_(l, mRows_('Seguimiento'));
+  f.seguimiento = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+  f.pagos = mRows_('PagosLic').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+  f.soporte = mRows_('Soporte').filter(x => x.negocioId === l.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm'));
+  // Uso (solo conteos, nunca sus datos): se lee la hoja del negocio
+  f.uso = null;
+  try {
+    Object.keys(MEMO).forEach(k => { if (k.indexOf('_m_') !== 0 && k.indexOf('_hm_') !== 0) delete MEMO[k]; });
+    setNegocio_(l);
+    const lim = Date.now() - 30 * 86400000, v30 = rowsDesde_('Ventas', lim).filter(v => !v.anulada && msDeLocal_(v.fecha) >= lim);
+    f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
+      pedidos: rows_('Pedidos').length, tienda: config_().tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+  } catch (e) { f.usoError = String(e.message || e); }
+  NEG = null; delete MEMO._ss;
+  return f;
+}
+function panelAccion_(d) {
+  const l = licDe_(d.id), f = ahora_().replace('T', ' ');
+  const upd = {}; let nota = '';
+  const pago = (concepto) => { if (Number(d.monto) > 0) mAppend_('PagosLic', { id: mId_('G'), negocioId: l.id, fecha: f, monto: r2_(Number(d.monto)), concepto: txt_(d.concepto, 60) || concepto, metodo: txt_(d.metodo, 20) || 'Efectivo', nota: '' }); };
+  switch (d.accion) {
+    case 'activar':    upd.estado = 'Activa'; nota = 'Licencia activada'; pago('Licencia'); break;
+    case 'plus':       upd.plus = 'Sí'; nota = 'Plus activado'; pago('Plus'); break;
+    case 'quitarPlus': upd.plus = ''; nota = 'Plus desactivado'; break;
+    case 'extender': { const dias = Math.max(1, Math.min(90, Number(d.dias) || 7)); const base = Math.max(Date.now(), msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T00:00') || 0);
+      upd.vencePrueba = Utilities.formatDate(new Date(base + dias * 86400000), TZ, 'yyyy-MM-dd'); upd.estado = 'Prueba'; nota = 'Prueba extendida ' + dias + ' días'; break; }
+    case 'pausar':     upd.estado = 'Bloqueada'; nota = 'Acceso pausado'; break;
+    case 'reanudar':   upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Activa'; nota = 'Acceso reanudado'; break;
+    default: throw new Error('Acción no válida');
+  }
+  mSet_('Licencias', l, upd);
+  CacheService.getScriptCache().remove('L_' + l.id);
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: f, nota: nota + (d.nota ? ' · ' + txt_(d.nota, 120) : '') });
+  return panelNegocio_({ id: l.id });
+}
+function panelContacto_(d) {
+  const l = licDe_(d.id), tipo = String(d.tipo || 'manual').replace(/[^a-z0-9]/gi, '').slice(0, 20);
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: tipo, fecha: ahora_().replace('T', ' '), nota: txt_(d.nota, 160) || 'Contactado por WhatsApp' });
+  return panelNegocio_({ id: l.id });
+}
+function panelPago_(d) {
+  const l = licDe_(d.id), monto = r2_(Number(d.monto) || 0);
+  if (!(monto > 0)) throw new Error('Escribe el monto');
+  mAppend_('PagosLic', { id: mId_('G'), negocioId: l.id, fecha: ahora_().replace('T', ' '), monto: monto, concepto: txt_(d.concepto, 60) || 'Pago', metodo: txt_(d.metodo, 20) || 'Efectivo', nota: txt_(d.nota, 120) });
+  return panelNegocio_({ id: l.id });
+}
+function panelNota_(d) { const l = licDe_(d.id); mSet_('Licencias', l, { notas: txt_(d.notas, 500) }); return panelNegocio_({ id: l.id }); }
+
+/* ---- Soporte: chat del negocio con el administrador ---- */
+function sopPublico_(c, lado) {
+  return { id: c.id, negocioId: c.negocioId, negocio: c.negocio, dueno: c.dueno, whatsapp: c.whatsapp, motivo: c.motivo, motivoT: MOTIVOS[c.motivo] || c.motivo, modulo: c.modulo, estado: c.estado || 'abierto', version: c.version, diaPrueba: c.diaPrueba,
+    ultimo: c.ultimo, ultimoTexto: c.ultimoTexto, deCliente: String(c.deCliente) === 'true', sinLeer: Number(lado === 'adm' ? c.sinLeerAdm : c.sinLeerCli) || 0, creado: c.creado };
+}
+function sopMsgs_(id) { return mRows_('SoporteMsg').filter(m => m.chatId === id).sort((a, b) => a.fecha < b.fecha ? -1 : 1).map(m => ({ id: m.id, de: m.de, texto: m.texto, foto: m.foto || '', quien: m.quien, fecha: m.fecha })); }
+function fotoChat_(f) { f = String(f || ''); if (!f) return ''; if (f.indexOf('data:image/') !== 0 || f.length > 48000) throw new Error('La captura es muy grande. Prueba con una más pequeña.'); return f; }
+function soporteCrear_(u, d) {
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('El chat con el administrador solo funciona en la versión multi-negocio');
+  const motivo = own_(MOTIVOS, d.motivo) ? d.motivo : 'otro', texto = String(d.texto || '').trim().slice(0, 800);
+  if (texto.length < 3) throw new Error('Cuéntanos qué pasó');
+  if (mRows_('Soporte').filter(c => c.negocioId === NEG.id && c.estado !== 'resuelto').length >= 5) throw new Error('Ya tienes 5 conversaciones abiertas. Continúa en una de ellas.');
+  const f = ahora_().replace('T', ' '), lic = NEG.lic, id = mId_('T');
+  const c = { id: id, negocioId: NEG.id, negocio: lic.negocio, dueno: u.nombre || lic.dueno, whatsapp: lic.whatsapp, motivo: motivo, modulo: txt_(d.modulo, 40), estado: 'abierto', version: txt_(d.version, 12),
+    diaPrueba: licNegocio_(lic).estado === 'prueba' ? diaPrueba_(lic) : '', ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: true, sinLeerAdm: 1, sinLeerCli: 0, creado: f };
+  mAppend_('Soporte', c);
+  mAppend_('SoporteMsg', { id: mId_('M'), chatId: id, de: 'cli', texto: texto, foto: fotoChat_(d.foto), quien: u.nombre || '', fecha: f });
+  return { chat: sopPublico_(c, 'cli'), mensajes: sopMsgs_(id) };
+}
+function soporteLista_(u) {
+  if (!MULTI_NEGOCIO || !NEG) return [];
+  return mRows_('Soporte').filter(c => c.negocioId === NEG.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'cli'));
+}
+function sopDe_(id, negocioId) { const c = mRows_('Soporte').find(x => x.id === id && (!negocioId || x.negocioId === negocioId)); if (!c) throw new Error('Esta conversación ya no existe'); return c; }
+function soporteVer_(u, d) {
+  const c = sopDe_(d.id, NEG ? NEG.id : '');
+  if (Number(c.sinLeerCli) > 0) { mSet_('Soporte', c, { sinLeerCli: 0 }); c.sinLeerCli = 0; }
+  return { chat: sopPublico_(c, 'cli'), mensajes: sopMsgs_(c.id) };
+}
+function soporteEnviar_(u, d) {
+  const c = sopDe_(d.id, NEG ? NEG.id : ''), texto = String(d.texto || '').trim().slice(0, 800);
+  if (!texto && !d.foto) throw new Error('Escribe tu mensaje');
+  const f = ahora_().replace('T', ' ');
+  mAppend_('SoporteMsg', { id: mId_('M'), chatId: c.id, de: 'cli', texto: texto, foto: fotoChat_(d.foto), quien: u.nombre || '', fecha: f });
+  mSet_('Soporte', c, { ultimo: f, ultimoTexto: (texto || '📷 Captura').slice(0, 120), deCliente: true, sinLeerAdm: (Number(c.sinLeerAdm) || 0) + 1, sinLeerCli: 0, estado: 'abierto' });
+  return soporteVer_(u, { id: c.id });
+}
+function panelSoporte_() { return mRows_('Soporte').sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm')); }
+function panelSoporteVer_(d) {
+  const c = sopDe_(d.id);
+  if (Number(c.sinLeerAdm) > 0) { mSet_('Soporte', c, { sinLeerAdm: 0 }); c.sinLeerAdm = 0; }
+  const l = mRows_('Licencias').find(x => x.id === c.negocioId);
+  return { chat: sopPublico_(c, 'adm'), mensajes: sopMsgs_(c.id), negocio: l ? panelFicha_(l, mRows_('Seguimiento')) : null };
+}
+function panelSoporteResponder_(d) {
+  const c = sopDe_(d.id), texto = String(d.texto || '').trim().slice(0, 800);
+  if (!texto) throw new Error('Escribe tu respuesta');
+  const f = ahora_().replace('T', ' ');
+  mAppend_('SoporteMsg', { id: mId_('M'), chatId: c.id, de: 'adm', texto: texto, foto: '', quien: 'Soporte', fecha: f });
+  mSet_('Soporte', c, { ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: false, sinLeerAdm: 0, sinLeerCli: (Number(c.sinLeerCli) || 0) + 1 });
+  return panelSoporteVer_({ id: c.id });
+}
+function panelSoporteEstado_(d) { const c = sopDe_(d.id); mSet_('Soporte', c, { estado: d.estado === 'resuelto' ? 'resuelto' : 'abierto' }); return panelSoporteVer_({ id: c.id }); }
+
+/* ---- Correo diario al administrador: a quién contactar y soporte pendiente ---- */
+function resumenPanelDiario() {
+  const r = panelResumen_(), P = r.plantillas;
+  const correo = PropertiesService.getScriptProperties().getProperty('PANEL_CORREO') || Session.getEffectiveUser().getEmail();
+  const sop = mRows_('Soporte').filter(c => Number(c.sinLeerAdm) > 0);
+  if (!r.contactar.length && !sop.length) return;
+  const wa = (x, t) => 'https://wa.me/' + x.whatsapp + '?text=' + encodeURIComponent(String(P[t] || '').replace(/\{dueno\}/g, String(x.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, x.negocio));
+  const T = { dia3: 'Día 3 de prueba · ¿qué tal?', vence: 'Vence mañana', inactivo: 'Sin entrar hace días', vencida: 'Prueba vencida' };
+  let h = '<h2 style="font-family:sans-serif">Gestión de Negocio VM · ' + r.hoy + '</h2>';
+  h += '<p style="font-family:sans-serif">Activos ' + r.kpis.activos + ' · En prueba ' + r.kpis.prueba + ' · Vencidos ' + r.kpis.vencidos + ' · Ingresos del mes L ' + r.kpis.ingresosMes + '</p>';
+  if (r.contactar.length) h += '<h3 style="font-family:sans-serif">Para contactar hoy</h3><ul style="font-family:sans-serif">' + r.contactar.map(x => '<li><b>' + x.negocio + '</b> (' + x.dueno + ') · ' + T[x.contactar] + ' · <a href="' + wa(x, x.contactar) + '">WhatsApp</a></li>').join('') + '</ul>';
+  if (sop.length) h += '<h3 style="font-family:sans-serif">Soporte sin responder</h3><ul style="font-family:sans-serif">' + sop.map(c => '<li><b>' + c.negocio + '</b> · ' + (MOTIVOS[c.motivo] || c.motivo) + (c.modulo ? ' · ' + c.modulo : '') + ': ' + c.ultimoTexto + '</li>').join('') + '</ul>';
+  h += '<p style="font-family:sans-serif"><a href="' + URL_APP + '?panel">Abrir el Panel Molina</a></p>';
+  MailApp.sendEmail({ to: correo, subject: 'Negocio VM · ' + r.contactar.length + ' por contactar · ' + sop.length + ' en soporte', htmlBody: h });
+}
+// Ejecútala una vez: el resumen llega cada mañana a las 7
+function instalarResumenDiario() {
+  ScriptApp.getProjectTriggers().filter(t => t.getHandlerFunction() === 'resumenPanelDiario').forEach(t => ScriptApp.deleteTrigger(t));
+  ScriptApp.newTrigger('resumenPanelDiario').timeBased().everyDays(1).atHour(7).create();
+  Logger.log('Listo: el resumen del panel llegará cada día a las 7 a. m.');
 }
 
 /* ===================== CATÁLOGOS (productos, clientes, proveedores) ===================== */
@@ -1618,7 +1854,8 @@ function pendientes_(u) {
   if (u.rol === 'bodega') return { nuevos: 0, mensajes: 0 };
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
   const n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
-  return { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length };
+  let sop = 0; try { if (MULTI_NEGOCIO && NEG) sop = mRows_('Soporte').filter(c => c.negocioId === NEG.id && Number(c.sinLeerCli) > 0).length; } catch (e) {}
+  return { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
 }
 
 function estadoPedido_(u, d) {
