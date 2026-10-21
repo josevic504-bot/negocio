@@ -431,6 +431,9 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .link-card{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:12px 14px;box-shadow:var(--sh);flex-wrap:wrap}
 .link-card .tx{flex:1;min-width:180px}.link-card b{display:block;font-weight:600}.link-card small{color:var(--mut);font-size:12px;word-break:break-all}
 .link-card.sm{box-shadow:none;margin-bottom:12px;background:var(--bg)}
+.plat-chips .chip{display:inline-flex;align-items:center;gap:6px}.plat-chips .chip i{width:14px;height:14px;border-radius:4px;display:inline-block;flex:none}
+.sus-box{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--bg)}.sus-box>b{display:flex;align-items:center;gap:6px;margin-bottom:8px}.sus-box .hint a{color:var(--pri);font-weight:600;cursor:pointer}
+.avi-sus{margin-bottom:12px}
 .li-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--h1),var(--h2))}
 .plus-card{background:linear-gradient(150deg,var(--h1),var(--h2));color:#fff;border-radius:24px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
 .plus-card:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-90px;background:radial-gradient(closest-side,rgba(255,255,255,.2),transparent)}
@@ -1003,7 +1006,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.7';
+const VERSION = '1.8';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -1030,7 +1033,9 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye'],
+  Cuentas:        ['id','plataforma','nombre','correo','clave','perfiles','costo','vence','nota','activo','creado'],
+  Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
   Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion'],
@@ -1056,8 +1061,8 @@ const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ve
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
-const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario']);
-const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo']);
+const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence']);
+const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -1069,7 +1074,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', suscripciones: '', plataformas: '',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
@@ -1084,6 +1089,7 @@ function sinInternos_(c) { Object.keys(c).forEach(k => { if (k.indexOf('seq') ==
 
 const ESCRITURA = {
   Productos: ['admin','bodega'],
+  Cuentas: ['admin'],
   Clientes: ['admin','cajero'],
   Proveedores: ['admin','bodega']
 };
@@ -1112,6 +1118,12 @@ const GIROS = {
     ej: [['Pan blanco (bolsa)','Pan salado','🍞',35,18,30],['Semita','Pan dulce','🥯',15,6,40],['Cachitos','Pan dulce','🥐',12,5,50],['Rosquillas (bolsa)','Galletas','🍩',45,22,25],['Pastel de cumpleaños','Pasteles','🎂',650,300,3,'Sabor: Chocolate, Vainilla, Tres leches'],['Galletas de mantequilla','Galletas','🍪',60,28,20],['Café con leche','Bebidas','☕',25,8,0],['Pan de coco','Pan dulce','🥥',20,9,30]] },
   servicios:  { n: 'Servicios', cats: ['Servicios','Paquetes','Materiales'],
     ej: [['Servicio básico','Servicios','🛎️',300,0,0],['Servicio premium','Servicios','⭐',650,0,0],['Visita a domicilio','Servicios','🏠',200,0,0,'Modalidad: A domicilio, En el local'],['Paquete mensual','Paquetes','📦',1500,0,0],['Materiales','Materiales','🧰',120,70,20]] },
+  streaming:  { n: 'Streaming y suscripciones', cats: ['Netflix','Disney+','HBO Max','Prime Video','Spotify','YouTube Premium','IPTV','Combos'],
+    ej: [['Netflix · 1 perfil','Netflix','📺',120,58,0,'Plan: 1 mes, 3 meses, 6 meses',{ plataforma: 'Netflix', entrega: 'perfil' }],['Netflix · cuenta completa','Netflix','📺',450,290,0,'Plan: 1 mes, 3 meses',{ plataforma: 'Netflix', entrega: 'cuenta' }],
+      ['Disney+ · 1 perfil','Disney+','🏰',100,45,0,'Plan: 1 mes, 3 meses, 6 meses',{ plataforma: 'Disney+', entrega: 'perfil' }],['HBO Max · 1 perfil','HBO Max','🎬',90,40,0,'Plan: 1 mes, 3 meses',{ plataforma: 'HBO Max', entrega: 'perfil' }],
+      ['Prime Video · 1 perfil','Prime Video','🎥',80,35,0,'Plan: 1 mes, 3 meses',{ plataforma: 'Prime Video', entrega: 'perfil' }],['Spotify Premium','Spotify','🎵',90,40,0,'Plan: 1 mes, 3 meses, 6 meses',{ plataforma: 'Spotify', entrega: 'perfil' }],
+      ['YouTube Premium','YouTube Premium','▶️',80,35,0,'Plan: 1 mes, 3 meses',{ plataforma: 'YouTube Premium', entrega: 'perfil' }],['IPTV · 1 dispositivo','IPTV','📡',150,60,0,'Plan: 1 mes, 3 meses, 6 meses, 12 meses',{ plataforma: 'IPTV', entrega: 'perfil' }],
+      ['Combo Netflix + Disney+','Combos','🍿',200,100,0,'Plan: 1 mes, 3 meses',{ incluye: 'Netflix:1|Disney+:1' }],['Combo total (Netflix, Disney+, HBO Max)','Combos','🎁',280,135,0,'Plan: 1 mes, 3 meses',{ incluye: 'Netflix:1|Disney+:1|HBO Max:1' }]] },
   otro:       { n: 'Otro tipo de negocio', cats: ['General'],
     ej: [['Producto de ejemplo 1','General','📦',100,60,10],['Producto de ejemplo 2','General','🛍️',250,150,10],['Servicio de ejemplo','General','🛎️',300,0,0]] }
 };
@@ -1211,6 +1223,10 @@ function rutaUsuario_(a, u, d, req) {
     case 'soporteLista':    return soporteLista_(u);
     case 'soporteVer':      return soporteVer_(u, d);
     case 'soporteEnviar':   return lock_(() => soporteEnviar_(u, d));
+    case 'susCuentas':      return susCuentas_(u);
+    case 'suscripciones':   return suscripciones_(u);
+    case 'susEstado':       return lock_(() => susEstado_(u, d));
+    case 'cambiarGiro':     return lock_(() => cambiarGiro_(u, d));
     case 'caja':            return caja_(u, d);
     case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
     case 'reporte':         return reporte_(u, d);
@@ -1854,6 +1870,127 @@ function registrar_(d) {
   });
 }
 
+/* ===================== SUSCRIPCIONES (streaming, mensualidades) ===================== */
+/* Para negocios que venden Netflix, Disney+, IPTV, gimnasio, internet…: cada venta de una suscripción queda con fecha de vencimiento,
+ * la cuenta/perfil que se entregó y los datos de acceso. Las cuentas madre viven en la hoja «Cuentas». */
+const PLATAFORMAS_DEF = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
+function susActivas_() { const cfg = config_(); return cfg.giro === 'streaming' || cfg.suscripciones === 'si'; }
+// "Netflix:1|Disney+:1" → [{ plataforma, n }]
+function incluye_(t) { return String(t || '').split('|').map(x => x.trim()).filter(Boolean).map(x => { const p = x.split(':'); return { plataforma: txt_(p[0], 40), n: Math.max(1, Math.min(10, parseInt(p[1], 10) || 1)) }; }).filter(x => x.plataforma).slice(0, 6); }
+function susDeProducto_(p) { // qué se entrega al vender este producto: una lista de plataformas
+  if (!p) return [];
+  if (p.incluye) return incluye_(p.incluye).map(x => ({ plataforma: x.plataforma, n: x.n, entrega: 'perfil' }));
+  if (p.plataforma) return [{ plataforma: p.plataforma, n: 1, entrega: p.entrega === 'cuenta' ? 'cuenta' : 'perfil' }];
+  return [];
+}
+function mesesSumar_(fechaIso, meses) {
+  const d = new Date(fechaIso + 'T12:00:00'); const dia = d.getDate();
+  d.setMonth(d.getMonth() + meses); if (d.getDate() !== dia) d.setDate(0);
+  return Utilities.formatDate(d, TZ, 'yyyy-MM-dd');
+}
+function perfilN_(p) { return p === '' || p === undefined || p === null ? '' : Number(p); }
+function susEstadoDe_(s, h) { if (s.estado === 'cancelada' || s.estado === 'renovada') return s.estado; return s.vence < h ? 'vencida' : 'activa'; }
+// Perfiles ocupados: { cuentaId: { perfil: suscripción } } (solo activas o vencidas hace menos de 7 días, para dar margen a renovar)
+function ocupados_() {
+  const h = hoy_(), lim = diasAtras_(7), o = {};
+  rows_('Suscripciones').forEach(s => { if (!s.cuentaId || s.estado === 'cancelada' || s.estado === 'renovada' || s.vence < lim) return; (o[s.cuentaId] = o[s.cuentaId] || {})[String(s.perfil || '0')] = s; });
+  return o;
+}
+function susCuentas_(u) {
+  req_(u, ['admin', 'cajero']);
+  const oc = ocupados_(), h = hoy_(), cl = porId_(rows_('Clientes'));
+  return rows_('Cuentas').map(c => {
+    const n = Math.max(1, Number(c.perfiles) || 1), perfiles = [];
+    for (let i = 1; i <= n; i++) { const s = (oc[c.id] || {})[String(i)]; perfiles.push(s ? { n: i, susId: s.id, cliente: s.cliente || (cl[s.clienteId] ? cl[s.clienteId].nombre : ''), vence: s.vence, estado: susEstadoDe_(s, h), pin: s.pin } : { n: i }); }
+    const completa = (oc[c.id] || {})['0'];
+    const o = Object.assign({}, c, { perfilesL: perfiles, ocupados: perfiles.filter(p => p.susId).length, completa: completa ? { susId: completa.id, cliente: completa.cliente, vence: completa.vence, estado: susEstadoDe_(completa, h) } : null });
+    if (u.rol !== 'admin') { o.clave = o.clave ? '••••' : ''; }
+    return o;
+  });
+}
+function suscripciones_(u) {
+  req_(u, ['admin', 'cajero']);
+  const h = hoy_(), cu = porId_(rows_('Cuentas')), cl = porId_(rows_('Clientes'));
+  return rows_('Suscripciones').map(s => {
+    const c = cu[s.cuentaId], cli = cl[s.clienteId];
+    return Object.assign({}, s, { perfil: perfilN_(s.perfil), estadoR: susEstadoDe_(s, h), dias: Math.ceil((msDeLocal_(s.vence + 'T00:00') - msDeLocal_(h + 'T00:00')) / 86400000),
+      cuentaNombre: c ? c.nombre : '', correo: c ? c.correo : '', clave: c ? (u.rol === 'admin' || true ? c.clave : '') : '', telefono: cli ? cli.telefono : s.telefono, cliente: cli ? cli.nombre : s.cliente });
+  }).sort((a, b) => a.vence < b.vence ? -1 : a.vence > b.vence ? 1 : 0);
+}
+function susEstado_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const s = rows_('Suscripciones').find(x => x.id === d.id); if (!s) throw new Error('La suscripción no existe');
+  const est = d.estado === 'cancelada' ? 'cancelada' : 'activa';
+  upsert_('Suscripciones', { id: s.id, estado: est, nota: txt_(d.nota, 120) || s.nota });
+  return suscripciones_(u);
+}
+// Al registrar una venta: crea las suscripciones que vienen en d.sus = [{ idx, meses, vence, renuevaId, asig: [{ plataforma, cuentaId, perfil, pin }] }]
+function susRegistrar_(u, d, venta, items, pm) {
+  if (!Array.isArray(d.sus) || !d.sus.length) return [];
+  const h = hoy_(), oc = ocupados_(), cu = porId_(rows_('Cuentas')), cli = venta.clienteId ? rows_('Clientes').find(x => x.id === venta.clienteId) : null;
+  const nuevas = [];
+  d.sus.forEach(sd => {
+    const it = items[Number(sd.idx)]; if (!it || !it.p) return;
+    const entregas = susDeProducto_(it.p); if (!entregas.length) return;
+    const meses = Math.max(1, Math.min(24, parseInt(sd.meses, 10) || 1));
+    const vence = /^\d{4}-\d{2}-\d{2}$/.test(String(sd.vence || '')) ? String(sd.vence) : mesesSumar_(h, meses);
+    if (vence < h) throw new Error('La fecha de vencimiento de «' + it.p.nombre + '» ya pasó');
+    const asig = Array.isArray(sd.asig) ? sd.asig : [];
+    const veces = Math.max(1, Math.min(10, Math.round(it.cantidad) || 1)), total = entregas.reduce((t, x) => t + x.n, 0) * veces;
+    let k = 0;
+    entregas.forEach(e => {
+      for (let i = 0; i < e.n * veces; i++) {
+        const a = asig[k++] || {};
+        const c = a.cuentaId ? cu[a.cuentaId] : null;
+        if (a.cuentaId && !c) throw new Error('La cuenta elegida para ' + e.plataforma + ' ya no existe');
+        const perfil = c ? (e.entrega === 'cuenta' ? 0 : Math.max(1, Math.min(Number(c.perfiles) || 1, parseInt(a.perfil, 10) || 1))) : '';
+        if (c) {
+          const ya = (oc[c.id] || {})[String(perfil)];
+          if (ya && ya.id !== sd.renuevaId) throw new Error((perfil ? 'El perfil ' + perfil + ' de ' : 'La cuenta ') + c.nombre + ' ya está ocupado por ' + (ya.cliente || 'otro cliente'));
+          if (perfil === 0 && Object.keys(oc[c.id] || {}).some(p => p !== '0' && (oc[c.id][p].id !== sd.renuevaId))) throw new Error('La cuenta ' + c.nombre + ' tiene perfiles vendidos por separado');
+          (oc[c.id] = oc[c.id] || {})[String(perfil)] = { id: '_', cliente: cli ? cli.nombre : '' };
+        }
+        const s = upsert_('Suscripciones', { ventaId: venta.id, clienteId: venta.clienteId || '', cliente: cli ? cli.nombre : txt_(sd.cliente, 60), telefono: cli ? cli.telefono : '',
+          productoId: it.p.id, producto: it.p.nombre, plataforma: e.plataforma, cuentaId: c ? c.id : '', perfil: perfil, pin: txt_(a.pin, 12), inicio: h, vence: vence, meses: meses,
+          precio: r2_(it.precio * it.cantidad / total), estado: 'activa', nota: '', creado: ahora_() });
+        nuevas.push(s);
+      }
+    });
+    if (sd.renuevaId) { const prev = rows_('Suscripciones').find(x => x.id === sd.renuevaId); if (prev) upsert_('Suscripciones', { id: prev.id, estado: 'renovada' }); }
+  });
+  return nuevas;
+}
+// Datos de acceso para el comprobante del cliente
+function susAccesos_(lista) {
+  const cu = porId_(rows_('Cuentas'));
+  return lista.map(s => { const c = cu[s.cuentaId]; return { plataforma: s.plataforma, producto: s.producto, vence: s.vence, perfil: perfilN_(s.perfil), pin: s.pin, correo: c ? c.correo : '', clave: c ? c.clave : '', cuenta: c ? c.nombre : '' }; });
+}
+function susResumen_() {
+  const h = hoy_(), sem = diasAtras_(-7), l = rows_('Suscripciones').filter(s => s.estado !== 'cancelada' && s.estado !== 'renovada');
+  const venc = l.filter(s => s.vence < h), hoyL = l.filter(s => s.vence === h), semL = l.filter(s => s.vence > h && s.vence <= sem);
+  const suma = a => r2_(a.reduce((t, s) => t + (Number(s.precio) || 0), 0));
+  const cu = rows_('Cuentas').filter(c => c.activo), oc = ocupados_();
+  const perfiles = cu.reduce((t, c) => t + Math.max(1, Number(c.perfiles) || 1), 0), ocupados = cu.reduce((t, c) => t + (oc[c.id] ? (oc[c.id]['0'] ? Math.max(1, Number(c.perfiles) || 1) : Object.keys(oc[c.id]).length) : 0), 0);
+  return { vencidas: venc.length, montoVencidas: suma(venc), hoy: hoyL.length, semana: semL.length, montoSemana: suma(semL.concat(hoyL)), activas: l.filter(s => s.vence >= h).length, cuentas: cu.length, perfiles: perfiles, ocupados: ocupados };
+}
+// Cambiar el tipo de negocio desde Ajustes: conserva todos los datos; opcionalmente carga ejemplos y desactiva los productos del tipo anterior
+function cambiarGiro_(u, d) {
+  req_(u, ['admin']);
+  if (!own_(GIROS, d.giro)) throw new Error('Tipo de negocio no válido');
+  const cfg = config_(), ant = cfg.giro;
+  if (ant === d.giro) return { config: sinInternos_(config_()), productos: rows_('Productos') };
+  let desactivados = 0;
+  if (d.desactivar && own_(GIROS, ant)) {
+    const cats = GIROS[ant].cats.map(c => c.toLowerCase());
+    rows_('Productos').forEach(p => { if (p.activo && cats.indexOf(String(p.categoria).toLowerCase()) >= 0) { upsert_('Productos', { id: p.id, activo: false }); desactivados++; } });
+  }
+  guardarConfig_({ giro: d.giro });
+  let agregados = 0;
+  if (d.ejemplos) agregados = cargarEjemplos_(u, { giro: d.giro }).agregados;
+  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, { giro: GIROS[d.giro].n }); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  return { config: sinInternos_(config_()), productos: rows_('Productos'), agregados: agregados, desactivados: desactivados };
+}
+
 /* ===================== PANEL MOLINA (súper admin) Y SOPORTE ===================== */
 /* El panel se abre en …/?panel con la clave guardada en Propiedades del script → PANEL_CLAVE.
  * Desde ahí se administran todos los negocios: licencias, Plus, prueba, pagos, seguimiento y el chat de soporte. */
@@ -2096,6 +2233,15 @@ function guardar_(u, d) {
   if (r.nombre !== undefined) r.nombre = txt_(r.nombre, 80);
   if (!prev && !r.nombre) throw new Error('El nombre es obligatorio');
   if (!prev) { r.creado = ahora_(); if (r.activo === undefined) r.activo = true; }
+  if (ent === 'Cuentas') {
+    if (r.plataforma !== undefined) r.plataforma = txt_(r.plataforma, 40);
+    if (!prev && !r.plataforma) throw new Error('Elige la plataforma');
+    ['correo', 'clave', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], k === 'nota' ? 200 : 80); });
+    if (r.perfiles !== undefined) { r.perfiles = Math.max(1, Math.min(20, parseInt(r.perfiles, 10) || 1)); if (prev && r.perfiles < Number(prev.perfiles)) { const oc = ocupados_()[prev.id] || {}; if (Object.keys(oc).some(p => Number(p) > r.perfiles)) throw new Error('Hay perfiles vendidos con un número mayor; no se puede reducir'); } }
+    if (r.costo !== undefined) r.costo = r2_(r.costo);
+    if (r.vence !== undefined && r.vence && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.vence))) r.vence = '';
+    return upsert_('Cuentas', r);
+  }
   if (ent === 'Productos') {
     if (r.codigo !== undefined) r.codigo = txt_(r.codigo, 40);
     if (r.codigo && rows_('Productos').some(p => p.codigo && String(p.codigo).toLowerCase() === r.codigo.toLowerCase() && p.id !== r.id)) throw new Error('Ya existe un producto con ese código');
@@ -2111,6 +2257,10 @@ function guardar_(u, d) {
     if (r.foto && (!prev || r.foto !== prev.foto)) { if (!plus_()) throw new Error('Las fotos de productos son parte del plan Plus'); if (!fotoPropia_(r.foto)) throw new Error('La foto no es válida. Súbela de nuevo.'); r.fotoFecha = ahora_(); }
     if (r.foto === '') r.fotoFecha = '';
     if (r.opciones !== undefined) r.opciones = opciones_(r.opciones);
+    if (r.plataforma !== undefined) r.plataforma = txt_(r.plataforma, 40);
+    if (r.entrega !== undefined) r.entrega = r.entrega === 'cuenta' ? 'cuenta' : (r.entrega ? 'perfil' : '');
+    if (r.incluye !== undefined) r.incluye = incluye_(r.incluye).map(x => x.plataforma + ':' + x.n).join('|');
+    if ((r.plataforma || r.incluye) && !prev) r.tipo = 'servicio';
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
     const stockIni = r.stock;
     delete r.stock;
@@ -2145,13 +2295,14 @@ function guardar_(u, d) {
 function eliminar_(u, d) {
   req_(u, ['admin']);
   const ent = d.entidad;
-  if (['Productos','Clientes','Proveedores'].indexOf(ent) < 0) throw new Error('No se puede eliminar este tipo de registro');
+  if (['Productos','Clientes','Proveedores','Cuentas'].indexOf(ent) < 0) throw new Error('No se puede eliminar este tipo de registro');
   if (!d.id || !rows_(ent).some(x => x.id === d.id)) throw new Error('El registro ya no existe');
   // Si ya tiene movimientos, se desactiva en lugar de borrarse (para no perder la historia)
   let usado = false;
   if (ent === 'Productos') usado = rows_('VentaDetalle').some(x => x.productoId === d.id) || rows_('CompraDetalle').some(x => x.productoId === d.id);
   if (ent === 'Clientes') usado = rows_('Ventas').some(x => x.clienteId === d.id) || rows_('Abonos').some(x => x.clienteId === d.id);
   if (ent === 'Proveedores') usado = rows_('Compras').some(x => x.proveedorId === d.id) || rows_('Pagos').some(x => x.proveedorId === d.id);
+  if (ent === 'Cuentas') usado = rows_('Suscripciones').some(x => x.cuentaId === d.id);
   if (usado) { upsert_(ent, { id: d.id, activo: false }); return { desactivado: true }; }
   if (ent === 'Productos') { const p = rows_('Productos').find(x => x.id === d.id); if (p && p.foto) borrarFoto_(p.foto); }
   deleteRow_(ent, d.id);
@@ -2168,7 +2319,7 @@ function cargarEjemplos_(u, d) {
     if (existentes.indexOf(x[0].toLowerCase()) >= 0) return;
     const p = upsert_('Productos', { codigo: 'EJ' + String(i + 1).padStart(3, '0'), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
-      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_() });
+      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '' });
     if (p.tipo === 'producto' && x[5] > 0) moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
     n++;
   });
@@ -2494,8 +2645,9 @@ function venta_(u, d) {
   Object.keys(pedido).forEach(id => { cambios[id] = -pedido[id]; });
   moverStock_(cambios, 'venta', venta.id, u, venta.numero, fecha);
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
+  const nuevasSus = susRegistrar_(u, d, venta, items, pm);
   if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} }
-  return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null };
+  return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
 }
 
 function rango_(d) {
@@ -2532,6 +2684,7 @@ function anularVenta_(u, d) {
   moverStock_(cambios, 'anulación', v.id, u, 'Anulación ' + v.numero);
   upsert_('Ventas', { id: v.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (v.nota ? v.nota + ' · ' : '') + 'Anulada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') + (d.motivo ? ': ' + txt_(d.motivo, 120) : '') });
   if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
+  try { rows_('Suscripciones').filter(x => x.ventaId === d.id && x.estado === 'activa').forEach(x => upsert_('Suscripciones', { id: x.id, estado: 'cancelada', nota: 'Venta anulada' })); } catch (e) {}
   return { productos: rows_('Productos') };
 }
 
@@ -2937,6 +3090,7 @@ function cerrarCaja_(u, d) {
 
 function inicio_(u) {
   const h = hoy_(), mes = h.slice(0, 7), out = { rol: u.rol }, vent = ventanaMs_();
+  if (u.rol !== 'bodega' && susActivas_()) { try { out.sus = susResumen_(); } catch (e) {} }
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada);
     const vh = ventas.filter(v => v.fecha.slice(0, 10) === h && (u.rol === 'admin' || v.usuarioId === u.id));
@@ -4124,6 +4278,7 @@ const ICP = {
   auto: '<circle cx="12" cy="12" r="8.5"/><path d="M12 3.5v17a8.5 8.5 0 0 0 0-17z" fill="currentColor"/>',
   barcode: '<path d="M4 5v14M7 5v14M10.5 5v14M13 5v14M16.5 5v14M20 5v14"/>',
   info: '<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.5"/>',
+  tv: '<rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8 21.5h8M8 2.5l4 3.5 4-3.5"/>',
   alert: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.3v.1"/>',
   inbox: '<path d="M3 13l2.5-8h13L21 13v6H3z"/><path d="M3 13h5l1.5 2.5h5L16 13h5"/>',
   percent: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
@@ -4274,7 +4429,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.7';
+const APP_VER = '1.8';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -4595,6 +4750,8 @@ const VISTAS = {
   precios:     { t: 'Precios', i: 'tag', roles: ['admin', 'bodega'] },
   proyectos:   { t: 'Proyectos', i: 'layers', roles: ['admin', 'bodega'] },
   clientes:    { t: 'Clientes', i: 'users', roles: ['admin', 'cajero'] },
+  vencimientos:{ t: 'Vencimientos', i: 'clock', roles: ['admin', 'cajero'], si: () => susOn() },
+  cuentas:     { t: 'Cuentas y perfiles', c: 'Cuentas', i: 'key', roles: ['admin', 'cajero'], si: () => susOn() },
   proveedores: { t: 'Proveedores', i: 'truck', roles: ['admin', 'bodega'] },
   compras:     { t: 'Compras', i: 'bag', roles: ['admin', 'bodega'] },
   gastos:      { t: 'Gastos', i: 'receipt', roles: ['admin', 'cajero'] },
@@ -4604,9 +4761,9 @@ const VISTAS = {
   usuarios:    { t: 'Usuarios', i: 'user', roles: ['admin'] },
   ajustes:     { t: 'Ajustes', i: 'gear', roles: TODOS }
 };
-const NAV_PC = ['inicio', 'vender', 'pedidos', 'mensajes', 'tienda', 'productos', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
+const NAV_PC = ['inicio', 'vender', 'pedidos', 'mensajes', 'tienda', 'productos', 'vencimientos', 'cuentas', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
 const R = {}; // funciones que pintan cada vista
-const puedeVer = v => VISTAS[v] && VISTAS[v].roles.includes(S.user.rol);
+const puedeVer = v => VISTAS[v] && VISTAS[v].roles.includes(S.user.rol) && (!VISTAS[v].si || VISTAS[v].si());
 
 function ir(v, params, sinHist) {
   if (!VISTAS[v] || !puedeVer(v)) v = 'inicio';
@@ -5198,6 +5355,10 @@ R.inicio = () => {
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus ✦', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
+    if (d.sus && susOn()) {
+      tiles += tile('t-pri', 'clock', 'Vencimientos', d.sus.semana + d.sus.hoy ? (d.sus.semana + d.sus.hoy) + ' esta semana' : d.sus.vencidas ? d.sus.vencidas + ' vencidas' : 'Al día', d.sus.vencidas ? d.sus.vencidas + ' vencidas · ' + money(d.sus.montoVencidas) : d.sus.activas + ' activas', ['ir', 'vencimientos']);
+      tiles += tile('t-verde', 'key', 'Cuentas y perfiles', d.sus.ocupados + ' / ' + d.sus.perfiles, d.sus.perfiles - d.sus.ocupados === 1 ? '1 perfil libre' : (d.sus.perfiles - d.sus.ocupados) + ' perfiles libres', ['ir', 'cuentas']);
+    }
     if (S.plus && S.chatsNuevos) tiles += tile('t-acc', 'chat', 'Mensajes', S.chatsNuevos === 1 ? '1 sin responder' : S.chatsNuevos + ' sin responder', 'Tus clientes te escriben desde la tienda', ['ir', 'mensajes']);
     tiles += tile('t-naranja', 'coin', 'Por cobrar', money(d.porCobrar.total), d.porCobrar.clientes === 1 ? '1 cliente con saldo' : d.porCobrar.clientes + ' clientes con saldo', ['ir', 'clientes', { saldo: 1 }]);
     if (rol === 'admin') tiles += tile('t-azul', 'truck', 'Por pagar', money(d.porPagar.total), d.porPagar.proveedores === 1 ? '1 proveedor' : d.porPagar.proveedores + ' proveedores', ['ir', 'proveedores', { saldo: 1 }]);
@@ -5222,7 +5383,8 @@ R.inicio = () => {
   }
   const aviso = d.aviso && rol === 'admin' ? `<div class="aviso">${ic('sparkle', 20)}<div><b>${esc(fMes(d.aviso.mes))} dejó ${money(d.aviso.pendiente)} de ganancia sin destino.</b><small>Decide si va a ahorro, reinversión o a pagar algo.</small></div><button class="btn sm pri" data-a="ir" data-v="reportes" data-p='{"tab":"ganancias"}'>Decidir</button></div>` : '';
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${vacio}${aviso}${listas}</div>`;
+  const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `Vencen esta semana: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
+  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${avSus}${vacio}${aviso}${listas}</div>`;
 };
 ACC.verVenta = async el => {
   const f = el.dataset.f.slice(0, 10);
@@ -5367,7 +5529,7 @@ function abrirCobro() {
         <label class="chk"><input type="checkbox" id="cb-exo" ${exo ? 'checked' : ''}> Cliente exonerado (sin ISV)</label>
         ${exo ? `<div class="f3" style="margin-top:8px"><label class="fld"><span>N.º orden de compra exenta</span><input id="cb-oce" value="${esc(fz.oce || '')}"></label><label class="fld"><span>N.º constancia de exonerado</span><input id="cb-cre" value="${esc(fz.cre || '')}"></label><label class="fld"><span>N.º registro SAG</span><input id="cb-sag" value="${esc(fz.sag || '')}"></label></div>` : ''}</div>` : ''}
       <div class="tks">${S.ticket.items.map((i, k) => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${admin || !i.productoId ? `<a data-a="cbPrecio" data-k="${k}">${money(i.precio)} c/u ✎</a>` : money(i.precio) + ' c/u'}</small></div>
-        <div class="qty"><button data-a="cbQ" data-k="${k}" data-d="-1">−</button><span data-a="cbCant" data-k="${k}" title="Escribir la cantidad">${cant(i.cantidad)}</span><button data-a="cbQ" data-k="${k}" data-d="1">+</button></div><b class="n tkt">${money(i.cantidad * i.precio)}</b></div>`).join('')}</div>
+        <div class="qty"><button data-a="cbQ" data-k="${k}" data-d="-1">−</button><span data-a="cbCant" data-k="${k}" title="Escribir la cantidad">${cant(i.cantidad)}</span><button data-a="cbQ" data-k="${k}" data-d="1">+</button></div><b class="n tkt">${money(i.cantidad * i.precio)}</b></div>${susOn() ? susBloqueCobro(k) : ''}`).join('')}</div>
       <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(t.subtotal)}</b></div>
         <div class="tot"><span>Descuento <a data-a="cbDesc">${t.descuento ? 'cambiar' : 'agregar'}</a></span><b class="n">${t.descuento ? '− ' + money(t.descuento) : '—'}</b></div>
         <div class="tot"><span>${exo ? 'ISV (cliente exonerado)' : `ISV ${S.config.preciosConISV !== 'no' ? 'incluido' : ''} (${Math.round(num(S.config.isv) * 100)}%)`}</span><b class="n">${money(t.isv)}</b></div>
@@ -5398,6 +5560,7 @@ function abrirCobro() {
       $('#cb-exo', h.el).addEventListener('change', e => { S.ticket.fiscal.exonerado = e.target.checked; guardarTicket(); pinta(); });
     }
     $('#cb-nota', h.el).addEventListener('input', e => { S.ticket.nota = e.target.value; });
+    if (susOn()) susBindCobro(h.el, pinta);
     h.botones([{ t: `${ic('check')} Cobrar ${money(t.total)}`, cls: 'pri big', fn: cobrar }]);
   };
   h.pinta = pinta;
@@ -5409,6 +5572,7 @@ function abrirCobro() {
     const t = calcTotales(S.ticket, exo);
     const datos = { items: S.ticket.items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio })),
       clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '' };
+    if (susOn()) { const sd = susDatosVenta(); if (sd.length) datos.sus = sd; }
     if (!S.ticket.clave) { S.ticket.clave = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); guardarTicket(); }
     datos.clave = S.ticket.clave;
     if (metodo === 'Efectivo') datos.recibido = S.ticket.recibido && String(S.ticket.recibido).trim() ? num(S.ticket.recibido) : t.total;
@@ -5424,11 +5588,11 @@ function abrirCobro() {
     S.productos = r.productos;
     if (S.ticket.clienteId) { const c = byId(S.clientes, S.ticket.clienteId); if (c) c.saldo = r.saldoCliente; }
     S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket();
-    S.inicio = null; S.pedidosL = null; guardarCache();
+    S.inicio = null; S.pedidosL = null; S.susL = null; S.cuentasL = null; guardarCache();
     h.onClose = null; h.cerrar(); S.hCobro = null;
     if (S.vista === 'vender') R.vender();
     if (r.repetida) toast('Esta venta ya se había registrado: no se cobró dos veces', 'ok', 5000);
-    ventaLista(r.venta, r.detalle);
+    ventaLista(r.venta, r.detalle, r.accesos);
   };
   pinta();
 }
@@ -5474,11 +5638,12 @@ ACC.cbDesc = async () => {
 };
 ACC.nuevoClienteRapido = () => formCliente(null, c => { S.ticket.clienteId = c.id; guardarTicket(); S.hCobro && S.hCobro.pinta(); });
 
-function ventaLista(v, det) {
+function ventaLista(v, det, accesos) {
   const cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
   const h = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic('check', 40)}</i><h2>${v.factura ? '¡Factura emitida!' : '¡Venta registrada!'}</h2><p class="mut">${v.factura ? 'Factura ' + esc(v.factura) : esc(v.numero)} · ${esc(v.metodo)}${cli ? ' · ' + esc(cli.nombre) : ''}</p>
     <div class="ok-tot n">${money(v.total)}</div>${v.metodo === 'Efectivo' && v.cambio > 0 ? `<div class="cambio"><span>Cambio</span><b class="n">${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' ? `<div class="cambio warn"><span>Queda debiendo</span><b class="n">${money(v.saldo)}</b></div>` : ''}</div>
-    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, det))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
+    ${accesosHTML(accesos)}
+    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, det) + textoAccesos(accesos))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
   S.ultVenta = { v, det };
   h.botones([{ t: `${ic('cart')} Nueva venta`, cls: 'pri big', fn: () => h.cerrar() }]);
 }
@@ -5776,6 +5941,7 @@ function formProducto(p, onSave, pre) {
     <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. Camiseta básica"></label>
     <div class="f2"><label class="fld"><span>Código de barras</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div></label>
       <label class="fld"><span>Categoría</span><input id="pf-cat" list="dl-cat" maxlength="40" value="${esc(p.categoria || '')}" placeholder="General"><datalist id="dl-cat">${catsSugeridas().map(c => `<option value="${esc(c)}">`).join('')}</datalist></label></div>
+    ${susOn() ? susFormProducto(p) : ''}
     ${S.plus && opcGiro(S.config.giro).filtro ? opcForm(p) : ''}
     <div class="precio-box"><h4>${ic('tag', 18)} Precio de venta</h4>
       <div class="f2"><label class="fld"><span>Costo ${nuevo ? '(opcional)' : 'promedio'}</span><input id="pf-costo" inputmode="decimal" value="${p.costo ? p.costo : ''}" placeholder="¿Cuánto te cuesta?"></label>
@@ -5815,6 +5981,7 @@ function formProducto(p, onSave, pre) {
   ACC.pfKardex = () => kardex(p);
   const ctrl = $('#pf-ctrl', h.el), stk = $('#pf-stk', h.el);
   const tg = () => { stk.hidden = !ctrl.checked; }; ctrl.addEventListener('change', tg); tg();
+  const leerSus = $('#pf-sus', h.el) ? susFormBind(h, p) : null;
   // Precio, costo y calculadora
   const costo = $('#pf-costo', h.el), precio = $('#pf-precio', h.el), pct = $('#pf-pct', h.el), red = $('#pf-red', h.el), conIsv = $('#pf-conisv', h.el), isvSel = $('#pf-isv', h.el);
   const tasa = () => isvSel.value === '' ? num(S.config.isv) : num(isvSel.value) / 100;
@@ -5851,6 +6018,7 @@ function formProducto(p, onSave, pre) {
     if (nuevo) reg.stock = num(($('#pf-stock', h.el) || {}).value);
     if ($('#pf-tienda', h.el)) { reg.tienda = $('#pf-tienda', h.el).checked; reg.descripcion = $('#pf-desc', h.el).value.trim(); reg.opciones = opcLeerForm(h.el); }
     if ($('#pf-act', h.el)) reg.activo = $('#pf-act', h.el).checked;
+    if (leerSus) { const sv = leerSus(); if (sv.plataforma || sv.incluye || p.plataforma || p.incluye) Object.assign(reg, sv); if (sv.plataforma || sv.incluye) reg.tipo = 'servicio'; }
     if (st.fotoNueva) { const f = await api('subirFoto', { data: st.fotoNueva }); reg.foto = f.foto; }
     else if (!st.foto && p.foto) reg.foto = '';
     if (!reg.id) delete reg.id;
@@ -6733,7 +6901,7 @@ R.ajustes = () => {
   const sel = (k, opts) => `<select data-k="${k}">${opts.map(([val, t]) => `<option value="${val}" ${String(c[k]) === String(val) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
   const L = S.licencia || {};
   let h = '';
-  if (adm) h += sec('negocio', 'store', 'Mi negocio', `<div class="f2"><label class="fld"><span>Nombre del negocio</span><input data-k="nombre" value="${v('nombre')}" maxlength="60"></label><label class="fld"><span>Tipo de negocio</span>${sel('giro', S.giros.map(g => [g.id, esc(g.n)]))}</label></div>
+  if (adm) h += sec('negocio', 'store', 'Mi negocio', `<div class="f2"><label class="fld"><span>Nombre del negocio</span><input data-k="nombre" value="${v('nombre')}" maxlength="60"></label><div class="fld"><span>Tipo de negocio</span><div class="link-card sm" style="margin:0"><div class="li-ic"><span class="emo">${GIRO_EMO[c.giro] || '📦'}</span></div><div class="tx"><b>${esc(giroNombre() || 'Sin tipo')}</b><small>Toca «Cambiar» para pasar a otro tipo</small></div><button class="btn sm" data-a="cambiarGiro">Cambiar</button></div></div></div>
     <label class="fld"><span>Frase o eslogan (aparece debajo del nombre)</span><input data-k="eslogan" value="${v('eslogan')}" maxlength="80" placeholder="${esc(giroNombre())}"></label>
     <div class="f2"><label class="fld"><span>Teléfono / WhatsApp del negocio</span><input data-k="telefono" value="${v('telefono')}"></label><label class="fld"><span>RTN</span><input data-k="rtn" value="${v('rtn')}"></label></div>
     <label class="fld"><span>Dirección</span><input data-k="direccion" value="${v('direccion')}"></label>
@@ -6741,6 +6909,7 @@ R.ajustes = () => {
     <div class="f2"><label class="fld"><span>Fondo de caja (para empezar el día)</span><input data-k="fondoCaja" inputmode="decimal" value="${v('fondoCaja')}"></label><label class="fld"><span>Sin existencias…</span>${sel('venderSinStock', [['no', 'No dejar vender'], ['si', 'Dejar vender igual']])}</label></div>
     <label class="fld"><span>Mensaje al pie del comprobante</span><input data-k="mensajeRecibo" value="${v('mensajeRecibo')}" maxlength="120"></label>
     <button class="btn pri" data-a="guardarAj" data-s="negocio">Guardar</button>`);
+  if (adm && c.giro !== 'streaming') h += sec('suscripciones', 'clock', 'Suscripciones y mensualidades', `<label class="sw-row"><input type="checkbox" data-k="suscripciones" data-on="si" data-off="" ${c.suscripciones === 'si' ? 'checked' : ''}><span class="sw"></span><div><b>Vender suscripciones</b><small>Netflix, IPTV, gimnasio, internet… Activa Vencimientos y Cuentas y perfiles, y al vender te pide la fecha de vencimiento.</small></div></label><button class="btn pri" data-a="guardarAj" data-s="suscripciones">Guardar</button>`, c.suscripciones === 'si' ? '<span class="badge b-ok">Activo</span>' : '');
   h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `<div class="temas">${Object.keys(TEMAS).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div><p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
     <div class="fld" style="margin-top:12px"><span>Modo (solo en este equipo)</span><div class="modos">${[['auto', 'auto', 'Automático'], ['claro', 'sun', 'Claro'], ['oscuro', 'moon', 'Oscuro']].map(([k, i, t]) => `<button class="pay ${modo === k ? 'on' : ''}" data-a="modoColor" data-m="${k}">${ic(i)}${t}</button>`).join('')}</div></div>
     ${adm ? `<div class="fld"><span>Logo</span><div class="row"><div class="logo-prev">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(iniciales(c.nombre))}</div><label class="btn">${ic('image', 18)} Subir logo<input type="file" accept="image/*" id="aj-logo" hidden></label>${c.logo ? `<button class="btn ghost" data-a="quitarLogo">Quitar</button>` : ''}</div></div>` : ''}`);
@@ -7325,7 +7494,297 @@ ACC.lbVer = async el => {
 
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.4'; // versión mínima del Code.gs que necesita esta app
+/* ===================== SUSCRIPCIONES: vencimientos, cuentas y perfiles ===================== */
+const PLAT = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
+const susOn = () => !!S.config && (S.config.giro === 'streaming' || S.config.suscripciones === 'si');
+const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', otro: '📦' };
+// Plataformas: las conocidas + las que el negocio agregó ("+ Otra") + las que ya usa en productos o cuentas
+function platsTodas() {
+  const l = PLAT.map(x => x[0]), add = n => { n = String(n || '').trim(); if (n && !l.some(x => x.toLowerCase() === n.toLowerCase())) l.push(n); };
+  String(S.config.plataformas || '').split(',').forEach(add);
+  (S.productos || []).forEach(p => { add(p.plataforma); leerIncluye(p.incluye).forEach(x => add(x.plataforma)); });
+  (S.cuentasL || []).forEach(c => add(c.plataforma));
+  return l;
+}
+function platColor(n) { const d = PLAT.find(x => x[0].toLowerCase() === String(n || '').toLowerCase()); return d ? d[1] : ''; }
+function platAv(n, cls) { const c = platColor(n); return `<span class="${cls || 'av'} ${c ? '' : colorDe(n)}" ${c ? `style="background:${c};color:#fff"` : ''}>${esc(iniciales(n))}</span>`; }
+function leerIncluye(t) { return String(t || '').split('|').map(x => x.trim()).filter(Boolean).map(x => { const p = x.split(':'); return { plataforma: p[0].trim(), n: Math.max(1, parseInt(p[1], 10) || 1) }; }).filter(x => x.plataforma); }
+// Qué entrega un producto al venderse: [{ plataforma, n, entrega }] (vacío si no es suscripción)
+function susDeProducto(p) {
+  if (!p) return [];
+  if (p.incluye) return leerIncluye(p.incluye).map(x => ({ plataforma: x.plataforma, n: x.n, entrega: 'perfil' }));
+  if (p.plataforma) return [{ plataforma: p.plataforma, n: 1, entrega: p.entrega === 'cuenta' ? 'cuenta' : 'perfil' }];
+  return [];
+}
+const esSus = p => susDeProducto(p).length > 0;
+function mesesSumar(iso, meses) { const d = parseLocal(iso + 'T12:00'); const dia = d.getDate(); d.setMonth(d.getMonth() + meses); if (d.getDate() !== dia) d.setDate(0); return toLocal(d).slice(0, 10); }
+function venceTxt(s) {
+  const d = typeof s === 'number' ? s : s.dias;
+  if (d < -1) return 'venció hace ' + (-d) + ' días'; if (d === -1) return 'venció ayer'; if (d === 0) return 'vence hoy'; if (d === 1) return 'vence mañana'; return 'vence en ' + d + ' días';
+}
+function susEtiqueta(s) { return (s.plataforma || s.producto) + (s.perfil === 0 || s.perfil === '0' ? ' · cuenta completa' : s.perfil ? ' · perfil ' + s.perfil : ''); }
+async function cargarCuentas(silent) { S.cuentasL = await api('susCuentas', {}, silent); return S.cuentasL; }
+// Elegir plataforma con chips (+ Otra)
+function platChips(sel, id, multi) {
+  const l = platsTodas(), on = n => multi ? sel.some(x => x.toLowerCase() === n.toLowerCase()) : String(sel || '').toLowerCase() === n.toLowerCase();
+  return `<div class="chips plat-chips" id="${id}">${l.map(n => `<button type="button" class="chip ${on(n) ? 'on' : ''}" data-pl="${esc(n)}">${platColor(n) ? `<i style="background:${platColor(n)}"></i>` : ''}${esc(n)}</button>`).join('')}<button type="button" class="chip" data-pl="+">+ Otra</button></div>`;
+}
+function platChipsBind(el, st, multi, onChange) {
+  el.addEventListener('click', async e => {
+    const b = e.target.closest('[data-pl]'); if (!b) return;
+    let n = b.dataset.pl;
+    if (n === '+') { n = await pedirTexto('Otra plataforma', { label: 'Nombre (ej. Canva, Gimnasio, Internet)', ph: 'Nombre' }); if (!n || !n.trim()) return; n = n.trim().slice(0, 40); if (!platsTodas().some(x => x.toLowerCase() === n.toLowerCase())) { S.config.plataformas = [S.config.plataformas, n].filter(Boolean).join(','); api('guardar', { entidad: 'Config', registro: { plataformas: S.config.plataformas } }, true).catch(() => {}); } }
+    if (multi) { const i = st.l.findIndex(x => x.toLowerCase() === n.toLowerCase()); if (i >= 0) st.l.splice(i, 1); else st.l.push(n); }
+    else st.v = st.v && st.v.toLowerCase() === n.toLowerCase() ? '' : n;
+    el.outerHTML = platChips(multi ? st.l : st.v, el.id, multi);
+    platChipsBind($('#' + el.id), st, multi, onChange);
+    if (onChange) onChange();
+  });
+}
+
+/* ---- Vencimientos ---- */
+R.vencimientos = async () => {
+  const m = $('#main');
+  if (!S.susL) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const l = S.susL = await api('suscripciones', {}, !!S.susL);
+  if (S.vista !== 'vencimientos') return;
+  const f = S.f.susF || 'por', q = norm(S.f.susQ || ''), pl = S.f.susP || '';
+  const viva = s => s.estadoR === 'activa' || s.estadoR === 'vencida';
+  const venc = l.filter(s => s.estadoR === 'vencida'), hoyL = l.filter(viva).filter(s => s.dias === 0), sem = l.filter(viva).filter(s => s.dias > 0 && s.dias <= 7), act = l.filter(s => s.estadoR === 'activa');
+  const suma = a => a.reduce((t, s) => t + num(s.precio), 0);
+  const plats = [...new Set(l.filter(viva).map(s => s.plataforma))].sort();
+  let lista = f === 'por' ? l.filter(viva).filter(s => s.dias <= 7 && s.dias >= -30) : f === 'venc' ? venc : f === 'act' ? act : l;
+  if (pl) lista = lista.filter(s => s.plataforma === pl);
+  if (q) lista = lista.filter(s => norm(s.cliente + ' ' + s.plataforma + ' ' + s.producto + ' ' + (s.telefono || '')).includes(q));
+  const chip = (k, t) => `<button class="chip ${f === k ? 'on' : ''}" data-a="susF" data-f="${k}">${t}</button>`;
+  m.innerHTML = `<div class="kpis k4"><div class="kpi" style="--k:var(--bad)"><small>Vencidas</small><b>${venc.length}</b><i>${money(suma(venc))}</i></div><div class="kpi" style="--k:var(--warn)"><small>Vencen hoy</small><b>${hoyL.length}</b><i>${money(suma(hoyL))}</i></div><div class="kpi"><small>Esta semana</small><b>${sem.length}</b><i>${money(suma(sem))}</i></div><div class="kpi" style="--k:#00b56e"><small>Activas</small><b>${act.length}</b><i>suscripciones</i></div></div>
+    <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="sus-q" placeholder="Buscar cliente o plataforma…" value="${esc(S.f.susQ || '')}"></div>
+    <div class="chips" style="margin-bottom:10px">${chip('por', 'Por vencer')}${chip('venc', 'Vencidas')}${chip('act', 'Activas')}${chip('todas', 'Todas')}${plats.map(p => `<button class="chip ${pl === p ? 'on' : ''}" data-a="susP" data-p="${esc(p)}">${esc(p)}</button>`).join('')}</div>
+    ${lista.length ? lista.map(s => tarjetaSus(s)).join('') : `<div class="empty-big">${ic('clock', 40)}<h3>${l.length ? 'Nada por aquí' : 'Todavía no hay suscripciones'}</h3><p>${l.length ? 'Prueba con otro filtro.' : 'Al vender un producto de tipo suscripción (Netflix, Disney+, IPTV…) aparece aquí con su fecha de vencimiento.'}</p>${l.length ? '' : `<button class="btn pri" data-a="ir" data-v="vender">${ic('cart', 18)} Vender</button>`}</div>`}`;
+  const qi = $('#sus-q', m); if (qi) qi.addEventListener('input', () => { S.f.susQ = qi.value; clearTimeout(S._susT); S._susT = setTimeout(() => R.vencimientos(), 250); });
+};
+function tarjetaSus(s) {
+  const b = s.estadoR === 'vencida' ? '<span class="badge b-bad">Vencida</span>' : s.estadoR === 'cancelada' ? '<span class="badge b-mut">Cancelada</span>' : s.estadoR === 'renovada' ? '<span class="badge b-mut">Renovada</span>' : s.dias === 0 ? '<span class="badge b-warn">Hoy</span>' : s.dias <= 3 ? `<span class="badge b-warn">${s.dias} ${s.dias === 1 ? 'día' : 'días'}</span>` : `<span class="badge b-mut">${s.dias} días</span>`;
+  const viva = s.estadoR === 'activa' || s.estadoR === 'vencida';
+  return `<div class="ord ${s.estadoR === 'vencida' ? 'new' : ''}" data-a="susVer" data-id="${s.id}"><div class="ord-h">${platAv(s.plataforma, 'oav')}<div class="tx"><b>${esc(s.cliente || 'Sin cliente')}</b><small>${esc(susEtiqueta(s))} · ${viva ? venceTxt(s) : 'venció ' + fFechaC(s.vence)}</small></div>${b}</div>
+    ${viva ? `<div class="row" style="margin-top:10px">${s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoRecordar(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Recordar</a>` : ''}<button class="btn sm pri" style="margin-left:auto" data-a="susRenovar" data-id="${s.id}">${ic('refresh', 16)} Renovar 1 mes · ${money(precioMes(s))}</button></div>` : ''}</div>`;
+}
+function precioMes(s) { const p = byId(S.productos, s.productoId); return p && p.precio ? p.precio : r2(num(s.precio) / Math.max(1, Number(s.meses) || 1)); }
+function textoRecordar(s) {
+  const n = (s.cliente || '').split(' ')[0];
+  return `Hola${n ? ' ' + n : ''} 👋 Tu suscripción de *${s.plataforma}*${s.perfil ? ' (perfil ' + s.perfil + ')' : ''} ${s.dias < 0 ? 'venció el ' + fFechaC(s.vence) : s.dias === 0 ? 'vence *hoy*' : 'vence el *' + fFechaC(s.vence) + '*'}. ¿La renovamos? Son ${money(precioMes(s))} por mes. — ${S.config.nombre || ''}`;
+}
+ACC.susF = el => { S.f.susF = el.dataset.f; R.vencimientos(); };
+ACC.susP = el => { S.f.susP = S.f.susP === el.dataset.p ? '' : el.dataset.p; R.vencimientos(); };
+ACC.susVer = el => {
+  const s = (S.susL || []).find(x => x.id === el.dataset.id); if (!s) return;
+  const viva = s.estadoR === 'activa' || s.estadoR === 'vencida';
+  const h = hoja({ titulo: esc(s.plataforma), html: `<div class="cli-h">${platAv(s.plataforma, 'av lg')}<div class="tx"><b>${esc(s.cliente || 'Sin cliente')}</b><small>${esc(s.producto)} · ${esc(s.telefono || '')}</small></div></div>
+    <div class="kv"><div><small>Inicio</small>${esc(fFechaC(s.inicio))}</div><div><small>Vence</small><b>${esc(fFechaC(s.vence))}</b> · ${viva ? venceTxt(s) : s.estadoR}</div><div><small>Plan</small>${s.meses} ${s.meses === 1 ? 'mes' : 'meses'} · ${money(s.precio)}</div><div><small>Estado</small>${esc(cap(s.estadoR))}</div></div>
+    ${s.cuentaId ? `<div class="precio-box"><h4>${ic('key', 18)} Acceso entregado</h4><div class="kv"><div><small>Cuenta</small>${esc(s.cuentaNombre || '')}</div><div><small>${s.perfil ? 'Perfil' : 'Entrega'}</small>${s.perfil ? 'Perfil ' + s.perfil : 'Cuenta completa'}</div><div><small>Correo</small>${esc(s.correo || '—')}</div><div><small>Clave</small>${esc(s.clave || '—')}</div>${s.pin ? `<div><small>PIN</small>${esc(s.pin)}</div>` : ''}</div>${s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoAcceso(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Reenviar acceso</a>` : ''}</div>` : '<p class="sm mut">Sin cuenta asignada.</p>'}
+    ${s.nota ? `<p class="sm mut">Nota: ${esc(s.nota)}</p>` : ''}` });
+  const bs = [];
+  if (viva) {
+    bs.push({ t: `${ic('x', 16)} Cancelar`, cls: 'bad', fn: async () => { if (!(await confirmar('¿Cancelar esta suscripción? El perfil queda libre para vender.', { si: 'Cancelar suscripción', peligro: 1 }))) return; S.susL = await api('susEstado', { id: s.id, estado: 'cancelada' }); S.inicio = null; h.cerrar(); toast('Suscripción cancelada', 'ok'); if (S.vista === 'vencimientos') R.vencimientos(); } });
+    bs.push({ t: `${ic('refresh', 16)} Renovar`, cls: 'pri', fn: () => { h.cerrar(); renovarSus(s); } });
+  }
+  h.botones(bs);
+};
+function textoAcceso(s) {
+  const l = [`*${s.plataforma}* · ${S.config.nombre || ''}`, s.perfil ? 'Perfil ' + s.perfil : 'Cuenta completa'];
+  if (s.correo) l.push('Correo: ' + s.correo); if (s.clave) l.push('Clave: ' + s.clave); if (s.pin) l.push('PIN: ' + s.pin);
+  l.push('Vence el ' + fFechaC(s.vence)); return l.join('\n');
+}
+ACC.susRenovar = el => { const s = (S.susL || []).find(x => x.id === el.dataset.id); if (s) renovarSus(s); };
+// Renovar: arma el ticket con el mismo producto, cliente y perfil, y abre el cobro
+async function renovarSus(s) {
+  const p = byId(S.productos, s.productoId);
+  if (!p || !p.activo) return toast('El producto de esta suscripción ya no existe', 'error');
+  if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo por la renovación?', { si: 'Reemplazar' }))) return;
+  const ent = susDeProducto(p), asig = [];
+  ent.forEach(e => { for (let i = 0; i < e.n; i++) asig.push(e.plataforma === s.plataforma && !asig.some(a => a.cuentaId) ? { plataforma: e.plataforma, cuentaId: s.cuentaId, perfil: s.perfil, pin: s.pin } : { plataforma: e.plataforma }); });
+  const inicio = s.dias >= 0 ? s.vence : hoy();
+  S.ticket = { items: [{ productoId: p.id, descripcion: p.nombre, cantidad: 1, precio: p.precio }], clienteId: s.clienteId || '', pedidoId: '', descuento: 0, sus: { 0: { meses: 1, inicio, vence: mesesSumar(inicio, 1), renuevaId: s.id, asig } } };
+  guardarTicket(); cerrarHojas(); ir('vender'); abrirCobro();
+}
+
+/* ---- Cuentas y perfiles ---- */
+R.cuentas = async () => {
+  const m = $('#main');
+  if (!S.cuentasL) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const l = await cargarCuentas(!!S.cuentasL);
+  if (S.vista !== 'cuentas') return;
+  const act = l.filter(c => c.activo), tot = act.reduce((t, c) => t + c.perfilesL.length, 0), oc = act.reduce((t, c) => t + (c.completa ? c.perfilesL.length : c.ocupados), 0);
+  const grupos = {}; act.forEach(c => (grupos[c.plataforma] = grupos[c.plataforma] || []).push(c));
+  const vencCu = act.filter(c => c.vence && c.vence <= hoy());
+  m.innerHTML = `<div class="kpis"><div class="kpi"><small>Cuentas</small><b>${act.length}</b><i>${Object.keys(grupos).length} ${Object.keys(grupos).length === 1 ? 'plataforma' : 'plataformas'}</i></div><div class="kpi" style="--k:#00b56e"><small>Perfiles ocupados</small><b>${oc} / ${tot}</b><i>${tot - oc} libres</i></div></div>
+    ${vencCu.length ? `<div class="aviso warn sm">${ic('alert', 18)}<div><b>${vencCu.length === 1 ? '1 cuenta venció' : vencCu.length + ' cuentas vencieron'} con el proveedor.</b> Renuévalas para que tus clientes no se queden sin servicio.</div></div>` : ''}
+    <div class="row" style="margin-bottom:12px"><button class="btn pri" data-a="nuevaCuenta">${ic('plus', 18)} Nueva cuenta</button></div>
+    ${act.length ? Object.keys(grupos).sort().map(pl => `<div class="sec-t"><h3>${esc(pl)}</h3><a data-a="nuevaCuenta" data-p="${esc(pl)}">+ Cuenta</a></div>${grupos[pl].map(c => tarjetaCuenta(c)).join('')}`).join('') : `<div class="empty-big">${ic('key', 40)}<h3>Agrega tu primera cuenta</h3><p>Una cuenta madre (por ejemplo, Netflix con 5 perfiles). Al vender, la app te ofrece el primer perfil libre y guarda a quién se lo diste.</p></div>`}
+    ${l.some(c => !c.activo) ? `<details class="pf-more"><summary>${ic('dots', 18)} Cuentas inactivas (${l.filter(c => !c.activo).length})${ic('down', 18)}</summary>${l.filter(c => !c.activo).map(c => tarjetaCuenta(c)).join('')}</details>` : ''}`;
+};
+function tarjetaCuenta(c) {
+  const n = c.perfilesL.length, oc = c.completa ? n : c.ocupados, h = hoy();
+  const estado = c.completa ? `<span class="badge ${c.completa.estado === 'vencida' ? 'b-bad' : 'b-ok'}">Completa</span>` : `<span class="badge ${oc >= n ? 'b-warn' : 'b-ok'}">${oc}/${n}</span>`;
+  const prov = c.vence ? (c.vence < h ? `<b style="color:var(--bad)">venció con el proveedor el ${fFechaC(c.vence)}</b>` : 'vence con el proveedor el ' + fFechaC(c.vence)) : '';
+  return `<div class="ord ${c.activo ? '' : 'anul'}"><div class="ord-h" data-a="editCuenta" data-id="${c.id}">${platAv(c.plataforma, 'oav')}<div class="tx"><b>${esc(c.nombre)}${c.correo ? ' · ' + esc(c.correo) : ''}</b><small>${c.clave ? 'Clave ' + esc(c.clave) + (prov ? ' · ' : '') : ''}${prov}${!c.clave && !prov ? (c.nota || 'Toca para editar') : ''}</small></div>${estado}</div>
+    <div class="list" style="margin-top:8px">${c.completa ? `<div class="li"><div class="av t-pri">${ic('user', 18)}</div><div class="tx"><b>${esc(c.completa.cliente || 'Cliente')}</b><small>Cuenta completa · ${c.completa.estado === 'vencida' ? 'venció' : 'vence'} ${fFechaC(c.completa.vence)}</small></div>${c.completa.estado === 'vencida' ? '<span class="badge b-bad">Vencido</span>' : ''}</div>`
+      : c.perfilesL.map(p => p.susId ? `<div class="li" data-a="susAbrir" data-id="${p.susId}"><div class="av t-pri">${p.n}</div><div class="tx"><b>${esc(p.cliente || 'Cliente')}</b><small>${p.pin ? 'PIN ' + esc(p.pin) + ' · ' : ''}${p.estado === 'vencida' ? 'venció' : 'vence'} ${fFechaC(p.vence)}</small></div>${p.estado === 'vencida' ? '<span class="badge b-bad">Vencido</span>' : ''}</div>`
+        : `<div class="li"><div class="av t-verde">${p.n}</div><div class="tx"><b>Libre</b><small>Disponible para vender</small></div>${c.activo && puede('admin', 'cajero') ? `<button class="btn sm pri" data-a="venderPerfil" data-id="${c.id}" data-n="${p.n}">Vender</button>` : ''}</div>`).join('')}</div></div>`;
+}
+ACC.nuevaCuenta = el => formCuenta(null, el.dataset.p || '');
+ACC.editCuenta = el => { const c = (S.cuentasL || []).find(x => x.id === el.dataset.id); if (c) formCuenta(c); };
+ACC.susAbrir = async el => { if (!S.susL) S.susL = await api('suscripciones', {}, true); ACC.susVer(el); };
+ACC.venderPerfil = async el => {
+  const c = (S.cuentasL || []).find(x => x.id === el.dataset.id); if (!c) return;
+  const p = S.productos.find(x => x.activo && x.plataforma && x.plataforma.toLowerCase() === c.plataforma.toLowerCase() && x.entrega !== 'cuenta') || S.productos.find(x => x.activo && x.plataforma && x.plataforma.toLowerCase() === c.plataforma.toLowerCase());
+  if (!p) return toast('Crea primero un producto de ' + c.plataforma + ' en Productos', 'error');
+  if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo?', { si: 'Reemplazar' }))) return;
+  S.ticket = { items: [{ productoId: p.id, descripcion: p.nombre, cantidad: 1, precio: p.precio }], clienteId: '', pedidoId: '', descuento: 0, sus: { 0: { meses: 1, vence: mesesSumar(hoy(), 1), asig: [{ plataforma: c.plataforma, cuentaId: c.id, perfil: Number(el.dataset.n) }] } } };
+  guardarTicket(); ir('vender'); abrirCobro();
+};
+function formCuenta(c, platPre) {
+  const nuevo = !c; c = c || { plataforma: platPre || '', nombre: '', perfiles: 5, correo: '', clave: '', costo: '', vence: '', nota: '', activo: true };
+  const st = { v: c.plataforma };
+  const h = hoja({ titulo: nuevo ? 'Nueva cuenta' : 'Editar cuenta', ancho: 1, html: `<div class="fld"><span>Plataforma</span>${platChips(st.v, 'cu-pl')}</div>
+    <div class="f2"><label class="fld"><span>Nombre para identificarla *</span><input id="cu-nom" maxlength="80" value="${esc(c.nombre)}" placeholder="Ej. Netflix 3"></label><label class="fld"><span>Perfiles que se venden</span><input id="cu-per" inputmode="numeric" value="${esc(c.perfiles)}"></label></div>
+    <div class="f2"><label class="fld"><span>Correo de la cuenta</span><input id="cu-cor" maxlength="80" value="${esc(c.correo)}" autocomplete="off"></label><label class="fld"><span>Clave</span><input id="cu-cla" maxlength="80" value="${esc(c.clave)}" autocomplete="off"></label></div>
+    <div class="f2"><label class="fld"><span>Me cuesta al mes</span><input id="cu-cos" inputmode="decimal" value="${c.costo ? c.costo : ''}" placeholder="0.00"></label><label class="fld"><span>Vence con el proveedor</span><input id="cu-ven" type="date" value="${esc(c.vence || '')}"></label></div>
+    <label class="fld"><span>Nota</span><input id="cu-nota" maxlength="200" value="${esc(c.nota)}" placeholder="Ej. comprada a Juan, pago por Tigo Money"></label>
+    ${nuevo ? `<div class="aviso info sm">${ic('info', 18)}<div>Los perfiles quedan <b>libres</b> hasta que vendas uno. Al vender ${st.v || 'esa plataforma'}, la app te ofrece el primer perfil libre.</div></div>` : `<label class="sw-row"><input type="checkbox" id="cu-act" ${c.activo ? 'checked' : ''}><span class="sw"></span><div><b>Cuenta activa</b><small>Las inactivas no se ofrecen al vender</small></div></label>`}` });
+  platChipsBind($('#cu-pl', h.el), st, false, () => { const n = $('#cu-nom', h.el); if (nuevo && st.v && (!n.value.trim() || /^.+ \d+$/.test(n.value))) n.value = st.v + ' ' + ((S.cuentasL || []).filter(x => x.plataforma.toLowerCase() === st.v.toLowerCase()).length + 1); });
+  const bs = [];
+  if (!nuevo && puede('admin')) bs.push({ t: ic('trash', 18), cls: 'bad icon', fn: async () => {
+    if (!(await confirmar(`¿Eliminar «${esc(c.nombre)}»? Si tiene perfiles vendidos, solo se desactiva.`, { si: 'Eliminar', peligro: 1 }))) return;
+    const r = await api('eliminar', { entidad: 'Cuentas', id: c.id });
+    toast(r.desactivado ? 'Tenía ventas: quedó desactivada' : 'Cuenta eliminada', 'ok'); S.cuentasL = null; S.inicio = null; h.cerrar(); if (S.vista === 'cuentas') R.cuentas();
+  } });
+  bs.push({ t: nuevo ? 'Guardar cuenta' : 'Guardar cambios', cls: 'pri', fn: async () => {
+    if (!st.v) throw new Error('Elige la plataforma');
+    const reg = { id: c.id, plataforma: st.v, nombre: $('#cu-nom', h.el).value.trim(), perfiles: Math.max(1, parseInt($('#cu-per', h.el).value, 10) || 1), correo: $('#cu-cor', h.el).value.trim(), clave: $('#cu-cla', h.el).value.trim(), costo: r2($('#cu-cos', h.el).value), vence: $('#cu-ven', h.el).value, nota: $('#cu-nota', h.el).value.trim() };
+    if (!reg.nombre) throw new Error('Escribe un nombre para identificar la cuenta');
+    if ($('#cu-act', h.el)) reg.activo = $('#cu-act', h.el).checked;
+    if (!reg.id) delete reg.id;
+    await api('guardar', { entidad: 'Cuentas', registro: reg });
+    S.cuentasL = null; S.inicio = null; h.cerrar(); toast(nuevo ? 'Cuenta agregada' : 'Cambios guardados', 'ok');
+    if (S.vista === 'cuentas') R.cuentas(); else if (S.hCobro) { await cargarCuentas(true); S.hCobro.pinta(); }
+  } });
+  h.botones(bs);
+}
+
+/* ---- Bloque de suscripción en el cobro ---- */
+// Devuelve el HTML del bloque para la línea k del ticket (o '' si el producto no es suscripción)
+function susBloqueCobro(k) {
+  const it = S.ticket.items[k], p = it.productoId ? byId(S.productos, it.productoId) : null, ent = susDeProducto(p);
+  if (!ent.length) return '';
+  const sus = S.ticket.sus = S.ticket.sus || {}, d = sus[k] = sus[k] || { meses: 1, vence: mesesSumar(hoy(), 1), asig: [] };
+  const veces = Math.max(1, Math.round(it.cantidad) || 1), filas = [];
+  ent.forEach(e => { for (let i = 0; i < e.n * veces; i++) filas.push(e); });
+  const cu = S.cuentasL;
+  const opciones = (e, j) => {
+    const a = d.asig[j] || {}, l = (cu || []).filter(c => c.activo && c.plataforma.toLowerCase() === e.plataforma.toLowerCase());
+    const usados = d.asig.map((x, i) => i !== j && x.cuentaId ? x.cuentaId + ':' + x.perfil : '').concat(Object.keys(sus).filter(x => Number(x) !== k).flatMap(x => (sus[x].asig || []).map(y => y.cuentaId ? y.cuentaId + ':' + y.perfil : '')));
+    let o = '<option value="">Sin asignar (lo apunto después)</option>';
+    l.forEach(c => {
+      if (e.entrega === 'cuenta') { const libre = !c.completa && !c.ocupados; if (libre || (a.cuentaId === c.id)) o += `<option value="${c.id}:0" ${a.cuentaId === c.id ? 'selected' : ''}>${esc(c.nombre)} · cuenta completa${libre ? '' : ' (ocupada)'}</option>`; return; }
+      if (c.completa) return;
+      c.perfilesL.forEach(pf => { const key = c.id + ':' + pf.n, mia = a.cuentaId === c.id && Number(a.perfil) === pf.n; if ((!pf.susId || mia || pf.estado === 'vencida') && (!usados.includes(key) || mia)) o += `<option value="${key}" ${mia ? 'selected' : ''}>${esc(c.nombre)} · perfil ${pf.n}${pf.susId && !mia ? ' (vencido de ' + esc(pf.cliente || '') + ')' : ' (libre)'}</option>`; });
+    });
+    return o;
+  };
+  return `<div class="sus-box" data-k="${k}"><b>${ic('tv', 18)} Suscripción · ${esc(it.descripcion)}${d.renuevaId ? ' <span class="badge b-ok">Renovación</span>' : ''}</b>
+    <div class="f2"><label class="fld"><span>Plan${p && p.precio ? ' · ' + money(p.precio) + ' por mes' : ''}</span><select class="sus-m" data-k="${k}">${[1, 2, 3, 6, 12].map(n => `<option value="${n}" ${Number(d.meses) === n ? 'selected' : ''}>${n} ${n === 1 ? 'mes' : 'meses'}</option>`).join('')}</select></label><label class="fld"><span>Vence el</span><input type="date" class="sus-v" data-k="${k}" value="${esc(d.vence)}"></label></div>
+    ${cu ? filas.map((e, j) => `<div class="f2 sus-f"><label class="fld"><span>${esc(e.plataforma)} · ${e.entrega === 'cuenta' ? 'cuenta' : 'perfil'}</span><select class="sus-c" data-k="${k}" data-j="${j}">${opciones(e, j)}</select></label><label class="fld"><span>PIN del perfil</span><input class="sus-pin" data-k="${k}" data-j="${j}" maxlength="12" value="${esc((d.asig[j] || {}).pin || '')}" placeholder="Opcional"></label></div>`).join('') : '<small class="hint">Cargando cuentas…</small>'}
+    ${cu && !cu.some(c => c.activo && filas.some(e => e.plataforma.toLowerCase() === c.plataforma.toLowerCase())) ? `<small class="hint">No tienes cuentas de ${esc([...new Set(filas.map(e => e.plataforma))].join(' / '))}. <a data-a="nuevaCuenta" data-p="${esc(filas[0].plataforma)}">Crear cuenta</a> o cobra sin asignar.</small>` : '<small class="hint">Los datos de acceso del perfil van en el comprobante por WhatsApp.</small>'}</div>`;
+}
+function susBindCobro(el, pinta) {
+  const sus = S.ticket.sus || {};
+  $$('.sus-m', el).forEach(s => s.addEventListener('change', () => { const d = sus[s.dataset.k], it = S.ticket.items[s.dataset.k], p = it && byId(S.productos, it.productoId); d.meses = Number(s.value); d.vence = mesesSumar(d.inicio || hoy(), d.meses); if (p && !it.precioMan) it.precio = r2(p.precio * d.meses); guardarTicket(); pinta(); }));
+  $$('.sus-v', el).forEach(i => i.addEventListener('change', () => { sus[i.dataset.k].vence = i.value; guardarTicket(); }));
+  $$('.sus-c', el).forEach(s => s.addEventListener('change', () => {
+    const d = sus[s.dataset.k], j = Number(s.dataset.j), it = S.ticket.items[s.dataset.k], ent = susDeProducto(byId(S.productos, it.productoId));
+    const filas = []; const veces = Math.max(1, Math.round(it.cantidad) || 1); ent.forEach(e => { for (let i = 0; i < e.n * veces; i++) filas.push(e); });
+    const a = d.asig[j] = Object.assign({ plataforma: filas[j].plataforma }, d.asig[j] || {});
+    if (s.value) { const [c, p] = s.value.split(':'); a.cuentaId = c; a.perfil = Number(p); } else { delete a.cuentaId; delete a.perfil; }
+    guardarTicket(); pinta();
+  }));
+  $$('.sus-pin', el).forEach(i => i.addEventListener('input', () => { const d = sus[i.dataset.k], j = Number(i.dataset.j); d.asig[j] = Object.assign({ plataforma: '' }, d.asig[j] || {}, { pin: i.value.trim() }); guardarTicket(); }));
+  if (!S.cuentasL && S.ticket.items.some(i => esSus(byId(S.productos, i.productoId)))) cargarCuentas(true).then(() => { if (S.hCobro) S.hCobro.pinta(); }).catch(() => {});
+}
+// Lo que se manda al servidor con la venta
+function susDatosVenta() {
+  const sus = S.ticket.sus || {}, out = [];
+  S.ticket.items.forEach((it, k) => {
+    const ent = susDeProducto(byId(S.productos, it.productoId)); if (!ent.length) return;
+    const d = sus[k] || { meses: 1 }, veces = Math.max(1, Math.round(it.cantidad) || 1), filas = []; ent.forEach(e => { for (let i = 0; i < e.n * veces; i++) filas.push(e); });
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.vence || '')) throw new Error('Revisa la fecha de vencimiento de «' + it.descripcion + '»');
+    out.push({ idx: k, meses: d.meses || 1, vence: d.vence, renuevaId: d.renuevaId || '', asig: filas.map((e, j) => { const a = (d.asig || [])[j] || {}; return { plataforma: e.plataforma, cuentaId: a.cuentaId || '', perfil: a.perfil === undefined ? '' : a.perfil, pin: a.pin || '' }; }) });
+  });
+  return out;
+}
+function textoAccesos(acc) {
+  if (!acc || !acc.length) return '';
+  return '\n\n*Tus accesos*\n' + acc.map(a => `${a.plataforma}${a.perfil ? ' · perfil ' + a.perfil : a.cuenta ? ' · cuenta completa' : ''}${a.correo ? '\nCorreo: ' + a.correo : ''}${a.clave ? '\nClave: ' + a.clave : ''}${a.pin ? '\nPIN: ' + a.pin : ''}\nVence el ${fFechaC(a.vence)}`).join('\n\n');
+}
+function accesosHTML(acc) {
+  if (!acc || !acc.length) return '';
+  return `<div class="precio-box" style="text-align:left"><h4>${ic('key', 18)} Accesos entregados</h4>${acc.map(a => `<div class="li" style="padding:6px 0">${platAv(a.plataforma)}<div class="tx"><b>${esc(a.plataforma)}${a.perfil ? ' · perfil ' + a.perfil : a.cuenta ? ' · cuenta completa' : ' · sin asignar'}</b><small>${a.correo ? esc(a.correo) + (a.clave ? ' · ' + esc(a.clave) : '') + (a.pin ? ' · PIN ' + esc(a.pin) : '') + ' · ' : ''}vence ${fFechaC(a.vence)}</small></div></div>`).join('')}</div>`;
+}
+
+/* ---- Producto: suscripción o paquete ---- */
+function susFormProducto(p) {
+  const tipo = p.incluye ? 'paq' : p.plataforma ? 'sus' : '';
+  return `<div class="precio-box" id="pf-sus"><h4>${ic('tv', 18)} Suscripción</h4>
+    <div class="seg full" id="pf-st"><button type="button" class="${tipo === '' ? 'on' : ''}" data-s="">No</button><button type="button" class="${tipo === 'sus' ? 'on' : ''}" data-s="sus">Suscripción</button><button type="button" class="${tipo === 'paq' ? 'on' : ''}" data-s="paq">Paquete</button></div>
+    <div id="pf-sus-b"></div></div>`;
+}
+function susFormBind(h, p) {
+  const st = { tipo: p.incluye ? 'paq' : p.plataforma ? 'sus' : '', v: p.plataforma || '', l: leerIncluye(p.incluye).map(x => x.plataforma), entrega: p.entrega === 'cuenta' ? 'cuenta' : 'perfil' };
+  const pinta = () => {
+    const b = $('#pf-sus-b', h.el);
+    b.innerHTML = st.tipo === 'sus' ? `<div class="fld" style="margin-top:10px"><span>Plataforma</span>${platChips(st.v, 'pf-pl')}</div><label class="fld"><span>Qué entrega</span><select id="pf-ent"><option value="perfil" ${st.entrega === 'perfil' ? 'selected' : ''}>1 perfil</option><option value="cuenta" ${st.entrega === 'cuenta' ? 'selected' : ''}>Cuenta completa</option></select></label><small class="hint">Al venderlo, la app pide la fecha de vencimiento y el perfil libre que entregas.</small>`
+      : st.tipo === 'paq' ? `<div class="fld" style="margin-top:10px"><span>Plataformas incluidas (1 perfil de cada una)</span>${platChips(st.l, 'pf-pl', true)}</div><small class="hint">Al vender un paquete, la app pide un perfil por cada plataforma y todas vencen el mismo día.</small>` : '';
+    const ch = $('#pf-pl', h.el); if (ch) platChipsBind(ch, st, st.tipo === 'paq');
+    const e = $('#pf-ent', h.el); if (e) e.addEventListener('change', () => { st.entrega = e.value; });
+    const ctrl = $('#pf-ctrl', h.el); if (st.tipo && ctrl && ctrl.checked) { ctrl.checked = false; ctrl.dispatchEvent(new Event('change')); }
+  };
+  $('#pf-st', h.el).addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; st.tipo = b.dataset.s; $$('#pf-st button', h.el).forEach(x => x.classList.toggle('on', x === b)); pinta(); });
+  pinta();
+  return () => st.tipo === 'sus' ? { plataforma: st.v, entrega: st.v ? st.entrega : '', incluye: '' } : st.tipo === 'paq' ? { plataforma: '', entrega: '', incluye: st.l.map(x => x + ':1').join('|') } : { plataforma: '', entrega: '', incluye: '' };
+}
+
+/* ---- Cambiar tipo de negocio (Ajustes) ---- */
+ACC.cambiarGiro = () => {
+  const act = S.config.giro;
+  const h = hoja({ titulo: 'Cambiar tipo de negocio', html: `<p class="sm mut" style="margin-bottom:10px">Tu negocio es <b>${esc(giroNombre() || 'sin tipo')}</b>. Elige el nuevo tipo:</p><div class="list">${S.giros.map(g => `<div class="li" data-g="${g.id}"><div class="av ${g.id === act ? 't-naranja' : 't-pri'}"><span class="emo">${GIRO_EMO[g.id] || '📦'}</span></div><div class="tx"><b>${esc(g.n)}</b>${g.id === act ? '<small>Actual</small>' : ''}</div><div class="am mut">${g.id === act ? '' : '›'}</div></div>`).join('')}</div>` });
+  h.b.addEventListener('click', e => { const x = e.target.closest('[data-g]'); if (!x || x.dataset.g === act) return; h.cerrar(); confirmarGiro(x.dataset.g); });
+};
+function confirmarGiro(id) {
+  const g = S.giros.find(x => x.id === id), ant = S.giros.find(x => x.id === S.config.giro) || { n: 'sin tipo', cats: [] };
+  const catsAnt = (ant.cats || []).map(c => c.toLowerCase()), nAnt = S.productos.filter(p => p.activo && catsAnt.includes(String(p.categoria).toLowerCase())).length;
+  const fila = (av, t, s) => `<div class="li"><div class="av ${av}">${av === 't-verde' ? '+' : av === 't-pri' ? '↻' : '−'}</div><div class="tx"><b>${t}</b><small>${s}</small></div></div>`;
+  const h = hoja({ titulo: 'Confirmar cambio', html: `<div style="text-align:center;padding:6px 0 10px"><div style="font-size:44px">${GIRO_EMO[ant.id] || '📦'} → ${GIRO_EMO[id] || '📦'}</div><h3 style="margin-top:6px">De ${esc(ant.n)} a ${esc(g.n)}</h3></div>
+    <div class="aviso info sm">${ic('info', 18)}<div><b>Tus datos se conservan.</b> Productos, clientes, ventas, caja y reportes siguen igual; solo cambia lo que la app te muestra.</div></div>
+    <div class="list" style="margin-top:10px">${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Suscripciones') : ''}
+    ${fila('t-pri', 'Categorías nuevas', esc(g.cats.slice(0, 6).join(' · ')))}${opcGiro(id).g.length ? fila('t-pri', 'Opción en productos: ' + esc(opcGiro(id).g[0]), esc(opcGiro(id).ej[0] || '')) : ''}
+    ${nAnt ? fila('t-mut', `Se pueden ocultar ${nAnt} productos de ${esc(ant.n)}`, 'Quedan guardados; abajo eliges si desactivarlos') : ''}</div>
+    <label class="chk" style="margin-top:12px"><input type="checkbox" id="cg-ej" checked> Cargar productos de ejemplo del nuevo tipo</label>
+    ${nAnt ? `<label class="chk"><input type="checkbox" id="cg-des"> Desactivar los ${nAnt} productos del tipo anterior</label>` : ''}` });
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: 'Cambiar tipo de negocio', cls: 'pri', fn: async () => {
+    const r = await api('cambiarGiro', { giro: id, ejemplos: $('#cg-ej', h.el).checked, desactivar: !!($('#cg-des', h.el) && $('#cg-des', h.el).checked) });
+    S.config = r.config; S.productos = r.productos; S.inicio = null; S.susL = null; S.cuentasL = null; guardarCache();
+    h.cerrar(); toast(`Ahora tu negocio es ${g.n}${r.agregados ? ' · ' + r.agregados + ' productos de ejemplo' : ''}`, 'ok', 4000);
+    ir('inicio');
+  } }]);
+}
+
 const NOVEDADES = [
+  { v: '1.8', fecha: '2026-10-21', items: [
+    { i: 'tv', t: 'Negocios de streaming y suscripciones', d: 'Nuevo tipo de negocio. Tus productos pueden ser una suscripción (Netflix, Disney+, IPTV…) o un paquete con varias plataformas. Al cobrar eliges el plan, la fecha de vencimiento y el perfil que entregas; los accesos van en el comprobante por WhatsApp.', ir: 'productos' },
+    { i: 'clock', t: 'Vencimientos', d: 'Qué suscripciones vencen hoy, esta semana o ya vencieron. Con un toque mandas el recordatorio por WhatsApp o renuevas un mes más.', ir: 'vencimientos' },
+    { i: 'key', t: 'Cuentas y perfiles', d: 'Registra tus cuentas madre con sus perfiles; la app te dice cuáles están libres y a quién le diste cada uno.', ir: 'cuentas' },
+    { i: 'store', t: 'Cambia el tipo de negocio cuando quieras', d: 'En Ajustes › Mi negocio › Cambiar. Tus datos se conservan; puedes cargar productos de ejemplo del nuevo tipo y ocultar los del anterior. Si no eres de streaming pero vendes mensualidades, enciende «Vender suscripciones» en Ajustes.', ir: 'ajustes' },
+  ] },
   { v: '1.7', fecha: '2026-10-21', items: [
     { i: 'chat', t: 'Contactar al administrador desde la app', d: 'En Ayuda › Contactar al administrador eliges el motivo (error, duda, prueba y activación, sugerencia…), cuentas qué pasó, adjuntas una captura y te respondemos ahí mismo. Te avisamos con un punto en el botón de Ayuda.' },
     { i: 'sparkle', t: 'Te preguntamos qué tal la prueba', d: 'Al tercer día de prueba aparece en Inicio una tarjeta para contarnos qué te gustó o qué te falta; el día antes de vencer, una para activar tu licencia.' },
@@ -7373,6 +7832,12 @@ const NOVEDADES = [
 
 /* ---------- Guías por pantalla ---------- */
 const AYUDA = {
+  vencimientos: { d: 'Tus suscripciones vendidas con su fecha de vencimiento: cuáles vencen hoy, esta semana o ya vencieron.',
+    p: ['<b>Recordar</b> abre WhatsApp con el aviso listo para el cliente.', '<b>Renovar 1 mes</b> arma el cobro con el mismo producto, cliente y perfil; solo eliges la forma de pago.', 'Toca una suscripción para ver los accesos entregados, reenviarlos o cancelarla.'],
+    t: ['Las vencidas conservan el perfil 7 días para darte tiempo de renovar; después queda libre.'] },
+  cuentas: { d: 'Tus cuentas madre (Netflix, Disney+, IPTV…) con sus perfiles: cuáles están ocupados, por quién y hasta cuándo.',
+    p: ['<b>Nueva cuenta</b>: elige la plataforma (o agrega otra), el correo, la clave y cuántos perfiles vendes.', 'En un perfil <b>libre</b> toca <b>Vender</b> y la app arma el cobro con ese perfil.', 'Toca el encabezado de una cuenta para editarla.'],
+    t: ['Anota la fecha en que la cuenta vence con tu proveedor: la app te avisa cuando pase.'] },
   inicio: { d: 'El resumen de tu negocio: lo que vendiste hoy, tu ganancia, pedidos nuevos y lo que se está agotando.',
     p: ['Toca cualquier tarjeta para ver el detalle.', 'El botón del centro, abajo, abre <b>Vender</b>.', 'Arriba a la izquierda está el <b>menú</b> con todos los módulos.'],
     t: ['Los números se actualizan solos cada vez que vuelves a abrir la app.'] },
@@ -7647,6 +8112,7 @@ const OPC_GIRO = {
   panaderia:  { g: ['Sabor', 'Tamaño'], ej: ['Chocolate, Vainilla', 'Pequeño, Grande'], nota: 'Dedicatoria o detalle', notaEj: 'Feliz cumpleaños, Ana' },
   servicios:  { g: ['Modalidad'], ej: ['A domicilio, En el local'], cita: true },
   tienda:     { g: ['Presentación', 'Sabor'], ej: ['Unidad, Paquete', 'Cola, Naranja'] },
+  streaming:  { g: ['Plan'], ej: ['1 mes, 3 meses, 6 meses'] },
   otro:       { g: ['Opción', 'Color'], ej: ['Pequeño, Grande', 'Negro, Blanco'] }
 };
 const opcGiro = g => OPC_GIRO[g] || OPC_GIRO.otro;
