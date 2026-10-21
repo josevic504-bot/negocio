@@ -5036,7 +5036,7 @@ function cardContactar(n) {
   const t = CONTACTAR_T[n.contactar];
   return `<div class="ord ${n.contactar === 'dia3' || n.contactar === 'vence' ? 'new' : ''}"><div class="ord-h"><span class="oav ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</span><div class="tx"><b>${esc(n.negocio)}</b><small>${t[2]} · ${esc(n.dueno)}${n.sinEntrar >= 2 ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><span class="badge ${t[1]}">${t[0]}</span></div>
     <div class="msg-prev">${esc((P.pl[n.contactar] || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio))}</div>
-    <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waPlantilla(n, n.contactar)}" target="_blank" rel="noopener" data-a="panelWa" data-id="${n.id}" data-t="${n.contactar}">${ic('wa', 16)} WhatsApp</a>${n.contactar === 'vence' || n.contactar === 'vencida' ? `<button class="btn sm" data-a="panelAccion" data-id="${n.id}" data-x="extender">+7 días</button>` : ''}<button class="btn sm pri" style="margin-left:auto" data-a="panelContactado" data-id="${n.id}" data-t="${n.contactar}">Marcar contactado ✓</button></div></div>`;
+    <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waPlantilla(n, n.contactar)}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a>${n.contactar === 'vence' || n.contactar === 'vencida' ? `<button class="btn sm" data-a="panelAccion" data-id="${n.id}" data-x="extender">+7 días</button>` : ''}<button class="btn sm pri" style="margin-left:auto" data-a="panelContactado" data-id="${n.id}" data-t="${n.contactar}">Marcar contactado ✓</button></div></div>`;
 }
 async function panelResumen() {
   panelCab('Panel Molina');
@@ -5054,7 +5054,6 @@ async function panelResumen() {
   $('#pn-q').addEventListener('input', debounce(e => { f.q = e.target.value; pinta(); }, 150)); P.pinta = pinta; pinta();
 }
 ACC.panelFiltro = el => { P.f.est = el.dataset.k; panelResumen(); };
-ACC.panelWa = () => {}; // el enlace abre WhatsApp; se marca con «Marcar contactado»
 ACC.panelContactado = async el => { await api('panelContacto', { id: el.dataset.id, tipo: el.dataset.t, nota: 'Contactado por WhatsApp · ' + (CONTACTAR_T[el.dataset.t] || [''])[0] }); toast('Marcado como contactado', 'ok'); panelResumen(); };
 ACC.panelVer = el => panelFicha(el.dataset.id);
 ACC.panelAccion = async el => { const r = await panelEjecutar(el.dataset.id, el.dataset.x); if (r && !PILA.length) panelResumen(); };
