@@ -436,6 +436,8 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .plat-chips .chip{display:inline-flex;align-items:center;gap:6px}.plat-chips .chip i{width:14px;height:14px;border-radius:4px;display:inline-block;flex:none}
 .sus-box{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--bg)}.sus-box>b{display:flex;align-items:center;gap:6px;margin-bottom:8px}.sus-box .hint a{color:var(--pri);font-weight:600;cursor:pointer}
 .avi-sus{margin-bottom:12px}
+.serie-box{padding:8px 12px}.serie-box .fld{margin:0}.srch.grow{flex:1;margin:0}.seg button.on{background:var(--card);box-shadow:var(--sh)}
+.li .av:has(.ha){display:flex;flex-direction:column;align-items:center;justify-content:center}.li .av .ha{display:block;font-size:11px;font-weight:700;line-height:1.1}.li .av .hb{display:block;font-size:9px;font-weight:600;opacity:.85;line-height:1.1}
 .li-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--h1),var(--h2))}
 .plus-card{background:linear-gradient(150deg,var(--h1),var(--h2));color:#fff;border-radius:24px;padding:18px;margin-bottom:12px;position:relative;overflow:hidden}
 .plus-card:after{content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-80px;top:-90px;background:radial-gradient(closest-side,rgba(255,255,255,.2),transparent)}
@@ -1008,7 +1010,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.8';
+const VERSION = '1.9';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -1035,13 +1037,15 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia'],
   Cuentas:        ['id','plataforma','nombre','correo','clave','perfiles','costo','vence','nota','activo','creado'],
   Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado'],
-  Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado'],
+  Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion'],
-  VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina'],
+  VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia'],
+  Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
+  Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado'],
   Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion'],
   Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion'],
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
@@ -1061,10 +1065,10 @@ const SCHEMA = {
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
   Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
-const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence']);
-const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye']);
+const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa']);
+const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -1076,14 +1080,14 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', suscripciones: '', plataformas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', suscripciones: '', plataformas: '', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
   msjCobro: 'Hola {cliente} 👋, te saluda {negocio}. Te recordamos tu saldo pendiente de {saldo}. ¡Gracias por tu preferencia!',
   // Facturación SAR (autoimpresor): apagada por defecto
   sarActivo: 'no', sarRazon: '', sarRtn: '', sarDireccion: '', sarCai: '', sarEst: '000', sarPunto: '001', sarDesde: '', sarHasta: '', sarLimite: '',
-  seqV: '0', seqC: '0', seqP: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
+  seqV: '0', seqC: '0', seqP: '0', seqO: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
 };
 // Ajustes que el administrador puede cambiar desde la app
 const CONFIG_EDITABLE = Object.keys(CONFIG_DEF).filter(k => k.indexOf('seq') !== 0 && k.indexOf('sys') !== 0 && k.indexOf('sar') !== 0);
@@ -1229,6 +1233,10 @@ function rutaUsuario_(a, u, d, req) {
     case 'suscripciones':   return suscripciones_(u);
     case 'susEstado':       return lock_(() => susEstado_(u, d));
     case 'cambiarGiro':     return lock_(() => cambiarGiro_(u, d));
+    case 'ordenes':         return ordenes_(u, d);
+    case 'ordenGuardar':    return lock_(() => ordenGuardar_(u, d));
+    case 'agenda':          return agenda_(u, d);
+    case 'agendaGuardar':   return lock_(() => agendaGuardar_(u, d));
     case 'caja':            return caja_(u, d);
     case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
     case 'reporte':         return reporte_(u, d);
@@ -1872,11 +1880,114 @@ function registrar_(d) {
   });
 }
 
+/* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
+/* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
+const MODULOS = ['caducidad', 'comanda', 'ordenes', 'series', 'variantes', 'encargos', 'agenda', 'suscripciones'];
+function modOn_(k) { const cfg = config_(); return (MODULOS_GIRO[cfg.giro] || []).indexOf(k) >= 0 || cfg[k] === 'si'; }
+const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
+const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
+
+/* ---- Caducidad: productos por vencer (farmacia, pulpería) ---- */
+function caducan_() {
+  const h = hoy_(), lim = diasAtras_(-30);
+  const l = rows_('Productos').filter(p => p.activo && p.caduca && p.caduca <= lim && (Number(p.stock) > 0 || p.tipo !== 'producto'))
+    .map(p => ({ id: p.id, nombre: p.nombre, caduca: p.caduca, stock: p.stock, vencido: p.caduca < h }))
+    .sort((a, b) => a.caduca < b.caduca ? -1 : 1);
+  return { n: l.length, vencidos: l.filter(x => x.vencido).length, lista: l.slice(0, 8) };
+}
+
+/* ---- Órdenes de trabajo (taller, repuestos, servicios técnicos) ---- */
+function ordenes_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const lim = diasAtras_(90) + 'T00:00';
+  const l = rows_('Ordenes').filter(o => ['recibido', 'proceso', 'listo'].indexOf(o.estado) >= 0 || o.creado >= lim);
+  return desc_(l, 'creado');
+}
+function ordenGuardar_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const r = Object.assign({}, d.registro || {});
+  const prev = r.id ? rows_('Ordenes').find(x => x.id === r.id) : null;
+  if (r.id && !prev) throw new Error('La orden ya no existe');
+  if (prev && prev.estado === 'entregado' && r.estado !== 'entregado' && u.rol !== 'admin') throw new Error('Una orden entregada ya no se cambia');
+  ['cliente', 'telefono', 'equipo', 'placa'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
+  ['falla', 'diagnostico', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
+  if (r.clienteId !== undefined) {
+    const c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null;
+    if (r.clienteId && !c) throw new Error('El cliente ya no existe');
+    if (c) { r.cliente = c.nombre; r.telefono = c.telefono; if (r.equipo && !c.equipo) upsert_('Clientes', { id: c.id, equipo: r.equipo + (r.placa ? ' · ' + r.placa : '') }); }
+  }
+  if (!prev && !r.cliente && !r.clienteId) throw new Error('Escribe el nombre del cliente');
+  if (!prev && !r.equipo) throw new Error('Escribe qué equipo o vehículo recibes');
+  if (r.estado !== undefined && EST_ORDEN.indexOf(r.estado) < 0) throw new Error('Estado no válido');
+  if (r.anticipo !== undefined) r.anticipo = r2_(r.anticipo);
+  if (r.presupuesto !== undefined) r.presupuesto = r2_(r.presupuesto);
+  if (r.promesa !== undefined && r.promesa && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.promesa))) r.promesa = '';
+  if (!prev) { r.numero = siguiente_('O'); r.estado = r.estado || 'recibido'; r.usuarioId = u.id; r.creado = ahora_(); }
+  r.actualizado = ahora_();
+  if (r.anticipo && !prev) {
+    // El anticipo entra a caja como un abono sin venta: se registra en la nota para no perderlo
+    r.nota = (r.nota ? r.nota + ' · ' : '') + 'Anticipo ' + money_(r.anticipo, config_());
+  }
+  return upsert_('Ordenes', r);
+}
+function ordenResumen_() {
+  const l = rows_('Ordenes'), h = hoy_();
+  return { recibido: l.filter(o => o.estado === 'recibido').length, proceso: l.filter(o => o.estado === 'proceso').length, listo: l.filter(o => o.estado === 'listo').length,
+    atrasadas: l.filter(o => ['recibido', 'proceso'].indexOf(o.estado) >= 0 && o.promesa && o.promesa < h).length };
+}
+
+/* ---- Agenda: citas (belleza, servicios) y encargos (panadería, comida) ---- */
+function agenda_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const desde = d.desde && /^\d{4}-\d{2}-\d{2}$/.test(d.desde) ? d.desde : diasAtras_(7), hasta = d.hasta && /^\d{4}-\d{2}-\d{2}$/.test(d.hasta) ? d.hasta : diasAtras_(-60);
+  const tipo = d.tipo === 'encargo' ? 'encargo' : d.tipo === 'cita' ? 'cita' : '';
+  return rows_('Agenda').filter(a => (!tipo || a.tipo === tipo) && ((a.dia >= desde && a.dia <= hasta) || a.estado === 'pendiente'))
+    .sort((a, b) => (a.dia + ' ' + a.hora) < (b.dia + ' ' + b.hora) ? -1 : 1);
+}
+function agendaGuardar_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const r = Object.assign({}, d.registro || {});
+  const prev = r.id ? rows_('Agenda').find(x => x.id === r.id) : null;
+  if (r.id && !prev) throw new Error('El registro ya no existe');
+  if (r.tipo !== undefined) r.tipo = r.tipo === 'encargo' ? 'encargo' : 'cita';
+  if (!prev && !r.tipo) r.tipo = 'cita';
+  ['cliente', 'telefono', 'atiende'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
+  ['detalle', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
+  if (r.clienteId !== undefined) {
+    const c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null;
+    if (r.clienteId && !c) throw new Error('El cliente ya no existe');
+    if (c) { r.cliente = c.nombre; r.telefono = c.telefono; }
+  }
+  if (!prev && !r.cliente && !r.clienteId) throw new Error('Escribe el nombre del cliente');
+  if (r.dia !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.dia))) throw new Error('Elige el día');
+  if (!prev && !r.dia) throw new Error('Elige el día');
+  if (r.hora !== undefined) { r.hora = String(r.hora || '').slice(0, 5); if (r.hora && !/^\d{2}:\d{2}$/.test(r.hora)) throw new Error('Hora no válida'); }
+  if (r.productoId !== undefined) { const p = r.productoId ? rows_('Productos').find(x => x.id === r.productoId) : null; if (r.productoId && !p) throw new Error('El producto ya no existe'); if (p && !r.detalle) r.detalle = p.nombre; if (p && r.monto === undefined) r.monto = p.precio; }
+  if (!prev && !r.detalle) throw new Error((r.tipo === 'encargo' ? 'Escribe qué encargó' : 'Escribe el servicio'));
+  if (r.monto !== undefined) r.monto = r2_(r.monto);
+  if (r.anticipo !== undefined) r.anticipo = r2_(r.anticipo);
+  if (r.estado !== undefined && EST_AGENDA.indexOf(r.estado) < 0) throw new Error('Estado no válido');
+  if (!prev) { r.estado = r.estado || 'pendiente'; r.usuarioId = u.id; r.creado = ahora_(); }
+  r.actualizado = ahora_();
+  return upsert_('Agenda', r);
+}
+function agendaResumen_(tipo) {
+  const h = hoy_(), l = rows_('Agenda').filter(a => a.tipo === tipo && a.estado === 'pendiente');
+  const hoyL = l.filter(a => a.dia === h).sort((a, b) => a.hora < b.hora ? -1 : 1), man = l.filter(a => a.dia === diasAtras_(-1)).length, atras = l.filter(a => a.dia < h).length;
+  return { hoy: hoyL.length, manana: man, atrasados: atras, lista: hoyL.slice(0, 6).map(a => ({ id: a.id, hora: a.hora, cliente: a.cliente, detalle: a.detalle, atiende: a.atiende, anticipo: a.anticipo, monto: a.monto })), montoHoy: r2_(hoyL.reduce((t, a) => t + (Number(a.monto) || 0), 0)) };
+}
+// Al cobrar una venta ligada a una orden, cita o encargo, se cierra solo
+function cerrarLigados_(d, venta) {
+  if (d.ordenId) { const o = rows_('Ordenes').find(x => x.id === d.ordenId); if (o && o.estado !== 'entregado') upsert_('Ordenes', { id: o.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
+  if (d.agendaId) { const a = rows_('Agenda').find(x => x.id === d.agendaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
+}
+
 /* ===================== SUSCRIPCIONES (streaming, mensualidades) ===================== */
 /* Para negocios que venden Netflix, Disney+, IPTV, gimnasio, internet…: cada venta de una suscripción queda con fecha de vencimiento,
  * la cuenta/perfil que se entregó y los datos de acceso. Las cuentas madre viven en la hoja «Cuentas». */
 const PLATAFORMAS_DEF = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
-function susActivas_() { const cfg = config_(); return cfg.giro === 'streaming' || cfg.suscripciones === 'si'; }
+function susActivas_() { return modOn_('suscripciones'); }
 // "Netflix:1|Disney+:1" → [{ plataforma, n }]
 function incluye_(t) { return String(t || '').split('|').map(x => x.trim()).filter(Boolean).map(x => { const p = x.split(':'); return { plataforma: txt_(p[0], 40), n: Math.max(1, Math.min(10, parseInt(p[1], 10) || 1)) }; }).filter(x => x.plataforma).slice(0, 6); }
 function susDeProducto_(p) { // qué se entrega al vender este producto: una lista de plataformas
@@ -2265,6 +2376,8 @@ function guardar_(u, d) {
     if (r.entrega !== undefined) r.entrega = r.entrega === 'cuenta' ? 'cuenta' : (r.entrega ? 'perfil' : '');
     if (r.incluye !== undefined) r.incluye = incluye_(r.incluye).map(x => x.plataforma + ':' + x.n).join('|');
     if ((r.plataforma || r.incluye) && !prev) r.tipo = 'servicio';
+    if (r.caduca !== undefined && r.caduca && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.caduca))) r.caduca = '';
+    if (r.garantia !== undefined) r.garantia = Math.max(0, Math.min(3650, parseInt(r.garantia, 10) || 0));
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
     const stockIni = r.stock;
     delete r.stock;
@@ -2280,6 +2393,7 @@ function guardar_(u, d) {
     }
     return g;
   }
+  if (ent === 'Clientes' && r.equipo !== undefined) r.equipo = txt_(r.equipo, 120);
   if (ent === 'Clientes') {
     if (u.rol !== 'admin') delete r.limite; // el límite de crédito lo pone solo el administrador
     if (r.limite !== undefined) r.limite = Math.max(0, r2_(r.limite));
@@ -2561,10 +2675,10 @@ function venta_(u, d) {
       if (Math.abs(precio - p.precio) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005)) precio = delPedido !== undefined ? delPedido : p.precio;
     }
     if (precio < 0) throw new Error('Precio no válido');
-    const desc = p ? p.nombre : txt_(i.descripcion, 80);
+    const desc = p ? p.nombre + (i.variante ? ' · ' + txt_(i.variante, 60) : '') : txt_(i.descripcion, 80);
     if (!desc) throw new Error('Escribe la descripción del artículo');
     if (!p && !(i.costo === undefined || i.costo === '' || i.costo === null) && !(Number(i.costo) >= 0)) throw new Error('El costo de «' + desc + '» no es válido');
-    return { p: p, productoId: p ? p.id : '', descripcion: desc, cantidad: cant, precio: precio, costo: p ? p.costo : r4_(Math.max(0, Number(i.costo) || 0)) };
+    return { p: p, productoId: p ? p.id : '', descripcion: desc, cantidad: cant, precio: precio, costo: p ? p.costo : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
   });
   if (!items.length) throw new Error('El ticket está vacío');
   // Existencias
@@ -2637,11 +2751,11 @@ function venta_(u, d) {
     id: newId_('Ventas'), numero: siguiente_('V'), fecha: fecha, clienteId: clienteId, usuarioId: u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
     recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200),
-    factura: factura, fiscal: fiscal
+    factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200)
   };
   const detalle = items.map((i, k) => ({
     id: newId_('VentaDetalle') + k, ventaId: venta.id, productoId: i.productoId, descripcion: i.descripcion,
-    cantidad: i.cantidad, precio: r2_(i.precio), costo: r4_(i.costo || 0), total: r2_(i.cantidad * i.precio)
+    cantidad: i.cantidad, precio: r2_(i.precio), costo: r4_(i.costo || 0), total: r2_(i.cantidad * i.precio), serie: i.serie || '', garantia: i.garantia || ''
   }));
   appendRows_('Ventas', [venta]);
   appendRows_('VentaDetalle', detalle);
@@ -2650,6 +2764,7 @@ function venta_(u, d) {
   moverStock_(cambios, 'venta', venta.id, u, venta.numero, fecha);
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   const nuevasSus = susRegistrar_(u, d, venta, items, pm);
+  cerrarLigados_(d, venta);
   if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} }
   return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
 }
@@ -3095,6 +3210,12 @@ function cerrarCaja_(u, d) {
 function inicio_(u) {
   const h = hoy_(), mes = h.slice(0, 7), out = { rol: u.rol }, vent = ventanaMs_();
   if (u.rol !== 'bodega' && susActivas_()) { try { out.sus = susResumen_(); } catch (e) {} }
+  try {
+    if (modOn_('caducidad')) out.caducan = caducan_();
+    if (modOn_('ordenes')) out.ordenes = ordenResumen_();
+    if (modOn_('agenda')) out.agenda = agendaResumen_('cita');
+    if (modOn_('encargos')) out.encargos = agendaResumen_('encargo');
+  } catch (e) {}
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada);
     const vh = ventas.filter(v => v.fecha.slice(0, 10) === h && (u.rol === 'admin' || v.usuarioId === u.id));
@@ -4284,6 +4405,8 @@ const ICP = {
   barcode: '<path d="M4 5v14M7 5v14M10.5 5v14M13 5v14M16.5 5v14M20 5v14"/>',
   info: '<circle cx="12" cy="12" r="9.5"/><path d="M12 11v6M12 7.5v.5"/>',
   tv: '<rect x="3" y="6" width="18" height="12.5" rx="2.5"/><path d="M8 21.5h8M8 2.5l4 3.5 4-3.5"/>',
+  wrench: '<path d="M14.5 6.5a4.5 4.5 0 0 0 5.6 5.6L21 13 11 23l-2-2-7-7 10-10 2 2 .5-.5zM3 21l4-4"/><path d="M14 6l4 4"/>',
+  gift: '<rect x="3" y="8" width="18" height="5" rx="1.5"/><path d="M5 13v8h14v-8M12 8v13M12 8s-1.5-5-4.5-5a2 2 0 0 0 0 4H12zM12 8s1.5-5 4.5-5a2 2 0 0 1 0 4H12z"/>',
   alert: '<path d="M12 3.5L2.5 20h19z"/><path d="M12 10v4.5M12 17.3v.1"/>',
   inbox: '<path d="M3 13l2.5-8h13L21 13v6H3z"/><path d="M3 13h5l1.5 2.5h5L16 13h5"/>',
   percent: '<path d="M19 5L5 19"/><circle cx="7" cy="7" r="2.5"/><circle cx="17" cy="17" r="2.5"/>',
@@ -4434,7 +4557,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.8';
+const APP_VER = '1.9';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -4760,6 +4883,9 @@ const VISTAS = {
   precios:     { t: 'Precios', i: 'tag', roles: ['admin', 'bodega'] },
   proyectos:   { t: 'Proyectos', i: 'layers', roles: ['admin', 'bodega'] },
   clientes:    { t: 'Clientes', i: 'users', roles: ['admin', 'cajero'] },
+  ordenes:     { t: 'Órdenes de trabajo', c: 'Órdenes', i: 'wrench', roles: TODOS, si: () => modOn('ordenes') },
+  agenda:      { t: 'Agenda de citas', c: 'Agenda', i: 'cal', roles: TODOS, si: () => modOn('agenda') },
+  encargos:    { t: 'Encargos', i: 'gift', roles: TODOS, si: () => modOn('encargos') },
   vencimientos:{ t: 'Vencimientos', i: 'clock', roles: ['admin', 'cajero'], si: () => susOn() },
   cuentas:     { t: 'Cuentas y perfiles', c: 'Cuentas', i: 'key', roles: ['admin', 'cajero'], si: () => susOn() },
   proveedores: { t: 'Proveedores', i: 'truck', roles: ['admin', 'bodega'] },
@@ -4771,7 +4897,7 @@ const VISTAS = {
   usuarios:    { t: 'Usuarios', i: 'user', roles: ['admin'] },
   ajustes:     { t: 'Ajustes', i: 'gear', roles: TODOS }
 };
-const NAV_PC = ['inicio', 'vender', 'pedidos', 'mensajes', 'tienda', 'productos', 'vencimientos', 'cuentas', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
+const NAV_PC = ['inicio', 'vender', 'pedidos', 'ordenes', 'agenda', 'encargos', 'mensajes', 'tienda', 'productos', 'vencimientos', 'cuentas', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
 const R = {}; // funciones que pintan cada vista
 const puedeVer = v => VISTAS[v] && VISTAS[v].roles.includes(S.user.rol) && (!VISTAS[v].si || VISTAS[v].si());
 
@@ -5365,6 +5491,10 @@ R.inicio = () => {
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus ✦', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
+    if (d.ordenes && modOn('ordenes')) tiles += tile('t-azul', 'wrench', 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : (d.ordenes.recibido + d.ordenes.proceso) + ' abiertas', d.ordenes.atrasadas ? d.ordenes.atrasadas + ' atrasadas' : d.ordenes.proceso + ' en proceso · ' + d.ordenes.recibido + ' recibidas', ['ir', 'ordenes']);
+    if (d.agenda && modOn('agenda')) tiles += tile('t-cian', 'cal', 'Citas de hoy', String(d.agenda.hoy), d.agenda.atrasados ? d.agenda.atrasados + ' sin cerrar' : d.agenda.manana + ' mañana', ['ir', 'agenda']);
+    if (d.encargos && modOn('encargos')) tiles += tile('t-naranja', 'gift', 'Entregas de hoy', String(d.encargos.hoy), d.encargos.atrasados ? d.encargos.atrasados + ' sin entregar' : d.encargos.manana + ' mañana', ['ir', 'encargos']);
+    if (d.caducan && modOn('caducidad') && (rol === 'admin')) tiles += tile('t-rojo', 'alert', 'Por caducar', d.caducan.n === 1 ? '1 producto' : d.caducan.n + ' productos', d.caducan.vencidos ? d.caducan.vencidos + ' ya vencidos' : 'En los próximos 30 días', ['ir', 'productos', { filtro: 'caducan' }]);
     if (d.sus && susOn()) {
       tiles += tile('t-pri', 'clock', 'Vencimientos', d.sus.semana + d.sus.hoy ? (d.sus.semana + d.sus.hoy) + ' esta semana' : d.sus.vencidas ? d.sus.vencidas + ' vencidas' : 'Al día', d.sus.vencidas ? d.sus.vencidas + ' vencidas · ' + money(d.sus.montoVencidas) : d.sus.activas + ' activas', ['ir', 'vencimientos']);
       tiles += tile('t-verde', 'key', 'Cuentas y perfiles', d.sus.ocupados + ' / ' + d.sus.perfiles, d.sus.perfiles - d.sus.ocupados === 1 ? '1 perfil libre' : (d.sus.perfiles - d.sus.ocupados) + ' perfiles libres', ['ir', 'cuentas']);
@@ -5384,6 +5514,15 @@ R.inicio = () => {
       tile('t-pri', 'box', 'Productos', String(d.stock.productos), 'Con control de existencias', ['ir', 'productos']) +
       tile('t-verde', 'truck', 'Proveedores', String(S.proveedores.filter(p => p.activo).length), 'Contactos y compras', ['ir', 'proveedores']);
     listas += `<div class="sec-t"><h3>Movimientos de inventario</h3><a data-a="ir" data-v="productos">Productos</a></div><div class="list">${(d.movimientos || []).map(x => `<div class="li"><div class="av ${x.cantidad >= 0 ? 't-verde' : 't-rojo'}">${ic(x.cantidad >= 0 ? 'down' : 'up', 20)}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${esc(cap(x.tipo))} · ${esc(x.nota || '')} · ${hace(x.fecha)}</small></div><div class="am n ${x.cantidad >= 0 ? 'pos' : 'neg'}">${x.cantidad > 0 ? '+' : ''}${cant(x.cantidad)}</div></div>`).join('') || '<div class="empty">Sin movimientos todavía</div>'}</div>`;
+  }
+  if (d.caducan && modOn('caducidad') && rol === 'bodega') tiles += tile('t-rojo', 'alert', 'Por caducar', d.caducan.n === 1 ? '1 producto' : d.caducan.n + ' productos', d.caducan.vencidos ? d.caducan.vencidos + ' ya vencidos' : 'En los próximos 30 días', ['ir', 'productos', { filtro: 'caducan' }]);
+  ['agenda', 'encargos'].forEach(k => {
+    if (!(d[k] && modOn(k) && d[k].lista.length)) return;
+    const C = agendaCfg(k === 'agenda' ? 'cita' : 'encargo');
+    listas += `<div class="sec-t"><h3>${k === 'agenda' ? 'Citas de hoy' : 'Entregas de hoy'}</h3><a data-a="ir" data-v="${k}">Ver ${k}</a></div><div class="list">${d[k].lista.map(a => `<div class="li" data-a="verAgendaInicio" data-id="${a.id}" data-t="${C.uno}"><div class="av t-pri">${a.hora ? horaAv(a.hora) : esc(iniciales(a.cliente))}</div><div class="tx"><b>${esc(a.cliente)}</b><small>${esc(a.detalle)}${a.atiende ? ' · ' + esc(a.atiende) : ''}</small></div>${a.monto ? `<div class="am n">${money(a.monto)}</div>` : ''}</div>`).join('')}</div>`;
+  });
+  if (d.caducan && modOn('caducidad') && d.caducan.lista.length && rol !== 'cajero') {
+    listas += `<div class="sec-t"><h3>Por caducar</h3><a data-a="ir" data-v="productos" data-p='{"filtro":"caducan"}'>Ver todos</a></div><div class="list">${d.caducan.lista.map(p => `<div class="li" data-a="verProducto" data-id="${p.id}"><div class="av ${p.vencido ? 't-rojo' : 't-naranja'}">${ic('alert', 20)}</div><div class="tx"><b>${esc(p.nombre)}</b><small>${p.vencido ? 'Venció el ' : 'Caduca el '}${fFechaC(p.caduca)} · ${cant(p.stock)} en existencia</small></div><span class="badge ${p.vencido ? 'b-bad' : 'b-warn'}">${p.vencido ? 'Vencido' : fFechaC(p.caduca)}</span></div>`).join('')}</div>`;
   }
   if ((rol === 'admin' || rol === 'bodega') && d.proyectos && d.proyectos.length) {
     listas += `<div class="sec-t"><h3>Proyectos en curso</h3><a data-a="ir" data-v="proyectos">${d.proyectosN > d.proyectos.length ? 'Ver los ' + d.proyectosN : 'Ver todos'}</a></div><div class="list">${d.proyectos.map(p => `<div class="li pj-li ${p.semaforo}" data-a="verProyecto" data-id="${p.id}"><div class="av"><span class="emo">${ic('layers', 20)}</span></div><div class="tx"><b>${esc(p.nombre)}</b><small>${p.unidades ? cant(p.unidades) + ' u · ' : ''}invertido ${money(p.costo)}</small></div><div class="am"><span class="pj-pill">${p.pct === null ? 'Sin precio' : pctTxt(p.pct)}</span></div></div>`).join('')}</div>`;
@@ -5425,11 +5564,11 @@ function calcTotales(t, exo) {
   return { subtotal, descuento, isv, total: r2(F.ex + F.exo + F.g15 + F.g18 + isv), n: t.items.reduce((a, i) => a + i.cantidad, 0) };
 }
 const enTicket = id => S.ticket.items.filter(i => i.productoId === id).reduce((a, i) => a + i.cantidad, 0);
-function agregarAlTicket(p, n) {
+function agregarAlTicket(p, n, variante) {
   n = n || 1;
   if (p.tipo === 'producto' && S.config.venderSinStock !== 'si' && enTicket(p.id) + n > p.stock) { toast(p.stock <= 0 ? '«' + p.nombre + '» está agotado' : 'Solo hay ' + cant(p.stock) + ' de «' + p.nombre + '»', 'error'); return false; }
-  const it = S.ticket.items.find(i => i.productoId === p.id && !i.precioMan);
-  if (it) it.cantidad = r2(it.cantidad + n); else S.ticket.items.push({ productoId: p.id, descripcion: p.nombre, cantidad: n, precio: p.precio });
+  const it = S.ticket.items.find(i => i.productoId === p.id && !i.precioMan && (i.variante || '') === (variante || ''));
+  if (it) it.cantidad = r2(it.cantidad + n); else S.ticket.items.push({ productoId: p.id, descripcion: p.nombre + (variante ? ' · ' + variante : ''), cantidad: n, precio: p.precio, variante: variante || '' });
   guardarTicket();
   try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
   return true;
@@ -5483,7 +5622,7 @@ function pintarCartBar() {
   b.innerHTML = `<button class="cartbar" data-a="abrirCobro"><span class="ci">${ic('cart', 22)}<b>${cant(t.n)}</b></span><span class="ct"><small>${t.n === 1 ? '1 artículo' : cant(t.n) + ' artículos'}${S.ticket.clienteId ? ' · ' + esc(nomCliente(S.ticket.clienteId)) : ''}</small><strong class="n">${money(t.total)}</strong></span><span class="go">Cobrar ${ic('arrow', 18)}</span></button>`;
 }
 ACC.vcat = el => { S.f.vcat = el.dataset.c; $$('#v-cats .chip').forEach(c => c.classList.toggle('on', c === el)); pintarGridVenta(); };
-ACC.vadd = el => { const p = byId(S.productos, el.dataset.id); if (p && agregarAlTicket(p)) pintarGridVenta(); };
+ACC.vadd = async el => { const p = byId(S.productos, el.dataset.id); if (!p) return; let v = ''; if (modOn('variantes') && p.opciones) { v = await elegirVariante(p); if (v === null) return; } if (agregarAlTicket(p, 1, v)) pintarGridVenta(); };
 ACC.limpiarTicket = async () => { if (!S.ticket.items.length || await confirmar('¿Vaciar el ticket?', { si: 'Vaciar' })) { S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket(); if (S.vista === 'vender') R.vender(); } };
 ACC.abrirCobro = () => abrirCobro();
 ACC.itemLibre = () => {
@@ -5538,8 +5677,9 @@ function abrirCobro() {
         <label class="fld"><span>Nombre en la factura</span><input id="cb-nf" maxlength="100" value="${esc(fz.nombre !== undefined ? fz.nombre : (cli ? cli.nombre : ''))}" placeholder="Consumidor Final"></label></div>
         <label class="chk"><input type="checkbox" id="cb-exo" ${exo ? 'checked' : ''}> Cliente exonerado (sin ISV)</label>
         ${exo ? `<div class="f3" style="margin-top:8px"><label class="fld"><span>N.º orden de compra exenta</span><input id="cb-oce" value="${esc(fz.oce || '')}"></label><label class="fld"><span>N.º constancia de exonerado</span><input id="cb-cre" value="${esc(fz.cre || '')}"></label><label class="fld"><span>N.º registro SAG</span><input id="cb-sag" value="${esc(fz.sag || '')}"></label></div>` : ''}</div>` : ''}
+      ${modOn('comanda') ? comandaBloque() : ''}
       <div class="tks">${S.ticket.items.map((i, k) => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${admin || !i.productoId ? `<a data-a="cbPrecio" data-k="${k}">${money(i.precio)} c/u ✎</a>` : money(i.precio) + ' c/u'}</small></div>
-        <div class="qty"><button data-a="cbQ" data-k="${k}" data-d="-1">−</button><span data-a="cbCant" data-k="${k}" title="Escribir la cantidad">${cant(i.cantidad)}</span><button data-a="cbQ" data-k="${k}" data-d="1">+</button></div><b class="n tkt">${money(i.cantidad * i.precio)}</b></div>${susOn() ? susBloqueCobro(k) : ''}`).join('')}</div>
+        <div class="qty"><button data-a="cbQ" data-k="${k}" data-d="-1">−</button><span data-a="cbCant" data-k="${k}" title="Escribir la cantidad">${cant(i.cantidad)}</span><button data-a="cbQ" data-k="${k}" data-d="1">+</button></div><b class="n tkt">${money(i.cantidad * i.precio)}</b></div>${susOn() ? susBloqueCobro(k) : ''}${modOn('series') ? serieCampo(k) : ''}`).join('')}</div>
       <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(t.subtotal)}</b></div>
         <div class="tot"><span>Descuento <a data-a="cbDesc">${t.descuento ? 'cambiar' : 'agregar'}</a></span><b class="n">${t.descuento ? '− ' + money(t.descuento) : '—'}</b></div>
         <div class="tot"><span>${exo ? 'ISV (cliente exonerado)' : `ISV ${S.config.preciosConISV !== 'no' ? 'incluido' : ''} (${Math.round(num(S.config.isv) * 100)}%)`}</span><b class="n">${money(t.isv)}</b></div>
@@ -5571,6 +5711,10 @@ function abrirCobro() {
     }
     $('#cb-nota', h.el).addEventListener('input', e => { S.ticket.nota = e.target.value; });
     if (susOn()) susBindCobro(h.el, pinta);
+    $$('.cb-serie', h.el).forEach(i => i.addEventListener('input', () => { S.ticket.items[i.dataset.k].serie = i.value; }));
+    const mesa = $('#cb-mesa', h.el), cocina = $('#cb-cocina', h.el);
+    if (mesa) mesa.addEventListener('input', () => { S.ticket.mesa = mesa.value; });
+    if (cocina) cocina.addEventListener('input', () => { S.ticket.cocina = cocina.value; });
     h.botones([{ t: `${ic('check')} Cobrar ${money(t.total)}`, cls: 'pri big', fn: cobrar }]);
   };
   h.pinta = pinta;
@@ -5580,8 +5724,9 @@ function abrirCobro() {
   const cobrar = async () => {
     const fz = S.ticket.fiscal || {}, exo = sarOn() && fz.exonerado;
     const t = calcTotales(S.ticket, exo);
-    const datos = { items: S.ticket.items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio })),
-      clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '' };
+    const datos = { items: S.ticket.items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, variante: i.variante || '', serie: i.serie || '' })),
+      clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '', ordenId: S.ticket.ordenId || '', agendaId: S.ticket.agendaId || '' };
+    if (modOn('comanda')) { datos.servicio = S.ticket.servicio || 'mesa'; datos.mesa = S.ticket.mesa || ''; datos.cocina = S.ticket.cocina || ''; }
     if (susOn()) { const sd = susDatosVenta(); if (sd.length) datos.sus = sd; }
     if (!S.ticket.clave) { S.ticket.clave = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); guardarTicket(); }
     datos.clave = S.ticket.clave;
@@ -5598,7 +5743,7 @@ function abrirCobro() {
     S.productos = r.productos;
     if (S.ticket.clienteId) { const c = byId(S.clientes, S.ticket.clienteId); if (c) c.saldo = r.saldoCliente; }
     S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket();
-    S.inicio = null; S.pedidosL = null; S.susL = null; S.cuentasL = null; guardarCache();
+    S.inicio = null; S.pedidosL = null; S.susL = null; S.cuentasL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; guardarCache();
     h.onClose = null; h.cerrar(); S.hCobro = null;
     if (S.vista === 'vender') R.vender();
     if (r.repetida) toast('Esta venta ya se había registrado: no se cobró dos veces', 'ok', 5000);
@@ -5653,7 +5798,7 @@ function ventaLista(v, det, accesos) {
   const h = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic('check', 40)}</i><h2>${v.factura ? '¡Factura emitida!' : '¡Venta registrada!'}</h2><p class="mut">${v.factura ? 'Factura ' + esc(v.factura) : esc(v.numero)} · ${esc(v.metodo)}${cli ? ' · ' + esc(cli.nombre) : ''}</p>
     <div class="ok-tot n">${money(v.total)}</div>${v.metodo === 'Efectivo' && v.cambio > 0 ? `<div class="cambio"><span>Cambio</span><b class="n">${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' ? `<div class="cambio warn"><span>Queda debiendo</span><b class="n">${money(v.saldo)}</b></div>` : ''}</div>
     ${accesosHTML(accesos)}
-    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, det) + textoAccesos(accesos))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
+    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${modOn('comanda') && v.servicio ? `<button class="btn" data-a="comanda">${ic('receipt', 18)} Comanda</button>` : ''}${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, det) + textoAccesos(accesos))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
   S.ultVenta = { v, det };
   h.botones([{ t: `${ic('cart')} Nueva venta`, cls: 'pri big', fn: () => h.cerrar() }]);
 }
@@ -5667,12 +5812,13 @@ function detalleVenta(v) {
   const fz = fiscalDe(v);
   const h = hoja({ titulo: v.factura ? 'Factura ' + esc(v.factura) : 'Venta ' + esc(v.numero), html: `${v.anulada ? `<div class="aviso bad">${ic('x', 18)}<div><b>${v.factura ? 'Factura anulada' : 'Venta anulada'}</b><small>${esc(v.nota)}</small></div></div>` : ''}
     <div class="kv"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(fz ? fz.nombre : cli ? cli.nombre : 'Consumidor final')}</div>${fz ? `<div><small>RTN del cliente</small>${esc(fmtRtn(fz.rtn)) || '—'}</div><div><small>Venta interna</small>${esc(v.numero)}</div>` : ''}<div><small>Atendió</small>${esc(nomUsuario(v.usuarioId))}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
-    <div class="tks">${v.detalle.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}</small></div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
+    <div class="tks">${v.detalle.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}${i.serie ? ' · serie ' + esc(i.serie) : ''}${i.garantia ? ' · garantía hasta ' + fFechaC(garantiaHasta(v.fecha, i.garantia)) : ''}</small></div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
+    ${v.servicio ? `<p class="sm mut">${v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio'}${v.cocina ? ' · cocina: ' + esc(v.cocina) : ''}</p>` : ''}
     <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(v.subtotal)}</b></div>${v.descuento ? `<div class="tot"><span>Descuento</span><b class="n">− ${money(v.descuento)}</b></div>` : ''}<div class="tot"><span>ISV</span><b class="n">${money(v.isv)}</b></div><div class="tot g"><span>Total</span><b class="n">${money(v.total)}</b></div>
     ${v.metodo === 'Efectivo' ? `<div class="tot"><span>Recibido · cambio</span><b class="n">${money(v.recibido)} · ${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' && !v.anulada ? `<div class="tot"><span>Anticipo · saldo pendiente</span><b class="n">${money(v.recibido)} · ${money(v.saldo)}</b></div>` : ''}
     ${puede('admin') ? `<div class="tot"><span>Costo · ganancia</span><b class="n">${money(v.costo)} · ${money(v.total - v.isv - v.costo)}</b></div>` : ''}</div>
     ${v.nota && !v.anulada ? `<p class="sm mut">Nota: ${esc(v.nota)}</p>` : ''}
-    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, v.detalle))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
+    <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${modOn('comanda') && v.servicio ? `<button class="btn" data-a="comanda">${ic('receipt', 18)} Comanda</button>` : ''}${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, v.detalle))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
   if (puede('admin') && !v.anulada) h.botones([{ t: 'Anular venta', cls: 'bad', fn: async () => {
     const m = await pedirTexto('Anular ' + (v.factura || v.numero), { label: 'Motivo', msg: v.factura ? 'Las existencias vuelven al inventario. La factura queda anulada con su número (no se vuelve a usar) y aparece en el libro de ventas para avisarla al SAR.' : 'Las existencias vuelven al inventario. La venta queda registrada como anulada.', si: 'Anular venta', peligro: 1 });
     if (m === null) return;
@@ -5884,7 +6030,7 @@ R.productos = () => {
   const valor = ctrl.reduce((a, p) => a + Math.max(0, p.stock) * p.costo, 0);
   const cats = catsUsadas();
   const sinFoto = act.filter(p => !p.foto).length;
-  const fil = [['', 'Todos'], ['bajos', 'Por agotarse'], ['agotados', 'Agotados'], ['tienda', 'En la tienda'], ['sinfoto', 'Sin foto'], ['inactivos', 'Inactivos']].filter(x => (x[0] !== 'tienda' || S.plus) && (x[0] !== 'sinfoto' || sinFoto));
+  const fil = [['', 'Todos'], ['bajos', 'Por agotarse'], ['agotados', 'Agotados']].concat(modOn('caducidad') ? [['caducan', 'Por caducar']] : []).concat([['tienda', 'En la tienda'], ['sinfoto', 'Sin foto'], ['inactivos', 'Inactivos']]).filter(x => (x[0] !== 'tienda' || S.plus) && (x[0] !== 'sinfoto' || sinFoto));
   const avFoto = sinFoto && puede('admin', 'bodega') && f.pfil !== 'sinfoto' && !S.f.avFotoOff ? `<div class="aviso info sm">${ic('cam', 20)}<div><b>${sinFoto === 1 ? '1 producto no tiene foto.' : sinFoto + ' productos no tienen foto.'}</b> <small style="display:inline">Con fotos reales tu tienda y Vender se ven mucho mejor.</small></div><button class="btn sm pri" data-a="pfil" data-k="sinfoto">Ver</button><button class="btn icon ghost sm" data-a="avFotoOff" aria-label="Cerrar">${ic('x', 16)}</button></div>` : '';
   $('#main').innerHTML = `${avFoto}${puede('admin', 'bodega') ? `<div class="kpis"><div class="kpi"><small>Productos activos</small><b>${act.length}</b></div><div class="kpi" style="--k:var(--warn)"><small>Por agotarse</small><b>${bajos.length}</b><i>${agot.length} agotados</i></div>${puede('admin', 'bodega') ? `<div class="kpi" style="--k:#00b56e"><small>Inventario al costo</small><b class="n">${money(valor)}</b></div>` : ''}</div>` : ''}
     <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="p-q" placeholder="Buscar por nombre, código o categoría…" value="${esc(f.pq || '')}"></div>
@@ -5901,6 +6047,7 @@ function listaProductos() {
   if (f.pfil === 'agotados') l = l.filter(p => p.tipo === 'producto' && p.stock <= 0);
   if (f.pfil === 'tienda') l = l.filter(p => p.tienda);
   if (f.pfil === 'sinfoto') l = l.filter(p => !p.foto);
+  if (f.pfil === 'caducan') { const lim = mesesSumarDia(30); l = l.filter(p => p.caduca && p.caduca <= lim).sort((a, b) => a.caduca < b.caduca ? -1 : 1); }
   if (f.pcat) l = l.filter(p => p.categoria === f.pcat);
   if (q) l = l.filter(p => norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q));
   l.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -5968,6 +6115,7 @@ function formProducto(p, onSave, pre) {
     <label class="sw-row"><input type="checkbox" id="pf-ctrl" ${p.tipo === 'producto' ? 'checked' : ''}><span class="sw"></span><div><b>Controlar existencias</b><small>Apágalo para servicios o platos que no llevan inventario</small></div></label>
     <div id="pf-stk" class="f2">${nuevo ? `<label class="fld"><span>Existencia inicial</span><input id="pf-stock" inputmode="decimal" placeholder="0"></label>` : `<div class="fld"><span>Existencias</span><div class="stk-now"><b>${cant(p.stock)}</b><button class="btn sm" type="button" data-a="pfAjuste">Ajustar</button><button class="btn sm ghost" type="button" data-a="pfKardex">Movimientos</button></div></div>`}
       <label class="fld"><span>Avisar cuando queden</span><input id="pf-min" inputmode="decimal" value="${p.stockMin || ''}" placeholder="0"></label></div>
+    ${modOn('caducidad') || modOn('series') ? `<div class="f2">${modOn('caducidad') ? `<label class="fld"><span>Fecha de caducidad</span><input id="pf-cad" type="date" value="${esc(p.caduca || '')}"></label>` : ''}${modOn('series') ? `<label class="fld"><span>Garantía (días)</span><input id="pf-gar" inputmode="numeric" value="${p.garantia || ''}" placeholder="Ej. 90"></label>` : ''}</div>` : ''}
     <details class="pf-more" id="pf-more"><summary>${ic('dots', 18)} Más detalles <small>ISV · unidad · tienda en línea</small>${ic('down', 18)}</summary>
     <div class="f2"><label class="fld"><span>ISV</span><select id="pf-isv"><option value="">General (${isvG}%)</option><option value="0">Exento</option><option value="15">15%</option><option value="18">18%</option></select></label>
       <label class="fld"><span>Se vende por</span><select id="pf-uni">${UNIDADES.map(u => `<option ${p.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
@@ -6028,6 +6176,8 @@ function formProducto(p, onSave, pre) {
     if (nuevo) reg.stock = num(($('#pf-stock', h.el) || {}).value);
     if ($('#pf-tienda', h.el)) { reg.tienda = $('#pf-tienda', h.el).checked; reg.descripcion = $('#pf-desc', h.el).value.trim(); reg.opciones = opcLeerForm(h.el); }
     if ($('#pf-act', h.el)) reg.activo = $('#pf-act', h.el).checked;
+    if ($('#pf-cad', h.el)) reg.caduca = $('#pf-cad', h.el).value;
+    if ($('#pf-gar', h.el)) reg.garantia = parseInt($('#pf-gar', h.el).value, 10) || 0;
     if (leerSus) { const sv = leerSus(); if (sv.plataforma || sv.incluye || p.plataforma || p.incluye) Object.assign(reg, sv); if (sv.plataforma || sv.incluye) reg.tipo = 'servicio'; }
     if (st.fotoNueva) { const f = await api('subirFoto', { data: st.fotoNueva }); reg.foto = f.foto; }
     else if (!st.foto && p.foto) reg.foto = '';
@@ -6231,6 +6381,7 @@ function formCliente(c, cb) {
     <div class="f2"><label class="fld"><span>Teléfono / WhatsApp</span><input id="cf-t" type="tel" inputmode="tel" value="${esc(c.telefono || '')}" placeholder="9876-5432"></label><label class="fld"><span>RTN</span><input id="cf-r" inputmode="numeric" value="${esc(c.rtn || '')}"></label></div>
     <label class="fld"><span>Dirección</span><input id="cf-d" maxlength="200" value="${esc(c.direccion || '')}"></label>
     <div class="f2"><label class="fld"><span>Correo</span><input id="cf-e" type="email" value="${esc(c.correo || '')}"></label>${puede('admin') ? `<label class="fld"><span>Límite de crédito</span><input id="cf-l" inputmode="decimal" value="${c.limite || ''}" placeholder="Sin límite"></label>` : ''}</div>
+    ${modOn('ordenes') ? `<label class="fld"><span>Vehículo o equipo</span><input id="cf-eq" maxlength="120" value="${esc(c.equipo || '')}" placeholder="Ej. Toyota Hilux 2015 · HAB1234"></label>` : ''}
     <label class="fld"><span>Notas</span><textarea id="cf-o" rows="2">${esc(c.notas || '')}</textarea></label>
     ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="cf-a" ${c.activo ? 'checked' : ''}><span class="sw"></span><div><b>Cliente activo</b></div></label>` : ''}` });
   const bs = [];
@@ -6243,6 +6394,7 @@ function formCliente(c, cb) {
   bs.push({ t: 'Guardar', cls: 'pri', fn: async () => {
     const reg = { id: c.id, nombre: $('#cf-n', h.el).value.trim(), telefono: $('#cf-t', h.el).value.trim(), rtn: $('#cf-r', h.el).value.trim(), direccion: $('#cf-d', h.el).value.trim(),
       correo: $('#cf-e', h.el).value.trim(), notas: $('#cf-o', h.el).value.trim() };
+    if ($('#cf-eq', h.el)) reg.equipo = $('#cf-eq', h.el).value.trim();
     if (!reg.nombre) throw new Error('Escribe el nombre');
     if ($('#cf-l', h.el)) reg.limite = num($('#cf-l', h.el).value);
     if ($('#cf-a', h.el)) reg.activo = $('#cf-a', h.el).checked;
@@ -6919,7 +7071,7 @@ R.ajustes = () => {
     <div class="f2"><label class="fld"><span>Fondo de caja (para empezar el día)</span><input data-k="fondoCaja" inputmode="decimal" value="${v('fondoCaja')}"></label><label class="fld"><span>Sin existencias…</span>${sel('venderSinStock', [['no', 'No dejar vender'], ['si', 'Dejar vender igual']])}</label></div>
     <label class="fld"><span>Mensaje al pie del comprobante</span><input data-k="mensajeRecibo" value="${v('mensajeRecibo')}" maxlength="120"></label>
     <button class="btn pri" data-a="guardarAj" data-s="negocio">Guardar</button>`);
-  if (adm && c.giro !== 'streaming') h += sec('suscripciones', 'clock', 'Suscripciones y mensualidades', `<label class="sw-row"><input type="checkbox" data-k="suscripciones" data-on="si" data-off="" ${c.suscripciones === 'si' ? 'checked' : ''}><span class="sw"></span><div><b>Vender suscripciones</b><small>Netflix, IPTV, gimnasio, internet… Activa Vencimientos y Cuentas y perfiles, y al vender te pide la fecha de vencimiento.</small></div></label><button class="btn pri" data-a="guardarAj" data-s="suscripciones">Guardar</button>`, c.suscripciones === 'si' ? '<span class="badge b-ok">Activo</span>' : '');
+  if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
   h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `<div class="temas">${Object.keys(TEMAS).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div><p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
     <div class="fld" style="margin-top:12px"><span>Modo (solo en este equipo)</span><div class="modos">${[['auto', 'auto', 'Automático'], ['claro', 'sun', 'Claro'], ['oscuro', 'moon', 'Oscuro']].map(([k, i, t]) => `<button class="pay ${modo === k ? 'on' : ''}" data-a="modoColor" data-m="${k}">${ic(i)}${t}</button>`).join('')}</div></div>
     ${adm ? `<div class="fld"><span>Logo</span><div class="row"><div class="logo-prev">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(iniciales(c.nombre))}</div><label class="btn">${ic('image', 18)} Subir logo<input type="file" accept="image/*" id="aj-logo" hidden></label>${c.logo ? `<button class="btn ghost" data-a="quitarLogo">Quitar</button>` : ''}</div></div>` : ''}`);
@@ -7002,7 +7154,7 @@ R.tienda = () => {
 };
 ACC.guardarAj = async el => {
   const s = $('#aj-' + el.dataset.s), reg = {};
-  $$('[data-k]', s).forEach(i => { reg[i.dataset.k] = i.type === 'checkbox' ? (i.checked ? i.dataset.on : i.dataset.off) : i.value.trim(); });
+  $$('[data-k]', s).forEach(i => { if (i.disabled) return; reg[i.dataset.k] = i.type === 'checkbox' ? (i.checked ? i.dataset.on : i.dataset.off) : i.value.trim(); });
   if (el.dataset.s === 'tienda' || el.dataset.s === 'entregas') { const p = $$('#aj-pagos input', s).filter(x => x.checked).map(x => x.value); if (!p.length) throw new Error('Elige al menos una forma de pago'); reg.tiendaPagos = p.join(','); }
   const c = await api('guardar', { entidad: 'Config', registro: reg });
   S.config = c; guardarCache(); aplicarTema(c.tema); toast('Ajustes guardados', 'ok'); render();
@@ -7504,9 +7656,230 @@ ACC.lbVer = async el => {
 
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.4'; // versión mínima del Code.gs que necesita esta app
+/* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
+const MODULOS_INFO = {
+  caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
+  comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
+  ordenes:       { n: 'Órdenes de trabajo', d: 'Recibes el equipo o vehículo, anotas la falla y lo pasas por recibido → en proceso → listo → entregado. Avisas por WhatsApp y cobras desde la orden.', g: 'taller, repuestos, servicios' },
+  series:        { n: 'Serie / IMEI y garantía', d: 'Al cobrar anotas la serie de cada equipo; el comprobante sale con la serie y hasta cuándo tiene garantía.', g: 'tecnología' },
+  variantes:     { n: 'Talla y color al vender', d: 'Si el producto tiene opciones (talla, color…), al tocarlo en Vender eliges cuál y el ticket lo dice.', g: 'boutique, variedades' },
+  encargos:      { n: 'Encargos con fecha de entrega', d: 'Pedidos por encargo con día, hora y anticipo; en Inicio ves las entregas de hoy.', g: 'panadería, repostería' },
+  agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios' },
+  suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' }
+};
+const modOn = k => !!S.config && ((MODULOS_GIRO[S.config.giro] || []).includes(k) || S.config[k] === 'si');
+const modDelGiro = k => !!S.config && (MODULOS_GIRO[S.config.giro] || []).includes(k);
+const EST_ORD = { recibido: ['Recibido', 'b-mut'], proceso: ['En proceso', 'b-warn'], listo: ['Listo', 'b-ok'], entregado: ['Entregado', 'b-mut'], cancelado: ['Cancelado', 'b-bad'] };
+const horaAv = h => { const t = fHoraC(h).split(' '); return `<span class="ha">${esc(t[0])}</span><span class="hb">${esc(t.slice(1).join(' '))}</span>`; };
+const fHoraC = h => { if (!h) return ''; const [hh, mm] = h.split(':').map(Number); return (hh % 12 || 12) + ':' + String(mm).padStart(2, '0') + (hh < 12 ? ' a. m.' : ' p. m.'); };
+const diaTxt = d => d === hoy() ? 'Hoy' : d === mesesSumarDia(1) ? 'Mañana' : d === mesesSumarDia(-1) ? 'Ayer' : cap(fFechaL(d));
+function mesesSumarDia(n) { const d = parseLocal(hoy() + 'T12:00'); d.setDate(d.getDate() + n); return toLocal(d).slice(0, 10); }
+// Cliente: datalist compartido para formularios (cliente registrado o nombre libre)
+function clienteCampo(id, valor) {
+  return `<label class="fld"><span>Cliente</span><div class="input-row"><input id="${id}" list="dl-${id}" value="${esc(valor || '')}" placeholder="Nombre o busca un cliente" autocomplete="off" maxlength="80"><button class="btn icon" type="button" data-a="nuevoClienteCampo" data-t="${id}" title="Nuevo cliente">${ic('userplus')}</button></div><datalist id="dl-${id}">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist></label>`;
+}
+function clienteLeer(el) {
+  const v = el.value.trim(); if (!v) return { clienteId: '', cliente: '' };
+  const c = S.clientes.find(x => (x.nombre + (x.telefono ? ' · ' + x.telefono : '')) === v) || S.clientes.find(x => norm(x.nombre) === norm(v));
+  return c ? { clienteId: c.id, cliente: c.nombre, telefono: c.telefono } : { clienteId: '', cliente: v.split(' · ')[0] };
+}
+ACC.nuevoClienteCampo = el => formCliente(null, c => { const i = $('#' + el.dataset.t); if (i) i.value = c.nombre + (c.telefono ? ' · ' + c.telefono : ''); });
+
+/* ---- Variantes al vender (talla, color…) ---- */
+function elegirVariante(p) {
+  const ops = leerOpc(p.opciones).filter(o => o.v.length);
+  if (!ops.length) return Promise.resolve('');
+  return new Promise(res => {
+    let r = null; const sel = {};
+    const h = hoja({ titulo: esc(p.nombre), cls: 'chica', html: `${ops.map((o, i) => `<div class="fld"><span>${esc(o.n)}</span><div class="chips" data-g="${i}">${o.v.map(v => `<button type="button" class="chip" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div></div>`).join('')}` });
+    h.b.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; const g = b.closest('[data-g]'); sel[g.dataset.g] = b.dataset.v; $$('[data-v]', g).forEach(x => x.classList.toggle('on', x === b)); });
+    h.onClose = () => res(r);
+    h.botones([{ t: `${ic('cart', 18)} Agregar`, cls: 'pri', fn: () => { const falta = ops.findIndex((o, i) => !sel[i]); if (falta >= 0) throw new Error('Elige ' + ops[falta].n.toLowerCase()); r = ops.map((o, i) => sel[i]).join(' · '); h.cerrar(); } }]);
+  });
+}
+
+/* ---- Comanda (restaurante): mesa / para llevar / domicilio ---- */
+function comandaBloque() {
+  const t = S.ticket, s = t.servicio || 'mesa';
+  return `<div class="fld"><span>Servicio</span><div class="pays">${[['mesa', 'Mesa', 'grid'], ['llevar', 'Para llevar', 'bag'], ['domicilio', 'Domicilio', 'truck']].map(([k, l, i]) => `<button class="pay ${s === k ? 'on' : ''}" data-a="cbServ" data-s="${k}">${ic(i)}${l}</button>`).join('')}</div></div>
+    <div class="f2">${s === 'mesa' ? `<label class="fld"><span>Mesa</span><input id="cb-mesa" maxlength="20" value="${esc(t.mesa || '')}" placeholder="Ej. 4"></label>` : ''}<label class="fld" ${s === 'mesa' ? '' : 'style="grid-column:1/-1"'}><span>Nota para la cocina</span><input id="cb-cocina" maxlength="200" value="${esc(t.cocina || '')}" placeholder="Sin cebolla, término medio…"></label></div>`;
+}
+ACC.cbServ = el => { S.ticket.servicio = el.dataset.s; guardarTicket(); S.hCobro && S.hCobro.pinta(); };
+function imprimirComanda(v, det) {
+  const L = (a, b) => `<div class="pl"><span>${a}</span><span>${b}</span></div>`;
+  const serv = v.servicio === 'llevar' ? 'PARA LLEVAR' : v.servicio === 'domicilio' ? 'DOMICILIO' : 'MESA ' + (v.mesa || '');
+  const cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
+  $('#print-area').innerHTML = `<div class="ticket"><div class="pc"><b style="font-size:16px">COMANDA</b><div style="font-size:15px;font-weight:700">${esc(serv)}</div></div>
+    <div class="ps">${L('Orden', esc(v.numero))}${L('Hora', fHora(v.fecha))}${cli ? L('Cliente', esc(cli.nombre)) : ''}${L('Atendió', esc(nomUsuario(v.usuarioId)))}</div>
+    <div class="ps">${det.map(i => `<div style="font-size:14px;font-weight:700">${cant(i.cantidad)} × ${esc(i.descripcion)}</div>`).join('')}</div>
+    ${v.cocina ? `<div class="ps"><b>NOTA:</b> ${esc(v.cocina)}</div>` : ''}</div>`;
+  if (window.AndroidApp && AndroidApp.imprimir) { AndroidApp.imprimir(); return; }
+  setTimeout(() => window.print(), 80);
+}
+ACC.comanda = () => S.ultVenta && imprimirComanda(S.ultVenta.v, S.ultVenta.det);
+
+/* ---- Serie / IMEI y garantía ---- */
+function serieCampo(k) {
+  const it = S.ticket.items[k], p = it.productoId ? byId(S.productos, it.productoId) : null;
+  if (!p || p.tipo !== 'producto') return '';
+  return `<div class="sus-box serie-box"><label class="fld"><span>${ic('barcode', 14)} Serie / IMEI de ${esc(it.descripcion)}${p.garantia ? ` · garantía ${p.garantia} días` : ''}</span><input class="cb-serie" data-k="${k}" maxlength="60" value="${esc(it.serie || '')}" placeholder="${it.cantidad > 1 ? 'Separa con comas si son varios' : 'Opcional'}"></label></div>`;
+}
+const garantiaHasta = (fecha, dias) => { if (!dias) return ''; const d = parseLocal(fecha); d.setDate(d.getDate() + Number(dias)); return toLocal(d).slice(0, 10); };
+
+/* ---- Órdenes de trabajo ---- */
+R.ordenes = async () => {
+  const m = $('#main');
+  if (!S.ordenesL) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const l = S.ordenesL = await api('ordenes', {}, !!S.ordenesL);
+  if (S.vista !== 'ordenes') return;
+  const f = S.f.ordF || 'abiertas', q = norm(S.f.ordQ || ''), h = hoy();
+  const n = k => l.filter(o => o.estado === k).length, atr = l.filter(o => ['recibido', 'proceso'].includes(o.estado) && o.promesa && o.promesa < h).length;
+  let lista = f === 'abiertas' ? l.filter(o => ['recibido', 'proceso', 'listo'].includes(o.estado)) : f === 'todas' ? l : l.filter(o => o.estado === f);
+  if (q) lista = lista.filter(o => norm(o.cliente + ' ' + o.equipo + ' ' + o.placa + ' ' + o.numero + ' ' + o.falla).includes(q));
+  const chip = (k, t) => `<button class="chip ${f === k ? 'on' : ''}" data-a="ordF" data-f="${k}">${t}</button>`;
+  m.innerHTML = `<div class="kpis k4"><div class="kpi"><small>Recibidas</small><b>${n('recibido')}</b><i>por revisar</i></div><div class="kpi" style="--k:var(--warn)"><small>En proceso</small><b>${n('proceso')}</b><i>${atr ? atr + ' atrasadas' : 'en tiempo'}</i></div><div class="kpi" style="--k:#00b56e"><small>Listas</small><b>${n('listo')}</b><i>para entregar</i></div><div class="kpi"><small>Entregadas</small><b>${n('entregado')}</b><i>últimos 90 días</i></div></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="nuevaOrden">${ic('plus', 18)} Nueva orden</button><div class="srch grow">${ic('search', 18)}<input id="ord-q" placeholder="Cliente, equipo, placa…" value="${esc(S.f.ordQ || '')}"></div></div>
+    <div class="chips" style="margin-bottom:10px">${chip('abiertas', 'Abiertas')}${chip('recibido', 'Recibidas')}${chip('proceso', 'En proceso')}${chip('listo', 'Listas')}${chip('entregado', 'Entregadas')}${chip('todas', 'Todas')}</div>
+    ${lista.length ? lista.map(o => tarjetaOrden(o)).join('') : `<div class="empty-big">${ic('wrench', 40)}<h3>${l.length ? 'Nada por aquí' : 'Sin órdenes todavía'}</h3><p>${l.length ? 'Prueba con otro filtro.' : 'Cuando recibas un equipo o vehículo, crea la orden: queda con su número, el cliente, la falla y su estado.'}</p></div>`}`;
+  const qi = $('#ord-q', m); if (qi) qi.addEventListener('input', () => { S.f.ordQ = qi.value; clearTimeout(S._ordT); S._ordT = setTimeout(() => R.ordenes(), 250); });
+};
+function tarjetaOrden(o) {
+  const e = EST_ORD[o.estado] || EST_ORD.recibido, h = hoy(), atr = ['recibido', 'proceso'].includes(o.estado) && o.promesa && o.promesa < h;
+  return `<div class="ord ${o.estado === 'listo' ? 'new' : ''}" data-a="verOrden" data-id="${o.id}"><div class="ord-h"><span class="oav ${colorDe(o.cliente)}">${esc(iniciales(o.cliente))}</span><div class="tx"><b>${esc(o.cliente)} · ${esc(o.equipo)}${o.placa ? ' · ' + esc(o.placa) : ''}</b><small>${esc(o.numero)} · ${esc(o.falla || '').slice(0, 60)}${o.promesa ? ` · ${atr ? '<b style="color:var(--bad)">prometida ' + fFechaC(o.promesa) + '</b>' : 'entrega ' + fFechaC(o.promesa)}` : ''}</small></div><span class="badge ${e[1]}">${e[0]}</span></div>
+    ${['recibido', 'proceso', 'listo'].includes(o.estado) ? `<div class="row" style="margin-top:10px">${o.estado === 'listo' && o.telefono ? `<a class="btn wa sm" href="${waLink(o.telefono, `Hola ${o.cliente.split(' ')[0]} 👋 Tu ${o.equipo}${o.placa ? ' (' + o.placa + ')' : ''} ya está listo${o.presupuesto ? '. Total: ' + money(o.presupuesto) + (o.anticipo ? ' (anticipo ' + money(o.anticipo) + ')' : '') : ''}. Te esperamos en ${S.config.nombre || 'el taller'}.`)}" target="_blank" rel="noopener">${ic('wa', 16)} Avisar</a>` : ''}
+      ${o.estado === 'recibido' ? `<button class="btn sm" data-a="ordEstado" data-id="${o.id}" data-e="proceso">${ic('refresh', 16)} En proceso</button>` : o.estado === 'proceso' ? `<button class="btn sm" data-a="ordEstado" data-id="${o.id}" data-e="listo">${ic('check', 16)} Listo</button>` : ''}
+      ${o.estado === 'listo' && puede('admin', 'cajero') ? `<button class="btn sm pri" style="margin-left:auto" data-a="ordCobrar" data-id="${o.id}">${ic('cash', 16)} Cobrar${o.presupuesto ? ' · ' + money(Math.max(0, o.presupuesto - (o.anticipo || 0))) : ''}</button>` : ''}</div>` : ''}</div>`;
+}
+ACC.ordF = el => { S.f.ordF = el.dataset.f; R.ordenes(); };
+ACC.nuevaOrden = () => formOrden(null);
+ACC.verOrden = el => { const o = (S.ordenesL || []).find(x => x.id === el.dataset.id); if (o) formOrden(o); };
+ACC.ordEstado = async el => {
+  const o = (S.ordenesL || []).find(x => x.id === el.dataset.id); if (!o) return;
+  await api('ordenGuardar', { registro: { id: o.id, estado: el.dataset.e } });
+  S.ordenesL = null; S.inicio = null; toast(el.dataset.e === 'listo' ? 'Orden lista para entregar' : 'Orden en proceso', 'ok'); cerrarHojas(); if (S.vista === 'ordenes') R.ordenes(); else if (S.vista === 'inicio') R.inicio();
+};
+ACC.ordCobrar = async el => {
+  const o = (S.ordenesL || []).find(x => x.id === el.dataset.id); if (!o) return;
+  if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo por el cobro de la orden?', { si: 'Reemplazar' }))) return;
+  const total = num(o.presupuesto);
+  S.ticket = { items: [{ productoId: '', descripcion: `${o.numero} · ${o.equipo}${o.placa ? ' ' + o.placa : ''}`, cantidad: 1, precio: total, costo: 0 }], clienteId: o.clienteId || '', pedidoId: '', descuento: num(o.anticipo) > 0 ? Math.min(num(o.anticipo), total) : 0, nota: num(o.anticipo) > 0 ? 'Anticipo ' + money(o.anticipo) + ' ya pagado' : '', ordenId: o.id };
+  guardarTicket(); cerrarHojas(); ir('vender'); abrirCobro();
+};
+function formOrden(o) {
+  const nuevo = !o; o = o || { estado: 'recibido' };
+  const cli = o.clienteId ? byId(S.clientes, o.clienteId) : null;
+  const h = hoja({ titulo: nuevo ? 'Nueva orden de trabajo' : esc(o.numero), ancho: 1, foco: nuevo ? '#or-cli' : null, html: `
+    ${!nuevo ? `<div class="kv"><div><small>Estado</small><span class="badge ${EST_ORD[o.estado][1]}">${EST_ORD[o.estado][0]}</span></div><div><small>Recibido</small>${esc(fFechaC(o.creado))} · ${fHora(o.creado)}</div><div><small>Atendió</small>${esc(nomUsuario(o.usuarioId))}</div>${o.ventaId ? `<div><small>Cobrada</small>Sí</div>` : ''}</div>` : ''}
+    ${clienteCampo('or-cli', cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : o.cliente)}
+    ${!o.clienteId && nuevo ? '' : ''}<div class="f2"><label class="fld"><span>Equipo o vehículo *</span><input id="or-eq" maxlength="80" value="${esc(o.equipo || (cli && cli.equipo ? cli.equipo.split(' · ')[0] : ''))}" placeholder="Ej. Toyota Hilux 2015 / Laptop HP"></label><label class="fld"><span>Placa / serie</span><input id="or-pl" maxlength="80" value="${esc(o.placa || (cli && cli.equipo && cli.equipo.includes(' · ') ? cli.equipo.split(' · ')[1] : ''))}" placeholder="Opcional"></label></div>
+    <label class="fld"><span>Falla o trabajo a realizar *</span><textarea id="or-fa" rows="2" maxlength="400" placeholder="Qué reporta el cliente o qué se va a hacer">${esc(o.falla || '')}</textarea></label>
+    ${!nuevo ? `<label class="fld"><span>Diagnóstico / trabajo realizado</span><textarea id="or-dg" rows="2" maxlength="400">${esc(o.diagnostico || '')}</textarea></label>` : ''}
+    <div class="f3"><label class="fld"><span>Entrega prometida</span><input id="or-pr" type="date" value="${esc(o.promesa || '')}"></label><label class="fld"><span>Presupuesto</span><input id="or-pp" inputmode="decimal" value="${o.presupuesto ? o.presupuesto : ''}" placeholder="0.00"></label><label class="fld"><span>Anticipo</span><input id="or-an" inputmode="decimal" value="${o.anticipo ? o.anticipo : ''}" placeholder="0.00" ${!nuevo && o.anticipo ? 'readonly' : ''}></label></div>
+    <label class="fld"><span>Nota</span><input id="or-no" maxlength="400" value="${esc(o.nota || '')}"></label>
+    ${!nuevo ? `<div class="fld"><span>Estado</span><div class="pays">${['recibido', 'proceso', 'listo', 'entregado', 'cancelado'].map(k => `<button type="button" class="pay ${o.estado === k ? 'on' : ''}" data-e="${k}">${EST_ORD[k][0]}</button>`).join('')}</div></div>` : ''}` });
+  let estado = o.estado;
+  if (!nuevo) $$('[data-e]', h.el).forEach(b => b.addEventListener('click', () => { estado = b.dataset.e; $$('[data-e]', h.el).forEach(x => x.classList.toggle('on', x === b)); }));
+  const bs = [];
+  if (!nuevo && o.telefono && o.estado === 'listo') bs.push({ t: ic('wa', 18), cls: 'wa icon', fn: () => window.open(waLink(o.telefono, `Hola ${o.cliente.split(' ')[0]} 👋 Tu ${o.equipo} ya está listo. Te esperamos en ${S.config.nombre || 'el taller'}.`), '_blank') });
+  bs.push({ t: nuevo ? 'Crear orden' : 'Guardar', cls: 'pri', fn: async () => {
+    const c = clienteLeer($('#or-cli', h.el));
+    if (!c.cliente) throw new Error('Escribe el nombre del cliente');
+    const reg = Object.assign({ id: o.id, equipo: $('#or-eq', h.el).value.trim(), placa: $('#or-pl', h.el).value.trim(), falla: $('#or-fa', h.el).value.trim(), promesa: $('#or-pr', h.el).value, presupuesto: r2($('#or-pp', h.el).value), nota: $('#or-no', h.el).value.trim(), estado }, c);
+    if (nuevo || !o.anticipo) reg.anticipo = r2($('#or-an', h.el).value);
+    if (!nuevo) reg.diagnostico = $('#or-dg', h.el).value.trim();
+    if (!reg.equipo) throw new Error('Escribe qué equipo o vehículo recibes');
+    if (!reg.falla) throw new Error('Describe la falla o el trabajo');
+    if (!reg.id) delete reg.id;
+    const g = await api('ordenGuardar', { registro: reg });
+    S.ordenesL = null; S.inicio = null; h.cerrar(); toast(nuevo ? 'Orden ' + g.numero + ' creada' : 'Orden guardada', 'ok');
+    if (S.vista === 'ordenes') R.ordenes(); else if (S.vista === 'inicio') R.inicio();
+    if (nuevo && g.telefono) { if (await confirmar(`¿Enviar al cliente el comprobante de recepción por WhatsApp?`, { si: 'Enviar' })) window.open(waLink(g.telefono, `*${S.config.nombre || ''}* · Orden ${g.numero}\nRecibimos: ${g.equipo}${g.placa ? ' (' + g.placa + ')' : ''}\nTrabajo: ${g.falla}${g.promesa ? '\nEntrega estimada: ' + fFechaC(g.promesa) : ''}${g.presupuesto ? '\nPresupuesto: ' + money(g.presupuesto) : ''}${g.anticipo ? '\nAnticipo recibido: ' + money(g.anticipo) : ''}\nTe avisamos cuando esté listo.`), '_blank'); }
+  } });
+  h.botones(bs);
+}
+
+/* ---- Agenda de citas y encargos ---- */
+function agendaCfg(tipo) {
+  return tipo === 'encargo' ? { t: 'Encargos', uno: 'encargo', nuevo: 'Nuevo encargo', que: 'Qué encargó', queEj: 'Ej. Pastel de chocolate 2 libras, "Feliz cumpleaños Ana"', listo: 'Entregado', vista: 'encargos', ico: 'gift' }
+    : { t: 'Agenda', uno: 'cita', nuevo: 'Nueva cita', que: 'Servicio', queEj: 'Ej. Corte y tinte', listo: 'Atendido', vista: 'agenda', ico: 'cal' };
+}
+async function pintarAgenda(tipo) {
+  const C = agendaCfg(tipo), m = $('#main'), key = 'ag_' + tipo;
+  if (!S[key]) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const l = S[key] = await api('agenda', { tipo }, !!S[key]);
+  if (S.vista !== C.vista) return;
+  const dia = S.f[key + 'd'] || hoy(), h = hoy();
+  const del = l.filter(a => a.dia === dia), atras = l.filter(a => a.estado === 'pendiente' && a.dia < h);
+  const pend = del.filter(a => a.estado === 'pendiente');
+  m.innerHTML = `<div class="kpis"><div class="kpi"><small>${diaTxt(dia)}</small><b>${pend.length}</b><i>${pend.length === 1 ? C.uno + ' pendiente' : C.uno + 's pendientes'}${del.length - pend.length ? ' · ' + (del.length - pend.length) + ' cerrados' : ''}</i></div><div class="kpi" style="--k:${atras.length ? 'var(--bad)' : '#00b56e'}"><small>Sin cerrar de días anteriores</small><b>${atras.length}</b><i>${atras.length ? 'revísalos' : 'todo al día'}</i></div></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="nuevaAgenda" data-t="${tipo}">${ic('plus', 18)} ${C.nuevo}</button><div class="seg"><button class="${dia === h ? 'on' : ''}" data-a="agDia" data-t="${tipo}" data-d="${h}">Hoy</button><button class="${dia === mesesSumarDia(1) ? 'on' : ''}" data-a="agDia" data-t="${tipo}" data-d="${mesesSumarDia(1)}">Mañana</button></div><input type="date" id="ag-dia" value="${dia}" style="width:auto"></div>
+    ${del.length ? `<div class="list">${del.map(a => filaAgenda(a, C)).join('')}</div>` : `<div class="empty-big">${ic(C.ico, 40)}<h3>Nada para ${diaTxt(dia).toLowerCase()}</h3><p>${tipo === 'encargo' ? 'Los encargos con entrega este día aparecen aquí.' : 'Las citas de este día aparecen aquí, ordenadas por hora.'}</p></div>`}
+    ${atras.length && dia === h ? `<div class="sec-t"><h3>Pendientes de días anteriores</h3></div><div class="list">${atras.map(a => filaAgenda(a, C, true)).join('')}</div>` : ''}`;
+  $('#ag-dia', m).addEventListener('change', e => { S.f[key + 'd'] = e.target.value; pintarAgenda(tipo); });
+}
+function filaAgenda(a, C, conDia) {
+  const cerrado = a.estado !== 'pendiente';
+  return `<div class="li ${cerrado ? 'anul' : ''}" data-a="verAgenda" data-id="${a.id}" data-t="${a.tipo}"><div class="av ${cerrado ? 't-mut' : colorDe(a.cliente)}" style="${cerrado ? 'background:var(--line);color:var(--mut)' : ''}">${a.hora ? horaAv(a.hora) : esc(iniciales(a.cliente))}</div><div class="tx"><b>${esc(a.cliente)}</b><small>${conDia ? esc(fFechaC(a.dia)) + ' · ' : ''}${esc(a.detalle)}${a.atiende ? ' · ' + esc(a.atiende) : ''}${a.anticipo ? ' · anticipo ' + money(a.anticipo) : ''}</small></div><div class="am">${cerrado ? `<span class="badge b-mut">${a.estado === 'cancelado' ? 'Cancelado' : C.listo}</span>` : a.monto ? `<b class="n">${money(a.monto)}</b>` : ''}</div></div>`;
+}
+R.agenda = () => pintarAgenda('cita');
+R.encargos = () => pintarAgenda('encargo');
+ACC.agDia = el => { S.f['ag_' + el.dataset.t + 'd'] = el.dataset.d; pintarAgenda(el.dataset.t); };
+ACC.nuevaAgenda = el => formAgenda(null, el.dataset.t);
+ACC.verAgenda = el => { const a = (S['ag_' + el.dataset.t] || []).find(x => x.id === el.dataset.id); if (a) formAgenda(a, a.tipo); };
+function formAgenda(a, tipo) {
+  const C = agendaCfg(tipo), nuevo = !a; a = a || { tipo, dia: S.f['ag_' + tipo + 'd'] || hoy(), estado: 'pendiente' };
+  const cli = a.clienteId ? byId(S.clientes, a.clienteId) : null, serv = S.productos.filter(p => p.activo && (tipo === 'cita' ? p.tipo === 'servicio' : true)).sort((x, y) => x.nombre.localeCompare(y.nombre));
+  const h = hoja({ titulo: nuevo ? C.nuevo : (C.uno === 'cita' ? 'Cita' : 'Encargo') + ' · ' + esc(a.cliente), ancho: 1, foco: nuevo ? '#ag-cli' : null, html: `
+    ${clienteCampo('ag-cli', cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : a.cliente)}
+    <div class="f2"><label class="fld"><span>Día *</span><input id="ag-d" type="date" value="${esc(a.dia)}"></label><label class="fld"><span>Hora</span><input id="ag-h" type="time" value="${esc(a.hora || '')}"></label></div>
+    <label class="fld"><span>${C.que} *</span><input id="ag-q" list="dl-ag" maxlength="400" value="${esc(a.detalle || '')}" placeholder="${esc(C.queEj)}" autocomplete="off"><datalist id="dl-ag">${serv.map(p => `<option value="${esc(p.nombre)}">`).join('')}</datalist></label>
+    <div class="f3"><label class="fld"><span>Precio</span><input id="ag-m" inputmode="decimal" value="${a.monto ? a.monto : ''}" placeholder="0.00"></label>${tipo === 'encargo' ? `<label class="fld"><span>Anticipo</span><input id="ag-an" inputmode="decimal" value="${a.anticipo ? a.anticipo : ''}" placeholder="0.00"></label>` : `<label class="fld"><span>Quién atiende</span><input id="ag-at" list="dl-at" maxlength="80" value="${esc(a.atiende || '')}" autocomplete="off"><datalist id="dl-at">${S.usuarios.filter(u => u.activo).map(u => `<option value="${esc(u.nombre)}">`).join('')}</datalist></label>`}<label class="fld"><span>Nota</span><input id="ag-n" maxlength="400" value="${esc(a.nota || '')}"></label></div>
+    ${!nuevo && a.estado !== 'pendiente' ? `<p class="sm mut">Estado: <b>${a.estado === 'cancelado' ? 'Cancelado' : C.listo}</b>${a.ventaId ? ' · cobrado' : ''}</p>` : ''}` });
+  $('#ag-q', h.el).addEventListener('change', () => { const p = serv.find(x => x.nombre === $('#ag-q', h.el).value.trim()); if (p && !$('#ag-m', h.el).value) $('#ag-m', h.el).value = p.precio; });
+  const guardar = async extra => {
+    const c = clienteLeer($('#ag-cli', h.el));
+    if (!c.cliente) throw new Error('Escribe el nombre del cliente');
+    const reg = Object.assign({ id: a.id, tipo, dia: $('#ag-d', h.el).value, hora: $('#ag-h', h.el).value, detalle: $('#ag-q', h.el).value.trim(), monto: r2($('#ag-m', h.el).value), nota: $('#ag-n', h.el).value.trim() }, c, extra || {});
+    const p = serv.find(x => x.nombre === reg.detalle); reg.productoId = p ? p.id : '';
+    if ($('#ag-an', h.el)) reg.anticipo = r2($('#ag-an', h.el).value);
+    if ($('#ag-at', h.el)) reg.atiende = $('#ag-at', h.el).value.trim();
+    if (!reg.dia) throw new Error('Elige el día');
+    if (!reg.detalle) throw new Error(C.que === 'Servicio' ? 'Escribe el servicio' : 'Escribe qué encargó');
+    if (!reg.id) delete reg.id;
+    const g = await api('agendaGuardar', { registro: reg });
+    S['ag_' + tipo] = null; S.inicio = null; h.cerrar();
+    if (S.vista === C.vista) pintarAgenda(tipo); else if (S.vista === 'inicio') R.inicio();
+    return g;
+  };
+  const bs = [];
+  if (!nuevo && a.estado === 'pendiente') {
+    if (a.telefono) bs.push({ t: ic('wa', 18), cls: 'wa icon', fn: () => window.open(waLink(a.telefono, tipo === 'cita' ? `Hola ${a.cliente.split(' ')[0]} 👋 Te recordamos tu cita en ${S.config.nombre || ''}: ${diaTxt(a.dia).toLowerCase() === 'hoy' ? 'hoy' : fFechaC(a.dia)}${a.hora ? ' a las ' + fHoraC(a.hora) : ''} · ${a.detalle}${a.atiende ? ' con ' + a.atiende : ''}. ¡Te esperamos!` : `Hola ${a.cliente.split(' ')[0]} 👋 Tu encargo en ${S.config.nombre || ''} (${a.detalle}) estará listo ${fFechaC(a.dia)}${a.hora ? ' a las ' + fHoraC(a.hora) : ''}.${a.monto ? ' Total ' + money(a.monto) + (a.anticipo ? ' · anticipo ' + money(a.anticipo) : '') : ''}`), '_blank') });
+    bs.push({ t: ic('x', 18), cls: 'bad icon', fn: async () => { if (!(await confirmar('¿Cancelar?', { si: 'Sí, cancelar', peligro: 1 }))) return; await guardar({ estado: 'cancelado' }); toast('Cancelado', 'ok'); } });
+    if (puede('admin', 'cajero')) bs.push({ t: `${ic('cash', 16)} Cobrar`, cls: 'acc', fn: async () => {
+      const g = await guardar();
+      if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo?', { si: 'Reemplazar' }))) return;
+      const p = g.productoId ? byId(S.productos, g.productoId) : null, total = num(g.monto) || (p ? p.precio : 0);
+      S.ticket = { items: [{ productoId: p ? p.id : '', descripcion: p ? p.nombre : g.detalle, cantidad: 1, precio: total, costo: 0 }], clienteId: g.clienteId || '', pedidoId: '', descuento: num(g.anticipo) > 0 ? Math.min(num(g.anticipo), total) : 0, nota: num(g.anticipo) > 0 ? 'Anticipo ' + money(g.anticipo) + ' ya pagado' : '', agendaId: g.id };
+      guardarTicket(); cerrarHojas(); ir('vender'); abrirCobro();
+    } });
+    bs.push({ t: `${ic('check', 16)} ${C.listo}`, cls: 'pri', fn: async () => { await guardar({ estado: 'atendido' }); toast(C.listo, 'ok'); } });
+  } else bs.push({ t: nuevo ? 'Guardar' : 'Guardar cambios', cls: 'pri', fn: async () => { await guardar(); toast('Guardado', 'ok'); } });
+  h.botones(bs);
+}
+
+/* ---- Ajustes: funciones por tipo de negocio ---- */
+function modulosAjustesHTML() {
+  return `<p class="sm mut" style="margin:0 0 10px">Tu tipo de negocio (<b>${esc(giroNombre())}</b>) ya trae encendidas las que le sirven. Puedes activar cualquier otra.</p>
+    ${Object.keys(MODULOS_INFO).map(k => { const i = MODULOS_INFO[k], del = modDelGiro(k); return `<label class="sw-row"><input type="checkbox" data-k="${k}" data-on="si" data-off="" ${del || S.config[k] === 'si' ? 'checked' : ''} ${del ? 'disabled' : ''}><span class="sw"></span><div><b>${i.n}${del ? ' <span class="badge b-ok">Incluida</span>' : ''}</b><small>${i.d} <i class="mut">(${i.g})</i></small></div></label>`; }).join('')}
+    <button class="btn pri" data-a="guardarAj" data-s="modulos">Guardar</button>`;
+}
+
+ACC.verAgendaInicio = async el => { const t = el.dataset.t; if (!S['ag_' + t]) S['ag_' + t] = await api('agenda', { tipo: t }, true); const a = S['ag_' + t].find(x => x.id === el.dataset.id); if (a) formAgenda(a, t); };
+
 /* ===================== SUSCRIPCIONES: vencimientos, cuentas y perfiles ===================== */
 const PLAT = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
-const susOn = () => !!S.config && (S.config.giro === 'streaming' || S.config.suscripciones === 'si');
+const susOn = () => modOn('suscripciones');
 const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', otro: '📦' };
 // Plataformas: las conocidas + las que el negocio agregó ("+ Otra") + las que ya usa en productos o cuentas
 function platsTodas() {
@@ -7790,6 +8163,15 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9', fecha: '2026-10-21', items: [
+    { i: 'sparkle', t: 'Cada tipo de negocio con lo suyo', d: 'Tu giro trae encendidas las funciones que le sirven y en Ajustes › Funciones por tipo de negocio puedes activar las demás.', ir: 'ajustes' },
+    { i: 'wrench', t: 'Órdenes de trabajo (taller, repuestos, servicios)', d: 'Recibes el equipo o vehículo con su falla, lo pasas por recibido → en proceso → listo → entregado, avisas por WhatsApp y cobras desde la orden. El cliente guarda su vehículo o equipo.' },
+    { i: 'cal', t: 'Agenda de citas (belleza) y encargos (panadería)', d: 'Citas por día y hora con quién atiende; encargos con fecha de entrega y anticipo. En Inicio ves las citas y entregas de hoy, y cobras con un toque.' },
+    { i: 'alert', t: 'Fechas de caducidad (farmacia, pulpería)', d: 'Cada producto puede llevar su fecha de caducidad; Inicio y Productos te muestran los que están por vencer.' },
+    { i: 'receipt', t: 'Mesa, para llevar y comanda (restaurante)', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina, e imprimes la comanda sin precios.' },
+    { i: 'barcode', t: 'Serie / IMEI y garantía (tecnología)', d: 'Al cobrar anotas la serie de cada equipo; el comprobante sale con la serie y hasta cuándo tiene garantía.' },
+    { i: 'tag', t: 'Talla y color al vender (boutique, variedades)', d: 'Si el producto tiene opciones, al tocarlo en Vender eliges cuál y el ticket lo dice.' },
+  ] },
   { v: '1.8', fecha: '2026-10-21', items: [
     { i: 'tv', t: 'Negocios de streaming y suscripciones', d: 'Nuevo tipo de negocio. Tus productos pueden ser una suscripción (Netflix, Disney+, IPTV…) o un paquete con varias plataformas. Al cobrar eliges el plan, la fecha de vencimiento y el perfil que entregas; los accesos van en el comprobante por WhatsApp.', ir: 'productos' },
     { i: 'clock', t: 'Vencimientos', d: 'Qué suscripciones vencen hoy, esta semana o ya vencieron. Con un toque mandas el recordatorio por WhatsApp o renuevas un mes más.', ir: 'vencimientos' },
@@ -7844,6 +8226,15 @@ const NOVEDADES = [
 
 /* ---------- Guías por pantalla ---------- */
 const AYUDA = {
+  ordenes: { d: 'Órdenes de trabajo: cada equipo o vehículo que recibes, con su falla, presupuesto, anticipo y estado.',
+    p: ['<b>Nueva orden</b>: cliente, equipo o vehículo, placa o serie, falla y entrega prometida. Puedes mandarle el comprobante de recepción por WhatsApp.', 'Avanza el estado con un toque: recibido → en proceso → listo. En <b>Listo</b> aparece <b>Avisar</b> por WhatsApp.', '<b>Cobrar</b> arma la venta con el presupuesto y descuenta el anticipo; la orden queda entregada.'],
+    t: ['Si pones la fecha de entrega prometida, Inicio te avisa cuando se pasa.'] },
+  agenda: { d: 'Las citas del día, ordenadas por hora, con el servicio y quién atiende.',
+    p: ['<b>Hoy</b> / <b>Mañana</b> o elige cualquier día.', 'Toca una cita para editarla, recordársela por WhatsApp, cobrarla o marcarla atendida.', 'Si escribes un servicio de tu lista de productos, el precio se llena solo.'],
+    t: ['Las citas pendientes de días anteriores aparecen abajo para que no se te queden abiertas.'] },
+  encargos: { d: 'Pedidos por encargo con día y hora de entrega, precio y anticipo.',
+    p: ['<b>Nuevo encargo</b>: cliente, día y hora de entrega, qué encargó, precio y anticipo.', 'En Inicio ves las entregas de hoy. Al cobrar, el anticipo se descuenta solo.', 'El botón de WhatsApp le confirma al cliente cuándo estará listo.'],
+    t: ['Marca <b>Entregado</b> al entregarlo si no lo cobras desde la app.'] },
   vencimientos: { d: 'Tus suscripciones vendidas con su fecha de vencimiento: cuáles vencen hoy, esta semana o ya vencieron.',
     p: ['<b>Recordar</b> abre WhatsApp con el aviso listo para el cliente.', '<b>Renovar 1 mes</b> arma el cobro con el mismo producto, cliente y perfil; solo eliges la forma de pago.', 'Toca una suscripción para ver los accesos entregados, reenviarlos o cancelarla.'],
     t: ['Las vencidas conservan el perfil 7 días para darte tiempo de renovar; después queda libre.'] },
@@ -8011,7 +8402,7 @@ ACC.apkBajo = el => { LS.set('apkNo', String(Date.now())); const d = $('#apk-bar
 /* ===================== COMPROBANTES (imagen, impresión, WhatsApp) ===================== */
 function textoVenta(v, det) {
   const l = [`*${S.config.nombre || 'Comprobante'}*`, v.factura ? `Factura ${v.factura} · ${fFechaC(v.fecha)} ${fHora(v.fecha)}` : `Comprobante ${v.numero} · ${fFechaC(v.fecha)} ${fHora(v.fecha)}`, ''];
-  det.forEach(i => l.push(`${cant(i.cantidad)} × ${i.descripcion} — ${money(i.total)}`));
+  det.forEach(i => l.push(`${cant(i.cantidad)} × ${i.descripcion} — ${money(i.total)}` + (i.serie ? `\n   Serie ${i.serie}` : '') + (i.garantia ? `\n   Garantía hasta ${fFechaC(garantiaHasta(v.fecha, i.garantia))}` : '')));
   l.push('');
   if (v.descuento) l.push('Descuento: −' + money(v.descuento));
   l.push(`*Total: ${money(v.total)}*`, 'Pago: ' + v.metodo + (v.metodo === 'Crédito' ? ` · saldo ${money(v.saldo)}` : ''));
@@ -8031,7 +8422,8 @@ function reciboHTML(tipo, d) {
     const v = d.v, cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
     return `<div class="rc">${cab}<div class="rc-b"><div class="rc-t"><b>Comprobante de pago</b><small>N.º ${esc(v.numero)}</small></div>
       <div class="rc-m"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(cli ? cli.nombre : 'Consumidor final')}</div><div><small>Atendió</small>${esc(nomUsuario(v.usuarioId).split(' ')[0])}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
-      ${d.det.map(i => `<div class="rc-i"><span>${esc(i.descripcion)} <small>× ${cant(i.cantidad)}</small></span><b>${money(i.total)}</b></div>`).join('')}
+      ${d.det.map(i => `<div class="rc-i"><span>${esc(i.descripcion)} <small>× ${cant(i.cantidad)}</small>${i.serie ? `<br><small>Serie ${esc(i.serie)}</small>` : ''}${i.garantia ? `<br><small>Garantía ${i.garantia} días · hasta ${fFechaC(garantiaHasta(v.fecha, i.garantia))}</small>` : ''}</span><b>${money(i.total)}</b></div>`).join('')}
+      ${v.servicio ? `<div class="rc-s"><span>Servicio</span><span>${v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio'}</span></div>` : ''}
       <div class="rc-s"><span>Subtotal</span><span>${money(v.subtotal)}</span></div>${v.descuento ? `<div class="rc-s"><span>Descuento</span><span>− ${money(v.descuento)}</span></div>` : ''}<div class="rc-s"><span>ISV</span><span>${money(v.isv)}</span></div>
       ${v.metodo === 'Efectivo' ? `<div class="rc-s"><span>Recibido · cambio</span><span>${money(v.recibido)} · ${money(v.cambio)}</span></div>` : ''}${v.metodo === 'Crédito' ? `<div class="rc-s"><span>Anticipo · saldo</span><span>${money(v.recibido)} · ${money(v.saldo)}</span></div>` : ''}
       <div class="rc-tot"><span>${v.metodo === 'Crédito' ? 'Total' : 'Total pagado'}</span><b>${money(v.total)}</b></div></div>${pie}</div>`;
@@ -8081,7 +8473,7 @@ function imprimirTicket(v, det) {
   const L = (a, b) => `<div class="pl"><span>${a}</span><span>${b}</span></div>`;
   $('#print-area').innerHTML = `<div class="ticket"><div class="pc">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : ''}<b>${esc(c.nombre || '')}</b>${c.rtn ? `<div>RTN ${esc(c.rtn)}</div>` : ''}${c.direccion ? `<div>${esc(c.direccion)}</div>` : ''}${c.telefono ? `<div>Tel. ${esc(c.telefono)}</div>` : ''}</div>
     <div class="ps">${L('Comprobante', esc(v.numero))}${L('Fecha', esc(fFechaC(v.fecha)) + ' ' + fHora(v.fecha))}${L('Cliente', esc(cli ? cli.nombre : 'Consumidor final'))}${L('Atendió', esc(nomUsuario(v.usuarioId)))}</div>
-    <div class="ps">${det.map(i => `<div>${esc(i.descripcion)}</div>${L('&nbsp;&nbsp;' + cant(i.cantidad) + ' × ' + money(i.precio), money(i.total))}`).join('')}</div>
+    <div class="ps">${det.map(i => `<div>${esc(i.descripcion)}</div>${i.serie ? `<div>&nbsp;&nbsp;Serie ${esc(i.serie)}</div>` : ''}${i.garantia ? `<div>&nbsp;&nbsp;Garantía hasta ${fFechaC(garantiaHasta(v.fecha, i.garantia))}</div>` : ''}${L('&nbsp;&nbsp;' + cant(i.cantidad) + ' × ' + money(i.precio), money(i.total))}`).join('')}</div>${v.servicio ? `<div class="ps">${L('Servicio', v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio')}</div>` : ''}
     <div class="ps">${L('Subtotal', money(v.subtotal))}${v.descuento ? L('Descuento', '−' + money(v.descuento)) : ''}${L('ISV', money(v.isv))}<div class="pl pt"><span>TOTAL</span><span>${money(v.total)}</span></div>${L('Pago', esc(v.metodo))}${v.metodo === 'Efectivo' ? L('Recibido', money(v.recibido)) + L('Cambio', money(v.cambio)) : ''}${v.metodo === 'Crédito' ? L('Anticipo', money(v.recibido)) + L('Saldo', money(v.saldo)) : ''}</div>
     <div class="pc"><div>${esc(c.mensajeRecibo || '¡Gracias por su compra!')}</div><small>Este comprobante no sustituye la factura fiscal</small></div></div>`;
   if (window.AndroidApp && AndroidApp.imprimir) { AndroidApp.imprimir(); return; }
