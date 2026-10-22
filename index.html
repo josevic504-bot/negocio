@@ -4887,11 +4887,12 @@ document.addEventListener('click', e => {
 const LIBS = {
   chart: ['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'],
   canvas: ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'],
-  qr: ['https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js']
+  qr: ['https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'],
+  zxing: ['https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'] // lector de códigos para equipos sin lector nativo (iPhone, Firefox, APK)
 };
 const LIBS_OK = {};
 function cargarLib(k) {
-  const listo = { chart: () => window.Chart, canvas: () => window.html2canvas, qr: () => window.qrcode }[k];
+  const listo = { chart: () => window.Chart, canvas: () => window.html2canvas, qr: () => window.qrcode, zxing: () => window.ZXing }[k];
   if (listo && listo()) return Promise.resolve();
   if (!LIBS_OK[k]) LIBS_OK[k] = LIBS[k].reduce((p, src) => p.then(() => new Promise((ok, mal) => {
     const s = document.createElement('script'); s.src = src; s.onload = ok;
@@ -5603,13 +5604,13 @@ function agregarAlTicket(p, n, variante) {
   try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
   return true;
 }
-R.vender_bar = () => ('BarcodeDetector' in window ? `<button class="hbtn" data-a="escanear" aria-label="Escanear">${ic('barcode', 20)}</button>` : '');
+R.vender_bar = () => `<button class="hbtn" data-a="escanear" aria-label="Escanear código">${ic('barcode', 20)}</button>`;
 R.vender = () => {
   const cats = [...new Set(S.productos.filter(p => p.activo).map(p => p.categoria))].sort();
   const f = S.f;
   if (f.vcat && !cats.includes(f.vcat)) f.vcat = '';
   $('#main').innerHTML = `<div class="pos-top"><div class="srch grow">${ic('search', 18)}<input id="v-q" placeholder="Buscar producto o código…" value="${esc(f.vq || '')}" autocomplete="off" enterkeyhint="search"></div>
-    <button class="btn icon" data-a="itemLibre" title="Artículo sin registrar">${ic('plus')}</button></div>
+    <button class="btn icon" data-a="escanear" title="Escanear código de barras">${ic('barcode')}</button><button class="btn icon" data-a="itemLibre" title="Artículo sin registrar">${ic('plus')}</button></div>
     <div class="chips" id="v-cats"><button class="chip ${!f.vcat ? 'on' : ''}" data-a="vcat" data-c="">Todo <span class="c">${S.productos.filter(p => p.activo).length}</span></button>${cats.map(c => `<button class="chip ${f.vcat === c ? 'on' : ''}" data-a="vcat" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <div class="pgrid" id="v-grid"></div>
     ${S.ticket.pedidoId ? `<div class="aviso info" style="margin-top:12px">${ic('inbox', 20)}<div><b>Cobrando un pedido en línea</b><small>Al cobrar, el pedido queda como entregado.</small></div><button class="btn sm" data-a="limpiarTicket">Quitar</button></div>` : ''}
@@ -5665,22 +5666,46 @@ ACC.itemLibre = () => {
     S.ticket.items.push({ productoId: '', descripcion: d, cantidad: c, precio: p }); guardarTicket(); h.cerrar(); pintarGridVenta();
   } }]);
 };
-ACC.escanear = () => escanearCodigo(code => {
-  const p = S.productos.find(x => x.activo && x.codigo && x.codigo === code);
+// Lector de código de barras físico (USB o Bluetooth): escribe el código muy rápido y termina con Enter.
+// Si el cajero no tiene el cursor en la búsqueda, igual se agrega al ticket.
+(() => {
+  let buf = '', t0 = 0;
+  document.addEventListener('keydown', e => {
+    if (S.vista !== 'vender' || !S.user || PILA.length) return;
+    const el = document.activeElement, enInput = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
+    if (enInput) return;
+    const ahora = Date.now(); if (ahora - t0 > 120) buf = ''; t0 = ahora;
+    if (e.key === 'Enter') { const c = buf; buf = ''; if (c.length >= 3) { e.preventDefault(); codigoLeido(c); } return; }
+    if (e.key.length === 1) buf += e.key;
+  });
+})();
+function codigoLeido(code) {
+  const c = String(code).trim().toLowerCase();
+  const p = S.productos.find(x => x.activo && x.codigo && String(x.codigo).toLowerCase() === c);
   if (p) { if (agregarAlTicket(p)) { toast('+1 ' + p.nombre, 'ok', 1500); pintarGridVenta(); } }
   else toast('No hay producto con el código ' + code, 'error');
-});
+}
+ACC.escanear = () => escanearCodigo(codigoLeido);
 async function escanearCodigo(cb, una) {
-  if (!('BarcodeDetector' in window)) { toast('Este equipo no puede leer códigos con la cámara', 'error'); return; }
-  let stream, activo = true, ultimo = '', tUlt = 0;
-  const h = hoja({ titulo: 'Escanear código', cls: 'chica', html: `<div class="scan"><video id="sc-v" playsinline muted></video><i></i></div><p class="sm mut" style="text-align:center">Apunta al código de barras</p>`, onClose: () => { activo = false; if (stream) stream.getTracks().forEach(t => t.stop()); } });
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) { toast('Este navegador no permite usar la cámara. Abre la app en Chrome o Safari.', 'error'); return; }
+  const nativo = 'BarcodeDetector' in window;
+  if (!nativo) { try { loader(true); await cargarLib('zxing'); } catch (e) { loader(false); toast(e.message, 'error'); return; } finally { loader(false); } }
+  let stream, activo = true, ultimo = '', tUlt = 0, lector = null;
+  const h = hoja({ titulo: 'Escanear código', cls: 'chica', html: `<div class="scan"><video id="sc-v" playsinline muted></video><i></i></div><p class="sm mut" style="text-align:center">Apunta al código de barras${una ? '' : ' · puedes escanear varios seguidos'}</p>`, onClose: () => { activo = false; if (lector) { try { lector.reset(); } catch (e) {} } if (stream) stream.getTracks().forEach(t => t.stop()); } });
   try {
+    const v = $('#sc-v', h.el);
+    const leido = c => { if (c !== ultimo || Date.now() - tUlt > 3000) { ultimo = c; tUlt = Date.now(); try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} cb(c); if (una) h.cerrar(); } };
+    if (!nativo) { // respaldo: ZXing lee EAN, UPC, Code 128, QR… desde el video
+      lector = new ZXing.BrowserMultiFormatReader();
+      await lector.decodeFromVideoDevice(undefined, v, r => { if (activo && r) leido(r.getText()); });
+      return;
+    }
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    const v = $('#sc-v', h.el); v.srcObject = stream; await v.play();
+    v.srcObject = stream; await v.play();
     const det = new BarcodeDetector();
     const loop = async () => {
       if (!activo) return;
-      try { const r = await det.detect(v); if (r.length) { const c = r[0].rawValue; if (c !== ultimo || Date.now() - tUlt > 2000) { ultimo = c; tUlt = Date.now(); cb(c); if (una) { h.cerrar(); return; } } } } catch (e) {}
+      try { const r = await det.detect(v); if (r.length) { leido(r[0].rawValue); if (una) return; } } catch (e) {}
       setTimeout(loop, 250);
     };
     loop();
@@ -8243,6 +8268,7 @@ const NOVEDADES = [
     { i: 'receipt', t: 'Mesa, para llevar y comanda (restaurante)', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina, e imprimes la comanda sin precios.' },
     { i: 'barcode', t: 'Serie / IMEI y garantía (tecnología)', d: 'Al cobrar anotas la serie de cada equipo; el comprobante sale con la serie y hasta cuándo tiene garantía.' },
     { i: 'tag', t: 'Talla y color al vender (boutique, variedades)', d: 'Si el producto tiene opciones, al tocarlo en Vender eliges cuál y el ticket lo dice.' },
+    { i: 'barcode', t: 'Escanear códigos en cualquier teléfono', d: 'El botón de código de barras en Vender ahora funciona también en iPhone, Firefox y la app Android: si el teléfono no trae lector, la app carga uno. Y si usas un lector físico (USB o Bluetooth), solo dispara: el producto se agrega al ticket.', ir: 'vender' },
     { i: 'bell', t: 'Alertas de vencimiento a tu gusto', d: 'En Vencimientos › Alertas eliges con cuántos días de anticipación te avisa la app y editas los mensajes de WhatsApp de «por vencer» y «vencida». Cada suscripción se puede editar (fecha, PIN, nota).', ir: 'vencimientos' },
   ] },
   { v: '1.8', fecha: '2026-10-21', items: [
