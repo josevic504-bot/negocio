@@ -5750,11 +5750,16 @@ ACC.itemLibre = () => {
     if (e.key.length === 1) buf += e.key;
   });
 })();
+// Devuelve true cuando el producto entró al ticket: el escáner se cierra y el cajero sigue con la venta
 function codigoLeido(code) {
   const c = String(code).trim().toLowerCase();
   const p = S.productos.find(x => x.activo && x.codigo && String(x.codigo).toLowerCase() === c);
-  if (p) { if (agregarAlTicket(p)) { toast('+1 ' + p.nombre, 'ok', 1500); pintarGridVenta(); } }
-  else toast('No hay producto con el código ' + code, 'error');
+  if (!p) { toast('No hay producto con el código ' + code, 'error'); return false; }
+  if (!agregarAlTicket(p)) return true;
+  toast('+1 ' + p.nombre + ' · ' + (enTicket(p.id) === 1 ? '1 en el ticket' : cant(enTicket(p.id)) + ' en el ticket'), 'ok', 2000);
+  if (S.vista !== 'vender') ir('vender'); else pintarGridVenta();
+  setTimeout(() => { const bar = $('#v-bar'); if (bar) bar.scrollIntoView({ block: 'end', behavior: 'smooth' }); }, 150);
+  return true;
 }
 ACC.escanear = () => escanearCodigo(codigoLeido);
 async function escanearCodigo(cb, una) {
@@ -5762,10 +5767,10 @@ async function escanearCodigo(cb, una) {
   const nativo = 'BarcodeDetector' in window;
   if (!nativo) { try { loader(true); await cargarLib('zxing'); } catch (e) { loader(false); toast(e.message, 'error'); return; } finally { loader(false); } }
   let stream, activo = true, ultimo = '', tUlt = 0, lector = null;
-  const h = hoja({ titulo: 'Escanear código', cls: 'chica', html: `<div class="scan"><video id="sc-v" playsinline muted></video><i></i></div><p class="sm mut" style="text-align:center">Apunta al código de barras${una ? '' : ' · puedes escanear varios seguidos'}</p>`, onClose: () => { activo = false; if (lector) { try { lector.reset(); } catch (e) {} } if (stream) stream.getTracks().forEach(t => t.stop()); } });
+  const h = hoja({ titulo: 'Escanear código', cls: 'chica', html: `<div class="scan"><video id="sc-v" playsinline muted></video><i></i></div><p class="sm mut" style="text-align:center">Apunta al código de barras</p>`, onClose: () => { activo = false; if (lector) { try { lector.reset(); } catch (e) {} } if (stream) stream.getTracks().forEach(t => t.stop()); } });
   try {
     const v = $('#sc-v', h.el);
-    const leido = c => { if (c !== ultimo || Date.now() - tUlt > 3000) { ultimo = c; tUlt = Date.now(); try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} cb(c); if (una) h.cerrar(); } };
+    const leido = c => { if (c !== ultimo || Date.now() - tUlt > 3000) { ultimo = c; tUlt = Date.now(); try { navigator.vibrate && navigator.vibrate(40); } catch (e) {} const r = cb(c); if (una || r === true) { activo = false; h.cerrar(); } } };
     if (!nativo) { // respaldo: ZXing lee EAN, UPC, Code 128, QR… desde el video
       lector = new ZXing.BrowserMultiFormatReader();
       await lector.decodeFromVideoDevice(undefined, v, r => { if (activo && r) leido(r.getText()); });
