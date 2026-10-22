@@ -3138,7 +3138,23 @@ function pendientes_(u) {
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
   const n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
   let sop = 0; try { if (MULTI_NEGOCIO && NEG) sop = mRows_('Soporte').filter(c => c.negocioId === NEG.id && Number(c.sinLeerCli) > 0).length; } catch (e) {}
-  return { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
+  const out = { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
+  try { out.avisos = avisosDia_(); } catch (e) {}
+  return out;
+}
+// Avisos del día para las notificaciones del teléfono (la app los muestra una sola vez por día)
+function avisosDia_() {
+  const h = hoy_(), a = {};
+  if (modOn_('suscripciones')) { const l = rows_('Suscripciones').filter(s => s.estado !== 'cancelada' && s.estado !== 'renovada'); a.susHoy = l.filter(s => s.vence === h).length; a.susVenc = l.filter(s => s.vence < h && s.vence >= diasAtras_(3)).length; }
+  if (modOn_('agenda') || modOn_('encargos')) {
+    const l = rows_('Agenda').filter(x => x.estado === 'pendiente' && x.dia === h), ahora = ahora_().slice(11, 16);
+    const prox = x => x.hora && x.hora >= ahora && (msDeLocal_(h + 'T' + x.hora) - Date.now()) <= 3600000;
+    if (modOn_('agenda')) { const c = l.filter(x => x.tipo === 'cita'); a.citasHoy = c.length; a.citasProx = c.filter(prox).map(x => ({ hora: x.hora, cliente: x.cliente, detalle: x.detalle })); }
+    if (modOn_('encargos')) { const e = l.filter(x => x.tipo === 'encargo'); a.encHoy = e.length; a.encProx = e.filter(prox).map(x => ({ hora: x.hora, cliente: x.cliente, detalle: x.detalle })); }
+  }
+  if (modOn_('caducidad')) { const c = caducan_(); a.cadVenc = c.vencidos; a.cadProx = c.n - c.vencidos; }
+  if (modOn_('ordenes')) a.ordAtras = rows_('Ordenes').filter(o => ['recibido', 'proceso'].indexOf(o.estado) >= 0 && o.promesa && o.promesa < h).length;
+  return a;
 }
 
 function estadoPedido_(u, d) {
@@ -5232,21 +5248,74 @@ async function detectarModo() {
 let vigilando = null;
 function vigilarPedidos() {
   if (vigilando || !puede('admin', 'cajero')) return;
+  let ultOculto = 0;
   const revisar = async () => {
-    if (!S.user || document.hidden || !puede('admin', 'cajero')) return;
+    if (!S.user || !puede('admin', 'cajero')) return;
+    if (document.hidden) { if (!avisosOn() || Date.now() - ultOculto < 110000) return; ultOculto = Date.now(); } // en segundo plano revisa cada 2 min, solo si hay avisos activados
     try {
       const r = await api('pendientes', {}, true);
+      if (r.avisos) avisosDelDia(r.avisos);
       const antes = S.pedidosNuevos, antesM = S.chatsNuevos, antesS = S.soporteNuevos || 0;
       S.pedidosNuevos = r.nuevos || 0; S.chatsNuevos = r.mensajes || 0; S.soporteNuevos = r.soporte || 0;
-      if (S.soporteNuevos > antesS && S.yaReviso) { toast('💬 El administrador te respondió. Ábrelo en Ayuda.', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) {} }
-      if (S.chatsNuevos > antesM && S.yaReviso) { toast('💬 Tienes un mensaje nuevo en tu tienda', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) {} if (S.vista === 'mensajes' && !PILA.length) R.mensajes(); }
-      if (S.pedidosNuevos > antes && antes >= 0 && S.yaReviso) { toast('🛍️ ¡Nuevo pedido en línea!', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) {} if (S.vista === 'pedidos') R.pedidos(); }
+      if (S.soporteNuevos > antesS && S.yaReviso) { toast('💬 El administrador te respondió. Ábrelo en Ayuda.', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) {} notificar('soporte', 'El administrador te respondió', 'Ábrelo en Ayuda › Contactar al administrador', 'inicio'); }
+      if (S.chatsNuevos > antesM && S.yaReviso) { toast('💬 Tienes un mensaje nuevo en tu tienda', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([80, 40, 80]); } catch (e) {} notificar('mensajes', 'Mensaje nuevo en tu tienda', S.chatsNuevos === 1 ? '1 conversación sin responder' : S.chatsNuevos + ' conversaciones sin responder', 'mensajes'); if (S.vista === 'mensajes' && !PILA.length) R.mensajes(); }
+      if (S.pedidosNuevos > antes && antes >= 0 && S.yaReviso) { toast('🛍️ ¡Nuevo pedido en línea!', 'ok', 6000); try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) {} notificar('pedidos', '¡Nuevo pedido en línea!', S.pedidosNuevos === 1 ? '1 pedido por confirmar' : S.pedidosNuevos + ' pedidos por confirmar', 'pedidos'); if (S.vista === 'pedidos') R.pedidos(); }
       S.yaReviso = true;
       if (S.pedidosNuevos !== antes || S.chatsNuevos !== antesM || S.soporteNuevos !== antesS) { pintarHeader(); pintarNav(); }
     } catch (e) {}
   };
   revisar();
   vigilando = setInterval(revisar, 30000);
+}
+/* ===================== AVISOS EN EL TELÉFONO ===================== */
+// Notificaciones del sistema (Chrome Android, PWA instalada, escritorio). Cada tipo se puede apagar en Ajustes › Avisos; se guardan por equipo.
+const AVISOS_TIPOS = [['pedidos', 'Pedidos en línea nuevos', 'inbox'], ['mensajes', 'Mensajes de la tienda', 'chat'], ['soporte', 'Respuestas del administrador', 'help'], ['vencimientos', 'Suscripciones que vencen hoy o ya vencieron', 'clock'], ['citas', 'Citas de hoy y la próxima hora', 'cal'], ['encargos', 'Entregas de hoy', 'gift'], ['caducidad', 'Productos vencidos o por caducar', 'alert'], ['ordenes', 'Órdenes de trabajo atrasadas', 'wrench']];
+const avisosOn = () => LS.get('avisos', '') === 'si' && 'Notification' in window && Notification.permission === 'granted';
+const avisoTipoOn = k => LS.get('av_' + k, 'si') === 'si';
+async function activarAvisos() {
+  if (!('Notification' in window)) { toast('Este navegador no permite notificaciones. En iPhone instala la app en la pantalla de inicio (Compartir › Agregar a inicio).', 'error', 7000); return false; }
+  let p = Notification.permission;
+  if (p === 'default') { try { p = await Notification.requestPermission(); } catch (e) { p = 'denied'; } }
+  if (p !== 'granted') { toast('El teléfono no dio permiso. Actívalo en los ajustes del navegador para este sitio.', 'error', 7000); return false; }
+  LS.set('avisos', 'si');
+  notificar('prueba', 'Avisos activados', 'Así te avisará ' + (S.config.nombre || 'la app') + ' cuando pase algo importante.', 'inicio', true);
+  return true;
+}
+async function notificar(tipo, titulo, cuerpo, vista, forzar) {
+  if (!forzar && (!avisosOn() || !avisoTipoOn(tipo))) return;
+  if (!forzar && !document.hidden && S.vista === vista) return; // ya lo está viendo
+  const o = { body: cuerpo, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'gnvm-' + tipo, renotify: true, data: { vista: vista || 'inicio' }, vibrate: [100, 50, 100] };
+  try {
+    const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
+    if (reg && reg.showNotification) { await reg.showNotification(titulo, o); return; }
+    const n = new Notification(titulo, o); n.onclick = () => { window.focus(); ir(vista || 'inicio'); n.close(); };
+  } catch (e) {}
+}
+// Avisos del día: cada uno se muestra una sola vez por día y por equipo
+function avisosDelDia(a) {
+  if (!avisosOn()) return;
+  const h = hoy(), una = (k, t, c, v) => { const key = 'avd_' + k; if (LS.get(key, '') === h) return; LS.set(key, h); notificar(k.split(':')[0], t, c, v); };
+  if (a.susHoy) una('vencimientos:hoy', a.susHoy === 1 ? '1 suscripción vence hoy' : a.susHoy + ' suscripciones vencen hoy', 'Recuérdales por WhatsApp o renueva con un toque.', 'vencimientos');
+  if (a.susVenc) una('vencimientos:venc', a.susVenc === 1 ? '1 suscripción venció' : a.susVenc + ' suscripciones vencieron', 'Revisa Vencimientos para avisar o liberar el perfil.', 'vencimientos');
+  if (a.citasHoy) una('citas:hoy', a.citasHoy === 1 ? 'Hoy tienes 1 cita' : 'Hoy tienes ' + a.citasHoy + ' citas', 'Ábrelas en Agenda.', 'agenda');
+  (a.citasProx || []).forEach(c => una('citas:' + c.hora + c.cliente, 'Cita a las ' + fHoraC(c.hora) + ' · ' + c.cliente, c.detalle, 'agenda'));
+  if (a.encHoy) una('encargos:hoy', a.encHoy === 1 ? 'Hoy entregas 1 encargo' : 'Hoy entregas ' + a.encHoy + ' encargos', 'Ábrelos en Encargos.', 'encargos');
+  (a.encProx || []).forEach(c => una('encargos:' + c.hora + c.cliente, 'Entrega a las ' + fHoraC(c.hora) + ' · ' + c.cliente, c.detalle, 'encargos'));
+  if (a.cadVenc) una('caducidad:venc', a.cadVenc === 1 ? '1 producto vencido en existencia' : a.cadVenc + ' productos vencidos en existencia', 'Revísalos en Productos › Por caducar.', 'productos');
+  else if (a.cadProx) una('caducidad:prox', a.cadProx === 1 ? '1 producto caduca pronto' : a.cadProx + ' productos caducan pronto', 'En los próximos 30 días.', 'productos');
+  if (a.ordAtras) una('ordenes:atras', a.ordAtras === 1 ? '1 orden de trabajo atrasada' : a.ordAtras + ' órdenes de trabajo atrasadas', 'Pasó la fecha de entrega prometida.', 'ordenes');
+}
+ACC.avisosActivar = async el => { if (await activarAvisos()) { toast('Avisos activados', 'ok'); render(); } };
+ACC.avisosApagar = () => { LS.set('avisos', 'no'); toast('Avisos apagados en este equipo', 'ok'); render(); };
+document.addEventListener('change', e => { const i = e.target.closest('input[data-av]'); if (i) LS.set('av_' + i.dataset.av, i.checked ? 'si' : 'no'); });
+ACC.avisosCerrar = () => { LS.set('avisosOferta', 'no'); R.inicio(); };
+function avisosAjustesHTML() {
+  const on = avisosOn(), soporta = 'Notification' in window, denegado = soporta && Notification.permission === 'denied';
+  return `<p class="sm" style="margin:0 0 10px">Notificaciones en este teléfono o computadora cuando la app está abierta o en segundo plano: pedidos nuevos, mensajes, vencimientos, citas… ${window.AndroidApp ? '' : 'En iPhone, primero instala la app en la pantalla de inicio.'}</p>
+    ${on ? `<div class="row" style="margin-bottom:10px"><span class="badge b-ok">Activados en este equipo</span><button class="btn sm ghost" data-a="avisosApagar">Apagar</button></div>
+      ${AVISOS_TIPOS.map(([k, t, i]) => `<label class="sw-row"><input type="checkbox" data-av="${k}" ${avisoTipoOn(k) ? 'checked' : ''}><span class="sw"></span><div><b>${t}</b></div></label>`).join('')}`
+      : denegado ? `<div class="aviso warn sm">${ic('alert', 18)}<div>El navegador tiene bloqueadas las notificaciones para este sitio. Actívalas en los ajustes del navegador (candado junto a la dirección) y vuelve aquí.</div></div>`
+      : `<button class="btn pri" data-a="avisosActivar">${ic('bell', 18)} Activar avisos en este equipo</button>`}`;
 }
 document.addEventListener('visibilitychange', () => { if (!document.hidden && S.user && !S.enTienda) { recargar(true).then(() => { if (['productos', 'clientes', 'proveedores'].includes(S.vista) && !PILA.length) render(); }).catch(() => {}); } });
 
@@ -5484,6 +5553,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (q.has('tienda')) { S.enTienda = true; return iniciarTienda(q.get('tienda')); }
   if (q.has('panel')) { if (DEMO.on) demoBackend(); return iniciarPanel(); }
   if ('serviceWorker' in navigator && location.protocol === 'https:') { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }
+  if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.tipo === 'ir' && S.user && VISTAS[e.data.vista]) { cerrarHojas(); ir(e.data.vista); } });
   if (S.token) {
     if (!LS.json(cacheKey(), null)) mostrarSplash();
     try { await arrancar(); return; } catch (e) { console.warn(e); quitarSplash(); }
@@ -5563,8 +5633,9 @@ R.inicio = () => {
   }
   const aviso = d.aviso && rol === 'admin' ? `<div class="aviso">${ic('sparkle', 20)}<div><b>${esc(fMes(d.aviso.mes))} dejó ${money(d.aviso.pendiente)} de ganancia sin destino.</b><small>Decide si va a ahorro, reinversión o a pagar algo.</small></div><button class="btn sm pri" data-a="ir" data-v="reportes" data-p='{"tab":"ganancias"}'>Decidir</button></div>` : '';
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
+  const ofAvisos = puede('admin', 'cajero') && 'Notification' in window && Notification.permission !== 'denied' && !avisosOn() && LS.get('avisosOferta', '') !== 'no' && !DEMO.on ? `<div class="aviso info">${ic('bell', 20)}<div><b>Recibe avisos en este teléfono.</b><small>Pedidos nuevos, mensajes, vencimientos y citas, aunque la app esté en segundo plano.</small></div><div class="row"><button class="btn sm pri" data-a="avisosActivar">Activar</button><button class="btn sm ghost icon" data-a="avisosCerrar" aria-label="Cerrar">${ic('x', 16)}</button></div></div>` : '';
   const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${avSus}${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${vacio}${aviso}${listas}</div>`;
 };
 ACC.verVenta = async el => {
   const f = el.dataset.f.slice(0, 10);
@@ -7131,6 +7202,7 @@ R.ajustes = () => {
     <label class="fld"><span>Mensaje al pie del comprobante</span><input data-k="mensajeRecibo" value="${v('mensajeRecibo')}" maxlength="120"></label>
     <button class="btn pri" data-a="guardarAj" data-s="negocio">Guardar</button>`);
   if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
+  if (puede('admin', 'cajero')) h += sec('avisos', 'bell', 'Avisos en el teléfono', avisosAjustesHTML(), avisosOn() ? '<span class="badge b-ok">Activos</span>' : '');
   h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `<div class="temas">${Object.keys(TEMAS).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div><p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
     <div class="fld" style="margin-top:12px"><span>Modo (solo en este equipo)</span><div class="modos">${[['auto', 'auto', 'Automático'], ['claro', 'sun', 'Claro'], ['oscuro', 'moon', 'Oscuro']].map(([k, i, t]) => `<button class="pay ${modo === k ? 'on' : ''}" data-a="modoColor" data-m="${k}">${ic(i)}${t}</button>`).join('')}</div></div>
     ${adm ? `<div class="fld"><span>Logo</span><div class="row"><div class="logo-prev">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(iniciales(c.nombre))}</div><label class="btn">${ic('image', 18)} Subir logo<input type="file" accept="image/*" id="aj-logo" hidden></label>${c.logo ? `<button class="btn ghost" data-a="quitarLogo">Quitar</button>` : ''}</div></div>` : ''}`);
@@ -8268,6 +8340,7 @@ const NOVEDADES = [
     { i: 'receipt', t: 'Mesa, para llevar y comanda (restaurante)', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina, e imprimes la comanda sin precios.' },
     { i: 'barcode', t: 'Serie / IMEI y garantía (tecnología)', d: 'Al cobrar anotas la serie de cada equipo; el comprobante sale con la serie y hasta cuándo tiene garantía.' },
     { i: 'tag', t: 'Talla y color al vender (boutique, variedades)', d: 'Si el producto tiene opciones, al tocarlo en Vender eliges cuál y el ticket lo dice.' },
+    { i: 'bell', t: 'Avisos en el teléfono', d: 'Notificaciones cuando entra un pedido o un mensaje, cuando vence una suscripción, una hora antes de cada cita o entrega, y por productos vencidos u órdenes atrasadas. Se activan en Ajustes › Avisos y funcionan con la app abierta o en segundo plano.', ir: 'ajustes' },
     { i: 'barcode', t: 'Escanear códigos en cualquier teléfono', d: 'El botón de código de barras en Vender ahora funciona también en iPhone, Firefox y la app Android: si el teléfono no trae lector, la app carga uno. Y si usas un lector físico (USB o Bluetooth), solo dispara: el producto se agrega al ticket.', ir: 'vender' },
     { i: 'bell', t: 'Alertas de vencimiento a tu gusto', d: 'En Vencimientos › Alertas eliges con cuántos días de anticipación te avisa la app y editas los mensajes de WhatsApp de «por vencer» y «vencida». Cada suscripción se puede editar (fecha, PIN, nota).', ir: 'vencimientos' },
   ] },

@@ -1,6 +1,6 @@
 /* Gestión de Negocio VM · guarda la app en el teléfono para que abra rápido.
    Los datos SIEMPRE se piden al servidor; aquí solo se guardan la página, íconos y librerías. */
-const VERSION = 'gnvm-1.5';
+const VERSION = 'gnvm-1.9';
 const BASE = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(VERSION).then(c => c.addAll(BASE)).catch(() => {}));
@@ -21,4 +21,15 @@ self.addEventListener('fetch', e => {
   if (u.origin === location.origin || /cdnjs\.cloudflare\.com|cdn\.jsdelivr\.net|fonts\.(googleapis|gstatic)\.com/.test(u.hostname)) {
     e.respondWith(caches.match(r).then(x => x || fetch(r).then(res => { if (res.ok || res.type === 'opaque') { const cp = res.clone(); caches.open(VERSION).then(c => c.put(r, cp)); } return res; })));
   }
+});
+
+// Al tocar una notificación: abre la app (o la trae al frente) en la pantalla indicada
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const vista = (e.notification.data && e.notification.data.vista) || 'inicio';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
+    const c = cs.find(x => 'focus' in x);
+    if (c) { c.focus(); c.postMessage({ tipo: 'ir', vista }); return; }
+    return self.clients.openWindow('./#' + vista);
+  }));
 });
