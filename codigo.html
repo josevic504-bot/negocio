@@ -1,0 +1,8 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Codigo.gs · Gestión de Negocio VM</title>
+<style>body{font-family:system-ui,sans-serif;margin:0;background:#f6f3f8;color:#222}header{position:sticky;top:0;background:#fff;padding:14px 16px;box-shadow:0 2px 10px rgba(0,0,0,.08);display:flex;gap:10px;align-items:center;flex-wrap:wrap}h1{font-size:17px;margin:0;flex:1}button{background:#d10f6f;color:#fff;border:0;border-radius:12px;padding:12px 18px;font-size:16px;font-weight:600}small{display:block;width:100%;color:#666}pre{margin:0;padding:16px;font-size:11px;white-space:pre-wrap;word-break:break-all}#ok{color:#0a8f4d;font-weight:600}</style></head><body>
+<header><h1>Codigo.gs</h1><button id="b">Copiar todo</button><span id="ok"></span><small id="v"></small><small>Pégalo en Apps Script reemplazando todo el contenido de Código.gs y crea una nueva versión de la implementación.</small></header>
+<pre id="c">Cargando…</pre>
+<script>
+fetch('Codigo.gs?v=' + Date.now()).then(r => r.text()).then(t => { document.getElementById('c').textContent = t; const m = t.match(/const VERSION = '([^']+)'/); document.getElementById('v').textContent = 'Versión ' + (m ? m[1] : '?') + ' · ' + Math.round(t.length / 1024) + ' KB'; window.__t = t; });
+document.getElementById('b').onclick = async () => { try { await navigator.clipboard.writeText(window.__t); } catch (e) { const r = document.createRange(); r.selectNodeContents(document.getElementById('c')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); document.execCommand('copy'); } document.getElementById('ok').textContent = '✓ Copiado'; };
+</script></body></html>

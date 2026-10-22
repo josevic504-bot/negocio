@@ -21,7 +21,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.7';
+const VERSION = '1.9';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -48,12 +48,16 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones'],
-  Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia'],
+  Cuentas:        ['id','plataforma','nombre','correo','clave','perfiles','costo','vence','nota','activo','creado'],
+  Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado'],
+  Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion'],
-  VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total'],
-  Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo'],
+  VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia'],
+  Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
+  Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado'],
+  Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','ref'],
   Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion'],
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion'],
@@ -70,12 +74,12 @@ const SCHEMA = {
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M' };
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
-const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario']);
-const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo']);
+const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa']);
+const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -87,14 +91,14 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
   msjCobro: 'Hola {cliente} 👋, te saluda {negocio}. Te recordamos tu saldo pendiente de {saldo}. ¡Gracias por tu preferencia!',
   // Facturación SAR (autoimpresor): apagada por defecto
   sarActivo: 'no', sarRazon: '', sarRtn: '', sarDireccion: '', sarCai: '', sarEst: '000', sarPunto: '001', sarDesde: '', sarHasta: '', sarLimite: '',
-  seqV: '0', seqC: '0', seqP: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
+  seqV: '0', seqC: '0', seqP: '0', seqO: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
 };
 // Ajustes que el administrador puede cambiar desde la app
 const CONFIG_EDITABLE = Object.keys(CONFIG_DEF).filter(k => k.indexOf('seq') !== 0 && k.indexOf('sys') !== 0 && k.indexOf('sar') !== 0);
@@ -102,6 +106,7 @@ function sinInternos_(c) { Object.keys(c).forEach(k => { if (k.indexOf('seq') ==
 
 const ESCRITURA = {
   Productos: ['admin','bodega'],
+  Cuentas: ['admin'],
   Clientes: ['admin','cajero'],
   Proveedores: ['admin','bodega']
 };
@@ -130,6 +135,12 @@ const GIROS = {
     ej: [['Pan blanco (bolsa)','Pan salado','🍞',35,18,30],['Semita','Pan dulce','🥯',15,6,40],['Cachitos','Pan dulce','🥐',12,5,50],['Rosquillas (bolsa)','Galletas','🍩',45,22,25],['Pastel de cumpleaños','Pasteles','🎂',650,300,3,'Sabor: Chocolate, Vainilla, Tres leches'],['Galletas de mantequilla','Galletas','🍪',60,28,20],['Café con leche','Bebidas','☕',25,8,0],['Pan de coco','Pan dulce','🥥',20,9,30]] },
   servicios:  { n: 'Servicios', cats: ['Servicios','Paquetes','Materiales'],
     ej: [['Servicio básico','Servicios','🛎️',300,0,0],['Servicio premium','Servicios','⭐',650,0,0],['Visita a domicilio','Servicios','🏠',200,0,0,'Modalidad: A domicilio, En el local'],['Paquete mensual','Paquetes','📦',1500,0,0],['Materiales','Materiales','🧰',120,70,20]] },
+  streaming:  { n: 'Streaming y suscripciones', cats: ['Netflix','Disney+','HBO Max','Prime Video','Spotify','YouTube Premium','IPTV','Combos'],
+    ej: [['Netflix · 1 perfil','Netflix','📺',120,58,0,'Plan: 1 mes, 3 meses, 6 meses',{ plataforma: 'Netflix', entrega: 'perfil' }],['Netflix · cuenta completa','Netflix','📺',450,290,0,'Plan: 1 mes, 3 meses',{ plataforma: 'Netflix', entrega: 'cuenta' }],
+      ['Disney+ · 1 perfil','Disney+','🏰',100,45,0,'Plan: 1 mes, 3 meses, 6 meses',{ plataforma: 'Disney+', entrega: 'perfil' }],['HBO Max · 1 perfil','HBO Max','🎬',90,40,0,'Plan: 1 mes, 3 meses',{ plataforma: 'HBO Max', entrega: 'perfil' }],
+      ['Prime Video · 1 perfil','Prime Video','🎥',80,35,0,'Plan: 1 mes, 3 meses',{ plataforma: 'Prime Video', entrega: 'perfil' }],['Spotify Premium','Spotify','🎵',90,40,0,'Plan: 1 mes, 3 meses, 6 meses',{ plataforma: 'Spotify', entrega: 'perfil' }],
+      ['YouTube Premium','YouTube Premium','▶️',80,35,0,'Plan: 1 mes, 3 meses',{ plataforma: 'YouTube Premium', entrega: 'perfil' }],['IPTV · 1 dispositivo','IPTV','📡',150,60,0,'Plan: 1 mes, 3 meses, 6 meses, 12 meses',{ plataforma: 'IPTV', entrega: 'perfil' }],
+      ['Combo Netflix + Disney+','Combos','🍿',200,100,0,'Plan: 1 mes, 3 meses',{ incluye: 'Netflix:1|Disney+:1' }],['Combo total (Netflix, Disney+, HBO Max)','Combos','🎁',280,135,0,'Plan: 1 mes, 3 meses',{ incluye: 'Netflix:1|Disney+:1|HBO Max:1' }]] },
   otro:       { n: 'Otro tipo de negocio', cats: ['General'],
     ej: [['Producto de ejemplo 1','General','📦',100,60,10],['Producto de ejemplo 2','General','🛍️',250,150,10],['Servicio de ejemplo','General','🛎️',300,0,0]] }
 };
@@ -229,6 +240,14 @@ function rutaUsuario_(a, u, d, req) {
     case 'soporteLista':    return soporteLista_(u);
     case 'soporteVer':      return soporteVer_(u, d);
     case 'soporteEnviar':   return lock_(() => soporteEnviar_(u, d));
+    case 'susCuentas':      return susCuentas_(u);
+    case 'suscripciones':   return suscripciones_(u);
+    case 'susEstado':       return lock_(() => susEstado_(u, d));
+    case 'cambiarGiro':     return lock_(() => cambiarGiro_(u, d));
+    case 'ordenes':         return ordenes_(u, d);
+    case 'ordenGuardar':    return lock_(() => ordenGuardar_(u, d));
+    case 'agenda':          return agenda_(u, d);
+    case 'agendaGuardar':   return lock_(() => agendaGuardar_(u, d));
     case 'caja':            return caja_(u, d);
     case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
     case 'reporte':         return reporte_(u, d);
@@ -872,6 +891,253 @@ function registrar_(d) {
   });
 }
 
+/* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
+/* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
+const MODULOS = ['caducidad', 'comanda', 'ordenes', 'series', 'variantes', 'encargos', 'agenda', 'suscripciones'];
+function modOn_(k) { const cfg = config_(); return (MODULOS_GIRO[cfg.giro] || []).indexOf(k) >= 0 || cfg[k] === 'si'; }
+const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
+const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
+
+/* ---- Caducidad: productos por vencer (farmacia, pulpería) ---- */
+function caducan_() {
+  const h = hoy_(), lim = diasAtras_(-30);
+  const l = rows_('Productos').filter(p => p.activo && p.caduca && p.caduca <= lim && (Number(p.stock) > 0 || p.tipo !== 'producto'))
+    .map(p => ({ id: p.id, nombre: p.nombre, caduca: p.caduca, stock: p.stock, vencido: p.caduca < h }))
+    .sort((a, b) => a.caduca < b.caduca ? -1 : 1);
+  return { n: l.length, vencidos: l.filter(x => x.vencido).length, lista: l.slice(0, 8) };
+}
+
+/* ---- Órdenes de trabajo (taller, repuestos, servicios técnicos) ---- */
+function ordenes_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const lim = diasAtras_(90) + 'T00:00';
+  const l = rows_('Ordenes').filter(o => ['recibido', 'proceso', 'listo'].indexOf(o.estado) >= 0 || o.creado >= lim);
+  return desc_(l, 'creado');
+}
+function ordenGuardar_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const r = Object.assign({}, d.registro || {});
+  const prev = r.id ? rows_('Ordenes').find(x => x.id === r.id) : null;
+  if (r.id && !prev) throw new Error('La orden ya no existe');
+  if (prev && ['entregado', 'cancelado'].indexOf(prev.estado) >= 0 && r.estado !== undefined && r.estado !== prev.estado && u.rol !== 'admin') throw new Error('Una orden ' + (prev.estado === 'entregado' ? 'entregada' : 'cancelada') + ' ya no se cambia');
+  if (prev && r.presupuesto !== undefined && u.rol === 'bodega') delete r.presupuesto;
+  ['cliente', 'telefono', 'equipo', 'placa'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
+  ['falla', 'diagnostico', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
+  if (prev && r.clienteId === '' && r.cliente === prev.cliente) { delete r.clienteId; delete r.cliente; delete r.telefono; }
+  if (r.clienteId !== undefined) {
+    const c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null;
+    if (r.clienteId && !c) throw new Error('El cliente ya no existe');
+    if (c) { r.cliente = c.nombre; r.telefono = c.telefono; if (r.equipo && !c.equipo) upsert_('Clientes', { id: c.id, equipo: r.equipo + (r.placa ? ' · ' + r.placa : '') }); }
+  }
+  if (!prev && !r.cliente && !r.clienteId) throw new Error('Escribe el nombre del cliente');
+  if (!prev && !r.equipo) throw new Error('Escribe qué equipo o vehículo recibes');
+  if (r.estado !== undefined && EST_ORDEN.indexOf(r.estado) < 0) throw new Error('Estado no válido');
+  if (r.anticipo !== undefined) r.anticipo = r2_(r.anticipo);
+  if (r.presupuesto !== undefined) r.presupuesto = r2_(r.presupuesto);
+  if (r.promesa !== undefined && r.promesa && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.promesa))) r.promesa = '';
+  if (!prev) { r.numero = siguiente_('O'); r.estado = r.estado || 'recibido'; r.usuarioId = u.id; r.creado = ahora_(); }
+  r.actualizado = ahora_();
+  if (prev && r.anticipo !== undefined && Number(prev.anticipo) > 0) delete r.anticipo; // el anticipo ya cobrado no se edita
+  const o = upsert_('Ordenes', r);
+  if (!prev && o.anticipo > 0) anticipoRegistrar_(u, o.anticipo, o.clienteId, 'Anticipo orden ' + o.numero, o.id, d.metodo);
+  return o;
+}
+function ordenResumen_() {
+  const l = rows_('Ordenes'), h = hoy_();
+  return { recibido: l.filter(o => o.estado === 'recibido').length, proceso: l.filter(o => o.estado === 'proceso').length, listo: l.filter(o => o.estado === 'listo').length,
+    atrasadas: l.filter(o => ['recibido', 'proceso'].indexOf(o.estado) >= 0 && o.promesa && o.promesa < h).length };
+}
+
+/* ---- Agenda: citas (belleza, servicios) y encargos (panadería, comida) ---- */
+function agenda_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const desde = d.desde && /^\d{4}-\d{2}-\d{2}$/.test(d.desde) ? d.desde : diasAtras_(7), hasta = d.hasta && /^\d{4}-\d{2}-\d{2}$/.test(d.hasta) ? d.hasta : diasAtras_(-60);
+  const tipo = d.tipo === 'encargo' ? 'encargo' : d.tipo === 'cita' ? 'cita' : '';
+  return rows_('Agenda').filter(a => (!tipo || a.tipo === tipo) && ((a.dia >= desde && a.dia <= hasta) || a.estado === 'pendiente'))
+    .sort((a, b) => (a.dia + ' ' + a.hora) < (b.dia + ' ' + b.hora) ? -1 : 1);
+}
+function agendaGuardar_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const r = Object.assign({}, d.registro || {});
+  const prev = r.id ? rows_('Agenda').find(x => x.id === r.id) : null;
+  if (r.id && !prev) throw new Error('El registro ya no existe');
+  if (r.tipo !== undefined) r.tipo = r.tipo === 'encargo' ? 'encargo' : 'cita';
+  if (!prev && !r.tipo) r.tipo = 'cita';
+  ['cliente', 'telefono', 'atiende'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
+  ['detalle', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
+  if (prev && r.clienteId === '' && r.cliente === prev.cliente) { delete r.clienteId; delete r.cliente; delete r.telefono; }
+  if (r.clienteId !== undefined) {
+    const c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null;
+    if (r.clienteId && !c) throw new Error('El cliente ya no existe');
+    if (c) { r.cliente = c.nombre; r.telefono = c.telefono; }
+  }
+  if (!prev && !r.cliente && !r.clienteId) throw new Error('Escribe el nombre del cliente');
+  if (r.dia !== undefined && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.dia))) throw new Error('Elige el día');
+  if (!prev && !r.dia) throw new Error('Elige el día');
+  if (r.hora !== undefined) { r.hora = String(r.hora || '').slice(0, 5); if (r.hora && !/^\d{2}:\d{2}$/.test(r.hora)) throw new Error('Hora no válida'); }
+  if (r.productoId !== undefined) { const p = r.productoId ? rows_('Productos').find(x => x.id === r.productoId) : null; if (r.productoId && !p) throw new Error('El producto ya no existe'); if (p && !r.detalle) r.detalle = p.nombre; if (p && r.monto === undefined) r.monto = p.precio; }
+  if (!prev && !r.detalle) throw new Error((r.tipo === 'encargo' ? 'Escribe qué encargó' : 'Escribe el servicio'));
+  if (r.monto !== undefined) r.monto = r2_(r.monto);
+  if (r.anticipo !== undefined) r.anticipo = r2_(r.anticipo);
+  if (r.estado !== undefined && EST_AGENDA.indexOf(r.estado) < 0) throw new Error('Estado no válido');
+  if (!prev) { r.estado = r.estado || 'pendiente'; r.usuarioId = u.id; r.creado = ahora_(); }
+  if (prev && r.anticipo !== undefined && Number(prev.anticipo) > 0) delete r.anticipo;
+  r.actualizado = ahora_();
+  const a = upsert_('Agenda', r);
+  if (!prev && a.anticipo > 0) anticipoRegistrar_(u, a.anticipo, a.clienteId, 'Anticipo ' + (a.tipo === 'encargo' ? 'encargo' : 'cita') + ' · ' + a.detalle, a.id, d.metodo);
+  return a;
+}
+function agendaResumen_(tipo) {
+  const h = hoy_(), l = rows_('Agenda').filter(a => a.tipo === tipo && a.estado === 'pendiente');
+  const hoyL = l.filter(a => a.dia === h).sort((a, b) => a.hora < b.hora ? -1 : 1), man = l.filter(a => a.dia === diasAtras_(-1)).length, atras = l.filter(a => a.dia < h).length;
+  return { hoy: hoyL.length, manana: man, atrasados: atras, lista: hoyL.slice(0, 6).map(a => ({ id: a.id, hora: a.hora, cliente: a.cliente, detalle: a.detalle, atiende: a.atiende, anticipo: a.anticipo, monto: a.monto })), montoHoy: r2_(hoyL.reduce((t, a) => t + (Number(a.monto) || 0), 0)) };
+}
+// El anticipo entra a caja como un abono (sin venta todavía) ligado a la orden o encargo
+function anticipoRegistrar_(u, monto, clienteId, nota, ref, metodo) {
+  metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(metodo) >= 0 ? metodo : 'Efectivo';
+  upsert_('Abonos', { fecha: ahora_(), clienteId: clienteId || '', monto: r2_(monto), metodo: metodo, aplicado: '[]', usuarioId: u.id, nota: txt_(nota, 200), anulado: false, ref: ref });
+}
+// Anticipo pendiente de aplicar de una orden/cita (lo que ya pagó el cliente y aún no se descontó de una venta)
+function anticipoDe_(ref) {
+  if (!ref) return 0;
+  const o = rows_('Ordenes').find(x => x.id === ref) || rows_('Agenda').find(x => x.id === ref);
+  if (!o || o.ventaId) return 0;
+  return r2_(rows_('Abonos').filter(a => a.ref === ref && !a.anulado).reduce((t, a) => t + (Number(a.monto) || 0), 0));
+}
+// Al cobrar una venta ligada a una orden, cita o encargo, se cierra solo
+function cerrarLigados_(d, venta) {
+  if (d.ordenId) { const o = rows_('Ordenes').find(x => x.id === d.ordenId); if (o && o.estado !== 'entregado') upsert_('Ordenes', { id: o.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
+  if (d.agendaId) { const a = rows_('Agenda').find(x => x.id === d.agendaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
+}
+
+/* ===================== SUSCRIPCIONES (streaming, mensualidades) ===================== */
+/* Para negocios que venden Netflix, Disney+, IPTV, gimnasio, internet…: cada venta de una suscripción queda con fecha de vencimiento,
+ * la cuenta/perfil que se entregó y los datos de acceso. Las cuentas madre viven en la hoja «Cuentas». */
+const PLATAFORMAS_DEF = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
+function susActivas_() { return modOn_('suscripciones'); }
+// "Netflix:1|Disney+:1" → [{ plataforma, n }]
+function incluye_(t) { return String(t || '').split('|').map(x => x.trim()).filter(Boolean).map(x => { const p = x.split(':'); return { plataforma: txt_(p[0], 40), n: Math.max(1, Math.min(10, parseInt(p[1], 10) || 1)) }; }).filter(x => x.plataforma).slice(0, 6); }
+function susDeProducto_(p) { // qué se entrega al vender este producto: una lista de plataformas
+  if (!p) return [];
+  if (p.incluye) return incluye_(p.incluye).map(x => ({ plataforma: x.plataforma, n: x.n, entrega: 'perfil' }));
+  if (p.plataforma) return [{ plataforma: p.plataforma, n: 1, entrega: p.entrega === 'cuenta' ? 'cuenta' : 'perfil' }];
+  return [];
+}
+function mesesSumar_(fechaIso, meses) {
+  const d = new Date(fechaIso + 'T12:00:00'); const dia = d.getDate();
+  d.setMonth(d.getMonth() + meses); if (d.getDate() !== dia) d.setDate(0);
+  return Utilities.formatDate(d, TZ, 'yyyy-MM-dd');
+}
+function perfilN_(p) { return p === '' || p === undefined || p === null ? '' : Number(p); }
+function susEstadoDe_(s, h) { if (s.estado === 'cancelada' || s.estado === 'renovada') return s.estado; return s.vence < h ? 'vencida' : 'activa'; }
+// Perfiles ocupados: { cuentaId: { perfil: suscripción } } (solo activas o vencidas hace menos de 7 días, para dar margen a renovar)
+function ocupados_() {
+  const h = hoy_(), lim = diasAtras_(7), o = {};
+  rows_('Suscripciones').forEach(s => { if (!s.cuentaId || s.estado === 'cancelada' || s.estado === 'renovada' || s.vence < lim) return; (o[s.cuentaId] = o[s.cuentaId] || {})[String(s.perfil || '0')] = s; });
+  return o;
+}
+function susCuentas_(u) {
+  req_(u, ['admin', 'cajero']);
+  const oc = ocupados_(), h = hoy_(), cl = porId_(rows_('Clientes'));
+  return rows_('Cuentas').map(c => {
+    const n = Math.max(1, Number(c.perfiles) || 1), perfiles = [];
+    for (let i = 1; i <= n; i++) { const s = (oc[c.id] || {})[String(i)]; perfiles.push(s ? { n: i, susId: s.id, cliente: s.cliente || (cl[s.clienteId] ? cl[s.clienteId].nombre : ''), vence: s.vence, estado: susEstadoDe_(s, h), pin: s.pin } : { n: i }); }
+    const completa = (oc[c.id] || {})['0'];
+    const o = Object.assign({}, c, { perfilesL: perfiles, ocupados: perfiles.filter(p => p.susId).length, completa: completa ? { susId: completa.id, cliente: completa.cliente, vence: completa.vence, estado: susEstadoDe_(completa, h) } : null });
+    if (u.rol !== 'admin') { o.clave = o.clave ? '••••' : ''; }
+    return o;
+  });
+}
+function suscripciones_(u) {
+  req_(u, ['admin', 'cajero']);
+  const h = hoy_(), cu = porId_(rows_('Cuentas')), cl = porId_(rows_('Clientes'));
+  return rows_('Suscripciones').map(s => {
+    const c = cu[s.cuentaId], cli = cl[s.clienteId];
+    return Object.assign({}, s, { perfil: perfilN_(s.perfil), estadoR: susEstadoDe_(s, h), dias: Math.ceil((msDeLocal_(s.vence + 'T00:00') - msDeLocal_(h + 'T00:00')) / 86400000),
+      cuentaNombre: c ? c.nombre : '', correo: c ? c.correo : '', clave: c ? (u.rol === 'admin' || true ? c.clave : '') : '', telefono: cli ? cli.telefono : s.telefono, cliente: cli ? cli.nombre : s.cliente });
+  }).sort((a, b) => a.vence < b.vence ? -1 : a.vence > b.vence ? 1 : 0);
+}
+function susEstado_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const s = rows_('Suscripciones').find(x => x.id === d.id); if (!s) throw new Error('La suscripción no existe');
+  const r = { id: s.id };
+  if (d.estado !== undefined) r.estado = d.estado === 'cancelada' ? 'cancelada' : 'activa';
+  if (d.nota !== undefined) r.nota = txt_(d.nota, 120);
+  if (d.pin !== undefined) r.pin = txt_(d.pin, 12);
+  if (d.vence !== undefined) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.vence))) throw new Error('Fecha no válida'); r.vence = String(d.vence); }
+  upsert_('Suscripciones', r);
+  return suscripciones_(u);
+}
+// Al registrar una venta: crea las suscripciones que vienen en d.sus = [{ idx, meses, vence, renuevaId, asig: [{ plataforma, cuentaId, perfil, pin }] }]
+function susRegistrar_(u, d, venta, items, pm) {
+  if (!Array.isArray(d.sus) || !d.sus.length) return [];
+  const h = hoy_(), oc = ocupados_(), cu = porId_(rows_('Cuentas')), cli = venta.clienteId ? rows_('Clientes').find(x => x.id === venta.clienteId) : null;
+  const nuevas = [];
+  d.sus.forEach(sd => {
+    const it = items[Number(sd.idx)]; if (!it || !it.p) return;
+    const entregas = susDeProducto_(it.p); if (!entregas.length) return;
+    const meses = Math.max(1, Math.min(24, parseInt(sd.meses, 10) || 1));
+    const vence = /^\d{4}-\d{2}-\d{2}$/.test(String(sd.vence || '')) ? String(sd.vence) : mesesSumar_(h, meses);
+    if (vence < h) throw new Error('La fecha de vencimiento de «' + it.p.nombre + '» ya pasó');
+    const asig = Array.isArray(sd.asig) ? sd.asig : [];
+    const veces = Math.max(1, Math.min(10, Math.round(it.cantidad) || 1)), total = entregas.reduce((t, x) => t + x.n, 0) * veces;
+    let k = 0;
+    entregas.forEach(e => {
+      for (let i = 0; i < e.n * veces; i++) {
+        const a = asig[k++] || {};
+        const venceA = /^\d{4}-\d{2}-\d{2}$/.test(String(a.vence || '')) ? String(a.vence) : vence;
+        if (venceA < h) throw new Error('La fecha de vencimiento de ' + e.plataforma + ' ya pasó');
+        const c = a.cuentaId ? cu[a.cuentaId] : null;
+        if (a.cuentaId && !c) throw new Error('La cuenta elegida para ' + e.plataforma + ' ya no existe');
+        const perfil = c ? (e.entrega === 'cuenta' ? 0 : Math.max(1, Math.min(Number(c.perfiles) || 1, parseInt(a.perfil, 10) || 1))) : '';
+        if (c) {
+          const ya = (oc[c.id] || {})[String(perfil)];
+          if (ya && ya.id !== sd.renuevaId) throw new Error((perfil ? 'El perfil ' + perfil + ' de ' : 'La cuenta ') + c.nombre + ' ya está ocupado por ' + (ya.cliente || 'otro cliente'));
+          if (perfil === 0 && Object.keys(oc[c.id] || {}).some(p => p !== '0' && (oc[c.id][p].id !== sd.renuevaId))) throw new Error('La cuenta ' + c.nombre + ' tiene perfiles vendidos por separado');
+          (oc[c.id] = oc[c.id] || {})[String(perfil)] = { id: '_', cliente: cli ? cli.nombre : '' };
+        }
+        const s = upsert_('Suscripciones', { ventaId: venta.id, clienteId: venta.clienteId || '', cliente: cli ? cli.nombre : txt_(sd.cliente, 60), telefono: cli ? cli.telefono : '',
+          productoId: it.p.id, producto: it.p.nombre, plataforma: e.plataforma, cuentaId: c ? c.id : '', perfil: perfil, pin: txt_(a.pin, 12), inicio: h, vence: venceA, meses: meses,
+          precio: r2_(it.precio * it.cantidad / total), estado: 'activa', nota: '', creado: ahora_() });
+        nuevas.push(s);
+      }
+    });
+    if (sd.renuevaId) { const prev = rows_('Suscripciones').find(x => x.id === sd.renuevaId); if (prev) upsert_('Suscripciones', { id: prev.id, estado: 'renovada' }); }
+  });
+  return nuevas;
+}
+// Datos de acceso para el comprobante del cliente
+function susAccesos_(lista) {
+  const cu = porId_(rows_('Cuentas'));
+  return lista.map(s => { const c = cu[s.cuentaId]; return { plataforma: s.plataforma, producto: s.producto, vence: s.vence, perfil: perfilN_(s.perfil), pin: s.pin, correo: c ? c.correo : '', clave: c ? c.clave : '', cuenta: c ? c.nombre : '' }; });
+}
+function susResumen_() {
+  const h = hoy_(), dias = Math.max(1, Math.min(30, parseInt(config_().susAviso, 10) || 7)), sem = diasAtras_(-dias), l = rows_('Suscripciones').filter(s => s.estado !== 'cancelada' && s.estado !== 'renovada');
+  const venc = l.filter(s => s.vence < h), hoyL = l.filter(s => s.vence === h), semL = l.filter(s => s.vence > h && s.vence <= sem);
+  const suma = a => r2_(a.reduce((t, s) => t + (Number(s.precio) || 0), 0));
+  const cu = rows_('Cuentas').filter(c => c.activo), oc = ocupados_();
+  const perfiles = cu.reduce((t, c) => t + Math.max(1, Number(c.perfiles) || 1), 0), ocupados = cu.reduce((t, c) => t + (oc[c.id] ? (oc[c.id]['0'] ? Math.max(1, Number(c.perfiles) || 1) : Object.keys(oc[c.id]).length) : 0), 0);
+  return { vencidas: venc.length, montoVencidas: suma(venc), hoy: hoyL.length, semana: semL.length, montoSemana: suma(semL.concat(hoyL)), activas: l.filter(s => s.vence >= h).length, cuentas: cu.length, perfiles: perfiles, ocupados: ocupados, dias: dias };
+}
+// Cambiar el tipo de negocio desde Ajustes: conserva todos los datos; opcionalmente carga ejemplos y desactiva los productos del tipo anterior
+function cambiarGiro_(u, d) {
+  req_(u, ['admin']);
+  if (!own_(GIROS, d.giro)) throw new Error('Tipo de negocio no válido');
+  const cfg = config_(), ant = cfg.giro;
+  if (ant === d.giro) return { config: sinInternos_(config_()), productos: rows_('Productos') };
+  let desactivados = 0;
+  if (d.desactivar && own_(GIROS, ant)) {
+    const cats = GIROS[ant].cats.map(c => c.toLowerCase());
+    rows_('Productos').forEach(p => { if (p.activo && cats.indexOf(String(p.categoria).toLowerCase()) >= 0) { upsert_('Productos', { id: p.id, activo: false }); desactivados++; } });
+  }
+  guardarConfig_({ giro: d.giro });
+  let agregados = 0;
+  if (d.ejemplos) agregados = cargarEjemplos_(u, { giro: d.giro }).agregados;
+  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, { giro: GIROS[d.giro].n }); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  return { config: sinInternos_(config_()), productos: rows_('Productos'), agregados: agregados, desactivados: desactivados };
+}
+
 /* ===================== PANEL MOLINA (súper admin) Y SOPORTE ===================== */
 /* El panel se abre en …/?panel con la clave guardada en Propiedades del script → PANEL_CLAVE.
  * Desde ahí se administran todos los negocios: licencias, Plus, prueba, pagos, seguimiento y el chat de soporte. */
@@ -1114,6 +1380,15 @@ function guardar_(u, d) {
   if (r.nombre !== undefined) r.nombre = txt_(r.nombre, 80);
   if (!prev && !r.nombre) throw new Error('El nombre es obligatorio');
   if (!prev) { r.creado = ahora_(); if (r.activo === undefined) r.activo = true; }
+  if (ent === 'Cuentas') {
+    if (r.plataforma !== undefined) r.plataforma = txt_(r.plataforma, 40);
+    if (!prev && !r.plataforma) throw new Error('Elige la plataforma');
+    ['correo', 'clave', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], k === 'nota' ? 200 : 80); });
+    if (r.perfiles !== undefined) { r.perfiles = Math.max(1, Math.min(20, parseInt(r.perfiles, 10) || 1)); if (prev && r.perfiles < Number(prev.perfiles)) { const oc = ocupados_()[prev.id] || {}; if (Object.keys(oc).some(p => Number(p) > r.perfiles)) throw new Error('Hay perfiles vendidos con un número mayor; no se puede reducir'); } }
+    if (r.costo !== undefined) r.costo = r2_(r.costo);
+    if (r.vence !== undefined && r.vence && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.vence))) r.vence = '';
+    return upsert_('Cuentas', r);
+  }
   if (ent === 'Productos') {
     if (r.codigo !== undefined) r.codigo = txt_(r.codigo, 40);
     if (r.codigo && rows_('Productos').some(p => p.codigo && String(p.codigo).toLowerCase() === r.codigo.toLowerCase() && p.id !== r.id)) throw new Error('Ya existe un producto con ese código');
@@ -1129,6 +1404,11 @@ function guardar_(u, d) {
     if (r.foto && (!prev || r.foto !== prev.foto)) { if (!plus_()) throw new Error('Las fotos de productos son parte del plan Plus'); if (!fotoPropia_(r.foto)) throw new Error('La foto no es válida. Súbela de nuevo.'); r.fotoFecha = ahora_(); }
     if (r.foto === '') r.fotoFecha = '';
     if (r.opciones !== undefined) r.opciones = opciones_(r.opciones);
+    if (r.plataforma !== undefined) r.plataforma = txt_(r.plataforma, 40);
+    if (r.entrega !== undefined) r.entrega = r.entrega === 'cuenta' ? 'cuenta' : (r.entrega ? 'perfil' : '');
+    if (r.incluye !== undefined) r.incluye = incluye_(r.incluye).map(x => x.plataforma + ':' + x.n).join('|');
+    if (r.caduca !== undefined && r.caduca && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.caduca))) r.caduca = '';
+    if (r.garantia !== undefined) r.garantia = Math.max(0, Math.min(3650, parseInt(r.garantia, 10) || 0));
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
     const stockIni = r.stock;
     delete r.stock;
@@ -1144,6 +1424,7 @@ function guardar_(u, d) {
     }
     return g;
   }
+  if (ent === 'Clientes' && r.equipo !== undefined) r.equipo = txt_(r.equipo, 120);
   if (ent === 'Clientes') {
     if (u.rol !== 'admin') delete r.limite; // el límite de crédito lo pone solo el administrador
     if (r.limite !== undefined) r.limite = Math.max(0, r2_(r.limite));
@@ -1163,13 +1444,14 @@ function guardar_(u, d) {
 function eliminar_(u, d) {
   req_(u, ['admin']);
   const ent = d.entidad;
-  if (['Productos','Clientes','Proveedores'].indexOf(ent) < 0) throw new Error('No se puede eliminar este tipo de registro');
+  if (['Productos','Clientes','Proveedores','Cuentas'].indexOf(ent) < 0) throw new Error('No se puede eliminar este tipo de registro');
   if (!d.id || !rows_(ent).some(x => x.id === d.id)) throw new Error('El registro ya no existe');
   // Si ya tiene movimientos, se desactiva en lugar de borrarse (para no perder la historia)
   let usado = false;
   if (ent === 'Productos') usado = rows_('VentaDetalle').some(x => x.productoId === d.id) || rows_('CompraDetalle').some(x => x.productoId === d.id);
   if (ent === 'Clientes') usado = rows_('Ventas').some(x => x.clienteId === d.id) || rows_('Abonos').some(x => x.clienteId === d.id);
   if (ent === 'Proveedores') usado = rows_('Compras').some(x => x.proveedorId === d.id) || rows_('Pagos').some(x => x.proveedorId === d.id);
+  if (ent === 'Cuentas') usado = rows_('Suscripciones').some(x => x.cuentaId === d.id);
   if (usado) { upsert_(ent, { id: d.id, activo: false }); return { desactivado: true }; }
   if (ent === 'Productos') { const p = rows_('Productos').find(x => x.id === d.id); if (p && p.foto) borrarFoto_(p.foto); }
   deleteRow_(ent, d.id);
@@ -1186,7 +1468,7 @@ function cargarEjemplos_(u, d) {
     if (existentes.indexOf(x[0].toLowerCase()) >= 0) return;
     const p = upsert_('Productos', { codigo: 'EJ' + String(i + 1).padStart(3, '0'), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
-      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_() });
+      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '' });
     if (p.tipo === 'producto' && x[5] > 0) moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
     n++;
   });
@@ -1401,6 +1683,8 @@ function venta_(u, d) {
   }
   // Pedido en línea: debe estar pendiente; sus precios son los que vio el cliente
   const preciosPedido = Object.create(null);
+  // Venta ligada a una cita/encargo: vale el precio acordado en la cita (lo puso quien la agendó)
+  const precioLigado = !!(d.agendaId && rows_('Agenda').some(x => x.id === d.agendaId && x.estado === 'pendiente'));
   if (d.pedidoId) {
     const pe = rows_('Pedidos').find(x => x.id === d.pedidoId);
     if (!pe) throw new Error('El pedido en línea ya no existe');
@@ -1410,6 +1694,10 @@ function venta_(u, d) {
   }
   const pm = porId_(rows_('Productos'));
   if (!Array.isArray(d.items)) throw new Error('El ticket está vacío');
+  if (Array.isArray(d.sus)) { // las fechas se validan antes de escribir nada
+    const h0 = hoy_();
+    d.sus.forEach(sd => { if (sd.vence && sd.vence < h0) throw new Error('Una fecha de vencimiento ya pasó'); (Array.isArray(sd.asig) ? sd.asig : []).forEach(a => { if (a.vence && a.vence < h0) throw new Error('La fecha de vencimiento de ' + (a.plataforma || 'una plataforma') + ' ya pasó'); }); });
+  }
   const items = d.items.map(i => {
     if (!i || typeof i !== 'object') throw new Error('Un artículo del ticket no es válido');
     const p = i.productoId ? pm[i.productoId] : null;
@@ -1419,15 +1707,15 @@ function venta_(u, d) {
     if (!(cant > 0)) throw new Error('Cantidad no válida');
     if (!(i.precio === undefined || i.precio === '' || i.precio === null) && !esNum_(i.precio)) throw new Error('Precio no válido');
     let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? p.precio : 0) : r2_(i.precio);
-    if (p && u.rol !== 'admin') { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
+    if (p && u.rol !== 'admin' && !precioLigado) { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
       const delPedido = preciosPedido[p.id];
       if (Math.abs(precio - p.precio) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005)) precio = delPedido !== undefined ? delPedido : p.precio;
     }
     if (precio < 0) throw new Error('Precio no válido');
-    const desc = p ? p.nombre : txt_(i.descripcion, 80);
+    const desc = p ? p.nombre + (i.variante ? ' · ' + txt_(i.variante, 60) : '') : txt_(i.descripcion, 80);
     if (!desc) throw new Error('Escribe la descripción del artículo');
     if (!p && !(i.costo === undefined || i.costo === '' || i.costo === null) && !(Number(i.costo) >= 0)) throw new Error('El costo de «' + desc + '» no es válido');
-    return { p: p, productoId: p ? p.id : '', descripcion: desc, cantidad: cant, precio: precio, costo: p ? p.costo : r4_(Math.max(0, Number(i.costo) || 0)) };
+    return { p: p, productoId: p ? p.id : '', descripcion: desc, cantidad: cant, precio: precio, costo: p ? p.costo : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
   });
   if (!items.length) throw new Error('El ticket está vacío');
   // Existencias
@@ -1468,19 +1756,22 @@ function venta_(u, d) {
   const costo = r2_(items.reduce((a, i) => a + i.cantidad * (i.costo || 0), 0));
   let recibido = 0, cambio = 0, saldo = 0;
   const clienteId = d.clienteId && rows_('Clientes').some(c => c.id === d.clienteId) ? d.clienteId : '';
+  // Anticipo ya pagado (orden de trabajo, cita o encargo): se descuenta de lo que falta por pagar, no del total de la venta
+  const anticipo = r2_(Math.min(anticipoDe_(d.ordenId || d.agendaId), total));
+  const porPagar = r2_(total - anticipo);
   if (metodo === 'Crédito') {
     if (!clienteId) throw new Error('Para vender al crédito selecciona un cliente registrado');
-    recibido = r2_(Math.min(Math.max(0, Number(d.recibido) || 0), total));
-    saldo = r2_(total - recibido);
+    recibido = r2_(Math.min(Math.max(0, Number(d.recibido) || 0), porPagar));
+    saldo = r2_(porPagar - recibido);
     const cli = rows_('Clientes').find(c => c.id === clienteId);
     const debe = saldosClientes_()[clienteId] || 0;
     if (cli.limite > 0 && debe + saldo > cli.limite + 0.004) throw new Error('Supera el límite de crédito de ' + cli.nombre + ' (' + money_(cli.limite, cfg) + '). Ya debe ' + money_(debe, cfg) + '.');
   } else if (metodo === 'Efectivo') {
-    recibido = d.recibido === undefined || d.recibido === '' || d.recibido === null ? total : r2_(d.recibido);
-    if (recibido + 0.004 < total) throw new Error('El efectivo recibido es menor que el total');
-    cambio = r2_(recibido - total);
+    recibido = d.recibido === undefined || d.recibido === '' || d.recibido === null ? porPagar : r2_(d.recibido);
+    if (recibido + 0.004 < porPagar) throw new Error('El efectivo recibido es menor que lo que falta por pagar');
+    cambio = r2_(recibido - porPagar);
   } else {
-    recibido = total;
+    recibido = porPagar;
   }
   // Número de factura: se toma al final, cuando ya pasaron todas las validaciones (no deja huecos)
   let factura = '', fiscal = '';
@@ -1500,11 +1791,11 @@ function venta_(u, d) {
     id: newId_('Ventas'), numero: siguiente_('V'), fecha: fecha, clienteId: clienteId, usuarioId: u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
     recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200),
-    factura: factura, fiscal: fiscal
+    factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo
   };
   const detalle = items.map((i, k) => ({
     id: newId_('VentaDetalle') + k, ventaId: venta.id, productoId: i.productoId, descripcion: i.descripcion,
-    cantidad: i.cantidad, precio: r2_(i.precio), costo: r4_(i.costo || 0), total: r2_(i.cantidad * i.precio)
+    cantidad: i.cantidad, precio: r2_(i.precio), costo: r4_(i.costo || 0), total: r2_(i.cantidad * i.precio), serie: i.serie || '', garantia: i.garantia || ''
   }));
   appendRows_('Ventas', [venta]);
   appendRows_('VentaDetalle', detalle);
@@ -1512,8 +1803,10 @@ function venta_(u, d) {
   Object.keys(pedido).forEach(id => { cambios[id] = -pedido[id]; });
   moverStock_(cambios, 'venta', venta.id, u, venta.numero, fecha);
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
+  const nuevasSus = susRegistrar_(u, d, venta, items, pm);
+  cerrarLigados_(d, venta);
   if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} }
-  return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null };
+  return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
 }
 
 function rango_(d) {
@@ -1550,6 +1843,7 @@ function anularVenta_(u, d) {
   moverStock_(cambios, 'anulación', v.id, u, 'Anulación ' + v.numero);
   upsert_('Ventas', { id: v.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (v.nota ? v.nota + ' · ' : '') + 'Anulada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') + (d.motivo ? ': ' + txt_(d.motivo, 120) : '') });
   if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
+  try { rows_('Suscripciones').filter(x => x.ventaId === d.id && x.estado === 'activa').forEach(x => upsert_('Suscripciones', { id: x.id, estado: 'cancelada', nota: 'Venta anulada' })); } catch (e) {}
   return { productos: rows_('Productos') };
 }
 
@@ -1855,7 +2149,23 @@ function pendientes_(u) {
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
   const n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
   let sop = 0; try { if (MULTI_NEGOCIO && NEG) sop = mRows_('Soporte').filter(c => c.negocioId === NEG.id && Number(c.sinLeerCli) > 0).length; } catch (e) {}
-  return { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
+  const out = { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
+  try { out.avisos = avisosDia_(); } catch (e) {}
+  return out;
+}
+// Avisos del día para las notificaciones del teléfono (la app los muestra una sola vez por día)
+function avisosDia_() {
+  const h = hoy_(), a = {};
+  if (modOn_('suscripciones')) { const l = rows_('Suscripciones').filter(s => s.estado !== 'cancelada' && s.estado !== 'renovada'); a.susHoy = l.filter(s => s.vence === h).length; a.susVenc = l.filter(s => s.vence < h && s.vence >= diasAtras_(3)).length; }
+  if (modOn_('agenda') || modOn_('encargos')) {
+    const l = rows_('Agenda').filter(x => x.estado === 'pendiente' && x.dia === h), ahora = ahora_().slice(11, 16);
+    const prox = x => x.hora && x.hora >= ahora && (msDeLocal_(h + 'T' + x.hora) - Date.now()) <= 3600000;
+    if (modOn_('agenda')) { const c = l.filter(x => x.tipo === 'cita'); a.citasHoy = c.length; a.citasProx = c.filter(prox).map(x => ({ hora: x.hora, cliente: x.cliente, detalle: x.detalle })); }
+    if (modOn_('encargos')) { const e = l.filter(x => x.tipo === 'encargo'); a.encHoy = e.length; a.encProx = e.filter(prox).map(x => ({ hora: x.hora, cliente: x.cliente, detalle: x.detalle })); }
+  }
+  if (modOn_('caducidad')) { const c = caducan_(); a.cadVenc = c.vencidos; a.cadProx = c.n - c.vencidos; }
+  if (modOn_('ordenes')) a.ordAtras = rows_('Ordenes').filter(o => ['recibido', 'proceso'].indexOf(o.estado) >= 0 && o.promesa && o.promesa < h).length;
+  return a;
 }
 
 function estadoPedido_(u, d) {
@@ -1896,10 +2206,11 @@ function cajaCalc_(w) {
   };
   rows_('Ventas').forEach(v => mira(v, v.anulada, v.metodo === 'Efectivo' || (v.metodo === 'Crédito' && v.recibido > 0), s => {
     if (s > 0) k.nVentas++;
-    if (v.metodo === 'Efectivo') k.ventas += s * v.total;
-    else if (v.metodo === 'Crédito') { k.ventas += s * v.recibido; if (s > 0) k.credito += v.total - v.recibido; }
-    else if (v.metodo === 'Tarjeta') k.tarjeta += v.total;
-    else if (v.metodo === 'Transferencia') k.transferencia += v.total;
+    const ant = Number(v.anticipo) || 0; // el anticipo ya entró a caja como abono cuando se recibió
+    if (v.metodo === 'Efectivo') k.ventas += s * (v.total - ant);
+    else if (v.metodo === 'Crédito') { k.ventas += s * v.recibido; if (s > 0) k.credito += v.total - ant - v.recibido; }
+    else if (v.metodo === 'Tarjeta') k.tarjeta += v.total - ant;
+    else if (v.metodo === 'Transferencia') k.transferencia += v.total - ant;
   }));
   rows_('Abonos').forEach(a => mira(a, a.anulado, a.metodo === 'Efectivo', s => { if (a.metodo === 'Efectivo') k.cobros += s * a.monto; else if (a.metodo === 'Tarjeta') k.tarjeta += a.monto; else k.transferencia += a.monto; }));
   rows_('Gastos').forEach(g => { if (g.metodo === 'Efectivo') mira(g, g.anulado, true, s => { k.gastos += s * g.monto; }); });
@@ -1955,6 +2266,13 @@ function cerrarCaja_(u, d) {
 
 function inicio_(u) {
   const h = hoy_(), mes = h.slice(0, 7), out = { rol: u.rol }, vent = ventanaMs_();
+  if (u.rol !== 'bodega' && susActivas_()) { try { out.sus = susResumen_(); } catch (e) {} }
+  try {
+    if (modOn_('caducidad')) out.caducan = caducan_();
+    if (modOn_('ordenes')) out.ordenes = ordenResumen_();
+    if (modOn_('agenda')) out.agenda = agendaResumen_('cita');
+    if (modOn_('encargos')) out.encargos = agendaResumen_('encargo');
+  } catch (e) {}
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada);
     const vh = ventas.filter(v => v.fecha.slice(0, 10) === h && (u.rol === 'admin' || v.usuarioId === u.id));
