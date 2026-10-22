@@ -2392,7 +2392,6 @@ function guardar_(u, d) {
     if (r.plataforma !== undefined) r.plataforma = txt_(r.plataforma, 40);
     if (r.entrega !== undefined) r.entrega = r.entrega === 'cuenta' ? 'cuenta' : (r.entrega ? 'perfil' : '');
     if (r.incluye !== undefined) r.incluye = incluye_(r.incluye).map(x => x.plataforma + ':' + x.n).join('|');
-    if ((r.plataforma || r.incluye) && !prev) r.tipo = 'servicio';
     if (r.caduca !== undefined && r.caduca && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.caduca))) r.caduca = '';
     if (r.garantia !== undefined) r.garantia = Math.max(0, Math.min(3650, parseInt(r.garantia, 10) || 0));
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
@@ -6085,7 +6084,8 @@ function listaProductos() {
   el.innerHTML = l.map(p => {
     const ctrl = p.tipo === 'producto';
     const st = ctrl ? `<span class="badge ${p.stock <= 0 ? 'b-bad' : p.stock <= p.stockMin ? 'b-warn' : 'b-ok'}">${p.stock <= 0 ? 'Agotado' : cant(p.stock) + ' ' + (p.unidad && p.unidad !== 'unidad' ? esc(p.unidad) : 'disp.')}</span>` : '<span class="badge b-mut">Sin inventario</span>';
-    return `<div class="li" data-a="verProducto" data-id="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${[esc(p.categoria), p.codigo ? esc(p.codigo) : '', S.plus && p.tienda ? '🛍️ tienda' : ''].filter(Boolean).join(' · ')}</small></div><div class="am"><span class="n">${money(p.precio)}</span><small>${st}</small></div></div>`;
+    const cad = modOn('caducidad') && p.caduca && p.caduca <= mesesSumarDia(30) ? `<span class="badge ${p.caduca < hoy() ? 'b-bad' : 'b-warn'}">${p.caduca < hoy() ? 'Vencido' : 'Vence ' + fFechaC(p.caduca).replace(/ de \d{4}| \d{4}/, '')}</span> ` : '';
+    return `<div class="li" data-a="verProducto" data-id="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${[esc(p.categoria), p.codigo ? esc(p.codigo) : '', S.plus && p.tienda ? '🛍️ tienda' : ''].filter(Boolean).join(' · ')}</small></div><div class="am"><span class="n">${money(p.precio)}</span><small>${cad}${st}</small></div></div>`;
   }).join('') || (vacio ? `<div class="empty-big">${ic('box', 40)}<h3>Agrega tus productos</h3><p>Puedes empezar con productos de ejemplo de tu tipo de negocio y luego editarlos.</p>
       ${puede('admin') ? `<button class="btn acc" data-a="cargarEjemplos">${ic('sparkle', 18)} Cargar productos de ejemplo</button>` : ''}${puede('admin', 'bodega') ? `<button class="btn pri" data-a="nuevoProducto">${ic('plus', 18)} Agregar el primero</button>` : ''}</div>` : '<div class="empty">No hay productos con ese filtro</div>');
 }
@@ -6208,7 +6208,7 @@ function formProducto(p, onSave, pre) {
     if ($('#pf-act', h.el)) reg.activo = $('#pf-act', h.el).checked;
     if ($('#pf-cad', h.el)) reg.caduca = $('#pf-cad', h.el).value;
     if ($('#pf-gar', h.el)) reg.garantia = parseInt($('#pf-gar', h.el).value, 10) || 0;
-    if (leerSus) { const sv = leerSus(); if (sv.plataforma || sv.incluye || p.plataforma || p.incluye) Object.assign(reg, sv); if (sv.plataforma || sv.incluye) reg.tipo = 'servicio'; }
+    if (leerSus) { const sv = leerSus(); if (sv.plataforma || sv.incluye || p.plataforma || p.incluye) Object.assign(reg, sv); }
     if (st.fotoNueva) { const f = await api('subirFoto', { data: st.fotoNueva }); reg.foto = f.foto; }
     else if (!st.foto && p.foto) reg.foto = '';
     if (!reg.id) delete reg.id;
@@ -8160,11 +8160,11 @@ function susFormBind(h, p) {
   const st = { tipo: p.incluye ? 'paq' : p.plataforma ? 'sus' : '', v: p.plataforma || '', l: leerIncluye(p.incluye).map(x => x.plataforma), entrega: p.entrega === 'cuenta' ? 'cuenta' : 'perfil' };
   const pinta = () => {
     const b = $('#pf-sus-b', h.el);
-    b.innerHTML = st.tipo === 'sus' ? `<div class="fld" style="margin-top:10px"><span>Plataforma</span>${platChips(st.v, 'pf-pl')}</div><label class="fld"><span>Qué entrega</span><select id="pf-ent"><option value="perfil" ${st.entrega === 'perfil' ? 'selected' : ''}>1 perfil</option><option value="cuenta" ${st.entrega === 'cuenta' ? 'selected' : ''}>Cuenta completa</option></select></label><small class="hint">Al venderlo, la app pide la fecha de vencimiento y el perfil libre que entregas.</small>`
+    b.innerHTML = st.tipo === 'sus' ? `<div class="fld" style="margin-top:10px"><span>Plataforma</span>${platChips(st.v, 'pf-pl')}</div><label class="fld"><span>Qué entrega</span><select id="pf-ent"><option value="perfil" ${st.entrega === 'perfil' ? 'selected' : ''}>1 perfil</option><option value="cuenta" ${st.entrega === 'cuenta' ? 'selected' : ''}>Cuenta completa</option></select></label><small class="hint">Al venderlo, la app pide la fecha de vencimiento y el perfil libre que entregas. Si quieres llevar cuántos tienes disponibles, enciende «Controlar existencias» más abajo.</small>`
       : st.tipo === 'paq' ? `<div class="fld" style="margin-top:10px"><span>Plataformas incluidas (1 perfil de cada una)</span>${platChips(st.l, 'pf-pl', true)}</div><small class="hint">Al vender un paquete, la app pide un perfil por cada plataforma y todas vencen el mismo día.</small>` : '';
     const ch = $('#pf-pl', h.el); if (ch) platChipsBind(ch, st, st.tipo === 'paq');
     const e = $('#pf-ent', h.el); if (e) e.addEventListener('change', () => { st.entrega = e.value; });
-    const ctrl = $('#pf-ctrl', h.el); if (st.tipo && ctrl && ctrl.checked) { ctrl.checked = false; ctrl.dispatchEvent(new Event('change')); }
+    const sw = $('#pf-ctrl', h.el) && $('#pf-ctrl', h.el).closest('.sw-row'); if (sw) { const sm = sw.querySelector('small'); if (sm) sm.textContent = st.tipo ? 'Enciéndelo para anotar cuántos perfiles o cupos tienes para vender; cada venta descuenta uno' : 'Apágalo para servicios o platos que no llevan inventario'; }
   };
   $('#pf-st', h.el).addEventListener('click', e => { const b = e.target.closest('[data-s]'); if (!b) return; st.tipo = b.dataset.s; $$('#pf-st button', h.el).forEach(x => x.classList.toggle('on', x === b)); pinta(); });
   pinta();
