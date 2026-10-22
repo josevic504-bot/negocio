@@ -1080,7 +1080,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', suscripciones: '', plataformas: '', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
@@ -2050,8 +2050,12 @@ function suscripciones_(u) {
 function susEstado_(u, d) {
   req_(u, ['admin', 'cajero']);
   const s = rows_('Suscripciones').find(x => x.id === d.id); if (!s) throw new Error('La suscripción no existe');
-  const est = d.estado === 'cancelada' ? 'cancelada' : 'activa';
-  upsert_('Suscripciones', { id: s.id, estado: est, nota: txt_(d.nota, 120) || s.nota });
+  const r = { id: s.id };
+  if (d.estado !== undefined) r.estado = d.estado === 'cancelada' ? 'cancelada' : 'activa';
+  if (d.nota !== undefined) r.nota = txt_(d.nota, 120);
+  if (d.pin !== undefined) r.pin = txt_(d.pin, 12);
+  if (d.vence !== undefined) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.vence))) throw new Error('Fecha no válida'); r.vence = String(d.vence); }
+  upsert_('Suscripciones', r);
   return suscripciones_(u);
 }
 // Al registrar una venta: crea las suscripciones que vienen en d.sus = [{ idx, meses, vence, renuevaId, asig: [{ plataforma, cuentaId, perfil, pin }] }]
@@ -2098,12 +2102,12 @@ function susAccesos_(lista) {
   return lista.map(s => { const c = cu[s.cuentaId]; return { plataforma: s.plataforma, producto: s.producto, vence: s.vence, perfil: perfilN_(s.perfil), pin: s.pin, correo: c ? c.correo : '', clave: c ? c.clave : '', cuenta: c ? c.nombre : '' }; });
 }
 function susResumen_() {
-  const h = hoy_(), sem = diasAtras_(-7), l = rows_('Suscripciones').filter(s => s.estado !== 'cancelada' && s.estado !== 'renovada');
+  const h = hoy_(), dias = Math.max(1, Math.min(30, parseInt(config_().susAviso, 10) || 7)), sem = diasAtras_(-dias), l = rows_('Suscripciones').filter(s => s.estado !== 'cancelada' && s.estado !== 'renovada');
   const venc = l.filter(s => s.vence < h), hoyL = l.filter(s => s.vence === h), semL = l.filter(s => s.vence > h && s.vence <= sem);
   const suma = a => r2_(a.reduce((t, s) => t + (Number(s.precio) || 0), 0));
   const cu = rows_('Cuentas').filter(c => c.activo), oc = ocupados_();
   const perfiles = cu.reduce((t, c) => t + Math.max(1, Number(c.perfiles) || 1), 0), ocupados = cu.reduce((t, c) => t + (oc[c.id] ? (oc[c.id]['0'] ? Math.max(1, Number(c.perfiles) || 1) : Object.keys(oc[c.id]).length) : 0), 0);
-  return { vencidas: venc.length, montoVencidas: suma(venc), hoy: hoyL.length, semana: semL.length, montoSemana: suma(semL.concat(hoyL)), activas: l.filter(s => s.vence >= h).length, cuentas: cu.length, perfiles: perfiles, ocupados: ocupados };
+  return { vencidas: venc.length, montoVencidas: suma(venc), hoy: hoyL.length, semana: semL.length, montoSemana: suma(semL.concat(hoyL)), activas: l.filter(s => s.vence >= h).length, cuentas: cu.length, perfiles: perfiles, ocupados: ocupados, dias: dias };
 }
 // Cambiar el tipo de negocio desde Ajustes: conserva todos los datos; opcionalmente carga ejemplos y desactiva los productos del tipo anterior
 function cambiarGiro_(u, d) {
@@ -5558,7 +5562,7 @@ R.inicio = () => {
   }
   const aviso = d.aviso && rol === 'admin' ? `<div class="aviso">${ic('sparkle', 20)}<div><b>${esc(fMes(d.aviso.mes))} dejó ${money(d.aviso.pendiente)} de ganancia sin destino.</b><small>Decide si va a ahorro, reinversión o a pagar algo.</small></div><button class="btn sm pri" data-a="ir" data-v="reportes" data-p='{"tab":"ganancias"}'>Decidir</button></div>` : '';
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
-  const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `Vencen esta semana: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
+  const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
   m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${avSus}${vacio}${aviso}${listas}</div>`;
 };
 ACC.verVenta = async el => {
@@ -7966,15 +7970,16 @@ R.vencimientos = async () => {
   if (S.vista !== 'vencimientos') return;
   const f = S.f.susF || 'por', q = norm(S.f.susQ || ''), pl = S.f.susP || '';
   const viva = s => s.estadoR === 'activa' || s.estadoR === 'vencida';
-  const venc = l.filter(s => s.estadoR === 'vencida'), hoyL = l.filter(viva).filter(s => s.dias === 0), sem = l.filter(viva).filter(s => s.dias > 0 && s.dias <= 7), act = l.filter(s => s.estadoR === 'activa');
+  const DA = susDias();
+  const venc = l.filter(s => s.estadoR === 'vencida'), hoyL = l.filter(viva).filter(s => s.dias === 0), sem = l.filter(viva).filter(s => s.dias > 0 && s.dias <= DA), act = l.filter(s => s.estadoR === 'activa');
   const suma = a => a.reduce((t, s) => t + num(s.precio), 0);
   const plats = [...new Set(l.filter(viva).map(s => s.plataforma))].sort();
-  let lista = f === 'por' ? l.filter(viva).filter(s => s.dias <= 7 && s.dias >= -30) : f === 'venc' ? venc : f === 'act' ? act : l;
+  let lista = f === 'por' ? l.filter(viva).filter(s => s.dias <= DA && s.dias >= -30) : f === 'venc' ? venc : f === 'act' ? act : l;
   if (pl) lista = lista.filter(s => s.plataforma === pl);
   if (q) lista = lista.filter(s => norm(s.cliente + ' ' + s.plataforma + ' ' + s.producto + ' ' + (s.telefono || '')).includes(q));
   const chip = (k, t) => `<button class="chip ${f === k ? 'on' : ''}" data-a="susF" data-f="${k}">${t}</button>`;
-  m.innerHTML = `<div class="kpis k4"><div class="kpi" style="--k:var(--bad)"><small>Vencidas</small><b>${venc.length}</b><i>${money(suma(venc))}</i></div><div class="kpi" style="--k:var(--warn)"><small>Vencen hoy</small><b>${hoyL.length}</b><i>${money(suma(hoyL))}</i></div><div class="kpi"><small>Esta semana</small><b>${sem.length}</b><i>${money(suma(sem))}</i></div><div class="kpi" style="--k:#00b56e"><small>Activas</small><b>${act.length}</b><i>suscripciones</i></div></div>
-    <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="sus-q" placeholder="Buscar cliente o plataforma…" value="${esc(S.f.susQ || '')}"></div>
+  m.innerHTML = `<div class="kpis k4"><div class="kpi" style="--k:var(--bad)"><small>Vencidas</small><b>${venc.length}</b><i>${money(suma(venc))}</i></div><div class="kpi" style="--k:var(--warn)"><small>Vencen hoy</small><b>${hoyL.length}</b><i>${money(suma(hoyL))}</i></div><div class="kpi"><small>${DA === 7 ? 'Esta semana' : 'En ' + DA + ' días'}</small><b>${sem.length}</b><i>${money(suma(sem))}</i></div><div class="kpi" style="--k:#00b56e"><small>Activas</small><b>${act.length}</b><i>suscripciones</i></div></div>
+    <div class="row" style="margin-bottom:10px"><div class="srch grow">${ic('search', 18)}<input id="sus-q" placeholder="Buscar cliente o plataforma…" value="${esc(S.f.susQ || '')}"></div>${puede('admin') ? `<button class="btn" data-a="susAlertas">${ic('bell', 18)} Alertas</button>` : ''}</div>
     <div class="chips" style="margin-bottom:10px">${chip('por', 'Por vencer')}${chip('venc', 'Vencidas')}${chip('act', 'Activas')}${chip('todas', 'Todas')}${plats.map(p => `<button class="chip ${pl === p ? 'on' : ''}" data-a="susP" data-p="${esc(p)}">${esc(p)}</button>`).join('')}</div>
     ${lista.length ? lista.map(s => tarjetaSus(s)).join('') : `<div class="empty-big">${ic('clock', 40)}<h3>${l.length ? 'Nada por aquí' : 'Todavía no hay suscripciones'}</h3><p>${l.length ? 'Prueba con otro filtro.' : 'Al vender un producto de tipo suscripción (Netflix, Disney+, IPTV…) aparece aquí con su fecha de vencimiento.'}</p>${l.length ? '' : `<button class="btn pri" data-a="ir" data-v="vender">${ic('cart', 18)} Vender</button>`}</div>`}`;
   const qi = $('#sus-q', m); if (qi) qi.addEventListener('input', () => { S.f.susQ = qi.value; clearTimeout(S._susT); S._susT = setTimeout(() => R.vencimientos(), 250); });
@@ -7986,10 +7991,32 @@ function tarjetaSus(s) {
     ${viva ? `<div class="row" style="margin-top:10px">${s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoRecordar(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Recordar</a>` : ''}<button class="btn sm pri" style="margin-left:auto" data-a="susRenovar" data-id="${s.id}">${ic('refresh', 16)} Renovar 1 mes · ${money(precioMes(s))}</button></div>` : ''}</div>`;
 }
 function precioMes(s) { const p = byId(S.productos, s.productoId); return p && p.precio ? p.precio : r2(num(s.precio) / Math.max(1, Number(s.meses) || 1)); }
+const susDias = () => Math.max(1, Math.min(30, parseInt(S.config.susAviso, 10) || 7));
 function textoRecordar(s) {
-  const n = (s.cliente || '').split(' ')[0];
-  return `Hola${n ? ' ' + n : ''} 👋 Tu suscripción de *${s.plataforma}*${s.perfil ? ' (perfil ' + s.perfil + ')' : ''} ${s.dias < 0 ? 'venció el ' + fFechaC(s.vence) : s.dias === 0 ? 'vence *hoy*' : 'vence el *' + fFechaC(s.vence) + '*'}. ¿La renovamos? Son ${money(precioMes(s))} por mes. — ${S.config.nombre || ''}`;
+  const t = s.dias < 0 ? S.config.msjSusVencida : S.config.msjSusPorVencer;
+  return plantilla(t, { cliente: (s.cliente || '').split(' ')[0] || 'cliente', plataforma: s.plataforma, perfil: s.perfil ? ' (perfil ' + s.perfil + ')' : '', vence: s.dias === 0 ? 'hoy' : fFechaC(s.vence), precio: money(precioMes(s)), negocio: S.config.nombre || '', dias: String(Math.abs(s.dias)) }).replace(/\bel (\*?)hoy(\*?)/, '$1hoy$2');
 }
+// Alertas de vencimiento: con cuántos días de anticipación avisa la app y qué mensaje manda por WhatsApp
+ACC.susAlertas = () => {
+  const c = S.config, ej = { cliente: 'Luis', plataforma: 'Netflix', perfil: ' (perfil 3)', vence: fFechaC(mesesSumarDia(3)), precio: money(120), negocio: c.nombre || 'Mi negocio', dias: '3' };
+  const h = hoja({ titulo: 'Alertas de vencimiento', ancho: 1, html: `<div class="fld"><span>Avisar con anticipación de</span><div class="chips" id="sa-d">${[1, 2, 3, 5, 7, 10, 15, 30].map(n => `<button type="button" class="chip ${susDias() === n ? 'on' : ''}" data-d="${n}">${n} ${n === 1 ? 'día' : 'días'}</button>`).join('')}</div><small class="hint">Define qué cuenta como «por vencer» en Inicio, en la tarjeta y en el filtro de esta pantalla.</small></div>
+    <p class="xs mut">En los mensajes puedes usar {cliente}, {plataforma}, {perfil}, {vence}, {precio}, {dias} y {negocio}.</p>
+    <label class="fld"><span>Mensaje cuando está por vencer</span><textarea id="sa-m1" rows="3" maxlength="400">${esc(c.msjSusPorVencer || '')}</textarea></label>
+    <div class="msg-prev" id="sa-p1"></div>
+    <label class="fld"><span>Mensaje cuando ya venció</span><textarea id="sa-m2" rows="3" maxlength="400">${esc(c.msjSusVencida || '')}</textarea></label>
+    <div class="msg-prev" id="sa-p2"></div>` });
+  let dias = susDias();
+  $('#sa-d', h.el).addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; dias = Number(b.dataset.d); $$('#sa-d .chip', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  const prev = () => { $('#sa-p1', h.el).textContent = plantilla($('#sa-m1', h.el).value, ej); $('#sa-p2', h.el).textContent = plantilla($('#sa-m2', h.el).value, Object.assign({}, ej, { vence: fFechaC(mesesSumarDia(-2)), dias: '2' })); };
+  ['#sa-m1', '#sa-m2'].forEach(k => $(k, h.el).addEventListener('input', prev)); prev();
+  h.botones([{ t: 'Restablecer mensajes', fn: () => { $('#sa-m1', h.el).value = CONFIG_MSJ.msjSusPorVencer; $('#sa-m2', h.el).value = CONFIG_MSJ.msjSusVencida; prev(); } }, { t: 'Guardar', cls: 'pri', fn: async () => {
+    const m1 = $('#sa-m1', h.el).value.trim(), m2 = $('#sa-m2', h.el).value.trim();
+    if (!m1 || !m2) throw new Error('Escribe los dos mensajes');
+    S.config = await api('guardar', { entidad: 'Config', registro: { susAviso: String(dias), msjSusPorVencer: m1, msjSusVencida: m2 } });
+    guardarCache(); S.inicio = null; h.cerrar(); toast('Alertas guardadas', 'ok'); if (S.vista === 'vencimientos') R.vencimientos();
+  } }]);
+};
+const CONFIG_MSJ = { msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}' };
 ACC.susF = el => { S.f.susF = el.dataset.f; R.vencimientos(); };
 ACC.susP = el => { S.f.susP = S.f.susP === el.dataset.p ? '' : el.dataset.p; R.vencimientos(); };
 ACC.susVer = el => {
@@ -8001,6 +8028,7 @@ ACC.susVer = el => {
     ${s.nota ? `<p class="sm mut">Nota: ${esc(s.nota)}</p>` : ''}` });
   const bs = [];
   if (viva) {
+    bs.push({ t: ic('edit', 18), cls: 'icon', fn: () => { h.cerrar(); editarSus(s); } });
     bs.push({ t: `${ic('x', 16)} Cancelar`, cls: 'bad', fn: async () => { if (!(await confirmar('¿Cancelar esta suscripción? El perfil queda libre para vender.', { si: 'Cancelar suscripción', peligro: 1 }))) return; S.susL = await api('susEstado', { id: s.id, estado: 'cancelada' }); S.inicio = null; h.cerrar(); toast('Suscripción cancelada', 'ok'); if (S.vista === 'vencimientos') R.vencimientos(); } });
     bs.push({ t: `${ic('refresh', 16)} Renovar`, cls: 'pri', fn: () => { h.cerrar(); renovarSus(s); } });
   }
@@ -8010,6 +8038,16 @@ function textoAcceso(s) {
   const l = [`*${s.plataforma}* · ${S.config.nombre || ''}`, s.perfil ? 'Perfil ' + s.perfil : 'Cuenta completa'];
   if (s.correo) l.push('Correo: ' + s.correo); if (s.clave) l.push('Clave: ' + s.clave); if (s.pin) l.push('PIN: ' + s.pin);
   l.push('Vence el ' + fFechaC(s.vence)); return l.join('\n');
+}
+function editarSus(s) {
+  const h = hoja({ titulo: 'Editar suscripción', cls: 'chica', html: `<p class="conf"><b>${esc(s.cliente || 'Sin cliente')}</b> · ${esc(susEtiqueta(s))}</p>
+    <div class="f2"><label class="fld"><span>Vence el</span><input id="es-v" type="date" value="${esc(s.vence)}"></label><label class="fld"><span>PIN del perfil</span><input id="es-p" maxlength="12" value="${esc(s.pin || '')}"></label></div>
+    <label class="fld"><span>Nota</span><input id="es-n" maxlength="120" value="${esc(s.nota || '')}" placeholder="Ej. pagó por Tigo Money"></label>` });
+  h.botones([{ t: 'Guardar', cls: 'pri', fn: async () => {
+    const v = $('#es-v', h.el).value; if (!v) throw new Error('Elige la fecha');
+    S.susL = await api('susEstado', { id: s.id, vence: v, pin: $('#es-p', h.el).value.trim(), nota: $('#es-n', h.el).value.trim() });
+    S.inicio = null; S.cuentasL = null; h.cerrar(); toast('Suscripción actualizada', 'ok'); if (S.vista === 'vencimientos') R.vencimientos();
+  } }]);
 }
 ACC.susRenovar = el => { const s = (S.susL || []).find(x => x.id === el.dataset.id); if (s) renovarSus(s); };
 // Renovar: arma el ticket con el mismo producto, cliente y perfil, y abre el cobro
@@ -8205,6 +8243,7 @@ const NOVEDADES = [
     { i: 'receipt', t: 'Mesa, para llevar y comanda (restaurante)', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina, e imprimes la comanda sin precios.' },
     { i: 'barcode', t: 'Serie / IMEI y garantía (tecnología)', d: 'Al cobrar anotas la serie de cada equipo; el comprobante sale con la serie y hasta cuándo tiene garantía.' },
     { i: 'tag', t: 'Talla y color al vender (boutique, variedades)', d: 'Si el producto tiene opciones, al tocarlo en Vender eliges cuál y el ticket lo dice.' },
+    { i: 'bell', t: 'Alertas de vencimiento a tu gusto', d: 'En Vencimientos › Alertas eliges con cuántos días de anticipación te avisa la app y editas los mensajes de WhatsApp de «por vencer» y «vencida». Cada suscripción se puede editar (fecha, PIN, nota).', ir: 'vencimientos' },
   ] },
   { v: '1.8', fecha: '2026-10-21', items: [
     { i: 'tv', t: 'Negocios de streaming y suscripciones', d: 'Nuevo tipo de negocio. Tus productos pueden ser una suscripción (Netflix, Disney+, IPTV…) o un paquete con varias plataformas. Al cobrar eliges el plan, la fecha de vencimiento y el perfil que entregas; los accesos van en el comprobante por WhatsApp.', ir: 'productos' },
@@ -8271,7 +8310,7 @@ const AYUDA = {
     t: ['Marca <b>Entregado</b> al entregarlo si no lo cobras desde la app.'] },
   vencimientos: { d: 'Tus suscripciones vendidas con su fecha de vencimiento: cuáles vencen hoy, esta semana o ya vencieron.',
     p: ['<b>Recordar</b> abre WhatsApp con el aviso listo para el cliente.', '<b>Renovar 1 mes</b> arma el cobro con el mismo producto, cliente y perfil; solo eliges la forma de pago.', 'Toca una suscripción para ver los accesos entregados, reenviarlos o cancelarla.'],
-    t: ['Las vencidas conservan el perfil 7 días para darte tiempo de renovar; después queda libre.'] },
+    t: ['Las vencidas conservan el perfil 7 días para darte tiempo de renovar; después queda libre.', 'En <b>Alertas</b> eliges con cuántos días de anticipación te avisa la app y editas los mensajes de WhatsApp. Con el lápiz cambias la fecha de vencimiento, el PIN o la nota de una suscripción.'] },
   cuentas: { d: 'Tus cuentas madre (Netflix, Disney+, IPTV…) con sus perfiles: cuáles están ocupados, por quién y hasta cuándo.',
     p: ['<b>Nueva cuenta</b>: elige la plataforma (o agrega otra), el correo, la clave y cuántos perfiles vendes.', 'En un perfil <b>libre</b> toca <b>Vender</b> y la app arma el cobro con ese perfil.', 'Toca el encabezado de una cuenta para editarla.'],
     t: ['Anota la fecha en que la cuenta vence con tu proveedor: la app te avisa cuando pase.'] },
