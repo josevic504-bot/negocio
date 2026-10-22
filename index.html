@@ -436,6 +436,10 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .plat-chips .chip{display:inline-flex;align-items:center;gap:6px}.plat-chips .chip i{width:14px;height:14px;border-radius:4px;display:inline-block;flex:none}
 .sus-box{border:1px solid var(--line);border-radius:16px;padding:12px;margin:10px 0;background:var(--bg)}.sus-box>b{display:flex;align-items:center;gap:6px;margin-bottom:8px}.sus-box .hint a{color:var(--pri);font-weight:600;cursor:pointer}
 .avi-sus{margin-bottom:12px}
+.fx-cli{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:16px;padding:10px 12px;margin-bottom:10px}.fx-cli b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fx-cli a{color:var(--pri);font-weight:600;cursor:pointer}
+.fx-top{display:flex;gap:10px;margin-bottom:10px}.fx-top .btn{flex:1;justify-content:center;padding:15px 10px;font-size:16px}
+.fx-emp{border:2px dashed var(--line);border-radius:20px;padding:30px 16px;text-align:center;color:var(--mut)}.fx-emp p{margin-top:8px}
+.fx-tot{display:flex;justify-content:space-between;align-items:center;padding:8px 2px}.fx-tot b{font-size:24px;color:var(--pri)}
 .serie-box{padding:8px 12px}.serie-box .fld{margin:0}.srch.grow{flex:1;margin:0}.seg button.on{background:var(--card);box-shadow:var(--sh)}
 .li .av:has(.ha){display:flex;flex-direction:column;align-items:center;justify-content:center}.li .av .ha{display:block;font-size:11px;font-weight:700;line-height:1.1}.li .av .hb{display:block;font-size:9px;font-weight:600;opacity:.85;line-height:1.1}
 .li-ic{width:44px;height:44px;border-radius:14px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--h1),var(--h2))}
@@ -1080,7 +1084,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
@@ -5680,7 +5684,7 @@ R.vender = () => {
   const cats = [...new Set(S.productos.filter(p => p.activo).map(p => p.categoria))].sort();
   const f = S.f;
   if (f.vcat && !cats.includes(f.vcat)) f.vcat = '';
-  $('#main').innerHTML = `<div class="pos-top"><div class="srch grow">${ic('search', 18)}<input id="v-q" placeholder="Buscar producto o código…" value="${esc(f.vq || '')}" autocomplete="off" enterkeyhint="search"></div>
+  $('#main').innerHTML = `<button class="btn pri big" style="width:100%;justify-content:center;margin-bottom:12px" data-a="nuevaFactura">${ic('doc', 20)} ${S.ticket.items.length ? 'Seguir la factura · ' + money(calcTotales(S.ticket).total) : 'Nueva factura'}</button><div class="pos-top"><div class="srch grow">${ic('search', 18)}<input id="v-q" placeholder="Buscar producto o código…" value="${esc(f.vq || '')}" autocomplete="off" enterkeyhint="search"></div>
     <button class="btn icon" data-a="escanear" title="Escanear código de barras">${ic('barcode')}</button><button class="btn icon" data-a="itemLibre" title="Artículo sin registrar">${ic('plus')}</button></div>
     <div class="chips" id="v-cats"><button class="chip ${!f.vcat ? 'on' : ''}" data-a="vcat" data-c="">Todo <span class="c">${S.productos.filter(p => p.activo).length}</span></button>${cats.map(c => `<button class="chip ${f.vcat === c ? 'on' : ''}" data-a="vcat" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <div class="pgrid" id="v-grid"></div>
@@ -5697,6 +5701,42 @@ R.vender = () => {
   });
   pintarGridVenta();
   if (S.params.cobrar) { S.params.cobrar = 0; setTimeout(abrirCobro, 60); }
+  else if (S.config.venderInicio === 'factura' && !S.hFact && !PILA.length && !S.ticket.pedidoId) setTimeout(abrirFactura, 60);
+};
+/* Nueva factura: la venta como lista (escanear o buscar), pensada para negocios con código de barras */
+ACC.nuevaFactura = () => abrirFactura();
+function abrirFactura() {
+  if (S.hFact) return;
+  const h = hoja({ titulo: 'Nueva factura', ancho: 1, html: '<div id="fx"></div>' });
+  const pinta = () => {
+    const t = S.ticket, cli = t.clienteId ? byId(S.clientes, t.clienteId) : null, tot = calcTotales(t), n = t.items.length, u = t.items.reduce((a, i) => a + i.cantidad, 0);
+    const admin = puede('admin');
+    $('#fx', h.el).innerHTML = `<div class="fx-cli">${ic('user', 18)}<b>${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : 'Consumidor final')}</b><a data-a="fxCliente">${cli ? 'Cambiar' : 'Elegir'}</a></div>
+      <div class="fx-top"><button class="btn pri" data-a="fxEscanear">${ic('barcode', 20)} Escanear</button><button class="btn" data-a="fxBuscar">${ic('search', 20)} Buscar</button></div>
+      ${n ? `<div class="tks">${t.items.map((i, k) => { const p = i.productoId ? byId(S.productos, i.productoId) : null; return `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${admin || !i.productoId ? `<a data-a="cbPrecio" data-k="${k}">${money(i.precio)} c/u ✎</a>` : money(i.precio) + ' c/u'}${p && p.codigo ? ' · ' + esc(p.codigo) : ''}</small></div><div class="qty"><button data-a="cbQ" data-k="${k}" data-d="-1">−</button><span data-a="cbCant" data-k="${k}">${cant(i.cantidad)}</span><button data-a="cbQ" data-k="${k}" data-d="1">+</button></div><b class="n tkt">${money(i.cantidad * i.precio)}</b></div>`; }).join('')}</div>
+        <div class="fx-tot"><span class="mut">${n === 1 ? '1 artículo' : n + ' artículos'} · ${cant(u)} ${u === 1 ? 'unidad' : 'unidades'}</span><b class="n">${money(tot.total)}</b></div>`
+      : `<div class="fx-emp">${ic('cart', 36)}<p><b>Factura nueva</b><br>Escanea el código de barras o busca el producto. Cada lectura agrega una unidad.</p></div>`}`;
+    h.botones([{ t: ic('trash', 18), cls: 'bad icon', fn: async () => { if (!n) return; if (await confirmar('¿Vaciar la factura?', { si: 'Vaciar' })) { S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket(); pinta(); pintarGridVenta(); } } },
+      { t: n ? `${ic('check')} Cobrar ${money(tot.total)}` : 'Cobrar', cls: 'pri big', fn: () => { if (!n) return toast('Agrega productos a la factura', 'error'); abrirCobro(); } }]);
+  };
+  h.pinta = pinta; S.hFact = h;
+  h.onClose = () => { S.hFact = null; if (S.vista === 'vender' && !PILA.length) R.vender(); };
+  pinta();
+}
+ACC.fxEscanear = () => escanearCodigo(codigoLeido);
+ACC.fxBuscar = () => {
+  const h = hoja({ titulo: 'Buscar producto', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="fxb-q" placeholder="Nombre, código o categoría…" autocomplete="off"></div><div class="list" id="fxb-l"></div>`, foco: '#fxb-q' });
+  const l = S.productos.filter(p => p.activo).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const pinta = () => { const q = norm($('#fxb-q', h.el).value); $('#fxb-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q)).slice(0, 40).map(p => `<div class="li" data-fx="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.categoria)}${p.codigo ? ' · ' + esc(p.codigo) : ''}${p.tipo === 'producto' ? ' · ' + cant(p.stock) + ' disp.' : ''}</small></div><div class="am n">${money(p.precio)}</div></div>`).join('') || '<div class="empty">Sin resultados</div>'; };
+  $('#fxb-q', h.el).addEventListener('input', debounce(pinta, 100)); pinta();
+  h.b.addEventListener('click', async e => { const x = e.target.closest('[data-fx]'); if (!x) return; const p = byId(S.productos, x.dataset.fx); let v = ''; if (modOn('variantes') && p.opciones) { v = await elegirVariante(p); if (v === null) return; } if (agregarAlTicket(p, 1, v)) { toast('+1 ' + p.nombre, 'ok', 1500); h.cerrar(); S.hFact && S.hFact.pinta(); pintarGridVenta(); } });
+};
+ACC.fxCliente = () => {
+  const h = hoja({ titulo: 'Cliente de la factura', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="fxc-q" placeholder="Buscar cliente…" autocomplete="off"></div><div class="list" id="fxc-l"></div>`, foco: '#fxc-q' });
+  const pinta = () => { const q = norm($('#fxc-q', h.el).value), l = S.clientes.filter(c => c.activo && (!q || norm(c.nombre + ' ' + (c.telefono || '')).includes(q))).slice(0, 40); $('#fxc-l', h.el).innerHTML = `<div class="li" data-fxc=""><div class="av t-mut" style="background:var(--line);color:var(--mut)">${ic('user', 18)}</div><div class="tx"><b>Consumidor final</b><small>Sin cliente</small></div></div>` + l.map(c => `<div class="li" data-fxc="${c.id}"><div class="av ${colorDe(c.nombre)}">${esc(iniciales(c.nombre))}</div><div class="tx"><b>${esc(c.nombre)}</b><small>${esc(c.telefono || '')}${c.saldo > 0 ? ' · debe ' + money(c.saldo) : ''}</small></div></div>`).join(''); };
+  $('#fxc-q', h.el).addEventListener('input', debounce(pinta, 100)); pinta();
+  h.botones([{ t: `${ic('userplus', 18)} Nuevo cliente`, fn: () => { h.cerrar(); formCliente(null, c => { S.ticket.clienteId = c.id; guardarTicket(); S.hFact && S.hFact.pinta(); }); } }]);
+  h.b.addEventListener('click', e => { const x = e.target.closest('[data-fxc]'); if (!x) return; S.ticket.clienteId = x.dataset.fxc; S.ticket.fiscal = {}; guardarTicket(); h.cerrar(); S.hFact && S.hFact.pinta(); });
 };
 function filtrarVenta() {
   const q = norm(S.f.vq || '');
@@ -5757,6 +5797,7 @@ function codigoLeido(code) {
   if (!p) { toast('No hay producto con el código ' + code, 'error'); return false; }
   if (!agregarAlTicket(p)) return true;
   toast('+1 ' + p.nombre + ' · ' + (enTicket(p.id) === 1 ? '1 en el ticket' : cant(enTicket(p.id)) + ' en el ticket'), 'ok', 2000);
+  if (S.hFact) { S.hFact.pinta(); pintarGridVenta(); return true; }
   if (S.vista !== 'vender') ir('vender'); else pintarGridVenta();
   setTimeout(() => { const bar = $('#v-bar'); if (bar) bar.scrollIntoView({ block: 'end', behavior: 'smooth' }); }, 150);
   return true;
@@ -5878,6 +5919,7 @@ function abrirCobro() {
     S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket();
     S.inicio = null; S.pedidosL = null; S.susL = null; S.cuentasL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; guardarCache();
     h.onClose = null; h.cerrar(); S.hCobro = null;
+    if (S.hFact) { const f = S.hFact; f.onClose = null; S.hFact = null; f.cerrar(); }
     if (S.vista === 'vender') R.vender();
     if (r.repetida) toast('Esta venta ya se había registrado: no se cobró dos veces', 'ok', 5000);
     ventaLista(r.venta, r.detalle, r.accesos);
@@ -5897,8 +5939,8 @@ ACC.cbQ = el => {
   it.cantidad = r2(it.cantidad + d);
   if (it.cantidad <= 0) S.ticket.items.splice(k, 1);
   guardarTicket();
-  if (!S.ticket.items.length) { S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket(); S.hCobro && S.hCobro.cerrar(); return; }
-  S.hCobro && S.hCobro.pinta();
+  if (!S.ticket.items.length) { S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket(); S.hCobro && S.hCobro.cerrar(); S.hFact && S.hFact.pinta(); return; }
+  S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta();
 };
 ACC.cbCant = async el => {
   const k = Number(el.dataset.k), it = S.ticket.items[k]; if (!it) return;
@@ -5907,14 +5949,14 @@ ACC.cbCant = async el => {
   const n = Math.round(num(v) * 1000) / 1000;
   if (!(n > 0)) return toast('Cantidad no válida', 'error');
   if (it.productoId) { const p = byId(S.productos, it.productoId); if (p && p.tipo === 'producto' && S.config.venderSinStock !== 'si' && enTicket(p.id) - it.cantidad + n > p.stock) return toast('Solo hay ' + cant(p.stock) + ' de «' + p.nombre + '»', 'error'); }
-  it.cantidad = n; guardarTicket(); S.hCobro && S.hCobro.pinta();
+  it.cantidad = n; guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta();
 };
 ACC.cbPrecio = async el => {
   const it = S.ticket.items[Number(el.dataset.k)];
   const v = await pedirTexto('Precio de «' + esc(it.descripcion) + '»', { label: 'Precio por unidad', valor: it.precio, modo: 'decimal' });
   if (v === null) return;
   const p = r2(v); if (!(p >= 0)) return toast('Precio no válido', 'error');
-  it.precio = p; it.precioMan = 1; guardarTicket(); S.hCobro && S.hCobro.pinta();
+  it.precio = p; it.precioMan = 1; guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta();
 };
 ACC.cbDesc = async () => {
   const t = calcTotales(S.ticket);
@@ -5922,9 +5964,9 @@ ACC.cbDesc = async () => {
   if (v === null) return;
   const s = String(v).trim();
   S.ticket.descuento = s.endsWith('%') ? r2(t.subtotal * num(s) / 100) : r2(s);
-  guardarTicket(); S.hCobro && S.hCobro.pinta();
+  guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta();
 };
-ACC.nuevoClienteRapido = () => formCliente(null, c => { S.ticket.clienteId = c.id; guardarTicket(); S.hCobro && S.hCobro.pinta(); });
+ACC.nuevoClienteRapido = () => formCliente(null, c => { S.ticket.clienteId = c.id; guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta(); });
 
 function ventaLista(v, det, accesos) {
   const cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
@@ -7204,6 +7246,7 @@ R.ajustes = () => {
     <label class="fld"><span>Dirección</span><input data-k="direccion" value="${v('direccion')}"></label>
     <div class="f3"><label class="fld"><span>Moneda</span><input data-k="moneda" value="${v('moneda')}" maxlength="4"></label><label class="fld"><span>ISV general</span>${sel('isv', [['0.15', '15%'], ['0.18', '18%'], ['0', 'No cobro ISV']])}</label><label class="fld"><span>Los precios…</span>${sel('preciosConISV', [['si', 'Ya incluyen ISV'], ['no', 'No incluyen ISV']])}</label></div>
     <div class="f2"><label class="fld"><span>Fondo de caja (para empezar el día)</span><input data-k="fondoCaja" inputmode="decimal" value="${v('fondoCaja')}"></label><label class="fld"><span>Sin existencias…</span>${sel('venderSinStock', [['no', 'No dejar vender'], ['si', 'Dejar vender igual']])}</label></div>
+    <label class="fld"><span>Vender empieza en</span>${sel('venderInicio', [['catalogo', 'Catálogo con fotos (tocar productos)'], ['factura', 'Nueva factura (escanear o buscar)']])}</label>
     <label class="fld"><span>Mensaje al pie del comprobante</span><input data-k="mensajeRecibo" value="${v('mensajeRecibo')}" maxlength="120"></label>
     <button class="btn pri" data-a="guardarAj" data-s="negocio">Guardar</button>`);
   if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
@@ -7842,7 +7885,7 @@ function comandaBloque() {
   return `<div class="fld"><span>Servicio</span><div class="pays">${[['mesa', 'Mesa', 'grid'], ['llevar', 'Para llevar', 'bag'], ['domicilio', 'Domicilio', 'truck']].map(([k, l, i]) => `<button class="pay ${s === k ? 'on' : ''}" data-a="cbServ" data-s="${k}">${ic(i)}${l}</button>`).join('')}</div></div>
     <div class="f2">${s === 'mesa' ? `<label class="fld"><span>Mesa</span><input id="cb-mesa" maxlength="20" value="${esc(t.mesa || '')}" placeholder="Ej. 4"></label>` : ''}<label class="fld" ${s === 'mesa' ? '' : 'style="grid-column:1/-1"'}><span>Nota para la cocina</span><input id="cb-cocina" maxlength="200" value="${esc(t.cocina || '')}" placeholder="Sin cebolla, término medio…"></label></div>`;
 }
-ACC.cbServ = el => { S.ticket.servicio = el.dataset.s; guardarTicket(); S.hCobro && S.hCobro.pinta(); };
+ACC.cbServ = el => { S.ticket.servicio = el.dataset.s; guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta(); };
 function imprimirComanda(v, det) {
   const L = (a, b) => `<div class="pl"><span>${a}</span><span>${b}</span></div>`;
   const serv = v.servicio === 'llevar' ? 'PARA LLEVAR' : v.servicio === 'domicilio' ? 'DOMICILIO' : 'MESA ' + (v.mesa || '');
@@ -8345,6 +8388,7 @@ const NOVEDADES = [
     { i: 'receipt', t: 'Mesa, para llevar y comanda (restaurante)', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina, e imprimes la comanda sin precios.' },
     { i: 'barcode', t: 'Serie / IMEI y garantía (tecnología)', d: 'Al cobrar anotas la serie de cada equipo; el comprobante sale con la serie y hasta cuándo tiene garantía.' },
     { i: 'tag', t: 'Talla y color al vender (boutique, variedades)', d: 'Si el producto tiene opciones, al tocarlo en Vender eliges cuál y el ticket lo dice.' },
+    { i: 'doc', t: 'Nueva factura: vender escaneando', d: 'En Vender, el botón Nueva factura abre la venta como lista: escaneas o buscas cada producto, ajustas cantidades y cobras. Ideal para pulperías, farmacias y ferreterías con código de barras. En Ajustes puedes hacer que Vender empiece ahí.', ir: 'vender' },
     { i: 'bell', t: 'Avisos en el teléfono', d: 'Notificaciones cuando entra un pedido o un mensaje, cuando vence una suscripción, una hora antes de cada cita o entrega, y por productos vencidos u órdenes atrasadas. Se activan en Ajustes › Avisos y funcionan con la app abierta o en segundo plano.', ir: 'ajustes' },
     { i: 'barcode', t: 'Escanear códigos en cualquier teléfono', d: 'El botón de código de barras en Vender ahora funciona también en iPhone, Firefox y la app Android: si el teléfono no trae lector, la app carga uno. Y si usas un lector físico (USB o Bluetooth), solo dispara: el producto se agrega al ticket.', ir: 'vender' },
     { i: 'bell', t: 'Alertas de vencimiento a tu gusto', d: 'En Vencimientos › Alertas eliges con cuántos días de anticipación te avisa la app y editas los mensajes de WhatsApp de «por vencer» y «vencida». Cada suscripción se puede editar (fecha, PIN, nota).', ir: 'vencimientos' },
