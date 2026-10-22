@@ -1042,11 +1042,11 @@ const SCHEMA = {
   Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia'],
   Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado'],
-  Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion'],
+  Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','ref'],
   Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion'],
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion'],
@@ -1063,7 +1063,7 @@ const SCHEMA = {
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M' };
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
@@ -1909,9 +1909,11 @@ function ordenGuardar_(u, d) {
   const r = Object.assign({}, d.registro || {});
   const prev = r.id ? rows_('Ordenes').find(x => x.id === r.id) : null;
   if (r.id && !prev) throw new Error('La orden ya no existe');
-  if (prev && prev.estado === 'entregado' && r.estado !== 'entregado' && u.rol !== 'admin') throw new Error('Una orden entregada ya no se cambia');
+  if (prev && ['entregado', 'cancelado'].indexOf(prev.estado) >= 0 && r.estado !== undefined && r.estado !== prev.estado && u.rol !== 'admin') throw new Error('Una orden ' + (prev.estado === 'entregado' ? 'entregada' : 'cancelada') + ' ya no se cambia');
+  if (prev && r.presupuesto !== undefined && u.rol === 'bodega') delete r.presupuesto;
   ['cliente', 'telefono', 'equipo', 'placa'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
   ['falla', 'diagnostico', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
+  if (prev && r.clienteId === '' && r.cliente === prev.cliente) { delete r.clienteId; delete r.cliente; delete r.telefono; }
   if (r.clienteId !== undefined) {
     const c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null;
     if (r.clienteId && !c) throw new Error('El cliente ya no existe');
@@ -1925,11 +1927,10 @@ function ordenGuardar_(u, d) {
   if (r.promesa !== undefined && r.promesa && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.promesa))) r.promesa = '';
   if (!prev) { r.numero = siguiente_('O'); r.estado = r.estado || 'recibido'; r.usuarioId = u.id; r.creado = ahora_(); }
   r.actualizado = ahora_();
-  if (r.anticipo && !prev) {
-    // El anticipo entra a caja como un abono sin venta: se registra en la nota para no perderlo
-    r.nota = (r.nota ? r.nota + ' · ' : '') + 'Anticipo ' + money_(r.anticipo, config_());
-  }
-  return upsert_('Ordenes', r);
+  if (prev && r.anticipo !== undefined && Number(prev.anticipo) > 0) delete r.anticipo; // el anticipo ya cobrado no se edita
+  const o = upsert_('Ordenes', r);
+  if (!prev && o.anticipo > 0) anticipoRegistrar_(u, o.anticipo, o.clienteId, 'Anticipo orden ' + o.numero, o.id, d.metodo);
+  return o;
 }
 function ordenResumen_() {
   const l = rows_('Ordenes'), h = hoy_();
@@ -1954,6 +1955,7 @@ function agendaGuardar_(u, d) {
   if (!prev && !r.tipo) r.tipo = 'cita';
   ['cliente', 'telefono', 'atiende'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
   ['detalle', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
+  if (prev && r.clienteId === '' && r.cliente === prev.cliente) { delete r.clienteId; delete r.cliente; delete r.telefono; }
   if (r.clienteId !== undefined) {
     const c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null;
     if (r.clienteId && !c) throw new Error('El cliente ya no existe');
@@ -1969,13 +1971,28 @@ function agendaGuardar_(u, d) {
   if (r.anticipo !== undefined) r.anticipo = r2_(r.anticipo);
   if (r.estado !== undefined && EST_AGENDA.indexOf(r.estado) < 0) throw new Error('Estado no válido');
   if (!prev) { r.estado = r.estado || 'pendiente'; r.usuarioId = u.id; r.creado = ahora_(); }
+  if (prev && r.anticipo !== undefined && Number(prev.anticipo) > 0) delete r.anticipo;
   r.actualizado = ahora_();
-  return upsert_('Agenda', r);
+  const a = upsert_('Agenda', r);
+  if (!prev && a.anticipo > 0) anticipoRegistrar_(u, a.anticipo, a.clienteId, 'Anticipo ' + (a.tipo === 'encargo' ? 'encargo' : 'cita') + ' · ' + a.detalle, a.id, d.metodo);
+  return a;
 }
 function agendaResumen_(tipo) {
   const h = hoy_(), l = rows_('Agenda').filter(a => a.tipo === tipo && a.estado === 'pendiente');
   const hoyL = l.filter(a => a.dia === h).sort((a, b) => a.hora < b.hora ? -1 : 1), man = l.filter(a => a.dia === diasAtras_(-1)).length, atras = l.filter(a => a.dia < h).length;
   return { hoy: hoyL.length, manana: man, atrasados: atras, lista: hoyL.slice(0, 6).map(a => ({ id: a.id, hora: a.hora, cliente: a.cliente, detalle: a.detalle, atiende: a.atiende, anticipo: a.anticipo, monto: a.monto })), montoHoy: r2_(hoyL.reduce((t, a) => t + (Number(a.monto) || 0), 0)) };
+}
+// El anticipo entra a caja como un abono (sin venta todavía) ligado a la orden o encargo
+function anticipoRegistrar_(u, monto, clienteId, nota, ref, metodo) {
+  metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(metodo) >= 0 ? metodo : 'Efectivo';
+  upsert_('Abonos', { fecha: ahora_(), clienteId: clienteId || '', monto: r2_(monto), metodo: metodo, aplicado: '[]', usuarioId: u.id, nota: txt_(nota, 200), anulado: false, ref: ref });
+}
+// Anticipo pendiente de aplicar de una orden/cita (lo que ya pagó el cliente y aún no se descontó de una venta)
+function anticipoDe_(ref) {
+  if (!ref) return 0;
+  const o = rows_('Ordenes').find(x => x.id === ref) || rows_('Agenda').find(x => x.id === ref);
+  if (!o || o.ventaId) return 0;
+  return r2_(rows_('Abonos').filter(a => a.ref === ref && !a.anulado).reduce((t, a) => t + (Number(a.monto) || 0), 0));
 }
 // Al cobrar una venta ligada a una orden, cita o encargo, se cierra solo
 function cerrarLigados_(d, venta) {
@@ -2652,6 +2669,8 @@ function venta_(u, d) {
   }
   // Pedido en línea: debe estar pendiente; sus precios son los que vio el cliente
   const preciosPedido = Object.create(null);
+  // Venta ligada a una cita/encargo: vale el precio acordado en la cita (lo puso quien la agendó)
+  const precioLigado = !!(d.agendaId && rows_('Agenda').some(x => x.id === d.agendaId && x.estado === 'pendiente'));
   if (d.pedidoId) {
     const pe = rows_('Pedidos').find(x => x.id === d.pedidoId);
     if (!pe) throw new Error('El pedido en línea ya no existe');
@@ -2661,6 +2680,10 @@ function venta_(u, d) {
   }
   const pm = porId_(rows_('Productos'));
   if (!Array.isArray(d.items)) throw new Error('El ticket está vacío');
+  if (Array.isArray(d.sus)) { // las fechas se validan antes de escribir nada
+    const h0 = hoy_();
+    d.sus.forEach(sd => { if (sd.vence && sd.vence < h0) throw new Error('Una fecha de vencimiento ya pasó'); (Array.isArray(sd.asig) ? sd.asig : []).forEach(a => { if (a.vence && a.vence < h0) throw new Error('La fecha de vencimiento de ' + (a.plataforma || 'una plataforma') + ' ya pasó'); }); });
+  }
   const items = d.items.map(i => {
     if (!i || typeof i !== 'object') throw new Error('Un artículo del ticket no es válido');
     const p = i.productoId ? pm[i.productoId] : null;
@@ -2670,7 +2693,7 @@ function venta_(u, d) {
     if (!(cant > 0)) throw new Error('Cantidad no válida');
     if (!(i.precio === undefined || i.precio === '' || i.precio === null) && !esNum_(i.precio)) throw new Error('Precio no válido');
     let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? p.precio : 0) : r2_(i.precio);
-    if (p && u.rol !== 'admin') { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
+    if (p && u.rol !== 'admin' && !precioLigado) { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
       const delPedido = preciosPedido[p.id];
       if (Math.abs(precio - p.precio) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005)) precio = delPedido !== undefined ? delPedido : p.precio;
     }
@@ -2719,19 +2742,22 @@ function venta_(u, d) {
   const costo = r2_(items.reduce((a, i) => a + i.cantidad * (i.costo || 0), 0));
   let recibido = 0, cambio = 0, saldo = 0;
   const clienteId = d.clienteId && rows_('Clientes').some(c => c.id === d.clienteId) ? d.clienteId : '';
+  // Anticipo ya pagado (orden de trabajo, cita o encargo): se descuenta de lo que falta por pagar, no del total de la venta
+  const anticipo = r2_(Math.min(anticipoDe_(d.ordenId || d.agendaId), total));
+  const porPagar = r2_(total - anticipo);
   if (metodo === 'Crédito') {
     if (!clienteId) throw new Error('Para vender al crédito selecciona un cliente registrado');
-    recibido = r2_(Math.min(Math.max(0, Number(d.recibido) || 0), total));
-    saldo = r2_(total - recibido);
+    recibido = r2_(Math.min(Math.max(0, Number(d.recibido) || 0), porPagar));
+    saldo = r2_(porPagar - recibido);
     const cli = rows_('Clientes').find(c => c.id === clienteId);
     const debe = saldosClientes_()[clienteId] || 0;
     if (cli.limite > 0 && debe + saldo > cli.limite + 0.004) throw new Error('Supera el límite de crédito de ' + cli.nombre + ' (' + money_(cli.limite, cfg) + '). Ya debe ' + money_(debe, cfg) + '.');
   } else if (metodo === 'Efectivo') {
-    recibido = d.recibido === undefined || d.recibido === '' || d.recibido === null ? total : r2_(d.recibido);
-    if (recibido + 0.004 < total) throw new Error('El efectivo recibido es menor que el total');
-    cambio = r2_(recibido - total);
+    recibido = d.recibido === undefined || d.recibido === '' || d.recibido === null ? porPagar : r2_(d.recibido);
+    if (recibido + 0.004 < porPagar) throw new Error('El efectivo recibido es menor que lo que falta por pagar');
+    cambio = r2_(recibido - porPagar);
   } else {
-    recibido = total;
+    recibido = porPagar;
   }
   // Número de factura: se toma al final, cuando ya pasaron todas las validaciones (no deja huecos)
   let factura = '', fiscal = '';
@@ -2751,7 +2777,7 @@ function venta_(u, d) {
     id: newId_('Ventas'), numero: siguiente_('V'), fecha: fecha, clienteId: clienteId, usuarioId: u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
     recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200),
-    factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200)
+    factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo
   };
   const detalle = items.map((i, k) => ({
     id: newId_('VentaDetalle') + k, ventaId: venta.id, productoId: i.productoId, descripcion: i.descripcion,
@@ -3150,10 +3176,11 @@ function cajaCalc_(w) {
   };
   rows_('Ventas').forEach(v => mira(v, v.anulada, v.metodo === 'Efectivo' || (v.metodo === 'Crédito' && v.recibido > 0), s => {
     if (s > 0) k.nVentas++;
-    if (v.metodo === 'Efectivo') k.ventas += s * v.total;
-    else if (v.metodo === 'Crédito') { k.ventas += s * v.recibido; if (s > 0) k.credito += v.total - v.recibido; }
-    else if (v.metodo === 'Tarjeta') k.tarjeta += v.total;
-    else if (v.metodo === 'Transferencia') k.transferencia += v.total;
+    const ant = Number(v.anticipo) || 0; // el anticipo ya entró a caja como abono cuando se recibió
+    if (v.metodo === 'Efectivo') k.ventas += s * (v.total - ant);
+    else if (v.metodo === 'Crédito') { k.ventas += s * v.recibido; if (s > 0) k.credito += v.total - ant - v.recibido; }
+    else if (v.metodo === 'Tarjeta') k.tarjeta += v.total - ant;
+    else if (v.metodo === 'Transferencia') k.transferencia += v.total - ant;
   }));
   rows_('Abonos').forEach(a => mira(a, a.anulado, a.metodo === 'Efectivo', s => { if (a.metodo === 'Efectivo') k.cobros += s * a.monto; else if (a.metodo === 'Tarjeta') k.tarjeta += a.monto; else k.transferencia += a.monto; }));
   rows_('Gastos').forEach(g => { if (g.metodo === 'Efectivo') mira(g, g.anulado, true, s => { k.gastos += s * g.monto; }); });
@@ -5668,6 +5695,7 @@ function abrirCobro() {
     const t0 = calcTotales(S.ticket), cli = S.ticket.clienteId ? byId(S.clientes, S.ticket.clienteId) : null;
     const admin = puede('admin'), fz = S.ticket.fiscal || (S.ticket.fiscal = {});
     const exo = sarOn() && fz.exonerado, t = exo ? calcTotales(S.ticket, true) : t0;
+    const ant = (S.ticket.ordenId || S.ticket.agendaId) ? Math.min(num(S.ticket.anticipo), t.total) : 0, porPagar = r2(t.total - ant);
     $('#cb', h.el).innerHTML = `
       <div class="fld"><span>Cliente</span><div class="input-row"><input id="cb-cli" list="dl-cli" placeholder="Consumidor final" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '')}" autocomplete="off"><button class="btn icon" data-a="nuevoClienteRapido" title="Nuevo cliente">${ic('userplus')}</button></div>
       <datalist id="dl-cli">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist>
@@ -5683,20 +5711,20 @@ function abrirCobro() {
       <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(t.subtotal)}</b></div>
         <div class="tot"><span>Descuento <a data-a="cbDesc">${t.descuento ? 'cambiar' : 'agregar'}</a></span><b class="n">${t.descuento ? '− ' + money(t.descuento) : '—'}</b></div>
         <div class="tot"><span>${exo ? 'ISV (cliente exonerado)' : `ISV ${S.config.preciosConISV !== 'no' ? 'incluido' : ''} (${Math.round(num(S.config.isv) * 100)}%)`}</span><b class="n">${money(t.isv)}</b></div>
-        <div class="tot g"><span>Total</span><b class="n">${money(t.total)}</b></div></div>
+        <div class="tot g"><span>Total</span><b class="n">${money(t.total)}</b></div>${ant ? `<div class="tot"><span>Anticipo ya pagado</span><b class="n">− ${money(ant)}</b></div><div class="tot g"><span>Falta por pagar</span><b class="n">${money(porPagar)}</b></div>` : ''}</div>
       <div class="fld"><span>Forma de pago</span><div class="pays">${pagos.map(([m, i]) => `<button class="pay ${metodo === m ? 'on' : ''}" data-a="cbMet" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div></div>
-      ${metodo === 'Efectivo' ? `<div class="f2"><label class="fld"><span>Recibido</span><input id="cb-rec" inputmode="decimal" placeholder="${fmtN(t.total)}" value="${esc(S.ticket.recibido || '')}"></label><div class="fld"><span>&nbsp;</span><div class="rapidos">${billetes(t.total).map(b => `<button class="chip" data-a="cbRec" data-v="${b}">${b === t.total ? 'Exacto' : fmtN(b, 0)}</button>`).join('')}</div></div></div>
+      ${metodo === 'Efectivo' ? `<div class="f2"><label class="fld"><span>Recibido</span><input id="cb-rec" inputmode="decimal" placeholder="${fmtN(porPagar)}" value="${esc(S.ticket.recibido || '')}"></label><div class="fld"><span>&nbsp;</span><div class="rapidos">${billetes(porPagar).map(b => `<button class="chip" data-a="cbRec" data-v="${b}">${b === porPagar ? 'Exacto' : fmtN(b, 0)}</button>`).join('')}</div></div></div>
         <div class="cambio" id="cb-cambio"></div>` : ''}
-      ${metodo === 'Crédito' ? `${!cli ? `<div class="aviso warn sm">${ic('alert', 18)}<div>Para vender al crédito elige un cliente registrado.</div></div>` : ''}<label class="fld"><span>Anticipo (opcional)</span><input id="cb-ant" inputmode="decimal" placeholder="0.00" value="${esc(S.ticket.anticipo || '')}"></label>
+      ${metodo === 'Crédito' ? `${!cli ? `<div class="aviso warn sm">${ic('alert', 18)}<div>Para vender al crédito elige un cliente registrado.</div></div>` : ''}<label class="fld"><span>Abono inicial (opcional)</span><input id="cb-ant" inputmode="decimal" placeholder="0.00" value="${esc(S.ticket.anticipoCred || '')}"></label>
         <div class="cambio warn" id="cb-cred"></div>` : ''}
       <label class="fld"><span>Nota (opcional)</span><input id="cb-nota" maxlength="200" value="${esc(S.ticket.nota || '')}"></label>`;
-    const rec = $('#cb-rec', h.el), ant = $('#cb-ant', h.el);
+    const rec = $('#cb-rec', h.el), antI = $('#cb-ant', h.el);
     const upd = () => {
-      if (rec) { S.ticket.recibido = rec.value; const r = rec.value.trim() ? num(rec.value) : t.total, c = r2(r - t.total); $('#cb-cambio', h.el).innerHTML = c >= 0 ? `<span>Cambio</span><b class="n">${money(c)}</b>` : `<span>Falta</span><b class="n">${money(-c)}</b>`; $('#cb-cambio', h.el).classList.toggle('bad', c < 0); }
-      if (ant) { S.ticket.anticipo = ant.value; const a = Math.min(num(ant.value), t.total); $('#cb-cred', h.el).innerHTML = `<span>Queda debiendo</span><b class="n">${money(t.total - a)}</b>`; }
+      if (rec) { S.ticket.recibido = rec.value; const r = rec.value.trim() ? num(rec.value) : porPagar, c = r2(r - porPagar); $('#cb-cambio', h.el).innerHTML = c >= 0 ? `<span>Cambio</span><b class="n">${money(c)}</b>` : `<span>Falta</span><b class="n">${money(-c)}</b>`; $('#cb-cambio', h.el).classList.toggle('bad', c < 0); }
+      if (antI) { S.ticket.anticipoCred = antI.value; const a = Math.min(num(antI.value), porPagar); $('#cb-cred', h.el).innerHTML = `<span>Queda debiendo</span><b class="n">${money(porPagar - a)}</b>`; }
     };
     if (rec) rec.addEventListener('input', upd);
-    if (ant) ant.addEventListener('input', upd);
+    if (antI) antI.addEventListener('input', upd);
     upd();
     const ci = $('#cb-cli', h.el);
     ci.addEventListener('change', () => {
@@ -5711,11 +5739,11 @@ function abrirCobro() {
     }
     $('#cb-nota', h.el).addEventListener('input', e => { S.ticket.nota = e.target.value; });
     if (susOn()) susBindCobro(h.el, pinta);
-    $$('.cb-serie', h.el).forEach(i => i.addEventListener('input', () => { S.ticket.items[i.dataset.k].serie = i.value; }));
+    $$('.cb-serie', h.el).forEach(i => i.addEventListener('input', () => { S.ticket.items[i.dataset.k].serie = i.value; guardarTicket(); }));
     const mesa = $('#cb-mesa', h.el), cocina = $('#cb-cocina', h.el);
-    if (mesa) mesa.addEventListener('input', () => { S.ticket.mesa = mesa.value; });
-    if (cocina) cocina.addEventListener('input', () => { S.ticket.cocina = cocina.value; });
-    h.botones([{ t: `${ic('check')} Cobrar ${money(t.total)}`, cls: 'pri big', fn: cobrar }]);
+    if (mesa) mesa.addEventListener('input', () => { S.ticket.mesa = mesa.value; guardarTicket(); });
+    if (cocina) cocina.addEventListener('input', () => { S.ticket.cocina = cocina.value; guardarTicket(); });
+    h.botones([{ t: `${ic('check')} Cobrar ${money(porPagar)}`, cls: 'pri big', fn: cobrar }]);
   };
   h.pinta = pinta;
   S.hCobro = h;
@@ -5726,12 +5754,13 @@ function abrirCobro() {
     const t = calcTotales(S.ticket, exo);
     const datos = { items: S.ticket.items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, variante: i.variante || '', serie: i.serie || '' })),
       clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '', ordenId: S.ticket.ordenId || '', agendaId: S.ticket.agendaId || '' };
-    if (modOn('comanda')) { datos.servicio = S.ticket.servicio || 'mesa'; datos.mesa = S.ticket.mesa || ''; datos.cocina = S.ticket.cocina || ''; }
+    if (modOn('comanda') && (S.ticket.servicio || S.ticket.mesa || S.ticket.cocina)) { datos.servicio = S.ticket.servicio || 'mesa'; datos.mesa = S.ticket.mesa || ''; datos.cocina = S.ticket.cocina || ''; }
     if (susOn()) { const sd = susDatosVenta(); if (sd.length) datos.sus = sd; }
     if (!S.ticket.clave) { S.ticket.clave = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); guardarTicket(); }
     datos.clave = S.ticket.clave;
-    if (metodo === 'Efectivo') datos.recibido = S.ticket.recibido && String(S.ticket.recibido).trim() ? num(S.ticket.recibido) : t.total;
-    if (metodo === 'Crédito') { if (!S.ticket.clienteId) throw new Error('Elige un cliente para vender al crédito'); datos.recibido = num(S.ticket.anticipo); }
+    const antC = (S.ticket.ordenId || S.ticket.agendaId) ? Math.min(num(S.ticket.anticipo), t.total) : 0;
+    if (metodo === 'Efectivo') datos.recibido = S.ticket.recibido && String(S.ticket.recibido).trim() ? num(S.ticket.recibido) : r2(t.total - antC);
+    if (metodo === 'Crédito') { if (!S.ticket.clienteId) throw new Error('Elige un cliente para vender al crédito'); datos.recibido = num(S.ticket.anticipoCred); }
     if (sarOn()) {
       const rtn = ($('#cb-rtn', h.el) || {}).value || '';
       if (rtn.replace(/\D/g, '') && rtn.replace(/\D/g, '').length !== 14) throw new Error('El RTN del cliente debe tener 14 números');
@@ -5796,7 +5825,7 @@ ACC.nuevoClienteRapido = () => formCliente(null, c => { S.ticket.clienteId = c.i
 function ventaLista(v, det, accesos) {
   const cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
   const h = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic('check', 40)}</i><h2>${v.factura ? '¡Factura emitida!' : '¡Venta registrada!'}</h2><p class="mut">${v.factura ? 'Factura ' + esc(v.factura) : esc(v.numero)} · ${esc(v.metodo)}${cli ? ' · ' + esc(cli.nombre) : ''}</p>
-    <div class="ok-tot n">${money(v.total)}</div>${v.metodo === 'Efectivo' && v.cambio > 0 ? `<div class="cambio"><span>Cambio</span><b class="n">${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' ? `<div class="cambio warn"><span>Queda debiendo</span><b class="n">${money(v.saldo)}</b></div>` : ''}</div>
+    <div class="ok-tot n">${money(v.total)}</div>${v.anticipo > 0 ? `<div class="cambio"><span>Anticipo ya pagado · cobrado hoy</span><b class="n">${money(v.anticipo)} · ${money(v.total - v.anticipo)}</b></div>` : ''}${v.metodo === 'Efectivo' && v.cambio > 0 ? `<div class="cambio"><span>Cambio</span><b class="n">${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' ? `<div class="cambio warn"><span>Queda debiendo</span><b class="n">${money(v.saldo)}</b></div>` : ''}</div>
     ${accesosHTML(accesos)}
     <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${modOn('comanda') && v.servicio ? `<button class="btn" data-a="comanda">${ic('receipt', 18)} Comanda</button>` : ''}${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, det) + textoAccesos(accesos))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
   S.ultVenta = { v, det };
@@ -5815,7 +5844,7 @@ function detalleVenta(v) {
     <div class="tks">${v.detalle.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}${i.serie ? ' · serie ' + esc(i.serie) : ''}${i.garantia ? ' · garantía hasta ' + fFechaC(garantiaHasta(v.fecha, i.garantia)) : ''}</small></div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
     ${v.servicio ? `<p class="sm mut">${v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio'}${v.cocina ? ' · cocina: ' + esc(v.cocina) : ''}</p>` : ''}
     <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(v.subtotal)}</b></div>${v.descuento ? `<div class="tot"><span>Descuento</span><b class="n">− ${money(v.descuento)}</b></div>` : ''}<div class="tot"><span>ISV</span><b class="n">${money(v.isv)}</b></div><div class="tot g"><span>Total</span><b class="n">${money(v.total)}</b></div>
-    ${v.metodo === 'Efectivo' ? `<div class="tot"><span>Recibido · cambio</span><b class="n">${money(v.recibido)} · ${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' && !v.anulada ? `<div class="tot"><span>Anticipo · saldo pendiente</span><b class="n">${money(v.recibido)} · ${money(v.saldo)}</b></div>` : ''}
+    ${v.anticipo > 0 ? `<div class="tot"><span>Anticipo ya pagado</span><b class="n">− ${money(v.anticipo)}</b></div>` : ''}${v.metodo === 'Efectivo' ? `<div class="tot"><span>Recibido · cambio</span><b class="n">${money(v.recibido)} · ${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' && !v.anulada ? `<div class="tot"><span>Anticipo · saldo pendiente</span><b class="n">${money(v.recibido)} · ${money(v.saldo)}</b></div>` : ''}
     ${puede('admin') ? `<div class="tot"><span>Costo · ganancia</span><b class="n">${money(v.costo)} · ${money(v.total - v.isv - v.costo)}</b></div>` : ''}</div>
     ${v.nota && !v.anulada ? `<p class="sm mut">Nota: ${esc(v.nota)}</p>` : ''}
     <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${modOn('comanda') && v.servicio ? `<button class="btn" data-a="comanda">${ic('receipt', 18)} Comanda</button>` : ''}${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, v.detalle))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
@@ -6047,7 +6076,7 @@ function listaProductos() {
   if (f.pfil === 'agotados') l = l.filter(p => p.tipo === 'producto' && p.stock <= 0);
   if (f.pfil === 'tienda') l = l.filter(p => p.tienda);
   if (f.pfil === 'sinfoto') l = l.filter(p => !p.foto);
-  if (f.pfil === 'caducan') { const lim = mesesSumarDia(30); l = l.filter(p => p.caduca && p.caduca <= lim).sort((a, b) => a.caduca < b.caduca ? -1 : 1); }
+  if (f.pfil === 'caducan') { const lim = mesesSumarDia(30); l = l.filter(p => p.caduca && p.caduca <= lim && (p.stock > 0 || p.tipo !== 'producto')).sort((a, b) => a.caduca < b.caduca ? -1 : 1); }
   if (f.pcat) l = l.filter(p => p.categoria === f.pcat);
   if (q) l = l.filter(p => norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q));
   l.sort((a, b) => a.nombre.localeCompare(b.nombre));
@@ -6099,7 +6128,7 @@ function formProducto(p, onSave, pre) {
     <div class="f2"><label class="fld"><span>Código de barras</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div></label>
       <label class="fld"><span>Categoría</span><input id="pf-cat" list="dl-cat" maxlength="40" value="${esc(p.categoria || '')}" placeholder="General"><datalist id="dl-cat">${catsSugeridas().map(c => `<option value="${esc(c)}">`).join('')}</datalist></label></div>
     ${susOn() ? susFormProducto(p) : ''}
-    ${S.plus && opcGiro(S.config.giro).filtro ? opcForm(p) : ''}
+    ${(S.plus || modOn('variantes')) && opcGiro(S.config.giro).filtro ? opcForm(p) : ''}
     <div class="precio-box"><h4>${ic('tag', 18)} Precio de venta</h4>
       <div class="f2"><label class="fld"><span>Costo ${nuevo ? '(opcional)' : 'promedio'}</span><input id="pf-costo" inputmode="decimal" value="${p.costo ? p.costo : ''}" placeholder="¿Cuánto te cuesta?"></label>
       <label class="fld"><span>Precio de venta *</span><input id="pf-precio" inputmode="decimal" value="${p.precio ? p.precio : ''}" placeholder="0.00"></label></div>
@@ -6121,7 +6150,7 @@ function formProducto(p, onSave, pre) {
       <label class="fld"><span>Se vende por</span><select id="pf-uni">${UNIDADES.map(u => `<option ${p.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
     ${S.plus ? `<label class="sw-row"><input type="checkbox" id="pf-tienda" ${p.tienda ? 'checked' : ''}><span class="sw"></span><div><b>Mostrar en la tienda en línea</b><small>Tus clientes lo verán en tu catálogo</small></div></label>
       <label class="fld"><span>Descripción para la tienda</span><textarea id="pf-desc" rows="2" maxlength="300" placeholder="Opcional: material, detalles…">${esc(p.descripcion || '')}</textarea></label>
-      ${opcGiro(S.config.giro).filtro ? '' : opcForm(p)}` : ''}
+      ${opcGiro(S.config.giro).filtro ? '' : opcForm(p)}` : (modOn('variantes') && !opcGiro(S.config.giro).filtro ? opcForm(p) : '')}
     ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="pf-act" ${p.activo ? 'checked' : ''}><span class="sw"></span><div><b>Producto activo</b><small>Los inactivos no aparecen para vender</small></div></label>` : ''}
     </details>` });
   $('#pf-isv', h.el).value = p.tasaIsv || '';
@@ -6174,7 +6203,8 @@ function formProducto(p, onSave, pre) {
       costo: r2(costo.value), margen: pct.value ? r2(pct.value) : (p.margen || 0), tasaIsv: isvSel.value, unidad: $('#pf-uni', h.el).value, icono: st.icono,
       tipo: ctrl.checked ? 'producto' : 'servicio', stockMin: num($('#pf-min', h.el).value) };
     if (nuevo) reg.stock = num(($('#pf-stock', h.el) || {}).value);
-    if ($('#pf-tienda', h.el)) { reg.tienda = $('#pf-tienda', h.el).checked; reg.descripcion = $('#pf-desc', h.el).value.trim(); reg.opciones = opcLeerForm(h.el); }
+    if ($('#pf-tienda', h.el)) { reg.tienda = $('#pf-tienda', h.el).checked; reg.descripcion = $('#pf-desc', h.el).value.trim(); }
+    if ($('.pf-on', h.el)) reg.opciones = opcLeerForm(h.el);
     if ($('#pf-act', h.el)) reg.activo = $('#pf-act', h.el).checked;
     if ($('#pf-cad', h.el)) reg.caduca = $('#pf-cad', h.el).value;
     if ($('#pf-gar', h.el)) reg.garantia = parseInt($('#pf-gar', h.el).value, 10) || 0;
@@ -7679,8 +7709,9 @@ function mesesSumarDia(n) { const d = parseLocal(hoy() + 'T12:00'); d.setDate(d.
 function clienteCampo(id, valor) {
   return `<label class="fld"><span>Cliente</span><div class="input-row"><input id="${id}" list="dl-${id}" value="${esc(valor || '')}" placeholder="Nombre o busca un cliente" autocomplete="off" maxlength="80"><button class="btn icon" type="button" data-a="nuevoClienteCampo" data-t="${id}" title="Nuevo cliente">${ic('userplus')}</button></div><datalist id="dl-${id}">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist></label>`;
 }
-function clienteLeer(el) {
+function clienteLeer(el, prev) {
   const v = el.value.trim(); if (!v) return { clienteId: '', cliente: '' };
+  if (prev && prev.clienteId && v === (prev.cliente || '') && !byId(S.clientes, prev.clienteId)) return { clienteId: prev.clienteId, cliente: prev.cliente, telefono: prev.telefono };
   const c = S.clientes.find(x => (x.nombre + (x.telefono ? ' · ' + x.telefono : '')) === v) || S.clientes.find(x => norm(x.nombre) === norm(v));
   return c ? { clienteId: c.id, cliente: c.nombre, telefono: c.telefono } : { clienteId: '', cliente: v.split(' · ')[0] };
 }
@@ -7763,7 +7794,7 @@ ACC.ordCobrar = async el => {
   const o = (S.ordenesL || []).find(x => x.id === el.dataset.id); if (!o) return;
   if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo por el cobro de la orden?', { si: 'Reemplazar' }))) return;
   const total = num(o.presupuesto);
-  S.ticket = { items: [{ productoId: '', descripcion: `${o.numero} · ${o.equipo}${o.placa ? ' ' + o.placa : ''}`, cantidad: 1, precio: total, costo: 0 }], clienteId: o.clienteId || '', pedidoId: '', descuento: num(o.anticipo) > 0 ? Math.min(num(o.anticipo), total) : 0, nota: num(o.anticipo) > 0 ? 'Anticipo ' + money(o.anticipo) + ' ya pagado' : '', ordenId: o.id };
+  S.ticket = { items: [{ productoId: '', descripcion: `${o.numero} · ${o.equipo}${o.placa ? ' ' + o.placa : ''}`, cantidad: 1, precio: total, costo: 0 }], clienteId: o.clienteId || '', pedidoId: '', descuento: 0, anticipo: num(o.anticipo), ordenId: o.id };
   guardarTicket(); cerrarHojas(); ir('vender'); abrirCobro();
 };
 function formOrden(o) {
@@ -7783,7 +7814,7 @@ function formOrden(o) {
   const bs = [];
   if (!nuevo && o.telefono && o.estado === 'listo') bs.push({ t: ic('wa', 18), cls: 'wa icon', fn: () => window.open(waLink(o.telefono, `Hola ${o.cliente.split(' ')[0]} 👋 Tu ${o.equipo} ya está listo. Te esperamos en ${S.config.nombre || 'el taller'}.`), '_blank') });
   bs.push({ t: nuevo ? 'Crear orden' : 'Guardar', cls: 'pri', fn: async () => {
-    const c = clienteLeer($('#or-cli', h.el));
+    const c = clienteLeer($('#or-cli', h.el), o);
     if (!c.cliente) throw new Error('Escribe el nombre del cliente');
     const reg = Object.assign({ id: o.id, equipo: $('#or-eq', h.el).value.trim(), placa: $('#or-pl', h.el).value.trim(), falla: $('#or-fa', h.el).value.trim(), promesa: $('#or-pr', h.el).value, presupuesto: r2($('#or-pp', h.el).value), nota: $('#or-no', h.el).value.trim(), estado }, c);
     if (nuevo || !o.anticipo) reg.anticipo = r2($('#or-an', h.el).value);
@@ -7807,9 +7838,11 @@ function agendaCfg(tipo) {
 async function pintarAgenda(tipo) {
   const C = agendaCfg(tipo), m = $('#main'), key = 'ag_' + tipo;
   if (!S[key]) m.innerHTML = '<div class="empty">Cargando…</div>';
-  const l = S[key] = await api('agenda', { tipo }, !!S[key]);
-  if (S.vista !== C.vista) return;
   const dia = S.f[key + 'd'] || hoy(), h = hoy();
+  const fuera = dia < mesesSumarDia(-7) || dia > mesesSumarDia(60);
+  const l = S[key] = fuera ? await api('agenda', { tipo, desde: dia, hasta: dia }, false) : await api('agenda', { tipo }, !!S[key]);
+  if (fuera) S[key] = null;
+  if (S.vista !== C.vista) return;
   const del = l.filter(a => a.dia === dia), atras = l.filter(a => a.estado === 'pendiente' && a.dia < h);
   const pend = del.filter(a => a.estado === 'pendiente');
   m.innerHTML = `<div class="kpis"><div class="kpi"><small>${diaTxt(dia)}</small><b>${pend.length}</b><i>${pend.length === 1 ? C.uno + ' pendiente' : C.uno + 's pendientes'}${del.length - pend.length ? ' · ' + (del.length - pend.length) + ' cerrados' : ''}</i></div><div class="kpi" style="--k:${atras.length ? 'var(--bad)' : '#00b56e'}"><small>Sin cerrar de días anteriores</small><b>${atras.length}</b><i>${atras.length ? 'revísalos' : 'todo al día'}</i></div></div>
@@ -7838,7 +7871,7 @@ function formAgenda(a, tipo) {
     ${!nuevo && a.estado !== 'pendiente' ? `<p class="sm mut">Estado: <b>${a.estado === 'cancelado' ? 'Cancelado' : C.listo}</b>${a.ventaId ? ' · cobrado' : ''}</p>` : ''}` });
   $('#ag-q', h.el).addEventListener('change', () => { const p = serv.find(x => x.nombre === $('#ag-q', h.el).value.trim()); if (p && !$('#ag-m', h.el).value) $('#ag-m', h.el).value = p.precio; });
   const guardar = async extra => {
-    const c = clienteLeer($('#ag-cli', h.el));
+    const c = clienteLeer($('#ag-cli', h.el), a);
     if (!c.cliente) throw new Error('Escribe el nombre del cliente');
     const reg = Object.assign({ id: a.id, tipo, dia: $('#ag-d', h.el).value, hora: $('#ag-h', h.el).value, detalle: $('#ag-q', h.el).value.trim(), monto: r2($('#ag-m', h.el).value), nota: $('#ag-n', h.el).value.trim() }, c, extra || {});
     const p = serv.find(x => x.nombre === reg.detalle); reg.productoId = p ? p.id : '';
@@ -7860,7 +7893,7 @@ function formAgenda(a, tipo) {
       const g = await guardar();
       if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo?', { si: 'Reemplazar' }))) return;
       const p = g.productoId ? byId(S.productos, g.productoId) : null, total = num(g.monto) || (p ? p.precio : 0);
-      S.ticket = { items: [{ productoId: p ? p.id : '', descripcion: p ? p.nombre : g.detalle, cantidad: 1, precio: total, costo: 0 }], clienteId: g.clienteId || '', pedidoId: '', descuento: num(g.anticipo) > 0 ? Math.min(num(g.anticipo), total) : 0, nota: num(g.anticipo) > 0 ? 'Anticipo ' + money(g.anticipo) + ' ya pagado' : '', agendaId: g.id };
+      S.ticket = { items: [{ productoId: p ? p.id : '', descripcion: p ? p.nombre : g.detalle, cantidad: 1, precio: total, costo: 0 }], clienteId: g.clienteId || '', pedidoId: '', descuento: 0, anticipo: num(g.anticipo), agendaId: g.id };
       guardarTicket(); cerrarHojas(); ir('vender'); abrirCobro();
     } });
     bs.push({ t: `${ic('check', 16)} ${C.listo}`, cls: 'pri', fn: async () => { await guardar({ estado: 'atendido' }); toast(C.listo, 'ok'); } });
@@ -8082,7 +8115,7 @@ function susBloqueCobro(k) {
 }
 function susBindCobro(el, pinta) {
   const sus = S.ticket.sus || {};
-  $$('.sus-m', el).forEach(s => s.addEventListener('change', () => { const d = sus[s.dataset.k], it = S.ticket.items[s.dataset.k], p = it && byId(S.productos, it.productoId); d.meses = Number(s.value); d.vence = mesesSumar(d.inicio || hoy(), d.meses); if (p && !it.precioMan) it.precio = r2(p.precio * d.meses); guardarTicket(); pinta(); }));
+  $$('.sus-m', el).forEach(s => s.addEventListener('change', () => { const d = sus[s.dataset.k], it = S.ticket.items[s.dataset.k], p = it && byId(S.productos, it.productoId); d.meses = Number(s.value); d.vence = mesesSumar(d.inicio || hoy(), d.meses); (d.asig || []).forEach(a => { delete a.vence; }); if (p && !it.precioMan) it.precio = r2(p.precio * d.meses); guardarTicket(); pinta(); }));
   $$('.sus-v', el).forEach(i => i.addEventListener('change', () => { const d = sus[i.dataset.k]; d.vence = i.value; (d.asig || []).forEach(a => { delete a.vence; }); $$('.sus-vp[data-k="' + i.dataset.k + '"]', el).forEach(x => { x.value = i.value; }); guardarTicket(); }));
   $$('.sus-vp', el).forEach(i => i.addEventListener('change', () => { const d = sus[i.dataset.k], j = Number(i.dataset.j); d.asig[j] = Object.assign({ plataforma: '' }, d.asig[j] || {}, { vence: i.value }); guardarTicket(); }));
   $$('.sus-c', el).forEach(s => s.addEventListener('change', () => {
@@ -8101,7 +8134,8 @@ function susDatosVenta() {
   S.ticket.items.forEach((it, k) => {
     const ent = susDeProducto(byId(S.productos, it.productoId)); if (!ent.length) return;
     const d = sus[k] || { meses: 1 }, veces = Math.max(1, Math.round(it.cantidad) || 1), filas = []; ent.forEach(e => { for (let i = 0; i < e.n * veces; i++) filas.push(e); });
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.vence || '')) throw new Error('Revisa la fecha de vencimiento de «' + it.descripcion + '»');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.vence || '') || d.vence < hoy()) throw new Error('Revisa la fecha de vencimiento de «' + it.descripcion + '»');
+    (d.asig || []).forEach(a => { if (a && a.vence && a.vence < hoy()) throw new Error('La fecha de vencimiento de ' + a.plataforma + ' ya pasó'); });
     out.push({ idx: k, meses: d.meses || 1, vence: d.vence, renuevaId: d.renuevaId || '', asig: filas.map((e, j) => { const a = (d.asig || [])[j] || {}; return { plataforma: e.plataforma, cuentaId: a.cuentaId || '', perfil: a.perfil === undefined ? '' : a.perfil, pin: a.pin || '', vence: a.vence || '' }; }) });
   });
   return out;
@@ -8405,7 +8439,9 @@ function textoVenta(v, det) {
   det.forEach(i => l.push(`${cant(i.cantidad)} × ${i.descripcion} — ${money(i.total)}` + (i.serie ? `\n   Serie ${i.serie}` : '') + (i.garantia ? `\n   Garantía hasta ${fFechaC(garantiaHasta(v.fecha, i.garantia))}` : '')));
   l.push('');
   if (v.descuento) l.push('Descuento: −' + money(v.descuento));
-  l.push(`*Total: ${money(v.total)}*`, 'Pago: ' + v.metodo + (v.metodo === 'Crédito' ? ` · saldo ${money(v.saldo)}` : ''));
+  l.push(`*Total: ${money(v.total)}*`);
+  if (v.anticipo > 0) l.push(`Anticipo ya pagado: −${money(v.anticipo)} · pagado hoy: ${money(v.total - v.anticipo)}`);
+  l.push('Pago: ' + v.metodo + (v.metodo === 'Crédito' ? ` · saldo ${money(v.saldo)}` : ''));
   if (S.config.mensajeRecibo) l.push('', S.config.mensajeRecibo);
   return l.join('\n');
 }
@@ -8425,7 +8461,7 @@ function reciboHTML(tipo, d) {
       ${d.det.map(i => `<div class="rc-i"><span>${esc(i.descripcion)} <small>× ${cant(i.cantidad)}</small>${i.serie ? `<br><small>Serie ${esc(i.serie)}</small>` : ''}${i.garantia ? `<br><small>Garantía ${i.garantia} días · hasta ${fFechaC(garantiaHasta(v.fecha, i.garantia))}</small>` : ''}</span><b>${money(i.total)}</b></div>`).join('')}
       ${v.servicio ? `<div class="rc-s"><span>Servicio</span><span>${v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio'}</span></div>` : ''}
       <div class="rc-s"><span>Subtotal</span><span>${money(v.subtotal)}</span></div>${v.descuento ? `<div class="rc-s"><span>Descuento</span><span>− ${money(v.descuento)}</span></div>` : ''}<div class="rc-s"><span>ISV</span><span>${money(v.isv)}</span></div>
-      ${v.metodo === 'Efectivo' ? `<div class="rc-s"><span>Recibido · cambio</span><span>${money(v.recibido)} · ${money(v.cambio)}</span></div>` : ''}${v.metodo === 'Crédito' ? `<div class="rc-s"><span>Anticipo · saldo</span><span>${money(v.recibido)} · ${money(v.saldo)}</span></div>` : ''}
+      ${v.anticipo > 0 ? `<div class="rc-s"><span>Anticipo ya pagado</span><span>− ${money(v.anticipo)}</span></div>` : ''}${v.metodo === 'Efectivo' ? `<div class="rc-s"><span>Recibido · cambio</span><span>${money(v.recibido)} · ${money(v.cambio)}</span></div>` : ''}${v.metodo === 'Crédito' ? `<div class="rc-s"><span>Anticipo · saldo</span><span>${money(v.recibido)} · ${money(v.saldo)}</span></div>` : ''}
       <div class="rc-tot"><span>${v.metodo === 'Crédito' ? 'Total' : 'Total pagado'}</span><b>${money(v.total)}</b></div></div>${pie}</div>`;
   }
   if (tipo === 'abono') {
