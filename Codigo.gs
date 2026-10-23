@@ -21,7 +21,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.2';
+const VERSION = '1.9.3';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -30,7 +30,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -49,6 +49,8 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado'],
   Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia'],
+  PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
+  Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Cuentas:        ['id','plataforma','nombre','correo','clave','perfiles','costo','vence','nota','activo','creado'],
   Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
@@ -74,12 +76,12 @@ const SCHEMA = {
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S' };
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa']);
-const TEXTO = new Set(['fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio']);
+const TEXTO = new Set(['lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -98,7 +100,7 @@ const CONFIG_DEF = {
   msjCobro: 'Hola {cliente} 👋, te saluda {negocio}. Te recordamos tu saldo pendiente de {saldo}. ¡Gracias por tu preferencia!',
   // Facturación SAR (autoimpresor): apagada por defecto
   sarActivo: 'no', sarRazon: '', sarRtn: '', sarDireccion: '', sarCai: '', sarEst: '000', sarPunto: '001', sarDesde: '', sarHasta: '', sarLimite: '',
-  seqV: '0', seqC: '0', seqP: '0', seqO: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
+  seqL: '0', contabInventario: 'perpetuo', contabIsvCompras: 'si', contabCerrado: '', contabMapeo: '', contabConcil: '', seqV: '0', seqC: '0', seqP: '0', seqO: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
 };
 // Ajustes que el administrador puede cambiar desde la app
 const CONFIG_EDITABLE = Object.keys(CONFIG_DEF).filter(k => k.indexOf('seq') !== 0 && k.indexOf('sys') !== 0 && k.indexOf('sar') !== 0);
@@ -269,6 +271,14 @@ function rutaUsuario_(a, u, d, req) {
     case 'proyectoAInventario': return lock_(() => proyectoAInventario_(u, d));
     case 'guardarSAR':      return lock_(() => guardarSAR_(u, d));
     case 'libroSAR':        return libroSAR_(u, d);
+    case 'contabilidad':     return contabilidad_(u, d);
+    case 'contabPlan':       return contabPlan_(u, d);
+    case 'guardarCuenta':    return lock_(() => guardarCuenta_(u, d));
+    case 'guardarMapeo':     return lock_(() => guardarMapeo_(u, d));
+    case 'guardarAsiento':   return lock_(() => guardarAsiento_(u, d));
+    case 'anularAsiento':    return lock_(() => anularAsiento_(u, d));
+    case 'cerrarPeriodo':    return lock_(() => cerrarPeriodo_(u, d));
+    case 'guardarConcil':    return lock_(() => guardarConcil_(u, d));
     default: throw new Error('Acción no válida: ' + a);
   }
 }
@@ -666,6 +676,7 @@ function bootstrap_(u, d) {
     licencia: licencia_(),
     plus: plus_(),
     plusIncluido: plusIncluido_(),
+    contab: contabOn_(),
     negocioId: MULTI_NEGOCIO && NEG ? NEG.id : '',
     multi: MULTI_NEGOCIO,
     version: VERSION,
@@ -1229,7 +1240,7 @@ function panelFicha_(l, segs) {
   const hecho = tipo => mis.filter(x => x.tipo === tipo).map(x => x.fecha).sort().pop() || '';
   const est = lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
-    usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
+    usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, contab: ['sí', 'si'].indexOf(String(l.contab).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
     ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '' };
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
@@ -1308,6 +1319,8 @@ function panelAccion_(d) {
     case 'activar':    upd.estado = 'Activa'; nota = 'Licencia activada'; pago('Licencia'); break;
     case 'plus':       upd.plus = 'Sí'; nota = 'Plus activado'; pago('Plus'); break;
     case 'quitarPlus': upd.plus = ''; nota = 'Plus desactivado'; break;
+    case 'contab':     upd.contab = 'Sí'; nota = 'Contabilidad activada'; pago('Contabilidad'); break;
+    case 'quitarContab': upd.contab = ''; nota = 'Contabilidad desactivada'; break;
     case 'extender': { const dias = Math.max(1, Math.min(90, Number(d.dias) || 7)); const base = Math.max(Date.now(), msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T00:00') || 0);
       upd.vencePrueba = Utilities.formatDate(new Date(base + dias * 86400000), TZ, 'yyyy-MM-dd'); upd.estado = 'Prueba'; nota = 'Prueba extendida ' + dias + ' días'; break; }
     case 'pausar':     upd.estado = 'Bloqueada'; nota = 'Acceso pausado'; break;
@@ -3428,3 +3441,314 @@ function sembrarEjemplo_(adminId) {
   return true;
 }
 
+/* ===================== CONTABILIDAD (módulo Plus) =====================
+ * Negocio VM · Molina Soluciones Digitales
+ *
+ * Enfoque: "libro mayor virtual". Los asientos de ventas, cobros, compras, pagos y gastos
+ * se DERIVAN de las hojas que ya existen (Ventas, Abonos, Compras, Pagos, Gastos,
+ * ProyectoGastos) usando el mapeo de cuentas. No se duplica nada, funciona con el
+ * historial completo y no toca ninguna función existente de la app.
+ * Solo se GUARDAN en hoja los asientos manuales (apertura, ajustes, depreciación,
+ * reversiones, partidas de conciliación) y el plan de cuentas.
+ *
+ * INSTALACIÓN (ver GUIA-INTEGRACION.md):
+ *   1) En SCHEMA agregar:   PlanCuentas y Asientos  (bloque A)
+ *   2) En PREFIJO agregar:  PlanCuentas:'F', Asientos:'L'
+ *   3) En TEXTO agregar:    'lineas', 'padre', 'naturaleza'
+ *   4) En CONFIG_DEF agregar: seqL:'0', contabInventario:'perpetuo', contabIsvCompras:'si',
+ *                             contabCerrado:'', contabMapeo:'', contabConcil:''
+ *   5) En rutaUsuario_ (antes de default) pegar el bloque B
+ *   5b) SCHEMA_M.Licencias: agregar 'contab' al final; bootstrap_: contab: contabOn_();
+ *       panelFicha_: campo contab; panelAccion_: casos 'contab' y 'quitarContab' (integrar.py lo hace)
+ *   6) Pegar este archivo completo como archivo nuevo del proyecto de Apps Script
+ *      y TAMBIÉN dentro de <script type="text/plain" id="backend-src"> de index.html
+ *      (al final de ese bloque) para que funcione en MODO PRUEBA. Ojo: nunca escribir la
+ *      etiqueta de cierre de script dentro de este archivo, porque corta el bloque en index.html.
+ *   7) Subir SYS_VER / versión para que asegurarEncabezados_ cree las hojas nuevas.
+ */
+
+/* ---- bloque A: líneas para SCHEMA ----
+  PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
+  Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
+*/
+
+/* ---- bloque B: líneas para rutaUsuario_ ----
+    case 'contabilidad':     return contabilidad_(u, d);
+    case 'contabPlan':       return contabPlan_(u, d);
+    case 'guardarCuenta':    return lock_(() => guardarCuenta_(u, d));
+    case 'guardarMapeo':     return lock_(() => guardarMapeo_(u, d));
+    case 'guardarAsiento':   return lock_(() => guardarAsiento_(u, d));
+    case 'anularAsiento':    return lock_(() => anularAsiento_(u, d));
+    case 'cerrarPeriodo':    return lock_(() => cerrarPeriodo_(u, d));
+    case 'guardarConcil':    return lock_(() => guardarConcil_(u, d));
+*/
+
+const CONTAB_TASA_ISV = 0.15;
+
+// El módulo solo existe para los negocios que Vic activa desde el Panel (columna «contab» en Licencias).
+// En modo de un solo negocio: propiedad del script CONTAB = 'activo'.
+function contabOn_() {
+  if (MULTI_NEGOCIO) { if (!NEG) return false; return ['sí','si','activo','activa','true','1','x'].indexOf(String(NEG.lic.contab || '').trim().toLowerCase()) >= 0; }
+  return PropertiesService.getScriptProperties().getProperty('CONTAB') === 'activo';
+}
+
+// Plan de cuentas base para PYME en Honduras (4 dígitos). El negocio lo puede editar.
+const PLAN_BASE = [
+  ['1101','Caja general','activo','deudora'], ['1102','Bancos','activo','deudora'], ['1103','Cuentas por cobrar clientes','activo','deudora'],
+  ['1104','Inventario de mercadería','activo','deudora'], ['1105','ISV crédito fiscal (pagado en compras)','activo','deudora'], ['1106','Retenciones ISR a favor (1 %)','activo','deudora'],
+  ['1201','Mobiliario y equipo','activo','deudora'], ['1202','Depreciación acumulada','activo','acreedora'],
+  ['2101','Cuentas por pagar proveedores','pasivo','acreedora'], ['2102','ISV por pagar (cobrado en ventas)','pasivo','acreedora'], ['2103','Retenciones por pagar','pasivo','acreedora'], ['2104','Préstamos por pagar','pasivo','acreedora'],
+  ['3101','Capital','capital','acreedora'], ['3102','Utilidades acumuladas','capital','acreedora'], ['3103','Retiros del propietario','capital','deudora'],
+  ['4101','Ventas','ingreso','acreedora'], ['4102','Otros ingresos','ingreso','acreedora'],
+  ['5101','Costo de ventas','costo','deudora'], ['5102','Compras de mercadería (inventario periódico)','costo','deudora'],
+  ['6101','Sueldos y salarios','gasto','deudora'], ['6102','Alquiler','gasto','deudora'], ['6103','Servicios públicos','gasto','deudora'], ['6104','Transporte y combustible','gasto','deudora'],
+  ['6105','Comisiones bancarias','gasto','deudora'], ['6106','Depreciación','gasto','deudora'], ['6107','Publicidad','gasto','deudora'], ['6108','Mantenimiento y reparaciones','gasto','deudora'],
+  ['6109','Impuestos y tasas municipales','gasto','deudora'], ['6199','Otros gastos','gasto','deudora']
+];
+
+const MAPEO_BASE = { caja:'1101', banco:'1102', cxc:'1103', inventario:'1104', isvCredito:'1105', retFavor:'1106', cxp:'2101', isvPagar:'2102', retPagar:'2103',
+  capital:'3101', utilAcum:'3102', ventas:'4101', otrosIngresos:'4102', costoVentas:'5101', compras:'5102', comisiones:'6105', gastoDefault:'6199',
+  metodos: { Efectivo:'caja', Tarjeta:'banco', Transferencia:'banco' }, gastos: {} };
+
+function contabCfg_() { const c = config_(); return { inventario: c.contabInventario === 'periodico' ? 'periodico' : 'perpetuo', isvCompras: c.contabIsvCompras !== 'no', cerrado: String(c.contabCerrado || '') }; }
+
+function contabMapeo_() {
+  const c = config_(); let m = {};
+  try { m = c.contabMapeo ? JSON.parse(c.contabMapeo) : {}; } catch (e) { m = {}; }
+  const out = Object.assign({}, MAPEO_BASE, m);
+  out.metodos = Object.assign({}, MAPEO_BASE.metodos, m.metodos || {});
+  out.gastos = Object.assign({}, m.gastos || {});
+  return out;
+}
+
+// Plan de cuentas; la primera vez siembra el plan base.
+function planCuentas_() {
+  let p = rows_('PlanCuentas');
+  if (!p.length) {
+    const ahora = ahora_();
+    appendRows_('PlanCuentas', PLAN_BASE.map(x => ({ id: newId_('PlanCuentas'), codigo: x[0], nombre: x[1], tipo: x[2], naturaleza: x[3], padre: '', activo: true, creado: ahora })));
+    invalidar_('PlanCuentas'); p = rows_('PlanCuentas');
+  }
+  return p.slice().sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)));
+}
+
+function contabPlan_(u, d) { req_(u, ['admin']); return { plan: planCuentas_(), mapeo: contabMapeo_(), gastoCats: catalogoGastos_() }; }
+
+function guardarCuenta_(u, d) {
+  req_(u, ['admin']);
+  const r = d.registro || {};
+  const codigo = String(r.codigo || '').replace(/\D/g, '');
+  if (!/^\d{4,6}$/.test(codigo)) throw new Error('El código debe tener de 4 a 6 dígitos (ej. 1101).');
+  if (!txt_(r.nombre)) throw new Error('Escriba el nombre de la cuenta.');
+  const tipo = ['activo','pasivo','capital','ingreso','costo','gasto'].includes(r.tipo) ? r.tipo : ({ 1:'activo', 2:'pasivo', 3:'capital', 4:'ingreso', 5:'costo', 6:'gasto' })[codigo[0]] || 'gasto';
+  const nat = r.naturaleza === 'acreedora' ? 'acreedora' : r.naturaleza === 'deudora' ? 'deudora' : (['pasivo','capital','ingreso'].includes(tipo) ? 'acreedora' : 'deudora');
+  const plan = planCuentas_();
+  const dup = plan.find(x => x.codigo === codigo && x.id !== r.id);
+  if (dup) throw new Error('Ya existe la cuenta ' + codigo + ' · ' + dup.nombre);
+  const rec = { id: r.id || newId_('PlanCuentas'), codigo: codigo, nombre: txt_(r.nombre), tipo: tipo, naturaleza: nat, padre: '', activo: r.activo !== false, creado: r.id ? undefined : ahora_() };
+  if (r.id) delete rec.creado;
+  upsert_('PlanCuentas', rec);
+  invalidar_('PlanCuentas');
+  return { plan: planCuentas_() };
+}
+
+function guardarMapeo_(u, d) {
+  req_(u, ['admin']);
+  const m = d.mapeo || {};
+  const codigos = new Set(planCuentas_().map(x => x.codigo));
+  Object.keys(m).forEach(k => { if (typeof m[k] === 'string' && m[k] && !codigos.has(m[k])) throw new Error('La cuenta ' + m[k] + ' no existe en el plan.'); });
+  Object.keys(m.gastos || {}).forEach(k => { const g = m.gastos[k] || {}; if (g.cuenta && !codigos.has(g.cuenta)) throw new Error('La cuenta ' + g.cuenta + ' no existe.'); });
+  const cfg = { contabMapeo: JSON.stringify(m) };
+  if (d.inventario) cfg.contabInventario = d.inventario === 'periodico' ? 'periodico' : 'perpetuo';
+  if (d.isvCompras !== undefined) cfg.contabIsvCompras = d.isvCompras ? 'si' : 'no';
+  guardarConfig_(cfg);
+  return { mapeo: contabMapeo_(), config: contabCfg_() };
+}
+
+/* ---------- construcción de asientos ---------- */
+function lin_(cuenta, debe, haber, detalle) { return { cuenta: String(cuenta), debe: r2_(debe || 0), haber: r2_(haber || 0), detalle: detalle || '' }; }
+function partirIsv_(total, conIsv) { if (!conIsv) return { base: r2_(total), isv: 0 }; const base = r2_(total / (1 + CONTAB_TASA_ISV)); return { base: base, isv: r2_(total - base) }; }
+function ctaMetodo_(m, metodo) { const k = m.metodos[metodo] || 'caja'; return m[k] || m.caja; }
+
+// Asientos derivados de la operación del negocio, entre dos fechas (YYYY-MM-DD, inclusive).
+function asientosDerivados_(desde, hasta) {
+  const m = contabMapeo_(), cfg = contabCfg_();
+  const cm = porId_(rows_('Clientes')), pv = porId_(rows_('Proveedores'));
+  const d0 = desde + 'T00:00', d1 = hasta + 'T23:59';
+  const en = f => f >= d0 && f <= d1;
+  const out = [];
+  const push = (id, fecha, tipo, concepto, ref, lineas, anulado, tercero) => out.push({ id: 'D' + id, fecha: fecha, tipo: tipo, concepto: concepto, ref: ref || '', lineas: lineas, anulado: !!anulado, auto: true, tercero: tercero || '' });
+
+  rows_('Ventas').forEach(v => {
+    if (!en(v.fecha)) return;
+    const neto = r2_(v.total - (v.isv || 0));
+    const cobrado = v.metodo === 'Crédito' ? r2_(Math.min(v.recibido || 0, v.total)) : v.total;
+    const credito = v.metodo === 'Crédito' ? r2_(v.total - cobrado) : 0;
+    const L = [];
+    if (cobrado > 0) L.push(lin_(ctaMetodo_(m, v.metodo === 'Crédito' ? 'Efectivo' : v.metodo), cobrado, 0, v.metodo));
+    if (credito > 0) L.push(lin_(m.cxc, credito, 0, cm[v.clienteId] ? cm[v.clienteId].nombre : 'Cliente'));
+    L.push(lin_(m.ventas, 0, neto, 'Venta ' + v.numero));
+    if (v.isv > 0) L.push(lin_(m.isvPagar, 0, v.isv, 'ISV 15 %'));
+    if (cfg.inventario === 'perpetuo' && v.costo > 0) { L.push(lin_(m.costoVentas, v.costo, 0, 'Costo de lo vendido')); L.push(lin_(m.inventario, 0, v.costo, 'Salida de inventario')); }
+    push(v.id, v.fecha, 'venta', 'Venta ' + v.numero + (v.factura ? ' · Fact. ' + v.factura : ''), v.id, L, v.anulada, cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final');
+  });
+
+  rows_('Abonos').forEach(a => {
+    if (!en(a.fecha)) return;
+    push(a.id, a.fecha, 'cobro', 'Cobro a cliente' + (a.ref ? ' · ' + a.ref : ''), a.id, [lin_(ctaMetodo_(m, a.metodo), a.monto, 0, a.metodo), lin_(m.cxc, 0, a.monto, cm[a.clienteId] ? cm[a.clienteId].nombre : 'Cliente')], a.anulado, cm[a.clienteId] ? cm[a.clienteId].nombre : '');
+  });
+
+  rows_('Compras').forEach(c => {
+    if (!en(c.fecha)) return;
+    const p = partirIsv_(c.total, cfg.isvCompras);
+    const L = [lin_(cfg.inventario === 'perpetuo' ? m.inventario : m.compras, p.base, 0, 'Mercadería')];
+    if (p.isv > 0) L.push(lin_(m.isvCredito, p.isv, 0, 'ISV pagado'));
+    L.push(c.metodo === 'Crédito' ? lin_(m.cxp, 0, c.total, pv[c.proveedorId] ? pv[c.proveedorId].nombre : 'Proveedor') : lin_(ctaMetodo_(m, c.metodo), 0, c.total, c.metodo));
+    push(c.id, c.fecha, 'compra', 'Compra ' + c.numero + (c.factura ? ' · Fact. ' + c.factura : ''), c.id, L, c.anulada, pv[c.proveedorId] ? pv[c.proveedorId].nombre : '');
+  });
+
+  rows_('Pagos').forEach(p => {
+    if (!en(p.fecha)) return;
+    push(p.id, p.fecha, 'pago', 'Pago a proveedor', p.id, [lin_(m.cxp, p.monto, 0, pv[p.proveedorId] ? pv[p.proveedorId].nombre : 'Proveedor'), lin_(ctaMetodo_(m, p.metodo), 0, p.monto, p.metodo)], p.anulado, pv[p.proveedorId] ? pv[p.proveedorId].nombre : '');
+  });
+
+  const gastoLineas = (categoria, monto, metodo, detalle) => {
+    const g = m.gastos[categoria] || {};
+    const p = partirIsv_(monto, g.isv === 'si');
+    const L = [lin_(g.cuenta || m.gastoDefault, p.base, 0, detalle)];
+    if (p.isv > 0) L.push(lin_(m.isvCredito, p.isv, 0, 'ISV pagado'));
+    L.push(metodo === 'Crédito' ? lin_(m.cxp, 0, monto, 'Por pagar') : lin_(ctaMetodo_(m, metodo), 0, monto, metodo));
+    return L;
+  };
+  rows_('Gastos').forEach(g => {
+    if (!(g.fechaGasto >= desde && g.fechaGasto <= hasta)) return;
+    push(g.id, g.fechaGasto + 'T' + (String(g.creado).slice(0, 10) === g.fechaGasto ? String(g.creado).slice(11, 16) : '00:00'), 'gasto', (g.categoria ? g.categoria + ' · ' : '') + (g.detalle || 'Gasto'), g.id, gastoLineas(g.categoria, g.monto, g.metodo, g.detalle), g.anulado, g.proveedor || '');
+  });
+  const pj = porId_(rows_('Proyectos'));
+  rows_('ProyectoGastos').forEach(g => {
+    if (!g.caja || !(String(g.dia) >= desde && String(g.dia) <= hasta)) return;
+    push(g.id, g.dia + 'T00:00', 'gasto', 'Proyecto ' + (pj[g.proyectoId] ? pj[g.proyectoId].nombre : '') + ' · ' + (g.descripcion || g.categoria), g.id, gastoLineas('Proyecto · ' + g.categoria, g.monto, 'Efectivo', g.descripcion), g.anulado, '');
+  });
+  return out;
+}
+
+function asientosManuales_(desde, hasta) {
+  const d0 = desde + 'T00:00', d1 = hasta + 'T23:59';
+  return rows_('Asientos').filter(a => a.fecha >= d0 && a.fecha <= d1).map(a => {
+    let L = []; try { L = JSON.parse(a.lineas || '[]'); } catch (e) { L = []; }
+    return { id: a.id, numero: a.numero, fecha: a.fecha, tipo: a.tipo || 'manual', concepto: a.concepto, ref: a.ref, lineas: L, anulado: !!a.anulado, auto: false, usuarioId: a.usuarioId };
+  });
+}
+
+function asientos_(desde, hasta, inicio) {
+  // Los derivados nunca se toman antes de la fecha de inicio (apertura); los manuales sí (la apertura misma).
+  const d0 = inicio && desde < inicio ? inicio : desde;
+  const todos = (d0 <= hasta ? asientosDerivados_(d0, hasta) : []).concat(asientosManuales_(desde, hasta));
+  todos.sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0);
+  return todos;
+}
+
+// Saldos por cuenta (debe − haber) acumulando todos los asientos vigentes de un rango.
+function saldos_(asientos) {
+  const s = {};
+  asientos.forEach(a => { if (a.anulado) return; a.lineas.forEach(l => { s[l.cuenta] = r2_((s[l.cuenta] || 0) + l.debe - l.haber); }); });
+  return s;
+}
+
+/* ---------- lectura principal ---------- */
+function contabilidad_(u, d) {
+  req_(u, ['admin']);
+  if (!contabOn_()) throw new Error('Contabilidad no está activada para este negocio.');
+  const hasta = /^\d{4}-\d{2}-\d{2}$/.test(String(d.hasta || '')) ? d.hasta : hoy_();
+  const desde = /^\d{4}-\d{2}-\d{2}$/.test(String(d.desde || '')) ? d.desde : hasta.slice(0, 8) + '01';
+  const plan = planCuentas_();
+  // Fecha de inicio de la contabilidad = fecha del asiento de apertura. Las operaciones anteriores
+  // a esa fecha ya están resumidas en la apertura, así que no se vuelven a derivar.
+  const ap = rows_('Asientos').find(a => a.tipo === 'apertura' && !a.anulado);
+  const inicio = ap ? String(ap.fecha).slice(0, 10) : '2000-01-01';
+  const periodo = asientos_(desde < inicio ? inicio : desde, hasta, inicio);
+  const anterior = inicio <= addDiasIso_(desde, -1) ? asientos_(inicio, addDiasIso_(desde, -1), inicio) : [];
+  const cxcp = cuentas_(u, {});
+  let concil = {}; try { concil = JSON.parse(config_().contabConcil || '{}'); } catch (e) { concil = {}; }
+  const cfg = contabCfg_();
+  return { desde: desde, hasta: hasta, plan: plan, mapeo: contabMapeo_(), config: cfg, asientos: periodo, saldosIniciales: saldos_(anterior),
+    cobrar: cxcp.cobrar, pagar: cxcp.pagar, concil: concil[hasta.slice(0, 7)] || null, cerrado: cfg.cerrado, aperturaHecha: !!ap, inicio: inicio };
+}
+function addDiasIso_(iso, n) { const dt = new Date(iso + 'T12:00:00'); dt.setDate(dt.getDate() + n); return Utilities.formatDate(dt, 'America/Tegucigalpa', 'yyyy-MM-dd'); }
+
+/* ---------- asientos manuales ---------- */
+function validarLineas_(lineas) {
+  const codigos = new Set(planCuentas_().filter(c => c.activo !== false).map(c => c.codigo));
+  const L = (lineas || []).map(l => lin_(l.cuenta, Number(l.debe) || 0, Number(l.haber) || 0, txt_(l.detalle))).filter(l => l.debe > 0 || l.haber > 0);
+  if (L.length < 2) throw new Error('Un asiento necesita al menos dos líneas (debe y haber).');
+  L.forEach(l => { if (!codigos.has(l.cuenta)) throw new Error('La cuenta ' + l.cuenta + ' no existe o está inactiva.'); if (l.debe > 0 && l.haber > 0) throw new Error('Cada línea lleva debe o haber, no ambos.'); });
+  const debe = r2_(L.reduce((s, l) => s + l.debe, 0)), haber = r2_(L.reduce((s, l) => s + l.haber, 0));
+  if (Math.abs(debe - haber) > 0.005) throw new Error('El asiento no cuadra: debe L ' + debe.toFixed(2) + ' · haber L ' + haber.toFixed(2));
+  return L;
+}
+
+function guardarAsiento_(u, d) {
+  req_(u, ['admin']);
+  if (!contabOn_()) throw new Error('Contabilidad no está activada para este negocio.');
+  const r = d.registro || {};
+  const fecha = /^\d{4}-\d{2}-\d{2}/.test(String(r.fecha || '')) ? String(r.fecha).slice(0, 10) + 'T' + (String(r.fecha).slice(11, 16) || '12:00') : ahora_();
+  const cfg = contabCfg_();
+  if (cfg.cerrado && fecha.slice(0, 7) <= cfg.cerrado) throw new Error('El período ' + fecha.slice(0, 7) + ' ya está cerrado. Registre el ajuste en el mes abierto.');
+  if (!txt_(r.concepto)) throw new Error('Escriba el concepto del asiento.');
+  const tipo = ['manual','apertura','ajuste','concil'].includes(r.tipo) ? r.tipo : 'manual';
+  if (tipo === 'apertura' && rows_('Asientos').some(a => a.tipo === 'apertura' && !a.anulado)) throw new Error('Ya existe un asiento de apertura. Anúlelo antes de registrar otro.');
+  const L = validarLineas_(r.lineas);
+  const rec = { id: newId_('Asientos'), numero: siguiente_('L'), fecha: fecha, tipo: tipo, concepto: txt_(r.concepto), lineas: JSON.stringify(L), ref: txt_(r.ref), usuarioId: u.id, anulado: false, anulacion: '', creado: ahora_() };
+  appendRows_('Asientos', [rec]); invalidar_('Asientos');
+  return { asiento: rec };
+}
+
+// Anular = marcar y crear la reversión (contrapartida), nunca borrar.
+function anularAsiento_(u, d) {
+  req_(u, ['admin']);
+  const a = rows_('Asientos').find(x => x.id === d.id);
+  if (!a) throw new Error('Asiento no encontrado.');
+  if (a.anulado) throw new Error('Este asiento ya está anulado.');
+  const cfg = contabCfg_();
+  if (cfg.cerrado && String(a.fecha).slice(0, 7) <= cfg.cerrado) throw new Error('El período está cerrado; registre una reversión en el mes abierto.');
+  upsert_('Asientos', { id: a.id, anulado: true, anulacion: ahora_() + ' · ' + (u.nombre || u.usuario) + (d.motivo ? ' · ' + txt_(d.motivo) : '') });
+  invalidar_('Asientos');
+  return { ok: true };
+}
+
+function cerrarPeriodo_(u, d) {
+  req_(u, ['admin']);
+  const mes = /^\d{4}-\d{2}$/.test(String(d.mes || '')) ? d.mes : '';
+  if (!mes) throw new Error('Mes no válido.');
+  const cfg = contabCfg_();
+  if (d.reabrir) { if (cfg.cerrado !== mes) throw new Error('Solo se puede reabrir el último mes cerrado (' + (cfg.cerrado || 'ninguno') + ').'); guardarConfig_({ contabCerrado: addMes_(mes, -1) }); return { cerrado: addMes_(mes, -1) }; }
+  if (cfg.cerrado && mes <= cfg.cerrado) throw new Error('Ese mes ya está cerrado.');
+  if (mes >= hoy_().slice(0, 7)) throw new Error('El mes en curso no se puede cerrar todavía.');
+  guardarConfig_({ contabCerrado: mes });
+  return { cerrado: mes };
+}
+function addMes_(ym, n) { const y = Number(ym.slice(0, 4)), m = Number(ym.slice(5, 7)) - 1 + n; const dt = new Date(y, m, 1); return dt.getFullYear() + '-' + String(dt.getMonth() + 1).padStart(2, '0'); }
+
+/* ---------- conciliación bancaria ---------- */
+// d = { mes:'2026-10', saldoBanco: 63935, marcados:['Dxxx', ...], nuevos:[{tipo:'comision'|'interes'|'otro', monto, detalle, fecha}], nota }
+function guardarConcil_(u, d) {
+  req_(u, ['admin']);
+  const mes = /^\d{4}-\d{2}$/.test(String(d.mes || '')) ? d.mes : hoy_().slice(0, 7);
+  const m = contabMapeo_();
+  const creados = [];
+  (d.nuevos || []).forEach(n => {
+    const monto = r2_(Math.abs(Number(n.monto) || 0)); if (!monto) return;
+    const fecha = /^\d{4}-\d{2}-\d{2}$/.test(String(n.fecha || '')) ? n.fecha + 'T12:00' : mes + '-28T12:00';
+    const det = txt_(n.detalle) || (n.tipo === 'interes' ? 'Intereses ganados' : n.tipo === 'comision' ? 'Comisión bancaria' : 'Partida bancaria');
+    const L = n.tipo === 'interes' ? [lin_(m.banco, monto, 0, det), lin_(m.otrosIngresos, 0, monto, det)] : [lin_(n.tipo === 'comision' ? m.comisiones : m.gastoDefault, monto, 0, det), lin_(m.banco, 0, monto, det)];
+    const rec = { id: newId_('Asientos'), numero: siguiente_('L'), fecha: fecha, tipo: 'concil', concepto: 'Conciliación ' + mes + ' · ' + det, lineas: JSON.stringify(L), ref: '', usuarioId: u.id, anulado: false, anulacion: '', creado: ahora_() };
+    appendRows_('Asientos', [rec]); creados.push(rec.id);
+  });
+  if (creados.length) invalidar_('Asientos');
+  let todo = {}; try { todo = JSON.parse(config_().contabConcil || '{}'); } catch (e) { todo = {}; }
+  const prev = todo[mes] || {};
+  todo[mes] = { saldoBanco: r2_(Number(d.saldoBanco) || 0), marcados: Array.isArray(d.marcados) ? d.marcados.slice(0, 400) : (prev.marcados || []), nota: txt_(d.nota), actualizado: ahora_(), listo: !!d.listo };
+  const meses = Object.keys(todo).sort(); while (meses.length > 24) delete todo[meses.shift()];
+  guardarConfig_({ contabConcil: JSON.stringify(todo) });
+  return { concil: todo[mes], creados: creados };
+}
