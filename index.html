@@ -6,7 +6,9 @@
 <meta name="theme-color" content="#8e0a5a">
 <title>Gestión de Negocio VM</title>
 <meta name="description" content="Administra tu negocio: ventas, inventario, clientes, compras, gastos, caja, reportes y tienda en línea.">
-<link rel="manifest" href="manifest.json">
+<link rel="manifest" id="manifest" href="manifest.json">
+<script>/* El Panel se instala como app aparte: con ?panel usa su propio manifiesto (ícono «Panel Molina» que abre directo en el panel) */
+if (new URLSearchParams(location.search).has('panel')) { document.getElementById('manifest').href = 'panel.webmanifest'; document.title = 'Panel Molina'; }</script>
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">

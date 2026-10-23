@@ -1,0 +1,18 @@
+{
+  "id": "panel-molina",
+  "name": "Panel Molina · Gestión de Negocio VM",
+  "short_name": "Panel Molina",
+  "description": "Panel de administración de clientes de Gestión de Negocio VM.",
+  "start_url": "./?panel",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1a0b14",
+  "theme_color": "#1a0b14",
+  "lang": "es",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
