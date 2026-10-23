@@ -3,7 +3,7 @@
   "name": "Panel Molina · Gestión de Negocio VM",
   "short_name": "Panel Molina",
   "description": "Panel de administración de clientes de Gestión de Negocio VM.",
-  "start_url": "./?panel",
+  "start_url": "./panel.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
