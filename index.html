@@ -120,6 +120,8 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .empty{text-align:center;color:var(--mut);padding:28px 10px}
 
 /* ===== Inicio ===== */
+.cuenta-btn{width:100%;margin:-4px auto 16px;max-width:560px;display:flex;align-items:center;gap:12px;text-align:left;padding:13px 16px;border-radius:20px;border:0;cursor:pointer;color:#fff;background:linear-gradient(135deg,var(--pri),var(--a1));box-shadow:0 10px 26px var(--glow);font:inherit}.cuenta-btn .ci{width:42px;height:42px;border-radius:13px;background:rgba(255,255,255,.18);display:grid;place-items:center;flex:none}.cuenta-btn b{display:block;font-size:16px}.cuenta-btn small{display:block;opacity:.85;font-size:12.5px;margin-top:1px}.cuenta-btn span{flex:1;min-width:0}
+.cuenta-box{background:linear-gradient(135deg,rgba(87,48,230,.18),rgba(0,198,240,.12));border:1px solid var(--line);border-radius:18px;padding:16px 18px;font-size:16px;line-height:1.55;margin-bottom:14px}.cuenta-box .cb-f{display:flex;align-items:center;gap:8px;color:var(--pri);font-size:12px;letter-spacing:.08em;font-weight:700;margin-bottom:8px;text-transform:uppercase}.cuenta-box p{margin:0 0 10px}.cuenta-box p:last-child{margin:0}.cuenta-box .animo{color:var(--pri);font-weight:700}.cuenta-box.hablando{border-color:var(--pri);box-shadow:0 0 0 3px var(--glow)}
 .today{position:relative;z-index:3;background:var(--card);border-radius:26px;box-shadow:0 14px 34px rgba(0,0,0,.12);padding:18px 18px 16px;margin:-52px auto 16px;max-width:560px;border:1px solid var(--line)}
 .today-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .today small{color:var(--mut);font-size:13px}
@@ -1014,7 +1016,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.1';
+const VERSION = '1.9.2';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -3391,7 +3393,7 @@ function reporte_(u, d) {
   const fac = {}; ventas.forEach(v => { fac[v.id] = lineas[v.id] > 0 ? (v.total - v.isv) / lineas[v.id] : 1; });
   const pm = porId_(rows_('Productos')), us = porId_(rows_('Usuarios'));
   const k = { ventas: 0, n: ventas.length, ticket: 0, isv: 0, descuentos: 0, costo: 0, bruta: 0, gastos: 0, neta: 0, margen: 0,
-    credito: 0, cobros: 0, compras: 0, anuladas: 0, clientesNuevos: 0, articulos: 0 };
+    credito: 0, cobros: 0, compras: 0, pagos: 0, anuladas: 0, clientesNuevos: 0, articulos: 0 };
   const porDia = {}, gastosDia = {}, porMetodo = {}, porCat = {}, top = {}, porUsuario = {}, porHora = {};
   ventas.forEach(v => {
     k.ventas += v.total; k.isv += v.isv; k.descuentos += v.descuento; k.costo += v.costo;
@@ -3422,6 +3424,7 @@ function reporte_(u, d) {
   });
   rows_('Abonos').forEach(a => { if (!a.anulado && a.fecha >= r.desde && a.fecha <= r.hasta) k.cobros += a.monto; });
   rows_('Compras').forEach(c => { if (!c.anulada && c.fecha >= r.desde && c.fecha <= r.hasta) k.compras += c.total; });
+  rows_('Pagos').forEach(p => { if (!p.anulado && p.fecha >= r.desde && p.fecha <= r.hasta) k.pagos += p.monto; });
   k.anuladas = rows_('Ventas').filter(v => v.anulada && v.fecha >= r.desde && v.fecha <= r.hasta).length;
   k.clientesNuevos = rows_('Clientes').filter(c => c.creado >= r.desde && c.creado <= r.hasta).length;
   k.ticket = ventas.length ? k.ventas / ventas.length : 0;
@@ -4461,6 +4464,7 @@ function temaVars(id, oscuro) {
 
 /* ===== Íconos (trazo) ===== */
 const ICP = {
+  volume: '<path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.5 8.5a5 5 0 010 7"/><path d="M18.5 5.5a9 9 0 010 13"/>',
   home: '<path d="M3 10.5L12 3l9 7.5"/><path d="M5 9.5V20h5v-6h4v6h5V9.5"/>',
   cart: '<circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/><path d="M2.5 3.5h2.6l2.4 11.2h11.3l2.2-8H6.2"/>',
   bag: '<path d="M5 8h14l-1.2 12.5H6.2z"/><path d="M8.5 10.5V7a3.5 3.5 0 0 1 7 0v3.5"/>',
@@ -4671,7 +4675,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.1';
+const APP_VER = '1.9.2';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -5733,7 +5737,7 @@ R.inicio = () => {
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
   const ofAvisos = puede('admin', 'cajero') && 'Notification' in window && Notification.permission !== 'denied' && !avisosOn() && LS.get('avisosOferta', '') !== 'no' && !DEMO.on ? `<div class="aviso info">${ic('bell', 20)}<div><b>Recibe avisos en este teléfono.</b><small>Pedidos nuevos, mensajes, vencimientos y citas, aunque la app esté en segundo plano.</small></div><div class="row"><button class="btn sm pri" data-a="avisosActivar">Activar</button><button class="btn sm ghost icon" data-a="avisosCerrar" aria-label="Cerrar">${ic('x', 16)}</button></div></div>` : '';
   const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${today}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${vacio}${aviso}${listas}</div>`;
 };
 ACC.verVenta = async el => {
   const f = el.dataset.f.slice(0, 10);
@@ -5741,6 +5745,162 @@ ACC.verVenta = async el => {
   const v = l.find(x => x.id === el.dataset.id);
   if (v) detalleVenta(v); else toast('No se encontró la venta', 'error');
 };
+
+/* ===================== «¿CÓMO ME FUE HOY?» · TU NEGOCIO TE CUENTA ===================== */
+// Frases de ánimo para días sin ventas (se rotan con la fecha para que no se repitan)
+const ANIMO_DIA = [
+  'Hoy todavía no hay ventas anotadas, y está bien: ningún negocio vende lo mismo todos los días. Lo que hoy siembras —atender bien, ordenar el inventario, escribirle a un cliente— se cosecha después.',
+  'Un día sin ventas no es un día perdido. Es un día para acomodar la vitrina, revisar precios y preparar el terreno para los que vienen.',
+  'Los negocios que duran no son los que venden todos los días, sino los que abren todos los días. Y tú abriste.',
+  'La paciencia también es parte del inventario. Cada cliente que atiendes bien hoy vuelve mañana con alguien más.',
+  'Todavía es temprano para sacar cuentas. Respira, sonríe al próximo cliente y deja que el día se acomode.',
+  'Nadie empezó grande. Cada negocio que admiras tuvo mañanas calladas como esta, y siguió adelante.',
+  'Hoy puede ser un buen día para lo que casi nunca da tiempo: llamar a un cliente, probar un producto nuevo o mejorar tu tienda en línea.',
+  'Sin ventas aún, pero con todo en su lugar: inventario, clientes y caja al día. Eso también es trabajar bien.',
+  'Un negocio se construye con constancia, no con prisa. Lo que haces hoy, aunque no se vea en la caja, cuenta.',
+  'Los días callados sirven para pensar: ¿qué producto se mueve más? ¿a qué cliente hace tiempo no veo? Esa es la ventaja de llevar registros.',
+  'No midas el día por la primera hora. Las mejores ventas a veces llegan cuando ya pensabas cerrar.',
+  'Hoy la caja está tranquila; tu ánimo no tiene por qué estarlo. Atiende como si fuera tu mejor cliente al que entre por la puerta.',
+  'Confía en lo que ya tienes: productos, clientes que te conocen y una forma ordenada de llevar tu negocio. Lo demás llega.',
+  'Vender es importante, pero también lo es cobrar lo pendiente, surtir lo que falta y mantener tu lugar listo. Hoy hay de qué ocuparse.',
+  'Cada negocio tiene su ritmo. Que hoy vaya lento no cambia lo que has construido ni lo que viene.',
+  'Es temprano, y el día es largo. Un mensaje a un cliente que te debe o una foto nueva de un producto pueden cambiar la tarde.',
+  'La disciplina de abrir, atender y anotar vale más que un día bueno aislado. Vas bien.',
+  'Hoy no hay ventas anotadas todavía. Piensa en quién podría necesitar lo que vendes y escríbele: muchas ventas empiezan con un saludo.',
+  'A veces el mejor día de ventas se prepara en un día tranquilo. Revisa qué está por agotarse y qué está sobrando.',
+  'Tu negocio no se mide solo en lempiras: también en clientes atendidos, en orden y en lo que aprendes cada día.',
+  'Tómalo con calma. Un día sin ventas, bien aprovechado, deja el negocio mejor que como lo encontraste.',
+  'Las ventas llegan a los que están listos. Hoy, asegúrate de estarlo: lugar limpio, productos a la vista, buena actitud.',
+  'Que no te asuste una mañana callada. Lo normal en un negocio son días distintos; lo importante es la suma de la semana.',
+  'Hoy puedes avanzar en algo que mañana te dará ventas: promociona un producto, comparte tu tienda en línea, pide una reseña.',
+  'Lo que anotas hoy te deja ver claro mañana. Aunque sea un cero, ya sabes dónde estás parado, y eso vale mucho.',
+  'Un cliente contento vale por diez anuncios. Si hoy entra uno solo, que se vaya queriendo volver.',
+  'El día apenas empieza. Dale una oportunidad antes de sacar conclusiones.',
+  'Hoy sin ventas, pero no sin negocio: tienes mercadería, tienes clientes y tienes una forma clara de llevar tus cuentas.',
+  'No pasa nada por un día lento. Pasa mucho por rendirse. Y tú no eres de esos.',
+  'Haz hoy una cosa pequeña por tu negocio: un mensaje, una foto, un precio revisado. Las cosas pequeñas se acumulan.'
+];
+const ANIMO_NOCHE = [
+  'Hoy no se anotaron ventas. Hay días así, y no definen tu negocio: lo que cuenta es la semana y el mes.',
+  'Un día en cero duele, pero no borra lo que ya has construido. Descansa; mañana se abre de nuevo.',
+  'Cierra el día sin culpa. Hiciste lo que tocaba: abrir, atender y estar. Las ventas vuelven.',
+  'Si hoy estuvo lento, piensa en una sola cosa que puedes hacer distinto mañana. Con una basta.',
+  'Los días sin ventas también enseñan: qué productos nadie preguntó, a qué hora casi no hubo gente. Todo eso ya quedó anotado.',
+  'Mañana es un nuevo día. Revisa qué producto puedes promocionar en tu tienda en línea y abre con ganas.',
+  'Un cero hoy no es una tendencia. Mira tu semana completa antes de preocuparte.',
+  'Hoy no entró nada a la caja, pero el negocio sigue en pie y tú también. Eso es lo que importa.',
+  'Descansa bien. Un dueño descansado atiende mejor, y atender mejor es la forma más barata de vender más.',
+  'Hay semanas con días flojos y días fuertes. Este fue de los flojos; el fuerte viene.',
+  'Lo que hoy no se vendió sigue en tu inventario, listo para mañana. Nada se perdió.',
+  'Cierra la tienda, no las ganas. Mañana vuelves con la misma actitud y mejores ideas.',
+  'Si hoy hubo tiempo de sobra, úsalo para planear: a quién cobrar, qué surtir, qué ofrecer. Ya tienes todo anotado.',
+  'No te mides por un día. Te mides por volver a abrir mañana, y eso ya lo decidiste.',
+  'Un día lento, bien cerrado, es un día en que tu negocio quedó ordenado. Eso también suma.',
+  'Confía en el proceso: los días lentos también son parte del camino.',
+  'Mañana escribe a un par de clientes que hace tiempo no vienen. Un saludo a tiempo mueve más de lo que parece.',
+  'Hoy no hubo ventas, pero hubo negocio: sigue existiendo, sigue listo, y tú sigues al frente.',
+  'Las ventas suben y bajan; la constancia no. Mañana otra vez, con calma y buen ánimo.',
+  'Dale al día su justo tamaño: fue uno. Los que vienen traen lo suyo.'
+];
+const ANIMO_CIERRE = ['Sigue adelante. Confía en tu trabajo: todo va a salir bien.', 'Tranquilo, vas por buen camino.', 'Un paso a la vez. Lo estás haciendo bien.', 'Ánimo: lo que siembras hoy se cosecha después.', 'Confía en el proceso y sigue.', 'Mañana se vuelve a intentar, con la misma fuerza.'];
+const CUENTA_APERTURA = ['{P} hiciste', 'Así te fue {p}: hiciste', 'Buen trabajo. {P} hiciste', 'Resumen de {p}: hiciste', '{P} tu negocio se movió: hiciste', 'Esto pasó {p}: hiciste', '{P} anotaste', 'Vamos con las cuentas de {p}: hiciste', '{P} tu caja registró', 'Cerrando {p}: hiciste'];
+const CUENTA_PER = { hoy: 'Hoy', ayer: 'Ayer', d7: 'Últimos 7 días', mes: 'Este mes' };
+const CUENTA_P = { hoy: ['hoy', 'Hoy'], ayer: ['ayer', 'Ayer'], d7: ['en los últimos 7 días', 'En los últimos 7 días'], mes: ['este mes', 'Este mes'] };
+const rotaDia = (lista, salt) => { const d = hoy(); const n = Number(d.slice(0, 4)) * 372 + Number(d.slice(5, 7)) * 31 + Number(d.slice(8, 10)) + (salt || 0) + (String(S.config.nombre || '').length); return lista[n % lista.length]; };
+const cuentaBtn = () => `<button class="cuenta-btn" data-a="cuenta"><span class="ci">${ic('sparkle', 22)}</span><span><b>¿Cómo me fue hoy?</b><small>Tu negocio te lo cuenta en palabras, con números</small></span>${ic('right', 20)}</button>`;
+const negrita = s => esc(s).replace(/\*([^*]+)\*/g, '<b>$1</b>');
+const sinMarca = s => s.replace(/\*/g, '');
+// Arma el texto del resumen (con *negritas* estilo WhatsApp). Devuelve { frases: [...], animo: bool }
+function cuentaTexto(per, d, extra) {
+  const k = d.kpi, p = CUENTA_P[per], F = [];
+  if (!k.n) {
+    const noche = new Date().getHours() >= 18, hoyP = per === 'hoy';
+    if (hoyP) F.push(noche ? rotaDia(ANIMO_NOCHE, 7) : rotaDia(ANIMO_DIA, 0));
+    else F.push(`${p[1]} no hay ventas anotadas. No pasa nada: lo importante es seguir abriendo, atendiendo y anotando.`);
+    const ini = S.inicio || {}, tareas = [];
+    if (ini.porCobrar && ini.porCobrar.total > 0) {
+      const con = S.clientes.filter(c => c.saldo > 0.004).sort((a, b) => b.saldo - a.saldo).slice(0, 2).map(c => '*' + c.nombre.split(' ')[0] + '*');
+      tareas.push(`tienes *${money(ini.porCobrar.total)}* por cobrar${con.length ? ': hoy puede ser un buen día para recordarle a ' + con.join(' y a ') : ''}`);
+    }
+    if (ini.pedidos && ini.pedidos.nuevos) tareas.push(`*${ini.pedidos.nuevos === 1 ? '1 pedido nuevo' : ini.pedidos.nuevos + ' pedidos nuevos'}* en la tienda en línea ${ini.pedidos.nuevos === 1 ? 'espera' : 'esperan'} tu confirmación`);
+    if (ini.stock && ini.stock.bajos) tareas.push(`*${ini.stock.bajos === 1 ? '1 producto está' : ini.stock.bajos + ' productos están'} por agotarse*${ini.stock.lista && ini.stock.lista.length ? ' (' + ini.stock.lista.slice(0, 2).map(x => x.nombre).join(', ') + ')' : ''}`);
+    if (extra && extra.kpi && extra.kpi.n) tareas.push(`esta semana llevas *${money(extra.kpi.ventas)}* en ${extra.kpi.n === 1 ? '1 venta' : extra.kpi.n + ' ventas'}`);
+    if (tareas.length) F.push(tareas.map(cap).join('. ') + '.');
+    F.push(rotaDia(ANIMO_CIERRE, 3));
+    return { frases: F, animo: true };
+  }
+  const ap = rotaDia(CUENTA_APERTURA, 11).replace('{P}', p[1]).replace('{p}', p[0]);
+  F.push(`${ap} *${k.n === 1 ? '1 factura' : k.n + ' facturas'}* y vendiste *${money(k.ventas)}*${k.articulos ? ' (' + cant(k.articulos) + (k.articulos === 1 ? ' artículo)' : ' artículos)') : ''}.`);
+  if (k.costo > 0) F.push(`Lo vendido te costó *${money(k.costo)}*, así que tu ganancia bruta fue *${money(k.bruta)}*.`);
+  else F.push(`Tu ganancia bruta fue *${money(k.bruta)}* (no hay costos anotados en estos productos, así que se calcula sobre todo lo vendido).`);
+  if (k.gastos > 0) F.push(`Pagaste *${money(k.gastos)}* de gastos y te quedan *${money(k.neta)}* de ganancia neta, un margen del *${cant(Math.round(k.margen))} %*.`);
+  else F.push(`No hubo gastos anotados, así que la ganancia neta queda en *${money(k.neta)}*, un margen del *${cant(Math.round(k.margen))} %*.`);
+  if (d.top && d.top.length) { const t = d.top[0]; F.push(`El producto más vendido fue *${t.nombre}* (${cant(t.cantidad)} ${t.cantidad === 1 ? 'unidad' : 'unidades'}, ${money(t.total)}).`); }
+  const mov = [];
+  if (k.compras > 0) mov.push(`compraste *${money(k.compras)}* a proveedores`);
+  if (k.pagos > 0) mov.push(`les pagaste *${money(k.pagos)}*`);
+  if (k.cobros > 0) mov.push(`cobraste *${money(k.cobros)}* a clientes`);
+  if (k.credito > 0) mov.push(`vendiste *${money(k.credito)}* al crédito`);
+  if (mov.length) F.push(cap(mov.join(', ')) + '.');
+  if (k.clientesNuevos > 0) F.push(`Registraste *${k.clientesNuevos === 1 ? '1 cliente nuevo' : k.clientesNuevos + ' clientes nuevos'}*.`);
+  if ((per === 'hoy' || per === 'ayer') && d.porHora) {
+    const hs = Object.keys(d.porHora); if (hs.length > 1) { const h = hs.sort((a, b) => d.porHora[b] - d.porHora[a])[0]; const n = Number(h); F.push(`Tu mejor hora fue a las *${n % 12 || 12} ${n < 12 ? 'a. m.' : 'p. m.'}*.`); }
+  }
+  if (k.anuladas) F.push(`Se anularon ${k.anuladas === 1 ? '1 venta' : k.anuladas + ' ventas'}.`);
+  return { frases: F, animo: false };
+}
+async function abrirCuenta(per) {
+  per = per || 'hoy';
+  const [desde, hasta] = rangoPer(per);
+  let h = S.hCuenta;
+  const chips = `<div class="chips" style="margin-bottom:12px">${Object.keys(CUENTA_PER).map(k => `<button class="chip ${per === k ? 'on' : ''}" data-a="cuentaPer" data-k="${k}">${CUENTA_PER[k]}</button>`).join('')}</div>`;
+  if (!h || h.cerrado) {
+    h = hoja({ titulo: 'Tu negocio te cuenta', html: chips + '<div id="cu-b"><div class="empty">Pensando en tu día…</div></div>', onClose: () => { S.hCuenta = null; pararVoz(); } });
+    S.hCuenta = h;
+  } else { pararVoz(); $('.chips', h.b).outerHTML = chips; $('#cu-b', h.b).innerHTML = '<div class="empty">Un momento…</div>'; }
+  h.per = per; h.botones([]);
+  let d, extra = null;
+  try {
+    d = await api('reporte', { desde, hasta }, true);
+    if (per === 'hoy' && !d.kpi.n) { const [d7, h7] = rangoPer('d7'); extra = await api('reporte', { desde: d7, hasta: h7 }, true); }
+  } catch (e) { $('#cu-b', h.b).innerHTML = `<div class="empty">${esc(e.message || e)}</div>`; return; }
+  if (h.cerrado || h.per !== per) return;
+  const k = d.kpi, { frases, animo } = cuentaTexto(per, d, extra);
+  const titulo = per === 'hoy' || per === 'ayer' ? cap(fFechaL(desde)) : `${fFechaL(desde)} – ${fFechaL(hasta)}`;
+  const kpi = (t, v, c, s) => `<div class="kpi" style="--k:${c || 'var(--pri)'}"><small>${t}</small><b class="n">${v}</b>${s ? `<i>${s}</i>` : ''}</div>`;
+  let cards = '';
+  if (animo) {
+    const ini = S.inicio || {};
+    if (ini.porCobrar && ini.porCobrar.total > 0) cards += kpi('Por cobrar', money(ini.porCobrar.total), '#00a8b5', ini.porCobrar.clientes === 1 ? '1 cliente con saldo' : ini.porCobrar.clientes + ' clientes con saldo');
+    if (ini.pedidos && ini.pedidos.nuevos) cards += kpi('Pedidos nuevos', String(ini.pedidos.nuevos), '#00b56e', 'Total ' + money(ini.pedidos.total));
+    if (ini.stock && ini.stock.bajos) cards += kpi('Por agotarse', ini.stock.bajos === 1 ? '1 producto' : ini.stock.bajos + ' productos', '#f25c05', ini.stock.lista && ini.stock.lista[0] ? ini.stock.lista[0].nombre : '');
+    if (extra && extra.kpi.n) cards += kpi('Esta semana', money(extra.kpi.ventas), 'var(--pri)', extra.kpi.n === 1 ? '1 venta' : extra.kpi.n + ' ventas');
+    if (ini.mes && ini.mes.ventas > 0) cards += kpi('Este mes', money(ini.mes.ventas), '#00b56e', 'ganancia ' + money(ini.mes.ganancia));
+    const acc = `<div class="row" style="flex-wrap:wrap;gap:8px;margin-top:4px">${ini.porCobrar && ini.porCobrar.total > 0 ? `<button class="btn sm pri" data-a="ir" data-v="clientes" data-p='{"saldo":1}'>${ic('coin', 16)} Cobrar</button>` : ''}${ini.pedidos && ini.pedidos.nuevos ? `<button class="btn sm" data-a="ir" data-v="pedidos">${ic('inbox', 16)} Ver pedidos</button>` : ''}${S.plus ? `<button class="btn sm" data-a="ir" data-v="tienda">${ic('store', 16)} Mi tienda en línea</button>` : ''}</div>`;
+    cards = (cards ? `<div class="kpis">${cards}</div>` : '') + acc + `<p class="xs mut" style="margin:12px 2px 0">Cuando registres la primera venta ${per === 'hoy' ? 'del día' : 'del período'}, aquí verás tu resumen con cifras.</p>`;
+  } else {
+    cards = `<div class="kpis">${kpi('Facturas', String(k.n), 'var(--pri)', k.articulos ? cant(k.articulos) + ' artículos' : '')}${kpi('Vendido', money(k.ventas), '#00b56e', 'ticket ' + money(k.ticket))}${kpi('Costo de lo vendido', money(k.costo), '#f25c05')}${kpi('Ganancia bruta', money(k.bruta), '#00b56e')}${kpi('Gastos', money(k.gastos), '#f25c05')}${kpi('Ganancia neta', money(k.neta), '#00b56e', 'margen ' + cant(Math.round(k.margen)) + ' %')}${d.top && d.top.length ? kpi('Más vendido', `<span style="font-size:16px;line-height:1.2;display:block">${esc(d.top[0].nombre)}</span>`, 'var(--a1)', cant(d.top[0].cantidad) + (d.top[0].cantidad === 1 ? ' unidad' : ' unidades')) : ''}${kpi('Compras', money(k.compras), '#1b4fd8')}${kpi('Pagos a proveedores', money(k.pagos || 0), '#1b4fd8')}${kpi('Cobros a clientes', money(k.cobros), '#00a8b5')}${kpi('Vendido al crédito', money(k.credito), '#f25c05')}${kpi('Clientes nuevos', String(k.clientesNuevos), '#00a8b5')}</div>
+      <p class="xs mut" style="margin:0 2px">La ganancia no incluye ISV. Las compras no son gasto: se vuelven inventario. <a data-a="ir" data-v="reportes">Ver reportes completos</a></p>`;
+  }
+  $('#cu-b', h.b).innerHTML = `<div class="cuenta-box" id="cu-box"><div class="cb-f">${ic('sparkle', 14)} ${esc(titulo)}</div>${frases.map((f, i) => `<p class="${animo && i === frases.length - 1 ? 'animo' : ''}">${negrita(f)}</p>`).join('')}</div>${cards}`;
+  h.texto = `*${S.config.nombre || 'Mi negocio'}* · ${titulo}\n\n${frases.map(sinMarca).join('\n')}\n\n(Gestión de Negocio VM)`;
+  h.voz = frases.map(sinMarca).join(' ');
+  h.botones([{ t: `${ic('volume', 18)} Escuchar`, cls: 'pri', id: 'cu-voz', fn: () => hablar(h) }, { t: `${ic('share', 18)} WhatsApp`, cls: 'ghost', fn: () => { window.open('https://wa.me/?text=' + encodeURIComponent(h.texto.replace(/\*/g, '*')), '_blank', 'noopener'); } }]);
+  if (!('speechSynthesis' in window)) { const b = $('#cu-voz'); if (b) b.hidden = true; }
+}
+function pararVoz() { try { if ('speechSynthesis' in window) speechSynthesis.cancel(); } catch (e) {} const b = $('#cu-box'); if (b) b.classList.remove('hablando'); const x = $('#cu-voz'); if (x) x.innerHTML = `${ic('volume', 18)} Escuchar`; }
+function hablar(h) {
+  if (!('speechSynthesis' in window)) return toast('Este teléfono no puede leer en voz alta', 'error');
+  if (speechSynthesis.speaking) { pararVoz(); return; }
+  const u = new SpeechSynthesisUtterance(h.voz.replace(/\bL\s?([\d.,]+)/g, '$1 lempiras').replace(/a\. m\./g, 'de la mañana').replace(/p\. m\./g, 'de la tarde'));
+  const voces = speechSynthesis.getVoices(), v = voces.find(x => /^es[-_](HN|MX|US|419)/i.test(x.lang)) || voces.find(x => /^es/i.test(x.lang));
+  if (v) u.voice = v; u.lang = v ? v.lang : 'es-MX'; u.rate = 0.98;
+  u.onend = u.onerror = () => pararVoz();
+  $('#cu-box').classList.add('hablando'); $('#cu-voz').innerHTML = `${ic('x', 18)} Detener`;
+  speechSynthesis.speak(u);
+}
+ACC.cuenta = () => abrirCuenta('hoy');
+ACC.cuentaPer = el => abrirCuenta(el.dataset.k);
 
 /* ===================== VENDER ===================== */
 function guardarTicket() { LS.set('ticket', JSON.stringify(S.ticket)); }
@@ -8474,6 +8634,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.2', fecha: '2026-10-23', items: [
+    { i: 'sparkle', t: '¿Cómo me fue hoy? Tu negocio te lo cuenta', d: 'En Inicio, un botón te resume el día en palabras: facturas, vendido, costo, ganancia y margen, lo más vendido, compras, pagos y cobros. Puedes escucharlo o enviarlo por WhatsApp. Y si aún no hay ventas, te anima a seguir.', ir: 'inicio' }
+  ] },
   { v: '1.9.1', fecha: '2026-10-22', items: [
     { i: 'lock', t: 'Registro más seguro', d: 'Al crear tu negocio el botón queda bloqueado hasta terminar, así no se crean cuentas repetidas por tocar dos veces.' }
   ] },

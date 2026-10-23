@@ -21,7 +21,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.1';
+const VERSION = '1.9.2';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -2398,7 +2398,7 @@ function reporte_(u, d) {
   const fac = {}; ventas.forEach(v => { fac[v.id] = lineas[v.id] > 0 ? (v.total - v.isv) / lineas[v.id] : 1; });
   const pm = porId_(rows_('Productos')), us = porId_(rows_('Usuarios'));
   const k = { ventas: 0, n: ventas.length, ticket: 0, isv: 0, descuentos: 0, costo: 0, bruta: 0, gastos: 0, neta: 0, margen: 0,
-    credito: 0, cobros: 0, compras: 0, anuladas: 0, clientesNuevos: 0, articulos: 0 };
+    credito: 0, cobros: 0, compras: 0, pagos: 0, anuladas: 0, clientesNuevos: 0, articulos: 0 };
   const porDia = {}, gastosDia = {}, porMetodo = {}, porCat = {}, top = {}, porUsuario = {}, porHora = {};
   ventas.forEach(v => {
     k.ventas += v.total; k.isv += v.isv; k.descuentos += v.descuento; k.costo += v.costo;
@@ -2429,6 +2429,7 @@ function reporte_(u, d) {
   });
   rows_('Abonos').forEach(a => { if (!a.anulado && a.fecha >= r.desde && a.fecha <= r.hasta) k.cobros += a.monto; });
   rows_('Compras').forEach(c => { if (!c.anulada && c.fecha >= r.desde && c.fecha <= r.hasta) k.compras += c.total; });
+  rows_('Pagos').forEach(p => { if (!p.anulado && p.fecha >= r.desde && p.fecha <= r.hasta) k.pagos += p.monto; });
   k.anuladas = rows_('Ventas').filter(v => v.anulada && v.fecha >= r.desde && v.fecha <= r.hasta).length;
   k.clientesNuevos = rows_('Clientes').filter(c => c.creado >= r.desde && c.creado <= r.hasta).length;
   k.ticket = ventas.length ? k.ventas / ventas.length : 0;
