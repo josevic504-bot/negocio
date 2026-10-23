@@ -30,7 +30,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -672,7 +672,7 @@ function bootstrap_(u, d) {
     sar: estadoSAR_()
   };
   sinInternos_(r.config);
-  if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config); mSet_('Licencias', NEG.lic, Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf)); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u);
   return r;
 }
@@ -757,7 +757,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','chatId','fecha','ultimo','creado','version'];
+const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -819,6 +819,15 @@ function licDesfase_(cfg) {
   if (g && String(NEG.lic.giro || '') !== g) o.giro = g;
   const n = txt_(cfg.nombre, 60);
   if (n && String(NEG.lic.negocio || '') !== n) o.negocio = n;
+  return o;
+}
+
+// Uso real del negocio para el Panel: última venta y ventas de los últimos 7 días (recien = se llama justo después de cobrar)
+function usoLic_(recien) {
+  const lim = Date.now() - 7 * 86400000, v = rowsDesde_('Ventas', lim).filter(x => !x.anulada && msDeLocal_(x.fecha) >= lim);
+  const o = { ventas7: Math.max(v.length, recien ? 1 : 0) };
+  if (recien) o.ultimaVenta = ahora_().replace('T', ' ');
+  else if (v.length) o.ultimaVenta = String(v.map(x => x.fecha).sort().pop()).replace('T', ' ').slice(0, 16);
   return o;
 }
 
@@ -1220,7 +1229,8 @@ function panelFicha_(l, segs) {
   const hecho = tipo => mis.filter(x => x.tipo === tipo).map(x => x.fecha).sort().pop() || '';
   const est = lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
-    usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, notas: l.notas || '', contactar: '' };
+    usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
+    ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '' };
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
   else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
@@ -1247,12 +1257,22 @@ function panelLimpiarDuplicados_() {
 function panelResumen_() {
   const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0).map(l => panelFicha_(l, segs));
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
-  const mes = hoy_().slice(0, 7), pagos = mRows_('PagosLic').filter(p => String(p.fecha).slice(0, 7) === mes);
+  const mes = hoy_().slice(0, 7), todosPagos = mRows_('PagosLic'), pagos = todosPagos.filter(p => String(p.fecha).slice(0, 7) === mes);
+  // Conversión: de las pruebas que ya terminaron (o se activaron antes de terminar), cuántas compraron
+  const terminadas = lics.filter(x => x.estado === 'activa' || x.estado === 'vencida' || x.estado === 'bloqueada'), compraron = lics.filter(x => x.estado === 'activa');
+  const porMes = {};
+  lics.forEach(x => { const m = String(x.registro).slice(0, 7); if (!/^\d{4}-\d{2}$/.test(m)) return; const o = porMes[m] = porMes[m] || { mes: m, registros: 0, activos: 0 }; o.registros++; if (x.estado === 'activa') o.activos++; });
+  // Activados sin pago anotado (licencia o Plus)
+  const pagoDe = {}; todosPagos.forEach(p => { (pagoDe[p.negocioId] = pagoDe[p.negocioId] || {})[String(p.concepto).toLowerCase().indexOf('plus') >= 0 ? 'plus' : 'lic'] = true; });
+  const sinPago = [];
+  lics.forEach(x => { const p = pagoDe[x.id] || {}; if (x.estado === 'activa' && !p.lic) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: 'Licencia' }); if (x.plus && x.estado !== 'prueba' && !p.plus) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: 'Plus' }); });
   const sop = mRows_('Soporte');
   const n = k => lics.filter(x => x.estado === k).length;
   const orden = { dia3: 0, vence: 1, inactivo: 2, vencida: 3 };
   return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
-      ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length },
+      ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
+      terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
+    porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION,
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics, duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
     soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
@@ -1279,6 +1299,7 @@ function panelNegocio_(d) {
   NEG = null; delete MEMO._ss;
   return f;
 }
+const ETIQUETAS_LIC = ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido'];
 function panelAccion_(d) {
   const l = licDe_(d.id), f = ahora_().replace('T', ' ');
   const upd = {}; let nota = '';
@@ -1291,6 +1312,7 @@ function panelAccion_(d) {
       upd.vencePrueba = Utilities.formatDate(new Date(base + dias * 86400000), TZ, 'yyyy-MM-dd'); upd.estado = 'Prueba'; nota = 'Prueba extendida ' + dias + ' días'; break; }
     case 'pausar':     upd.estado = 'Bloqueada'; nota = 'Acceso pausado'; break;
     case 'reanudar':   upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Activa'; nota = 'Acceso reanudado'; break;
+    case 'etiqueta': { const e = ETIQUETAS_LIC.indexOf(d.etiqueta) >= 0 ? d.etiqueta : ''; upd.etiqueta = e; nota = e ? 'Etiqueta: ' + e : 'Etiqueta quitada'; break; }
     default: throw new Error('Acción no válida');
   }
   mSet_('Licencias', l, upd);
@@ -1846,6 +1868,7 @@ function venta_(u, d) {
   const nuevasSus = susRegistrar_(u, d, venta, items, pm);
   cerrarLigados_(d, venta);
   if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, usoLic_(1)); } catch (e) {} }
   return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
 }
 

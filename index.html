@@ -1023,7 +1023,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -1665,7 +1665,7 @@ function bootstrap_(u, d) {
     sar: estadoSAR_()
   };
   sinInternos_(r.config);
-  if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config); mSet_('Licencias', NEG.lic, Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf)); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u);
   return r;
 }
@@ -1750,7 +1750,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','chatId','fecha','ultimo','creado','version'];
+const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -1812,6 +1812,15 @@ function licDesfase_(cfg) {
   if (g && String(NEG.lic.giro || '') !== g) o.giro = g;
   const n = txt_(cfg.nombre, 60);
   if (n && String(NEG.lic.negocio || '') !== n) o.negocio = n;
+  return o;
+}
+
+// Uso real del negocio para el Panel: última venta y ventas de los últimos 7 días (recien = se llama justo después de cobrar)
+function usoLic_(recien) {
+  const lim = Date.now() - 7 * 86400000, v = rowsDesde_('Ventas', lim).filter(x => !x.anulada && msDeLocal_(x.fecha) >= lim);
+  const o = { ventas7: Math.max(v.length, recien ? 1 : 0) };
+  if (recien) o.ultimaVenta = ahora_().replace('T', ' ');
+  else if (v.length) o.ultimaVenta = String(v.map(x => x.fecha).sort().pop()).replace('T', ' ').slice(0, 16);
   return o;
 }
 
@@ -2213,7 +2222,8 @@ function panelFicha_(l, segs) {
   const hecho = tipo => mis.filter(x => x.tipo === tipo).map(x => x.fecha).sort().pop() || '';
   const est = lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
-    usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, notas: l.notas || '', contactar: '' };
+    usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
+    ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '' };
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
   else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
@@ -2240,12 +2250,22 @@ function panelLimpiarDuplicados_() {
 function panelResumen_() {
   const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0).map(l => panelFicha_(l, segs));
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
-  const mes = hoy_().slice(0, 7), pagos = mRows_('PagosLic').filter(p => String(p.fecha).slice(0, 7) === mes);
+  const mes = hoy_().slice(0, 7), todosPagos = mRows_('PagosLic'), pagos = todosPagos.filter(p => String(p.fecha).slice(0, 7) === mes);
+  // Conversión: de las pruebas que ya terminaron (o se activaron antes de terminar), cuántas compraron
+  const terminadas = lics.filter(x => x.estado === 'activa' || x.estado === 'vencida' || x.estado === 'bloqueada'), compraron = lics.filter(x => x.estado === 'activa');
+  const porMes = {};
+  lics.forEach(x => { const m = String(x.registro).slice(0, 7); if (!/^\d{4}-\d{2}$/.test(m)) return; const o = porMes[m] = porMes[m] || { mes: m, registros: 0, activos: 0 }; o.registros++; if (x.estado === 'activa') o.activos++; });
+  // Activados sin pago anotado (licencia o Plus)
+  const pagoDe = {}; todosPagos.forEach(p => { (pagoDe[p.negocioId] = pagoDe[p.negocioId] || {})[String(p.concepto).toLowerCase().indexOf('plus') >= 0 ? 'plus' : 'lic'] = true; });
+  const sinPago = [];
+  lics.forEach(x => { const p = pagoDe[x.id] || {}; if (x.estado === 'activa' && !p.lic) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: 'Licencia' }); if (x.plus && x.estado !== 'prueba' && !p.plus) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: 'Plus' }); });
   const sop = mRows_('Soporte');
   const n = k => lics.filter(x => x.estado === k).length;
   const orden = { dia3: 0, vence: 1, inactivo: 2, vencida: 3 };
   return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
-      ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length },
+      ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
+      terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
+    porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION,
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics, duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
     soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
@@ -2272,6 +2292,7 @@ function panelNegocio_(d) {
   NEG = null; delete MEMO._ss;
   return f;
 }
+const ETIQUETAS_LIC = ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido'];
 function panelAccion_(d) {
   const l = licDe_(d.id), f = ahora_().replace('T', ' ');
   const upd = {}; let nota = '';
@@ -2284,6 +2305,7 @@ function panelAccion_(d) {
       upd.vencePrueba = Utilities.formatDate(new Date(base + dias * 86400000), TZ, 'yyyy-MM-dd'); upd.estado = 'Prueba'; nota = 'Prueba extendida ' + dias + ' días'; break; }
     case 'pausar':     upd.estado = 'Bloqueada'; nota = 'Acceso pausado'; break;
     case 'reanudar':   upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Activa'; nota = 'Acceso reanudado'; break;
+    case 'etiqueta': { const e = ETIQUETAS_LIC.indexOf(d.etiqueta) >= 0 ? d.etiqueta : ''; upd.etiqueta = e; nota = e ? 'Etiqueta: ' + e : 'Etiqueta quitada'; break; }
     default: throw new Error('Acción no válida');
   }
   mSet_('Licencias', l, upd);
@@ -2839,6 +2861,7 @@ function venta_(u, d) {
   const nuevasSus = susRegistrar_(u, d, venta, items, pm);
   cerrarLigados_(d, venta);
   if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, usoLic_(1)); } catch (e) {} }
   return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
 }
 
@@ -5079,7 +5102,7 @@ async function arrancar() {
   let cache = LS.json(cacheKey(), null);
   if (cache && cache.usuario) { aplicarDatos(cache); mostrarApp(); } else cache = null;
   try {
-    const d = await api('bootstrap', { inicio: true }, !!cache);
+    const d = await api('bootstrap', { inicio: true, app: APP_VER }, !!cache);
     S.inicio = d.inicio || null; delete d.inicio;
     aplicarDatos(d);
     try { LS.set(cacheKey(), JSON.stringify(d)); } catch (e) {}
@@ -5115,7 +5138,7 @@ function guardarCache() {
   } catch (e) {}
 }
 async function recargar(silent) {
-  const d = await api('bootstrap', {}, silent);
+  const d = await api('bootstrap', { app: APP_VER }, silent);
   aplicarDatos(d);
   try { LS.set(cacheKey(), JSON.stringify(d)); } catch (e) {}
 }
@@ -5475,7 +5498,7 @@ function panelLogin() {
 }
 ACC.panelSalir = async () => { try { await api('panelSalir', {}, true); } catch (e) {} panelLogin(); };
 ACC.panelInicio = () => panelResumen();
-const fichaLi = n => `<div class="li" data-a="panelVer" data-id="${n.id}"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}${n.plus ? ' <span class="plus-b" style="font-size:9px;padding:2px 6px">PLUS</span>' : ''}</b><small>${esc(n.giro)} · ${esc(n.dueno)} · ${n.usuarios} usuario${n.usuarios > 1 ? 's' : ''} · entró ${cuandoP(n.ultimaConexion)}</small>${n.estado === 'prueba' ? `<small style="color:var(--warn)">Día ${n.dia} · ${n.diasRestantes === 1 ? 'vence mañana' : 'vence en ' + n.diasRestantes + ' días'}</small>` : ''}</div><div class="am"><span class="badge ${EST_L[n.estado][0]}">${EST_L[n.estado][1]}</span></div></div>`;
+const fichaLi = n => `<div class="li" data-a="panelVer" data-id="${n.id}"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}${n.plus ? ' <span class="plus-b" style="font-size:9px;padding:2px 6px">PLUS</span>' : ''}</b><small>${esc(n.giro)} · ${esc(n.dueno)} · entró ${cuandoP(n.ultimaConexion)}</small><small style="color:${n.ventas7 ? 'var(--ok, #00b56e)' : 'var(--mut)'}">${ventasTxt(n)}${n.version && P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? ` · <span style="color:var(--bad)">app ${esc(n.version)}</span>` : ''}</small>${n.estado === 'prueba' ? `<small style="color:var(--warn)">Día ${n.dia} · ${n.diasRestantes === 1 ? 'vence mañana' : 'vence en ' + n.diasRestantes + ' días'}</small>` : ''}</div><div class="am" style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="badge ${EST_L[n.estado][0]}">${EST_L[n.estado][1]}</span>${n.etiqueta ? `<span class="badge ${ETQ_B[n.etiqueta] || 'b-mut'}" style="font-size:10px">${esc(n.etiqueta)}</span>` : ''}</div></div>`;
 function cardContactar(n) {
   const t = CONTACTAR_T[n.contactar];
   return `<div class="ord ${n.contactar === 'dia3' || n.contactar === 'vence' ? 'new' : ''}"><div class="ord-h"><span class="oav ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</span><div class="tx"><b>${esc(n.negocio)}</b><small>${t[2]} · ${esc(n.dueno)}${n.sinEntrar >= 2 ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><span class="badge ${t[1]}">${t[0]}</span></div>
@@ -5487,18 +5510,25 @@ async function panelResumen() {
   $('#main').innerHTML = '<div class="empty">Cargando…</div>';
   const d = await api('panelResumen', {}); P.d = d; P.pl = d.plantillas || P.pl; panelCab('Panel Molina');
   const k = d.kpis, f = P.f;
-  $('#main').innerHTML = `<div class="kpis k4"><div class="kpi"><small>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></div><div class="kpi" style="--k:var(--warn)"><small>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b></div><div class="kpi" style="--k:#00b56e"><small>Ingresos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'}</i></div></div>
+  $('#main').innerHTML = `<div class="kpis k4"><div class="kpi"><small>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></div><div class="kpi" style="--k:var(--warn)"><small>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b></div><div class="kpi" style="--k:#00b56e"><small>Ingresos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'} · total ${money(k.ingresosTotal || 0)}</i></div></div>
+    <div class="kpis k4" style="margin-top:8px"><div class="kpi" style="--k:var(--pri)"><small>Conversión</small><b>${k.terminadas ? k.conversion + '%' : '—'}</b><i>${k.terminadas ? `${k.compraron} de ${k.terminadas} pruebas terminadas compraron` : 'ninguna prueba ha terminado'}</i></div><div class="kpi" style="--k:var(--warn)"><small>Sin vender 7 días</small><b>${k.sinVender7 || 0}</b><i>abren la app pero no cobran</i></div></div>
+    ${(d.porMes || []).length > 1 ? `<div class="chips" style="margin:8px 0 0;flex-wrap:wrap">${d.porMes.map(m => `<span class="chip" style="pointer-events:none">${esc(fMes(m.mes).split(' ')[0].slice(0, 3))} · ${m.activos}/${m.registros}</span>`).join('')}</div>` : ''}
+    ${(d.sinPago || []).length ? `<div class="aviso warn" style="margin-top:10px">${ic('coin', 20)}<div><b>${d.sinPago.length} activación${d.sinPago.length > 1 ? 'es' : ''} sin pago anotado</b><small>${d.sinPago.map(x => esc(x.negocio) + ' (' + x.que + ')').join(' · ')}</small></div><button class="btn sm" data-a="panelVer" data-id="${d.sinPago[0].id}">Ver</button></div>` : ''}
     ${d.soporteSin ? `<div class="aviso info">${ic('chat', 20)}<div><b>${d.soporteSin} conversación${d.soporteSin > 1 ? 'es' : ''} de soporte sin responder</b>${d.erroresAbiertos ? `<small>${d.erroresAbiertos} error${d.erroresAbiertos > 1 ? 'es' : ''} abierto${d.erroresAbiertos > 1 ? 's' : ''}</small>` : ''}</div><button class="btn sm pri" data-a="panelSoporteLista">Ver</button></div>` : ''}
     <div class="sec-t"><h3>Para contactar hoy</h3><a>${d.contactar.length}</a></div>${d.contactar.map(cardContactar).join('') || '<div class="empty">Nadie pendiente hoy 🎉</div>'}
     <div class="sec-t"><h3>Clientes</h3><a>${d.negocios.length} negocio${d.negocios.length === 1 ? '' : 's'}</a></div>
     <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="pn-q" placeholder="Buscar negocio, dueño o WhatsApp…" value="${esc(f.q || '')}"></div>
-    <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['prueba', 'En prueba'], ['activa', 'Activos'], ['vencida', 'Vencidos'], ['bloqueada', 'Pausados'], ['sin', 'Sin entrar 7 días']].map(x => `<button class="chip ${(f.est || '') === x[0] ? 'on' : ''}" data-a="panelFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+    <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['prueba', 'En prueba'], ['activa', 'Activos'], ['vencida', 'Vencidos'], ['bloqueada', 'Pausados'], ['sin', 'Sin vender 7 días']].map(x => `<button class="chip ${(f.est || '') === x[0] ? 'on' : ''}" data-a="panelFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+    <div class="chips" style="margin-bottom:10px">${[['', 'Toda etiqueta']].concat((d.etiquetas || []).map(e => [e, e])).map(x => `<button class="chip ${(f.etq || '') === x[0] ? 'on' : ''}" data-a="panelFiltroEtq" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
     <div class="list" id="pn-list"></div>
     ${(d.duplicados || []).length ? `<div class="row sp" style="margin-top:14px"><small class="h">${d.duplicados.length} registro${d.duplicados.length > 1 ? 's' : ''} repetido${d.duplicados.length > 1 ? 's' : ''} (sin acceso)${d.duplicados.some(x => !x.limpiada) ? '' : ' · ya limpiados'}</small><div class="row"><button class="btn sm ghost" data-a="panelDuplicados">Ver</button>${d.duplicados.some(x => !x.limpiada) ? '<button class="btn sm" data-a="panelLimpiarDup">Limpiar</button>' : ''}</div></div>` : ''}`;
-  const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'sin' ? n.sinEntrar >= 7 : n.estado === f.est)) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); $('#pn-list').innerHTML = l.map(fichaLi).join('') || '<div class="empty">Sin resultados</div>'; };
+  const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'sin' ? (n.sinVender >= 7 && n.estado !== 'vencida' && n.estado !== 'bloqueada') : n.estado === f.est)) && (!f.etq || n.etiqueta === f.etq) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); $('#pn-list').innerHTML = l.map(fichaLi).join('') || '<div class="empty">Sin resultados</div>'; };
   $('#pn-q').addEventListener('input', debounce(e => { f.q = e.target.value; pinta(); }, 150)); P.pinta = pinta; pinta();
 }
 ACC.panelFiltro = el => { P.f.est = el.dataset.k; panelResumen(); };
+ACC.panelFiltroEtq = el => { P.f.etq = el.dataset.k; panelResumen(); };
+const ventasTxt = n => n.ventas7 ? `${n.ventas7} venta${n.ventas7 === 1 ? '' : 's'} esta semana` : n.ultimaVenta ? 'última venta ' + cuandoP(n.ultimaVenta) : 'sin ventas';
+const ETQ_B = { 'Interesado': 'b-ok', 'Precio alto': 'b-warn', 'Ya tiene otro sistema': 'b-mut', 'Perdido': 'b-bad' };
 ACC.panelDuplicados = () => {
   const l = (P.d && P.d.duplicados) || [];
   hoja({ titulo: 'Registros repetidos', html: `<p class="h" style="margin:0 0 10px">Filas de Licencias a las que nadie entra (el cliente tocó dos veces «Comenzar prueba»). El cliente usa la otra fila; estas no afectan sus datos.</p>
@@ -5536,9 +5566,12 @@ async function panelFicha(id) {
     n = await api('panelNegocio', { id }); $('.sheet-h h3', h.el).textContent = n.negocio;
     const u = n.uso, e = EST_L[n.estado];
     h.b.innerHTML = `<div class="cli-h"><div class="av ${colorDe(n.negocio)} lg">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.dueno)} · ${esc(fmtWA(n.whatsapp))}</b><small>${esc(n.giro)} · registrado el ${esc(fFechaC(String(n.registro).slice(0, 10)))} · ${n.usuarios} usuario${n.usuarios > 1 ? 's' : ''}</small></div></div>
-      <div class="kpis"><div class="kpi" style="--k:${n.estado === 'activa' ? '#00b56e' : n.estado === 'prueba' ? 'var(--warn)' : 'var(--bad)'}"><small>Estado</small><b>${e[1]}</b><i>${n.estado === 'prueba' ? `día ${n.dia} · vence ${esc(fFechaC(n.vencePrueba))}` : n.estado === 'vencida' ? 'venció el ' + esc(fFechaC(n.vencePrueba)) : n.plus ? 'con Plus' : 'sin Plus'}</i></div><div class="kpi"><small>Última conexión</small><b>${n.sinEntrar === 0 ? 'Hoy' : n.sinEntrar === 1 ? 'Ayer' : 'Hace ' + n.sinEntrar + ' días'}</b><i>${esc(String(n.ultimaConexion).slice(11))}</i></div>
+      <div class="kpis"><div class="kpi" style="--k:${n.estado === 'activa' ? '#00b56e' : n.estado === 'prueba' ? 'var(--warn)' : 'var(--bad)'}"><small>Estado</small><b>${e[1]}</b><i>${n.estado === 'prueba' ? `día ${n.dia} · vence ${esc(fFechaC(n.vencePrueba))}` : n.estado === 'vencida' ? 'venció el ' + esc(fFechaC(n.vencePrueba)) : n.plus ? 'con Plus' : 'sin Plus'}</i></div><div class="kpi"><small>Última conexión</small><b>${n.sinEntrar === 0 ? 'Hoy' : n.sinEntrar === 1 ? 'Ayer' : 'Hace ' + n.sinEntrar + ' días'}</b><i>${esc(String(n.ultimaConexion).slice(11))}${n.version ? ' · app ' + esc(n.version) + (P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? ' <span style="color:var(--bad)">(desactualizada)</span>' : '') : ''}</i></div>
+      <div class="kpi" style="--k:${n.ventas7 ? '#00b56e' : 'var(--mut)'}"><small>Última venta</small><b>${n.ultimaVenta ? (n.sinVender === 0 ? 'Hoy' : n.sinVender === 1 ? 'Ayer' : 'Hace ' + n.sinVender + ' días') : 'Ninguna'}</b><i>${n.ventas7} venta${n.ventas7 === 1 ? '' : 's'} en 7 días</i></div>
       ${u ? `<div class="kpi"><small>Uso en 30 días</small><b>${u.ventas30} venta${u.ventas30 === 1 ? '' : 's'}</b><i>${u.productos} productos · ${u.clientes} clientes · ${u.pedidos} pedidos</i></div>` : `<div class="kpi"><small>Uso</small><b>—</b><i>${esc(n.usoError || 'sin datos')}</i></div>`}<div class="kpi"><small>Plus · tienda</small><b>${n.plus ? 'Activo' : n.estado === 'prueba' ? 'Incluido' : 'No'}</b><i>${u && u.tienda ? 'tienda abierta' : 'tienda apagada'}</i></div></div>
       <div class="acciones">${n.estado === 'bloqueada' ? `<button class="btn pri" data-x="reanudar">▶ Reanudar acceso</button>` : n.estado === 'activa' ? '' : `<button class="btn pri" data-x="activar">✓ Activar licencia</button>`}${n.plus ? `<button class="btn ghost" data-x="quitarPlus">Quitar Plus</button>` : `<button class="btn acc" data-x="plus">✦ Activar Plus</button>`}${n.estado === 'activa' ? '' : `<button class="btn" data-x="extender">+7 días de prueba</button>`}${n.estado === 'bloqueada' ? '' : `<button class="btn ghost" data-x="pausar">⏸ Pausar</button>`}</div>
+      <div class="sec-t"><h3>Etiqueta</h3></div>
+      <div class="chips" style="flex-wrap:wrap">${(P.d && P.d.etiquetas || ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido']).map(e => `<button class="chip ${n.etiqueta === e ? 'on' : ''}" data-x="etiqueta" data-e="${esc(e)}">${esc(e)}</button>`).join('')}${n.etiqueta ? `<button class="chip" data-x="etiqueta" data-e="">Quitar</button>` : ''}</div>
       <div class="sec-t"><h3>Escribirle por WhatsApp</h3></div>
       <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['bienvenida', 'Bienvenida'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<a class="btn sm" href="${esc(location.href.split('?')[0] + '?tienda=' + encodeURIComponent(n.id))}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
       <div class="sec-t"><h3>Pagos</h3><a data-x="pago">+ Anotar pago</a></div>
@@ -5552,6 +5585,7 @@ async function panelFicha(id) {
       try {
         if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
         else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }
+        else if (x === 'etiqueta') { await api('panelAccion', { id, accion: 'etiqueta', etiqueta: b.dataset.e === n.etiqueta ? '' : b.dataset.e }); toast('Etiqueta guardada', 'ok'); }
         else { if (!(await panelEjecutar(id, x))) return; }
         await pinta();
       } catch (er) { err(er); }
