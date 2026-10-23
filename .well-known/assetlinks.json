@@ -1,0 +1,8 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "com.molinasoluciones.panelmolina",
+    "sha256_cert_fingerprints": ["7A:BB:D2:B9:D8:EA:11:2D:37:53:03:DD:5C:DE:26:FF:D0:0B:6D:DD:13:DE:8F:37:B0:2F:AE:E3:C6:04:72:3D"]
+  }
+}]
