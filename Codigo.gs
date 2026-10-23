@@ -21,7 +21,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9';
+const VERSION = '1.9.1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -279,7 +279,7 @@ function lock_(fn) {
   l.waitLock(25000);
   if (!EN_LOCK) Object.keys(MEMO).forEach(k => { if (k !== '_ss' && k.indexOf('_m_') !== 0) delete MEMO[k]; }); // lo leído antes del candado puede estar viejo
   EN_LOCK++;
-  try { return fn(); } finally { EN_LOCK--; l.releaseLock(); }
+  try { return fn(); } finally { EN_LOCK--; try { SpreadsheetApp.flush(); } catch (e) {} l.releaseLock(); } // flush: lo escrito queda confirmado antes de soltar el candado (evita registros duplicados)
 }
 function own_(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
 
@@ -672,7 +672,7 @@ function bootstrap_(u, d) {
     sar: estadoSAR_()
   };
   sinInternos_(r.config);
-  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, { ultimaConexion: ahora_().replace('T', ' ') }); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config); mSet_('Licencias', NEG.lic, Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf)); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u);
   return r;
 }
@@ -811,6 +811,17 @@ function setNegocio_(lic) {
   NEG = { id: lic.id, hojaId: lic.hojaId, lic: lic };
 }
 
+// Campos de la ficha en Licencias que ya no coinciden con la configuración real del negocio (tipo y nombre)
+function licDesfase_(cfg) {
+  const o = {};
+  if (!NEG || !NEG.lic) return o;
+  const g = own_(GIROS, cfg.giro) ? GIROS[cfg.giro].n : '';
+  if (g && String(NEG.lic.giro || '') !== g) o.giro = g;
+  const n = txt_(cfg.nombre, 60);
+  if (n && String(NEG.lic.negocio || '') !== n) o.negocio = n;
+  return o;
+}
+
 function licNegocio_(l) {
   const est = String(l.estado || '').trim().toLowerCase();
   if (est === 'activa') return { estado: 'completa' };
@@ -869,6 +880,13 @@ function registrar_(d) {
   if (yaExiste()) throw new Error('Ese WhatsApp ya tiene una cuenta. Toca «Ya tengo cuenta» para ingresar.');
   const cs = CacheService.getScriptCache(), nReg = Number(cs.get('REG_H') || 0);
   if (nReg >= 30) throw new Error('Hay muchos registros en este momento. Intenta de nuevo en una hora o escríbenos por WhatsApp.');
+  // Un registro a la vez por WhatsApp: si el cliente toca dos veces o reintenta, el segundo intento se rechaza mientras el primero termina
+  const kReg = 'REG_' + wa;
+  if (cs.get(kReg)) throw new Error('Tu negocio se está creando, espera un momento. Si ya tienes cuenta, toca «Ya tengo cuenta».');
+  cs.put(kReg, '1', 180);
+  try { return registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg); } finally { try { cs.remove(kReg); } catch (e) {} }
+}
+function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) {
   // La hoja del negocio se crea y se prepara fuera del candado (tarda): así no detiene las ventas de los demás negocios
   const libro = SpreadsheetApp.create('Negocio – ' + negocio);
   try { DriveApp.getFileById(libro.getId()).moveTo(carpeta_()); } catch (e) {}
@@ -1164,6 +1182,7 @@ function rutaPanel_(a, d) {
     case 'panelResumen':           return panelResumen_();
     case 'panelNegocio':           return panelNegocio_(d);
     case 'panelAccion':            return panelAccion_(d);
+    case 'panelLimpiarDuplicados': return panelLimpiarDuplicados_();
     case 'panelContacto':          return panelContacto_(d);
     case 'panelPago':              return panelPago_(d);
     case 'panelNota':              return panelNota_(d);
@@ -1209,8 +1228,24 @@ function panelFicha_(l, segs) {
   else if ((est === 'prueba' || est === 'activa') && sin >= 5 && diasDesde_(hecho('inactivo')) > 7) o.contactar = 'inactivo';
   return o;
 }
+// Filas de Licencias a las que nadie entra: sin acceso en la hoja Accesos (registros repetidos) o ya marcadas como Duplicada
+function licsDuplicadas_() {
+  const conAcceso = {};
+  mRows_('Accesos').forEach(a => { conAcceso[a.negocioId] = true; });
+  return mRows_('Licencias').filter(l => !conAcceso[l.id] || String(l.estado).toLowerCase() === 'duplicada');
+}
+function panelLimpiarDuplicados_() {
+  const dup = licsDuplicadas_(), vivas = {};
+  mRows_('Licencias').forEach(l => { if (dup.indexOf(l) < 0 && l.hojaId) vivas[l.hojaId] = true; });
+  let n = 0;
+  dup.forEach(l => {
+    if (String(l.estado).toLowerCase() !== 'duplicada') { mSet_('Licencias', l, { estado: 'Duplicada', notas: ('Registro repetido · hoja a la papelera ' + hoy_() + (l.notas ? ' · ' + l.notas : '')).slice(0, 200) }); CacheService.getScriptCache().remove('L_' + l.id); n++; }
+    if (l.hojaId && !vivas[l.hojaId]) { try { DriveApp.getFileById(l.hojaId).setTrashed(true); } catch (e) {} }
+  });
+  return { marcadas: n, total: dup.length };
+}
 function panelResumen_() {
-  const segs = mRows_('Seguimiento'), lics = mRows_('Licencias').map(l => panelFicha_(l, segs));
+  const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0).map(l => panelFicha_(l, segs));
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
   const mes = hoy_().slice(0, 7), pagos = mRows_('PagosLic').filter(p => String(p.fecha).slice(0, 7) === mes);
   const sop = mRows_('Soporte');
@@ -1219,7 +1254,8 @@ function panelResumen_() {
   return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
       ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length },
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
-    negocios: lics, soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
+    negocios: lics, duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
+    soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
 }
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
@@ -1233,8 +1269,12 @@ function panelNegocio_(d) {
     Object.keys(MEMO).forEach(k => { if (k.indexOf('_m_') !== 0 && k.indexOf('_hm_') !== 0) delete MEMO[k]; });
     setNegocio_(l);
     const lim = Date.now() - 30 * 86400000, v30 = rowsDesde_('Ventas', lim).filter(v => !v.anulada && msDeLocal_(v.fecha) >= lim);
+    const cfg = config_();
     f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
-      pedidos: rows_('Pedidos').length, tienda: config_().tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+      pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+    // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
+    const dsf = licDesfase_(cfg);
+    if (Object.keys(dsf).length) { mSet_('Licencias', l, dsf); Object.assign(f, dsf); CacheService.getScriptCache().remove('L_' + l.id); }
   } catch (e) { f.usoError = String(e.message || e); }
   NEG = null; delete MEMO._ss;
   return f;

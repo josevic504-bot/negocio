@@ -1014,7 +1014,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9';
+const VERSION = '1.9.1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -1272,7 +1272,7 @@ function lock_(fn) {
   l.waitLock(25000);
   if (!EN_LOCK) Object.keys(MEMO).forEach(k => { if (k !== '_ss' && k.indexOf('_m_') !== 0) delete MEMO[k]; }); // lo leído antes del candado puede estar viejo
   EN_LOCK++;
-  try { return fn(); } finally { EN_LOCK--; l.releaseLock(); }
+  try { return fn(); } finally { EN_LOCK--; try { SpreadsheetApp.flush(); } catch (e) {} l.releaseLock(); } // flush: lo escrito queda confirmado antes de soltar el candado (evita registros duplicados)
 }
 function own_(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
 
@@ -1665,7 +1665,7 @@ function bootstrap_(u, d) {
     sar: estadoSAR_()
   };
   sinInternos_(r.config);
-  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, { ultimaConexion: ahora_().replace('T', ' ') }); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config); mSet_('Licencias', NEG.lic, Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf)); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u);
   return r;
 }
@@ -1804,6 +1804,17 @@ function setNegocio_(lic) {
   NEG = { id: lic.id, hojaId: lic.hojaId, lic: lic };
 }
 
+// Campos de la ficha en Licencias que ya no coinciden con la configuración real del negocio (tipo y nombre)
+function licDesfase_(cfg) {
+  const o = {};
+  if (!NEG || !NEG.lic) return o;
+  const g = own_(GIROS, cfg.giro) ? GIROS[cfg.giro].n : '';
+  if (g && String(NEG.lic.giro || '') !== g) o.giro = g;
+  const n = txt_(cfg.nombre, 60);
+  if (n && String(NEG.lic.negocio || '') !== n) o.negocio = n;
+  return o;
+}
+
 function licNegocio_(l) {
   const est = String(l.estado || '').trim().toLowerCase();
   if (est === 'activa') return { estado: 'completa' };
@@ -1862,6 +1873,13 @@ function registrar_(d) {
   if (yaExiste()) throw new Error('Ese WhatsApp ya tiene una cuenta. Toca «Ya tengo cuenta» para ingresar.');
   const cs = CacheService.getScriptCache(), nReg = Number(cs.get('REG_H') || 0);
   if (nReg >= 30) throw new Error('Hay muchos registros en este momento. Intenta de nuevo en una hora o escríbenos por WhatsApp.');
+  // Un registro a la vez por WhatsApp: si el cliente toca dos veces o reintenta, el segundo intento se rechaza mientras el primero termina
+  const kReg = 'REG_' + wa;
+  if (cs.get(kReg)) throw new Error('Tu negocio se está creando, espera un momento. Si ya tienes cuenta, toca «Ya tengo cuenta».');
+  cs.put(kReg, '1', 180);
+  try { return registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg); } finally { try { cs.remove(kReg); } catch (e) {} }
+}
+function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) {
   // La hoja del negocio se crea y se prepara fuera del candado (tarda): así no detiene las ventas de los demás negocios
   const libro = SpreadsheetApp.create('Negocio – ' + negocio);
   try { DriveApp.getFileById(libro.getId()).moveTo(carpeta_()); } catch (e) {}
@@ -2157,6 +2175,7 @@ function rutaPanel_(a, d) {
     case 'panelResumen':           return panelResumen_();
     case 'panelNegocio':           return panelNegocio_(d);
     case 'panelAccion':            return panelAccion_(d);
+    case 'panelLimpiarDuplicados': return panelLimpiarDuplicados_();
     case 'panelContacto':          return panelContacto_(d);
     case 'panelPago':              return panelPago_(d);
     case 'panelNota':              return panelNota_(d);
@@ -2202,8 +2221,24 @@ function panelFicha_(l, segs) {
   else if ((est === 'prueba' || est === 'activa') && sin >= 5 && diasDesde_(hecho('inactivo')) > 7) o.contactar = 'inactivo';
   return o;
 }
+// Filas de Licencias a las que nadie entra: sin acceso en la hoja Accesos (registros repetidos) o ya marcadas como Duplicada
+function licsDuplicadas_() {
+  const conAcceso = {};
+  mRows_('Accesos').forEach(a => { conAcceso[a.negocioId] = true; });
+  return mRows_('Licencias').filter(l => !conAcceso[l.id] || String(l.estado).toLowerCase() === 'duplicada');
+}
+function panelLimpiarDuplicados_() {
+  const dup = licsDuplicadas_(), vivas = {};
+  mRows_('Licencias').forEach(l => { if (dup.indexOf(l) < 0 && l.hojaId) vivas[l.hojaId] = true; });
+  let n = 0;
+  dup.forEach(l => {
+    if (String(l.estado).toLowerCase() !== 'duplicada') { mSet_('Licencias', l, { estado: 'Duplicada', notas: ('Registro repetido · hoja a la papelera ' + hoy_() + (l.notas ? ' · ' + l.notas : '')).slice(0, 200) }); CacheService.getScriptCache().remove('L_' + l.id); n++; }
+    if (l.hojaId && !vivas[l.hojaId]) { try { DriveApp.getFileById(l.hojaId).setTrashed(true); } catch (e) {} }
+  });
+  return { marcadas: n, total: dup.length };
+}
 function panelResumen_() {
-  const segs = mRows_('Seguimiento'), lics = mRows_('Licencias').map(l => panelFicha_(l, segs));
+  const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0).map(l => panelFicha_(l, segs));
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
   const mes = hoy_().slice(0, 7), pagos = mRows_('PagosLic').filter(p => String(p.fecha).slice(0, 7) === mes);
   const sop = mRows_('Soporte');
@@ -2212,7 +2247,8 @@ function panelResumen_() {
   return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
       ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length },
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
-    negocios: lics, soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
+    negocios: lics, duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
+    soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
 }
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
@@ -2226,8 +2262,12 @@ function panelNegocio_(d) {
     Object.keys(MEMO).forEach(k => { if (k.indexOf('_m_') !== 0 && k.indexOf('_hm_') !== 0) delete MEMO[k]; });
     setNegocio_(l);
     const lim = Date.now() - 30 * 86400000, v30 = rowsDesde_('Ventas', lim).filter(v => !v.anulada && msDeLocal_(v.fecha) >= lim);
+    const cfg = config_();
     f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
-      pedidos: rows_('Pedidos').length, tienda: config_().tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+      pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+    // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
+    const dsf = licDesfase_(cfg);
+    if (Object.keys(dsf).length) { mSet_('Licencias', l, dsf); Object.assign(f, dsf); CacheService.getScriptCache().remove('L_' + l.id); }
   } catch (e) { f.usoError = String(e.message || e); }
   NEG = null; delete MEMO._ss;
   return f;
@@ -4549,7 +4589,8 @@ function demoShims(DEMO) {
     getActiveSpreadsheet: () => Libro(null),
     openById: id => { if (!db().books || !db().books[id]) throw new Error('No se encontró la hoja del negocio'); return Libro(id); },
     create: nombre => { const id = 'H' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); (db().books = db().books || {})[id] = { nombre, sheets: {}, order: [] }; return Libro(id); },
-    newDataValidation: () => validacion
+    newDataValidation: () => validacion,
+    flush: () => {}
   };
   // Las fotos del modo prueba se guardan como datos dentro del navegador
   const carpeta = { getName: () => 'Carpeta', createFile: b => { const url = 'data:' + b.mime + ';base64,' + b.data; return { getId: () => url, setSharing: () => {} }; } };
@@ -4607,7 +4648,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9';
+const APP_VER = '1.9.1';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -5151,7 +5192,7 @@ function pintarLogin() {
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
-        <button class="btn pri big" type="submit">Comenzar prueba gratis</button><div class="lg-err" id="r-err"></div></form>`
+        <button class="btn pri big" type="submit" id="r-btn">Comenzar prueba gratis</button><div class="lg-err" id="r-err"></div></form>`
     : `<h3 class="lg-t">${nombre ? 'Hola de nuevo' : 'Ingresar'}</h3>
       <form id="f-log" autocomplete="on">
         ${multi ? `<label class="fld"><span>Tu WhatsApp</span><input id="l-user" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
@@ -5181,19 +5222,25 @@ async function ingresar(ev) {
     await arrancar();
   } catch (e) { const el = $('#l-err'); if (el) el.textContent = e.message; }
 }
+let registrando = false;
 async function registrarse(ev) {
   ev.preventDefault();
+  if (registrando) return; // un solo registro aunque toquen el botón varias veces
   $('#r-err').textContent = '';
+  const btn = $('#r-btn');
   try {
     const pin = $('#r-pin').value.trim();
     if (!/^\d{4,6}$/.test(pin)) throw new Error('El PIN debe tener de 4 a 6 números');
     if ($('#r-wa').value.replace(/\D/g, '').length < 8) throw new Error('Escribe tu número de WhatsApp');
+    registrando = true;
+    if (btn) { btn.disabled = true; btn.textContent = 'Creando tu negocio… (puede tardar un minuto)'; }
     const r = await api('registrar', { negocio: $('#r-neg').value.trim(), giro: $('#r-giro').value, nombre: $('#r-nom').value.trim(), whatsapp: $('#r-wa').value, pin });
     S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing');
     limpiarSesion();
     await arrancar();
     toast('¡Bienvenido! Tu prueba de ' + DIAS_PRUEBA_REG + ' días ya comenzó', 'ok', 5000);
   } catch (e) { const el = $('#r-err'); if (el) el.textContent = e.message; }
+  finally { registrando = false; const b = $('#r-btn'); if (b) { b.disabled = false; b.textContent = 'Comenzar prueba gratis'; } }
 }
 ACC.demoEjemplo = async el => {
   el.disabled = true; el.innerHTML = 'Preparando el negocio de ejemplo…';
@@ -5446,11 +5493,24 @@ async function panelResumen() {
     <div class="sec-t"><h3>Clientes</h3><a>${d.negocios.length} negocio${d.negocios.length === 1 ? '' : 's'}</a></div>
     <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="pn-q" placeholder="Buscar negocio, dueño o WhatsApp…" value="${esc(f.q || '')}"></div>
     <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['prueba', 'En prueba'], ['activa', 'Activos'], ['vencida', 'Vencidos'], ['bloqueada', 'Pausados'], ['sin', 'Sin entrar 7 días']].map(x => `<button class="chip ${(f.est || '') === x[0] ? 'on' : ''}" data-a="panelFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
-    <div class="list" id="pn-list"></div>`;
+    <div class="list" id="pn-list"></div>
+    ${(d.duplicados || []).length ? `<div class="row sp" style="margin-top:14px"><small class="h">${d.duplicados.length} registro${d.duplicados.length > 1 ? 's' : ''} repetido${d.duplicados.length > 1 ? 's' : ''} (sin acceso)${d.duplicados.some(x => !x.limpiada) ? '' : ' · ya limpiados'}</small><div class="row"><button class="btn sm ghost" data-a="panelDuplicados">Ver</button>${d.duplicados.some(x => !x.limpiada) ? '<button class="btn sm" data-a="panelLimpiarDup">Limpiar</button>' : ''}</div></div>` : ''}`;
   const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'sin' ? n.sinEntrar >= 7 : n.estado === f.est)) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); $('#pn-list').innerHTML = l.map(fichaLi).join('') || '<div class="empty">Sin resultados</div>'; };
   $('#pn-q').addEventListener('input', debounce(e => { f.q = e.target.value; pinta(); }, 150)); P.pinta = pinta; pinta();
 }
 ACC.panelFiltro = el => { P.f.est = el.dataset.k; panelResumen(); };
+ACC.panelDuplicados = () => {
+  const l = (P.d && P.d.duplicados) || [];
+  hoja({ titulo: 'Registros repetidos', html: `<p class="h" style="margin:0 0 10px">Filas de Licencias a las que nadie entra (el cliente tocó dos veces «Comenzar prueba»). El cliente usa la otra fila; estas no afectan sus datos.</p>
+    <div class="list">${l.map(x => `<div class="li"><div class="av t-rojo">${esc(iniciales(x.negocio))}</div><div class="tx"><b>${esc(x.negocio)}</b><small>${esc(x.dueno)} · ${esc(x.whatsapp)} · ${esc(fFechaC(String(x.registro).slice(0, 10)))}</small></div><span class="badge ${x.limpiada ? 'b-ok' : 'b-warn'}">${x.limpiada ? 'Limpiado' : esc(x.estado)}</span></div>`).join('') || '<div class="empty">Sin registros repetidos</div>'}</div>` });
+};
+ACC.panelLimpiarDup = async () => {
+  const n = ((P.d && P.d.duplicados) || []).filter(x => !x.limpiada).length;
+  if (!await confirmar(`¿Marcar ${n} registro${n > 1 ? 's' : ''} como duplicado${n > 1 ? 's' : ''} y mandar su hoja a la papelera de Drive? Se puede recuperar desde la papelera durante 30 días.`, { si: 'Limpiar' })) return;
+  const r = await api('panelLimpiarDuplicados', {});
+  toast(`${r.marcadas} registro${r.marcadas === 1 ? '' : 's'} limpiado${r.marcadas === 1 ? '' : 's'}`, 'ok');
+  panelResumen();
+};
 ACC.panelContactado = async el => { await api('panelContacto', { id: el.dataset.id, tipo: el.dataset.t, nota: 'Contactado por WhatsApp · ' + (CONTACTAR_T[el.dataset.t] || [''])[0] }); toast('Marcado como contactado', 'ok'); panelResumen(); };
 ACC.panelVer = el => panelFicha(el.dataset.id);
 ACC.panelAccion = async el => { const r = await panelEjecutar(el.dataset.id, el.dataset.x); if (r && !PILA.length) panelResumen(); };
@@ -8380,6 +8440,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.1', fecha: '2026-10-22', items: [
+    { i: 'lock', t: 'Registro más seguro', d: 'Al crear tu negocio el botón queda bloqueado hasta terminar, así no se crean cuentas repetidas por tocar dos veces.' }
+  ] },
   { v: '1.9', fecha: '2026-10-21', items: [
     { i: 'sparkle', t: 'Cada tipo de negocio con lo suyo', d: 'Tu giro trae encendidas las funciones que le sirven y en Ajustes › Funciones por tipo de negocio puedes activar las demás.', ir: 'ajustes' },
     { i: 'wrench', t: 'Órdenes de trabajo (taller, repuestos, servicios)', d: 'Recibes el equipo o vehículo con su falla, lo pasas por recibido → en proceso → listo → entregado, avisas por WhatsApp y cobras desde la orden. El cliente guarda su vehículo o equipo.' },
