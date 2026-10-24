@@ -1026,7 +1026,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.4';
+const VERSION = '1.9.5';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -1035,13 +1035,15 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
   SoporteMsg:  ['id','chatId','de','texto','foto','quien','fecha'],
   Seguimiento: ['id','negocioId','tipo','fecha','nota'],
-  PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota']
+  PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota'],
+  // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
+  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado']
 };
 const PANEL_SEG = 21600;
 // Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
@@ -1773,7 +1775,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
+const M_TEXTO = ['desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -2222,6 +2224,11 @@ function rutaPanel_(a, d) {
     case 'panelSoporteVer':        return panelSoporteVer_(d);
     case 'panelSoporteResponder':  return panelSoporteResponder_(d);
     case 'panelSoporteEstado':     return panelSoporteEstado_(d);
+    case 'panelGastos':            return panelGastos_();
+    case 'panelGastoGuardar':      return panelGastoGuardar_(d);
+    case 'panelGastoAnular':       return panelGastoAnular_(d);
+    case 'panelTasa':              return { tasa: tasaDolar_(d && d.forzar) };
+    case 'panelLlego':             return panelLlego_(d);
     case 'panelSalir':             return true;
   }
   throw new Error('Acción no válida: ' + a);
@@ -2296,9 +2303,13 @@ function panelResumen_() {
   });
   lics.forEach(x => { x.sop = sopDe[x.id] || null; });
   const n = k => lics.filter(x => x.estado === k).length;
+  const gastos = mRows_('GastosPanel').filter(g => !esSi_(g.anulado)), gastosMes = r2_(gastos.filter(g => String(g.fecha).slice(0, 7) === mes).reduce((a, g) => a + (Number(g.monto) || 0), 0));
+  const ingresosMes = r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0));
+  const rc = resumenCampanas_();
   const orden = { dia3: 0, vence: 1, inactivo: 2, vencida: 3 };
   return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
-      ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
+      ingresosMes: ingresosMes, pagosMes: pagos.length, gastosMes: gastosMes, gastosMesN: gastos.filter(g => String(g.fecha).slice(0, 7) === mes).length, resultadoMes: r2_(ingresosMes - gastosMes),
+      invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION,
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
@@ -2308,6 +2319,9 @@ function panelResumen_() {
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
   const l = licDe_(d.id), f = panelFicha_(l, mRows_('Seguimiento'));
+  const camps = campanas_(), c = campanaDe_(l, camps);
+  f.llego = c ? { id: c.id, nombre: c.plataforma + ' · «' + c.nombre + '»', desde: c.desde, hasta: c.hasta, auto: !l.llegoPor } : { id: '', nombre: '', directo: l.llegoPor === 'directo' };
+  f.campanas = camps.map(x => ({ id: x.id, nombre: x.plataforma + ' · «' + x.nombre + '»', desde: x.desde, hasta: x.hasta }));
   f.seguimiento = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.pagos = mRows_('PagosLic').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.soporte = mRows_('Soporte').filter(x => x.negocioId === l.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm'));
@@ -4783,6 +4797,103 @@ function guardarConcil_(u, d) {
 }
 
 function norm_(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+
+/* ===================== GASTOS Y PUBLICIDAD (solo Panel) =====================
+ * Gastos del negocio de software (publicidad, dominio, herramientas). Cada publicidad tiene fechas;
+ * los clientes que se registran dentro de esas fechas se le atribuyen solos (se puede cambiar en la ficha).
+ */
+function esSi_(v) { return v === true || ['true', 'sí', 'si', '1', 'x'].indexOf(String(v).toLowerCase()) >= 0; }
+function campanas_() {
+  return mRows_('GastosPanel').filter(g => g.tipo === 'publicidad' && !esSi_(g.anulado) && /^\d{4}-\d{2}-\d{2}$/.test(String(g.desde)))
+    .sort((a, b) => a.desde < b.desde ? 1 : -1);
+}
+// Publicidad a la que se atribuye un cliente: la que él marcó a mano o, si no, la más reciente activa el día que se registró
+function campanaDe_(l, camps) {
+  if (l.llegoPor === 'directo') return null;
+  if (l.llegoPor) { const c = camps.find(x => x.id === l.llegoPor); if (c) return c; }
+  const dia = String(l.registro).slice(0, 10), hoy = hoy_();
+  return camps.find(c => dia >= c.desde && dia <= (c.hasta || hoy)) || null;
+}
+function resumenCampanas_() {
+  const camps = campanas_(), lics = mRows_('Licencias').filter(l => String(l.estado).toLowerCase() !== 'duplicada'), pagos = mRows_('PagosLic');
+  const pagoDe = {}; pagos.forEach(p => { pagoDe[p.negocioId] = r2_((pagoDe[p.negocioId] || 0) + (Number(p.monto) || 0)); });
+  const por = {}; camps.forEach(c => { por[c.id] = []; });
+  lics.forEach(l => { const c = campanaDe_(l, camps); if (c) por[c.id].push(l); });
+  // Conversión y ticket históricos, para estimar la posible recuperación
+  const terminadas = lics.filter(l => ['activa', 'vencida', 'bloqueada'].indexOf(licNegocio_(l).estado === 'completa' ? 'activa' : licNegocio_(l).estado) >= 0);
+  const pagaron = lics.filter(l => pagoDe[l.id] > 0);
+  const conv = terminadas.length ? pagaron.length / terminadas.length : 0.3;
+  const ticket = pagaron.length ? r2_(pagaron.reduce((a, l) => a + pagoDe[l.id], 0) / pagaron.length) : 3000;
+  let invertido = 0, recuperado = 0;
+  const lista = camps.map(c => {
+    const ls = por[c.id], monto = Number(c.monto) || 0;
+    const reg = ls.map(l => { const e = licNegocio_(l).estado; return { id: l.id, negocio: l.negocio, estado: esEliminada_(l) ? 'eliminada' : (e === 'completa' ? 'activa' : e), pagado: pagoDe[l.id] || 0 }; });
+    const pagado = r2_(reg.reduce((a, x) => a + x.pagado, 0)), enPrueba = reg.filter(x => x.estado === 'prueba' && !(x.pagado > 0)).length;
+    invertido += monto; recuperado += pagado;
+    return Object.assign({}, c, { monto: monto, registros: reg.length, activaron: reg.filter(x => x.estado === 'activa').length, pagado: pagado,
+      recuperacion: monto ? Math.round(pagado * 100 / monto) : 0, costoRegistro: reg.length ? r2_(monto / reg.length) : 0,
+      enPrueba: enPrueba, posible: r2_(enPrueba * ticket * conv), clientes: reg, enCurso: !c.hasta || c.hasta >= hoy_() });
+  });
+  return { lista: lista, invertido: r2_(invertido), recuperado: r2_(recuperado), conversion: Math.round(conv * 100), ticket: ticket };
+}
+function panelGastos_() {
+  const rc = resumenCampanas_(), mes = hoy_().slice(0, 7);
+  const otros = mRows_('GastosPanel').filter(g => g.tipo !== 'publicidad' && !esSi_(g.anulado)).sort((a, b) => a.fecha < b.fecha ? 1 : -1)
+    .map(g => ({ id: g.id, fecha: g.fecha, nombre: g.nombre, nota: g.nota, moneda: g.moneda, montoOrig: Number(g.montoOrig) || 0, tasa: Number(g.tasa) || 0, monto: Number(g.monto) || 0 }));
+  const todos = mRows_('GastosPanel').filter(g => !esSi_(g.anulado));
+  const porMes = {}; todos.forEach(g => { const m = String(g.fecha).slice(0, 7); porMes[m] = r2_((porMes[m] || 0) + (Number(g.monto) || 0)); });
+  return { campanas: rc.lista.map(c => ({ id: c.id, fecha: c.fecha, plataforma: c.plataforma, nombre: c.nombre, desde: c.desde, hasta: c.hasta, nota: c.nota, moneda: c.moneda,
+      montoOrig: Number(c.montoOrig) || 0, tasa: Number(c.tasa) || 0, monto: c.monto, registros: c.registros, activaron: c.activaron, pagado: c.pagado, recuperacion: c.recuperacion,
+      costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso })),
+    otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_() };
+}
+function panelGastoGuardar_(d) {
+  const tipo = d.tipo === 'publicidad' ? 'publicidad' : 'otro';
+  const moneda = d.moneda === 'USD' ? 'USD' : 'HNL';
+  const orig = r2_(Number(d.montoOrig) || 0);
+  if (!(orig > 0)) throw new Error('Escribe el monto');
+  const tasa = moneda === 'USD' ? Number(d.tasa) || tasaDolar_() : 1;
+  if (moneda === 'USD' && !(tasa > 0)) throw new Error('Escribe el cambio del dólar');
+  const nombre = txt_(d.nombre, 60);
+  if (!nombre) throw new Error(tipo === 'publicidad' ? 'Ponle un nombre a la publicidad' : 'Escribe en qué fue el gasto');
+  const fecha = /^\d{4}-\d{2}-\d{2}$/.test(String(d.fecha || '')) ? d.fecha : hoy_();
+  const desde = tipo === 'publicidad' ? (/^\d{4}-\d{2}-\d{2}$/.test(String(d.desde || '')) ? d.desde : fecha) : '';
+  const hasta = tipo === 'publicidad' && /^\d{4}-\d{2}-\d{2}$/.test(String(d.hasta || '')) ? d.hasta : '';
+  if (hasta && hasta < desde) throw new Error('La fecha final no puede ser antes del inicio');
+  const rec = { id: d.id || mId_('P'), fecha: fecha, tipo: tipo, plataforma: tipo === 'publicidad' ? txt_(d.plataforma, 30) || 'Otra' : '', nombre: nombre, desde: desde, hasta: hasta,
+    moneda: moneda, montoOrig: orig, tasa: Math.round(tasa * 10000) / 10000, monto: r2_(orig * tasa), nota: txt_(d.nota, 120), anulado: '', creado: ahora_().replace('T', ' ') };
+  const prev = d.id ? mRows_('GastosPanel').find(g => g.id === d.id) : null;
+  if (prev) { delete rec.creado; mSet_('GastosPanel', prev, rec); } else mAppend_('GastosPanel', rec);
+  return panelGastos_();
+}
+function panelGastoAnular_(d) {
+  const g = mRows_('GastosPanel').find(x => x.id === d.id); if (!g) throw new Error('Ese gasto no existe');
+  mSet_('GastosPanel', g, { anulado: 'Sí' });
+  // los clientes asignados a mano a esa publicidad vuelven a la asignación automática
+  mRows_('Licencias').filter(l => l.llegoPor === g.id).forEach(l => mSet_('Licencias', l, { llegoPor: '' }));
+  return panelGastos_();
+}
+function panelLlego_(d) {
+  const l = licDe_(d.id), v = String(d.llegoPor || '');
+  if (v && v !== 'directo' && !campanas_().some(c => c.id === v)) throw new Error('Esa publicidad no existe');
+  mSet_('Licencias', l, { llegoPor: v });
+  CacheService.getScriptCache().remove('L_' + l.id);
+  return panelNegocio_({ id: l.id });
+}
+// Cambio del dólar (lempiras por US$) de un servicio público gratuito; se guarda 6 horas. Si falla, usa el último conocido.
+function tasaDolar_(forzar) {
+  const c = CacheService.getScriptCache(), pr = PropertiesService.getScriptProperties();
+  if (!forzar) { const x = Number(c.get('TASA_USD')); if (x > 0) return x; }
+  try {
+    if (typeof UrlFetchApp === 'undefined') throw new Error('sin internet');
+    const r = JSON.parse(UrlFetchApp.fetch('https://open.er-api.com/v6/latest/USD', { muteHttpExceptions: true }).getContentText());
+    const t = Number(r && r.rates && r.rates.HNL);
+    if (t > 0) { const v = Math.round(t * 10000) / 10000; c.put('TASA_USD', String(v), 21600); pr.setProperty('TASA_USD', String(v)); return v; }
+  } catch (e) {}
+  return Number(pr.getProperty('TASA_USD')) || 0;
+}
+// Ejecútala una vez desde el editor para autorizar la consulta del cambio del dólar
+function probarCambioDolar() { Logger.log('Cambio del dólar hoy: L ' + tasaDolar_(true)); }
 </script>
 <script>
 'use strict';
@@ -5035,7 +5146,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.4';
+const APP_VER = '1.9.5';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -5877,6 +5988,8 @@ async function panelResumen() {
   const k = d.kpis, f = P.f;
   $('#main').innerHTML = `<div class="kpis k4"><div class="kpi"><small>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></div><div class="kpi" style="--k:var(--warn)"><small>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b></div><div class="kpi" style="--k:#00b56e"><small>Ingresos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'} · total ${money(k.ingresosTotal || 0)}</i></div></div>
     <div class="kpis k4" style="margin-top:8px"><div class="kpi" style="--k:var(--pri)"><small>Conversión</small><b>${k.terminadas ? k.conversion + '%' : '—'}</b><i>${k.terminadas ? `${k.compraron} de ${k.terminadas} pruebas terminadas compraron` : 'ninguna prueba ha terminado'}</i></div><div class="kpi" style="--k:var(--warn)"><small>Sin vender 7 días</small><b>${k.sinVender7 || 0}</b><i>abren la app pero no cobran</i></div></div>
+    <div class="kpis k4" style="margin-top:8px"><button class="kpi" style="--k:var(--bad);text-align:left;font:inherit;color:inherit" data-a="panelGastosLista"><small>Gastos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.gastosMes || 0)}</b><i>${k.gastosMesN || 0} gasto${k.gastosMesN === 1 ? '' : 's'} · ver y registrar</i></button><div class="kpi" style="--k:${(k.resultadoMes || 0) < 0 ? 'var(--bad)' : '#00b56e'}"><small>Resultado del mes</small><b class="n">${money(k.resultadoMes || 0)}</b><i>ingresos − gastos</i></div></div>
+    ${k.invertidoPub ? `<button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelGastosLista">${ic('sparkle', 20)}<div><b>Publicidad: recuperado ${money(k.recuperadoPub)} de ${money(k.invertidoPub)} invertidos</b><small>${Math.round(k.recuperadoPub * 100 / k.invertidoPub)} % · toca para ver cada publicidad</small></div></button>` : ''}
     ${(d.porMes || []).length > 1 ? `<div class="chips" style="margin:8px 0 0;flex-wrap:wrap">${d.porMes.map(m => `<span class="chip" style="pointer-events:none">${esc(fMes(m.mes).split(' ')[0].slice(0, 3))} · ${m.activos}/${m.registros}</span>`).join('')}</div>` : ''}
     ${(d.sinPago || []).length ? `<div class="aviso warn" style="margin-top:10px">${ic('coin', 20)}<div><b>${d.sinPago.length} activación${d.sinPago.length > 1 ? 'es' : ''} sin pago anotado</b><small>${d.sinPago.map(x => esc(x.negocio) + ' (' + x.que + ')').join(' · ')}</small></div><button class="btn sm" data-a="panelVer" data-id="${d.sinPago[0].id}">Ver</button></div>` : ''}
     <div class="sec-t"><h3>Clientes</h3><a>${d.negocios.length} negocio${d.negocios.length === 1 ? '' : 's'}</a></div>
@@ -5920,6 +6033,69 @@ ACC.panelLimpiarDup = async () => {
 ACC.panelContactado = async el => { await api('panelContacto', { id: el.dataset.id, tipo: el.dataset.t, nota: 'Contactado por WhatsApp · ' + (CONTACTAR_T[el.dataset.t] || [''])[0] }); toast('Marcado como contactado', 'ok'); panelResumen(); };
 ACC.panelVer = el => panelFicha(el.dataset.id);
 ACC.panelAccion = async el => { const r = await panelEjecutar(el.dataset.id, el.dataset.x); if (r && !PILA.length) panelResumen(); };
+/* ===== Gastos y publicidad (solo Panel) ===== */
+const PLATAFORMAS = ['TikTok', 'Facebook / Instagram', 'Google', 'WhatsApp', 'Volantes / impreso', 'Otra'];
+ACC.panelGastosLista = async () => {
+  panelCab('Gastos y publicidad', true);
+  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
+  const g = await api('panelGastos', {}); P.g = g;
+  const mesT = esc(fMes(hoy().slice(0, 7)).split(' ')[0]);
+  const monTxt = x => x.moneda === 'USD' ? `US$ ${fmtN(x.montoOrig)} × L ${fmtN(x.tasa, 2)} = <b style="display:inline">${money(x.monto)}</b>` : `<b style="display:inline">${money(x.monto)}</b>`;
+  const camp = c => {
+    const est = c.monto && c.pagado >= c.monto ? ['b-ok', 'Recuperada'] : c.enCurso ? ['b-warn', 'En curso'] : ['b-mut', 'Terminada'];
+    return `<div class="cc" data-a="panelGasto" data-id="${c.id}"><div class="cc-h"><div class="av ${colorDe(c.plataforma)}">${ic('sparkle', 20)}</div><div class="tx"><b>${esc(c.plataforma)} · «${esc(c.nombre)}»</b><small>${esc(fFechaC(c.desde))} – ${c.hasta ? esc(fFechaC(c.hasta)) : 'en curso'} · ${monTxt(c)}</small></div><span class="badge ${est[0]}">${est[1]}</span></div>
+      <div class="cc-l"><span>${ic('users', 14)} <b>${c.registros}</b> registro${c.registros === 1 ? '' : 's'}</span><span><b>${c.activaron}</b> activaron</span>${c.registros ? `<span>${money(c.costoRegistro)} por registro</span>` : ''}</div>
+      ${c.pagado > 0 ? `<div class="cc-a ${c.pagado >= c.monto ? 'i' : 'w'}"><span style="color:${c.pagado >= c.monto ? 'var(--info)' : 'var(--warn)'}">${ic('trend', 20)}</span><div class="tx"><b>Recuperación ${c.recuperacion} %</b><small>Pagos de clientes que llegaron en esta publicidad: ${money(c.pagado)}</small></div></div>` : ''}
+      ${c.enPrueba ? `<div class="cc-a w"><span style="color:var(--warn)">${ic('clock', 20)}</span><div class="tx"><b>Posible recuperación: ${money(c.posible)}</b><small>${c.enPrueba} en prueba · estimado con tu conversión (${g.conversion} %) y pago promedio (${money(g.ticket)})</small></div></div>` : ''}
+      ${c.clientes.length ? `<div style="margin:10px 0 0 54px;font-size:12px;color:var(--mut);line-height:1.5">Llegaron: ${c.clientes.map(x => esc(x.negocio) + (x.pagado > 0 ? ' ✓' : x.estado === 'eliminada' ? ' (eliminado)' : '')).join(' · ')}</div>` : ''}</div>`;
+  };
+  $('#main').innerHTML = `<div class="kpis k4"><div class="kpi" style="--k:var(--bad)"><small>Gastos de ${mesT}</small><b class="n">${money(g.gastosMes)}</b></div><div class="kpi" style="--k:#00b56e"><small>Recuperado con publicidad</small><b class="n">${money(g.recuperado)}</b><i>de ${money(g.invertido)} invertidos${g.invertido ? ' · ' + Math.round(g.recuperado * 100 / g.invertido) + ' %' : ''}</i></div></div>
+    <button class="btn pri big" style="width:100%;margin:12px 0" data-a="panelGasto">${ic('plus', 18)} Registrar gasto</button>
+    <div class="sec-t"><h3>Publicidad</h3><a>${g.campanas.length}</a></div>${g.campanas.map(camp).join('') || '<div class="empty">Aún no has registrado publicidad</div>'}
+    <div class="sec-t"><h3>Otros gastos</h3><a>${g.otros.length}</a></div><div class="list">${g.otros.map(x => `<div class="li" data-a="panelGasto" data-id="${x.id}"><div class="av t-azul">${ic('receipt', 20)}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${esc(fFechaC(x.fecha))}${x.moneda === 'USD' ? ' · US$ ' + fmtN(x.montoOrig) + ' × L ' + fmtN(x.tasa, 2) : ''}${x.nota ? ' · ' + esc(x.nota) : ''}</small></div><div class="am n">${money(x.monto)}</div></div>`).join('') || '<div class="empty">Sin otros gastos</div>'}</div>
+    <p class="h" style="text-align:center;font-size:12px;margin-top:14px">Solo tú ves esto. Los clientes que se registran durante las fechas de una publicidad se le asignan solos; lo cambias en su ficha.</p>`;
+};
+ACC.panelGasto = el => {
+  const x = el.dataset.id ? (P.g.campanas.concat(P.g.otros)).find(y => y.id === el.dataset.id) : null;
+  const pub = x ? !!x.plataforma : true;
+  let tipo = pub ? 'publicidad' : 'otro', moneda = x ? x.moneda : 'HNL';
+  const h = hoja({ titulo: x ? 'Editar gasto' : 'Registrar gasto', html: `
+    <div class="seg" id="g-tipo" style="margin-bottom:12px"><button data-t="publicidad" class="${tipo === 'publicidad' ? 'on' : ''}">Publicidad</button><button data-t="otro" class="${tipo === 'otro' ? 'on' : ''}">Otro gasto</button></div>
+    <div id="g-pub"><div class="f2"><label class="fld"><span>Plataforma</span><select id="g-pl">${PLATAFORMAS.map(p => `<option ${x && x.plataforma === p ? 'selected' : ''}>${p}</option>`).join('')}</select></label><label class="fld"><span>Nombre de la publicidad</span><input id="g-n1" maxlength="60" value="${esc(x && pub ? x.nombre : '')}" placeholder="Ej.: Prueba gratis 7 días"></label></div>
+      <div class="f2"><label class="fld"><span>Desde</span><input type="date" id="g-d" value="${esc(x && x.desde || hoy())}"></label><label class="fld"><span>Hasta (vacío = en curso)</span><input type="date" id="g-h" value="${esc(x && x.hasta || '')}"></label></div></div>
+    <div id="g-otro"><div class="f2"><label class="fld"><span>¿En qué fue?</span><input id="g-n2" maxlength="60" value="${esc(x && !pub ? x.nombre : '')}" placeholder="Ej.: Dominio y hosting"></label><label class="fld"><span>Fecha</span><input type="date" id="g-f" value="${esc(x && x.fecha || hoy())}"></label></div></div>
+    <div class="sec-t" style="margin-top:6px"><h3>Monto</h3></div>
+    <div class="seg" id="g-mon" style="margin-bottom:10px"><button data-m="HNL" class="${moneda === 'HNL' ? 'on' : ''}">Lempiras</button><button data-m="USD" class="${moneda === 'USD' ? 'on' : ''}">Dólares</button></div>
+    <div class="f2"><label class="fld"><span id="g-ml">Monto</span><input id="g-m" type="number" step="0.01" min="0" class="n" value="${x ? x.montoOrig : ''}" placeholder="0.00"></label><label class="fld" id="g-tw"><span>Cambio (L por US$)</span><input id="g-t" type="number" step="0.0001" min="0" class="n" value="${x && x.tasa > 1 ? x.tasa : (P.g.tasa || '')}"></label></div>
+    <div class="aviso info" id="g-res" style="margin-top:4px"></div>
+    <label class="fld"><span>Nota (opcional)</span><input id="g-no" maxlength="120" value="${esc(x && x.nota || '')}" placeholder="Ej.: segmentado a San Pedro Sula"></label>` });
+  const B = h.b;
+  const pinta = () => {
+    $('#g-pub', B).hidden = tipo !== 'publicidad'; $('#g-otro', B).hidden = tipo === 'publicidad';
+    $('#g-tw', B).style.visibility = moneda === 'USD' ? '' : 'hidden'; $('#g-ml', B).textContent = moneda === 'USD' ? 'Monto en dólares' : 'Monto en lempiras';
+    const m = num($('#g-m', B).value), t = moneda === 'USD' ? num($('#g-t', B).value) : 1;
+    $('#g-res', B).innerHTML = `${ic('info', 18)}<div><b>Se registra: ${money(r2(m * t))}</b><small>${moneda === 'USD' ? (P.g.tasa ? 'Cambio de hoy consultado automáticamente. Corrígelo si tu banco te cobró otro.' : 'No se pudo consultar el cambio de hoy; escríbelo tú.') : 'Monto en lempiras.'}</small></div>`;
+  };
+  B.addEventListener('click', e => { const t = e.target.closest('[data-t]'), m = e.target.closest('[data-m]'); if (t) { tipo = t.dataset.t; $$('#g-tipo button', B).forEach(b => b.classList.toggle('on', b === t)); pinta(); } if (m) { moneda = m.dataset.m; $$('#g-mon button', B).forEach(b => b.classList.toggle('on', b === m)); pinta(); } });
+  B.addEventListener('input', pinta); pinta();
+  const bt = [{ t: 'Guardar gasto', cls: 'pri', fn: async () => {
+    const d = { id: x ? x.id : '', tipo, moneda, montoOrig: num($('#g-m', B).value), tasa: num($('#g-t', B).value), nota: $('#g-no', B).value };
+    if (tipo === 'publicidad') Object.assign(d, { plataforma: $('#g-pl', B).value, nombre: $('#g-n1', B).value, desde: $('#g-d', B).value, hasta: $('#g-h', B).value, fecha: $('#g-d', B).value });
+    else Object.assign(d, { nombre: $('#g-n2', B).value, fecha: $('#g-f', B).value });
+    await api('panelGastoGuardar', d); toast('Gasto guardado', 'ok'); h.cerrar(); ACC.panelGastosLista();
+  } }];
+  if (x) bt.unshift({ t: 'Anular', cls: 'bad', fn: async () => { if (!await confirmar('¿Anular este gasto? Deja de contar en el mes y en la publicidad.', { si: 'Anular', peligro: true })) return; await api('panelGastoAnular', { id: x.id }); toast('Gasto anulado', 'ok'); h.cerrar(); ACC.panelGastosLista(); } });
+  h.botones(bt);
+};
+function panelElegirLlego(n) {
+  return new Promise(res => {
+    let v = null;
+    const act = n.llego && n.llego.id && !n.llego.auto ? n.llego.id : n.llego && n.llego.directo ? 'directo' : '';
+    const op = [['', 'Automático (según su fecha de registro)'], ['directo', 'Sin publicidad (llegó por otro medio)']].concat((n.campanas || []).map(c => [c.id, c.nombre + ' · ' + fFechaC(c.desde) + (c.hasta ? ' – ' + fFechaC(c.hasta) : ' – en curso')]));
+    const h = hoja({ titulo: '¿Cómo llegó?', cls: 'chica', html: `<div class="list">${op.map(o => `<label class="li" style="cursor:pointer"><input type="radio" name="lleg" value="${esc(o[0])}" ${o[0] === act ? 'checked' : ''} style="width:20px;height:20px;margin-right:10px"><div class="tx"><b style="font-weight:500">${esc(o[1])}</b></div></label>`).join('')}</div>`, onClose: () => res(v) });
+    h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: 'Guardar', cls: 'pri', fn: () => { const r = $('input[name=lleg]:checked', h.el); v = r ? r.value : ''; h.cerrar(); } }]);
+  });
+}
 // Eliminar cliente: confirma escribiendo el nombre del negocio
 function panelEliminar(n) {
   return new Promise(res => {
@@ -5967,8 +6143,10 @@ async function panelFicha(id) {
       <div class="chips" style="flex-wrap:wrap">${(P.d && P.d.etiquetas || ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido']).map(e => `<button class="chip ${n.etiqueta === e ? 'on' : ''}" data-x="etiqueta" data-e="${esc(e)}">${esc(e)}</button>`).join('')}${n.etiqueta ? `<button class="chip" data-x="etiqueta" data-e="">Quitar</button>` : ''}</div>
       <div class="sec-t"><h3>Escribirle por WhatsApp</h3></div>
       <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['bienvenida', 'Bienvenida'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<a class="btn sm" href="${esc(location.href.split('?')[0] + '?tienda=' + encodeURIComponent(n.id))}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
+      <div class="sec-t"><h3>¿Cómo llegó?</h3>${(n.campanas || []).length ? '<a data-x="llego">Cambiar</a>' : ''}</div>
+      ${n.llego && n.llego.id ? `<div class="aviso info">${ic('sparkle', 18)}<div><b>Por publicidad: ${esc(n.llego.nombre)}</b><small>${n.llego.auto ? 'Se registró el ' + esc(fFechaC(String(n.registro).slice(0, 10))) + ', durante esa publicidad (' + esc(fFechaC(n.llego.desde)) + ' – ' + (n.llego.hasta ? esc(fFechaC(n.llego.hasta)) : 'en curso') + ').' : 'Asignado a mano.'}</small></div></div>` : `<p class="h" style="margin:0 0 6px">${n.llego && n.llego.directo ? 'Llegó sin publicidad (marcado a mano).' : 'Sin publicidad en las fechas de su registro.'}</p>`}
       <div class="sec-t"><h3>Pagos</h3><a data-x="pago">+ Anotar pago</a></div>
-      <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small></div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
+      <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small>${n.llego && n.llego.id ? `<small style="color:var(--pri)">${ic('sparkle', 12)} Llegó por ${esc(n.llego.nombre)}</small>` : ''}</div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
       ${n.soporte.length ? `<div class="sec-t"><h3>Soporte</h3></div><div class="list">${n.soporte.slice(0, 5).map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av t-pri">${ic('chat', 18)}</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small>${esc(c.ultimoTexto)}</small></div>${c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : ''}</div>`).join('')}</div>` : ''}
       <div class="sec-t"><h3>Historial</h3></div>
       <div class="list">${n.seguimiento.map(x => `<div class="li"><div class="av ${x.tipo === 'accion' ? 't-pri' : 't-verde'}">${ic(x.tipo === 'accion' ? 'check' : 'wa', 18)}</div><div class="tx"><b>${esc(x.nota)}</b><small>${esc(fFechaC(String(x.fecha).slice(0, 10)))} ${esc(String(x.fecha).slice(11, 16))}</small></div></div>`).join('')}<div class="li"><div class="av t-cian">${ic('plus', 18)}</div><div class="tx"><b>Se registró</b><small>${esc(fFechaC(String(n.registro).slice(0, 10)))} · prueba de ${DIAS_PRUEBA_REG} días</small></div></div></div>
@@ -5982,6 +6160,10 @@ async function panelFicha(id) {
       try {
         if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
         else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }
+        else if (x === 'llego') {
+          const v = await panelElegirLlego(n); if (v === null) return;
+          await api('panelLlego', { id, llegoPor: v }); toast('Guardado', 'ok');
+        }
         else if (x === 'eliminar') { if (await panelEliminar(n)) { h.cerrar(); } return; }
         else if (x === 'etiqueta') { await api('panelAccion', { id, accion: 'etiqueta', etiqueta: b.dataset.e === n.etiqueta ? '' : b.dataset.e }); toast('Etiqueta guardada', 'ok'); }
         else { if (!(await panelEjecutar(id, x))) return; }
@@ -9450,6 +9632,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.5', fecha: '2026-10-24', items: [
+    { i: 'gear', t: 'Mejoras internas', d: 'Ajustes de mantenimiento. Tus datos no cambian.' }
+  ] },
   { v: '1.9.4', fecha: '2026-10-24', items: [
     { i: 'gear', t: 'Mejoras internas', d: 'Ajustes de mantenimiento. Tus datos no cambian.' }
   ] },

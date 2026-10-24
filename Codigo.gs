@@ -21,7 +21,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.4';
+const VERSION = '1.9.5';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -30,13 +30,15 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
   SoporteMsg:  ['id','chatId','de','texto','foto','quien','fecha'],
   Seguimiento: ['id','negocioId','tipo','fecha','nota'],
-  PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota']
+  PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota'],
+  // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
+  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado']
 };
 const PANEL_SEG = 21600;
 // Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
@@ -768,7 +770,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
+const M_TEXTO = ['desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -1217,6 +1219,11 @@ function rutaPanel_(a, d) {
     case 'panelSoporteVer':        return panelSoporteVer_(d);
     case 'panelSoporteResponder':  return panelSoporteResponder_(d);
     case 'panelSoporteEstado':     return panelSoporteEstado_(d);
+    case 'panelGastos':            return panelGastos_();
+    case 'panelGastoGuardar':      return panelGastoGuardar_(d);
+    case 'panelGastoAnular':       return panelGastoAnular_(d);
+    case 'panelTasa':              return { tasa: tasaDolar_(d && d.forzar) };
+    case 'panelLlego':             return panelLlego_(d);
     case 'panelSalir':             return true;
   }
   throw new Error('Acción no válida: ' + a);
@@ -1291,9 +1298,13 @@ function panelResumen_() {
   });
   lics.forEach(x => { x.sop = sopDe[x.id] || null; });
   const n = k => lics.filter(x => x.estado === k).length;
+  const gastos = mRows_('GastosPanel').filter(g => !esSi_(g.anulado)), gastosMes = r2_(gastos.filter(g => String(g.fecha).slice(0, 7) === mes).reduce((a, g) => a + (Number(g.monto) || 0), 0));
+  const ingresosMes = r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0));
+  const rc = resumenCampanas_();
   const orden = { dia3: 0, vence: 1, inactivo: 2, vencida: 3 };
   return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
-      ingresosMes: r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), pagosMes: pagos.length, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
+      ingresosMes: ingresosMes, pagosMes: pagos.length, gastosMes: gastosMes, gastosMesN: gastos.filter(g => String(g.fecha).slice(0, 7) === mes).length, resultadoMes: r2_(ingresosMes - gastosMes),
+      invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION,
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
@@ -1303,6 +1314,9 @@ function panelResumen_() {
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
   const l = licDe_(d.id), f = panelFicha_(l, mRows_('Seguimiento'));
+  const camps = campanas_(), c = campanaDe_(l, camps);
+  f.llego = c ? { id: c.id, nombre: c.plataforma + ' · «' + c.nombre + '»', desde: c.desde, hasta: c.hasta, auto: !l.llegoPor } : { id: '', nombre: '', directo: l.llegoPor === 'directo' };
+  f.campanas = camps.map(x => ({ id: x.id, nombre: x.plataforma + ' · «' + x.nombre + '»', desde: x.desde, hasta: x.hasta }));
   f.seguimiento = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.pagos = mRows_('PagosLic').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.soporte = mRows_('Soporte').filter(x => x.negocioId === l.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm'));
@@ -3778,3 +3792,100 @@ function guardarConcil_(u, d) {
 }
 
 function norm_(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
+
+/* ===================== GASTOS Y PUBLICIDAD (solo Panel) =====================
+ * Gastos del negocio de software (publicidad, dominio, herramientas). Cada publicidad tiene fechas;
+ * los clientes que se registran dentro de esas fechas se le atribuyen solos (se puede cambiar en la ficha).
+ */
+function esSi_(v) { return v === true || ['true', 'sí', 'si', '1', 'x'].indexOf(String(v).toLowerCase()) >= 0; }
+function campanas_() {
+  return mRows_('GastosPanel').filter(g => g.tipo === 'publicidad' && !esSi_(g.anulado) && /^\d{4}-\d{2}-\d{2}$/.test(String(g.desde)))
+    .sort((a, b) => a.desde < b.desde ? 1 : -1);
+}
+// Publicidad a la que se atribuye un cliente: la que él marcó a mano o, si no, la más reciente activa el día que se registró
+function campanaDe_(l, camps) {
+  if (l.llegoPor === 'directo') return null;
+  if (l.llegoPor) { const c = camps.find(x => x.id === l.llegoPor); if (c) return c; }
+  const dia = String(l.registro).slice(0, 10), hoy = hoy_();
+  return camps.find(c => dia >= c.desde && dia <= (c.hasta || hoy)) || null;
+}
+function resumenCampanas_() {
+  const camps = campanas_(), lics = mRows_('Licencias').filter(l => String(l.estado).toLowerCase() !== 'duplicada'), pagos = mRows_('PagosLic');
+  const pagoDe = {}; pagos.forEach(p => { pagoDe[p.negocioId] = r2_((pagoDe[p.negocioId] || 0) + (Number(p.monto) || 0)); });
+  const por = {}; camps.forEach(c => { por[c.id] = []; });
+  lics.forEach(l => { const c = campanaDe_(l, camps); if (c) por[c.id].push(l); });
+  // Conversión y ticket históricos, para estimar la posible recuperación
+  const terminadas = lics.filter(l => ['activa', 'vencida', 'bloqueada'].indexOf(licNegocio_(l).estado === 'completa' ? 'activa' : licNegocio_(l).estado) >= 0);
+  const pagaron = lics.filter(l => pagoDe[l.id] > 0);
+  const conv = terminadas.length ? pagaron.length / terminadas.length : 0.3;
+  const ticket = pagaron.length ? r2_(pagaron.reduce((a, l) => a + pagoDe[l.id], 0) / pagaron.length) : 3000;
+  let invertido = 0, recuperado = 0;
+  const lista = camps.map(c => {
+    const ls = por[c.id], monto = Number(c.monto) || 0;
+    const reg = ls.map(l => { const e = licNegocio_(l).estado; return { id: l.id, negocio: l.negocio, estado: esEliminada_(l) ? 'eliminada' : (e === 'completa' ? 'activa' : e), pagado: pagoDe[l.id] || 0 }; });
+    const pagado = r2_(reg.reduce((a, x) => a + x.pagado, 0)), enPrueba = reg.filter(x => x.estado === 'prueba' && !(x.pagado > 0)).length;
+    invertido += monto; recuperado += pagado;
+    return Object.assign({}, c, { monto: monto, registros: reg.length, activaron: reg.filter(x => x.estado === 'activa').length, pagado: pagado,
+      recuperacion: monto ? Math.round(pagado * 100 / monto) : 0, costoRegistro: reg.length ? r2_(monto / reg.length) : 0,
+      enPrueba: enPrueba, posible: r2_(enPrueba * ticket * conv), clientes: reg, enCurso: !c.hasta || c.hasta >= hoy_() });
+  });
+  return { lista: lista, invertido: r2_(invertido), recuperado: r2_(recuperado), conversion: Math.round(conv * 100), ticket: ticket };
+}
+function panelGastos_() {
+  const rc = resumenCampanas_(), mes = hoy_().slice(0, 7);
+  const otros = mRows_('GastosPanel').filter(g => g.tipo !== 'publicidad' && !esSi_(g.anulado)).sort((a, b) => a.fecha < b.fecha ? 1 : -1)
+    .map(g => ({ id: g.id, fecha: g.fecha, nombre: g.nombre, nota: g.nota, moneda: g.moneda, montoOrig: Number(g.montoOrig) || 0, tasa: Number(g.tasa) || 0, monto: Number(g.monto) || 0 }));
+  const todos = mRows_('GastosPanel').filter(g => !esSi_(g.anulado));
+  const porMes = {}; todos.forEach(g => { const m = String(g.fecha).slice(0, 7); porMes[m] = r2_((porMes[m] || 0) + (Number(g.monto) || 0)); });
+  return { campanas: rc.lista.map(c => ({ id: c.id, fecha: c.fecha, plataforma: c.plataforma, nombre: c.nombre, desde: c.desde, hasta: c.hasta, nota: c.nota, moneda: c.moneda,
+      montoOrig: Number(c.montoOrig) || 0, tasa: Number(c.tasa) || 0, monto: c.monto, registros: c.registros, activaron: c.activaron, pagado: c.pagado, recuperacion: c.recuperacion,
+      costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso })),
+    otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_() };
+}
+function panelGastoGuardar_(d) {
+  const tipo = d.tipo === 'publicidad' ? 'publicidad' : 'otro';
+  const moneda = d.moneda === 'USD' ? 'USD' : 'HNL';
+  const orig = r2_(Number(d.montoOrig) || 0);
+  if (!(orig > 0)) throw new Error('Escribe el monto');
+  const tasa = moneda === 'USD' ? Number(d.tasa) || tasaDolar_() : 1;
+  if (moneda === 'USD' && !(tasa > 0)) throw new Error('Escribe el cambio del dólar');
+  const nombre = txt_(d.nombre, 60);
+  if (!nombre) throw new Error(tipo === 'publicidad' ? 'Ponle un nombre a la publicidad' : 'Escribe en qué fue el gasto');
+  const fecha = /^\d{4}-\d{2}-\d{2}$/.test(String(d.fecha || '')) ? d.fecha : hoy_();
+  const desde = tipo === 'publicidad' ? (/^\d{4}-\d{2}-\d{2}$/.test(String(d.desde || '')) ? d.desde : fecha) : '';
+  const hasta = tipo === 'publicidad' && /^\d{4}-\d{2}-\d{2}$/.test(String(d.hasta || '')) ? d.hasta : '';
+  if (hasta && hasta < desde) throw new Error('La fecha final no puede ser antes del inicio');
+  const rec = { id: d.id || mId_('P'), fecha: fecha, tipo: tipo, plataforma: tipo === 'publicidad' ? txt_(d.plataforma, 30) || 'Otra' : '', nombre: nombre, desde: desde, hasta: hasta,
+    moneda: moneda, montoOrig: orig, tasa: Math.round(tasa * 10000) / 10000, monto: r2_(orig * tasa), nota: txt_(d.nota, 120), anulado: '', creado: ahora_().replace('T', ' ') };
+  const prev = d.id ? mRows_('GastosPanel').find(g => g.id === d.id) : null;
+  if (prev) { delete rec.creado; mSet_('GastosPanel', prev, rec); } else mAppend_('GastosPanel', rec);
+  return panelGastos_();
+}
+function panelGastoAnular_(d) {
+  const g = mRows_('GastosPanel').find(x => x.id === d.id); if (!g) throw new Error('Ese gasto no existe');
+  mSet_('GastosPanel', g, { anulado: 'Sí' });
+  // los clientes asignados a mano a esa publicidad vuelven a la asignación automática
+  mRows_('Licencias').filter(l => l.llegoPor === g.id).forEach(l => mSet_('Licencias', l, { llegoPor: '' }));
+  return panelGastos_();
+}
+function panelLlego_(d) {
+  const l = licDe_(d.id), v = String(d.llegoPor || '');
+  if (v && v !== 'directo' && !campanas_().some(c => c.id === v)) throw new Error('Esa publicidad no existe');
+  mSet_('Licencias', l, { llegoPor: v });
+  CacheService.getScriptCache().remove('L_' + l.id);
+  return panelNegocio_({ id: l.id });
+}
+// Cambio del dólar (lempiras por US$) de un servicio público gratuito; se guarda 6 horas. Si falla, usa el último conocido.
+function tasaDolar_(forzar) {
+  const c = CacheService.getScriptCache(), pr = PropertiesService.getScriptProperties();
+  if (!forzar) { const x = Number(c.get('TASA_USD')); if (x > 0) return x; }
+  try {
+    if (typeof UrlFetchApp === 'undefined') throw new Error('sin internet');
+    const r = JSON.parse(UrlFetchApp.fetch('https://open.er-api.com/v6/latest/USD', { muteHttpExceptions: true }).getContentText());
+    const t = Number(r && r.rates && r.rates.HNL);
+    if (t > 0) { const v = Math.round(t * 10000) / 10000; c.put('TASA_USD', String(v), 21600); pr.setProperty('TASA_USD', String(v)); return v; }
+  } catch (e) {}
+  return Number(pr.getProperty('TASA_USD')) || 0;
+}
+// Ejecútala una vez desde el editor para autorizar la consulta del cambio del dólar
+function probarCambioDolar() { Logger.log('Cambio del dólar hoy: L ' + tasaDolar_(true)); }
