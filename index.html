@@ -6078,6 +6078,11 @@ ACC.panelGasto = el => {
   };
   B.addEventListener('click', e => { const t = e.target.closest('[data-t]'), m = e.target.closest('[data-m]'); if (t) { tipo = t.dataset.t; $$('#g-tipo button', B).forEach(b => b.classList.toggle('on', b === t)); pinta(); } if (m) { moneda = m.dataset.m; $$('#g-mon button', B).forEach(b => b.classList.toggle('on', b === m)); pinta(); } });
   B.addEventListener('input', pinta); pinta();
+  // Si el servidor no trajo el cambio del día, el teléfono lo consulta directo
+  if (!(P.g.tasa > 0)) fetch('https://open.er-api.com/v6/latest/USD').then(r => r.json()).then(j => {
+    const t = Math.round(Number(j && j.rates && j.rates.HNL) * 10000) / 10000;
+    if (t > 0) { P.g.tasa = t; const i = $('#g-t', B); if (i && !i.value) i.value = t; pinta(); }
+  }).catch(() => {});
   const bt = [{ t: 'Guardar gasto', cls: 'pri', fn: async () => {
     const d = { id: x ? x.id : '', tipo, moneda, montoOrig: num($('#g-m', B).value), tasa: num($('#g-t', B).value), nota: $('#g-no', B).value };
     if (tipo === 'publicidad') Object.assign(d, { plataforma: $('#g-pl', B).value, nombre: $('#g-n1', B).value, desde: $('#g-d', B).value, hasta: $('#g-h', B).value, fecha: $('#g-d', B).value });
