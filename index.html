@@ -6171,7 +6171,7 @@ function cuentaTexto(per, d, extra) {
   if (mov.length) F.push(cap(mov.join(', ')) + '.');
   if (k.clientesNuevos > 0) F.push(`Registraste *${k.clientesNuevos === 1 ? '1 cliente nuevo' : k.clientesNuevos + ' clientes nuevos'}*.`);
   if ((per === 'hoy' || per === 'ayer') && d.porHora) {
-    const hs = Object.keys(d.porHora); if (hs.length > 1) { const h = hs.sort((a, b) => d.porHora[b] - d.porHora[a])[0]; const n = Number(h); F.push(`Tu mejor hora fue a las *${n % 12 || 12} ${n < 12 ? 'a. m.' : 'p. m.'}*.`); }
+    const hs = Object.keys(d.porHora); if (hs.length > 1) { const h = hs.sort((a, b) => d.porHora[b] - d.porHora[a])[0]; const n = Number(h); F.push(`Tu mejor hora de ventas: *${n % 12 || 12} ${n < 12 ? 'de la mañana' : n < 19 ? 'de la tarde' : 'de la noche'}*.`); }
   }
   if (k.anuladas) F.push(`Se anularon ${k.anuladas === 1 ? '1 venta' : k.anuladas + ' ventas'}.`);
   return { frases: F, animo: false };
