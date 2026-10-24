@@ -2239,7 +2239,7 @@ const PLANTILLAS_DEF = {
   inactivo: 'Hola {dueno}, vi que no has vuelto a entrar a Gestión de Negocio VM. ¿Te trabó algo? Te ayudo por acá.',
   vencida: 'Hola {dueno}, tu prueba de Gestión de Negocio VM ya terminó, pero tus datos de {negocio} siguen guardados. Cuando querás, activamos tu licencia y seguís donde lo dejaste.',
   activada: '¡Listo {dueno}! Tu licencia de Gestión de Negocio VM para {negocio} ya está activa. Gracias por confiar 🙌 Cualquier duda, me escribís.',
-  bienvenida: '¡Bienvenido a Gestión de Negocio VM, {dueno}! Tenés 7 días para probarlo todo en {negocio}, incluida la tienda en línea. Si necesitás ayuda, escribime por aquí o desde Ayuda en la app.'
+  bienvenida: '¡Hola {dueno}! 👋 Bienvenido a *Gestión de Negocio VM* 🎉\n\nGracias por confiar en nosotros para llevar el control de *{negocio}*. Desde hoy tenés en un solo lugar tus ventas, inventario, clientes, compras, gastos, caja y reportes, desde el teléfono o la computadora.\n\nPara empezar te recomiendo:\n1️⃣ Cargá tus productos con su costo y precio.\n2️⃣ Registrá tus ventas del día.\n3️⃣ Al cerrar, revisá tu caja y tus reportes.\n\nTe dejo la imagen con todo lo que incluye. Si tenés cualquier duda, escribime por aquí o desde *Ayuda* dentro de la app; con gusto te acompaño.\n\n_Molina Soluciones Digitales_'
 };
 function plantillas_() {
   let p = {}; try { p = JSON.parse(PropertiesService.getScriptProperties().getProperty('PANEL_PLANTILLAS') || '{}'); } catch (e) { p = {}; }
@@ -6087,6 +6087,15 @@ ACC.panelGasto = el => {
   if (x) bt.unshift({ t: 'Anular', cls: 'bad', fn: async () => { if (!await confirmar('¿Anular este gasto? Deja de contar en el mes y en la publicidad.', { si: 'Anular', peligro: true })) return; await api('panelGastoAnular', { id: x.id }); toast('Gasto anulado', 'ok'); h.cerrar(); ACC.panelGastosLista(); } });
   h.botones(bt);
 };
+// Bienvenida: imagen con los módulos y tipos de negocio + mensaje de la plantilla «Bienvenida»
+function panelBienvenida(n) {
+  const IMG = 'bienvenida.png';
+  const h = hoja({ titulo: 'Bienvenida para ' + n.negocio, html: `<img src="${IMG}" alt="Imagen de bienvenida" style="width:100%;border-radius:14px;display:block;margin-bottom:12px">
+    <div class="msg-prev" style="white-space:pre-line;max-height:180px;overflow:auto">${esc((P.pl.bienvenida || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio))}</div>
+    <p class="h" style="font-size:12px;margin:10px 0 0">1) Envía la imagen y elige el chat de ${esc(String(n.dueno || '').split(' ')[0])}. 2) Envía el mensaje (se abre su chat con el texto listo).</p>` });
+  h.botones([{ t: '1 · Enviar imagen', fn: async () => { const b = await (await fetch(IMG)).blob(); await compartirArchivo(b, 'Bienvenida-Gestion-de-Negocio-VM.png', ''); } },
+    { t: '2 · Enviar mensaje', cls: 'pri', fn: () => { window.open(waPlantilla(n, 'bienvenida'), '_blank', 'noopener'); api('panelContacto', { id: n.id, tipo: 'bienvenida', nota: 'WhatsApp · Bienvenida + imagen' }, true).catch(() => {}); } }]);
+}
 function panelElegirLlego(n) {
   return new Promise(res => {
     let v = null;
@@ -6142,7 +6151,7 @@ async function panelFicha(id) {
       <div class="sec-t"><h3>Etiqueta</h3></div>
       <div class="chips" style="flex-wrap:wrap">${(P.d && P.d.etiquetas || ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido']).map(e => `<button class="chip ${n.etiqueta === e ? 'on' : ''}" data-x="etiqueta" data-e="${esc(e)}">${esc(e)}</button>`).join('')}${n.etiqueta ? `<button class="chip" data-x="etiqueta" data-e="">Quitar</button>` : ''}</div>
       <div class="sec-t"><h3>Escribirle por WhatsApp</h3></div>
-      <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['bienvenida', 'Bienvenida'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<a class="btn sm" href="${esc(location.href.split('?')[0] + '?tienda=' + encodeURIComponent(n.id))}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
+      <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<button class="btn wa sm" data-x="bienv">${ic('sparkle', 14)} Bienvenida + imagen</button><a class="btn sm" href="${esc(location.href.split('?')[0] + '?tienda=' + encodeURIComponent(n.id))}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
       <div class="sec-t"><h3>¿Cómo llegó?</h3>${(n.campanas || []).length ? '<a data-x="llego">Cambiar</a>' : ''}</div>
       ${n.llego && n.llego.id ? `<div class="aviso info">${ic('sparkle', 18)}<div><b>Por publicidad: ${esc(n.llego.nombre)}</b><small>${n.llego.auto ? 'Se registró el ' + esc(fFechaC(String(n.registro).slice(0, 10))) + ', durante esa publicidad (' + esc(fFechaC(n.llego.desde)) + ' – ' + (n.llego.hasta ? esc(fFechaC(n.llego.hasta)) : 'en curso') + ').' : 'Asignado a mano.'}</small></div></div>` : `<p class="h" style="margin:0 0 6px">${n.llego && n.llego.directo ? 'Llegó sin publicidad (marcado a mano).' : 'Sin publicidad en las fechas de su registro.'}</p>`}
       <div class="sec-t"><h3>Pagos</h3><a data-x="pago">+ Anotar pago</a></div>
@@ -6160,6 +6169,7 @@ async function panelFicha(id) {
       try {
         if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
         else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }
+        else if (x === 'bienv') { panelBienvenida(n); return; }
         else if (x === 'llego') {
           const v = await panelElegirLlego(n); if (v === null) return;
           await api('panelLlego', { id, llegoPor: v }); toast('Guardado', 'ok');
