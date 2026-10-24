@@ -21,7 +21,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.3';
+const VERSION = '1.9.4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -812,9 +812,12 @@ function waNorm_(w) {
 function negocioPorId_(id) {
   const c = CacheService.getScriptCache();
   try { const x = c.get('L_' + id); if (x) return JSON.parse(x); } catch (e) {}
-  const l = mRows_('Licencias').find(x => x.id === id) || null;
+  let l = mRows_('Licencias').find(x => x.id === id) || null;
+  if (l && esEliminada_(l)) l = null; // cliente eliminado desde el Panel: ni sesión ni tienda
   if (l) { try { c.put('L_' + id, JSON.stringify(l), 120); } catch (e) {} }
   return l;
+}
+function esEliminada_(l) { return String(l && l.estado || '').trim().toLowerCase() === 'eliminada';
 }
 
 function setNegocio_(lic) {
@@ -845,7 +848,7 @@ function usoLic_(recien) {
 function licNegocio_(l) {
   const est = String(l.estado || '').trim().toLowerCase();
   if (est === 'activa') return { estado: 'completa' };
-  if (est === 'bloqueada') return { estado: 'bloqueada', contacto: CONTACTO_WA };
+  if (est === 'bloqueada' || est === 'eliminada') return { estado: 'bloqueada', contacto: CONTACTO_WA };
   const vence = String(l.vencePrueba || '').slice(0, 10);
   const fin = /^\d{4}-\d{2}-\d{2}$/.test(vence) ? new Date(vence + 'T00:00:00').getTime() : 0;
   const resta = Math.ceil((fin - Date.now()) / 86400000);
@@ -1253,7 +1256,7 @@ function panelFicha_(l, segs) {
 function licsDuplicadas_() {
   const conAcceso = {};
   mRows_('Accesos').forEach(a => { conAcceso[a.negocioId] = true; });
-  return mRows_('Licencias').filter(l => !conAcceso[l.id] || String(l.estado).toLowerCase() === 'duplicada');
+  return mRows_('Licencias').filter(l => !esEliminada_(l) && (!conAcceso[l.id] || String(l.estado).toLowerCase() === 'duplicada'));
 }
 function panelLimpiarDuplicados_() {
   const dup = licsDuplicadas_(), vivas = {};
@@ -1266,7 +1269,7 @@ function panelLimpiarDuplicados_() {
   return { marcadas: n, total: dup.length };
 }
 function panelResumen_() {
-  const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0).map(l => panelFicha_(l, segs));
+  const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)).map(l => panelFicha_(l, segs));
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
   const mes = hoy_().slice(0, 7), todosPagos = mRows_('PagosLic'), pagos = todosPagos.filter(p => String(p.fecha).slice(0, 7) === mes);
   // Conversión: de las pruebas que ya terminaron (o se activaron antes de terminar), cuántas compraron
@@ -1278,6 +1281,13 @@ function panelResumen_() {
   const sinPago = [];
   lics.forEach(x => { const p = pagoDe[x.id] || {}; if (x.estado === 'activa' && !p.lic) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: 'Licencia' }); if (x.plus && x.estado !== 'prueba' && !p.plus) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: 'Plus' }); });
   const sop = mRows_('Soporte');
+  // Soporte sin responder, dentro de la tarjeta de cada cliente
+  const sopDe = {};
+  sop.filter(c => Number(c.sinLeerAdm) > 0).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).forEach(c => {
+    const o = sopDe[c.negocioId] || (sopDe[c.negocioId] = { sin: 0, id: c.id, texto: String(c.ultimoTexto || '').slice(0, 90), motivo: c.motivo });
+    o.sin += Number(c.sinLeerAdm) || 0;
+  });
+  lics.forEach(x => { x.sop = sopDe[x.id] || null; });
   const n = k => lics.filter(x => x.estado === k).length;
   const orden = { dia3: 0, vence: 1, inactivo: 2, vencida: 3 };
   return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
@@ -1325,12 +1335,24 @@ function panelAccion_(d) {
       upd.vencePrueba = Utilities.formatDate(new Date(base + dias * 86400000), TZ, 'yyyy-MM-dd'); upd.estado = 'Prueba'; nota = 'Prueba extendida ' + dias + ' días'; break; }
     case 'pausar':     upd.estado = 'Bloqueada'; nota = 'Acceso pausado'; break;
     case 'reanudar':   upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Activa'; nota = 'Acceso reanudado'; break;
+    case 'eliminar': {
+      if (norm_(d.confirmar) !== norm_(l.negocio)) throw new Error('El nombre no coincide. Escribe el nombre del negocio tal como aparece.');
+      // 1) Nadie de ese negocio vuelve a entrar y su WhatsApp queda libre
+      const acc = mRows_('Accesos').filter(a => a.negocioId === l.id).map(a => a._fila).filter(Boolean).sort((a, b) => b - a);
+      const sa = masterSheet_('Accesos'); acc.forEach(f => sa.deleteRow(f)); delete MEMO['_m_Accesos'];
+      // 2) Su hoja de datos a la papelera de Drive (recuperable 30 días), si ningún otro registro la usa
+      if (l.hojaId && !mRows_('Licencias').some(x => x.id !== l.id && x.hojaId === l.hojaId && !esEliminada_(x))) { try { DriveApp.getFileById(l.hojaId).setTrashed(true); } catch (e) {} }
+      upd.estado = 'Eliminada'; upd.notas = ('Eliminado ' + hoy_() + (d.motivo ? ' · ' + txt_(d.motivo, 80) : '') + (l.notas ? ' · ' + l.notas : '')).slice(0, 500);
+      nota = 'Cliente eliminado' + (d.motivo ? ' · ' + txt_(d.motivo, 80) : '');
+      break;
+    }
     case 'etiqueta': { const e = ETIQUETAS_LIC.indexOf(d.etiqueta) >= 0 ? d.etiqueta : ''; upd.etiqueta = e; nota = e ? 'Etiqueta: ' + e : 'Etiqueta quitada'; break; }
     default: throw new Error('Acción no válida');
   }
   mSet_('Licencias', l, upd);
   CacheService.getScriptCache().remove('L_' + l.id);
   mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: f, nota: nota + (d.nota ? ' · ' + txt_(d.nota, 120) : '') });
+  if (d.accion === 'eliminar') return { eliminado: true, negocio: l.negocio };
   return panelNegocio_({ id: l.id });
 }
 function panelContacto_(d) {
@@ -3752,3 +3774,5 @@ function guardarConcil_(u, d) {
   guardarConfig_({ contabConcil: JSON.stringify(todo) });
   return { concil: todo[mes], creados: creados };
 }
+
+function norm_(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
