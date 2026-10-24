@@ -1764,7 +1764,7 @@ function mRows_(name) {
       const o = { _fila: i + 2 };
       h.forEach((k, j) => {
         let v = r[j];
-        if (v instanceof Date) v = Utilities.formatDate(v, TZ, k === 'vencePrueba' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm');
+        if (v instanceof Date) v = k === 'version' ? '' : Utilities.formatDate(v, TZ, k === 'vencePrueba' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm'); // versión que Sheets convirtió en fecha: se ignora y se reescribe en la próxima conexión
         o[k] = (v === null || v === undefined) ? '' : (k === 'activo' ? !(v === false || v === 'false' || v === 'FALSE') : String(v));
       });
       return o;
@@ -1780,6 +1780,8 @@ function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(
 function mCell_(v, k) {
   if (v === undefined || v === null) return '';
   if (typeof v === 'string' && /^[=+\-@]/.test(v) && M_TEXTO.indexOf(k) < 0) return "'" + v;
+  // Versiones como 1.9.4: Google Sheets las convierte en fecha si no van como texto
+  if (k === 'version' && typeof v === 'string' && /^\d+(\.\d+)+$/.test(v)) return "'" + v;
   return v;
 }
 // Busca la fila del registro en la hoja maestra (la fila guardada puede haber cambiado si alguien borró filas)
