@@ -4893,7 +4893,12 @@ function tasaDolar_(forzar) {
   return Number(pr.getProperty('TASA_USD')) || 0;
 }
 // Ejecútala una vez desde el editor para autorizar la consulta del cambio del dólar
-function probarCambioDolar() { Logger.log('Cambio del dólar hoy: L ' + tasaDolar_(true)); }
+function probarCambioDolar() {
+  // Llama directo (sin atrapar errores) para que Google pida el permiso o muestre el motivo exacto
+  const r = UrlFetchApp.fetch('https://open.er-api.com/v6/latest/USD', { muteHttpExceptions: true });
+  Logger.log('Respuesta ' + r.getResponseCode() + ': ' + r.getContentText().slice(0, 160));
+  Logger.log('Cambio del dólar hoy: L ' + tasaDolar_(true));
+}
 </script>
 <script>
 'use strict';
