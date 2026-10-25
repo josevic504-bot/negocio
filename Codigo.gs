@@ -1,12 +1,15 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.7 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.7 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
  * 3) Implementar → Nueva implementación → App web
  *    Ejecutar como: Yo · Quién tiene acceso: Cualquier usuario
  * 4) Copia la URL /exec y pégala en index.html (API_URL_DEFAULT)
+ *
+ * PARA ACTUALIZAR: pega este archivo completo, guarda y ve a Implementar → Gestionar
+ * implementaciones → lápiz → Versión: Nueva versión → Implementar (misma URL, no crear otra).
  *****************************************************************/
 
 /* ---------------- MODO MULTI-NEGOCIO ----------------
