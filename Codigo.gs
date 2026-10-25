@@ -1012,9 +1012,8 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
-const MODULOS = ['caducidad', 'comanda', 'ordenes', 'series', 'variantes', 'encargos', 'agenda', 'suscripciones'];
-function modOn_(k) { const cfg = config_(); return (MODULOS_GIRO[cfg.giro] || []).indexOf(k) >= 0 || cfg[k] === 'si'; }
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
+function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
 
@@ -1133,7 +1132,6 @@ function cerrarLigados_(d, venta) {
 /* ===================== SUSCRIPCIONES (streaming, mensualidades) ===================== */
 /* Para negocios que venden Netflix, Disney+, IPTV, gimnasio, internet…: cada venta de una suscripción queda con fecha de vencimiento,
  * la cuenta/perfil que se entregó y los datos de acceso. Las cuentas madre viven en la hoja «Cuentas». */
-const PLATAFORMAS_DEF = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
 function susActivas_() { return modOn_('suscripciones'); }
 // "Netflix:1|Disney+:1" → [{ plataforma, n }]
 function incluye_(t) { return String(t || '').split('|').map(x => x.trim()).filter(Boolean).map(x => { const p = x.split(':'); return { plataforma: txt_(p[0], 40), n: Math.max(1, Math.min(10, parseInt(p[1], 10) || 1)) }; }).filter(x => x.plataforma).slice(0, 6); }
@@ -3656,52 +3654,6 @@ function sembrarEjemplo_(adminId) {
   return true;
 }
 
-/* ===================== CONTABILIDAD (módulo Plus) =====================
- * Negocio VM · Molina Soluciones Digitales
- *
- * Enfoque: "libro mayor virtual". Los asientos de ventas, cobros, compras, pagos y gastos
- * se DERIVAN de las hojas que ya existen (Ventas, Abonos, Compras, Pagos, Gastos,
- * ProyectoGastos) usando el mapeo de cuentas. No se duplica nada, funciona con el
- * historial completo y no toca ninguna función existente de la app.
- * Solo se GUARDAN en hoja los asientos manuales (apertura, ajustes, depreciación,
- * reversiones, partidas de conciliación) y el plan de cuentas.
- *
- * INSTALACIÓN (ver GUIA-INTEGRACION.md):
- *   1) En SCHEMA agregar:   PlanCuentas y Asientos  (bloque A)
- *   2) En PREFIJO agregar:  PlanCuentas:'F', Asientos:'L'
- *   3) En TEXTO agregar:    'lineas', 'padre', 'naturaleza'
- *   4) En CONFIG_DEF agregar: seqL:'0', contabInventario:'perpetuo', contabIsvCompras:'si',
- *                             contabCerrado:'', contabMapeo:'', contabConcil:''
- *   5) En rutaUsuario_ (antes de default) pegar el bloque B
- *   5b) SCHEMA_M.Licencias: agregar 'contab' al final; bootstrap_: contab: contabOn_();
- *       panelFicha_: campo contab; panelAccion_: casos 'contab' y 'quitarContab' (integrar.py lo hace)
- *   6) Pegar este archivo completo como archivo nuevo del proyecto de Apps Script
- *      y TAMBIÉN dentro de <script type="text/plain" id="backend-src"> de index.html
- *      (al final de ese bloque) para que funcione en MODO PRUEBA. Ojo: nunca escribir la
- *      etiqueta de cierre de script dentro de este archivo, porque corta el bloque en index.html.
- *   7) Subir SYS_VER / versión para que asegurarEncabezados_ cree las hojas nuevas.
- */
-
-/* ---- bloque A: líneas para SCHEMA ----
-  PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
-  Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
-*/
-
-/* ---- bloque B: líneas para rutaUsuario_ ----
-    case 'contabilidad':     return contabilidad_(u, d);
-    case 'contabPlan':       return contabPlan_(u, d);
-    case 'guardarCuenta':    return lock_(() => guardarCuenta_(u, d));
-    case 'guardarMapeo':     return lock_(() => guardarMapeo_(u, d));
-    case 'guardarAsiento':   return lock_(() => guardarAsiento_(u, d));
-    case 'anularAsiento':    return lock_(() => anularAsiento_(u, d));
-    case 'cerrarPeriodo':    return lock_(() => cerrarPeriodo_(u, d));
-    case 'guardarConcil':    return lock_(() => guardarConcil_(u, d));
-*/
-
-const CONTAB_TASA_ISV = 0.15;
-
-// El módulo solo existe para los negocios que Vic activa desde el Panel (columna «contab» en Licencias).
-// En modo de un solo negocio: propiedad del script CONTAB = 'activo'.
 /* ===================== VARIOS GIROS EN UNA TIENDA =====================
  * El giro principal está en Config (giro). Los giros extra los activa Vic desde el Panel Molina
  * (columna «giros» de Licencias, separados por coma). Cada giro sale como un módulo en la tienda en línea.
@@ -3729,6 +3681,22 @@ function precioCompra_(usd, cfg) {
   return Math.ceil(usd * t * (1 + rec / 100) + env);
 }
 
+
+/* ===================== CONTABILIDAD (módulo Plus) =====================
+ * Negocio VM · Molina Soluciones Digitales
+ *
+ * Enfoque: "libro mayor virtual". Los asientos de ventas, cobros, compras, pagos y gastos
+ * se DERIVAN de las hojas que ya existen (Ventas, Abonos, Compras, Pagos, Gastos,
+ * ProyectoGastos) usando el mapeo de cuentas. No se duplica nada, funciona con el
+ * historial completo y no toca ninguna función existente de la app.
+ * Solo se GUARDAN en hoja los asientos manuales (apertura, ajustes, depreciación,
+ * reversiones, partidas de conciliación) y el plan de cuentas.
+ */
+
+const CONTAB_TASA_ISV = 0.15;
+
+// El módulo solo existe para los negocios que Vic activa desde el Panel (columna «contab» en Licencias).
+// En modo de un solo negocio: propiedad del script CONTAB = 'activo'.
 function contabOn_() {
   if (MULTI_NEGOCIO) { if (!NEG) return false; return ['sí','si','activo','activa','true','1','x'].indexOf(String(NEG.lic.contab || '').trim().toLowerCase()) >= 0; }
   return PropertiesService.getScriptProperties().getProperty('CONTAB') === 'activo';

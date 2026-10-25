@@ -13,7 +13,7 @@ self.addEventListener('fetch', e => {
   const r = e.request, u = new URL(r.url);
   if (r.method !== 'GET' || /\.apk$/i.test(u.pathname) || u.searchParams.has('v') || u.hostname.endsWith('script.google.com') || u.hostname.endsWith('googleusercontent.com') || u.hostname === 'drive.google.com') return;
   // La página: primero internet (para recibir las actualizaciones) y si no hay, la guardada
-  if (r.mode === 'navigate' || (u.origin === location.origin && /\.(html|json)$|\/$/.test(u.pathname))) {
+  if (r.mode === 'navigate' || (u.origin === location.origin && /\.(html|json|gs)$|\/$/.test(u.pathname))) {
     e.respondWith(fetch(r).then(res => { const cp = res.clone(); caches.open(VERSION).then(c => c.put(r, cp)); return res; }).catch(() => caches.match(r).then(x => x || caches.match('./index.html'))));
     return;
   }
