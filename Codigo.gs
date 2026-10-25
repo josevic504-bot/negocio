@@ -21,7 +21,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.6';
+const VERSION = '1.9.7';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -251,6 +251,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'anularGasto':     return lock_(() => anularGasto_(u, d));
     case 'pedidos':         return pedidos_(u, d);
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
+    case 'editarPedido':    return lock_(() => editarPedido_(u, d));
     case 'chats':           return chats_(u);
     case 'chat':            return lock_(() => chat_(u, d));
     case 'chatResponder':   return lock_(() => chatResponder_(u, d));
@@ -2448,6 +2449,41 @@ function estadoPedido_(u, d) {
   if (d.estado === 'cancelado' && d.motivo) upd.nota = (p.nota ? p.nota + ' · ' : '') + 'Cancelado: ' + txt_(d.motivo, 120);
   const g = upsert_('Pedidos', upd);
   g.items = parseJ_(g.items, []);
+  return g;
+}
+
+// Corregir un pedido en línea antes de cobrarlo: cambiar cantidades o quitar productos (se agotó, error de precio…)
+function editarPedido_(u, d) {
+  req_(u, ['admin','cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('El pedido no existe');
+  if (p.ventaId || ['nuevo','confirmado','listo'].indexOf(p.estado) < 0) throw new Error('Este pedido ya está ' + (p.estado === 'entregado' ? 'cobrado' : p.estado) + ' y no se puede editar');
+  const antes = parseJ_(p.items, []), cambios = Array.isArray(d.cantidades) ? d.cantidades : [];
+  if (cambios.length !== antes.length) throw new Error('El pedido cambió mientras lo editabas. Ábrelo de nuevo.');
+  const cfg = config_(), pm = porId_(rows_('Productos')), sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
+  const items = [], lineas = [], suma = {};
+  antes.forEach((it, i) => {
+    const n = Math.floor(Number(cambios[i]) || 0);
+    if (n < 0 || n > 999) throw new Error('Cantidad no válida en «' + it.nombre + '»');
+    if (n !== it.cantidad) lineas.push('• ' + it.nombre + ': ' + (n ? it.cantidad + ' → ' + n : 'quitado'));
+    if (!n) return;
+    const pr = it.productoId ? pm[it.productoId] : null;
+    if (pr) {
+      suma[pr.id] = (suma[pr.id] || 0) + n;
+      if (n > it.cantidad && pr.tipo === 'producto' && !sin && pr.stock < suma[pr.id]) throw new Error(pr.stock > 0 ? 'Solo quedan ' + Math.floor(pr.stock) + ' de «' + pr.nombre + '»' : '«' + pr.nombre + '» está agotado');
+    }
+    items.push(Object.assign({}, it, { cantidad: n, total: r2_(n * it.precio) }));
+  });
+  if (!lineas.length) throw new Error('No cambiaste nada');
+  if (!items.length) throw new Error('Si quitas todo, mejor cancela el pedido');
+  const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
+  const pct = Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0));
+  const anticipo = Math.ceil(items.filter(i => i.tipo === 'compra').reduce((a, i) => a + i.total, 0) * pct / 100);
+  const motivo = txt_(d.motivo, 80);
+  const nota = ((p.nota ? p.nota + ' · ' : '') + 'Editado ' + ahora_().replace('T', ' ').slice(5, 16) + ' por ' + String(u.nombre || '').split(' ')[0] + (motivo ? ' (' + motivo + ')' : '') + ': ' + lineas.map(x => x.slice(2)).join('; ')).slice(0, 1000);
+  const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(items), subtotal: subtotal, total: r2_(subtotal + (Number(p.envio) || 0)), anticipo: anticipo, nota: nota, actualizado: ahora_() });
+  g.items = parseJ_(g.items, []);
+  g.cambios = lineas;
   return g;
 }
 

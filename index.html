@@ -1196,7 +1196,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.6';
+const APP_VER = '1.9.7';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -3227,9 +3227,55 @@ ACC.verPedido = el => {
     Object.assign(p, await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m }));
     h.cerrar(); toast('Pedido cancelado', 'ok'); R.pedidos();
   } });
+  if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !p.ventaId) bs.push({ t: `${ic('edit', 18)} Editar`, fn: () => { h.cerrar(); editarPedido(p); } });
   bs.push({ t: `${ic('wa', 18)} WhatsApp`, cls: 'wa', fn: () => { window.open(waLink(p.telefono, msjPedido(p)), '_blank'); } });
   h.botones(bs);
 };
+// Corregir un pedido en línea: cambiar cantidades o quitar productos y avisarle al cliente
+const MOTIVOS_PED = [['Se agotó', ' porque se agotó'], ['Error de precio', ' por un error de nuestra parte'], ['El cliente lo pidió', ' como nos pediste']];
+function editarPedido(p) {
+  const q = p.items.map(i => i.cantidad);
+  let motivo = 'Se agotó', otro = '';
+  const h = hoja({ titulo: 'Editar ' + esc(p.numero), html: '<div id="ep"></div>' });
+  const cambios = () => p.items.map((it, i) => q[i] === it.cantidad ? '' : `• ${it.nombre}: ${q[i] ? it.cantidad + ' → ' + q[i] : 'quitado'}`).filter(Boolean);
+  const total = () => r2(p.items.reduce((a, it, i) => a + it.precio * q[i], 0) + (Number(p.envio) || 0));
+  const porque = () => motivo === 'Otro' ? (otro.trim() ? ': ' + otro.trim() : '') : (MOTIVOS_PED.find(m => m[0] === motivo) || ['', ''])[1];
+  const mensaje = () => `Hola ${String(p.nombre).split(' ')[0]} 👋, tu pedido ${p.numero} en ${S.config.nombre || 'nuestra tienda'} cambió${porque()}:\n${cambios().join('\n')}\nNuevo total: ${money(total())}. ¡Disculpa la molestia!`;
+  const pinta = () => {
+    const c = cambios(), vacio = q.every(x => !x);
+    $('#ep', h.el).innerHTML = `<div class="tks">${p.items.map((it, i) => q[i] ? `<div class="tk"><div class="tx"><b>${esc(it.nombre)}</b><small>${money(it.precio)} c/u${q[i] !== it.cantidad ? ' · pidió ' + cant(it.cantidad) : ''}</small></div><div class="qty"><button data-i="${i}" data-d="-1">−</button><span>${q[i]}</span><button data-i="${i}" data-d="1">+</button></div><button class="btn icon sm ghost" data-q="${i}" aria-label="Quitar" style="color:var(--bad)">${ic('trash', 16)}</button></div>`
+        : `<div class="tk" style="opacity:.6"><div class="tx"><b style="text-decoration:line-through">${esc(it.nombre)}</b><small>Quitado del pedido</small></div><button class="btn sm ghost" data-u="${i}">Deshacer</button></div>`).join('')}</div>
+      <div class="tots"><div class="tot"><span>Antes</span><b class="n">${money(p.total)}</b></div><div class="tot g"><span>Nuevo total</span><b class="n">${money(total())}</b></div></div>
+      ${vacio ? `<div class="aviso warn sm">${ic('alert', 18)}<div>Quitaste todo. Si el pedido ya no va, mejor cancélalo.</div><button class="btn sm bad" data-cancelar="1">Cancelar pedido</button></div>` : ''}
+      ${c.length && !vacio ? `<span class="op-l" style="margin-top:12px">¿Por qué cambia? (se le dice al cliente)</span><div class="chips" id="ep-m" style="flex-wrap:wrap">${MOTIVOS_PED.map(m => m[0]).concat('Otro').map(m => `<button type="button" class="chip ${motivo === m ? 'on' : ''}" data-m="${esc(m)}">${esc(m)}</button>`).join('')}</div>
+        ${motivo === 'Otro' ? `<label class="fld" style="margin-top:8px"><span>Motivo</span><input id="ep-o" maxlength="80" value="${esc(otro)}" placeholder="Ej. cambiamos de proveedor"></label>` : ''}
+        <span class="op-l" style="margin-top:12px">Mensaje para el cliente</span><div class="msg-prev" style="white-space:pre-line">${esc(mensaje())}</div>` : ''}`;
+    const o = $('#ep-o', h.el); if (o) o.oninput = () => { otro = o.value; $('.msg-prev', h.el).textContent = mensaje(); };
+    h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Guardar cambios`, cls: 'pri', fn: guardar }]);
+  };
+  const guardar = async () => {
+    if (!cambios().length) throw new Error('No cambiaste nada');
+    if (q.every(x => !x)) throw new Error('Si quitas todo, mejor cancela el pedido');
+    const msj = mensaje();
+    const g = await api('editarPedido', { id: p.id, cantidades: q, motivo: motivo === 'Otro' ? otro.trim() : motivo });
+    Object.assign(p, g); h.cerrar(); toast('Pedido actualizado', 'ok'); if (S.vista === 'pedidos') R.pedidos();
+    const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp?</p><div class="msg-prev" style="white-space:pre-line">${esc(msj)}</div>` });
+    a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, msj)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false;
+    a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300));
+  };
+  h.el.addEventListener('click', async e => {
+    const d = e.target.closest('[data-d]'); if (d) { const i = Number(d.dataset.i); q[i] = Math.max(0, Math.min(999, q[i] + Number(d.dataset.d))); return pinta(); }
+    const x = e.target.closest('[data-q]'); if (x) { q[Number(x.dataset.q)] = 0; return pinta(); }
+    const u = e.target.closest('[data-u]'); if (u) { const i = Number(u.dataset.u); q[i] = p.items[i].cantidad; return pinta(); }
+    const m = e.target.closest('[data-m]'); if (m) { motivo = m.dataset.m; return pinta(); }
+    if (e.target.closest('[data-cancelar]')) {
+      const t = await pedirTexto('Cancelar ' + p.numero, { label: 'Motivo (se guarda en el pedido)', si: 'Cancelar pedido', peligro: 1, valor: motivo === 'Otro' ? otro : motivo });
+      if (t === null) return;
+      try { Object.assign(p, await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: t })); h.cerrar(); toast('Pedido cancelado', 'ok'); if (S.vista === 'pedidos') R.pedidos(); } catch (x) { err(x); }
+    }
+  });
+  pinta();
+}
 ACC.copiarTienda = async () => { try { await navigator.clipboard.writeText(linkTienda()); toast('Enlace copiado', 'ok'); } catch (e) { pedirTexto('Enlace de tu tienda', { valor: linkTienda() }); } };
 ACC.compartirTienda = async () => {
   const txt = '🛍️ ¡Haz tu pedido en línea en ' + (S.config.nombre || 'nuestra tienda') + '! ' + linkTienda();
@@ -5897,6 +5943,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.7', fecha: '2026-10-25', items: [
+    { i: 'edit', t: 'Editar pedidos en línea', d: 'Si algo se agotó o hubo un error, abre el pedido y toca «Editar»: cambia cantidades o quita productos, el total se recalcula y le avisas al cliente por WhatsApp con el motivo.', ir: 'pedidos' }
+  ] },
   { v: '1.9.5', fecha: '2026-10-24', items: [
     { i: 'gear', t: 'Mejoras internas', d: 'Ajustes de mantenimiento. Tus datos no cambian.' }
   ] },
