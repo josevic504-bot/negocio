@@ -22,6 +22,8 @@ const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con có
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
 const VERSION = '1.9.6';
+// Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
+const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -30,7 +32,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -52,7 +54,7 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Cuentas:        ['id','plataforma','nombre','correo','clave','perfiles','costo','vence','nota','activo','creado'],
@@ -69,7 +71,7 @@ const SCHEMA = {
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota'],
-  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado'],
+  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado'],
@@ -98,6 +100,8 @@ const CONFIG_DEF = {
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
   tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '',
+  // Compras en línea (giro «compras»): cómo se calcula lo que el cliente pide desde un enlace
+  comprasCambio: '25', comprasRecargo: '15', comprasEnvio: '0', comprasAnticipo: '50', comprasDias: '15 a 20 días', comprasTiendas: 'Shein, Temu, Amazon',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
@@ -147,6 +151,13 @@ const GIROS = {
       ['Prime Video · 1 perfil','Prime Video','🎥',80,35,0,'Plan: 1 mes, 3 meses',{ plataforma: 'Prime Video', entrega: 'perfil' }],['Spotify Premium','Spotify','🎵',90,40,0,'Plan: 1 mes, 3 meses, 6 meses',{ plataforma: 'Spotify', entrega: 'perfil' }],
       ['YouTube Premium','YouTube Premium','▶️',80,35,0,'Plan: 1 mes, 3 meses',{ plataforma: 'YouTube Premium', entrega: 'perfil' }],['IPTV · 1 dispositivo','IPTV','📡',150,60,0,'Plan: 1 mes, 3 meses, 6 meses, 12 meses',{ plataforma: 'IPTV', entrega: 'perfil' }],
       ['Combo Netflix + Disney+','Combos','🍿',200,100,0,'Plan: 1 mes, 3 meses',{ incluye: 'Netflix:1|Disney+:1' }],['Combo total (Netflix, Disney+, HBO Max)','Combos','🎁',280,135,0,'Plan: 1 mes, 3 meses',{ incluye: 'Netflix:1|Disney+:1|HBO Max:1' }]] },
+  compras:    { n: 'Compras en línea (Shein, Temu, Amazon…)', cats: ['Ropa','Calzado','Hogar','Belleza','Tecnología','Accesorios'],
+    ej: [['Blusa casual','Ropa','👚',380,250,4,'Talla: S, M, L | Color: Negro, Blanco'],['Vestido de verano','Ropa','👗',520,330,3,'Talla: S, M, L'],['Tenis blancos','Calzado','👟',890,600,2,'Talla: 37, 38, 39, 40'],
+      ['Organizador de cocina','Hogar','🧺',260,150,5],['Set de brochas de maquillaje','Belleza','💄',310,180,6],['Audífonos inalámbricos','Tecnología','🎧',450,290,4],['Bolso de mano','Accesorios','👜',420,260,3,'Color: Negro, Café']] },
+  recargas:   { n: 'Recargas de juegos', cats: ['Free Fire','PUBG Mobile','Roblox','Call of Duty Mobile','Fortnite','Tarjetas de regalo'],
+    ej: [['Free Fire · 100 diamantes','Free Fire','💎',30,22,0],['Free Fire · 310 diamantes','Free Fire','💎',90,66,0],['Free Fire · 520 diamantes','Free Fire','💎',145,108,0],['PUBG Mobile · 60 UC','PUBG Mobile','🎯',25,18,0],
+      ['PUBG Mobile · 325 UC','PUBG Mobile','🎯',120,90,0],['Roblox · 400 Robux','Roblox','🧱',125,95,0],['Roblox · 800 Robux','Roblox','🧱',240,185,0],['Call of Duty Mobile · 80 CP','Call of Duty Mobile','🪖',30,22,0],
+      ['Fortnite · 1,000 V-Bucks','Fortnite','🎮',230,175,0],['Tarjeta de regalo Google Play L 250','Tarjetas de regalo','🎁',265,250,0]] },
   otro:       { n: 'Otro tipo de negocio', cats: ['General'],
     ej: [['Producto de ejemplo 1','General','📦',100,60,10],['Producto de ejemplo 2','General','🛍️',250,150,10],['Servicio de ejemplo','General','🛎️',300,0,0]] }
 };
@@ -252,6 +263,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'suscripciones':   return suscripciones_(u);
     case 'susEstado':       return lock_(() => susEstado_(u, d));
     case 'cambiarGiro':     return lock_(() => cambiarGiro_(u, d));
+    case 'cambiarNegocio':  return lock_(() => cambiarNegocio_(u, d));
     case 'ordenes':         return ordenes_(u, d);
     case 'ordenGuardar':    return lock_(() => ordenGuardar_(u, d));
     case 'agenda':          return agenda_(u, d);
@@ -573,7 +585,9 @@ function cambiarClave_(u, d) {
   c.remove(kf);
   if (MULTI_NEGOCIO ? !/^\d{4,6}$/.test(String(d.nueva || '')) : String(d.nueva || '').length < 6) throw new Error(MULTI_NEGOCIO ? 'El PIN debe tener de 4 a 6 números' : 'La nueva contraseña debe tener al menos 6 caracteres');
   const salt = Utilities.getUuid();
-  upsert_('Usuarios', { id: u.id, salt: salt, hash: hash_(d.nueva, salt) });
+  const hashN = hash_(d.nueva, salt);
+  upsert_('Usuarios', { id: u.id, salt: salt, hash: hashN });
+  try { sincronizarPin_(waDe_(u), hashN, salt); } catch (e) {}
   // Esta sesión sigue abierta con la firma nueva; las demás se cierran
   const val = MULTI_NEGOCIO && NEG ? NEG.id + '|' + u.id + '|' + salt.slice(0, 8) : u.id + '|' + salt.slice(0, 8);
   if (d._token) c.put('S_' + d._token, val, SESION_SEG);
@@ -607,6 +621,7 @@ function guardarUsuario_(u, d) {
   if (!r.id) { r.creado = ahora_(); if (r.activo === undefined) r.activo = true; }
   const g = upsert_('Usuarios', r);
   // Si el administrador cambió su propio PIN, esta sesión sigue abierta (las demás se cierran)
+  if (g.id === u.id && r.salt) { try { sincronizarPin_(waDe_(u), r.hash, r.salt); } catch (e) {} }
   if (g.id === u.id && r.salt && d._token) { try { CacheService.getScriptCache().put('S_' + d._token, (MULTI_NEGOCIO && NEG ? NEG.id + '|' : '') + u.id + '|' + r.salt.slice(0, 8), SESION_SEG); } catch (e) {} }
   if (MULTI_NEGOCIO) {
     const acc = mRows_('Accesos').find(x => x.negocioId === NEG.id && x.usuarioId === g.id);
@@ -667,7 +682,7 @@ function bootstrap_(u, d) {
   // Una vez al día: borra las fotos de productos sin movimiento por más de 3 meses
   if (u.rol === 'admin' && config_().sysLimpieza !== hoy_()) { try { lock_(() => limpiarFotos_()); } catch (e) {} }
   // Después de actualizar el sistema: agrega las columnas nuevas a las hojas de este negocio
-  if (config_().sysVer !== VERSION) { try { lock_(() => asegurarEncabezados_()); } catch (e) {} }
+  if (config_().sysVer !== ESQUEMA) { try { lock_(() => asegurarEncabezados_()); } catch (e) {} }
   const sc = u.rol === 'bodega' ? {} : saldosClientes_();
   const sp = u.rol === 'cajero' ? {} : saldosProveedores_();
   const r = {
@@ -683,6 +698,8 @@ function bootstrap_(u, d) {
     plus: plus_(),
     plusIncluido: plusIncluido_(),
     contab: contabOn_(),
+    girosActivos: girosActivos_(),
+    negocios: misNegocios_(u),
     negocioId: MULTI_NEGOCIO && NEG ? NEG.id : '',
     multi: MULTI_NEGOCIO,
     version: VERSION,
@@ -774,7 +791,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['pagina','origen','vid','ref','desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
+const M_TEXTO = ['persona','giros','pagina','origen','vid','ref','desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -881,16 +898,69 @@ function loginMulti_(d) {
   const fallos = Number(c.get(kf) || 0);
   if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
   const falla = () => { c.put(kf, String(fallos + 1), 600); return new Error('WhatsApp o PIN incorrectos'); };
-  const acc = mRows_('Accesos').find(x => String(x.whatsapp) === wa && x.activo);
-  if (!acc) throw falla();
-  const lic = negocioPorId_(acc.negocioId);
-  if (!lic) throw falla();
-  setNegocio_(lic);
-  const u = rows_('Usuarios').find(x => x.id === acc.usuarioId);
-  if (!u || !u.activo || hash_(String(d.pin || ''), u.salt) !== u.hash) throw falla();
+  // Una persona puede tener varios negocios con el mismo WhatsApp y PIN (los vincula Vic desde el Panel)
+  const accs = mRows_('Accesos').filter(x => String(x.whatsapp) === wa && x.activo);
+  if (!accs.length) throw falla();
+  const validos = [];
+  accs.forEach(acc => {
+    const lic = negocioPorId_(acc.negocioId);
+    if (!lic) return;
+    cambiarA_(lic);
+    const u = rows_('Usuarios').find(x => x.id === acc.usuarioId);
+    if (u && u.activo && hash_(String(d.pin || ''), u.salt) === u.hash) validos.push({ lic: lic, u: u });
+  });
+  if (!validos.length) throw falla();
   c.remove(kf);
+  let v = validos[0];
+  if (validos.length > 1) {
+    v = d.negocioId ? validos.find(x => x.lic.id === String(d.negocioId)) : null;
+    if (!v) return { elegir: validos.map(x => ({ id: x.lic.id, negocio: x.lic.negocio, giro: x.lic.giro, estado: licNegocio_(x.lic).estado })) };
+  }
+  cambiarA_(v.lic);
   bloquearSiVence_();
-  return { token: nuevoToken_(lic.id + '|' + u.id + '|' + String(u.salt).slice(0, 8)), usuario: publico_(u) };
+  return { token: nuevoToken_(v.lic.id + '|' + v.u.id + '|' + String(v.u.salt).slice(0, 8)), usuario: publico_(v.u) };
+}
+// Pasar a leer/escribir otro negocio dentro de la misma solicitud (lo leído del anterior se olvida)
+function cambiarA_(lic) {
+  Object.keys(MEMO).forEach(k => { if (k.indexOf('_m_') !== 0 && k.indexOf('_hm_') !== 0) delete MEMO[k]; });
+  NEG = { id: lic.id, hojaId: lic.hojaId, lic: lic };
+}
+// WhatsApp con el que entra el usuario de esta sesión
+function waDe_(u) {
+  if (!MULTI_NEGOCIO || !NEG) return '';
+  const a = mRows_('Accesos').find(x => x.negocioId === NEG.id && x.usuarioId === u.id);
+  return a ? String(a.whatsapp) : '';
+}
+// Los otros negocios a los que entra la misma persona (para «Cambiar de negocio»)
+function misNegocios_(u) {
+  const wa = waDe_(u);
+  if (!wa) return [];
+  const l = mRows_('Accesos').filter(x => String(x.whatsapp) === wa && x.activo).map(a => negocioPorId_(a.negocioId)).filter(Boolean)
+    .map(x => ({ id: x.id, negocio: x.negocio, giro: x.giro, actual: x.id === NEG.id }));
+  return l.length > 1 ? l : [];
+}
+function cambiarNegocio_(u, d) {
+  const wa = waDe_(u);
+  const acc = wa ? mRows_('Accesos').find(x => String(x.whatsapp) === wa && x.activo && x.negocioId === String(d.negocioId || '')) : null;
+  if (!acc) throw new Error('No tienes acceso a ese negocio');
+  const lic = negocioPorId_(acc.negocioId);
+  if (!lic) throw new Error('Ese negocio ya no existe');
+  cambiarA_(lic);
+  const u2 = rows_('Usuarios').find(x => x.id === acc.usuarioId);
+  if (!u2 || !u2.activo) throw new Error('Tu usuario en ese negocio está desactivado');
+  bloquearSiVence_();
+  return { token: nuevoToken_(lic.id + '|' + u2.id + '|' + String(u2.salt).slice(0, 8)), usuario: publico_(u2) };
+}
+// Si la persona cambia su PIN en un negocio, cambia también en sus otros negocios
+function sincronizarPin_(wa, hash, salt) {
+  if (!MULTI_NEGOCIO || !NEG || !wa) return;
+  const yo = NEG.lic;
+  mRows_('Accesos').filter(x => String(x.whatsapp) === wa && x.activo && x.negocioId !== yo.id).forEach(a => {
+    const lic = negocioPorId_(a.negocioId);
+    if (!lic) return;
+    try { cambiarA_(lic); upsert_('Usuarios', { id: a.usuarioId, hash: hash, salt: salt }); } catch (e) {}
+  });
+  cambiarA_(yo);
 }
 
 function carpeta_() {
@@ -1258,7 +1328,8 @@ function panelFicha_(l, segs) {
   const est = lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
     usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, contab: ['sí', 'si'].indexOf(String(l.contab).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
-    ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '' };
+    ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '',
+    giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '' };
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
   else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
@@ -1326,6 +1397,10 @@ function panelNegocio_(d) {
   f.seguimiento = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.pagos = mRows_('PagosLic').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.soporte = mRows_('Soporte').filter(x => x.negocioId === l.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm'));
+  // Negocios de la misma persona y giros que se pueden activar
+  f.grupo = grupoDe_(l).map(x => { const e = licNegocio_(x).estado; return { id: x.id, negocio: x.negocio, giro: x.giro, estado: e === 'completa' ? 'activa' : e, principal: x.id === (l.persona || l.id) || (!x.persona && !l.persona && x.id === l.id), yo: x.id === l.id }; });
+  f.girosTodos = Object.keys(GIROS).map(k => ({ id: k, n: GIROS[k].n }));
+  f.giroId = giroIdDe_(l.giro);
   // Uso (solo conteos, nunca sus datos): se lee la hoja del negocio
   f.uso = null;
   try {
@@ -1333,6 +1408,7 @@ function panelNegocio_(d) {
     setNegocio_(l);
     const lim = Date.now() - 30 * 86400000, v30 = rowsDesde_('Ventas', lim).filter(v => !v.anulada && msDeLocal_(v.fecha) >= lim);
     const cfg = config_();
+    f.giroId = own_(GIROS, cfg.giro) ? cfg.giro : f.giroId;
     f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
       pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
     // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
@@ -1341,6 +1417,67 @@ function panelNegocio_(d) {
   } catch (e) { f.usoError = String(e.message || e); }
   NEG = null; delete MEMO._ss;
   return f;
+}
+// Licencias de la misma persona: la principal (persona vacía) y las que la tienen anotada en «persona»
+function grupoDe_(l) {
+  const k = l.persona || l.id;
+  return mRows_('Licencias').filter(x => !esEliminada_(x) && String(x.estado).toLowerCase() !== 'duplicada' && (x.id === k || x.persona === k))
+    .sort((a, b) => (a.id === k ? -1 : b.id === k ? 1 : String(a.registro) < String(b.registro) ? -1 : 1));
+}
+function giroIdDe_(nombre) { const n = norm_(nombre); return Object.keys(GIROS).find(k => norm_(GIROS[k].n) === n || k === n) || 'otro'; }
+// Usuario administrador (el dueño) de un negocio: el que entra con el WhatsApp de la licencia
+function duenoDe_(lic) {
+  const acc = mRows_('Accesos').find(a => a.negocioId === lic.id && String(a.whatsapp) === String(lic.whatsapp)) || mRows_('Accesos').find(a => a.negocioId === lic.id);
+  if (!acc) throw new Error('No encuentro el acceso del dueño de ' + lic.negocio);
+  cambiarA_(lic);
+  const u = rows_('Usuarios').find(x => x.id === acc.usuarioId);
+  if (!u) throw new Error('No encuentro el usuario del dueño de ' + lic.negocio);
+  return { acc: acc, u: u };
+}
+// Crea otro negocio para la misma persona: hoja nueva, mismo WhatsApp y PIN; la prueba es por persona (comparte la fecha de vencimiento)
+function panelAgregarNegocio_(l, d) {
+  const base = mRows_('Licencias').find(x => x.id === (l.persona || l.id)) || l;
+  const negocio = txt_(d.negocio, 60), giro = own_(GIROS, d.giro) ? d.giro : 'otro';
+  if (!negocio) throw new Error('Escribe el nombre del nuevo negocio');
+  if (grupoDe_(base).some(x => norm_(x.negocio) === norm_(negocio))) throw new Error('Esta persona ya tiene un negocio con ese nombre');
+  const du = duenoDe_(base), cfgBase = config_(), copiar = d.copiar || {};
+  const otrosU = copiar.usuarios ? rows_('Usuarios').filter(x => x.activo && x.id !== du.u.id) : [];
+  const clientes = copiar.clientes ? rows_('Clientes').filter(x => x.activo) : [];
+  const libro = SpreadsheetApp.create('Negocio – ' + negocio);
+  try { DriveApp.getFileById(libro.getId()).moveTo(carpeta_()); } catch (e) {}
+  const id = 'N' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase(), ahora = ahora_().replace('T', ' ');
+  const lic = { id: id, negocio: negocio, giro: GIROS[giro].n, dueno: base.dueno, whatsapp: base.whatsapp, registro: ahora, vencePrueba: String(base.vencePrueba || '').slice(0, 10),
+    estado: d.activar ? 'Activa' : 'Prueba', usuarios: 1 + otrosU.length, ultimaConexion: '', hojaId: libro.getId(), persona: base.id, llegoPor: (function () { try { const c = campanaDe_(base, campanas_()); return c ? c.id : 'directo'; } catch (e) { return 'directo'; } })() };
+  cambiarA_(lic); MEMO._ss = libro;
+  instalarNegocio_({ nombre: negocio, giro: giro, telefono: cfgBase.telefono, admin: { usuario: du.u.usuario, nombre: du.u.nombre, pin: Utilities.getUuid() } });
+  const adm = rows_('Usuarios').find(x => x.usuario === du.u.usuario);
+  upsert_('Usuarios', { id: adm.id, hash: du.u.hash, salt: du.u.salt, color: du.u.color || '#d10f6f' }); // mismo PIN
+  const accesos = [{ whatsapp: du.acc.whatsapp, negocioId: id, usuarioId: adm.id, activo: true }];
+  otrosU.forEach(x => { const nu = upsert_('Usuarios', { usuario: x.usuario, nombre: x.nombre, rol: x.rol, color: x.color, hash: x.hash, salt: x.salt, activo: true, creado: ahora_() }); accesos.push({ whatsapp: x.usuario, negocioId: id, usuarioId: nu.id, activo: true }); });
+  clientes.forEach(x => { const o = Object.assign({}, x); delete o.id; upsert_('Clientes', o); });
+  if (copiar.apariencia) guardarConfig_({ tema: cfgBase.tema, logo: cfgBase.logo, eslogan: cfgBase.eslogan, direccion: cfgBase.direccion, rtn: cfgBase.rtn, correo: cfgBase.correo, mensajeRecibo: cfgBase.mensajeRecibo });
+  mAppend_('Licencias', lic);
+  accesos.forEach(a => mAppend_('Accesos', a));
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: id, tipo: 'accion', fecha: ahora, nota: 'Creado desde el Panel como otro negocio de ' + base.dueno + ' (' + base.negocio + ')' });
+  NEG = null; delete MEMO._ss;
+  return lic;
+}
+// Une a esta persona un negocio que se registró con otro número: su dueño pasa a entrar con el WhatsApp y PIN de la persona
+function panelVincularNegocio_(l, d) {
+  const base = mRows_('Licencias').find(x => x.id === (l.persona || l.id)) || l;
+  const otro = mRows_('Licencias').find(x => x.id === String(d.otroId || ''));
+  if (!otro || esEliminada_(otro)) throw new Error('Elige el negocio que quieres vincular');
+  if (grupoDe_(base).some(x => x.id === otro.id)) throw new Error('Ese negocio ya es de esta persona');
+  if (mRows_('Licencias').some(x => x.persona === otro.id && !esEliminada_(x))) throw new Error(otro.negocio + ' tiene sus propios negocios vinculados. Vincula esta persona a ese grupo desde su ficha.');
+  const du = duenoDe_(base), duO = duenoDe_(otro);
+  cambiarA_(otro);
+  upsert_('Usuarios', { id: duO.u.id, usuario: du.u.usuario, nombre: du.u.nombre, hash: du.u.hash, salt: du.u.salt });
+  mSet_('Accesos', duO.acc, { whatsapp: du.acc.whatsapp, activo: true });
+  mSet_('Licencias', otro, { persona: base.id, dueno: base.dueno, whatsapp: base.whatsapp, notas: ('Antes entraba con ' + otro.whatsapp + (otro.notas ? ' · ' + otro.notas : '')).slice(0, 500) });
+  CacheService.getScriptCache().remove('L_' + otro.id);
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: otro.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Vinculado a ' + base.dueno + ' (' + base.negocio + '). Ahora entra con ' + base.whatsapp });
+  NEG = null; delete MEMO._ss;
+  return otro;
 }
 const ETIQUETAS_LIC = ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido'];
 function panelAccion_(d) {
@@ -1369,6 +1506,19 @@ function panelAccion_(d) {
       break;
     }
     case 'etiqueta': { const e = ETIQUETAS_LIC.indexOf(d.etiqueta) >= 0 ? d.etiqueta : ''; upd.etiqueta = e; nota = e ? 'Etiqueta: ' + e : 'Etiqueta quitada'; break; }
+    case 'giros': {
+      // Giros extra de la tienda (el principal no se cuenta). Durante la prueba solo se permite un giro.
+      const princ = giroIdDe_(l.giro), antes = String(l.giros || '').split(',').map(x => x.trim()).filter(Boolean);
+      const lista = (Array.isArray(d.giros) ? d.giros : []).map(String).filter((g, i, a) => own_(GIROS, g) && g !== princ && a.indexOf(g) === i);
+      const nuevos = lista.filter(g => antes.indexOf(g) < 0), quitados = antes.filter(g => lista.indexOf(g) < 0);
+      if (nuevos.length && licNegocio_(l).estado !== 'completa') throw new Error('Durante la prueba gratis solo se permite un giro. Activa la licencia y luego enciende los giros extra.');
+      upd.giros = lista.join(',');
+      nota = [nuevos.length ? 'Giros activados: ' + nuevos.map(g => GIROS[g].n).join(', ') : '', quitados.length ? 'Giros quitados: ' + quitados.filter(g => own_(GIROS, g)).map(g => GIROS[g].n).join(', ') : ''].filter(Boolean).join(' · ') || 'Giros sin cambios';
+      if (nuevos.length) pago(nuevos.length === 1 ? 'Giro extra: ' + GIROS[nuevos[0]].n : nuevos.length + ' giros extra');
+      break;
+    }
+    case 'agregarNegocio': { const nuevo = panelAgregarNegocio_(l, d); nota = 'Negocio agregado a esta persona: ' + nuevo.negocio + (d.activar ? ' (licencia activada)' : ' (comparte la prueba de la persona)'); if (d.activar) pago('Licencia · ' + nuevo.negocio); break; }
+    case 'vincularNegocio': { const otro = panelVincularNegocio_(l, d); nota = 'Negocio vinculado a esta persona: ' + otro.negocio; break; }
     default: throw new Error('Acción no válida');
   }
   mSet_('Licencias', l, upd);
@@ -1528,6 +1678,7 @@ function guardar_(u, d) {
     if (r.incluye !== undefined) r.incluye = incluye_(r.incluye).map(x => x.plataforma + ':' + x.n).join('|');
     if (r.caduca !== undefined && r.caduca && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.caduca))) r.caduca = '';
     if (r.garantia !== undefined) r.garantia = Math.max(0, Math.min(3650, parseInt(r.garantia, 10) || 0));
+    if (r.giro !== undefined) r.giro = own_(GIROS, r.giro) && girosActivos_().indexOf(r.giro) > 0 ? r.giro : ''; // vacío = giro principal
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
     const stockIni = r.stock;
     delete r.stock;
@@ -1580,14 +1731,15 @@ function eliminar_(u, d) {
 function cargarEjemplos_(u, d) {
   req_(u, ['admin']);
   const cfg = config_();
-  const g = own_(GIROS, d.giro) ? GIROS[d.giro] : own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro;
+  const gid = own_(GIROS, d.giro) ? d.giro : own_(GIROS, cfg.giro) ? cfg.giro : 'otro', g = GIROS[gid];
+  if (gid !== cfg.giro && girosActivos_(cfg).indexOf(gid) < 0) throw new Error('Ese tipo de negocio no está activo en tu tienda');
   const existentes = rows_('Productos').map(p => p.nombre.toLowerCase());
   let n = 0;
   g.ej.forEach((x, i) => {
     if (existentes.indexOf(x[0].toLowerCase()) >= 0) return;
     const p = upsert_('Productos', { codigo: 'EJ' + String(i + 1).padStart(3, '0'), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
-      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '' });
+      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid });
     if (p.tipo === 'producto' && x[5] > 0) moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
     n++;
   });
@@ -2753,7 +2905,7 @@ function asegurarEncabezados_() {
       h.forEach((k, i) => { if (i >= ancho && TEXTO.has(k)) sh.getRange(2, i + 1, Math.max(1, sh.getMaxRows() - 1), 1).setNumberFormat('@'); });
     }
   });
-  guardarConfig_({ sysVer: VERSION });
+  guardarConfig_({ sysVer: ESQUEMA });
 }
 
 /* ===================== PROYECTOS =====================
@@ -3068,6 +3220,7 @@ function tiendaNeg_(d) {
 function tiendaInfo_(d) {
   const cfg = tiendaNeg_(d);
   const ver = cfg.tiendaMostrarStock === 'si', sin = cfg.tiendaSinStock === 'si', nuevoDesde = diasAtras_(15);
+  const activos = girosActivos_(cfg);
   return {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
@@ -3075,9 +3228,12 @@ function tiendaInfo_(d) {
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
       abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
-        datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null },
+        datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null,
+      giros: activos.map(g => ({ id: g, n: GIROS[g].n })),
+      compras: activos.indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0 ? { cambio: Number(cfg.comprasCambio) || 0, recargo: Math.max(0, Number(cfg.comprasRecargo) || 0), envio: Math.max(0, Number(cfg.comprasEnvio) || 0),
+        anticipo: Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0)), dias: cfg.comprasDias, tiendas: cfg.comprasTiendas } : null },
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
-      const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '' };
+      const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '', g: giroDeProd_(p, activos) };
       if (String(p.creado).slice(0, 10) >= nuevoDesde) o.nuevo = true;
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
       return o;
@@ -3111,7 +3267,22 @@ function pedir_(d) {
   const sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
   const lista = Array.isArray(d.items) ? d.items.slice(0, 40) : [];
   const items = [], suma = {};
+  const conCompras = girosActivos_(cfg).indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0;
+  let anticipo = 0;
   lista.forEach(i => {
+    // Compras en línea: el cliente pega el enlace del artículo y su precio en dólares; el precio en lempiras se calcula aquí
+    if (i && i.id === '_compra') {
+      if (!conCompras) throw new Error('Esta tienda no recibe compras por enlace');
+      const enlace = txt_(i.enlace, 400), usd = r2_(Number(i.usd) || 0), cant = Math.floor(Number(i.cantidad) || 0);
+      if (enlace.length < 4) throw new Error('Pega el enlace o el código del artículo');
+      if (!(usd > 0) || usd > 5000) throw new Error('Escribe el precio en dólares que muestra la página');
+      if (cant < 1 || cant > 50) throw new Error('Cantidad no válida en una compra por enlace');
+      const det = [i.talla ? 'Talla: ' + txt_(i.talla, 20) : '', i.color ? 'Color: ' + txt_(i.color, 30) : '', i.nota ? 'Nota: ' + txt_(i.nota, 80) : ''].filter(Boolean).join(', ');
+      const precio = precioCompra_(usd, cfg), total = r2_(precio * cant);
+      items.push({ productoId: '', tipo: 'compra', enlace: enlace, usd: usd, nombre: txt_('Compra en línea' + (det ? ' (' + det + ')' : ''), 240), cantidad: cant, precio: precio, total: total });
+      anticipo = r2_(anticipo + total * Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0)) / 100);
+      return;
+    }
     const p = i && typeof i === 'object' ? pm[i.id] : null, cant = Math.floor(Number(i && i.cantidad) || 0);
     if (!p || !p.activo || !p.tienda) throw new Error('Uno de los productos ya no está disponible. Actualiza la página.');
     if (cant < 1 || cant > 999) throw new Error('Cantidad no válida en «' + p.nombre + '»');
@@ -3138,10 +3309,10 @@ function pedir_(d) {
     upsert_('Clientes', { id: cli.id, direccion: direccion });
   }
   const p = upsert_('Pedidos', { numero: siguiente_('P'), fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
-    pago: pago, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: r2_(subtotal + envio), estado: 'nuevo', ventaId: '', nota: txt_(d.nota, 300), actualizado: ahora_() });
+    pago: pago, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: r2_(subtotal + envio), estado: 'nuevo', ventaId: '', nota: txt_(d.nota, 300), actualizado: ahora_(), anticipo: Math.ceil(anticipo) });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
-  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, items: items, entrega: entrega, pago: pago,
+  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '',
     negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : '' };
 }
 
@@ -3531,6 +3702,33 @@ const CONTAB_TASA_ISV = 0.15;
 
 // El módulo solo existe para los negocios que Vic activa desde el Panel (columna «contab» en Licencias).
 // En modo de un solo negocio: propiedad del script CONTAB = 'activo'.
+/* ===================== VARIOS GIROS EN UNA TIENDA =====================
+ * El giro principal está en Config (giro). Los giros extra los activa Vic desde el Panel Molina
+ * (columna «giros» de Licencias, separados por coma). Cada giro sale como un módulo en la tienda en línea.
+ * Durante la prueba gratis solo se permite un giro. */
+function girosExtra_() {
+  const raw = MULTI_NEGOCIO ? (NEG && NEG.lic ? NEG.lic.giros : '') : PropertiesService.getScriptProperties().getProperty('GIROS_EXTRA');
+  return String(raw || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x));
+}
+function girosActivos_(cfg) {
+  cfg = cfg || config_();
+  const p = own_(GIROS, cfg.giro) ? cfg.giro : 'otro', l = [p];
+  girosExtra_().forEach(g => { if (l.indexOf(g) < 0) l.push(g); });
+  return l;
+}
+// A qué giro pertenece un producto: el que tenga anotado; si no, el giro activo que tenga su categoría; si no, el principal
+function giroDeProd_(p, activos) {
+  if (p.giro && activos.indexOf(p.giro) >= 0) return p.giro;
+  const c = String(p.categoria || '').toLowerCase();
+  if (c) for (let i = 0; i < activos.length; i++) { if (GIROS[activos[i]].cats.some(x => x.toLowerCase() === c)) return activos[i]; }
+  return activos[0];
+}
+// Precio en lempiras de un artículo pedido desde un enlace (giro Compras en línea)
+function precioCompra_(usd, cfg) {
+  const t = Number(cfg.comprasCambio) || 0, rec = Math.max(0, Number(cfg.comprasRecargo) || 0), env = Math.max(0, Number(cfg.comprasEnvio) || 0);
+  return Math.ceil(usd * t * (1 + rec / 100) + env);
+}
+
 function contabOn_() {
   if (MULTI_NEGOCIO) { if (!NEG) return false; return ['sí','si','activo','activa','true','1','x'].indexOf(String(NEG.lic.contab || '').trim().toLowerCase()) >= 0; }
   return PropertiesService.getScriptProperties().getProperty('CONTAB') === 'activo';
