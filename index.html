@@ -983,6 +983,7 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .cc-a .tx{flex:1;min-width:0}.cc-a b{display:block;font-size:13px}.cc-a small{display:block;color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc-a .bt{flex-basis:100%;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 </style>
+<script src="visitas.js?v=1" defer></script>
 </head>
 <body>
 <div id="loader"></div>
@@ -1026,7 +1027,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.5';
+const VERSION = '1.9.6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -1043,7 +1044,9 @@ const SCHEMA_M = {
   Seguimiento: ['id','negocioId','tipo','fecha','nota'],
   PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota'],
   // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
-  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado']
+  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado'],
+  // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
+  Visitas:     ['id','fecha','pagina','origen','disp','vid','ref']
 };
 const PANEL_SEG = 21600;
 // Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
@@ -1186,6 +1189,8 @@ function route_(req) {
   if (a === 'login') return lock_(() => MULTI_NEGOCIO ? loginMulti_(d) : login_(d));
   if (a === 'registrar') return registrar_(d);
   if (a === 'info') return { multi: MULTI_NEGOCIO, version: VERSION };
+  // Contador de visitas (público, sin usuario)
+  if (a === 'visita') return visita_(d);
   // Tienda en línea (página pública, sin usuario)
   if (a === 'tiendaInfo') return tiendaInfo_(d);
   if (a === 'pedir') { pedirLimites_(d); return lock_(() => pedir_(d)); }
@@ -1746,7 +1751,7 @@ function masterSheet_(name) {
     s.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
     s.setFrozenRows(1);
     h.forEach((k, i) => { if (M_TEXTO.indexOf(k) >= 0) s.getRange(2, i + 1, s.getMaxRows() - 1, 1).setNumberFormat('@'); });
-    if (['Accesos', 'SoporteMsg', 'Seguimiento'].indexOf(name) >= 0) { try { s.hideSheet(); } catch (e) {} }
+    if (['Accesos', 'SoporteMsg', 'Seguimiento', 'Visitas'].indexOf(name) >= 0) { try { s.hideSheet(); } catch (e) {} }
     if (name === 'Licencias') {
       try {
         const regla = SpreadsheetApp.newDataValidation().requireValueInList(['Prueba', 'Activa', 'Vencida', 'Bloqueada'], true).build();
@@ -1775,7 +1780,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
+const M_TEXTO = ['pagina','origen','vid','ref','desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -2229,6 +2234,7 @@ function rutaPanel_(a, d) {
     case 'panelGastoAnular':       return panelGastoAnular_(d);
     case 'panelTasa':              return { tasa: tasaDolar_(d && d.forzar) };
     case 'panelLlego':             return panelLlego_(d);
+    case 'panelVisitas':           return panelVisitas_(d);
     case 'panelSalir':             return true;
   }
   throw new Error('Acción no válida: ' + a);
@@ -2312,6 +2318,7 @@ function panelResumen_() {
       invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION,
+    visitas: visitasMini_(),
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics, duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
     soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
@@ -4899,6 +4906,69 @@ function probarCambioDolar() {
   Logger.log('Respuesta ' + r.getResponseCode() + ': ' + r.getContentText().slice(0, 160));
   Logger.log('Cambio del dólar hoy: L ' + tasaDolar_(true));
 }
+
+/* ===================== CONTADOR DE VISITAS (Panel Molina) =====================
+ * Las páginas (catálogo, Negocio VM, Salón VM, Eventos VM) cargan …/negocio/visitas.js, que manda
+ * { action:'visita', data:{ p:página, o:origen, d:'cel'|'pc', v:id al azar del navegador, r:sitio de donde vino } }.
+ * No guarda nombres, teléfonos, IP ni nada personal. El mismo navegador cuenta una sola vez cada 30 minutos por página.
+ */
+const VISITA_DIAS = 180; // las visitas más viejas se borran solas
+function slug_(x, n) { return String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9-]/g, '').slice(0, n || 30); }
+function visita_(d) {
+  if (!MULTI_NEGOCIO) return false;
+  const pagina = slug_(d.p, 30); if (!pagina) return false;
+  const vid = String(d.v || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24);
+  const c = CacheService.getScriptCache(), k = 'VI_' + vid + '_' + pagina;
+  if (vid && c.get(k)) return true;
+  const min = 'VIM_' + Utilities.formatDate(new Date(), TZ, 'HHmm'), n = Number(c.get(min) || 0);
+  if (n >= 150) return false; // freno contra abusos: máximo 150 visitas por minuto
+  c.put(min, String(n + 1), 120);
+  if (vid) c.put(k, '1', 1800);
+  mAppend_('Visitas', { id: mId_('VI'), fecha: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), pagina: pagina, origen: slug_(d.o, 20) || 'directo',
+    disp: d.d === 'pc' ? 'pc' : 'cel', vid: vid, ref: String(d.r || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 60) });
+  return true;
+}
+// Lee solo las columnas fecha, página, origen, disp y vid de las últimas filas (rápido aunque la hoja crezca)
+function visitasFilas_(maxFilas) {
+  const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 2) return [];
+  const h = SCHEMA_M.Visitas, cuantas = Math.min(n - 1, maxFilas || 60000), ini = n - cuantas + 1;
+  return s.getRange(ini, 2, cuantas, 5).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]) }))
+    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha));
+}
+function diaMenos_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
+// Para la tarjeta del resumen: hoy y últimos 7 días
+function visitasMini_() {
+  try {
+    const hoy = hoy_(), d7 = diaMenos_(6), f = visitasFilas_(8000).filter(x => x.fecha.slice(0, 10) >= d7);
+    const u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
+    return { hoy: f.filter(x => x.fecha.slice(0, 10) === hoy).length, semana: f.length, unicos: Object.keys(u).length };
+  } catch (e) { return { hoy: 0, semana: 0, unicos: 0 }; }
+}
+function borrarVisitasViejas_() {
+  const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 3) return;
+  const limite = diaMenos_(VISITA_DIAS), col = s.getRange(2, 2, Math.min(n - 1, 20000), 1).getValues();
+  let k = 0; while (k < col.length && String(col[k][0] instanceof Date ? Utilities.formatDate(col[k][0], TZ, 'yyyy-MM-dd') : col[k][0]).slice(0, 10) < limite) k++;
+  if (k > 0) s.deleteRows(2, k);
+}
+function panelVisitas_(d) {
+  const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
+  try { borrarVisitasViejas_(); } catch (e) {}
+  const hoy = hoy_(), desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
+  const todas = visitasFilas_(), f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
+  const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
+  const contar = (l, campo) => { const o = {}; l.forEach(x => { const k = x[campo] || 'directo'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n); };
+  // Barras: por día (7 y 30 días) o por semana (90 días)
+  const barras = [];
+  if (dias <= 30) { for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i), l = f.filter(x => x.fecha.slice(0, 10) === k); barras.push({ k: k, n: l.length, u: unicos(l) }); } }
+  else { for (let w = 12; w >= 0; w--) { const a = diaMenos_(w * 7 + 6), b = diaMenos_(w * 7), l = f.filter(x => { const k = x.fecha.slice(0, 10); return k >= a && k <= b; }); if (b >= desde) barras.push({ k: a < desde ? desde : a, n: l.length, u: unicos(l), semana: true }); } }
+  const porHora = new Array(24).fill(0); f.forEach(x => { const h = Number(x.fecha.slice(11, 13)); if (h >= 0 && h < 24) porHora[h]++; });
+  const regs = mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada' && String(l.registro).slice(0, 10) >= desde).length;
+  const cel = f.filter(x => x.disp !== 'pc').length;
+  return { dias: dias, desde: desde, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
+    registros: regs, conversion: unicos(f) ? Math.round(regs * 1000 / unicos(f)) / 10 : 0, cel: f.length ? Math.round(cel * 100 / f.length) : 0,
+    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, ultimas: f.slice(-15).reverse() };
+}
+
 </script>
 <script>
 'use strict';
@@ -5151,7 +5221,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.5';
+const APP_VER = '1.9.6';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -5721,7 +5791,7 @@ async function ingresar(ev) {
   $('#l-err').textContent = '';
   try {
     const r = await api('login', S.multi ? { whatsapp: $('#l-user').value, pin: $('#l-pass').value.trim() } : { usuario: $('#l-user').value.trim(), clave: $('#l-pass').value });
-    S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing');
+    S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing'); if (!DEMO.on) mvMarca('mv_cliente');
     limpiarSesion();
     await arrancar();
   } catch (e) { const el = $('#l-err'); if (el) el.textContent = e.message; }
@@ -5739,7 +5809,7 @@ async function registrarse(ev) {
     registrando = true;
     if (btn) { btn.disabled = true; btn.textContent = 'Creando tu negocio… (puede tardar un minuto)'; }
     const r = await api('registrar', { negocio: $('#r-neg').value.trim(), giro: $('#r-giro').value, nombre: $('#r-nom').value.trim(), whatsapp: $('#r-wa').value, pin });
-    S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing');
+    S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing'); if (!DEMO.on) mvMarca('mv_cliente');
     limpiarSesion();
     await arrancar();
     toast('¡Bienvenido! Tu prueba de ' + DIAS_PRUEBA_REG + ' días ya comenzó', 'ok', 5000);
@@ -5759,7 +5829,7 @@ ACC.demoEjemplo = async el => {
       B.sembrarEjemplo_(r.usuario.id);
       demoGuardar();
     }
-    S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing');
+    S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing'); if (!DEMO.on) mvMarca('mv_cliente');
     limpiarSesion();
     await arrancar();
     toast('Negocio de ejemplo listo · usuario 9876-0000 · PIN 1234', 'ok', 6000);
@@ -5961,8 +6031,10 @@ const CONTACTAR_T = { dia3: ['¿Qué tal la prueba?', 'b-warn', 'Día 3 de prueb
 const EST_L = { activa: ['b-ok', 'Activa'], prueba: ['b-warn', 'Prueba'], vencida: ['b-bad', 'Vencida'], bloqueada: ['b-mut', 'Pausada'] };
 const waPlantilla = (n, k, texto) => waLink(n.whatsapp, (texto || P.pl[k] || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio));
 const cuandoP = f => f ? hace(String(f).replace(' ', 'T')) : 'nunca';
+// Marca este navegador para el contador de visitas (mv_yo = Vic, no se cuenta; mv_cliente = ya usa el programa)
+const mvMarca = k => { try { localStorage.setItem(k, '1'); } catch (e) {} };
 function iniciarPanel() {
-  S.enPanel = true; document.title = 'Panel Molina · Gestión de Negocio VM';
+  S.enPanel = true; mvMarca('mv_yo'); document.title = 'Panel Molina · Gestión de Negocio VM';
   $('#login').hidden = true; $('#tienda').hidden = true; $('#app').hidden = false; document.body.classList.add('app', 'panel');
   $('#bnav').style.display = 'none'; $('#tnav').style.display = 'none';
   if (P.tok) panelResumen().catch(() => panelLogin()); else panelLogin();
@@ -5994,6 +6066,7 @@ async function panelResumen() {
   $('#main').innerHTML = `<div class="kpis k4"><div class="kpi"><small>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></div><div class="kpi" style="--k:var(--warn)"><small>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b></div><div class="kpi" style="--k:#00b56e"><small>Ingresos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'} · total ${money(k.ingresosTotal || 0)}</i></div></div>
     <div class="kpis k4" style="margin-top:8px"><div class="kpi" style="--k:var(--pri)"><small>Conversión</small><b>${k.terminadas ? k.conversion + '%' : '—'}</b><i>${k.terminadas ? `${k.compraron} de ${k.terminadas} pruebas terminadas compraron` : 'ninguna prueba ha terminado'}</i></div><div class="kpi" style="--k:var(--warn)"><small>Sin vender 7 días</small><b>${k.sinVender7 || 0}</b><i>abren la app pero no cobran</i></div></div>
     <div class="kpis k4" style="margin-top:8px"><button class="kpi" style="--k:var(--bad);text-align:left;font:inherit;color:inherit" data-a="panelGastosLista"><small>Gastos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.gastosMes || 0)}</b><i>${k.gastosMesN || 0} gasto${k.gastosMesN === 1 ? '' : 's'} · ver y registrar</i></button><div class="kpi" style="--k:${(k.resultadoMes || 0) < 0 ? 'var(--bad)' : '#00b56e'}"><small>Resultado del mes</small><b class="n">${money(k.resultadoMes || 0)}</b><i>ingresos − gastos</i></div></div>
+    <button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelVisitas">${ic('eye', 20)}<div><b>Visitas: ${(d.visitas || {}).hoy || 0} hoy · ${(d.visitas || {}).semana || 0} en 7 días</b><small>${(d.visitas || {}).unicos || 0} personas distintas · toca para ver de dónde vienen y tus enlaces</small></div></button>
     ${k.invertidoPub ? `<button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelGastosLista">${ic('sparkle', 20)}<div><b>Publicidad: recuperado ${money(k.recuperadoPub)} de ${money(k.invertidoPub)} invertidos</b><small>${Math.round(k.recuperadoPub * 100 / k.invertidoPub)} % · toca para ver cada publicidad</small></div></button>` : ''}
     ${(d.porMes || []).length > 1 ? `<div class="chips" style="margin:8px 0 0;flex-wrap:wrap">${d.porMes.map(m => `<span class="chip" style="pointer-events:none">${esc(fMes(m.mes).split(' ')[0].slice(0, 3))} · ${m.activos}/${m.registros}</span>`).join('')}</div>` : ''}
     ${(d.sinPago || []).length ? `<div class="aviso warn" style="margin-top:10px">${ic('coin', 20)}<div><b>${d.sinPago.length} activación${d.sinPago.length > 1 ? 'es' : ''} sin pago anotado</b><small>${d.sinPago.map(x => esc(x.negocio) + ' (' + x.que + ')').join(' · ')}</small></div><button class="btn sm" data-a="panelVer" data-id="${d.sinPago[0].id}">Ver</button></div>` : ''}
@@ -6038,6 +6111,36 @@ ACC.panelLimpiarDup = async () => {
 ACC.panelContactado = async el => { await api('panelContacto', { id: el.dataset.id, tipo: el.dataset.t, nota: 'Contactado por WhatsApp · ' + (CONTACTAR_T[el.dataset.t] || [''])[0] }); toast('Marcado como contactado', 'ok'); panelResumen(); };
 ACC.panelVer = el => panelFicha(el.dataset.id);
 ACC.panelAccion = async el => { const r = await panelEjecutar(el.dataset.id, el.dataset.x); if (r && !PILA.length) panelResumen(); };
+/* ===== Visitas a los enlaces (solo Panel) ===== */
+const VIS_PAG = { negocio: 'Negocio VM', demo: 'Demo Negocio VM', catalogo: 'Catálogo', salon: 'Salón VM', eventos: 'Eventos VM' };
+const VIS_ORI = { tiktok: ['TikTok', 'tv'], wa: ['WhatsApp', 'wa'], whatsapp: ['WhatsApp', 'wa'], facebook: ['Facebook', 'fb'], fb: ['Facebook', 'fb'], instagram: ['Instagram', 'insta'], ig: ['Instagram', 'insta'], google: ['Google', 'search'], youtube: ['YouTube', 'tv'], estado: ['Estado de WhatsApp', 'wa'], 'mis-paginas': ['Desde tus páginas', 'layers'], 'otro-sitio': ['Otro sitio web', 'globe'], directo: ['Directo (sin etiqueta)', 'right'] };
+const VIS_LINKS = [['negocio', 'https://josevic504-bot.github.io/negocio/'], ['demo', 'https://josevic504-bot.github.io/negocio/?demo'], ['salon', 'https://josevic504-bot.github.io/salonlicencias/'], ['eventos', 'https://josevic504-bot.github.io/eventos/']];
+const visOri = k => VIS_ORI[k] || [k.charAt(0).toUpperCase() + k.slice(1), 'tag'];
+const visPag = k => VIS_PAG[k] || k;
+const visLink = (u, src) => u + (src ? (u.includes('?') ? '&' : '?') + 'src=' + src : '');
+ACC.panelVisitas = async el => {
+  const dias = Number((el && el.dataset && el.dataset.k) || P.visDias || 7); P.visDias = dias;
+  panelCab('Visitas', true);
+  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
+  const v = await api('panelVisitas', { dias });
+  const max = Math.max(1, ...v.barras.map(b => b.n)), maxH = Math.max(1, ...v.porHora);
+  const camb = v.anterior ? Math.round((v.total - v.anterior) * 100 / v.anterior) : null;
+  const barLbl = b => b.semana ? fFechaC(b.k).replace(/ \d{4}$/, '') : dias === 7 ? ['D', 'L', 'M', 'M', 'J', 'V', 'S'][new Date(b.k + 'T12:00').getDay()] : String(Number(b.k.slice(8)));
+  const lista = (l, fn) => l.length ? `<div class="list">${l.map(x => { const t = fn(x); return `<div class="li"><div class="av ${colorDe(t[0])}">${ic(t[1], 18)}</div><div class="tx"><b>${esc(t[0])}</b><small>${Math.round(x.n * 100 / v.total)} % de las visitas</small><div style="height:6px;border-radius:6px;background:var(--line);margin-top:6px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(3, Math.round(x.n * 100 / l[0].n))}%;background:var(--pri)"></i></div></div><div class="am n"><b>${x.n}</b></div></div>`; }).join('')}</div>` : '<div class="empty">Todavía no hay visitas en este período</div>';
+  const pico = v.porHora.indexOf(maxH);
+  $('#main').innerHTML = `<div class="chips" style="margin-bottom:10px">${[[7, '7 días'], [30, '30 días'], [90, '90 días']].map(x => `<button class="chip ${dias === x[0] ? 'on' : ''}" data-a="panelVisitas" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+    <div class="kpis k4"><div class="kpi" style="--k:var(--pri)"><small>Hoy</small><b>${v.hoyN}</b><i>visitas</i></div><div class="kpi" style="--k:var(--info)"><small>${dias} días</small><b>${v.total}</b><i>${camb === null ? 'sin período anterior' : (camb >= 0 ? '▲ ' : '▼ ') + Math.abs(camb) + ' % vs. ' + dias + ' días antes'}</i></div><div class="kpi" style="--k:#00b56e"><small>Personas distintas</small><b>${v.unicos}</b><i>celular ${v.cel} % · PC ${100 - v.cel} %</i></div><div class="kpi" style="--k:var(--warn)"><small>Se registraron</small><b>${v.registros}</b><i>${v.unicos ? v.conversion + ' % de las personas' : 'pruebas gratis nuevas'}</i></div></div>
+    <div class="sec-t"><h3>${dias === 90 ? 'Por semana' : 'Por día'}</h3><a>${v.total ? 'más visitas a las ' + (pico % 12 || 12) + (pico < 12 ? ' a. m.' : ' p. m.') : ''}</a></div>
+    <div class="panel" style="padding:14px 12px 10px"><div style="display:flex;align-items:flex-end;gap:${dias === 30 ? 2 : 6}px;height:110px">${v.barras.map(b => `<div title="${esc(b.k)}: ${b.n} visitas, ${b.u} personas" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%">${dias !== 30 && b.n ? `<small style="font-size:10px;color:var(--mut)">${b.n}</small>` : ''}<i style="display:block;width:100%;height:${b.n ? Math.max(4, Math.round(b.n * 100 / max)) : 2}%;border-radius:6px 6px 2px 2px;background:${b.k === v.hoy ? 'var(--pri)' : 'color-mix(in srgb, var(--pri) 45%, transparent)'}"></i></div>`).join('')}</div>
+      <div style="display:flex;gap:${dias === 30 ? 2 : 6}px;margin-top:4px">${v.barras.map((b, i) => `<small style="flex:1;text-align:center;font-size:10px;color:var(--mut)">${dias === 30 && i % 5 ? '' : barLbl(b)}</small>`).join('')}</div></div>
+    <div class="sec-t"><h3>De dónde vienen</h3></div>${lista(v.origen, x => visOri(x.k))}
+    <div class="sec-t"><h3>Qué página vieron</h3></div>${lista(v.paginas, x => [visPag(x.k), 'doc'])}
+    <div class="sec-t"><h3>Tus enlaces para anuncios</h3></div>
+    <p class="h" style="margin:-4px 0 10px">Usa un enlace distinto en cada lugar donde lo publiques. Así sabes qué anuncio trae más gente. Sin etiqueta aparece como «Directo».</p>
+    <div class="list">${VIS_LINKS.map(([k, u]) => `<div class="li" style="flex-wrap:wrap"><div class="av ${colorDe(visPag(k))}">${ic('globe', 18)}</div><div class="tx"><b>${esc(visPag(k))}</b><small style="word-break:break-all">${esc(u)}</small></div><div class="row" style="width:100%;margin-top:8px;flex-wrap:wrap;gap:6px">${[['tiktok', 'TikTok'], ['wa', 'WhatsApp'], ['estado', 'Estado WA'], ['facebook', 'Facebook']].map(([s2, t]) => `<button class="btn sm" data-a="panelCopiarLink" data-u="${esc(visLink(u, s2))}">${ic(VIS_ORI[s2][1], 15)} ${t}</button>`).join('')}</div></div>`).join('')}</div>
+    <p class="credit" style="margin-top:14px">No se cuentan tus propias visitas (este teléfono queda marcado al abrir el Panel) ni las de clientes que ya iniciaron sesión. El mismo teléfono cuenta una vez cada 30 minutos. No se guarda ningún dato personal.</p>`;
+};
+ACC.panelCopiarLink = async el => { const u = el.dataset.u; try { await navigator.clipboard.writeText(u); toast('Enlace copiado: ' + u.replace(/^https:\/\//, ''), 'ok'); } catch (e) { pedirTexto('Enlace', { valor: u }); } };
 /* ===== Gastos y publicidad (solo Panel) ===== */
 const PLATAFORMAS = ['TikTok', 'Facebook / Instagram', 'Google', 'WhatsApp', 'Volantes / impreso', 'Otra'];
 ACC.panelGastosLista = async () => {
@@ -6250,6 +6353,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (q.has('demo')) { LS.set('modo', 'demo'); if (!LS.get('cuenta', '')) S.lmodo = 'demo'; history.replaceState(null, '', location.pathname); if (!DEMO.on) { location.reload(); return; } }
   if (q.has('tienda')) { S.enTienda = true; return iniciarTienda(q.get('tienda')); }
   if (q.has('panel')) { if (DEMO.on) demoBackend(); return iniciarPanel(); }
+  // Contador de visitas (Panel Molina): cuenta a quien abre el enlace; no a los clientes con sesión
+  if (S.token && !DEMO.on) mvMarca('mv_cliente'); else (window.mvq = window.mvq || []).push(DEMO.on ? 'demo' : 'negocio');
   if ('serviceWorker' in navigator && location.protocol === 'https:') { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }
   if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.tipo === 'ir' && S.user && VISTAS[e.data.vista]) { cerrarHojas(); ir(e.data.vista); } });
   if (S.token) {

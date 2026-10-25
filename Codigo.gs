@@ -21,7 +21,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.5';
+const VERSION = '1.9.6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -38,7 +38,9 @@ const SCHEMA_M = {
   Seguimiento: ['id','negocioId','tipo','fecha','nota'],
   PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota'],
   // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
-  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado']
+  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado'],
+  // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
+  Visitas:     ['id','fecha','pagina','origen','disp','vid','ref']
 };
 const PANEL_SEG = 21600;
 // Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
@@ -181,6 +183,8 @@ function route_(req) {
   if (a === 'login') return lock_(() => MULTI_NEGOCIO ? loginMulti_(d) : login_(d));
   if (a === 'registrar') return registrar_(d);
   if (a === 'info') return { multi: MULTI_NEGOCIO, version: VERSION };
+  // Contador de visitas (público, sin usuario)
+  if (a === 'visita') return visita_(d);
   // Tienda en línea (página pública, sin usuario)
   if (a === 'tiendaInfo') return tiendaInfo_(d);
   if (a === 'pedir') { pedirLimites_(d); return lock_(() => pedir_(d)); }
@@ -741,7 +745,7 @@ function masterSheet_(name) {
     s.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
     s.setFrozenRows(1);
     h.forEach((k, i) => { if (M_TEXTO.indexOf(k) >= 0) s.getRange(2, i + 1, s.getMaxRows() - 1, 1).setNumberFormat('@'); });
-    if (['Accesos', 'SoporteMsg', 'Seguimiento'].indexOf(name) >= 0) { try { s.hideSheet(); } catch (e) {} }
+    if (['Accesos', 'SoporteMsg', 'Seguimiento', 'Visitas'].indexOf(name) >= 0) { try { s.hideSheet(); } catch (e) {} }
     if (name === 'Licencias') {
       try {
         const regla = SpreadsheetApp.newDataValidation().requireValueInList(['Prueba', 'Activa', 'Vencida', 'Bloqueada'], true).build();
@@ -770,7 +774,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
+const M_TEXTO = ['pagina','origen','vid','ref','desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -1224,6 +1228,7 @@ function rutaPanel_(a, d) {
     case 'panelGastoAnular':       return panelGastoAnular_(d);
     case 'panelTasa':              return { tasa: tasaDolar_(d && d.forzar) };
     case 'panelLlego':             return panelLlego_(d);
+    case 'panelVisitas':           return panelVisitas_(d);
     case 'panelSalir':             return true;
   }
   throw new Error('Acción no válida: ' + a);
@@ -1307,6 +1312,7 @@ function panelResumen_() {
       invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION,
+    visitas: visitasMini_(),
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics, duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
     soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
@@ -3894,3 +3900,66 @@ function probarCambioDolar() {
   Logger.log('Respuesta ' + r.getResponseCode() + ': ' + r.getContentText().slice(0, 160));
   Logger.log('Cambio del dólar hoy: L ' + tasaDolar_(true));
 }
+
+/* ===================== CONTADOR DE VISITAS (Panel Molina) =====================
+ * Las páginas (catálogo, Negocio VM, Salón VM, Eventos VM) cargan …/negocio/visitas.js, que manda
+ * { action:'visita', data:{ p:página, o:origen, d:'cel'|'pc', v:id al azar del navegador, r:sitio de donde vino } }.
+ * No guarda nombres, teléfonos, IP ni nada personal. El mismo navegador cuenta una sola vez cada 30 minutos por página.
+ */
+const VISITA_DIAS = 180; // las visitas más viejas se borran solas
+function slug_(x, n) { return String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9-]/g, '').slice(0, n || 30); }
+function visita_(d) {
+  if (!MULTI_NEGOCIO) return false;
+  const pagina = slug_(d.p, 30); if (!pagina) return false;
+  const vid = String(d.v || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24);
+  const c = CacheService.getScriptCache(), k = 'VI_' + vid + '_' + pagina;
+  if (vid && c.get(k)) return true;
+  const min = 'VIM_' + Utilities.formatDate(new Date(), TZ, 'HHmm'), n = Number(c.get(min) || 0);
+  if (n >= 150) return false; // freno contra abusos: máximo 150 visitas por minuto
+  c.put(min, String(n + 1), 120);
+  if (vid) c.put(k, '1', 1800);
+  mAppend_('Visitas', { id: mId_('VI'), fecha: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), pagina: pagina, origen: slug_(d.o, 20) || 'directo',
+    disp: d.d === 'pc' ? 'pc' : 'cel', vid: vid, ref: String(d.r || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 60) });
+  return true;
+}
+// Lee solo las columnas fecha, página, origen, disp y vid de las últimas filas (rápido aunque la hoja crezca)
+function visitasFilas_(maxFilas) {
+  const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 2) return [];
+  const h = SCHEMA_M.Visitas, cuantas = Math.min(n - 1, maxFilas || 60000), ini = n - cuantas + 1;
+  return s.getRange(ini, 2, cuantas, 5).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]) }))
+    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha));
+}
+function diaMenos_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
+// Para la tarjeta del resumen: hoy y últimos 7 días
+function visitasMini_() {
+  try {
+    const hoy = hoy_(), d7 = diaMenos_(6), f = visitasFilas_(8000).filter(x => x.fecha.slice(0, 10) >= d7);
+    const u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
+    return { hoy: f.filter(x => x.fecha.slice(0, 10) === hoy).length, semana: f.length, unicos: Object.keys(u).length };
+  } catch (e) { return { hoy: 0, semana: 0, unicos: 0 }; }
+}
+function borrarVisitasViejas_() {
+  const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 3) return;
+  const limite = diaMenos_(VISITA_DIAS), col = s.getRange(2, 2, Math.min(n - 1, 20000), 1).getValues();
+  let k = 0; while (k < col.length && String(col[k][0] instanceof Date ? Utilities.formatDate(col[k][0], TZ, 'yyyy-MM-dd') : col[k][0]).slice(0, 10) < limite) k++;
+  if (k > 0) s.deleteRows(2, k);
+}
+function panelVisitas_(d) {
+  const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
+  try { borrarVisitasViejas_(); } catch (e) {}
+  const hoy = hoy_(), desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
+  const todas = visitasFilas_(), f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
+  const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
+  const contar = (l, campo) => { const o = {}; l.forEach(x => { const k = x[campo] || 'directo'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n); };
+  // Barras: por día (7 y 30 días) o por semana (90 días)
+  const barras = [];
+  if (dias <= 30) { for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i), l = f.filter(x => x.fecha.slice(0, 10) === k); barras.push({ k: k, n: l.length, u: unicos(l) }); } }
+  else { for (let w = 12; w >= 0; w--) { const a = diaMenos_(w * 7 + 6), b = diaMenos_(w * 7), l = f.filter(x => { const k = x.fecha.slice(0, 10); return k >= a && k <= b; }); if (b >= desde) barras.push({ k: a < desde ? desde : a, n: l.length, u: unicos(l), semana: true }); } }
+  const porHora = new Array(24).fill(0); f.forEach(x => { const h = Number(x.fecha.slice(11, 13)); if (h >= 0 && h < 24) porHora[h]++; });
+  const regs = mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada' && String(l.registro).slice(0, 10) >= desde).length;
+  const cel = f.filter(x => x.disp !== 'pc').length;
+  return { dias: dias, desde: desde, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
+    registros: regs, conversion: unicos(f) ? Math.round(regs * 1000 / unicos(f)) / 10 : 0, cel: f.length ? Math.round(cel * 100 / f.length) : 0,
+    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, ultimas: f.slice(-15).reverse() };
+}
+
