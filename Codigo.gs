@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.8 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.9 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.8';
+const VERSION = '1.9.9';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -65,14 +65,14 @@ const SCHEMA = {
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
   Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo'],
-  VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia'],
+  VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
   Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado'],
   Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','ref'],
   Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion'],
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion'],
-  Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion'],
+  Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota'],
   Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca'],
@@ -2066,9 +2066,13 @@ function venta_(u, d) {
     recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200),
     factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo
   };
+  // Sección (giro) de cada línea: queda guardada para que los reportes por sección no cambien si después mueves el producto
+  const activos = girosActivos_(cfg), gl = items.map(i => giroLinea_(i, pm, activos)), mg = {};
+  items.forEach((i, k) => { if (gl[k]) mg[gl[k]] = (mg[gl[k]] || 0) + i.cantidad * i.precio; });
+  const gDom = Object.keys(mg).reduce((a, b) => !a || mg[b] > mg[a] ? b : a, '') || activos[0];
   const detalle = items.map((i, k) => ({
     id: newId_('VentaDetalle') + k, ventaId: venta.id, productoId: i.productoId, descripcion: i.descripcion,
-    cantidad: i.cantidad, precio: r2_(i.precio), costo: r4_(i.costo || 0), total: r2_(i.cantidad * i.precio), serie: i.serie || '', garantia: i.garantia || ''
+    cantidad: i.cantidad, precio: r2_(i.precio), costo: r4_(i.costo || 0), total: r2_(i.cantidad * i.precio), serie: i.serie || '', garantia: i.garantia || '', giro: gl[k] || gDom
   }));
   appendRows_('Ventas', [venta]);
   appendRows_('VentaDetalle', detalle);
@@ -2392,6 +2396,8 @@ function guardarGasto_(u, d) {
   const prov = [].concat.apply([], cats.map(c => c.proveedores)).find(x => r.proveedor && x.toLowerCase() === r.proveedor.toLowerCase());
   if (prov) r.proveedor = prov;
   r.metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(r.metodo) >= 0 ? r.metodo : 'Efectivo';
+  // Sección del gasto (solo si la tienda tiene varias): vacío = gasto general, que el reporte reparte entre las secciones
+  if (r.giro === undefined) delete r.giro; else r.giro = girosActivos_().indexOf(String(r.giro)) >= 0 ? String(r.giro) : (prev && giroValido_(prev.giro) === String(r.giro) ? prev.giro : '');
   if (prev && (prev.metodo === 'Efectivo' || r.metodo === 'Efectivo') && (Math.abs(prev.monto - r.monto) > 0.004 || prev.metodo !== r.metodo) && idMs_(prev.id) <= ventanaCaja_().desdeMs)
     throw new Error('Este gasto ya entró en un cierre de caja. Para cambiar el monto o la forma de pago, anúlalo y regístralo de nuevo.');
   if (!prev) { r.usuarioId = u.id; r.creado = ahora_(); r.anulado = false; }
@@ -2643,22 +2649,31 @@ function reporte_(u, d) {
   const lineas = {}; det.forEach(x => { lineas[x.ventaId] = (lineas[x.ventaId] || 0) + x.total; });
   const fac = {}; ventas.forEach(v => { fac[v.id] = lineas[v.id] > 0 ? (v.total - v.isv) / lineas[v.id] : 1; });
   const pm = porId_(rows_('Productos')), us = porId_(rows_('Usuarios'));
-  const k = { ventas: 0, n: ventas.length, ticket: 0, isv: 0, descuentos: 0, costo: 0, bruta: 0, gastos: 0, neta: 0, margen: 0,
+  // Secciones (giros): con un giro filtra todo el reporte a esa sección; con varios, arma además el comparativo
+  const activos = girosActivos_(), giro = giroValido_(d.giro);
+  const sec = seccionesDe_(ventas, det, activos, pm);
+  const w = v => giro ? (sec.peso[v.id][giro] || 0) : 1;
+  const vs = giro ? ventas.filter(v => w(v) > 0) : ventas;
+  const ds = giro ? det.filter(x => sec.lin[x.id] === giro) : det;
+  const k = { ventas: 0, n: vs.length, ticket: 0, isv: 0, descuentos: 0, costo: 0, bruta: 0, gastos: 0, neta: 0, margen: 0,
     credito: 0, cobros: 0, compras: 0, pagos: 0, anuladas: 0, clientesNuevos: 0, articulos: 0 };
   const porDia = {}, gastosDia = {}, porMetodo = {}, porCat = {}, top = {}, porUsuario = {}, porHora = {};
-  ventas.forEach(v => {
-    k.ventas += v.total; k.isv += v.isv; k.descuentos += v.descuento; k.costo += v.costo;
-    if (v.metodo === 'Crédito') k.credito += v.total - v.recibido;
+  vs.forEach(v => {
+    const p = w(v);
+    k.ventas += v.total * p; k.isv += v.isv * p; k.descuentos += v.descuento * p;
+    if (!giro) k.costo += v.costo;
+    if (v.metodo === 'Crédito') k.credito += (v.total - v.recibido) * p;
     const dia = v.fecha.slice(0, 10);
-    porDia[dia] = (porDia[dia] || 0) + v.total;
-    porMetodo[v.metodo] = (porMetodo[v.metodo] || 0) + v.total;
+    porDia[dia] = (porDia[dia] || 0) + v.total * p;
+    porMetodo[v.metodo] = (porMetodo[v.metodo] || 0) + v.total * p;
     const hr = v.fecha.slice(11, 13);
     porHora[hr] = (porHora[hr] || 0) + 1;
     const x = porUsuario[v.usuarioId] || (porUsuario[v.usuarioId] = { nombre: us[v.usuarioId] ? us[v.usuarioId].nombre : '—', ventas: 0, n: 0 });
-    x.ventas += v.total; x.n++;
+    x.ventas += v.total * p; x.n++;
   });
-  det.forEach(i => {
+  ds.forEach(i => {
     k.articulos += i.cantidad;
+    if (giro) k.costo += i.cantidad * i.costo;
     const p = pm[i.productoId];
     const cat = p ? p.categoria : 'Otros';
     const neto = i.total * (fac[i.ventaId] !== undefined ? fac[i.ventaId] : 1);
@@ -2667,29 +2682,61 @@ function reporte_(u, d) {
     const t = top[key] || (top[key] = { nombre: i.descripcion, cantidad: 0, total: 0, ganancia: 0 });
     t.cantidad += i.cantidad; t.total += i.total; t.ganancia += neto - i.cantidad * i.costo;
   });
-  const gastosCat = {};
-  rows_('Gastos').filter(g => !g.anulado && g.fechaGasto >= r.desde.slice(0, 10) && g.fechaGasto <= r.hasta.slice(0, 10)).forEach(g => {
-    k.gastos += g.monto;
-    gastosDia[g.fechaGasto] = (gastosDia[g.fechaGasto] || 0) + g.monto;
-    gastosCat[g.categoria] = (gastosCat[g.categoria] || 0) + g.monto;
+  // Comparativo por sección: ventas, costo, gastos propios y su parte de los gastos generales
+  const gastos = rows_('Gastos').filter(g => !g.anulado && g.fechaGasto >= r.desde.slice(0, 10) && g.fechaGasto <= r.hasta.slice(0, 10));
+  const secs = {};
+  const sx = g => secs[g] || (secs[g] = { id: g, nombre: GIROS[g] ? GIROS[g].n : g, activa: activos.indexOf(g) >= 0, ventas: 0, isv: 0, costo: 0, n: 0, articulos: 0, propios: 0, top: {} });
+  activos.forEach(sx);
+  ventas.forEach(v => { const pw = sec.peso[v.id]; Object.keys(pw).forEach(g => { const s = sx(g); s.ventas += v.total * pw[g]; s.isv += v.isv * pw[g]; s.n++; }); });
+  det.forEach(i => {
+    const s = sx(sec.lin[i.id]), key = i.productoId || ('*' + i.descripcion);
+    s.costo += i.cantidad * i.costo; s.articulos += i.cantidad;
+    (s.top[key] = s.top[key] || { nombre: i.descripcion, total: 0 }).total += i.total;
   });
-  rows_('Abonos').forEach(a => { if (!a.anulado && a.fecha >= r.desde && a.fecha <= r.hasta) k.cobros += a.monto; });
-  rows_('Compras').forEach(c => { if (!c.anulada && c.fecha >= r.desde && c.fecha <= r.hasta) k.compras += c.total; });
-  rows_('Pagos').forEach(p => { if (!p.anulado && p.fecha >= r.desde && p.fecha <= r.hasta) k.pagos += p.monto; });
-  k.anuladas = rows_('Ventas').filter(v => v.anulada && v.fecha >= r.desde && v.fecha <= r.hasta).length;
-  k.clientesNuevos = rows_('Clientes').filter(c => c.creado >= r.desde && c.creado <= r.hasta).length;
-  k.ticket = ventas.length ? k.ventas / ventas.length : 0;
+  let general = 0;
+  gastos.forEach(g => { const gg = giroValido_(g.giro); if (gg) sx(gg).propios += g.monto; else general += g.monto; });
+  const lista = Object.keys(secs), netas = {};
+  lista.forEach(g => { netas[g] = secs[g].ventas - secs[g].isv; });
+  const parte = repartoGeneral_(netas, lista), totV = lista.reduce((a, g) => a + secs[g].ventas, 0);
+  const gastosCat = {};
+  gastos.forEach(g => {
+    const gg = giroValido_(g.giro), m = !giro ? g.monto : gg === giro ? g.monto : !gg ? g.monto * (parte[giro] || 0) : 0;
+    if (!m) return;
+    k.gastos += m;
+    gastosDia[g.fechaGasto] = (gastosDia[g.fechaGasto] || 0) + m;
+    const c = giro && !gg ? 'Parte de gastos generales' : g.categoria;
+    gastosCat[c] = (gastosCat[c] || 0) + m;
+  });
+  if (!giro) {
+    rows_('Abonos').forEach(a => { if (!a.anulado && a.fecha >= r.desde && a.fecha <= r.hasta) k.cobros += a.monto; });
+    rows_('Compras').forEach(c => { if (!c.anulada && c.fecha >= r.desde && c.fecha <= r.hasta) k.compras += c.total; });
+    rows_('Pagos').forEach(p => { if (!p.anulado && p.fecha >= r.desde && p.fecha <= r.hasta) k.pagos += p.monto; });
+    k.anuladas = rows_('Ventas').filter(v => v.anulada && v.fecha >= r.desde && v.fecha <= r.hasta).length;
+    k.clientesNuevos = rows_('Clientes').filter(c => c.creado >= r.desde && c.creado <= r.hasta).length;
+  }
+  k.ticket = vs.length ? k.ventas / vs.length : 0;
   k.bruta = k.ventas - k.isv - k.costo;
   k.neta = k.bruta - k.gastos;
   k.margen = (k.ventas - k.isv) > 0 ? k.neta / (k.ventas - k.isv) * 100 : 0;
+  if (giro) { const s = secs[giro] || sx(giro); k.propios = s.propios; k.general = general * (parte[giro] || 0); k.parteGeneral = (parte[giro] || 0) * 100; k.pct = totV > 0 ? s.ventas / totV * 100 : 0; }
   Object.keys(k).forEach(x => { k[x] = r2_(k[x]); });
-  const lista = o => Object.keys(o).map(c => ({ nombre: c, total: r2_(o[c]) })).sort((a, b) => b.total - a.total);
-  return {
-    kpi: k, porDia: porDia, gastosDia: gastosDia, porMetodo: lista(porMetodo), porCategoria: lista(porCat), gastosCategoria: lista(gastosCat),
+  const listaO = o => Object.keys(o).map(c => ({ nombre: c, total: r2_(o[c]) })).sort((a, b) => b.total - a.total);
+  const res = {
+    kpi: k, porDia: porDia, gastosDia: gastosDia, porMetodo: listaO(porMetodo), porCategoria: listaO(porCat), gastosCategoria: listaO(gastosCat),
     top: Object.keys(top).map(x => { const t = top[x]; t.total = r2_(t.total); t.ganancia = r2_(t.ganancia); t.cantidad = r3_(t.cantidad); return t; }).sort((a, b) => b.total - a.total).slice(0, 15),
     usuarios: Object.keys(porUsuario).map(x => { const o = porUsuario[x]; o.ventas = r2_(o.ventas); return o; }).sort((a, b) => b.ventas - a.ventas),
-    porHora: porHora
+    porHora: porHora, giro: giro
   };
+  if (lista.length > 1 || giro) {
+    res.gastosGenerales = r2_(general);
+    res.secciones = lista.filter(g => secs[g].activa || secs[g].n || secs[g].propios).map(g => {
+      const s = secs[g], gen = general * parte[g], bruta = s.ventas - s.isv - s.costo, neta = bruta - s.propios - gen, t = Object.keys(s.top).map(x => s.top[x]).sort((a, b) => b.total - a.total)[0];
+      return { id: g, nombre: s.nombre, activa: s.activa, ventas: r2_(s.ventas), isv: r2_(s.isv), costo: r2_(s.costo), bruta: r2_(bruta), propios: r2_(s.propios), general: r2_(gen),
+        neta: r2_(neta), margen: r2_(s.ventas - s.isv > 0 ? neta / (s.ventas - s.isv) * 100 : 0), n: s.n, articulos: r3_(s.articulos), ticket: r2_(s.n ? s.ventas / s.n : 0),
+        pct: r2_(totV > 0 ? s.ventas / totV * 100 : 0), parte: r2_(parte[g] * 100), top: t ? t.nombre : '' };
+    });
+  }
+  return res;
 }
 
 // Resumen por mes: ventas, ISV, costo, gastos, ganancia y cuánto de ella ya tiene destino
@@ -2801,11 +2848,12 @@ function inventario_(u, d) {
   const vend = {};
   const vids = new Set(rows_('Ventas').filter(v => !v.anulada && v.fecha >= desde).map(v => v.id));
   rows_('VentaDetalle').forEach(x => { if (vids.has(x.ventaId) && x.productoId) vend[x.productoId] = r3_((vend[x.productoId] || 0) + x.cantidad); });
-  const pm = porId_(prods), us = porId_(rows_('Usuarios'));
+  const pm = porId_(prods), us = porId_(rows_('Usuarios')), activos = girosActivos_();
+  const gp = {}; prods.forEach(p => { gp[p.id] = giroDeProd_(p, activos); });
   return {
     productos: prods.map(p => ({ id: p.id, codigo: p.codigo, nombre: p.nombre, categoria: p.categoria, stock: p.stock, stockMin: p.stockMin, costo: p.costo, precio: p.precio, activo: p.activo,
-      icono: p.icono, foto: p.foto, valorCosto: r2_(Math.max(0, p.stock) * p.costo), valorVenta: r2_(Math.max(0, p.stock) * p.precio), vendidos30: vend[p.id] || 0 })),
-    movimientos: desc_(rows_('Inventario'), 'fecha').slice(0, 150)
+      icono: p.icono, foto: p.foto, valorCosto: r2_(Math.max(0, p.stock) * p.costo), valorVenta: r2_(Math.max(0, p.stock) * p.precio), vendidos30: vend[p.id] || 0, giro: gp[p.id] })),
+    movimientos: desc_(rows_('Inventario'), 'fecha').filter(m => !d.giro || gp[m.productoId] === d.giro).slice(0, 150)
       .map(m => ({ fecha: m.fecha, tipo: m.tipo, cantidad: m.cantidad, stock: m.stock, nombre: pm[m.productoId] ? pm[m.productoId].nombre : '—', nota: m.nota, usuario: us[m.usuarioId] ? us[m.usuarioId].nombre : '' }))
   };
 }
@@ -2825,11 +2873,20 @@ function antiguedad_(lista, campoTercero, campoFecha) {
 function cuentas_(u, d) {
   req_(u, ['admin']);
   const cm = porId_(rows_('Clientes')), pv = porId_(rows_('Proveedores'));
-  const cxc = antiguedad_(rows_('Ventas').filter(v => !v.anulada && v.saldo > 0.004 && v.clienteId), 'clienteId', 'fecha')
+  let vs = rows_('Ventas').filter(v => !v.anulada && v.saldo > 0.004 && v.clienteId), cs = rows_('Compras').filter(c => !c.anulada && c.saldo > 0.004 && c.proveedorId);
+  // Por sección: el saldo de cada factura se reparte según lo que tiene de cada sección
+  const giro = giroValido_(d.giro);
+  if (giro) {
+    const activos = girosActivos_(), pm = porId_(rows_('Productos'));
+    const parte = (docs, hoja, campo) => { const ids = new Set(docs.map(x => x.id)), sp = seccionesDe_(docs, rows_(hoja).filter(x => ids.has(x[campo])), activos, pm, campo);
+      return docs.map(x => { x.saldo = x.saldo * (sp.peso[x.id][giro] || 0); return x; }).filter(x => x.saldo > 0.004); };
+    vs = parte(vs, 'VentaDetalle', 'ventaId'); cs = parte(cs, 'CompraDetalle', 'compraId');
+  }
+  const cxc = antiguedad_(vs, 'clienteId', 'fecha')
     .map(o => { const c = cm[o.id] || {}; o.nombre = c.nombre || 'Cliente'; o.telefono = c.telefono || ''; return o; });
-  const cxp = antiguedad_(rows_('Compras').filter(c => !c.anulada && c.saldo > 0.004 && c.proveedorId), 'proveedorId', 'fecha')
+  const cxp = antiguedad_(cs, 'proveedorId', 'fecha')
     .map(o => { const p = pv[o.id] || {}; o.nombre = p.nombre || 'Proveedor'; o.telefono = p.telefono || ''; return o; });
-  return { cobrar: cxc, pagar: cxp };
+  return { cobrar: cxc, pagar: cxp, giro: giro };
 }
 
 /* ===================== FACTURACIÓN SAR (autoimpresor) =====================
@@ -3713,6 +3770,40 @@ function giroDeProd_(p, activos) {
   const c = String(p.categoria || '').toLowerCase();
   if (c) for (let i = 0; i < activos.length; i++) { if (GIROS[activos[i]].cats.some(x => x.toLowerCase() === c)) return activos[i]; }
   return activos[0];
+}
+/* ===== Reportes por sección (giro) =====
+ * Cada línea vendida va a una sección: la que quedó guardada al vender o, en ventas anteriores, la de su producto.
+ * Una compra desde enlace va a «Compras en línea». Una línea sin producto (envío, artículo escrito a mano) va a la
+ * sección que más vendió en esa misma venta. Así cada venta se reparte entre sus secciones sin perder un centavo. */
+function giroLinea_(i, pm, activos) {
+  if (i.giro && own_(GIROS, i.giro)) return i.giro;
+  const p = i.productoId ? pm[i.productoId] : null;
+  if (p) return giroDeProd_(p, activos);
+  if (/^compra en l[ií]nea/i.test(String(i.descripcion || '')) && activos.indexOf('compras') >= 0) return 'compras';
+  return '';
+}
+// lin: sección de cada línea (por id) · peso: qué parte de cada documento es de cada sección (0 a 1)
+function seccionesDe_(docs, det, activos, pm, campo) {
+  campo = campo || 'ventaId';
+  const lin = {}, porD = {}, peso = {};
+  det.forEach(x => { (porD[x[campo]] = porD[x[campo]] || []).push(x); lin[x.id] = giroLinea_(x, pm, activos); });
+  docs.forEach(v => {
+    const ls = porD[v.id] || [], m = {};
+    ls.forEach(x => { if (lin[x.id]) m[lin[x.id]] = (m[lin[x.id]] || 0) + Math.max(0, Number(x.total) || 0); });
+    const gs = Object.keys(m), dom = gs.length ? gs.reduce((a, b) => m[b] > m[a] ? b : a) : activos[0];
+    ls.forEach(x => { if (!lin[x.id]) { lin[x.id] = dom; m[dom] = (m[dom] || 0) + Math.max(0, Number(x.total) || 0); } });
+    const tot = Object.keys(m).reduce((a, g) => a + m[g], 0), w = {};
+    if (tot > 0) Object.keys(m).forEach(g => { if (m[g] > 0) w[g] = m[g] / tot; }); else w[dom] = 1;
+    peso[v.id] = w;
+  });
+  return { lin: lin, peso: peso };
+}
+const giroValido_ = g => (g && own_(GIROS, String(g)) ? String(g) : '');
+// Los gastos sin sección (alquiler, luz, planilla…) se reparten según lo que vendió cada sección; sin ventas, por partes iguales
+function repartoGeneral_(netas, lista) {
+  const t = lista.reduce((a, g) => a + Math.max(0, netas[g] || 0), 0), o = {};
+  lista.forEach(g => { o[g] = t > 0 ? Math.max(0, netas[g] || 0) / t : 1 / lista.length; });
+  return o;
 }
 // Precio en lempiras de un artículo pedido desde un enlace (giro Compras en línea)
 function precioCompra_(usd, cfg) {

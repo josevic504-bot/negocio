@@ -494,6 +494,38 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .tabla.meses{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:4px 14px;margin:12px 0}
 @media(max-width:560px){.tabla.meses .tr{grid-template-columns:1fr 1fr;row-gap:2px}.tabla.meses .tr.th{display:none}.tabla.meses .tr>span:nth-child(3){display:none}
   .tabla.inv .tr{grid-template-columns:minmax(0,1.8fr) .7fr 1fr .9fr}.tabla.inv .tr>span:nth-child(4){display:none}}
+/* Reportes por sección (giro) */
+.rsec{display:flex;align-items:center;gap:10px;margin:12px 0 0}
+.rsec-l{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--mut);flex:none}
+.rsec .chips{flex:1;min-width:0}
+.sd{display:inline-block;width:9px;height:9px;border-radius:50%;flex:none}
+.tr .sd{margin-right:7px}
+.sec-av{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--sc);border-radius:18px;padding:12px 14px;margin:12px 0;box-shadow:var(--sh)}
+.sec-av-h{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap}
+.sec-av-h b{font-size:15.5px}.sec-av-h span{font-size:13px;color:var(--mut)}
+.sec-av p{margin:6px 0 0;font-size:12.5px;color:var(--mut);line-height:1.45}.sec-av p b{color:var(--ink);font-weight:600}
+.sec-bar{display:flex;gap:2px;height:16px;border-radius:8px;overflow:hidden;margin:14px 0 10px}
+.sec-bar i{display:block;min-width:4px}
+.sec-ley{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--mut)}
+.sec-ley span{display:inline-flex;align-items:center;gap:6px}.sec-ley i{width:10px;height:10px;border-radius:3px;display:inline-block}.sec-ley b{color:var(--ink);font-weight:600}
+.sec-g{display:grid;gap:12px;margin-bottom:12px}
+@media(min-width:760px){.sec-g{grid-template-columns:repeat(auto-fill,minmax(320px,1fr))}}
+.sec-c{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:16px 14px 14px;box-shadow:var(--sh);position:relative;overflow:hidden}
+.sec-c:before{content:"";position:absolute;left:0;top:0;right:0;height:4px;background:var(--sc)}
+.sec-c-h{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.sec-emo{width:40px;height:40px;border-radius:14px;display:grid;place-items:center;font-size:21px;background:var(--pri2);background:color-mix(in srgb,var(--sc) 15%,transparent);flex:none}
+.sec-c-h .tx{flex:1;min-width:0}.sec-c-h .tx b{display:block;font-size:15.5px}.sec-c-h .tx small{color:var(--mut);font-size:12px}
+.sec-pct{font-size:18px;font-weight:700}
+.sec-k{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:10px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:4px}
+.sec-k small{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut)}.sec-k b{font-size:19px;font-weight:700}.sec-k i{display:block;font-style:normal;font-size:11.5px;color:var(--mut)}
+.sec-f{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-size:13px;border-bottom:1px dashed var(--line)}.sec-f span{color:var(--mut)}.sec-f small{font-size:11px}.sec-f b{font-weight:600}
+.sec-top{font-size:12.5px;color:var(--mut);margin:9px 0 2px;display:flex;align-items:center;gap:5px;flex-wrap:wrap}.sec-top b{color:var(--ink);font-weight:600}
+.sec-ver{margin-top:10px;width:100%;justify-content:center}
+.tabla.sec-t .tr{grid-template-columns:minmax(0,1.6fr) 1fr 1fr .7fr}
+.tabla.sec-t .tr>span:first-child{display:flex;align-items:center;min-width:0}
+.tr.tot{border-bottom:0;border-top:2px solid var(--line)}
+.gf-sec .chip .sd{margin-right:1px}
+.chip.on .sd{box-shadow:0 0 0 2px rgba(255,255,255,.9)}
 .dia{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:4px 12px;margin-bottom:10px}
 .dia-h{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;gap:8px;flex-wrap:wrap}
 .mv{display:grid;grid-template-columns:62px auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
@@ -1196,7 +1228,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.8';
+const APP_VER = '1.9.9';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -2695,6 +2727,7 @@ function cuentaTexto(per, d, extra) {
   else F.push(`Tu ganancia bruta fue *${money(k.bruta)}* (no hay costos anotados en estos productos, así que se calcula sobre todo lo vendido).`);
   if (k.gastos > 0) F.push(`Pagaste *${money(k.gastos)}* de gastos y te quedan *${money(k.neta)}* de ganancia neta, un margen del *${cant(Math.round(k.margen))} %*.`);
   else F.push(`No hubo gastos anotados, así que la ganancia neta queda en *${money(k.neta)}*, un margen del *${cant(Math.round(k.margen))} %*.`);
+  if (d.secciones && d.secciones.length > 1) { const sv = d.secciones.filter(x => x.ventas > 0).sort((a, b) => b.ventas - a.ventas); if (sv.length > 1) F.push(`Por sección: ${sv.map(x => `${giroCorto(x.id)} *${money(x.ventas)}*`).join(', ')}.`); }
   if (d.top && d.top.length) { const t = d.top[0]; F.push(`El producto más vendido fue *${t.nombre}* (${cant(t.cantidad)} ${t.cantidad === 1 ? 'unidad' : 'unidades'}, ${money(t.total)}).`); }
   const mov = [];
   if (k.compras > 0) mov.push(`compraste *${money(k.compras)}* a proveedores`);
@@ -4076,7 +4109,7 @@ R.gastos = async () => {
   const top = Object.keys(pc).sort((a, b) => pc[b] - pc[a])[0];
   $('#ga-b').innerHTML = `<div class="kpis"><div class="kpi" style="--k:var(--bad)"><small>Total gastado</small><b class="n">${money(tot)}</b><i>${act.length} registros</i></div>${top ? `<div class="kpi" style="--k:#f25c05"><small>Mayor categoría</small><b>${esc(top)}</b><i class="n">${money(pc[top])}</i></div>` : ''}</div>
     ${Object.keys(pc).length > 1 ? `<div class="panel"><h3>Por categoría</h3>${Object.keys(pc).sort((a, b) => pc[b] - pc[a]).map(k => `<div class="rank"><span class="nm">${esc(k)}</span><span class="bw"><i style="width:${(pc[k] / pc[top] * 100).toFixed(1)}%"></i></span><span class="v n">${money(pc[k])}</span></div>`).join('')}</div>` : ''}
-    <div class="list">${l.map(g => `<div class="li ${g.anulado ? 'anul' : ''}" data-a="verGasto" data-id="${g.id}"><div class="av ${colorDe(g.categoria)}">${ic('receipt', 20)}</div><div class="tx"><b>${esc(g.detalle)}</b><small>${esc(g.categoria)} · ${esc(fFecha(g.fechaGasto))}${g.proveedor ? ' · ' + esc(g.proveedor) : ''} · ${esc(g.metodo)}${g.anulado ? ' · anulado' : ''}</small></div><div class="am n">${money(g.monto)}</div></div>`).join('') || `<div class="empty">No hay gastos en este periodo</div>`}</div>`;
+    <div class="list">${l.map(g => `<div class="li ${g.anulado ? 'anul' : ''}" data-a="verGasto" data-id="${g.id}"><div class="av ${colorDe(g.categoria)}">${ic('receipt', 20)}</div><div class="tx"><b>${esc(g.detalle)}</b><small>${esc(g.categoria)} · ${esc(fFecha(g.fechaGasto))}${g.proveedor ? ' · ' + esc(g.proveedor) : ''} · ${esc(g.metodo)}${repMulti() && g.giro ? ' · ' + esc(secNom(g.giro)) : ''}${g.anulado ? ' · anulado' : ''}</small></div><div class="am n">${money(g.monto)}</div></div>`).join('') || `<div class="empty">No hay gastos en este periodo</div>`}</div>`;
 };
 ACC.gper = el => { S.f.gper = el.dataset.k; R.gastos(); };
 ACC.nuevoGasto = () => formGasto(null);
@@ -4086,12 +4119,16 @@ function formGasto(g) {
   const soloVer = g.anulado || (!nuevo && !puede('admin') && g.usuarioId !== S.user.id);
   let metodo = g.metodo || 'Efectivo';
   const cats = [...new Set(S.gastoCats.map(c => c.categoria).concat(CATS_GASTO))];
+  // Con varias secciones (giros), el gasto puede ser de una sola o general (se reparte en los reportes)
+  const secs = repMulti() ? girosOn().concat(g.giro && !girosOn().includes(g.giro) ? [g.giro] : []) : [];
+  let giroG = g.giro || '';
   const h = hoja({ titulo: nuevo ? 'Registrar gasto' : g.anulado ? 'Gasto anulado' : 'Gasto', html: `${g.anulado ? `<div class="aviso bad">${ic('x', 18)}<div><b>Anulado</b><small>${esc(g.nota)}</small></div></div>` : ''}
     <div class="fld"><span>Categoría</span><div class="chips wrap" id="gf-cats">${cats.slice(0, 12).map(c => `<button type="button" class="chip ${g.categoria === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div><input id="gf-c" list="dl-gc" value="${esc(g.categoria || '')}" placeholder="O escribe una nueva" style="margin-top:8px"><datalist id="dl-gc">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>
     <label class="fld"><span>Detalle</span><input id="gf-d" list="dl-gd" value="${esc(g.detalle || '')}" placeholder="Ej. Energía eléctrica"><datalist id="dl-gd"></datalist><small class="hint" id="gf-ult"></small></label>
     <div class="f2"><label class="fld"><span>Monto</span><input id="gf-m" inputmode="decimal" value="${g.monto || ''}"></label><label class="fld"><span>Fecha</span><input id="gf-f" type="date" value="${g.fechaGasto}" max="${hoy()}"></label></div>
     <label class="fld"><span>Pagado a (opcional)</span><input id="gf-p" list="dl-gp" value="${esc(g.proveedor || '')}"><datalist id="dl-gp">${[...new Set([].concat(...S.gastoCats.map(c => c.proveedores)))].map(p => `<option value="${esc(p)}">`).join('')}</datalist></label>
     <div class="fld"><span>Forma de pago</span><div class="pays three" id="gf-mt">${[['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer']].map(([m, i]) => `<button class="pay ${m === metodo ? 'on' : ''}" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div><small class="hint">Los gastos en efectivo se restan de la caja.</small></div>
+    ${secs.length ? `<div class="fld"><span>¿De qué sección es?</span><div class="chips wrap gf-sec" id="gf-g">${[''].concat(secs).map(id => `<button type="button" class="chip ${(g.giro || '') === id ? 'on' : ''}" data-g="${id}">${id ? `<i class="sd" style="background:${secColor(id)}"></i>${esc(secNom(id))}` : 'General · se reparte'}</button>`).join('')}</div><small class="hint">Lo general (alquiler, luz, planilla…) se reparte entre las secciones según lo que vende cada una.</small></div>` : ''}
     <label class="fld"><span>Nota</span><input id="gf-n" maxlength="200" value="${esc(g.anulado ? '' : g.nota || '')}"></label>` });
   const ci = $('#gf-c', h.el), di = $('#gf-d', h.el);
   const actDet = () => {
@@ -4104,6 +4141,7 @@ function formGasto(g) {
   ci.addEventListener('input', actDet); di.addEventListener('input', actDet);
   $('#gf-ult', h.el).addEventListener('click', e => { const a = e.target.closest('[data-u]'); if (a) $('#gf-m', h.el).value = a.dataset.u; });
   $('#gf-mt', h.el).addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; metodo = b.dataset.m; $$('#gf-mt .pay', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  const gg = $('#gf-g', h.el); if (gg) gg.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; giroG = b.dataset.g; $$('.chip', gg).forEach(x => x.classList.toggle('on', x === b)); });
   actDet();
   if (soloVer) { $$('input,button.chip,button.pay', h.b).forEach(x => { x.disabled = true; }); return; }
   const bs = [];
@@ -4112,7 +4150,7 @@ function formGasto(g) {
     const r = await api('anularGasto', { id: g.id }); S.gastoCats = r.cats; guardarCache(); h.cerrar(); toast('Gasto anulado', 'ok'); if (S.vista === 'gastos') R.gastos();
   } });
   bs.push({ t: nuevo ? 'Guardar gasto' : 'Guardar cambios', cls: 'pri', fn: async () => {
-    const r = await api('guardarGasto', { registro: { id: g.id, categoria: ci.value, detalle: di.value, monto: num($('#gf-m', h.el).value), fechaGasto: $('#gf-f', h.el).value, proveedor: $('#gf-p', h.el).value, metodo, nota: $('#gf-n', h.el).value } });
+    const r = await api('guardarGasto', { registro: { id: g.id, categoria: ci.value, detalle: di.value, monto: num($('#gf-m', h.el).value), fechaGasto: $('#gf-f', h.el).value, proveedor: $('#gf-p', h.el).value, metodo, nota: $('#gf-n', h.el).value, giro: secs.length ? giroG : undefined } });
     S.gastoCats = r.cats; guardarCache(); S.inicio = null; h.cerrar(); toast('Gasto guardado', 'ok');
     if (S.vista === 'gastos') R.gastos(); else if (S.vista === 'inicio') R.inicio(); else if (S.vista === 'caja') R.caja();
   } });
@@ -4254,13 +4292,37 @@ function graficoBarras(id, etiquetas, series, opts) {
 R.reportes_bar = () => `<button class="hbtn" data-a="repCSV" aria-label="Descargar">${ic('save', 20)}</button>`;
 R.reportes = () => {
   if (S.params.tab) { S.f.rtab = S.params.tab; S.params.tab = ''; }
+  if (S.params.giro !== undefined) { S.f.rgiro = S.params.giro; delete S.params.giro; }
+  const multi = repMulti();
+  if (!multi) S.f.rgiro = '';
+  else if (S.f.rgiro && !girosOn().includes(S.f.rgiro)) S.f.rgiro = '';
+  if (!multi && S.f.rtab === 'secciones') S.f.rtab = 'resumen';
   const tab = S.f.rtab || 'resumen';
-  const tabs = [['resumen', 'Resumen'], ['diario', 'Diario'], ['ganancias', 'Ganancias'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']].concat(sarOn() || (S.sar && S.sar.estado !== 'incompleto') ? [['sar', 'Libro SAR']] : []);
-  $('#main').innerHTML = `<div class="seg tabs">${tabs.map(([k, t]) => `<button class="${tab === k ? 'on' : ''}" data-a="rtab" data-k="${k}">${t}</button>`).join('')}</div><div id="rp"></div>`;
+  const tabs = [['resumen', 'Resumen']].concat(multi ? [['secciones', 'Por sección']] : [], [['diario', 'Diario'], ['ganancias', 'Ganancias'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']], sarOn() || (S.sar && S.sar.estado !== 'incompleto') ? [['sar', 'Libro SAR']] : []);
+  $('#main').innerHTML = `<div class="seg tabs">${tabs.map(([k, t]) => `<button class="${tab === k ? 'on' : ''}" data-a="rtab" data-k="${k}">${t}</button>`).join('')}</div>${multi && REP_CON_SECCION.includes(tab) ? secSelector() : ''}<div id="rp"></div>`;
   S.repCSV = null; // la descarga siempre es de la pestaña que se ve
-  return ({ resumen: repResumen, diario: repDiario, ganancias: repGanancias, inventario: repInventario, cuentas: repCuentas, sar: repLibroSAR })[tab]();
+  if (multi) secALaVista();
+  return ({ resumen: repResumen, secciones: repSecciones, diario: repDiario, ganancias: repGanancias, inventario: repInventario, cuentas: repCuentas, sar: repLibroSAR })[tab]();
 };
 ACC.rtab = el => { S.f.rtab = el.dataset.k; const r = R.reportes(); if (r && r.catch) r.catch(err); };
+/* ---------- Reportes por sección (giro) ----------
+ * Con 2 o más secciones activas: Resumen, Inventario y Cuentas se pueden ver por sección, y «Por sección» las compara.
+ * El color de cada sección sigue a la sección (orden de la tienda: la principal primero), nunca a su lugar en el ranking. */
+const REP_CON_SECCION = ['resumen', 'inventario', 'cuentas'];
+const repMulti = () => girosOn().length > 1;
+const SEC_COL = { claro: ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300'], oscuro: ['#3987e5', '#d95926', '#199e70', '#c98500', '#d55181', '#008300'] };
+function secColor(id) { const i = girosOn().indexOf(id), l = esOscuro() ? SEC_COL.oscuro : SEC_COL.claro; return i >= 0 && i < l.length ? l[i] : '#8a8296'; }
+const giroCorto = id => giroN(id).replace(/\s*\(.*\)\s*$/, ''); // «Compras en línea (Shein, Temu…)» → «Compras en línea»
+const secNom = id => `${GIRO_EMO[id] || '📦'} ${giroCorto(id)}`;
+const secSlug = id => norm(giroCorto(id)).replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function secSelector() {
+  const g = S.f.rgiro || '';
+  return `<div class="rsec"><span class="rsec-l">Ver</span><div class="chips">${[''].concat(girosOn()).map(id => `<button class="chip ${g === id ? 'on' : ''}" data-a="rgiro" data-k="${id}">${id ? `<i class="sd" style="background:${secColor(id)}"></i>${esc(secNom(id))}` : 'Todo el negocio'}</button>`).join('')}</div></div>`;
+}
+ACC.rgiro = el => { S.f.rgiro = el.dataset.k; const r = R.reportes(); if (r && r.catch) r.catch(err); };
+// La sección elegida siempre queda a la vista en la fila de chips
+function secALaVista() { const c = $('.rsec .chips'), on = c && $('.chip.on', c); if (on) c.scrollLeft = Math.max(0, on.offsetLeft - c.offsetLeft - (c.clientWidth - on.offsetWidth) / 2); }
+ACC.verSeccion = el => { S.f.rgiro = el.dataset.k; S.f.rtab = 'resumen'; const r = R.reportes(); if (r && r.catch) r.catch(err); window.scrollTo({ top: 0, behavior: 'smooth' }); };
 ACC.repCSV = () => { if (S.repCSV) S.repCSV(); else toast('Espera a que termine de cargar para descargar', 'error'); };
 const enRep = t => S.vista === 'reportes' && (S.f.rtab || 'resumen') === t && $('#rp');
 
@@ -4269,8 +4331,9 @@ async function repResumen() {
   let [desde, hasta] = per === 'otro' ? [S.f.rdesde || hoy(), S.f.rhasta || hoy()] : rangoPer(per);
   $('#rp').innerHTML = `<div class="chips" style="margin:12px 0 8px">${['hoy', 'd7', 'mes', 'ant', 'anio'].map(k => `<button class="chip ${per === k ? 'on' : ''}" data-a="rper" data-k="${k}">${PERIODOS[k]}</button>`).join('')}<button class="chip ${per === 'otro' ? 'on' : ''}" data-a="rper" data-k="otro">Elegir fechas</button></div>
     ${per === 'otro' ? `<div class="row" style="margin-bottom:10px"><input type="date" id="r-d" value="${desde}" max="${hoy()}" style="width:auto"><span class="mut">a</span><input type="date" id="r-h" value="${hasta}" max="${hoy()}" style="width:auto"><button class="btn pri sm" data-a="rVer">Ver</button></div>` : ''}<div id="rp-b"><div class="empty">Calculando…</div></div>`;
-  const d = await api('reporte', { desde, hasta }, true);
-  if (!enRep('resumen') || (S.f.rper || 'mes') !== per) return;
+  const giro = S.f.rgiro || '';
+  const d = await api('reporte', { desde, hasta, giro }, true);
+  if (!enRep('resumen') || (S.f.rper || 'mes') !== per || (S.f.rgiro || '') !== giro) return;
   const k = d.kpi;
   const sinCosto = S.productos.filter(p => p.activo && !(p.costo > 0)).length;
   const kp = (t, v, s, color, cls) => `<div class="kpi" style="--k:${color}"><small>${t}</small><b class="n ${cls || ''}">${v}</b>${s ? `<i>${s}</i>` : ''}</div>`;
@@ -4292,10 +4355,12 @@ async function repResumen() {
     for (let f = desde; f <= hasta; f = addDias(f, 1)) { etiquetas.push(parseLocal(f).getDate() + (largo <= 7 ? ' ' + parseLocal(f).toLocaleDateString('es-HN', { weekday: 'short' }) : '')); dias.push(r2(d.porDia[f] || 0)); gastos.push(r2(d.gastosDia[f] || 0)); }
   }
   const esHora = per === 'hoy' || (per === 'otro' && desde === hasta);
-  $('#rp-b').innerHTML = `<div class="kpis k4">${kp('Ventas', money(k.ventas), k.n + ' ventas', serie(0))}${kp('Ganancia neta', money(k.neta), fmtN(k.margen, 1) + '% de margen', '#00b56e', k.neta >= 0 ? 'pos' : 'neg')}
+  const secAv = giro ? `<div class="sec-av" style="--sc:${secColor(giro)}"><div class="sec-av-h"><b>${esc(secNom(giro))}</b><span class="n">${fmtN(k.pct, 0)} % de lo vendido</span></div>
+      <p>Solo cuenta lo que se vendió de esta sección (si una factura trae productos de varias, se reparte por línea). ${k.general > 0 ? `Gastos propios <b class="n">${money(k.propios)}</b> + su parte de los gastos generales <b class="n">${money(k.general)}</b> (${fmtN(k.parteGeneral, 0)} %, según lo que vende).` : k.propios > 0 ? `Gastos propios <b class="n">${money(k.propios)}</b>.` : 'No hay gastos anotados para esta sección en el período.'}</p></div>` : '';
+  $('#rp-b').innerHTML = secAv + `<div class="kpis k4">${kp('Ventas', money(k.ventas), k.n + (giro ? ' facturas con esta sección' : ' ventas'), serie(0))}${kp('Ganancia neta', money(k.neta), fmtN(k.margen, 1) + '% de margen', '#00b56e', k.neta >= 0 ? 'pos' : 'neg')}
       ${kp('Ganancia bruta', money(k.bruta), 'Ventas sin ISV − costo', '#6a1fe0')}${kp('Costo de lo vendido', money(k.costo), fmtN(k.articulos, 0) + ' artículos', '#8a8296')}
-      ${kp('Gastos', money(k.gastos), 'Alquiler, servicios, planilla…', serie(1))}${kp('Ticket promedio', money(k.ticket), '', '#00a8b5')}
-      ${kp('ISV cobrado', money(k.isv), k.descuentos ? 'Descuentos ' + money(k.descuentos) : '', '#1b4fd8')}${kp('Vendido al crédito', money(k.credito), 'Cobros ' + money(k.cobros), '#f25c05')}</div>
+      ${kp('Gastos', money(k.gastos), giro ? (k.general > 0 ? 'Propios + parte de los generales' : 'De esta sección') : 'Alquiler, servicios, planilla…', serie(1))}${kp('Ticket promedio', money(k.ticket), '', '#00a8b5')}
+      ${kp('ISV cobrado', money(k.isv), k.descuentos ? 'Descuentos ' + money(k.descuentos) : '', '#1b4fd8')}${kp('Vendido al crédito', money(k.credito), giro ? 'De esta sección' : 'Cobros ' + money(k.cobros), '#f25c05')}</div>
     <p class="xs mut" style="margin:-4px 2px 12px">Ganancia neta = ventas sin ISV − costo de lo vendido − gastos. Las compras no son gasto: se vuelven inventario.${k.anuladas ? ' · ' + k.anuladas + ' ventas anuladas no cuentan.' : ''}</p>
     ${sinCosto ? `<div class="aviso warn sm">${ic('alert', 18)}<div>${sinCosto} productos no tienen costo; su ganancia puede verse mayor. <a data-a="ir" data-v="precios" data-p='{}'>Revisar en Precios</a></div></div>` : ''}
     <div class="chart"><div class="row sp"><h3 style="margin:0">${esHora ? 'Ventas por hora' : 'Ventas y gastos'}</h3><span class="xs mut">${esHora ? 'Número de ventas' : porMes ? 'Por mes' : 'Por día'}</span></div><div class="cv"><canvas id="ch-vg" role="img" aria-label="Gráfica de ventas"></canvas></div></div>
@@ -4304,12 +4369,45 @@ async function repResumen() {
     <div class="chart"><h3>Ventas por persona</h3>${rankBars(d.usuarios.map(u => ({ nombre: u.nombre + ' · ' + u.n, ventas: u.ventas })), 'ventas', money)}</div>
     <div class="chart"><h3>Gastos por categoría</h3>${rankBars(d.gastosCategoria, 'total', money, 8)}</div></div>`;
   graficoBarras('ch-vg', etiquetas, esHora ? [{ label: 'Ventas', data: dias }] : [{ label: 'Ventas', data: dias }, { label: 'Gastos', data: gastos }], esHora ? { cant: 1 } : null);
-  S.repCSV = () => csv(`reporte-${desde}-a-${hasta}.csv`, [['Reporte', S.config.nombre, desde + ' a ' + hasta], [], ['Indicador', 'Valor'],
-    ['Ventas', k.ventas], ['Número de ventas', k.n], ['Ticket promedio', k.ticket], ['ISV', k.isv], ['Descuentos', k.descuentos], ['Costo de lo vendido', k.costo], ['Ganancia bruta', k.bruta], ['Gastos', k.gastos], ['Ganancia neta', k.neta], ['Margen %', k.margen], ['Vendido al crédito', k.credito], ['Cobros', k.cobros], ['Compras', k.compras],
-    [], ['Producto', 'Cantidad', 'Vendido', 'Ganancia'], ...d.top.map(t => [t.nombre, t.cantidad, t.total, t.ganancia])]);
+  S.repCSV = () => csv(`reporte-${giro ? secSlug(giro) + '-' : ''}${desde}-a-${hasta}.csv`, [['Reporte', S.config.nombre, desde + ' a ' + hasta]].concat(giro ? [['Sección', giroCorto(giro)]] : [], [[], ['Indicador', 'Valor'],
+    ['Ventas', k.ventas], ['Número de ventas', k.n], ['Ticket promedio', k.ticket], ['ISV', k.isv], ['Descuentos', k.descuentos], ['Costo de lo vendido', k.costo], ['Ganancia bruta', k.bruta]],
+    giro ? [['Gastos propios', k.propios], ['Parte de gastos generales', k.general]] : [], [['Gastos', k.gastos], ['Ganancia neta', k.neta], ['Margen %', k.margen], ['Vendido al crédito', k.credito]],
+    giro ? [['% de lo vendido', k.pct]] : [['Cobros', k.cobros], ['Compras', k.compras]],
+    [[], ['Producto', 'Cantidad', 'Vendido', 'Ganancia'], ...d.top.map(t => [t.nombre, t.cantidad, t.total, t.ganancia])]));
 }
 ACC.rper = el => { S.f.rper = el.dataset.k; return repResumen(); };
 ACC.rVer = () => { S.f.rdesde = $('#r-d').value; S.f.rhasta = $('#r-h').value; if (S.f.rdesde > S.f.rhasta) return toast('La fecha inicial es mayor que la final', 'error'); repResumen(); };
+
+async function repSecciones() {
+  const per = S.f.rper || 'mes';
+  let [desde, hasta] = per === 'otro' ? [S.f.rdesde || hoy(), S.f.rhasta || hoy()] : rangoPer(per);
+  $('#rp').innerHTML = `<div class="chips" style="margin:12px 0 8px">${['hoy', 'd7', 'mes', 'ant', 'anio'].map(k => `<button class="chip ${per === k ? 'on' : ''}" data-a="rperS" data-k="${k}">${PERIODOS[k]}</button>`).join('')}<button class="chip ${per === 'otro' ? 'on' : ''}" data-a="rperS" data-k="otro">Elegir fechas</button></div>
+    ${per === 'otro' ? `<div class="row" style="margin-bottom:10px"><input type="date" id="r-d" value="${desde}" max="${hoy()}" style="width:auto"><span class="mut">a</span><input type="date" id="r-h" value="${hasta}" max="${hoy()}" style="width:auto"><button class="btn pri sm" data-a="rVerS">Ver</button></div>` : ''}<div id="rp-b"><div class="empty">Calculando…</div></div>`;
+  const d = await api('reporte', { desde, hasta }, true);
+  if (!enRep('secciones') || (S.f.rper || 'mes') !== per) return;
+  const l = d.secciones || [], tot = d.kpi, conV = l.filter(x => x.ventas > 0);
+  const pct = x => fmtN(x.pct, 0) + ' %';
+  const barra = conV.length ? `<div class="sec-bar" role="img" aria-label="Parte de lo vendido por sección">${conV.map(x => `<i style="flex:${x.ventas} 1 0;background:${secColor(x.id)}" title="${esc(giroCorto(x.id))}: ${money(x.ventas)} (${pct(x)})"></i>`).join('')}</div>
+    <div class="sec-ley">${conV.map(x => `<span><i style="background:${secColor(x.id)}"></i>${esc(giroCorto(x.id))} <b class="n">${pct(x)}</b></span>`).join('')}</div>` : '<p class="sm mut" style="margin:6px 2px 0">Aún no hay ventas en este período.</p>';
+  const fila = (t, v, cls) => `<div class="sec-f"><span>${t}</span><b class="n ${cls || ''}">${v}</b></div>`;
+  const tarjeta = x => `<div class="sec-c" style="--sc:${secColor(x.id)}">
+      <div class="sec-c-h"><span class="sec-emo">${GIRO_EMO[x.id] || '📦'}</span><div class="tx"><b>${esc(giroCorto(x.id))}</b><small>${x.n ? (x.n === 1 ? '1 factura' : x.n + ' facturas') + ' · ' + cant(x.articulos) + ' artículos' : 'Sin ventas en el período'}${x.activa ? '' : ' · ya no está activa'}</small></div><span class="sec-pct n">${pct(x)}</span></div>
+      <div class="sec-k"><div><small>Vendido</small><b class="n">${money(x.ventas)}</b></div><div><small>Ganancia neta</small><b class="n ${x.neta >= 0 ? 'pos' : 'neg'}">${money(x.neta)}</b><i>${fmtN(x.margen, 1)} % de margen</i></div></div>
+      ${fila('Costo de lo vendido', money(x.costo))}${fila('Ganancia bruta', money(x.bruta))}${fila('Gastos propios', money(x.propios))}${d.gastosGenerales > 0 ? fila(`Parte de gastos generales <small>(${fmtN(x.parte, 0)} %)</small>`, money(x.general)) : ''}${fila('Ticket promedio', money(x.ticket))}
+      ${x.top ? `<div class="sec-top">${ic('star', 14)} Lo más vendido: <b>${esc(x.top)}</b></div>` : ''}
+      <button class="btn sm ghost sec-ver" data-a="verSeccion" data-k="${x.id}">Ver reporte de esta sección ${ic('arrow', 14)}</button></div>`;
+  $('#rp-b').innerHTML = `<div class="chart"><div class="row sp"><h3 style="margin:0">¿Cuánto vende cada sección?</h3><span class="xs mut">Total ${money(tot.ventas)}</span></div>${barra}</div>
+    <div class="sec-g">${l.map(tarjeta).join('')}</div>
+    <div class="chart"><h3>Comparativo</h3><div class="tabla sec-t"><div class="tr th"><span>Sección</span><span>Vendido</span><span>Ganancia</span><span>Margen</span></div>${l.map(x => `<div class="tr"><span><i class="sd" style="background:${secColor(x.id)}"></i>${esc(giroCorto(x.id))}</span><span class="n">${money(x.ventas)}</span><span class="n ${x.neta >= 0 ? 'pos' : 'neg'}">${money(x.neta)}</span><span class="n">${fmtN(x.margen, 1)} %</span></div>`).join('')}
+      <div class="tr tot"><span><b>Todo el negocio</b></span><span class="n"><b>${money(tot.ventas)}</b></span><span class="n ${tot.neta >= 0 ? 'pos' : 'neg'}"><b>${money(tot.neta)}</b></span><span class="n"><b>${fmtN(tot.margen, 1)} %</b></span></div></div></div>
+    <div class="aviso info sm">${ic('info', 18)}<div>${d.gastosGenerales > 0 ? `<b>Gastos generales: ${money(d.gastosGenerales)}</b> (sin sección: alquiler, luz, planilla…). Se reparten según lo que vende cada sección.` : '<b>Sin gastos generales en el período.</b>'} Para que un gasto sea de una sola sección, elígela al registrarlo en Gastos.</div></div>`;
+  S.repCSV = () => csv(`por-seccion-${desde}-a-${hasta}.csv`, [['Reporte por sección', S.config.nombre, desde + ' a ' + hasta], [],
+    ['Sección', 'Vendido', '% de lo vendido', 'Facturas', 'Artículos', 'ISV', 'Costo de lo vendido', 'Ganancia bruta', 'Gastos propios', 'Parte de gastos generales', 'Ganancia neta', 'Margen %', 'Ticket promedio', 'Lo más vendido']]
+    .concat(l.map(x => [giroCorto(x.id), x.ventas, x.pct, x.n, x.articulos, x.isv, x.costo, x.bruta, x.propios, x.general, x.neta, x.margen, x.ticket, x.top]),
+      [['Todo el negocio', tot.ventas, 100, tot.n, tot.articulos, tot.isv, tot.costo, tot.bruta, '', d.gastosGenerales, tot.neta, tot.margen, tot.ticket, '']]));
+}
+ACC.rperS = el => { S.f.rper = el.dataset.k; return repSecciones(); };
+ACC.rVerS = () => { S.f.rdesde = $('#r-d').value; S.f.rhasta = $('#r-h').value; if (S.f.rdesde > S.f.rhasta) return toast('La fecha inicial es mayor que la final', 'error'); repSecciones(); };
 
 async function repDiario() {
   const mes = S.f.dmes || hoy().slice(0, 7);
@@ -4363,9 +4461,11 @@ ACC.anularDist = async el => { if (!(await confirmar('¿Anular este movimiento? 
 
 async function repInventario() {
   $('#rp').innerHTML = '<div class="empty">Cargando…</div>';
-  const d = await api('inventario', {}, true);
-  if (!enRep('inventario')) return;
-  const act = d.productos.filter(p => p.activo);
+  const giro = S.f.rgiro || '';
+  const d = await api('inventario', { giro }, true);
+  if (!enRep('inventario') || (S.f.rgiro || '') !== giro) return;
+  const act = d.productos.filter(p => p.activo && (!giro || p.giro === giro));
+  if (giro && !act.length) { $('#rp').innerHTML = `<div class="empty" style="margin-top:14px">${esc(secNom(giro))} no tiene productos con existencia: sus artículos son servicios (no llevan inventario). Sus ventas y ganancias están en Resumen y en «Por sección».</div>`; S.repCSV = null; return; }
   const vc = act.reduce((a, p) => a + p.valorCosto, 0), vv = act.reduce((a, p) => a + p.valorVenta, 0);
   const alcanza = p => p.vendidos30 > 0 ? Math.floor(Math.max(0, p.stock) / (p.vendidos30 / 30)) : null;
   const orden = S.f.iord || 'valor';
@@ -4374,22 +4474,23 @@ async function repInventario() {
     <div class="chips" style="margin-bottom:10px">${[['valor', 'Más valor'], ['vendidos', 'Más vendidos (30 días)'], ['alcanza', 'Se acaban primero']].map(([k, t]) => `<button class="chip ${orden === k ? 'on' : ''}" data-a="iord" data-k="${k}">${t}</button>`).join('')}</div>
     <div class="tabla inv"><div class="tr th"><span>Producto</span><span>Hay</span><span>Valor</span><span>Vendidos 30 d</span><span>Alcanza</span></div>${l.map(p => { const a = alcanza(p); return `<div class="tr" data-a="verProducto" data-id="${p.id}"><span><b>${esc(p.nombre)}</b><small>${esc(p.categoria)}</small></span><span class="n"><span class="badge ${p.stock <= 0 ? 'b-bad' : p.stock <= p.stockMin ? 'b-warn' : 'b-ok'}">${cant(p.stock)}</span></span><span class="n">${money(p.valorCosto)}</span><span class="n">${cant(p.vendidos30)}</span><span class="n">${a === null ? '<i class="mut">sin ventas</i>' : a + ' días'}</span></div>`; }).join('')}</div>
     <div class="sec-t"><h3>Últimos movimientos</h3></div><div class="list">${d.movimientos.slice(0, 40).map(m => `<div class="li"><div class="av ${m.cantidad >= 0 ? 't-verde' : 't-rojo'}">${ic(m.cantidad >= 0 ? 'down' : 'up', 20)}</div><div class="tx"><b>${esc(m.nombre)}</b><small>${esc(cap(m.tipo))}${m.nota ? ' · ' + esc(m.nota) : ''} · ${esc(fFechaC(m.fecha))}${m.usuario ? ' · ' + esc(m.usuario) : ''}</small></div><div class="am n ${m.cantidad >= 0 ? 'pos' : 'neg'}">${m.cantidad > 0 ? '+' : ''}${cant(m.cantidad)}</div></div>`).join('')}</div>`;
-  S.repCSV = () => csv(`inventario-${hoy()}.csv`, [['Código', 'Producto', 'Categoría', 'Existencia', 'Mínimo', 'Costo', 'Precio', 'Valor al costo', 'Valor a precio', 'Vendidos 30 días']].concat(d.productos.map(p => [p.codigo, p.nombre, p.categoria, p.stock, p.stockMin, p.costo, p.precio, p.valorCosto, p.valorVenta, p.vendidos30])));
+  S.repCSV = () => csv(`inventario-${giro ? secSlug(giro) + '-' : ''}${hoy()}.csv`, [['Código', 'Producto', 'Categoría'].concat(repMulti() ? ['Sección'] : [], ['Existencia', 'Mínimo', 'Costo', 'Precio', 'Valor al costo', 'Valor a precio', 'Vendidos 30 días'])].concat(d.productos.filter(p => !giro || p.giro === giro).map(p => [p.codigo, p.nombre, p.categoria].concat(repMulti() ? [giroCorto(p.giro)] : [], [p.stock, p.stockMin, p.costo, p.precio, p.valorCosto, p.valorVenta, p.vendidos30]))));
 }
 ACC.iord = el => { S.f.iord = el.dataset.k; return repInventario(); };
 
 async function repCuentas() {
   $('#rp').innerHTML = '<div class="empty">Cargando…</div>';
-  const d = await api('cuentas', {}, true);
-  if (!enRep('cuentas')) return;
+  const giro = S.f.rgiro || '';
+  const d = await api('cuentas', { giro }, true);
+  if (!enRep('cuentas') || (S.f.rgiro || '') !== giro) return;
   const bloque = (titulo, l, wa) => {
     const t = k => l.reduce((a, x) => a + x[k], 0);
     return `<div class="panel"><div class="row sp"><h3 style="margin:0">${titulo}</h3><b class="n" style="font-size:20px">${money(t('total'))}</b></div>
       <div class="aging"><div><small>0–30 días</small><b class="n">${money(t('a30'))}</b></div><div><small>31–60</small><b class="n">${money(t('a60'))}</b></div><div><small>61–90</small><b class="n">${money(t('a90'))}</b></div><div class="${t('mas') > 0 ? 'mal' : ''}"><small>Más de 90</small><b class="n">${money(t('mas'))}</b></div></div>
       <div class="list">${l.map(x => `<div class="li"><div class="av ${colorDe(x.nombre)}">${esc(iniciales(x.nombre))}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${x.docs} ${x.docs === 1 ? 'documento' : 'documentos'} · desde ${esc(fFechaC(x.antigua))}${x.mas > 0 ? ' · <span class="neg">más de 90 días</span>' : ''}</small></div><div class="am n">${money(x.total)}${wa && x.telefono ? `<small><a href="${waLink(x.telefono, plantilla(S.config.msjCobro, { cliente: x.nombre.split(' ')[0], saldo: money(x.total), negocio: S.config.nombre }))}" target="_blank" rel="noopener">Recordar</a></small>` : ''}</div></div>`).join('') || '<div class="empty sm">Nadie debe ✓</div>'}</div></div>`;
   };
-  $('#rp').innerHTML = `<div style="margin-top:12px">${bloque('Por cobrar a clientes', d.cobrar, true)}${bloque('Por pagar a proveedores', d.pagar, false)}</div>`;
-  S.repCSV = () => csv(`cuentas-${hoy()}.csv`, [['Tipo', 'Nombre', 'Teléfono', 'Total', '0-30', '31-60', '61-90', 'Más de 90']].concat(d.cobrar.map(x => ['Por cobrar', x.nombre, x.telefono, x.total, x.a30, x.a60, x.a90, x.mas]), d.pagar.map(x => ['Por pagar', x.nombre, x.telefono, x.total, x.a30, x.a60, x.a90, x.mas])));
+  $('#rp').innerHTML = `<div style="margin-top:12px">${giro ? `<p class="xs mut" style="margin:0 2px 10px">Saldos de ${esc(secNom(giro))}: si una factura trae productos de varias secciones, su saldo se reparte en la misma proporción.</p>` : ''}${bloque('Por cobrar a clientes', d.cobrar, true)}${bloque('Por pagar a proveedores', d.pagar, false)}</div>`;
+  S.repCSV = () => csv(`cuentas-${giro ? secSlug(giro) + '-' : ''}${hoy()}.csv`, [['Tipo', 'Nombre', 'Teléfono', 'Total', '0-30', '31-60', '61-90', 'Más de 90']].concat(d.cobrar.map(x => ['Por cobrar', x.nombre, x.telefono, x.total, x.a30, x.a60, x.a90, x.mas]), d.pagar.map(x => ['Por pagar', x.nombre, x.telefono, x.total, x.a30, x.a60, x.a90, x.mas])));
 }
 
 /* ===================== USUARIOS ===================== */
@@ -6010,6 +6111,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.9', fecha: '2026-10-27', items: [
+    { i: 'chart', t: 'Reportes por sección', d: 'Si tu tienda tiene varias secciones, en Reportes eliges «Ver: Todo el negocio» o una sección y el Resumen, el Inventario y las Cuentas muestran solo esa parte. La pestaña «Por sección» las compara: cuánto vende y cuánto gana cada una. Al registrar un gasto puedes decir de qué sección es; lo general se reparte según lo que vende cada sección.', ir: 'reportes', si: () => repMulti() }
+  ] },
   { v: '1.9.8', fecha: '2026-10-27', items: [
     { i: 'barcode', t: 'Lector de códigos también en Nueva factura', d: 'Si usas una pistola lectora (USB o Bluetooth) en la computadora o la tablet, ahora también funciona con Nueva factura abierta: solo dispara y el producto se agrega. Y en Buscar, al dar Enter entra el producto si el código coincide o hay un solo resultado.', ir: 'vender' }
   ] },
@@ -6153,7 +6257,7 @@ const AYUDA = {
     t: ['Comparte el resumen del día por WhatsApp con «Compartir».', 'Toca una venta para ver su comprobante.'] },
   ventas: { d: 'Todas tus ventas por fecha.', p: ['Elige las fechas.', 'Toca una venta para ver el detalle, reenviar el comprobante o anularla (administrador).'], t: [] },
   reportes: { d: 'Cuánto vendes y cuánto ganas de verdad.',
-    p: ['<b>Resumen</b>: ventas, costo, ganancia bruta y neta, gastos y la gráfica por día del período que elijas.', '<b>Diario</b>: el mes día por día.', '<b>Ganancias</b>: lo que ganaste cada mes y a dónde va (ahorro, reinversión, pagos).', '<b>Inventario</b> y <b>Cuentas</b>: valor de tus existencias, lo que te deben y lo que debes.', '<b>Libro SAR</b> (si facturas con el SAR): cada factura del mes con su exento, gravado e ISV, para tu declaración.'],
+    p: ['<b>Resumen</b>: ventas, costo, ganancia bruta y neta, gastos y la gráfica por día del período que elijas.', '<b>Por sección</b> (si tu tienda tiene varias): compara cuánto vende y gana cada sección; con «Ver» arriba, el Resumen, el Inventario y las Cuentas muestran solo una sección.', '<b>Diario</b>: el mes día por día.', '<b>Ganancias</b>: lo que ganaste cada mes y a dónde va (ahorro, reinversión, pagos).', '<b>Inventario</b> y <b>Cuentas</b>: valor de tus existencias, lo que te deben y lo que debes.', '<b>Libro SAR</b> (si facturas con el SAR): cada factura del mes con su exento, gravado e ISV, para tu declaración.'],
     t: ['El botón de arriba descarga el reporte en CSV para abrirlo en Excel.'] },
   usuarios: { d: 'Tu equipo y lo que puede hacer cada uno.',
     p: ['Toca <b>+</b> y escribe el nombre, el WhatsApp y un PIN para la persona.', 'Elige el rol: <b>Administrador</b> (todo), <b>Cajero</b> (vende, cobra y cierra caja) o <b>Bodega</b> (productos, compras, inventario y proyectos).', 'Desactiva a alguien para quitarle el acceso.'], t: ['Cada persona entra con su propio WhatsApp y PIN.'] },
@@ -6195,7 +6299,8 @@ ACC.ayuda = () => abrirAyuda(S.vista);
 function mostrarNovedades(desde) {
   const l = NOVEDADES.filter(n => !desde || cmpVer(n.v, desde) > 0);
   if (!l.length) return;
-  const items = [].concat.apply([], l.map(n => n.items)).filter(x => !x.ir || puedeVer(x.ir));
+  const items = [].concat.apply([], l.map(n => n.items)).filter(x => (!x.ir || puedeVer(x.ir)) && (!x.si || x.si()));
+  if (!items.length) return;
   const h = hoja({ titulo: '', cls: 'nov', html: `<div class="nov-h"><div class="nov-ic">${ic('sparkle', 30)}</div><h2>¡Novedades!</h2><p>Gestión de Negocio VM · versión ${esc(l[0].v)}</p></div>
     <div class="nov-l">${items.map(x => `<div class="nov-i"><i class="${colorDe(x.t)}">${ic(x.i, 20)}</i><div><b>${esc(x.t)}</b><p>${esc(x.d)}</p>${x.ir && S.vista !== x.ir ? `<button class="lnk" data-a="ir" data-v="${x.ir}">Ver dónde ${ic('arrow', 14)}</button>` : ''}</div></div>`).join('')}</div>` });
   h.botones([{ t: '¡Entendido!', cls: 'pri', fn: () => h.cerrar() }]);
