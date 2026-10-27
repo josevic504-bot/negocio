@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.7 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.8 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.7';
+const VERSION = '1.9.8';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -4127,11 +4127,11 @@ function visita_(d) {
     disp: d.d === 'pc' ? 'pc' : 'cel', vid: vid, ref: String(d.r || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 60) });
   return true;
 }
-// Lee solo las columnas fecha, página, origen, disp y vid de las últimas filas (rápido aunque la hoja crezca)
+// Lee solo las columnas fecha, página, origen, disp, vid y ref de las últimas filas (rápido aunque la hoja crezca)
 function visitasFilas_(maxFilas) {
   const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 2) return [];
   const h = SCHEMA_M.Visitas, cuantas = Math.min(n - 1, maxFilas || 60000), ini = n - cuantas + 1;
-  return s.getRange(ini, 2, cuantas, 5).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]) }))
+  return s.getRange(ini, 2, cuantas, 6).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]), ref: String(r[5] || '') }))
     .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha));
 }
 function diaMenos_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
@@ -4149,9 +4149,28 @@ function borrarVisitasViejas_() {
   let k = 0; while (k < col.length && String(col[k][0] instanceof Date ? Utilities.formatDate(col[k][0], TZ, 'yyyy-MM-dd') : col[k][0]).slice(0, 10) < limite) k++;
   if (k > 0) s.deleteRows(2, k);
 }
+// Suma días a una fecha 'yyyy-MM-dd' (al mediodía, para que el horario no la corra de día)
+function diaMas_(dia, n) { const p = String(dia).split('-').map(Number); return Utilities.formatDate(new Date(p[0], p[1] - 1, p[2] + n, 12), TZ, 'yyyy-MM-dd'); }
+// Un solo día: de dónde vinieron, qué página vieron, a qué hora y cada visita (filtro por día del Panel)
+function panelVisitasDia_(dia) {
+  const hoy = hoy_(), ayer = diaMas_(dia, -1), todas = visitasFilas_();
+  const f = todas.filter(x => x.fecha.slice(0, 10) === dia), prev = todas.filter(x => x.fecha.slice(0, 10) === ayer);
+  const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
+  const contar = (l, campo) => { const o = {}; l.forEach(x => { const k = x[campo] || 'directo'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n); };
+  const barras = [];
+  for (let h = 0; h < 24; h++) { const hh = (h < 10 ? '0' : '') + h, l = f.filter(x => x.fecha.slice(11, 13) === hh); barras.push({ k: hh, n: l.length, u: unicos(l) }); }
+  const regs = mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada' && String(l.registro).slice(0, 10) === dia).length;
+  const cel = f.filter(x => x.disp !== 'pc').length, u = unicos(f);
+  return { dia: dia, hoy: hoy, total: f.length, unicos: u, anterior: prev.length, registros: regs, conversion: u ? Math.round(regs * 1000 / u) / 10 : 0,
+    cel: f.length ? Math.round(cel * 100 / f.length) : 0, barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'),
+    lista: f.slice(-300).reverse().map(x => ({ h: x.fecha.slice(11, 16), p: x.pagina, o: x.origen || 'directo', d: x.disp, r: x.ref })), mas: Math.max(0, f.length - 300),
+    min: diaMenos_(VISITA_DIAS - 1) };
+}
 function panelVisitas_(d) {
-  const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
   try { borrarVisitasViejas_(); } catch (e) {}
+  const dia = String((d && d.dia) || '');
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dia) && dia <= hoy_() && dia >= diaMenos_(VISITA_DIAS - 1)) return panelVisitasDia_(dia);
+  const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
   const hoy = hoy_(), desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
   const todas = visitasFilas_(), f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
   const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
@@ -4165,6 +4184,6 @@ function panelVisitas_(d) {
   const cel = f.filter(x => x.disp !== 'pc').length;
   return { dias: dias, desde: desde, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
     registros: regs, conversion: unicos(f) ? Math.round(regs * 1000 / unicos(f)) / 10 : 0, cel: f.length ? Math.round(cel * 100 / f.length) : 0,
-    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, ultimas: f.slice(-15).reverse() };
+    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: diaMenos_(VISITA_DIAS - 1) };
 }
 

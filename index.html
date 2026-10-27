@@ -2142,28 +2142,80 @@ const VIS_LINKS = [['negocio', 'https://josevic504-bot.github.io/negocio/'], ['d
 const visOri = k => VIS_ORI[k] || [k.charAt(0).toUpperCase() + k.slice(1), 'tag'];
 const visPag = k => VIS_PAG[k] || k;
 const visLink = (u, src) => u + (src ? (u.includes('?') ? '&' : '?') + 'src=' + src : '');
+const h12 = hhmm => { const h = Number(String(hhmm).slice(0, 2)), m = String(hhmm).slice(3, 5); return (h % 12 || 12) + (m ? ':' + m : '') + (h < 12 ? ' a. m.' : ' p. m.'); };
+// Barras de porcentaje (de dónde vienen / qué página)
+const visLista = (l, total, fn) => l.length ? `<div class="list">${l.map(x => { const t = fn(x); return `<div class="li"><div class="av ${colorDe(t[0])}">${ic(t[1], 18)}</div><div class="tx"><b>${esc(t[0])}</b><small>${Math.round(x.n * 100 / total)} % de las visitas</small><div style="height:6px;border-radius:6px;background:var(--line);margin-top:6px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(3, Math.round(x.n * 100 / l[0].n))}%;background:var(--pri)"></i></div></div><div class="am n"><b>${x.n}</b></div></div>`; }).join('')}</div>` : '<div class="empty">Todavía no hay visitas en este período</div>';
+// Filtros de arriba: Hoy, Ayer, 7/30/90 días o un día del calendario
+const visChips = sel => {
+  const h = hoy(), a = addDias(h, -1), otro = typeof sel === 'string' && sel !== h && sel !== a;
+  const ch = [[`data-dia="${h}"`, 'Hoy', sel === h], [`data-dia="${a}"`, 'Ayer', sel === a], ...[7, 30, 90].map(n => [`data-k="${n}"`, n + ' días', sel === n])];
+  return `<div class="chips wrap" style="margin-bottom:10px">${ch.map(x => `<button class="chip ${x[2] ? 'on' : ''}" data-a="panelVisitas" ${x[0]}>${x[1]}</button>`).join('')}<label class="chip ${otro ? 'on' : ''}" style="position:relative">${ic('cal', 16)} ${otro ? esc(fFechaC(sel).replace(/ (de )?\d{4}$/, '')) : 'Elegir día'}<input type="date" id="vis-dia" min="${esc(P.visMin || '')}" max="${h}" value="${typeof sel === 'string' ? sel : ''}" aria-label="Elegir un día" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0"></label></div>`;
+};
+function visChipsEventos() {
+  const i = $('#vis-dia'); if (!i) return;
+  i.addEventListener('click', () => { try { i.showPicker && i.showPicker(); } catch (e) {} });
+  i.addEventListener('change', () => { if (i.value) panelVisitasDia(i.value).catch(err); });
+}
 ACC.panelVisitas = async el => {
-  const dias = Number((el && el.dataset && el.dataset.k) || P.visDias || 7); P.visDias = dias;
+  const ds = (el && el.dataset) || {};
+  if (ds.dia) return panelVisitasDia(ds.dia);
+  P.visDia = '';
+  const dias = Number(ds.k || P.visDias || 7); P.visDias = dias;
   panelCab('Visitas', true);
   $('#main').innerHTML = '<div class="empty">Cargando…</div>';
-  const v = await api('panelVisitas', { dias });
+  const v = await api('panelVisitas', { dias }); if (v.min) P.visMin = v.min;
   const max = Math.max(1, ...v.barras.map(b => b.n)), maxH = Math.max(1, ...v.porHora);
   const camb = v.anterior ? Math.round((v.total - v.anterior) * 100 / v.anterior) : null;
   const barLbl = b => b.semana ? fFechaC(b.k).replace(/ \d{4}$/, '') : dias === 7 ? ['D', 'L', 'M', 'M', 'J', 'V', 'S'][new Date(b.k + 'T12:00').getDay()] : String(Number(b.k.slice(8)));
-  const lista = (l, fn) => l.length ? `<div class="list">${l.map(x => { const t = fn(x); return `<div class="li"><div class="av ${colorDe(t[0])}">${ic(t[1], 18)}</div><div class="tx"><b>${esc(t[0])}</b><small>${Math.round(x.n * 100 / v.total)} % de las visitas</small><div style="height:6px;border-radius:6px;background:var(--line);margin-top:6px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(3, Math.round(x.n * 100 / l[0].n))}%;background:var(--pri)"></i></div></div><div class="am n"><b>${x.n}</b></div></div>`; }).join('')}</div>` : '<div class="empty">Todavía no hay visitas en este período</div>';
-  const pico = v.porHora.indexOf(maxH);
-  $('#main').innerHTML = `<div class="chips" style="margin-bottom:10px">${[[7, '7 días'], [30, '30 días'], [90, '90 días']].map(x => `<button class="chip ${dias === x[0] ? 'on' : ''}" data-a="panelVisitas" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+  const pico = v.porHora.indexOf(maxH), porDia = dias <= 30;
+  $('#main').innerHTML = `${visChips(dias)}
     <div class="kpis k4"><div class="kpi" style="--k:var(--pri)"><small>Hoy</small><b>${v.hoyN}</b><i>visitas</i></div><div class="kpi" style="--k:var(--info)"><small>${dias} días</small><b>${v.total}</b><i>${camb === null ? 'sin período anterior' : (camb >= 0 ? '▲ ' : '▼ ') + Math.abs(camb) + ' % vs. ' + dias + ' días antes'}</i></div><div class="kpi" style="--k:#00b56e"><small>Personas distintas</small><b>${v.unicos}</b><i>celular ${v.cel} % · PC ${100 - v.cel} %</i></div><div class="kpi" style="--k:var(--warn)"><small>Se registraron</small><b>${v.registros}</b><i>${v.unicos ? v.conversion + ' % de las personas' : 'pruebas gratis nuevas'}</i></div></div>
-    <div class="sec-t"><h3>${dias === 90 ? 'Por semana' : 'Por día'}</h3><a>${v.total ? 'más visitas a las ' + (pico % 12 || 12) + (pico < 12 ? ' a. m.' : ' p. m.') : ''}</a></div>
-    <div class="panel" style="padding:14px 12px 10px"><div style="display:flex;align-items:flex-end;gap:${dias === 30 ? 2 : 6}px;height:110px">${v.barras.map(b => `<div title="${esc(b.k)}: ${b.n} visitas, ${b.u} personas" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%">${dias !== 30 && b.n ? `<small style="font-size:10px;color:var(--mut)">${b.n}</small>` : ''}<i style="display:block;width:100%;height:${b.n ? Math.max(4, Math.round(b.n * 100 / max)) : 2}%;border-radius:6px 6px 2px 2px;background:${b.k === v.hoy ? 'var(--pri)' : 'color-mix(in srgb, var(--pri) 45%, transparent)'}"></i></div>`).join('')}</div>
-      <div style="display:flex;gap:${dias === 30 ? 2 : 6}px;margin-top:4px">${v.barras.map((b, i) => `<small style="flex:1;text-align:center;font-size:10px;color:var(--mut)">${dias === 30 && i % 5 ? '' : barLbl(b)}</small>`).join('')}</div></div>
-    <div class="sec-t"><h3>De dónde vienen</h3></div>${lista(v.origen, x => visOri(x.k))}
-    <div class="sec-t"><h3>Qué página vieron</h3></div>${lista(v.paginas, x => [visPag(x.k), 'doc'])}
+    <div class="sec-t"><h3>${porDia ? 'Por día' : 'Por semana'}</h3><a>${v.total ? 'más visitas a las ' + (pico % 12 || 12) + (pico < 12 ? ' a. m.' : ' p. m.') : ''}</a></div>
+    <div class="panel" style="padding:14px 12px 10px"><div style="display:flex;align-items:flex-end;gap:${dias === 30 ? 2 : 6}px;height:110px">${v.barras.map(b => `<div ${porDia ? `data-a="panelVisitas" data-dia="${esc(b.k)}" role="button" aria-label="Ver el ${esc(fFechaL(b.k))}"` : ''} title="${esc(b.k)}: ${b.n} visitas, ${b.u} personas" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;${porDia ? 'cursor:pointer' : ''}">${dias !== 30 && b.n ? `<small style="font-size:10px;color:var(--mut)">${b.n}</small>` : ''}<i style="display:block;width:100%;height:${b.n ? Math.max(4, Math.round(b.n * 100 / max)) : 2}%;border-radius:6px 6px 2px 2px;background:${b.k === v.hoy ? 'var(--pri)' : 'color-mix(in srgb, var(--pri) 45%, transparent)'}"></i></div>`).join('')}</div>
+      <div style="display:flex;gap:${dias === 30 ? 2 : 6}px;margin-top:4px">${v.barras.map((b, i) => `<small style="flex:1;text-align:center;font-size:10px;color:var(--mut)">${dias === 30 && i % 5 ? '' : barLbl(b)}</small>`).join('')}</div>
+      ${porDia ? `<p class="h" style="margin:8px 0 0;font-size:12px">${ic('info', 14)} Toca una barra para ver ese día: de dónde vinieron y cada visita.</p>` : ''}</div>
+    <div class="sec-t"><h3>De dónde vienen</h3></div>${visLista(v.origen, v.total, x => visOri(x.k))}
+    <div class="sec-t"><h3>Qué página vieron</h3></div>${visLista(v.paginas, v.total, x => [visPag(x.k), 'doc'])}
     <div class="sec-t"><h3>Tus enlaces para anuncios</h3></div>
     <p class="h" style="margin:-4px 0 10px">Usa un enlace distinto en cada lugar donde lo publiques. Así sabes qué anuncio trae más gente. Sin etiqueta aparece como «Directo».</p>
     <div class="list">${VIS_LINKS.map(([k, u]) => `<div class="li" style="flex-wrap:wrap"><div class="av ${colorDe(visPag(k))}">${ic('globe', 18)}</div><div class="tx"><b>${esc(visPag(k))}</b><small style="word-break:break-all">${esc(u)}</small></div><div class="row" style="width:100%;margin-top:8px;flex-wrap:wrap;gap:6px">${[['tiktok', 'TikTok'], ['wa', 'WhatsApp'], ['estado', 'Estado WA'], ['facebook', 'Facebook']].map(([s2, t]) => `<button class="btn sm" data-a="panelCopiarLink" data-u="${esc(visLink(u, s2))}">${ic(VIS_ORI[s2][1], 15)} ${t}</button>`).join('')}</div></div>`).join('')}</div>
     <p class="credit" style="margin-top:14px">No se cuentan tus propias visitas (este teléfono queda marcado al abrir el Panel) ni las de clientes que ya iniciaron sesión. El mismo teléfono cuenta una vez cada 30 minutos. No se guarda ningún dato personal.</p>`;
+  visChipsEventos();
 };
+// Un solo día: de dónde vinieron, qué página vieron, a qué hora y cada visita
+async function panelVisitasDia(dia) {
+  P.visDia = dia; P.visOri = '';
+  panelCab('Visitas', true);
+  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
+  const v = await api('panelVisitas', { dia });
+  if (!v.dia) { toast('Para ver un día, pega el Codigo.gs nuevo en Apps Script y publica una versión nueva', 'error', 6000); return ACC.panelVisitas({ dataset: { k: String(P.visDias || 7) } }); }
+  P.vd = v; if (v.min) P.visMin = v.min;
+  const h = hoy(), maxB = Math.max(1, ...v.barras.map(b => b.n)), pico = v.total ? v.barras.reduce((a, b) => b.n > a.n ? b : a) : null;
+  const camb = v.anterior ? Math.round((v.total - v.anterior) * 100 / v.anterior) : null;
+  const cuando = dia === h ? 'Hoy' : dia === addDias(h, -1) ? 'Ayer' : 'Hace ' + Math.round((parseLocal(h) - parseLocal(dia)) / 86400000) + ' días';
+  const hLbl = k => ({ '00': '12a', '03': '3a', '06': '6a', '09': '9a', 12: '12p', 15: '3p', 18: '6p', 21: '9p' })[k] || '';
+  $('#main').innerHTML = `${visChips(dia)}
+    <div class="panel" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:12px"><button class="btn icon ghost" data-a="panelVisitas" data-dia="${addDias(dia, -1)}" ${P.visMin && dia <= P.visMin ? 'disabled' : ''} aria-label="Día anterior">${ic('left')}</button><div style="flex:1;text-align:center;line-height:1.25"><b style="font-size:16px">${esc(cap(fFechaL(dia)))}</b><small class="mut" style="display:block">${cuando}</small></div><button class="btn icon ghost" data-a="panelVisitas" data-dia="${addDias(dia, 1)}" ${dia >= h ? 'disabled' : ''} aria-label="Día siguiente">${ic('right')}</button></div>
+    <div class="kpis k4"><div class="kpi" style="--k:var(--pri)"><small>Visitas</small><b>${v.total}</b><i>${camb === null ? (v.total ? 'el día anterior no hubo' : 'ninguna este día') : (camb >= 0 ? '▲ ' : '▼ ') + Math.abs(camb) + ' % vs. el día anterior'}</i></div><div class="kpi" style="--k:#00b56e"><small>Personas distintas</small><b>${v.unicos}</b><i>${v.total ? 'celular ' + v.cel + ' % · PC ' + (100 - v.cel) + ' %' : '—'}</i></div><div class="kpi" style="--k:var(--warn)"><small>Se registraron</small><b>${v.registros}</b><i>${v.unicos ? v.conversion + ' % de las personas' : 'pruebas gratis nuevas'}</i></div><div class="kpi" style="--k:var(--info)"><small>Hora pico</small><b>${pico ? h12(pico.k + ':00').replace(':00', '') : '—'}</b><i>${pico ? pico.n + ' visita' + (pico.n === 1 ? '' : 's') + ' en esa hora' : 'sin visitas'}</i></div></div>
+    <div class="sec-t"><h3>Por hora</h3><a data-a="panelVisitas" data-k="${P.visDias || 7}">Ver ${P.visDias || 7} días</a></div>
+    <div class="panel" style="padding:14px 12px 10px"><div style="display:flex;align-items:flex-end;gap:2px;height:100px">${v.barras.map(b => `<div title="${h12(b.k + ':00')}: ${b.n} visitas, ${b.u} personas" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><i style="display:block;width:100%;height:${b.n ? Math.max(5, Math.round(b.n * 100 / maxB)) : 2}%;border-radius:4px 4px 1px 1px;background:${pico && b.k === pico.k ? 'var(--pri)' : 'color-mix(in srgb, var(--pri) 45%, transparent)'}"></i></div>`).join('')}</div>
+      <div style="display:flex;gap:2px;margin-top:4px">${v.barras.map(b => `<small style="flex:1;text-align:center;font-size:10px;color:var(--mut);white-space:nowrap;overflow:visible">${hLbl(b.k)}</small>`).join('')}</div></div>
+    <div class="sec-t"><h3>De dónde vienen</h3></div>${visLista(v.origen, v.total, x => visOri(x.k))}
+    <div class="sec-t"><h3>Qué página vieron</h3></div>${visLista(v.paginas, v.total, x => [visPag(x.k), 'doc'])}
+    <div class="sec-t"><h3>Cada visita del día</h3><a>${v.total} en total</a></div><div id="vis-cada"></div>
+    <p class="credit" style="margin-top:14px">Hora de Honduras. No se cuentan tus propias visitas ni las de clientes que ya iniciaron sesión. No se guarda ningún dato personal.</p>`;
+  visCada(); visChipsEventos();
+}
+// Lista de cada visita del día, con filtro por origen (TikTok, WhatsApp…)
+function visCada() {
+  const v = P.vd, box = $('#vis-cada'); if (!v || !box) return;
+  if (!v.lista.length) { box.innerHTML = '<div class="empty">Este día nadie abrió tus páginas</div>'; return; }
+  const o = P.visOri, l = o ? v.lista.filter(x => x.o === o) : v.lista;
+  box.innerHTML = `${v.origen.length > 1 ? `<div class="chips" style="margin-bottom:10px"><button class="chip ${o ? '' : 'on'}" data-a="visFiltroOri" data-o="">Todas · ${v.lista.length}</button>${v.origen.map(x => `<button class="chip ${o === x.k ? 'on' : ''}" data-a="visFiltroOri" data-o="${esc(x.k)}">${ic(visOri(x.k)[1], 15)} ${esc(visOri(x.k)[0].replace(' (sin etiqueta)', ''))} · ${x.n}</button>`).join('')}</div>` : ''}
+    <div class="list">${l.map(x => { const t = visOri(x.o); return `<div class="li"><div class="av ${colorDe(t[0])}">${ic(t[1], 18)}</div><div class="tx"><b>${esc(t[0].replace(' (sin etiqueta)', ''))}</b><small>${esc(visPag(x.p))} · ${x.d === 'pc' ? 'PC' : 'celular'}${x.r ? ' · desde ' + esc(x.r) : ''}</small></div><div class="am n"><b>${h12(x.h)}</b></div></div>`; }).join('')}</div>
+    ${v.mas ? `<p class="h" style="margin-top:8px">Se muestran las últimas 300 visitas del día (${v.mas} más no aparecen).</p>` : ''}`;
+}
+ACC.visFiltroOri = el => { P.visOri = el.dataset.o || ''; visCada(); };
 ACC.panelCopiarLink = async el => { const u = el.dataset.u; try { await navigator.clipboard.writeText(u); toast('Enlace copiado: ' + u.replace(/^https:\/\//, ''), 'ok'); } catch (e) { pedirTexto('Enlace', { valor: u }); } };
 /* ===== Gastos y publicidad (solo Panel) ===== */
 const PLATAFORMAS = ['TikTok', 'Facebook / Instagram', 'Google', 'WhatsApp', 'Volantes / impreso', 'Otra'];
