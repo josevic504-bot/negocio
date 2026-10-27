@@ -30,6 +30,13 @@
     return o;
   }
   var ORIGEN = origen(); // se calcula al cargar, antes de que la página limpie la dirección
+  // El último canal real con el que llegó este navegador (WhatsApp, Facebook, TikTok…) se recuerda 30 días:
+  // así, si se registra días después entrando directo, igual se sabe por dónde llegó
+  if (['directo', 'mis-paginas', 'otro-sitio'].indexOf(ORIGEN) < 0) set(L, 'mv_canal', ORIGEN + '|' + Date.now());
+  window.mvOrigen = function () {
+    var c = get(L, 'mv_canal').split('|'), ok = c[0] && Date.now() - Number(c[1] || 0) < 30 * 86400000;
+    return { o: ok ? c[0] : ORIGEN, v: get(L, 'mv_vid') };
+  };
 
   function vid() {
     var v = get(L, 'mv_vid');

@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.12 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.13 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.12';
+const VERSION = '1.9.13';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -35,7 +35,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -718,7 +718,7 @@ function bootstrap_(u, d) {
     sar: estadoSAR_()
   };
   sinInternos_(r.config);
-  if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); if (d && d.vid && !NEG.lic.vid && u.rol === 'admin') upd.vid = String(d.vid).replace(/[^A-Za-z0-9]/g, '').slice(0, 24); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u, d);
   if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && cb.vencidas.length) r.cobroVM = cb; }
   return r;
@@ -795,7 +795,7 @@ function mRows_(name) {
       const o = { _fila: i + 2 };
       h.forEach((k, j) => {
         let v = r[j];
-        if (v instanceof Date) v = k === 'version' ? '' : Utilities.formatDate(v, TZ, k === 'vencePrueba' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm'); // versión que Sheets convirtió en fecha: se ignora y se reescribe en la próxima conexión
+        if (v instanceof Date) v = k === 'version' ? '' : Utilities.formatDate(v, TZ, k === 'vencePrueba' || k === 'desde' || k === 'hasta' ? 'yyyy-MM-dd' : 'yyyy-MM-dd HH:mm'); // versión que Sheets convirtió en fecha: se ignora y se reescribe en la próxima conexión
         o[k] = (v === null || v === undefined) ? '' : (k === 'activo' ? !(v === false || v === 'false' || v === 'FALSE') : String(v));
       });
       return o;
@@ -1011,7 +1011,8 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
   const ahora = ahora_().replace('T', ' ');
   const lic = { id: id, negocio: negocio, giro: GIROS[giro].n, dueno: nombre, whatsapp: wa, registro: ahora,
     vencePrueba: Utilities.formatDate(new Date(Date.now() + DIAS_PRUEBA * 86400000), TZ, 'yyyy-MM-dd'),
-    estado: 'Prueba', usuarios: 1, ultimaConexion: ahora, hojaId: libro.getId() };
+    estado: 'Prueba', usuarios: 1, ultimaConexion: ahora, hojaId: libro.getId(),
+    origen: slug_(d.origen && d.origen.o, 20), vid: String(d.origen && d.origen.v || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24) };
   NEG = { id: id, hojaId: libro.getId(), lic: lic };
   MEMO._ss = libro;
   instalarNegocio_({ nombre: negocio, giro: giro, telefono: wa.length === 11 && wa.indexOf('504') === 0 ? wa.slice(3, 7) + '-' + wa.slice(7) : wa,
@@ -1369,7 +1370,8 @@ function panelLimpiarDuplicados_() {
   return { marcadas: n, total: dup.length };
 }
 function panelResumen_() {
-  const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)).map(l => panelFicha_(l, segs));
+  const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), vivas = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)), org = origenesLic_(vivas);
+  const lics = vivas.map(l => { const f = panelFicha_(l, segs); f.canal = (org[l.id] || {}).canal || ''; return f; });
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
   const mes = hoy_().slice(0, 7), todosPagos = mRows_('PagosLic'), pagos = todosPagos.filter(p => String(p.fecha).slice(0, 7) === mes);
   // Conversión: de las pruebas que ya terminaron (o se activaron antes de terminar), cuántas compraron
@@ -1406,8 +1408,12 @@ function panelResumen_() {
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
   const l = licDe_(d.id), f = panelFicha_(l, mRows_('Seguimiento'));
-  const camps = campanas_(), c = campanaDe_(l, camps);
+  const camps = campanas_(), og = origenesLic_([l])[l.id] || {}, c = campanaDe_(l, camps, og.canal);
+  f.origen = og;
   f.llego = c ? { id: c.id, nombre: c.plataforma + ' · «' + c.nombre + '»', desde: c.desde, hasta: c.hasta, auto: !l.llegoPor } : { id: '', nombre: '', directo: l.llegoPor === 'directo' };
+  // ¿Había publicidad ese día aunque no sea de su canal? (para explicarlo en la ficha)
+  const dReg = fecha10_(l.registro); f.otraPub = c ? null : (camps.find(x => dReg >= x.desde && dReg <= (x.hasta || hoy_())) || null);
+  if (f.otraPub) f.otraPub = { nombre: f.otraPub.plataforma + ' · «' + f.otraPub.nombre + '»' };
   f.campanas = camps.map(x => ({ id: x.id, nombre: x.plataforma + ' · «' + x.nombre + '»', desde: x.desde, hasta: x.hasta }));
   f.seguimiento = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.pagos = mRows_('PagosLic').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
@@ -4311,22 +4317,59 @@ function norm_(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u0
  * los clientes que se registran dentro de esas fechas se le atribuyen solos (se puede cambiar en la ficha).
  */
 function esSi_(v) { return v === true || ['true', 'sí', 'si', '1', 'x'].indexOf(String(v).toLowerCase()) >= 0; }
+// Fecha «año-mes-día» de una celda, aunque Google Sheets la haya guardado como fecha con hora («2026-10-25 00:00») o como 25/10/2026
+function fecha10_(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
+  const t = String(v || '').trim(); let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
+  m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  return m ? m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2) : '';
+}
 function campanas_() {
-  return mRows_('GastosPanel').filter(g => g.tipo === 'publicidad' && !esSi_(g.anulado) && /^\d{4}-\d{2}-\d{2}$/.test(String(g.desde)))
+  // Antes se exigía «2026-10-25» exacto: si Sheets guardaba la fecha con hora, la publicidad no aparecía en ninguna parte
+  return mRows_('GastosPanel').filter(g => g.tipo === 'publicidad' && !esSi_(g.anulado) && fecha10_(g.desde || g.fecha))
+    .map(g => Object.assign({}, g, { desde: fecha10_(g.desde || g.fecha), hasta: fecha10_(g.hasta) }))
     .sort((a, b) => a.desde < b.desde ? 1 : -1);
 }
-// Publicidad a la que se atribuye un cliente: la que él marcó a mano o, si no, la más reciente activa el día que se registró
-function campanaDe_(l, camps) {
+/* ===== ¿Por dónde llegó cada cliente? =====
+ * Al registrarse, la app manda el canal del enlace con el que entró (?src=wa, ?src=facebook, TikTok o Facebook por la app
+ * donde se abrió…) y el número al azar del navegador (vid) que usa el contador de visitas. Con ese vid se buscan sus visitas
+ * anteriores al registro. Para clientes de antes, el vid se toma la próxima vez que el dueño abre su programa. */
+const CANAL_PLAT = { facebook: /facebook|instagram|meta/i, instagram: /instagram|facebook|meta/i, tiktok: /tiktok/i, wa: /whatsapp/i, whatsapp: /whatsapp/i, estado: /whatsapp/i, google: /google/i, youtube: /youtube|google/i };
+const SIN_CANAL = ['', 'directo', 'mis-paginas', 'otro-sitio'];
+function origenesLic_(lics) {
+  if (!MEMO._orig) {
+    const vids = {}; lics.forEach(l => { if (l.vid) vids[l.vid] = 1; });
+    const porVid = {};
+    if (Object.keys(vids).length) { try { visitasFilas_(60000).forEach(x => { if (vids[x.vid]) (porVid[x.vid] = porVid[x.vid] || []).push(x); }); } catch (e) {} }
+    MEMO._orig = porVid;
+  }
+  const out = {};
+  lics.forEach(l => {
+    const reg = String(l.registro || '').replace('T', ' ').slice(0, 16), vs = (MEMO._orig[l.vid] || []).filter(x => !reg || x.fecha <= reg).sort((a, b) => a.fecha < b.fecha ? -1 : 1);
+    const conCanal = vs.filter(x => SIN_CANAL.indexOf(x.origen) < 0), ult = conCanal[conCanal.length - 1];
+    const guardado = SIN_CANAL.indexOf(String(l.origen || '')) < 0 ? String(l.origen) : '';
+    const canal = guardado || (ult ? ult.origen : '') || (l.origen || (vs.length ? 'directo' : ''));
+    out[l.id] = { canal: canal, visitas: vs.length, primera: vs[0] ? { f: vs[0].fecha, o: vs[0].origen } : null, pagina: (ult || vs[vs.length - 1] || {}).pagina || '' };
+  });
+  return out;
+}
+// ¿La publicidad es del canal por donde llegó? (Facebook/Instagram, TikTok, WhatsApp, Google…)
+function canalDePub_(plataforma, canal) { const r = CANAL_PLAT[canal]; return !!r && r.test(String(plataforma || '')); }
+// Publicidad a la que se atribuye un cliente: la que se marcó a mano o, si no, la activa el día que se registró.
+// Si se sabe por qué canal llegó, solo cuenta una publicidad de ese canal (llegó por WhatsApp → no es de la de TikTok).
+function campanaDe_(l, camps, canal) {
   if (l.llegoPor === 'directo') return null;
   if (l.llegoPor) { const c = camps.find(x => x.id === l.llegoPor); if (c) return c; }
-  const dia = String(l.registro).slice(0, 10), hoy = hoy_();
-  return camps.find(c => dia >= c.desde && dia <= (c.hasta || hoy)) || null;
+  const dia = fecha10_(l.registro), hoy = hoy_(), act = camps.filter(c => dia >= c.desde && dia <= (c.hasta || hoy));
+  if (canal && SIN_CANAL.indexOf(canal) < 0) return act.find(c => canalDePub_(c.plataforma, canal)) || null;
+  return act[0] || null;
 }
 function resumenCampanas_() {
   const camps = campanas_(), lics = mRows_('Licencias').filter(l => String(l.estado).toLowerCase() !== 'duplicada'), pagos = mRows_('PagosLic');
   const pagoDe = {}; pagos.forEach(p => { pagoDe[p.negocioId] = r2_((pagoDe[p.negocioId] || 0) + (Number(p.monto) || 0)); });
-  const por = {}; camps.forEach(c => { por[c.id] = []; });
-  lics.forEach(l => { const c = campanaDe_(l, camps); if (c) por[c.id].push(l); });
+  const por = {}, org = origenesLic_(lics); camps.forEach(c => { por[c.id] = []; });
+  lics.forEach(l => { const c = campanaDe_(l, camps, (org[l.id] || {}).canal); if (c) por[c.id].push(l); });
   // Conversión y ticket históricos, para estimar la posible recuperación
   const terminadas = lics.filter(l => ['activa', 'vencida', 'bloqueada'].indexOf(licNegocio_(l).estado === 'completa' ? 'activa' : licNegocio_(l).estado) >= 0);
   const pagaron = lics.filter(l => pagoDe[l.id] > 0);

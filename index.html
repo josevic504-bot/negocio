@@ -526,6 +526,11 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .tr.tot{border-bottom:0;border-top:2px solid var(--line)}
 .gf-sec .chip .sd{margin-right:1px}
 .chip.on .sd{box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+/* ¿Cómo llegó? */
+.t-gris{--t1:#8a8296;--t2:#b3adbd}
+.lleg{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--card);margin-bottom:8px}
+.lleg .tx{flex:1;min-width:0}.lleg .tx b{display:block;font-size:15px}.lleg .tx small{color:var(--mut);font-size:12.5px;line-height:1.4}
+.cc-canal{display:inline-flex;align-items:center;gap:4px;color:var(--mut)}
 /* Pagos programados */
 .cobro-h{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding:14px;border-radius:18px;background:var(--pri2);margin-bottom:12px}
 .cobro-h small{color:var(--mut);font-size:13px}.cobro-h b{font-size:30px;font-weight:700}
@@ -993,7 +998,7 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .cc-a .tx{flex:1;min-width:0}.cc-a b{display:block;font-size:13px}.cc-a small{display:block;color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc-a .bt{flex-basis:100%;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
 </style>
-<script src="visitas.js?v=1" defer></script>
+<script src="visitas.js?v=2" defer></script>
 </head>
 <body>
 <div id="loader"></div>
@@ -1263,7 +1268,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.12';
+const APP_VER = '1.9.13';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -1729,7 +1734,7 @@ async function arrancar() {
   let cache = LS.json(cacheKey(), null);
   if (cache && cache.usuario) { aplicarDatos(cache); mostrarApp(); } else cache = null;
   try {
-    const d = await api('bootstrap', { inicio: true, app: APP_VER }, !!cache);
+    const d = await api('bootstrap', { inicio: true, app: APP_VER, vid: DEMO.on ? '' : miOrigen().v || '' }, !!cache);
     S.inicio = d.inicio || null; delete d.inicio;
     aplicarDatos(d);
     try { LS.set(cacheKey(), JSON.stringify(d)); } catch (e) {}
@@ -1999,7 +2004,7 @@ async function registrarse(ev) {
     if ($('#r-wa').value.replace(/\D/g, '').length < 8) throw new Error('Escribe tu número de WhatsApp');
     registrando = true;
     if (btn) { btn.disabled = true; btn.textContent = 'Creando tu negocio… (puede tardar un minuto)'; }
-    const r = await api('registrar', { negocio: $('#r-neg').value.trim(), giro: $('#r-giro').value, nombre: $('#r-nom').value.trim(), whatsapp: $('#r-wa').value, pin });
+    const r = await api('registrar', { negocio: $('#r-neg').value.trim(), giro: $('#r-giro').value, nombre: $('#r-nom').value.trim(), whatsapp: $('#r-wa').value, pin, origen: miOrigen() });
     S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing'); if (!DEMO.on) mvMarca('mv_cliente');
     limpiarSesion();
     await arrancar();
@@ -2224,6 +2229,8 @@ const waPlantilla = (n, k, texto) => waLink(n.whatsapp, (texto || P.pl[k] || '')
 const cuandoP = f => f ? hace(String(f).replace(' ', 'T')) : 'nunca';
 // Marca este navegador para el contador de visitas (mv_yo = Vic, no se cuenta; mv_cliente = ya usa el programa)
 const mvMarca = k => { try { localStorage.setItem(k, '1'); } catch (e) {} };
+// Por dónde llegó este navegador (contador de visitas): canal del último enlace y su número al azar
+const miOrigen = () => { try { if (localStorage.getItem('mv_yo')) return {}; return window.mvOrigen ? window.mvOrigen() : { v: localStorage.getItem('mv_vid') || '' }; } catch (e) { return {}; } };
 function iniciarPanel() {
   S.enPanel = true; mvMarca('mv_yo'); document.title = 'Panel Molina · Gestión de Negocio VM';
   $('#login').hidden = true; $('#tienda').hidden = true; $('#app').hidden = false; document.body.classList.add('app', 'panel');
@@ -2283,7 +2290,7 @@ function tarjetaCli(n) {
     : n.estado === 'activa' ? ['var(--ok, #00b56e)', n.plus ? 'Licencia + Plus' : 'Licencia activa'] : n.estado === 'vencida' ? ['var(--bad)', 'Prueba vencida'] : ['var(--mut)', 'Acceso pausado'];
   const cls = n.sop || n.contactar === 'vence' ? 'ur' : t ? 'at' : '';
   return `<div class="cc ${cls}" data-a="panelVer" data-id="${n.id}"><div class="cc-h"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}${n.plus ? ' <span class="plus-b" style="font-size:9px;padding:2px 6px">PLUS</span>' : ''}${n.etiqueta ? ` <span class="badge ${ETQ_B[n.etiqueta] || 'b-mut'}" style="font-size:10px">${esc(n.etiqueta)}</span>` : ''}</b><small>${esc(n.giro)}${extrasTxt(n)} · ${esc(n.dueno)} · entró ${cuandoP(n.ultimaConexion)}</small></div><span class="badge ${e[0] || 'b-mut'}">${esc(e[1])}</span></div>
-    <div class="cc-l"><span style="color:${n.ventas7 ? 'var(--ok, #00b56e)' : 'var(--mut)'}">${ventasTxt(n)}</span><span style="color:${sub[0]}">${sub[1]}</span>${n.version && P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? `<span style="color:var(--bad)">app ${esc(n.version)}</span>` : ''}</div>
+    <div class="cc-l"><span style="color:${n.ventas7 ? 'var(--ok, #00b56e)' : 'var(--mut)'}">${ventasTxt(n)}</span><span style="color:${sub[0]}">${sub[1]}</span>${n.canal && n.canal !== 'directo' ? `<span class="cc-canal">${ic(visOri(n.canal)[1], 13)} vía ${esc(visOri(n.canal)[0])}</span>` : ''}${n.version && P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? `<span style="color:var(--bad)">app ${esc(n.version)}</span>` : ''}</div>
     ${cobroTarjeta(n)}
     ${n.sop ? `<div class="cc-a i"><span style="color:var(--info)">${ic('chat', 20)}</span><div class="tx"><b>${n.sop.sin} mensaje${n.sop.sin === 1 ? '' : 's'} sin responder</b><small>“${esc(n.sop.texto)}”</small></div><div class="bt"><button class="btn sm pri" data-a="panelSoporteVer" data-id="${n.sop.id}">${ic('chat', 15)} Responder</button></div></div>` : ''}
     ${t ? `<div class="cc-a ${n.contactar === 'vence' ? 'b' : 'w'}"><span style="color:${n.contactar === 'vence' ? 'var(--bad)' : 'var(--warn)'}">${ic('alert', 20)}</span><div class="tx"><b>${t[0]}</b><small>${t[2]}${n.sinEntrar >= 2 ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><div class="bt">${n.contactar === 'vence' || n.contactar === 'vencida' ? `<button class="btn sm" data-a="panelAccion" data-id="${n.id}" data-x="extender">+7 días</button>` : ''}<button class="btn sm" data-a="panelContactado" data-id="${n.id}" data-t="${n.contactar}">Ya le escribí</button><a class="btn wa sm" data-a="panelWA" href="${waPlantilla(n, n.contactar)}" target="_blank" rel="noopener">${ic('wa', 15)} Escribir</a></div></div>` : ''}</div>`;
@@ -2455,6 +2462,17 @@ function panelBienvenida(n) {
     <p class="h" style="font-size:12px;margin:10px 0 0">1) Envía la imagen y elige el chat de ${esc(String(n.dueno || '').split(' ')[0])}. 2) Envía el mensaje (se abre su chat con el texto listo).</p>` });
   h.botones([{ t: '1 · Enviar imagen', fn: async () => { const b = await (await fetch(IMG)).blob(); await compartirArchivo(b, 'Bienvenida-Gestion-de-Negocio-VM.png', ''); } },
     { t: '2 · Enviar mensaje', cls: 'pri', fn: () => { window.open(waPlantilla(n, 'bienvenida'), '_blank', 'noopener'); api('panelContacto', { id: n.id, tipo: 'bienvenida', nota: 'WhatsApp · Bienvenida + imagen' }, true).catch(() => {}); } }]);
+}
+/* ---- ¿Cómo llegó? Canal (WhatsApp, Facebook, TikTok…) y publicidad ---- */
+const CANAL_TX = { wa: 'Por WhatsApp', whatsapp: 'Por WhatsApp', estado: 'Por tu estado de WhatsApp', facebook: 'Por Facebook', fb: 'Por Facebook', instagram: 'Por Instagram', ig: 'Por Instagram', tiktok: 'Por TikTok', google: 'Por Google', youtube: 'Por YouTube', directo: 'Entró directo', 'mis-paginas': 'Desde tus páginas', 'otro-sitio': 'Desde otro sitio web' };
+const canalTx = k => CANAL_TX[k] || (k ? 'Por ' + visOri(k)[0] : '');
+function llegoHTML(n) {
+  const o = n.origen || {}, k = o.canal || '', l = n.llego || {};
+  const canal = k ? `<div class="lleg"><div class="av ${colorDe(visOri(k)[0])}">${ic(visOri(k)[1], 18)}</div><div class="tx"><b>${esc(canalTx(k))}</b><small>${o.visitas ? `${o.visitas === 1 ? '1 visita' : o.visitas + ' visitas'} antes de registrarse${o.primera ? ' · la primera el ' + esc(fFechaC(String(o.primera.f).slice(0, 10))) + (o.primera.o && o.primera.o !== k ? ' (' + esc(visOri(o.primera.o)[0]) + ')' : '') : ''}` : k === 'directo' ? 'Abrió el enlace sin etiqueta (?src=…). Usa tus enlaces con etiqueta para saber de dónde vienen.' : 'Según el enlace con el que se registró.'}</small></div></div>`
+    : `<div class="lleg"><div class="av t-gris">${ic('info', 18)}</div><div class="tx"><b>Canal sin datos todavía</b><small>Se registró antes del contador de visitas. Se completa solo la próxima vez que abra su programa, si antes visitó tu enlace desde ese teléfono.</small></div></div>`;
+  const pub = l.id ? `<div class="aviso info">${ic('sparkle', 18)}<div><b>Por publicidad: ${esc(l.nombre)}</b><small>${l.auto ? 'Se registró el ' + esc(fFechaC(String(n.registro).slice(0, 10))) + ', durante esa publicidad (' + esc(fFechaC(l.desde)) + ' – ' + (l.hasta ? esc(fFechaC(l.hasta)) : 'en curso') + ')' + (k && k !== 'directo' ? ' y llegó por ese canal.' : '.') : 'Asignado a mano.'}</small></div></div>`
+    : `<p class="h" style="margin:6px 0 6px">${l.directo ? 'Sin publicidad (marcado a mano).' : n.otraPub ? `No se cuenta para la publicidad ${esc(n.otraPub.nombre)}: llegó ${esc(canalTx(k).replace(/^Por /, 'por '))}, no por esa publicidad. Si sí fue por ella, toca «Cambiar».` : 'Sin publicidad en las fechas de su registro.'}</p>`;
+  return canal + pub;
 }
 function panelElegirLlego(n) {
   return new Promise(res => {
@@ -2651,7 +2669,7 @@ async function panelFicha(id) {
       <div class="sec-t"><h3>Escribirle por WhatsApp</h3></div>
       <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<button class="btn wa sm" data-x="bienv">${ic('sparkle', 14)} Bienvenida + imagen</button><a class="btn sm" href="${esc(location.href.split('?')[0] + '?tienda=' + encodeURIComponent(n.id))}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
       <div class="sec-t"><h3>¿Cómo llegó?</h3>${(n.campanas || []).length ? '<a data-x="llego">Cambiar</a>' : ''}</div>
-      ${n.llego && n.llego.id ? `<div class="aviso info">${ic('sparkle', 18)}<div><b>Por publicidad: ${esc(n.llego.nombre)}</b><small>${n.llego.auto ? 'Se registró el ' + esc(fFechaC(String(n.registro).slice(0, 10))) + ', durante esa publicidad (' + esc(fFechaC(n.llego.desde)) + ' – ' + (n.llego.hasta ? esc(fFechaC(n.llego.hasta)) : 'en curso') + ').' : 'Asignado a mano.'}</small></div></div>` : `<p class="h" style="margin:0 0 6px">${n.llego && n.llego.directo ? 'Llegó sin publicidad (marcado a mano).' : 'Sin publicidad en las fechas de su registro.'}</p>`}
+      ${llegoHTML(n)}
       ${panelSecCuotas(n)}
       <div class="sec-t"><h3>Pagos recibidos</h3><a data-x="pago">+ Anotar pago</a></div>
       <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small>${n.llego && n.llego.id ? `<small style="color:var(--pri)">${ic('sparkle', 12)} Llegó por ${esc(n.llego.nombre)}</small>` : ''}</div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
