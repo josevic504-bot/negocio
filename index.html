@@ -526,6 +526,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .tr.tot{border-bottom:0;border-top:2px solid var(--line)}
 .gf-sec .chip .sd{margin-right:1px}
 .chip.on .sd{box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+.srv-av{margin-bottom:12px}.srv-av small{display:block;line-height:1.45;margin:4px 0 8px}.srv-av small b{display:inline}
 /* ¿Cómo llegó? */
 .t-gris{--t1:#8a8296;--t2:#b3adbd}
 .lleg{display:flex;align-items:center;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--card);margin-bottom:8px}
@@ -1268,7 +1269,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.13';
+const APP_VER = '1.9.14';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -2252,12 +2253,21 @@ ACC.panelInicio = () => panelResumen();
 // Cuántos negocios tiene la persona y cuántos giros la tienda (para las tarjetas del panel)
 const grupoN = n => { const k = n.persona || n.id; return ((P.d && P.d.negocios) || []).filter(x => (x.persona || x.id) === k).length; };
 const extrasTxt = n => { const g = grupoN(n), e = (n.giros || []).length; return (g > 1 ? ` · <span style="color:var(--pri)">${g} negocios</span>` : '') + (e ? ` · +${e} giro${e > 1 ? 's' : ''}` : ''); };
+/* Aviso en el Panel cuando el Codigo.gs publicado en Apps Script es más viejo que la app:
+ * las funciones nuevas (como la publicidad) no responden hasta que se publique una versión nueva. */
+function avisoServidor(ver, que) {
+  if (DEMO.on && !P.forzarAviso) return '';
+  if (ver && cmpVer(ver, APP_VER) >= 0) return '';
+  return `<div class="aviso warn srv-av">${ic('alert', 20)}<div><b>Tu servidor tiene ${ver ? 'la versión ' + esc(ver) : 'una versión anterior'}; la app ya va en la ${APP_VER}</b>
+    <small>${que ? esc(que) + ' ' : ''}Pega el Codigo.gs nuevo en Apps Script, guarda y ve a <b>Implementar → Gestionar implementaciones → lápiz → Versión: Nueva versión → Implementar</b>. No uses «Nueva implementación»: crea otra dirección que la app no usa.</small>
+    <a class="btn sm" href="codigo.html" target="_blank" rel="noopener">${ic('copy', 15)} Copiar el Codigo.gs</a></div></div>`;
+}
 async function panelResumen() {
   panelCab('Panel Molina');
   $('#main').innerHTML = '<div class="empty">Cargando…</div>';
   const d = await api('panelResumen', {}); P.d = d; P.pl = d.plantillas || P.pl; panelCab('Panel Molina');
   const k = d.kpis, f = P.f;
-  $('#main').innerHTML = `<div class="kpis k4"><div class="kpi"><small>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></div><div class="kpi" style="--k:var(--warn)"><small>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b></div><div class="kpi" style="--k:#00b56e"><small>Ingresos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'} · total ${money(k.ingresosTotal || 0)}</i></div></div>
+  $('#main').innerHTML = avisoServidor(d.appVer) + `<div class="kpis k4"><div class="kpi"><small>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></div><div class="kpi" style="--k:var(--warn)"><small>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b></div><div class="kpi" style="--k:#00b56e"><small>Ingresos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'} · total ${money(k.ingresosTotal || 0)}</i></div></div>
     <div class="kpis k4" style="margin-top:8px"><div class="kpi" style="--k:var(--pri)"><small>Conversión</small><b>${k.terminadas ? k.conversion + '%' : '—'}</b><i>${k.terminadas ? `${k.compraron} de ${k.terminadas} pruebas terminadas compraron` : 'ninguna prueba ha terminado'}</i></div><div class="kpi" style="--k:var(--warn)"><small>Sin vender 7 días</small><b>${k.sinVender7 || 0}</b><i>abren la app pero no cobran</i></div></div>
     <div class="kpis k4" style="margin-top:8px"><button class="kpi" style="--k:var(--bad);text-align:left;font:inherit;color:inherit" data-a="panelGastosLista"><small>Gastos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.gastosMes || 0)}</b><i>${k.gastosMesN || 0} gasto${k.gastosMesN === 1 ? '' : 's'} · ver y registrar</i></button><div class="kpi" style="--k:${(k.resultadoMes || 0) < 0 ? 'var(--bad)' : '#00b56e'}"><small>Resultado del mes</small><b class="n">${money(k.resultadoMes || 0)}</b><i>ingresos − gastos</i></div></div>
     <button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelVisitas">${ic('eye', 20)}<div><b>Visitas: ${(d.visitas || {}).hoy || 0} hoy · ${(d.visitas || {}).semana || 0} en 7 días</b><small>${(d.visitas || {}).unicos || 0} personas distintas · toca para ver de dónde vienen y tus enlaces</small></div></button>
@@ -2401,6 +2411,7 @@ ACC.panelGastosLista = async () => {
   panelCab('Gastos y publicidad', true);
   $('#main').innerHTML = '<div class="empty">Cargando…</div>';
   const g = await api('panelGastos', {}); P.g = g;
+  const avSrv = avisoServidor(g.version, 'Por eso la publicidad no aparece en la lista aunque sí se suma en los gastos del mes.');
   const mesT = esc(fMes(hoy().slice(0, 7)).split(' ')[0]);
   const monTxt = x => x.moneda === 'USD' ? `US$ ${fmtN(x.montoOrig)} × L ${fmtN(x.tasa, 2)} = <b style="display:inline">${money(x.monto)}</b>` : `<b style="display:inline">${money(x.monto)}</b>`;
   const camp = c => {
@@ -2411,7 +2422,7 @@ ACC.panelGastosLista = async () => {
       ${c.enPrueba ? `<div class="cc-a w"><span style="color:var(--warn)">${ic('clock', 20)}</span><div class="tx"><b>Posible recuperación: ${money(c.posible)}</b><small>${c.enPrueba} en prueba · estimado con tu conversión (${g.conversion} %) y pago promedio (${money(g.ticket)})</small></div></div>` : ''}
       ${c.clientes.length ? `<div style="margin:10px 0 0 54px;font-size:12px;color:var(--mut);line-height:1.5">Llegaron: ${c.clientes.map(x => esc(x.negocio) + (x.pagado > 0 ? ' ✓' : x.estado === 'eliminada' ? ' (eliminado)' : '')).join(' · ')}</div>` : ''}</div>`;
   };
-  $('#main').innerHTML = `<div class="kpis k4"><div class="kpi" style="--k:var(--bad)"><small>Gastos de ${mesT}</small><b class="n">${money(g.gastosMes)}</b></div><div class="kpi" style="--k:#00b56e"><small>Recuperado con publicidad</small><b class="n">${money(g.recuperado)}</b><i>de ${money(g.invertido)} invertidos${g.invertido ? ' · ' + Math.round(g.recuperado * 100 / g.invertido) + ' %' : ''}</i></div></div>
+  $('#main').innerHTML = avSrv + `<div class="kpis k4"><div class="kpi" style="--k:var(--bad)"><small>Gastos de ${mesT}</small><b class="n">${money(g.gastosMes)}</b></div><div class="kpi" style="--k:#00b56e"><small>Recuperado con publicidad</small><b class="n">${money(g.recuperado)}</b><i>de ${money(g.invertido)} invertidos${g.invertido ? ' · ' + Math.round(g.recuperado * 100 / g.invertido) + ' %' : ''}</i></div></div>
     <button class="btn pri big" style="width:100%;margin:12px 0" data-a="panelGasto">${ic('plus', 18)} Registrar gasto</button>
     <div class="sec-t"><h3>Publicidad</h3><a>${g.campanas.length}</a></div>${g.campanas.map(camp).join('') || '<div class="empty">Aún no has registrado publicidad</div>'}
     <div class="sec-t"><h3>Otros gastos</h3><a>${g.otros.length}</a></div><div class="list">${g.otros.map(x => `<div class="li" data-a="panelGasto" data-id="${x.id}"><div class="av t-azul">${ic('receipt', 20)}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${esc(fFechaC(x.fecha))}${x.moneda === 'USD' ? ' · US$ ' + fmtN(x.montoOrig) + ' × L ' + fmtN(x.tasa, 2) : ''}${x.nota ? ' · ' + esc(x.nota) : ''}</small></div><div class="am n">${money(x.monto)}</div></div>`).join('') || '<div class="empty">Sin otros gastos</div>'}</div>

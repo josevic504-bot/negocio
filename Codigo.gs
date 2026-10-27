@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.13 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.14 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.13';
+const VERSION = '1.9.14';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -4323,12 +4323,17 @@ function fecha10_(v) {
   const t = String(v || '').trim(); let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
   if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
   m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  return m ? m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2) : '';
+  if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  // Número de serie de Sheets (días desde el 30/12/1899), si la celda quedó con formato de número
+  if (/^\d{5}(\.\d+)?$/.test(t)) return Utilities.formatDate(new Date(Math.round((Number(t) - 25569) * 86400000)), 'UTC', 'yyyy-MM-dd');
+  return '';
 }
+const esPub_ = g => String(g.tipo || '').trim().toLowerCase() === 'publicidad';
 function campanas_() {
   // Antes se exigía «2026-10-25» exacto: si Sheets guardaba la fecha con hora, la publicidad no aparecía en ninguna parte
-  return mRows_('GastosPanel').filter(g => g.tipo === 'publicidad' && !esSi_(g.anulado) && fecha10_(g.desde || g.fecha))
-    .map(g => Object.assign({}, g, { desde: fecha10_(g.desde || g.fecha), hasta: fecha10_(g.hasta) }))
+  // Ninguna publicidad se pierde: si no se entiende su fecha de inicio, se usa la del gasto, la de registro o la de hoy
+  return mRows_('GastosPanel').filter(g => esPub_(g) && !esSi_(g.anulado))
+    .map(g => Object.assign({}, g, { desde: fecha10_(g.desde) || fecha10_(g.fecha) || fecha10_(g.creado) || hoy_(), hasta: fecha10_(g.hasta) }))
     .sort((a, b) => a.desde < b.desde ? 1 : -1);
 }
 /* ===== ¿Por dónde llegó cada cliente? =====
@@ -4389,14 +4394,14 @@ function resumenCampanas_() {
 }
 function panelGastos_() {
   const rc = resumenCampanas_(), mes = hoy_().slice(0, 7);
-  const otros = mRows_('GastosPanel').filter(g => g.tipo !== 'publicidad' && !esSi_(g.anulado)).sort((a, b) => a.fecha < b.fecha ? 1 : -1)
+  const otros = mRows_('GastosPanel').filter(g => !esPub_(g) && !esSi_(g.anulado)).sort((a, b) => a.fecha < b.fecha ? 1 : -1)
     .map(g => ({ id: g.id, fecha: g.fecha, nombre: g.nombre, nota: g.nota, moneda: g.moneda, montoOrig: Number(g.montoOrig) || 0, tasa: Number(g.tasa) || 0, monto: Number(g.monto) || 0 }));
   const todos = mRows_('GastosPanel').filter(g => !esSi_(g.anulado));
   const porMes = {}; todos.forEach(g => { const m = String(g.fecha).slice(0, 7); porMes[m] = r2_((porMes[m] || 0) + (Number(g.monto) || 0)); });
   return { campanas: rc.lista.map(c => ({ id: c.id, fecha: c.fecha, plataforma: c.plataforma, nombre: c.nombre, desde: c.desde, hasta: c.hasta, nota: c.nota, moneda: c.moneda,
       montoOrig: Number(c.montoOrig) || 0, tasa: Number(c.tasa) || 0, monto: c.monto, registros: c.registros, activaron: c.activaron, pagado: c.pagado, recuperacion: c.recuperacion,
       costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso })),
-    otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_() };
+    otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_(), version: VERSION };
 }
 function panelGastoGuardar_(d) {
   const tipo = d.tipo === 'publicidad' ? 'publicidad' : 'otro';
