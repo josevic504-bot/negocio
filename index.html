@@ -526,6 +526,17 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .tr.tot{border-bottom:0;border-top:2px solid var(--line)}
 .gf-sec .chip .sd{margin-right:1px}
 .chip.on .sd{box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+/* Editar venta */
+.ev-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:var(--pri2);border-radius:14px;font-size:13px;color:var(--mut);margin-bottom:6px}.ev-h b{color:var(--ink);font-size:15px}
+.ev-ant{color:var(--warn);font-weight:600}.ev-nuevo{color:var(--ok);font-weight:600}
+.tk.ev-q{opacity:.6}.tk.ev-q b{text-decoration:line-through}
+.ev-add{margin:2px 0 12px}
+.ev-pasa{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:10px 12px;margin-top:12px}
+.ev-pasa .op-l{margin:0 0 4px}
+.ev-f{display:flex;gap:9px;align-items:flex-start;font-size:13px;line-height:1.4;padding:6px 0;border-top:1px dashed var(--line)}.ev-f:first-of-type{border-top:0}
+.ev-f svg{flex:none;margin-top:1px;color:var(--mut)}.ev-f.warn svg{color:var(--warn)}.ev-f.ok svg{color:var(--ok)}
+.ed-tag{color:var(--pri);font-weight:600}
+.ed-av .lnk{margin-top:4px}
 .dia{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:4px 12px;margin-bottom:10px}
 .dia-h{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--line);font-size:14px;gap:8px;flex-wrap:wrap}
 .mv{display:grid;grid-template-columns:62px auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
@@ -1228,7 +1239,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.9';
+const APP_VER = '1.9.10';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -3146,8 +3157,9 @@ ACC.impVenta = () => S.ultVenta && imprimirTicket(S.ultVenta.v, S.ultVenta.det);
 function detalleVenta(v) {
   const cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
   S.ultVenta = { v, det: v.detalle };
-  const fz = fiscalDe(v);
-  const h = hoja({ titulo: v.factura ? 'Factura ' + esc(v.factura) : 'Venta ' + esc(v.numero), html: `${v.anulada ? `<div class="aviso bad">${ic('x', 18)}<div><b>${v.factura ? 'Factura anulada' : 'Venta anulada'}</b><small>${esc(v.nota)}</small></div></div>` : ''}
+  const fz = fiscalDe(v), edi = (() => { try { return v.edicion ? JSON.parse(v.edicion) : null; } catch (e) { return null; } })();
+  const h = hoja({ titulo: v.factura ? 'Factura ' + esc(v.factura) : 'Venta ' + esc(v.numero), html: `${v.anulada ? `<div class="aviso bad">${ic('x', 18)}<div><b>${v.corregida ? 'Versión anterior (se editó)' : v.factura ? 'Factura anulada' : 'Venta anulada'}</b><small>${esc(v.nota)}</small></div></div>` : ''}
+    ${edi && !v.anulada ? `<div class="aviso info sm ed-av">${ic('edit', 18)}<div><b>Editada${edi.veces > 1 ? ' ' + edi.veces + ' veces' : ''} · antes ${money(edi.antes.total)}${edi.antes.metodo !== v.metodo ? ' en ' + esc(edi.antes.metodo) : ''}</b><small>${esc(fFechaC(edi.fecha))} ${fHora(edi.fecha)} · ${esc(edi.por)} · ${esc(edi.motivo)}${edi.antes.factura && edi.antes.factura !== v.factura ? ' · reemplaza la factura ' + esc(edi.antes.factura) : ''}</small>${v.anterior ? `<button class="lnk" data-a="verVentaAnt">Ver cómo era antes ${ic('arrow', 14)}</button>` : ''}</div></div>` : ''}
     <div class="kv"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(fz ? fz.nombre : cli ? cli.nombre : 'Consumidor final')}</div>${fz ? `<div><small>RTN del cliente</small>${esc(fmtRtn(fz.rtn)) || '—'}</div><div><small>Venta interna</small>${esc(v.numero)}</div>` : ''}<div><small>Atendió</small>${esc(nomUsuario(v.usuarioId))}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
     <div class="tks">${v.detalle.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}${i.serie ? ' · serie ' + esc(i.serie) : ''}${i.garantia ? ' · garantía hasta ' + fFechaC(garantiaHasta(v.fecha, i.garantia)) : ''}</small></div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
     ${v.servicio ? `<p class="sm mut">${v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio'}${v.cocina ? ' · cocina: ' + esc(v.cocina) : ''}</p>` : ''}
@@ -3156,7 +3168,10 @@ function detalleVenta(v) {
     ${puede('admin') ? `<div class="tot"><span>Costo · ganancia</span><b class="n">${money(v.costo)} · ${money(v.total - v.isv - v.costo)}</b></div>` : ''}</div>
     ${v.nota && !v.anulada ? `<p class="sm mut">Nota: ${esc(v.nota)}</p>` : ''}
     <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${modOn('comanda') && v.servicio ? `<button class="btn" data-a="comanda">${ic('receipt', 18)} Comanda</button>` : ''}${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, v.detalle))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
-  if (puede('admin') && !v.anulada) h.botones([{ t: 'Anular venta', cls: 'bad', fn: async () => {
+  S.ventaAnt = v.anterior || null;
+  const bs = [];
+  if (puede('admin') && !v.anulada) bs.push({ t: `${ic('edit', 18)} Editar`, cls: 'pri', fn: () => { if (Number(v.anticipo) > 0) return toast('Esta venta viene de una orden o cita con anticipo: anúlala y vuelve a cobrarla desde ahí', 'error', 5000); h.cerrar(); editarVenta(v); } });
+  if (puede('admin') && !v.anulada) bs.unshift({ t: 'Anular venta', cls: 'bad', fn: async () => {
     const m = await pedirTexto('Anular ' + (v.factura || v.numero), { label: 'Motivo', msg: v.factura ? 'Las existencias vuelven al inventario. La factura queda anulada con su número (no se vuelve a usar) y aparece en el libro de ventas para avisarla al SAR.' : 'Las existencias vuelven al inventario. La venta queda registrada como anulada.', si: 'Anular venta', peligro: 1 });
     if (m === null) return;
     const r = await api('anularVenta', { id: v.id, motivo: m });
@@ -3164,7 +3179,97 @@ function detalleVenta(v) {
     h.cerrar(); toast('Venta anulada', 'ok');
     if (cli) recargar(true).catch(() => {});
     if (S.vista === 'ventas') R.ventas(); else render();
-  } }]);
+  } });
+  if (bs.length) h.botones(bs);
+}
+ACC.verVentaAnt = () => { const a = S.ventaAnt; if (a) detalleVenta(Object.assign({}, a, { detalle: a.detalle || [] })); };
+
+/* ---------- Editar una venta ----------
+ * Cambia cantidades, precios, productos, cliente, forma de pago o descuento. Conserva el número y la fecha;
+ * la diferencia en efectivo entra o sale de la caja de hoy y el inventario se ajusta solo. */
+const MOTIVOS_VENTA = ['Error de cantidad', 'Error de precio', 'Producto equivocado', 'El cliente devolvió algo', 'Otro'];
+function editarVenta(v) {
+  const fz = fiscalDe(v), exo = !!(fz && (fz.oce || fz.cre || fz.sag));
+  const varDe = i => { const p = i.productoId ? byId(S.productos, i.productoId) : null; return p && i.descripcion.indexOf(p.nombre + ' · ') === 0 ? i.descripcion.slice(p.nombre.length + 3) : ''; };
+  const E = { items: v.detalle.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, variante: varDe(i), cantidad: i.cantidad, precio: i.precio, costo: i.costo, serie: i.serie || '', antes: i.cantidad, pAntes: i.precio })),
+    clienteId: v.clienteId || '', metodo: v.metodo, descuento: v.descuento || 0, abono: v.metodo === 'Crédito' ? v.recibido : '', motivo: '', otro: '' };
+  const pagos = [['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer'], ['Crédito', 'cal']];
+  const efectivo = (met, total, rec) => met === 'Efectivo' ? total : met === 'Crédito' ? Math.min(num(rec), total) : 0;
+  const h = hoja({ titulo: 'Editar ' + (v.factura ? 'factura' : 'venta') + ' ' + esc(v.numero), html: '<div id="ev"></div>' });
+  const pinta = () => {
+    const vivos = E.items.filter(i => i.cantidad > 0), t = calcTotales({ items: vivos, descuento: E.descuento }, exo), cli = E.clienteId ? byId(S.clientes, E.clienteId) : null;
+    const dif = r2(t.total - v.total), cajaDif = r2(efectivo(E.metodo, t.total, E.abono) - efectivo(v.metodo, v.total, v.recibido));
+    const cambioItems = E.items.some(i => i.cantidad !== i.antes || i.precio !== i.pAntes), cambio = cambioItems || E.clienteId !== (v.clienteId || '') || E.metodo !== v.metodo || r2(num(E.descuento)) !== r2(v.descuento || 0) || (E.metodo === 'Crédito' && r2(num(E.abono)) !== r2(v.recibido));
+    // Qué pasa con el inventario: diferencia por producto
+    const dq = {}; E.items.forEach(i => { const p = i.productoId ? byId(S.productos, i.productoId) : null; if (p && p.tipo === 'producto') dq[p.id] = (dq[p.id] || 0) + i.antes - i.cantidad; });
+    const vuelven = Object.keys(dq).filter(k => dq[k] > 0), salen = Object.keys(dq).filter(k => dq[k] < 0);
+    const nomP = k => `${cant(Math.abs(dq[k]))} ${esc(byId(S.productos, k).nombre)}`;
+    const efe = [];
+    if (cajaDif < 0) efe.push(['cash', `<b>Devuelve ${money(-cajaDif)}</b> en efectivo al cliente: sale de la caja de hoy.`, 'warn']);
+    else if (cajaDif > 0) efe.push(['cash', `<b>Cobra ${money(cajaDif)} más</b> en efectivo: entra a la caja de hoy.`, 'ok']);
+    if (E.metodo !== v.metodo) efe.push(['card', `La forma de pago cambia de <b>${esc(v.metodo)}</b> a <b>${esc(E.metodo)}</b>.`]);
+    if (E.metodo === 'Crédito' && cli) { const ant = v.metodo === 'Crédito' && v.clienteId === E.clienteId ? v.saldo : 0, nuevo = r2(t.total - Math.min(num(E.abono), t.total) - (v.metodo === 'Crédito' ? r2(v.total - v.recibido - v.saldo) : 0)); efe.push(['user', `Lo que debe ${esc(cli.nombre.split(' ')[0])} por esta venta: <b>${money(ant)} → ${money(Math.max(0, nuevo))}</b>.`]); }
+    if (vuelven.length) efe.push(['box', `Vuelven al inventario: ${vuelven.map(nomP).join(', ')}.`]);
+    if (salen.length) efe.push(['box', `Salen del inventario: ${salen.map(nomP).join(', ')}.`]);
+    efe.push(['doc', v.factura ? `La factura ${esc(v.factura)} queda <b>anulada</b> y se emite una nueva con el número que sigue (así lo pide el SAR).` : `Conserva su número <b>${esc(v.numero)}</b> y su fecha (${esc(fFechaC(v.fecha))}). Queda guardado cómo era antes.`]);
+    $('#ev', h.el).innerHTML = `<div class="ev-h"><span>${esc(fFechaC(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)}${v.clienteId ? ' · ' + esc(nomCliente(v.clienteId)) : ''}</span><b class="n">${money(v.total)}</b></div>
+      <div class="tks">${E.items.map((i, k) => i.cantidad > 0 ? `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small><a data-ep="${k}">${money(i.precio)} c/u ✎</a>${i.antes && i.cantidad !== i.antes ? ` · <span class="ev-ant">antes ${cant(i.antes)}</span>` : !i.antes ? ' · <span class="ev-nuevo">nuevo</span>' : ''}${i.precio !== i.pAntes && i.antes ? ` · <span class="ev-ant">antes ${money(i.pAntes)}</span>` : ''}</small></div>
+          <div class="qty"><button data-k="${k}" data-d="-1">−</button><span data-eq="${k}">${cant(i.cantidad)}</span><button data-k="${k}" data-d="1">+</button></div><button class="btn icon sm ghost" data-x="${k}" aria-label="Quitar" style="color:var(--bad)">${ic('trash', 16)}</button></div>`
+        : `<div class="tk ev-q"><div class="tx"><b>${esc(i.descripcion)}</b><small>Se quita de la venta</small></div><button class="btn sm ghost" data-u="${k}">Deshacer</button></div>`).join('')}</div>
+      <button class="btn sm ghost ev-add" data-agregar="1">${ic('plus', 16)} Agregar producto</button>
+      <div class="fld"><span>Cliente</span><input id="ev-cli" list="dl-evc" placeholder="Consumidor final" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '')}" autocomplete="off"><datalist id="dl-evc">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist></div>
+      <div class="fld"><span>Forma de pago</span><div class="pays">${pagos.map(([m, i]) => `<button class="pay ${E.metodo === m ? 'on' : ''}" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div></div>
+      ${E.metodo === 'Crédito' ? `<label class="fld"><span>Abono inicial</span><input id="ev-ab" inputmode="decimal" value="${esc(E.abono)}" placeholder="0.00"></label>${!cli ? `<div class="aviso warn sm">${ic('alert', 18)}<div>Para dejarla al crédito elige un cliente registrado.</div></div>` : ''}` : ''}
+      <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(t.subtotal)}</b></div><div class="tot"><span>Descuento <a data-desc="1">${t.descuento ? 'cambiar' : 'agregar'}</a></span><b class="n">${t.descuento ? '− ' + money(t.descuento) : '—'}</b></div>
+        <div class="tot"><span>Antes</span><b class="n">${money(v.total)}</b></div><div class="tot g"><span>Nuevo total</span><b class="n">${money(t.total)}</b></div>${dif ? `<div class="tot"><span>Diferencia</span><b class="n ${dif < 0 ? 'neg' : 'pos'}">${dif < 0 ? '− ' : '+ '}${money(Math.abs(dif))}</b></div>` : ''}</div>
+      ${cambio ? `<div class="ev-pasa"><span class="op-l">Al guardar</span>${efe.map(([i, x, c]) => `<div class="ev-f ${c || ''}">${ic(i, 17)}<span>${x}</span></div>`).join('')}</div>
+      <span class="op-l" style="margin-top:12px">¿Por qué cambia?</span><div class="chips" id="ev-m" style="flex-wrap:wrap">${MOTIVOS_VENTA.map(m => `<button type="button" class="chip ${E.motivo === m ? 'on' : ''}" data-mo="${esc(m)}">${esc(m)}</button>`).join('')}</div>
+      ${E.motivo === 'Otro' ? `<label class="fld" style="margin-top:8px"><span>Motivo</span><input id="ev-o" maxlength="100" value="${esc(E.otro)}" placeholder="Ej. el cliente cambió de plan"></label>` : ''}` : `<p class="xs mut" style="margin:10px 2px 0">Cambia cantidades, precios, productos, el cliente o la forma de pago. Abajo verás qué pasa con la caja y el inventario.</p>`}`;
+    const ab = $('#ev-ab', h.el); if (ab) ab.onchange = () => { E.abono = ab.value; pinta(); };
+    const o = $('#ev-o', h.el); if (o) o.oninput = () => { E.otro = o.value; };
+    const ci = $('#ev-cli', h.el);
+    ci.onchange = () => { const x = ci.value.trim(), c = x ? S.clientes.find(y => (y.nombre + (y.telefono ? ' · ' + y.telefono : '')) === x) || S.clientes.find(y => norm(y.nombre) === norm(x)) : null; if (x && !c) { toast('Ese cliente no está registrado. Tócalo en la lista', 'error'); ci.value = ''; } E.clienteId = c ? c.id : ''; pinta(); };
+    h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Guardar cambios`, cls: 'pri', fn: guardar }]);
+  };
+  const guardar = async () => {
+    const vivos = E.items.filter(i => i.cantidad > 0);
+    if (!vivos.length) throw new Error('Si quitas todo, mejor anula la venta');
+    if (!E.motivo) throw new Error('Elige por qué cambia la venta');
+    const motivo = E.motivo === 'Otro' ? E.otro.trim() : E.motivo;
+    if (!motivo) throw new Error('Escribe el motivo');
+    if (E.metodo === 'Crédito' && !E.clienteId) throw new Error('Para dejarla al crédito elige un cliente');
+    const t = calcTotales({ items: vivos, descuento: E.descuento }, exo);
+    const r = await api('editarVenta', { id: v.id, motivo, clienteId: E.clienteId, metodo: E.metodo, descuento: E.descuento || 0,
+      recibido: E.metodo === 'Crédito' ? num(E.abono) : E.metodo === 'Efectivo' ? t.total : undefined,
+      items: vivos.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, variante: i.variante, cantidad: i.cantidad, precio: i.precio, costo: i.costo, serie: i.serie })) });
+    S.productos = r.productos; if (r.sar) S.sar = r.sar;
+    if (r.venta.clienteId) { const c = byId(S.clientes, r.venta.clienteId); if (c) c.saldo = r.saldoCliente; }
+    if (v.clienteId && v.clienteId !== r.venta.clienteId) recargar(true).catch(() => {});
+    S.inicio = null; S.cuentasL = null; S.susL = null; guardarCache();
+    h.cerrar(); toast('Venta ' + r.venta.numero + ' corregida', 'ok');
+    if (S.vista === 'ventas') R.ventas();
+    detalleVenta(Object.assign({}, r.venta, { detalle: r.detalle, anterior: Object.assign({}, v) }));
+  };
+  h.el.addEventListener('click', async e => {
+    const d = e.target.closest('[data-d]'); if (d) { const it = E.items[Number(d.dataset.k)]; it.cantidad = Math.max(0, r2(it.cantidad + Number(d.dataset.d))); return pinta(); }
+    const x = e.target.closest('[data-x]'); if (x) { E.items[Number(x.dataset.x)].cantidad = 0; return pinta(); }
+    const u = e.target.closest('[data-u]'); if (u) { const it = E.items[Number(u.dataset.u)]; it.cantidad = it.antes || 1; return pinta(); }
+    const m = e.target.closest('[data-m]'); if (m) { E.metodo = m.dataset.m; if (E.metodo === 'Crédito' && E.abono === '') E.abono = 0; return pinta(); }
+    const mo = e.target.closest('[data-mo]'); if (mo) { E.motivo = mo.dataset.mo; return pinta(); }
+    const q = e.target.closest('[data-eq]'); if (q) { const it = E.items[Number(q.dataset.eq)]; const n = await pedirTexto('Cantidad de «' + esc(it.descripcion) + '»', { label: 'Cantidad', valor: it.cantidad, modo: 'decimal' }); if (n !== null && num(n) >= 0) { it.cantidad = Math.round(num(n) * 1000) / 1000; pinta(); } return; }
+    const pr = e.target.closest('[data-ep]'); if (pr) { const it = E.items[Number(pr.dataset.ep)]; const n = await pedirTexto('Precio de «' + esc(it.descripcion) + '»', { label: 'Precio por unidad', valor: it.precio, modo: 'decimal' }); if (n !== null && r2(n) >= 0) { it.precio = r2(n); pinta(); } return; }
+    if (e.target.closest('[data-desc]')) { const t = calcTotales({ items: E.items.filter(i => i.cantidad > 0), descuento: 0 }, exo); const n = await pedirTexto('Descuento', { label: 'Monto o porcentaje (ej. 50 o 10%)', valor: E.descuento || '', ph: '0.00', msg: `Subtotal: <b>${money(t.subtotal)}</b>` }); if (n !== null) { const z = String(n).trim(); E.descuento = z.endsWith('%') ? r2(t.subtotal * num(z) / 100) : r2(z); pinta(); } return; }
+    if (e.target.closest('[data-agregar]')) elegirParaVenta(p => { const ya = E.items.find(i => i.productoId === p.id && !i.variante); if (ya) ya.cantidad = r2(ya.cantidad + 1); else E.items.push({ productoId: p.id, descripcion: p.nombre, variante: '', cantidad: 1, precio: p.precio, costo: p.costo, serie: '', antes: 0, pAntes: p.precio }); pinta(); });
+  });
+  pinta();
+}
+// Buscar un producto o servicio para agregarlo a una venta que se está editando
+function elegirParaVenta(cb) {
+  const l = S.productos.filter(p => p.activo).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const h = hoja({ titulo: 'Agregar producto', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="ea-q" placeholder="Buscar producto o código…"></div><div class="list" id="ea-l"></div>`, foco: '#ea-q' });
+  const pinta = () => { const q = norm($('#ea-q', h.el).value); $('#ea-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q)).slice(0, 80).map(p => `<div class="li ch" data-p="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${money(p.precio)}${p.tipo === 'producto' ? ' · hay ' + cant(p.stock) : ''}</small></div></div>`).join('') || '<div class="empty sm">No hay productos con ese nombre</div>'; };
+  $('#ea-q', h.el).addEventListener('input', pinta); pinta();
+  $('#ea-l', h.el).addEventListener('click', e => { const x = e.target.closest('[data-p]'); if (!x) return; h.cerrar(); cb(byId(S.productos, x.dataset.p)); });
 }
 
 /* ===================== PEDIDOS EN LÍNEA ===================== */
@@ -4255,7 +4360,7 @@ function listaVentas() {
   const tot = rec ? S.ventasR.resumen.total : act.reduce((a, v) => a + v.total, 0), n = rec ? S.ventasR.resumen.n : act.length;
   const pm = {}; if (!rec) act.forEach(v => { pm[v.metodo] = (pm[v.metodo] || 0) + v.total; });
   $('#vh-b').innerHTML = `${rec ? `<p class="xs mut" style="margin:0 2px 10px">Se muestran las ${l.length} ventas más recientes; los totales son de todo el período.</p>` : ''}<div class="kpis"><div class="kpi"><small>Vendido</small><b class="n">${money(tot)}</b><i>${n} ventas</i></div><div class="kpi" style="--k:#00b56e"><small>Ticket promedio</small><b class="n">${money(n ? tot / n : 0)}</b></div>${Object.keys(pm).map(m => `<div class="kpi" style="--k:${{ Efectivo: '#00b56e', Tarjeta: '#1b4fd8', Transferencia: '#00a8b5', 'Crédito': '#f25c05' }[m] || 'var(--pri)'}"><small>${esc(m)}</small><b class="n">${money(pm[m])}</b></div>`).join('')}</div>
-    <div class="list">${l.map(v => `<div class="li ${v.anulada ? 'anul' : ''}" data-a="verVentaL" data-id="${v.id}"><div class="av ${colorDe(nomCliente(v.clienteId))}">${esc(iniciales(nomCliente(v.clienteId)))}</div><div class="tx"><b>${esc(v.factura ? 'Fact. ' + v.factura.slice(-8) : v.numero)} · ${esc(nomCliente(v.clienteId))}</b><small>${esc(fFecha(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)} · ${v.detalle.length === 1 ? esc(v.detalle[0].descripcion) : v.detalle.length + ' artículos'}${v.anulada ? ' · anulada' : ''}</small></div><div class="am n">${money(v.total)}${v.saldo > 0 ? `<small class="neg">debe ${money(v.saldo)}</small>` : ''}</div></div>`).join('') || '<div class="empty">No hay ventas en este periodo</div>'}</div>`;
+    <div class="list">${l.map(v => `<div class="li ${v.anulada ? 'anul' : ''}" data-a="verVentaL" data-id="${v.id}"><div class="av ${colorDe(nomCliente(v.clienteId))}">${esc(iniciales(nomCliente(v.clienteId)))}</div><div class="tx"><b>${esc(v.factura ? 'Fact. ' + v.factura.slice(-8) : v.numero)} · ${esc(nomCliente(v.clienteId))}</b><small>${esc(fFecha(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)} · ${v.detalle.length === 1 ? esc(v.detalle[0].descripcion) : v.detalle.length + ' artículos'}${v.corrige ? ' · <span class="ed-tag">editada</span>' : ''}${v.anulada ? ' · anulada' : ''}</small></div><div class="am n">${money(v.total)}${v.saldo > 0 ? `<small class="neg">debe ${money(v.saldo)}</small>` : ''}</div></div>`).join('') || '<div class="empty">No hay ventas en este periodo</div>'}</div>`;
 }
 ACC.vper = el => { S.f.vper = el.dataset.k; R.ventas(); };
 ACC.verVentaL = el => { const v = (S.ventasL || []).find(x => x.id === el.dataset.id); if (v) detalleVenta(v); };
@@ -6111,6 +6216,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.10', fecha: '2026-10-27', items: [
+    { i: 'edit', t: 'Editar una venta', d: 'Abre una venta en Ventas y toca «Editar»: cambia cantidades, precios, productos, el cliente, la forma de pago o el descuento. Conserva su número y su fecha, el inventario se ajusta solo y te dice cuánto devolver o cobrar en efectivo. Queda guardado cómo era antes y por qué cambió.', ir: 'ventas' }
+  ] },
   { v: '1.9.9', fecha: '2026-10-27', items: [
     { i: 'chart', t: 'Reportes por sección', d: 'Si tu tienda tiene varias secciones, en Reportes eliges «Ver: Todo el negocio» o una sección y el Resumen, el Inventario y las Cuentas muestran solo esa parte. La pestaña «Por sección» las compara: cuánto vende y cuánto gana cada una. Al registrar un gasto puedes decir de qué sección es; lo general se reparte según lo que vende cada sección.', ir: 'reportes', si: () => repMulti() }
   ] },
@@ -6255,7 +6363,7 @@ const AYUDA = {
   caja: { d: 'Cuánto efectivo debería haber y el cierre del día.',
     p: ['Arriba ves el <b>efectivo esperado</b>: fondo + ventas y cobros en efectivo − gastos, compras y pagos en efectivo.', 'En <b>Ventas de hoy</b> está cada venta con su cliente, artículos, monto y si fue pedido en línea; o el resumen <b>por artículo</b>.', 'Al final del día toca <b>Hacer cierre de caja</b>, cuenta billetes y monedas y guarda: te dice si cuadró, sobró o faltó.'],
     t: ['Comparte el resumen del día por WhatsApp con «Compartir».', 'Toca una venta para ver su comprobante.'] },
-  ventas: { d: 'Todas tus ventas por fecha.', p: ['Elige las fechas.', 'Toca una venta para ver el detalle, reenviar el comprobante o anularla (administrador).'], t: [] },
+  ventas: { d: 'Todas tus ventas por fecha.', p: ['Elige las fechas.', 'Toca una venta para ver el detalle, reenviar el comprobante, editarla o anularla (administrador).', '<b>Editar</b>: cambia cantidades, precios, productos, cliente, forma de pago o descuento. Antes de guardar te dice cuánto devolver o cobrar en efectivo y qué vuelve al inventario.'], t: ['La venta editada conserva su número y su fecha; en el detalle puedes ver cómo era antes.'] },
   reportes: { d: 'Cuánto vendes y cuánto ganas de verdad.',
     p: ['<b>Resumen</b>: ventas, costo, ganancia bruta y neta, gastos y la gráfica por día del período que elijas.', '<b>Por sección</b> (si tu tienda tiene varias): compara cuánto vende y gana cada sección; con «Ver» arriba, el Resumen, el Inventario y las Cuentas muestran solo una sección.', '<b>Diario</b>: el mes día por día.', '<b>Ganancias</b>: lo que ganaste cada mes y a dónde va (ahorro, reinversión, pagos).', '<b>Inventario</b> y <b>Cuentas</b>: valor de tus existencias, lo que te deben y lo que debes.', '<b>Libro SAR</b> (si facturas con el SAR): cada factura del mes con su exento, gravado e ISV, para tu declaración.'],
     t: ['El botón de arriba descarga el reporte en CSV para abrirlo en Excel.'] },

@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.9 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.10 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.9';
+const VERSION = '1.9.10';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -64,7 +64,7 @@ const SCHEMA = {
   Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
   Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado'],
@@ -238,6 +238,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'venta':           return lock_(() => venta_(u, d));
     case 'ventas':          return ventas_(u, d);
     case 'anularVenta':     return lock_(() => anularVenta_(u, d));
+    case 'editarVenta':     return lock_(() => editarVenta_(u, d));
     case 'abono':           return lock_(() => abono_(u, d));
     case 'anularAbono':     return lock_(() => anularAbono_(u, d));
     case 'cuentaCliente':   return cuentaCliente_(u, d);
@@ -1947,7 +1948,9 @@ function venta_(u, d) {
   const cfg = config_();
   const incl = cfg.preciosConISV !== 'no';
   // Si la misma venta llega dos veces (se cortó la conexión y se volvió a tocar Cobrar), se devuelve la primera
-  const clave = txt_(d.clave, 60), kc = clave ? 'VK_' + (NEG ? NEG.id : '') + '_' + clave : '';
+  // ed: datos de la venta que se está corrigiendo (editarVenta_). Lo devuelto por la original cuenta como existencia.
+  const ed = d._ed || null, dev = ed ? ed.devuelto : {};
+  const clave = ed ? '' : txt_(d.clave, 60), kc = clave ? 'VK_' + (NEG ? NEG.id : '') + '_' + clave : '';
   if (kc) {
     let vid = null; try { vid = CacheService.getScriptCache().get(kc); } catch (e) {}
     const ya = vid ? rows_('Ventas').find(x => x.id === vid) : null;
@@ -1961,7 +1964,7 @@ function venta_(u, d) {
   if (d.pedidoId) {
     const pe = rows_('Pedidos').find(x => x.id === d.pedidoId);
     if (!pe) throw new Error('El pedido en línea ya no existe');
-    if (pe.ventaId || pe.estado === 'entregado') throw new Error('Este pedido ya se cobró');
+    if ((pe.ventaId || pe.estado === 'entregado') && !(ed && (!pe.ventaId || pe.ventaId === ed.de))) throw new Error('Este pedido ya se cobró');
     if (pe.estado === 'cancelado') throw new Error('Este pedido está cancelado');
     parseJ_(pe.items, []).forEach(x => { if (x && x.productoId) preciosPedido[x.productoId] = r2_(x.precio); });
   }
@@ -1995,7 +1998,7 @@ function venta_(u, d) {
   const pedido = {};
   items.forEach(i => { if (i.p && i.p.tipo === 'producto') pedido[i.productoId] = r3_((pedido[i.productoId] || 0) + i.cantidad); });
   if (cfg.venderSinStock !== 'si') {
-    Object.keys(pedido).forEach(id => { const p = pm[id]; if (p.stock < pedido[id]) throw new Error('No hay suficiente «' + p.nombre + '» (quedan ' + p.stock + ')'); });
+    Object.keys(pedido).forEach(id => { const p = pm[id], hay = r3_(p.stock + (ed && !ed.listo ? dev[id] || 0 : 0)); if (hay < pedido[id]) throw new Error('No hay suficiente «' + p.nombre + '» (quedan ' + hay + ')'); });
   }
   const metodo = METODOS.indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
   // Facturación SAR (solo si el negocio la activó en Ajustes)
@@ -2037,8 +2040,9 @@ function venta_(u, d) {
     recibido = r2_(Math.min(Math.max(0, Number(d.recibido) || 0), porPagar));
     saldo = r2_(porPagar - recibido);
     const cli = rows_('Clientes').find(c => c.id === clienteId);
-    const debe = saldosClientes_()[clienteId] || 0;
-    if (cli.limite > 0 && debe + saldo > cli.limite + 0.004) throw new Error('Supera el límite de crédito de ' + cli.nombre + ' (' + money_(cli.limite, cfg) + '). Ya debe ' + money_(debe, cfg) + '.');
+    // Al corregir una venta, su saldo anterior deja de contar y los abonos que ya tenía se descuentan
+    const debe = (saldosClientes_()[clienteId] || 0) - (ed && !ed.listo && ed.cliente === clienteId ? ed.saldoAnt : 0), nuevoSaldo = saldo - (ed ? ed.pagado : 0);
+    if (!(ed && ed.listo) && cli.limite > 0 && nuevoSaldo > 0.004 && debe + nuevoSaldo > cli.limite + 0.004) throw new Error('Supera el límite de crédito de ' + cli.nombre + ' (' + money_(cli.limite, cfg) + '). Ya debe ' + money_(debe, cfg) + '.');
   } else if (metodo === 'Efectivo') {
     recibido = d.recibido === undefined || d.recibido === '' || d.recibido === null ? porPagar : r2_(d.recibido);
     if (recibido + 0.004 < porPagar) throw new Error('El efectivo recibido es menor que lo que falta por pagar');
@@ -2046,6 +2050,8 @@ function venta_(u, d) {
   } else {
     recibido = porPagar;
   }
+  // Solo validar (editarVenta_ revisa todo antes de tocar la venta original)
+  if (d.soloValidar) return { total: total, saldo: saldo, recibido: recibido, metodo: metodo, clienteId: clienteId };
   // Número de factura: se toma al final, cuando ya pasaron todas las validaciones (no deja huecos)
   let factura = '', fiscal = '';
   if (sar) {
@@ -2061,7 +2067,8 @@ function venta_(u, d) {
   }
   const fecha = ahora_();
   const venta = {
-    id: newId_('Ventas'), numero: siguiente_('V'), fecha: fecha, clienteId: clienteId, usuarioId: u.id,
+    // Una venta corregida conserva su número interno, su fecha y quién la vendió (la factura SAR sí es nueva)
+    id: newId_('Ventas'), numero: ed ? ed.numero : siguiente_('V'), fecha: ed ? ed.fecha : fecha, clienteId: clienteId, usuarioId: ed ? ed.usuarioId : u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
     recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200),
     factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo
@@ -2078,12 +2085,12 @@ function venta_(u, d) {
   appendRows_('VentaDetalle', detalle);
   const cambios = {};
   Object.keys(pedido).forEach(id => { cambios[id] = -pedido[id]; });
-  moverStock_(cambios, 'venta', venta.id, u, venta.numero, fecha);
+  moverStock_(cambios, 'venta', venta.id, u, ed ? 'Edición ' + venta.numero : venta.numero, fecha);
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   const nuevasSus = susRegistrar_(u, d, venta, items, pm);
   cerrarLigados_(d, venta);
   if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} }
-  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, usoLic_(1)); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG && !ed) { try { mSet_('Licencias', NEG.lic, usoLic_(1)); } catch (e) {} }
   return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
 }
 
@@ -2102,6 +2109,9 @@ function ventas_(u, d) {
   const ids = {};
   v.forEach(x => { x.detalle = []; ids[x.id] = x; });
   rows_('VentaDetalle').forEach(det => { if (ids[det.ventaId]) ids[det.ventaId].detalle.push(det); });
+  // Ventas editadas: la versión anterior va dentro de la corregida y no se lista aparte
+  v.forEach(x => { if (x.corrige && ids[x.corrige]) x.anterior = Object.assign({}, ids[x.corrige], { anterior: undefined }); });
+  v = v.filter(x => !x.corregida);
   const act = v.filter(x => !x.anulada);
   const lista = desc_(v, 'fecha');
   return { lista: lista.slice(0, 500), n: v.length, recortada: lista.length > 500,
@@ -2123,6 +2133,61 @@ function anularVenta_(u, d) {
   if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
   try { rows_('Suscripciones').filter(x => x.ventaId === d.id && x.estado === 'activa').forEach(x => upsert_('Suscripciones', { id: x.id, estado: 'cancelada', nota: 'Venta anulada' })); } catch (e) {}
   return { productos: rows_('Productos') };
+}
+
+/* ===================== EDITAR UNA VENTA =====================
+ * Corrige cantidades, precios, productos, cliente, forma de pago o descuento de una venta ya hecha.
+ * Por dentro: la original queda anulada (con su motivo) y se registra la versión corregida con el MISMO número,
+ * la misma fecha y el mismo vendedor. Así todo cuadra solo:
+ *  - Inventario: vuelve lo de la original y sale lo de la corregida (solo se mueve la diferencia).
+ *  - Caja: la diferencia en efectivo entra o sale de la caja abierta, aunque la venta sea de un día ya cerrado.
+ *  - Crédito: los abonos que ya tenía pasan a la versión corregida.
+ *  - Facturación SAR: la factura anterior queda anulada y la corregida lleva el número que sigue (así lo pide el SAR).
+ * Todo se valida ANTES de tocar la original, para que nunca quede una venta anulada sin su reemplazo. */
+function editarVenta_(u, d) {
+  req_(u, ['admin']);
+  const v = rows_('Ventas').find(x => x.id === d.id);
+  if (!v) throw new Error('La venta no existe');
+  if (v.corregida) throw new Error('Esta venta ya se editó. Abre la versión corregida para cambiarla otra vez.');
+  if (v.anulada) throw new Error('No se puede editar una venta anulada');
+  if (Number(v.anticipo) > 0) throw new Error('Esta venta viene de una orden o cita con anticipo. Para cambiarla, anúlala y vuelve a cobrarla desde ahí.');
+  const motivo = txt_(d.motivo, 120);
+  if (!motivo) throw new Error('Escribe por qué cambias la venta');
+  const det = rows_('VentaDetalle').filter(x => x.ventaId === v.id);
+  // Abonos que el cliente ya hizo a esta venta: pasan a la corregida
+  const abonos = rows_('Abonos').filter(a => !a.anulado && parseJ_(a.aplicado, []).some(x => x.id === v.id));
+  const pagado = r2_(abonos.reduce((t, a) => t + parseJ_(a.aplicado, []).filter(x => x.id === v.id).reduce((s, x) => s + Number(x.monto || 0), 0), 0));
+  const cfg = config_();
+  if (pagado > 0 && d.clienteId !== v.clienteId) throw new Error('Esta venta ya tiene abonos del cliente (' + money_(pagado, cfg) + '): no se puede cambiar de cliente.');
+  if (pagado > 0 && d.metodo !== 'Crédito') throw new Error('Esta venta ya tiene abonos (' + money_(pagado, cfg) + '): debe seguir al crédito.');
+  const devuelto = {};
+  det.forEach(i => { if (i.productoId) devuelto[i.productoId] = r3_((devuelto[i.productoId] || 0) + i.cantidad); });
+  const ed = { de: v.id, devuelto: devuelto, saldoAnt: v.saldo, pagado: pagado, cliente: v.clienteId, fecha: v.fecha, numero: v.numero, usuarioId: v.usuarioId, listo: false };
+  // Datos fiscales de la factura anterior (si el cliente no cambió, se conservan)
+  const fzA = parseJ_(v.fiscal, null), fd = d.fiscal || (fzA && d.clienteId === v.clienteId ? { rtn: fzA.rtn, nombre: fzA.nombre, exonerado: !!(fzA.oce || fzA.cre || fzA.sag), oce: fzA.oce, cre: fzA.cre, sag: fzA.sag } : undefined);
+  const nd = { items: d.items, clienteId: d.clienteId, metodo: d.metodo, descuento: d.descuento, recibido: d.recibido, nota: d.nota === undefined ? v.nota : d.nota, pedidoId: v.pedidoId,
+    fiscal: fd, servicio: v.servicio, mesa: v.mesa, cocina: v.cocina, _ed: ed };
+  // 1) Validar todo (existencias, límite de crédito, abonos) sin escribir nada
+  const pre = venta_(u, Object.assign({ soloValidar: true }, nd));
+  if (pre.saldo - pagado < -0.004) throw new Error('El nuevo total es menor que lo que el cliente ya abonó (' + money_(pagado, cfg) + '). Anula primero ese abono o deja un total mayor.');
+  // 2) La original queda anulada: vuelve su inventario
+  const subs = (() => { try { return rows_('Suscripciones').filter(x => x.ventaId === v.id); } catch (e) { return []; } })();
+  moverStock_(devuelto, 'anulación', v.id, u, 'Edición ' + v.numero + ' (antes)');
+  upsert_('Ventas', { id: v.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (v.nota ? v.nota + ' · ' : '') + 'Editada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') + ': ' + motivo });
+  if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
+  // 3) La versión corregida
+  ed.listo = true;
+  const r = venta_(u, nd);
+  const nv = r.venta;
+  upsert_('Ventas', { id: v.id, corregida: nv.id });
+  abonos.forEach(a => { upsert_('Abonos', { id: a.id, aplicado: JSON.stringify(parseJ_(a.aplicado, []).map(x => x.id === v.id ? Object.assign({}, x, { id: nv.id, numero: nv.numero }) : x)) }); });
+  const edicion = { antes: { total: v.total, metodo: v.metodo, cliente: v.clienteId, factura: v.factura, items: det.map(i => ({ d: i.descripcion, c: i.cantidad, p: i.precio })) }, motivo: motivo, por: u.nombre, fecha: ahora_(), veces: (parseJ_(v.edicion, {}).veces || 0) + 1 };
+  upsert_('Ventas', { id: nv.id, saldo: r2_(Math.max(0, nv.saldo - pagado)), corrige: v.id, edicion: JSON.stringify(edicion) });
+  // Suscripciones (streaming): siguen con la venta si su producto sigue en ella; si se quitó, se cancelan
+  const sigue = new Set(r.detalle.map(x => x.productoId).filter(Boolean));
+  subs.forEach(x => { if (x.estado === 'cancelada' || x.estado === 'renovada') return; if (sigue.has(x.productoId)) upsert_('Suscripciones', { id: x.id, ventaId: nv.id }); else upsert_('Suscripciones', { id: x.id, estado: 'cancelada', nota: 'Se quitó al editar la venta ' + v.numero }); });
+  const vf = rows_('Ventas').find(x => x.id === nv.id);
+  return { venta: vf, detalle: r.detalle, anterior: v.id, productos: rows_('Productos'), saldoCliente: vf.clienteId ? (saldosClientes_()[vf.clienteId] || 0) : 0, sar: r.sar };
 }
 
 /* ===================== CUENTAS POR COBRAR (abonos) ===================== */
@@ -2165,7 +2230,7 @@ function cuentaCliente_(u, d) {
   req_(u, ['admin','cajero']);
   const cli = rows_('Clientes').find(c => c.id === d.id);
   if (!cli) throw new Error('El cliente no existe');
-  const ventas = desc_(rows_('Ventas').filter(v => v.clienteId === cli.id), 'fecha');
+  const ventas = desc_(rows_('Ventas').filter(v => v.clienteId === cli.id && !v.corregida), 'fecha'); // de una venta editada solo se ve la versión corregida
   const ids = {};
   ventas.forEach(v => { v.detalle = []; ids[v.id] = v; });
   rows_('VentaDetalle').forEach(x => { if (ids[x.ventaId]) ids[x.ventaId].detalle.push(x); });
@@ -2818,7 +2883,7 @@ function diario_(u, d) {
   const ventas = rows_('Ventas').filter(v => v.fecha.slice(0, 7) === mes);
   ventas.forEach(v => { det[v.id] = []; });
   rows_('VentaDetalle').forEach(x => { if (det[x.ventaId]) det[x.ventaId].push(x.descripcion + (x.cantidad !== 1 ? ' ×' + x.cantidad : '')); });
-  const mov = ventas.map(v => ({ id: v.id, fecha: v.fecha, tipo: 'venta', numero: v.numero, concepto: det[v.id].join(', ') || 'Venta', categoria: 'Venta',
+  const mov = ventas.map(v => ({ id: v.id, fecha: v.fecha, tipo: 'venta', numero: v.numero, concepto: (det[v.id].join(', ') || 'Venta') + (v.corregida ? ' (antes de editarla)' : v.corrige ? ' (editada)' : ''), categoria: 'Venta',
     tercero: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final', metodo: v.metodo, usuario: us[v.usuarioId] ? us[v.usuarioId].nombre : '',
     monto: v.total, cobrado: v.metodo === 'Crédito' ? v.recibido : v.total, anulado: v.anulada }));
   rows_('Abonos').filter(a => a.fecha.slice(0, 7) === mes).forEach(a => mov.push({ id: a.id, fecha: a.fecha, tipo: 'cobro', numero: '', concepto: 'Abono a cuenta', categoria: 'Cobro',
