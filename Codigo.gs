@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.11 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.12 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.11';
+const VERSION = '1.9.12';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -35,19 +35,22 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
   SoporteMsg:  ['id','chatId','de','texto','foto','quien','fecha'],
   Seguimiento: ['id','negocioId','tipo','fecha','nota'],
   PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota'],
+  // Pagos programados por Vic para cada cliente (cuotas del programa, Plus, giros extra…)
+  CuotasLic:   ['id','negocioId','fecha','monto','concepto','gracia','estado','pagoId','pagadaEl','nota','creado'],
   // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
   GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado'],
   // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
   Visitas:     ['id','fecha','pagina','origen','disp','vid','ref']
 };
 const PANEL_SEG = 21600;
+const GRACIA_DEF = 5; // días después de la fecha de pago antes de pausar el programa
 // Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
 const MOTIVOS = { error: 'Error del programa', duda: 'No sé cómo hacer algo', prueba: 'Prueba y activación', idea: 'Sugerencia', app: 'App Android / instalación', otro: 'Otro' };
 let NEG = null; // negocio de la solicitud actual (modo multi)
@@ -717,6 +720,7 @@ function bootstrap_(u, d) {
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u, d);
+  if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && cb.vencidas.length) r.cobroVM = cb; }
   return r;
 }
 
@@ -900,6 +904,9 @@ function bloquearSiVence_() {
   if (lic.estado === 'vencida' || lic.estado === 'bloqueada') {
     throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: NEG ? NEG.lic.negocio : '', tipo: lic.estado }));
   }
+  // Pago programado vencido y sin registrar después de los días de gracia: el programa se pausa hasta que Vic lo marque
+  const cb = MULTI_NEGOCIO && NEG && NEG.lic ? cobroDe_(NEG.lic) : null;
+  if (cb && cb.pausado) throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: NEG.lic.negocio, tipo: 'pago', total: cb.total, conceptos: cb.vencidas.map(c => c.c), desde: cb.desde }));
 }
 
 function loginMulti_(d) {
@@ -1293,6 +1300,7 @@ function rutaPanel_(a, d) {
     case 'panelLimpiarDuplicados': return panelLimpiarDuplicados_();
     case 'panelContacto':          return panelContacto_(d);
     case 'panelPago':              return panelPago_(d);
+    case 'panelCuotas':            return panelCuotas_(d);
     case 'panelNota':              return panelNota_(d);
     case 'panelPlantillas':        return plantillas_();
     case 'panelPlantillasGuardar': return plantillasGuardar_(d);
@@ -1336,7 +1344,7 @@ function panelFicha_(l, segs) {
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
     usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, contab: ['sí', 'si'].indexOf(String(l.contab).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
     ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '',
-    giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '' };
+    giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l) };
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
   else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
@@ -1403,6 +1411,7 @@ function panelNegocio_(d) {
   f.campanas = camps.map(x => ({ id: x.id, nombre: x.plataforma + ' · «' + x.nombre + '»', desde: x.desde, hasta: x.hasta }));
   f.seguimiento = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.pagos = mRows_('PagosLic').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+  f.cuotas = cuotasDe_(l.id).map(c => ({ id: c.id, fecha: String(c.fecha).slice(0, 10), monto: Number(c.monto) || 0, concepto: c.concepto, gracia: esNum_(c.gracia) ? Number(c.gracia) : GRACIA_DEF, estado: c.estado, pagadaEl: c.pagadaEl, nota: c.nota }));
   f.soporte = mRows_('Soporte').filter(x => x.negocioId === l.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm'));
   // Negocios de la misma persona y giros que se pueden activar
   f.grupo = grupoDe_(l).map(x => { const e = licNegocio_(x).estado; return { id: x.id, negocio: x.negocio, giro: x.giro, estado: e === 'completa' ? 'activa' : e, principal: x.id === (l.persona || l.id) || (!x.persona && !l.persona && x.id === l.id), yo: x.id === l.id }; });
@@ -1543,6 +1552,58 @@ function panelPago_(d) {
   const l = licDe_(d.id), monto = r2_(Number(d.monto) || 0);
   if (!(monto > 0)) throw new Error('Escribe el monto');
   mAppend_('PagosLic', { id: mId_('G'), negocioId: l.id, fecha: ahora_().replace('T', ' '), monto: monto, concepto: txt_(d.concepto, 60) || 'Pago', metodo: txt_(d.metodo, 20) || 'Efectivo', nota: txt_(d.nota, 120) });
+  return panelNegocio_({ id: l.id });
+}
+/* ===================== PAGOS PROGRAMADOS (Panel Molina) =====================
+ * En la ficha del cliente, Vic programa las fechas y montos que debe pagarle (cuotas del programa, Plus, giros extra…).
+ * Desde la fecha de pago, la app del cliente le muestra un recordatorio cada vez que la abre. Si pasan los días de
+ * gracia sin que Vic marque el pago, el programa se pausa (como cuando vence la prueba) hasta que lo marque como pagado.
+ * La columna «cobro» de Licencias guarda las cuotas pendientes de cada negocio, para revisarlas sin leer otra hoja. */
+function cuotasDe_(id) { return mRows_('CuotasLic').filter(c => c.negocioId === id && c.estado !== 'anulada').sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0); }
+function cobroResumen_(id) {
+  const l = licDe_(id), pend = cuotasDe_(id).filter(c => c.estado === 'pendiente')
+    .map(c => ({ id: c.id, f: String(c.fecha).slice(0, 10), m: Number(c.monto) || 0, c: c.concepto, g: esNum_(c.gracia) ? Number(c.gracia) : GRACIA_DEF }));
+  mSet_('Licencias', l, { cobro: pend.length ? JSON.stringify(pend) : '' });
+  try { CacheService.getScriptCache().remove('L_' + l.id); } catch (e) {}
+}
+// Lo que el cliente debe a hoy: cuotas vencidas, total, días de atraso y desde cuándo se pausa
+function cobroDe_(l) {
+  const pend = parseJ_(l && l.cobro, []), h = hoy_();
+  if (!Array.isArray(pend) || !pend.length) return null;
+  const venc = pend.filter(c => c.f <= h), prox = pend.find(c => c.f > h) || null;
+  if (!venc.length) return { vencidas: [], proxima: prox };
+  const pausaEl = venc.map(c => addDiasIso_(c.f, (Number(c.g) || 0) + 1)).sort()[0];
+  return { vencidas: venc, total: r2_(venc.reduce((a, c) => a + c.m, 0)), desde: venc[0].f, atraso: Math.round((new Date(h + 'T12:00:00') - new Date(venc[0].f + 'T12:00:00')) / 86400000),
+    pausaEl: pausaEl, pausado: h >= pausaEl, proxima: prox };
+}
+function panelCuotas_(d) {
+  const l = licDe_(d.id), acc = d.accion;
+  if (acc === 'programar') {
+    const monto = r2_(Number(d.monto) || 0); if (!(monto > 0)) throw new Error('Escribe el monto');
+    const f0 = String(d.fecha || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(f0)) throw new Error('Elige la fecha del primer pago');
+    const veces = Math.max(1, Math.min(24, parseInt(d.veces, 10) || 1)), g = parseInt(d.gracia, 10), gracia = Math.max(0, Math.min(60, isNaN(g) ? GRACIA_DEF : g));
+    const concepto = txt_(d.concepto, 60) || 'Pago';
+    for (let i = 0; i < veces; i++) mAppend_('CuotasLic', { id: mId_('Q') + i, negocioId: l.id, fecha: i ? mesesSumar_(f0, i) : f0, monto: monto, concepto: veces > 1 ? concepto + ' ' + (i + 1) + '/' + veces : concepto,
+      gracia: gracia, estado: 'pendiente', pagoId: '', pagadaEl: '', nota: txt_(d.nota, 120), creado: ahora_().replace('T', ' ') });
+    mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Pagos programados: ' + (veces > 1 ? veces + ' × ' : '') + money_(monto, { moneda: 'L' }) + ' · ' + concepto + ' desde ' + f0 });
+  } else {
+    const c = mRows_('CuotasLic').find(x => x.id === d.cuotaId && x.negocioId === l.id);
+    if (!c || c.estado === 'anulada') throw new Error('Ese pago programado ya no existe');
+    if (acc === 'pagar') {
+      if (c.estado === 'pagada') throw new Error('Ese pago ya está marcado como recibido');
+      const monto = r2_(Number(d.monto) || Number(c.monto) || 0), pid = mId_('G');
+      mAppend_('PagosLic', { id: pid, negocioId: l.id, fecha: ahora_().replace('T', ' '), monto: monto, concepto: c.concepto, metodo: txt_(d.metodo, 20) || 'Transferencia', nota: txt_(d.nota, 120) });
+      mSet_('CuotasLic', c, { estado: 'pagada', pagoId: pid, pagadaEl: ahora_().replace('T', ' ') });
+    } else if (acc === 'quitar') {
+      if (c.estado === 'pagada') throw new Error('Ese pago ya se recibió; para quitarlo, borra el pago anotado');
+      mSet_('CuotasLic', c, { estado: 'anulada' });
+    } else if (acc === 'mover') {
+      const f = String(d.fecha || ''); if (!/^\d{4}-\d{2}-\d{2}$/.test(f)) throw new Error('Elige la nueva fecha');
+      mSet_('CuotasLic', c, { fecha: f });
+      mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Prórroga: ' + c.concepto + ' pasa del ' + String(c.fecha).slice(0, 10) + ' al ' + f });
+    } else throw new Error('Acción no válida');
+  }
+  cobroResumen_(l.id);
   return panelNegocio_({ id: l.id });
 }
 function panelNota_(d) { const l = licDe_(d.id); mSet_('Licencias', l, { notas: txt_(d.notas, 500) }); return panelNegocio_({ id: l.id }); }

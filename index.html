@@ -526,6 +526,13 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .tr.tot{border-bottom:0;border-top:2px solid var(--line)}
 .gf-sec .chip .sd{margin-right:1px}
 .chip.on .sd{box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+/* Pagos programados */
+.cobro-h{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center;padding:14px;border-radius:18px;background:var(--pri2);margin-bottom:12px}
+.cobro-h small{color:var(--mut);font-size:13px}.cobro-h b{font-size:30px;font-weight:700}
+.cobro-ic{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:var(--card);color:var(--warn);margin-bottom:4px;box-shadow:var(--sh)}
+.banner.cobro-b{background:var(--card);background:color-mix(in srgb,var(--warn) 14%,var(--card));border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}.banner.cobro-b svg{color:var(--warn)}
+.li.cu{flex-wrap:wrap}.li.cu .cu-e{display:inline-block;margin-top:4px;font-size:10.5px;white-space:normal}.li.cu .cu-bt{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;padding-left:56px;margin-top:2px}.li.cu.pagada{opacity:.75}
+.cq-prev .cq-f{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}.cq-prev .cq-f.tot{border-bottom:0;font-weight:600}
 /* Modo tienda */
 .t-pill{margin:10px auto 0;display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.16);color:inherit;border-radius:99px;padding:6px 14px;font:600 13.5px var(--font);cursor:pointer;position:relative;z-index:1}
 .t-pill .sd{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
@@ -1256,7 +1263,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.11';
+const APP_VER = '1.9.12';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -1386,7 +1393,7 @@ function toast(msg, tipo, ms) {
   $('#toasts').appendChild(t); requestAnimationFrame(() => t.classList.add('in'));
   setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 300); }, ms || 3600);
 }
-function err(e) { console.error(e); toast(e && e.message ? e.message : String(e), 'error', 5000); }
+function err(e) { console.error(e); if (S.vencidaVista) return; toast(e && e.message ? e.message : String(e), 'error', 5000); }
 function apiUrl() { return LS.get('api', '') || API_URL_DEFAULT; }
 
 /* ===================== SERVIDOR ===================== */
@@ -1409,8 +1416,8 @@ async function api(action, data, silent) {
 }
 function manejarError(m) {
   m = String(m || 'Error');
-  if (m.indexOf('PRUEBA_VENCIDA|') === 0) { let info = {}; try { info = JSON.parse(m.slice(15)); } catch (e) {} if (!S.enTienda) mostrarVencida(info); throw new Error('Tu período de prueba terminó'); }
-  if (m === 'SESION') { if (!S.enTienda) salir(true); throw new Error('Tu sesión expiró. Ingresa de nuevo.'); }
+  if (m.indexOf('PRUEBA_VENCIDA|') === 0) { let info = {}; try { info = JSON.parse(m.slice(15)); } catch (e) {} if (!S.enTienda) mostrarVencida(info); throw new Error(info.tipo === 'pago' ? 'El programa está en pausa por un pago pendiente' : info.tipo === 'bloqueada' ? 'El acceso está pausado' : 'Tu período de prueba terminó'); }
+  if (m === 'SESION') { if (!S.enTienda && !S.vencidaVista) salir(true); throw new Error('Tu sesión expiró. Ingresa de nuevo.'); } // con la pantalla de pausa a la vista, no se cambia por la de ingreso
   if (m === 'PANEL') { if (S.enPanel) { cerrarHojas(); panelLogin(); } throw new Error('Tu sesión del panel expiró. Entra de nuevo.'); }
   if (m.indexOf('Acción no válida') === 0) throw new Error('Esta función necesita la versión nueva del servidor. Escríbenos por WhatsApp al +504 3313-0265 para activarla.');
   throw new Error(m);
@@ -1682,6 +1689,29 @@ function pintarBanner() {
   }
   $('#banner').innerHTML = h;
 }
+// En Inicio, debajo de las ventas de hoy: el pago pendiente con Vic
+function bannerCobro() {
+  const c = S.cobroVM;
+  if (!(c && c.vencidas && c.vencidas.length && puede('admin'))) return '';
+  return `<div class="banner cobro-b">${ic('coin', 18)}<span>Pago pendiente <b>${money(c.total)}</b> · ${c.atraso === 0 ? 'vence hoy' : 'atrasado ' + c.atraso + (c.atraso === 1 ? ' día' : ' días')} · se pausa el ${esc(fFechaC(c.pausaEl).replace(/ (de )?\d{4}$/, ''))}</span><button class="btn sm acc" data-a="verCobro">Ver</button></div>`;
+}
+/* ---------- Recordatorio de pago (pagos programados desde el Panel Molina) ----------
+ * Desde la fecha de pago, al abrir la app el administrador del negocio ve cuánto debe y hasta cuándo puede pagar.
+ * Si pasan los días de gracia sin que se registre el pago, el servidor pausa el programa (pantalla «Programa en pausa»). */
+const debeAvisarCobro = () => !!(S.user && puede('admin') && S.cobroVM && S.cobroVM.vencidas && S.cobroVM.vencidas.length && !S.cobroVisto);
+ACC.verCobro = () => avisoCobro();
+function avisoCobro(luego) {
+  const c = S.cobroVM; if (!S.user || S.vencidaVista || !c || !c.vencidas || !c.vencidas.length) { if (luego && S.user) luego(); return; }
+  S.cobroVisto = true;
+  const negocio = S.config.nombre || 'mi negocio', conceptos = c.vencidas.map(x => x.c).join(', ');
+  const msj = `Hola, soy ${S.user.nombre} de ${negocio}. Ya pagué ${conceptos} (${money(c.total)}). Te envío el comprobante.`;
+  const h = hoja({ titulo: 'Recordatorio de pago', cls: 'chica', onClose: () => { if (luego) luego(); }, html: `<div class="cobro-h"><div class="cobro-ic">${ic('coin', 30)}</div><small>${c.vencidas.length === 1 ? 'Tienes un pago pendiente' : 'Tienes ' + c.vencidas.length + ' pagos pendientes'}</small><b class="n">${money(c.total)}</b></div>
+    <div class="list">${c.vencidas.map(x => { const d = Math.round((parseLocal(hoy()) - parseLocal(x.f)) / 86400000); return `<div class="li"><div class="av ${d ? 't-naranja' : 't-azul'}">${ic('cal', 18)}</div><div class="tx"><b>${esc(x.c)}</b><small>${esc(fFechaC(x.f))} · ${d === 0 ? 'vence hoy' : 'venció hace ' + d + (d === 1 ? ' día' : ' días')}</small></div><div class="am n">${money(x.m)}</div></div>`; }).join('')}</div>
+    <div class="aviso warn sm" style="margin-top:12px">${ic('alert', 18)}<div>Si el pago no se registra, el programa se pausa el <b>${esc(fFechaL(c.pausaEl))}</b>. Tus datos no se pierden.</div></div>
+    <p class="xs mut" style="margin:10px 2px 0">¿Ya pagaste? Avísanos por WhatsApp con el comprobante y lo marcamos como recibido.</p>` });
+  h.f.innerHTML = `<a class="btn wa big" href="${waLink(CONTACTO_WA, msj)}" target="_blank" rel="noopener">${ic('wa')} Ya pagué · enviar comprobante</a><button class="btn ghost" data-cerrar="1">Recordar más tarde</button>`; h.f.hidden = false;
+  h.f.querySelector('[data-cerrar]').onclick = () => h.cerrar();
+}
 ACC.ir = el => { cerrarHojas(); ir(el.dataset.v, el.dataset.p ? JSON.parse(el.dataset.p) : {}); };
 ACC.mas = () => {
   const items = Object.keys(VISTAS).filter(k => k !== 'inicio' && puedeVer(k));
@@ -1703,7 +1733,7 @@ async function arrancar() {
     S.inicio = d.inicio || null; delete d.inicio;
     aplicarDatos(d);
     try { LS.set(cacheKey(), JSON.stringify(d)); } catch (e) {}
-    if (!cache) mostrarApp(); else if (S.vista && !puedeVer(S.vista)) ir('inicio'); else render(); // si cambió el usuario o su permiso, no se queda en una pantalla que ya no le toca
+    if (!cache) mostrarApp(); else { if (S.vista && !puedeVer(S.vista)) ir('inicio'); else render(); if (debeAvisarCobro() && !PILA.length) avisoCobro(); } // si cambió el usuario o su permiso, no se queda en una pantalla que ya no le toca
   } catch (e) {
     if (!cache || !S.token) throw e;
     toast('Sin conexión: mostrando los últimos datos guardados', 'error');
@@ -1719,7 +1749,7 @@ function aplicarDatos(d) {
   if (d.negocios) S.negocios = d.negocios;
   if (d.negocioId !== undefined) S.negocioId = d.negocioId;
   if (d.multi !== undefined) { S.multi = !!d.multi; LS.set('multi', S.multi ? '1' : '0'); }
-  if (d.usuario) S.user = d.usuario;
+  if (d.usuario) { S.user = d.usuario; S.cobroVM = d.cobroVM || null; }
   if (d.version) S.version = d.version;
   if (S.user) prepararTienda();
   if (d.sar) S.sar = d.sar;
@@ -1757,7 +1787,8 @@ function mostrarApp() {
   document.body.classList.add('app');
   const h = location.hash.slice(1);
   ir(VISTAS[h] ? h : 'inicio', {}, true);
-  if (S.elegirTienda) { S.elegirTienda = false; setTimeout(() => elegirTienda(true), 300); }
+  const tiendaLuego = () => { if (S.elegirTienda) { S.elegirTienda = false; setTimeout(() => elegirTienda(true), 300); } };
+  if (debeAvisarCobro()) setTimeout(() => avisoCobro(tiendaLuego), 400); else tiendaLuego();
   vigilarPedidos();
   revisarNovedades();
   setTimeout(ofrecerApk, 2500);
@@ -1780,9 +1811,20 @@ function limpiarSesion() {
 }
 function mostrarVencida(info) {
   S.token = ''; S.user = null; LS.del(tokenKey()); LS.del(cacheKey());
+  S.vencidaVista = true; // al abrir la app, no se tapa con la pantalla de ingreso
   cerrarHojas();
   $('#app').hidden = true; document.body.classList.remove('app'); $('#login').hidden = false;
   const tel = String(info.contacto || CONTACTO_WA).replace(/\D/g, ''), nombre = info.nombre || 'tu negocio', bloq = info.tipo === 'bloqueada';
+  if (info.tipo === 'pago') { // pausa por un pago programado que no se registró a tiempo
+    const con = (info.conceptos || []).join(', ') || 'pago pendiente';
+    $('#login').innerHTML = `<div class="lg-hero"><div class="mono">${ic('lock', 30)}</div><div class="hero-name">Programa en pausa</div><div class="hero-tag">Gestión de Negocio VM</div></div>
+      <div class="lg-card"><p class="lg-p">El acceso a <b>${esc(nombre)}</b> está en pausa porque hay un pago pendiente desde el <b>${esc(fFechaC(info.desde || hoy()))}</b>.</p>
+      <div class="cobro-h" style="margin:4px 0 14px"><small>${esc(con)}</small><b class="n">${money(info.total || 0)}</b></div>
+      <p class="lg-p sm">Tu información sigue guardada y segura. En cuanto se registre el pago, vuelves a entrar como siempre.</p>
+      <a class="btn wa big" href="${waLink(tel, 'Hola, ya pagué ' + con + ' de ' + nombre + ' (' + money(info.total || 0) + '). Te envío el comprobante.')}" target="_blank" rel="noopener">${ic('wa')} Ya pagué · enviar comprobante</a>
+      <button class="btn ghost big" type="button" onclick="location.reload()">Volver a intentar</button></div>${creditoHTML()}`;
+    return;
+  }
   $('#login').innerHTML = `<div class="lg-hero"><div class="mono">${ic('lock', 30)}</div><div class="hero-name">${bloq ? 'Cuenta suspendida' : 'Tu prueba terminó'}</div><div class="hero-tag">Gestión de Negocio VM</div></div>
     <div class="lg-card"><p class="lg-p">${bloq ? `El acceso a <b>${esc(nombre)}</b> está pausado. Tu información sigue guardada y segura.` : `Gracias por probar el sistema en <b>${esc(nombre)}</b> durante ${DIAS_PRUEBA_REG} días. Tu información está guardada: al activarlo, todo sigue tal como lo dejaste.`}</p>
     <a class="btn wa big" href="${waLink(tel, (bloq ? 'Hola, quiero reactivar Gestión de Negocio VM para ' : 'Hola, quiero activar Gestión de Negocio VM para ') + nombre)}" target="_blank" rel="noopener">${ic('wa')} ${bloq ? 'Reactivar por WhatsApp' : 'Activar por WhatsApp'}</a>
@@ -2227,7 +2269,14 @@ async function panelResumen() {
 ACC.panelFiltro = el => { P.f.est = el.dataset.k; panelResumen(); };
 ACC.panelFiltroEtq = el => { P.f.etq = el.dataset.k; panelResumen(); };
 // Una sola tarjeta por cliente: datos, estado y lo pendiente (mensajes de soporte y a quién escribirle hoy)
-const pendCli = n => (n.sop ? 2 : 0) + (n.contactar === 'vence' ? 2 : n.contactar ? 1 : 0);
+const pendCli = n => (n.sop ? 2 : 0) + (n.contactar === 'vence' ? 2 : n.contactar ? 1 : 0) + (n.cobro && n.cobro.vencidas && n.cobro.vencidas.length ? 2 : 0);
+/* ---- Pagos programados: en la tarjeta del cliente, lo que debe hoy o si ya está en pausa ---- */
+const fCorta = f => fFechaC(f).replace(/ (de )?\d{4}$/, '');
+const atrasoTxt = c => c.atraso === 0 ? 'vence hoy' : 'atrasado ' + c.atraso + (c.atraso === 1 ? ' día' : ' días');
+function cobroTarjeta(n) {
+  const c = n.cobro; if (!c || !c.vencidas || !c.vencidas.length) return '';
+  return `<div class="cc-a ${c.pausado ? 'b' : 'w'}"><span style="color:${c.pausado ? 'var(--bad)' : 'var(--warn)'}">${ic(c.pausado ? 'lock' : 'coin', 20)}</span><div class="tx"><b>${c.pausado ? 'En pausa por pago pendiente' : 'Pago pendiente · ' + atrasoTxt(c)}</b><small>${money(c.total)} · ${esc(c.vencidas.map(x => x.c).join(', '))}${c.pausado ? '' : ' · se pausa el ' + esc(fCorta(c.pausaEl))}</small></div><div class="bt"><button class="btn sm pri" data-a="panelVer" data-id="${n.id}">Ver pagos</button></div></div>`;
+}
 function tarjetaCli(n) {
   const e = EST_L[n.estado] || ['', n.estado], t = n.contactar && CONTACTAR_T[n.contactar];
   const sub = n.estado === 'prueba' ? [n.diasRestantes <= 1 ? 'var(--bad)' : 'var(--warn)', `Día ${n.dia} · ${n.diasRestantes <= 1 ? 'vence mañana' : 'vence en ' + n.diasRestantes + ' días'}`]
@@ -2235,6 +2284,7 @@ function tarjetaCli(n) {
   const cls = n.sop || n.contactar === 'vence' ? 'ur' : t ? 'at' : '';
   return `<div class="cc ${cls}" data-a="panelVer" data-id="${n.id}"><div class="cc-h"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}${n.plus ? ' <span class="plus-b" style="font-size:9px;padding:2px 6px">PLUS</span>' : ''}${n.etiqueta ? ` <span class="badge ${ETQ_B[n.etiqueta] || 'b-mut'}" style="font-size:10px">${esc(n.etiqueta)}</span>` : ''}</b><small>${esc(n.giro)}${extrasTxt(n)} · ${esc(n.dueno)} · entró ${cuandoP(n.ultimaConexion)}</small></div><span class="badge ${e[0] || 'b-mut'}">${esc(e[1])}</span></div>
     <div class="cc-l"><span style="color:${n.ventas7 ? 'var(--ok, #00b56e)' : 'var(--mut)'}">${ventasTxt(n)}</span><span style="color:${sub[0]}">${sub[1]}</span>${n.version && P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? `<span style="color:var(--bad)">app ${esc(n.version)}</span>` : ''}</div>
+    ${cobroTarjeta(n)}
     ${n.sop ? `<div class="cc-a i"><span style="color:var(--info)">${ic('chat', 20)}</span><div class="tx"><b>${n.sop.sin} mensaje${n.sop.sin === 1 ? '' : 's'} sin responder</b><small>“${esc(n.sop.texto)}”</small></div><div class="bt"><button class="btn sm pri" data-a="panelSoporteVer" data-id="${n.sop.id}">${ic('chat', 15)} Responder</button></div></div>` : ''}
     ${t ? `<div class="cc-a ${n.contactar === 'vence' ? 'b' : 'w'}"><span style="color:${n.contactar === 'vence' ? 'var(--bad)' : 'var(--warn)'}">${ic('alert', 20)}</span><div class="tx"><b>${t[0]}</b><small>${t[2]}${n.sinEntrar >= 2 ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><div class="bt">${n.contactar === 'vence' || n.contactar === 'vencida' ? `<button class="btn sm" data-a="panelAccion" data-id="${n.id}" data-x="extender">+7 días</button>` : ''}<button class="btn sm" data-a="panelContactado" data-id="${n.id}" data-t="${n.contactar}">Ya le escribí</button><a class="btn wa sm" data-a="panelWA" href="${waPlantilla(n, n.contactar)}" target="_blank" rel="noopener">${ic('wa', 15)} Escribir</a></div></div>` : ''}</div>`;
 }
@@ -2441,6 +2491,67 @@ async function panelEjecutar(id, accion, extra) {
   } else if (!(await confirmar(preg, { si: 'Sí', peligro: accion === 'pausar' }))) return null;
   const f = await api('panelAccion', datos); toast('Listo', 'ok'); return f;
 }
+/* ---- Pagos programados (cuotas, mensualidades, Plus, giros extra) ---- */
+const CONCEPTOS_CUOTA = ['Cuota del programa', 'Mensualidad', 'Plan Plus', 'Giro extra', 'Tienda en línea'];
+function cuotaEstado(c) {
+  const h = hoy();
+  if (c.estado === 'pagada') return ['t-verde', 'b-ok', 'Pagada' + (c.pagadaEl ? ' el ' + fCorta(String(c.pagadaEl).slice(0, 10)) : '')];
+  const pausa = addDias(c.fecha, c.gracia + 1), dias = Math.round((parseLocal(h) - parseLocal(c.fecha)) / 86400000);
+  if (c.fecha > h) return ['t-azul', 'b-info', 'Programada'];
+  if (h >= pausa) return ['t-rojo', 'b-bad', 'En pausa desde el ' + fCorta(pausa)];
+  return ['t-naranja', 'b-warn', (dias === 0 ? 'Vence hoy' : 'Atrasada ' + dias + (dias === 1 ? ' día' : ' días')) + ' · se pausa el ' + fCorta(pausa)];
+}
+function panelSecCuotas(n) {
+  const l = n.cuotas || [], pend = l.filter(c => c.estado === 'pendiente'), tot = pend.reduce((a, c) => a + c.monto, 0);
+  return `<div class="sec-t"><h3>Pagos programados</h3><a data-x="cuotaNueva">+ Programar</a></div>
+    ${l.length ? `<p class="h" style="margin:-4px 2px 8px">${pend.length ? `${pend.length} pendiente${pend.length === 1 ? '' : 's'} · ${money(tot)}` : 'Todo pagado'}</p>
+    <div class="list">${l.map(c => { const e = cuotaEstado(c); return `<div class="li cu ${c.estado}"><div class="av ${e[0]}">${ic(c.estado === 'pagada' ? 'check' : e[1] === 'b-bad' ? 'lock' : 'cal', 18)}</div><div class="tx"><b>${esc(c.concepto)}</b><small>${esc(fFechaC(c.fecha))}</small><span class="badge ${e[1]} cu-e">${esc(e[2])}</span></div><div class="am n">${money(c.monto)}</div>
+      ${c.estado === 'pendiente' ? `<div class="cu-bt"><button class="btn sm pri" data-x="cuotaPagar" data-id="${c.id}">${ic('check', 15)} Recibido</button><button class="btn sm" data-x="cuotaMover" data-id="${c.id}">Prórroga</button><button class="btn sm ghost" data-x="cuotaQuitar" data-id="${c.id}">Quitar</button></div>` : ''}</div>`; }).join('')}</div>`
+    : `<p class="h" style="margin:-4px 2px 0">Programa aquí sus cuotas o mensualidades. Desde la fecha de pago, su app le recuerda pagar cada vez que la abre; si pasan los días de gracia sin que lo marques como recibido, el programa se pausa hasta que lo marques.</p>`}`;
+}
+function panelProgramarPagos(n) {
+  return new Promise(ok => {
+    let con = CONCEPTOS_CUOTA[0];
+    const h = hoja({ titulo: 'Programar pagos', html: `<p class="sm mut" style="margin-top:0">${esc(n.negocio)} · ${esc(n.dueno)}</p>
+      <div class="fld"><span>Concepto</span><div class="chips wrap" id="cq-c">${CONCEPTOS_CUOTA.map(c => `<button type="button" class="chip ${c === con ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}<button type="button" class="chip" data-c="">Otro</button></div><input id="cq-o" maxlength="60" placeholder="Escribe el concepto" hidden style="margin-top:8px"></div>
+      <div class="f2"><label class="fld"><span>Monto de cada pago</span><input id="cq-m" inputmode="decimal" placeholder="1,000.00"></label><label class="fld"><span>Primer pago</span><input id="cq-f" type="date" value="${hoy()}"></label></div>
+      <div class="f2"><label class="fld"><span>¿Cuántos pagos?</span><select id="cq-n">${[1, 2, 3, 4, 5, 6, 9, 12].map(x => `<option value="${x}">${x === 1 ? 'Un solo pago' : x + ' pagos, uno por mes'}</option>`).join('')}</select></label><label class="fld"><span>Días de gracia</span><input id="cq-g" inputmode="numeric" value="5"></label></div>
+      <small class="hint" style="display:block;margin:-6px 0 10px">Días de gracia: después de la fecha, cuántos días espera antes de pausar el programa si no marcas el pago.</small>
+      <div class="cq-prev" id="cq-p"></div>` });
+    const leer = () => { const n_ = Number($('#cq-n', h.el).value), m = num($('#cq-m', h.el).value), f = $('#cq-f', h.el).value, g = Math.max(0, parseInt($('#cq-g', h.el).value, 10) || 0), c = con || $('#cq-o', h.el).value.trim();
+      return { veces: n_, monto: m, fecha: f, gracia: g, concepto: c, fechas: Array.from({ length: n_ }, (_, i) => i ? mesesSumarDia_(f, i) : f) }; };
+    const prev = () => { const x = leer(); $('#cq-p', h.el).innerHTML = x.fecha && x.monto > 0 ? `<span class="op-l">Así queda</span>${x.fechas.map((f, i) => `<div class="cq-f"><span>${esc(x.concepto || 'Pago')}${x.veces > 1 ? ' ' + (i + 1) + '/' + x.veces : ''}</span><span>${esc(fFechaC(f))}</span><b class="n">${money(x.monto)}</b></div>`).join('')}<div class="cq-f tot"><span>Total</span><span></span><b class="n">${money(x.monto * x.veces)}</b></div><p class="xs mut" style="margin:8px 0 0">Si no lo marcas como recibido, la app se pausa el ${esc(fFechaC(addDias(x.fechas[0], x.gracia + 1)))}.</p>` : ''; };
+    $('#cq-c', h.el).addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; con = b.dataset.c; $$('#cq-c .chip', h.el).forEach(z => z.classList.toggle('on', z === b)); $('#cq-o', h.el).hidden = !!con; if (!con) $('#cq-o', h.el).focus(); prev(); });
+    ['#cq-m', '#cq-f', '#cq-n', '#cq-g', '#cq-o'].forEach(q => { $(q, h.el).addEventListener('input', prev); $(q, h.el).addEventListener('change', prev); });
+    h.onClose = () => ok(false);
+    h.botones([{ t: '✓ Programar', cls: 'pri', fn: async () => {
+      const x = leer();
+      if (!x.concepto) throw new Error('Escribe el concepto');
+      if (!(x.monto > 0)) throw new Error('Escribe el monto');
+      if (!x.fecha) throw new Error('Elige la fecha del primer pago');
+      await api('panelCuotas', { id: n.id, accion: 'programar', concepto: x.concepto, monto: x.monto, fecha: x.fecha, veces: x.veces, gracia: x.gracia });
+      h.onClose = null; h.cerrar(); toast(x.veces === 1 ? 'Pago programado' : x.veces + ' pagos programados', 'ok'); ok(true);
+    } }]);
+    prev();
+  });
+}
+async function panelCuotaAccion(n, x, cid) {
+  const c = (n.cuotas || []).find(z => z.id === cid); if (!c) return false;
+  if (x === 'cuotaPagar') {
+    const r = await panelFormPago('Pago recibido', c.concepto, c.monto); if (!r) return false;
+    await api('panelCuotas', { id: n.id, accion: 'pagar', cuotaId: cid, monto: r.monto || c.monto, metodo: r.metodo }); toast('Pago marcado como recibido', 'ok'); return true;
+  }
+  if (x === 'cuotaMover') {
+    const f = await pedirTexto('Prórroga · ' + esc(c.concepto), { label: 'Nueva fecha de pago (año-mes-día)', valor: addDias(hoy(), 7), msg: `Fecha actual: <b>${esc(fFechaC(c.fecha))}</b>. Con la nueva fecha se reinician los días de gracia.` });
+    if (f === null) return false;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(String(f).trim())) throw new Error('Escribe la fecha como 2026-11-05');
+    await api('panelCuotas', { id: n.id, accion: 'mover', cuotaId: cid, fecha: String(f).trim() }); toast('Fecha cambiada', 'ok'); return true;
+  }
+  if (!(await confirmar(`¿Quitar «${esc(c.concepto)}» de ${money(c.monto)}? Ya no se le recordará ni pausará el programa por este pago.`, { si: 'Quitar', peligro: 1 }))) return false;
+  await api('panelCuotas', { id: n.id, accion: 'quitar', cuotaId: cid }); toast('Pago programado quitado', 'ok'); return true;
+}
+// Suma meses a una fecha (si el día no existe en ese mes, toma el último día)
+function mesesSumarDia_(f, m) { const d = parseLocal(f), dia = d.getDate(); d.setMonth(d.getMonth() + m); if (d.getDate() !== dia) d.setDate(0); return toLocal(d).slice(0, 10); }
 function panelFormPago(titulo, concepto, sugerido) {
   return new Promise(ok => {
     const h = hoja({ titulo, cls: 'chica', html: `<p class="sm mut" style="margin-bottom:10px">Si ya te pagó, anota el monto para que cuente en tus ingresos. Si no, deja el monto vacío.</p><div class="f2"><label class="fld"><span>Monto recibido</span><input id="pp-m" inputmode="decimal" placeholder="${sugerido ? esc(String(sugerido)) : '0.00'}"></label><label class="fld"><span>Forma de pago</span><select id="pp-f"><option>Efectivo</option><option>Transferencia</option><option>Tigo Money</option><option>Otro</option></select></label></div><label class="fld"><span>Concepto</span><input id="pp-c" value="${esc(concepto)}"></label>`, onClose: () => ok(null) });
@@ -2541,7 +2652,8 @@ async function panelFicha(id) {
       <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<button class="btn wa sm" data-x="bienv">${ic('sparkle', 14)} Bienvenida + imagen</button><a class="btn sm" href="${esc(location.href.split('?')[0] + '?tienda=' + encodeURIComponent(n.id))}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
       <div class="sec-t"><h3>¿Cómo llegó?</h3>${(n.campanas || []).length ? '<a data-x="llego">Cambiar</a>' : ''}</div>
       ${n.llego && n.llego.id ? `<div class="aviso info">${ic('sparkle', 18)}<div><b>Por publicidad: ${esc(n.llego.nombre)}</b><small>${n.llego.auto ? 'Se registró el ' + esc(fFechaC(String(n.registro).slice(0, 10))) + ', durante esa publicidad (' + esc(fFechaC(n.llego.desde)) + ' – ' + (n.llego.hasta ? esc(fFechaC(n.llego.hasta)) : 'en curso') + ').' : 'Asignado a mano.'}</small></div></div>` : `<p class="h" style="margin:0 0 6px">${n.llego && n.llego.directo ? 'Llegó sin publicidad (marcado a mano).' : 'Sin publicidad en las fechas de su registro.'}</p>`}
-      <div class="sec-t"><h3>Pagos</h3><a data-x="pago">+ Anotar pago</a></div>
+      ${panelSecCuotas(n)}
+      <div class="sec-t"><h3>Pagos recibidos</h3><a data-x="pago">+ Anotar pago</a></div>
       <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small>${n.llego && n.llego.id ? `<small style="color:var(--pri)">${ic('sparkle', 12)} Llegó por ${esc(n.llego.nombre)}</small>` : ''}</div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
       ${n.soporte.length ? `<div class="sec-t"><h3>Soporte</h3></div><div class="list">${n.soporte.slice(0, 5).map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av t-pri">${ic('chat', 18)}</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small>${esc(c.ultimoTexto)}</small></div>${c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : ''}</div>`).join('')}</div>` : ''}
       <div class="sec-t"><h3>Historial</h3></div>
@@ -2557,6 +2669,8 @@ async function panelFicha(id) {
       try {
         if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
         else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }
+        else if (x === 'cuotaNueva') { if (!(await panelProgramarPagos(n))) return; }
+        else if (x === 'cuotaPagar' || x === 'cuotaMover' || x === 'cuotaQuitar') { if (!(await panelCuotaAccion(n, x, b.dataset.id))) return; }
         else if (x === 'bienv') { panelBienvenida(n); return; }
         else if (x === 'llego') {
           const v = await panelElegirLlego(n); if (v === null) return;
@@ -2638,7 +2752,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (navigator.serviceWorker) navigator.serviceWorker.addEventListener('message', e => { if (e.data && e.data.tipo === 'ir' && S.user && VISTAS[e.data.vista]) { cerrarHojas(); ir(e.data.vista); } });
   if (S.token) {
     if (!LS.json(cacheKey(), null)) mostrarSplash();
-    try { await arrancar(); return; } catch (e) { console.warn(e); quitarSplash(); }
+    try { await arrancar(); return; } catch (e) { console.warn(e); quitarSplash(); if (S.vencidaVista) return; }
   }
   await detectarModo();
   pintarLogin();
@@ -2718,7 +2832,7 @@ R.inicio = () => {
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
   const ofAvisos = puede('admin', 'cajero') && 'Notification' in window && Notification.permission !== 'denied' && !avisosOn() && LS.get('avisosOferta', '') !== 'no' && !DEMO.on ? `<div class="aviso info">${ic('bell', 20)}<div><b>Recibe avisos en este teléfono.</b><small>Pedidos nuevos, mensajes, vencimientos y citas, aunque la app esté en segundo plano.</small></div><div class="row"><button class="btn sm pri" data-a="avisosActivar">Activar</button><button class="btn sm ghost icon" data-a="avisosCerrar" aria-label="Cerrar">${ic('x', 16)}</button></div></div>` : '';
   const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${today}${bannerCobro()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${vacio}${aviso}${listas}</div>`;
 };
 ACC.verVenta = async el => {
   const f = el.dataset.f.slice(0, 10);
