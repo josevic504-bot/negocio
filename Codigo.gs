@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.10 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.11 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.10';
+const VERSION = '1.9.11';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -56,7 +56,7 @@ const TZ = 'America/Tegucigalpa';
 const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
-  Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado'],
+  Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado','sucursal'],
   Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
@@ -64,18 +64,18 @@ const SCHEMA = {
   Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
   Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado'],
-  Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','ref'],
-  Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion'],
+  Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','ref','sucursal'],
+  Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion','sucursal'],
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
-  Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion'],
-  Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro'],
+  Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
+  Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota'],
   Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
-  Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca'],
+  Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado'],
   ProyectoGastos: ['id','proyectoId','dia','categoria','descripcion','cantidad','costoUnit','monto','productoId','caja','usuarioId','anulado','creado','anulacion'],
@@ -98,7 +98,7 @@ const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
 const CONFIG_DEF = {
   nombre: 'Mi Negocio', giro: 'otro', eslogan: '', rtn: '', telefono: '', direccion: '', correo: '',
   moneda: 'L', isv: '0.15', preciosConISV: 'si', venderSinStock: 'no',
-  mensajeRecibo: '¡Gracias por su compra!', tema: 'fucsia', logo: '', fondoCaja: '0',
+  mensajeRecibo: '¡Gracias por su compra!', tema: 'fucsia', logo: '', fondoCaja: '0', cajaTienda: 'si',
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
@@ -225,8 +225,9 @@ function rutaUsuario_(a, u, d, req) {
   switch (a) {
     case 'logout':          CacheService.getScriptCache().remove('S_' + req.token); return true;
     case 'bootstrap':       return bootstrap_(u, d);
-    case 'inicio':          return inicio_(u);
-    case 'pendientes':      return pendientes_(u);
+    case 'inicio':          return inicio_(u, d);
+    case 'tiendas':         return tiendas_(u);
+    case 'pendientes':      return pendientes_(u, d);
     case 'guardar':         return lock_(() => guardar_(u, d));
     case 'eliminar':        return lock_(() => eliminar_(u, d));
     case 'guardarUsuario':  d._token = req.token; return lock_(() => guardarUsuario_(u, d));
@@ -614,6 +615,9 @@ function guardarUsuario_(u, d) {
   if (todos.some(x => x.usuario === r.usuario && x.id !== r.id)) throw new Error('Ese usuario ya existe');
   if (ROLES.indexOf(r.rol) < 0) throw new Error('Rol no válido');
   if (r.id === u.id && (r.rol !== 'admin' || r.activo === false)) throw new Error('No puedes quitarte el rol de administrador ni desactivarte');
+  // Tienda asignada (con varios giros): el cajero o bodega solo ve la suya; el administrador ve todas
+  const suc = r.tienda !== undefined ? r.tienda : r.sucursal; delete r.tienda; delete r.sucursal;
+  if (suc !== undefined) r.sucursal = r.rol !== 'admin' && girosActivos_().indexOf(String(suc)) >= 0 ? String(suc) : '';
   delete r.hash; delete r.salt;
   if (d.clave) {
     if (MULTI_NEGOCIO && !/^\d{4,6}$/.test(String(d.clave))) throw new Error('El PIN debe tener de 4 a 6 números');
@@ -712,7 +716,7 @@ function bootstrap_(u, d) {
   };
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
-  if (d && d.inicio) r.inicio = inicio_(u);
+  if (d && d.inicio) r.inicio = inicio_(u, d);
   return r;
 }
 
@@ -2081,6 +2085,7 @@ function venta_(u, d) {
     id: newId_('VentaDetalle') + k, ventaId: venta.id, productoId: i.productoId, descripcion: i.descripcion,
     cantidad: i.cantidad, precio: r2_(i.precio), costo: r4_(i.costo || 0), total: r2_(i.cantidad * i.precio), serie: i.serie || '', garantia: i.garantia || '', giro: gl[k] || gDom
   }));
+  if (girosActivos_(cfg).length > 1) venta.sucursal = ed && ed.tienda ? ed.tienda : tiendaReq_(u, d) || gDom;
   appendRows_('Ventas', [venta]);
   appendRows_('VentaDetalle', detalle);
   const cambios = {};
@@ -2109,6 +2114,8 @@ function ventas_(u, d) {
   const ids = {};
   v.forEach(x => { x.detalle = []; ids[x.id] = x; });
   rows_('VentaDetalle').forEach(det => { if (ids[det.ventaId]) ids[det.ventaId].detalle.push(det); });
+  const t = tiendaReq_(u, d);
+  if (t) { const act = girosActivos_(), tv = tiendasVentas_(v, [].concat.apply([], v.map(x => x.detalle)), act); v = v.filter(x => tv[x.id] === t); }
   // Ventas editadas: la versión anterior va dentro de la corregida y no se lista aparte
   v.forEach(x => { if (x.corrige && ids[x.corrige]) x.anterior = Object.assign({}, ids[x.corrige], { anterior: undefined }); });
   v = v.filter(x => !x.corregida);
@@ -2162,7 +2169,7 @@ function editarVenta_(u, d) {
   if (pagado > 0 && d.metodo !== 'Crédito') throw new Error('Esta venta ya tiene abonos (' + money_(pagado, cfg) + '): debe seguir al crédito.');
   const devuelto = {};
   det.forEach(i => { if (i.productoId) devuelto[i.productoId] = r3_((devuelto[i.productoId] || 0) + i.cantidad); });
-  const ed = { de: v.id, devuelto: devuelto, saldoAnt: v.saldo, pagado: pagado, cliente: v.clienteId, fecha: v.fecha, numero: v.numero, usuarioId: v.usuarioId, listo: false };
+  const ed = { de: v.id, devuelto: devuelto, saldoAnt: v.saldo, pagado: pagado, cliente: v.clienteId, fecha: v.fecha, numero: v.numero, usuarioId: v.usuarioId, listo: false, tienda: v.sucursal || '' };
   // Datos fiscales de la factura anterior (si el cliente no cambió, se conservan)
   const fzA = parseJ_(v.fiscal, null), fd = d.fiscal || (fzA && d.clienteId === v.clienteId ? { rtn: fzA.rtn, nombre: fzA.nombre, exonerado: !!(fzA.oce || fzA.cre || fzA.sag), oce: fzA.oce, cre: fzA.cre, sag: fzA.sag } : undefined);
   const nd = { items: d.items, clienteId: d.clienteId, metodo: d.metodo, descuento: d.descuento, recibido: d.recibido, nota: d.nota === undefined ? v.nota : d.nota, pedidoId: v.pedidoId,
@@ -2211,7 +2218,7 @@ function abono_(u, d) {
     resta = r2_(resta - x);
   });
   const metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
-  const a = upsert_('Abonos', { fecha: ahora_(), clienteId: cli.id, monto: monto, metodo: metodo, aplicado: JSON.stringify(aplicado), usuarioId: u.id, nota: txt_(d.nota, 200), anulado: false });
+  const a = upsert_('Abonos', { fecha: ahora_(), clienteId: cli.id, monto: monto, metodo: metodo, aplicado: JSON.stringify(aplicado), usuarioId: u.id, nota: txt_(d.nota, 200), anulado: false, sucursal: tiendaReq_(u, d) || (girosActivos_().length > 1 ? girosActivos_()[0] : '') });
   return { abono: a, saldo: saldosClientes_()[cli.id] || 0 };
 }
 
@@ -2296,6 +2303,7 @@ function compra_(u, d) {
     id: newId_('Compras'), numero: siguiente_('C'), fecha: fecha, proveedorId: prov ? prov.id : '', factura: txt_(d.factura, 40),
     total: total, saldo: metodo === 'Crédito' ? total : 0, metodo: metodo, usuarioId: u.id, anulada: false, nota: txt_(d.nota, 200)
   };
+  if (girosActivos_().length > 1) c.sucursal = tiendaReq_(u, d) || girosActivos_()[0];
   appendRows_('Compras', [c]);
   appendRows_('CompraDetalle', items.map((i, k) => ({ id: newId_('CompraDetalle') + k, compraId: c.id, productoId: i.p.id, descripcion: i.p.nombre,
     cantidad: i.cantidad, costo: i.costo, total: r2_(i.cantidad * i.costo),
@@ -2326,6 +2334,7 @@ function compras_(u, d) {
   const r = rango_(d);
   let l = rows_('Compras').filter(x => (!r.desde || x.fecha >= r.desde) && (!r.hasta || x.fecha <= r.hasta));
   if (d.proveedorId) l = l.filter(x => x.proveedorId === d.proveedorId);
+  const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(); l = l.filter(x => tiendaDoc_(x, act) === t); }
   const ids = {};
   l.forEach(x => { x.detalle = []; ids[x.id] = x; });
   rows_('CompraDetalle').forEach(x => { if (ids[x.compraId]) ids[x.compraId].detalle.push(x); });
@@ -2380,7 +2389,7 @@ function pago_(u, d) {
     resta = r2_(resta - x);
   });
   const metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
-  const p = upsert_('Pagos', { fecha: ahora_(), proveedorId: pr.id, monto: monto, metodo: metodo, aplicado: JSON.stringify(aplicado), usuarioId: u.id, nota: txt_(d.nota, 200), anulado: false });
+  const p = upsert_('Pagos', { fecha: ahora_(), proveedorId: pr.id, monto: monto, metodo: metodo, aplicado: JSON.stringify(aplicado), usuarioId: u.id, nota: txt_(d.nota, 200), anulado: false, sucursal: tiendaReq_(u, d) || (girosActivos_().length > 1 ? girosActivos_()[0] : '') });
   return { pago: p, proveedores: proveedoresConSaldo_() };
 }
 
@@ -2433,6 +2442,7 @@ function gastos_(u, d) {
   const desde = String(d.desde || '').slice(0, 10), hasta = String(d.hasta || '').slice(0, 10);
   let l = rows_('Gastos').filter(g => (!desde || g.fechaGasto >= desde) && (!hasta || g.fechaGasto <= hasta));
   if (u.rol === 'cajero') l = l.filter(g => g.usuarioId === u.id);
+  const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(); l = l.filter(g => tiendaDoc_(g, act) === t); }
   return desc_(l.map(g => { g._k = g.fechaGasto + g.creado; return g; }), '_k');
 }
 
@@ -2467,6 +2477,7 @@ function guardarGasto_(u, d) {
     throw new Error('Este gasto ya entró en un cierre de caja. Para cambiar el monto o la forma de pago, anúlalo y regístralo de nuevo.');
   if (!prev) { r.usuarioId = u.id; r.creado = ahora_(); r.anulado = false; }
   else { delete r.usuarioId; delete r.creado; delete r.anulado; }
+  if (!prev) { const act = girosActivos_(); delete r.tienda; if (act.length > 1) r.sucursal = tiendaReq_(u, d) || (r.giro && act.indexOf(r.giro) >= 0 ? r.giro : act[0]); } else { delete r.tienda; delete r.sucursal; } // de qué caja sale
   const g = upsert_('Gastos', r);
   return { gasto: g, cats: catalogoGastos_() };
 }
@@ -2485,14 +2496,16 @@ function anularGasto_(u, d) {
 function pedidos_(u, d) {
   req_(u, ['admin','cajero']);
   const lim = diasAtras_(45) + 'T00:00';
-  const l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo'].indexOf(p.estado) >= 0 || p.fecha >= lim);
+  let l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo'].indexOf(p.estado) >= 0 || p.fecha >= lim);
+  const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); l = l.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); return p; });
 }
 
-function pendientes_(u) {
+function pendientes_(u, d) {
   if (u.rol === 'bodega') return { nuevos: 0, mensajes: 0 };
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
-  const n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
+  let n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
+  const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); n = n.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   let sop = 0; try { if (MULTI_NEGOCIO && NEG) sop = mRows_('Soporte').filter(c => c.negocioId === NEG.id && Number(c.sinLeerCli) > 0).length; } catch (e) {}
   const out = { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
   try { out.avisos = avisosDia_(); } catch (e) {}
@@ -2564,8 +2577,9 @@ function editarPedido_(u, d) {
 /* ===================== CAJA ===================== */
 
 // La caja abierta empieza donde terminó el último cierre (o hoy a las 00:00)
-function ventanaCaja_() {
-  const cierres = desc_(rows_('Cierres'), 'hasta'), u = cierres[0];
+function ventanaCaja_(t) {
+  // Con una caja por tienda, cuenta el último cierre de ESA tienda (o uno general hecho antes de separar las cajas)
+  const cierres = desc_(rows_('Cierres'), 'hasta').filter(c => !t || !c.sucursal || c.sucursal === t), u = cierres[0];
   const desde = u ? u.hasta : hoy_() + 'T00:00';
   const desdeMs = u ? (Number(u.marca) || msDeLocal_(u.hasta) + (String(u.hasta).length > 16 ? 999 : 59999)) : msDeLocal_(hoy_() + 'T00:00') - 1;
   return { desde: desde, desdeMs: desdeMs, hastaMs: Infinity, cierres: cierres };
@@ -2573,11 +2587,14 @@ function ventanaCaja_() {
 
 // Efectivo de la ventana: cada movimiento cuenta en el momento exacto en que se registró (va en su id).
 // Si se anula algo que ya entró en un cierre anterior, la devolución se refleja en la caja abierta.
-function cajaCalc_(w) {
+function cajaCalc_(w, tienda) {
   const en = t => t > w.desdeMs && t <= w.hastaMs;
   const k = { ventas: 0, cobros: 0, gastos: 0, pagos: 0, compras: 0, tarjeta: 0, transferencia: 0, credito: 0, nVentas: 0, proyectos: 0, anulaciones: 0 };
   // Solo se leen los movimientos desde el último cierre (y, por si una anulación toca algo anterior, hasta 90 días atrás)
-  const vent = Math.min(w.desdeMs, ventanaMs_()), rows_ = name => rowsDesde_(name, vent);
+  const vent = Math.min(w.desdeMs, ventanaMs_()), todas = name => rowsDesde_(name, vent);
+  // Con tienda: solo los movimientos de esa tienda (su caja)
+  const act = tienda ? girosActivos_() : null, tv = tienda ? tiendasVentas_(todas('Ventas'), todas('VentaDetalle'), act) : null;
+  const rows_ = name => !tienda ? todas(name) : todas(name).filter(x => (name === 'Ventas' ? tv[x.id] : name === 'ProyectoGastos' ? act[0] : tiendaDoc_(x, act)) === tienda);
   // signo: +1 entra efectivo, -1 sale. Devuelve true si el movimiento se cuenta normalmente.
   const mira = (x, anulado, efectivo, aplicar) => {
     const t = idMs_(x.id), ta = Number(x.anulacion) || 0;
@@ -2602,20 +2619,30 @@ function cajaCalc_(w) {
   return k;
 }
 
+// Tienda cuya caja se ve o se cierra: con una caja por tienda siempre hay una (la principal si se eligió «todas»)
+function tiendaCaja_(u, d) {
+  if (!cajaPorTienda_()) return '';
+  const act = girosActivos_(), t = tiendaReq_(u, d), c = String((d && d.caja) || '');
+  return t || (act.indexOf(c) >= 0 ? c : act[0]);
+}
 function caja_(u, d) {
   req_(u, ['admin','cajero']);
-  const w = ventanaCaja_(), cierres = w.cierres, desde = w.desde;
-  const k = cajaCalc_(w);
+  const t = tiendaCaja_(u, d), w = ventanaCaja_(t), cierres = w.cierres, desde = w.desde;
+  const k = cajaCalc_(w, t);
   const us = porId_(rows_('Usuarios'));
-  return { desde: desde, ahora: ahora_(), fondo: Number(config_().fondoCaja) || 0, k: k, ventasHoy: ventasDelDia_(hoy_()),
+  const r = { desde: desde, ahora: ahora_(), fondo: Number(config_().fondoCaja) || 0, k: k, ventasHoy: ventasDelDia_(hoy_(), t || tiendaReq_(u, d)), tienda: t,
     cierres: cierres.slice(0, 30).map(c => { c.usuario = us[c.usuarioId] ? us[c.usuarioId].nombre : ''; return c; }) };
+  // El administrador en «todas las tiendas» ve cuánto debe haber en cada caja
+  if (t && !tiendaReq_(u, d)) r.cajas = girosActivos_().map(g => { const kk = cajaCalc_(ventanaCaja_(g), g); return { id: g, esperado: r2_(r.fondo + kk.ventas + kk.cobros - kk.gastos - kk.pagos - kk.compras), desde: ventanaCaja_(g).desde }; });
+  return r;
 }
 
 // Ventas de un día con cliente, artículos y si vinieron de un pedido en línea (para Caja)
-function ventasDelDia_(dia) {
+function ventasDelDia_(dia, tienda) {
   const cm = porId_(rows_('Clientes')), us = porId_(rows_('Usuarios')), pm = porId_(rows_('Pedidos'));
   const vent = msDeLocal_(dia + 'T00:00') - 60000;
-  const v = rowsDesde_('Ventas', vent).filter(x => String(x.fecha).slice(0, 10) === dia);
+  let v = rowsDesde_('Ventas', vent).filter(x => String(x.fecha).slice(0, 10) === dia && !x.corregida);
+  if (tienda) { const tv = tiendasVentas_(v, rowsDesde_('VentaDetalle', vent), girosActivos_()); v = v.filter(x => tv[x.id] === tienda); }
   const ids = {};
   v.forEach(x => { x.detalle = []; ids[x.id] = x; });
   rowsDesde_('VentaDetalle', vent).forEach(x => { if (ids[x.ventaId]) ids[x.ventaId].detalle.push({ descripcion: x.descripcion, cantidad: x.cantidad, total: x.total, productoId: x.productoId }); });
@@ -2627,10 +2654,10 @@ function ventasDelDia_(dia) {
 function cerrarCaja_(u, d) {
   req_(u, ['admin','cajero']);
   const marca = Number(marca_());
-  const w = ventanaCaja_();
+  const t = tiendaCaja_(u, d), w = ventanaCaja_(t);
   if (marca - w.desdeMs < 3000) throw new Error('Espera unos segundos antes de hacer otro cierre');
   w.hastaMs = marca;
-  const k = cajaCalc_(w);
+  const k = cajaCalc_(w, t);
   if (!esNum_(d.contado) || !(Number(d.contado) >= 0)) throw new Error('Escribe cuánto efectivo contaste');
   if (d.fondo !== undefined && d.fondo !== '' && (!esNum_(d.fondo) || Number(d.fondo) < 0)) throw new Error('El fondo de caja no es válido');
   const fondo = d.fondo === undefined || d.fondo === '' ? (Number(config_().fondoCaja) || 0) : r2_(d.fondo);
@@ -2638,14 +2665,19 @@ function cerrarCaja_(u, d) {
   const esperado = r2_(fondo + k.ventas + k.cobros - k.gastos - k.pagos - k.compras);
   const hasta = ahora_() + ':59';
   const c = upsert_('Cierres', { desde: w.desde, hasta: hasta < w.desde ? w.desde : hasta, usuarioId: u.id, fondo: fondo, ventas: k.ventas, cobros: k.cobros,
-    gastos: r2_(k.gastos + k.compras), pagos: k.pagos, esperado: esperado, contado: contado, diferencia: r2_(contado - esperado), nota: txt_(d.nota, 200), marca: String(marca) });
-  return { cierre: c, caja: caja_(u, d) };
+    gastos: r2_(k.gastos + k.compras), pagos: k.pagos, esperado: esperado, contado: contado, diferencia: r2_(contado - esperado), nota: txt_(d.nota, 200), marca: String(marca), sucursal: t });
+  return { cierre: c, caja: caja_(u, Object.assign({}, d, { caja: t })) };
 }
 
 /* ===================== INICIO ===================== */
 
-function inicio_(u) {
+function inicio_(u, d) {
   const h = hoy_(), mes = h.slice(0, 7), out = { rol: u.rol }, vent = ventanaMs_();
+  // Modo tienda: todo lo de Inicio es de la tienda elegida (ventas, caja, pedidos, por cobrar, existencias, compras)
+  const t = tiendaReq_(u, d), act = t ? girosActivos_() : null;
+  const tv = t ? tiendasVentas_(rowsDesde_('Ventas', vent), rowsDesde_('VentaDetalle', vent), act) : null;
+  const deT = (x, hoja) => !t || (hoja === 'Ventas' ? tv[x.id] : tiendaDoc_(x, act)) === t;
+  if (t) out.tienda = t;
   if (u.rol !== 'bodega' && susActivas_()) { try { out.sus = susResumen_(); } catch (e) {} }
   try {
     if (modOn_('caducidad')) out.caducan = caducan_();
@@ -2654,7 +2686,7 @@ function inicio_(u) {
     if (modOn_('encargos')) out.encargos = agendaResumen_('encargo');
   } catch (e) {}
   if (u.rol === 'admin' || u.rol === 'cajero') {
-    const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada);
+    const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && deT(v, 'Ventas'));
     const vh = ventas.filter(v => v.fecha.slice(0, 10) === h && (u.rol === 'admin' || v.usuarioId === u.id));
     out.hoy = { ventas: r2_(vh.reduce((a, v) => a + v.total, 0)), n: vh.length };
     if (u.rol === 'admin') out.hoy.ganancia = r2_(vh.reduce((a, v) => a + v.total - v.isv - v.costo, 0));
@@ -2662,30 +2694,38 @@ function inicio_(u) {
     for (let i = 6; i >= 0; i--) { const f = diasAtras_(i); spark.push(r2_(ventas.filter(v => v.fecha.slice(0, 10) === f && (u.rol === 'admin' || v.usuarioId === u.id)).reduce((a, v) => a + v.total, 0))); }
     out.spark = spark;
     const cm = porId_(rows_('Clientes'));
-    out.ultimas = desc_(rowsDesde_('Ventas', vent).filter(v => u.rol === 'admin' || v.usuarioId === u.id), 'fecha').slice(0, 5)
+    out.ultimas = desc_(rowsDesde_('Ventas', vent).filter(v => !v.corregida && deT(v, 'Ventas') && (u.rol === 'admin' || v.usuarioId === u.id)), 'fecha').slice(0, 5)
       .map(v => ({ id: v.id, numero: v.numero, fecha: v.fecha, total: v.total, metodo: v.metodo, anulada: v.anulada, cliente: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final' }));
-    const ped = rows_('Pedidos').filter(p => p.estado === 'nuevo');
-    out.pedidos = { nuevos: ped.length, total: r2_(ped.reduce((a, p) => a + p.total, 0)), activos: rows_('Pedidos').filter(p => ['confirmado','listo'].indexOf(p.estado) >= 0).length };
-    const sc = saldosClientes_();
-    out.porCobrar = { total: r2_(Object.keys(sc).reduce((a, k) => a + sc[k], 0)), clientes: Object.keys(sc).length };
-    const k = cajaCalc_(ventanaCaja_());
+    const pmI = t ? porId_(rows_('Productos')) : null, pedT = p => !t || girosPedido_(p, pmI, act).indexOf(t) >= 0;
+    const ped = rows_('Pedidos').filter(p => p.estado === 'nuevo' && pedT(p));
+    out.pedidos = { nuevos: ped.length, total: r2_(ped.reduce((a, p) => a + p.total, 0)), activos: rows_('Pedidos').filter(p => ['confirmado','listo'].indexOf(p.estado) >= 0 && pedT(p)).length };
+    if (!t) {
+      const sc = saldosClientes_();
+      out.porCobrar = { total: r2_(Object.keys(sc).reduce((a, k) => a + sc[k], 0)), clientes: Object.keys(sc).length };
+    } else { // lo que deben las ventas al crédito de esta tienda
+      const vsT = rows_('Ventas').filter(v => !v.anulada && v.saldo > 0.004 && v.clienteId), tvT = tiendasVentas_(vsT, null, act), cs = {};
+      vsT.forEach(v => { if (tvT[v.id] === t) cs[v.clienteId] = (cs[v.clienteId] || 0) + v.saldo; });
+      out.porCobrar = { total: r2_(Object.keys(cs).reduce((a, k) => a + cs[k], 0)), clientes: Object.keys(cs).length };
+    }
+    const tc = cajaPorTienda_() ? (t || act && act[0] || girosActivos_()[0]) : '';
+    const k = cajaCalc_(ventanaCaja_(tc), tc);
     out.caja = r2_((Number(config_().fondoCaja) || 0) + k.ventas + k.cobros - k.gastos - k.pagos - k.compras);
   }
   if (u.rol === 'admin') {
-    const ventasMes = rowsDesde_('Ventas', vent).filter(v => !v.anulada && v.fecha.slice(0, 7) === mes);
-    const gastosMes = rowsDesde_('Gastos', vent).filter(g => !g.anulado && g.fechaGasto.slice(0, 7) === mes);
+    const ventasMes = rowsDesde_('Ventas', vent).filter(v => !v.anulada && v.fecha.slice(0, 7) === mes && deT(v, 'Ventas'));
+    const gastosMes = rowsDesde_('Gastos', vent).filter(g => !g.anulado && g.fechaGasto.slice(0, 7) === mes && deT(g));
     const vs = ventasMes.reduce((a, v) => a + v.total, 0), gb = ventasMes.reduce((a, v) => a + v.total - v.isv - v.costo, 0), gs = gastosMes.reduce((a, g) => a + g.monto, 0);
     out.mes = { ventas: r2_(vs), ganancia: r2_(gb - gs), gastos: r2_(gs), n: ventasMes.length };
     const sp = saldosProveedores_();
     out.porPagar = { total: r2_(Object.keys(sp).reduce((a, k) => a + sp[k], 0)), proveedores: Object.keys(sp).length };
-    out.aviso = resumenMeses_().find(m => !m.enCurso && m.pendiente > 0.009) || null;
+    if (!t) out.aviso = resumenMeses_().find(m => !m.enCurso && m.pendiente > 0.009) || null;
   }
   if (u.rol === 'admin' || u.rol === 'bodega') {
-    const prods = rows_('Productos').filter(p => p.activo && p.tipo === 'producto');
+    const prods = rows_('Productos').filter(p => p.activo && p.tipo === 'producto' && (!t || giroDeProd_(p, act) === t));
     const bajos = prods.filter(p => p.stock <= p.stockMin);
     out.stock = { bajos: bajos.length, agotados: prods.filter(p => p.stock <= 0).length, lista: bajos.sort((a, b) => a.stock - b.stock).slice(0, 6).map(p => ({ id: p.id, nombre: p.nombre, stock: p.stock, stockMin: p.stockMin, icono: p.icono, foto: p.foto })),
       valor: r2_(prods.reduce((a, p) => a + Math.max(0, p.stock) * p.costo, 0)), productos: prods.length };
-    const cm = rowsDesde_('Compras', vent).filter(c => !c.anulada && c.fecha.slice(0, 7) === mes);
+    const cm = rowsDesde_('Compras', vent).filter(c => !c.anulada && c.fecha.slice(0, 7) === mes && deT(c));
     out.comprasMes = { total: r2_(cm.reduce((a, c) => a + c.total, 0)), n: cm.length };
     const pj = rows_('Proyectos').filter(p => p.estado === 'curso');
     if (pj.length) {
@@ -3864,6 +3904,51 @@ function seccionesDe_(docs, det, activos, pm, campo) {
   return { lin: lin, peso: peso };
 }
 const giroValido_ = g => (g && own_(GIROS, String(g)) ? String(g) : '');
+/* ===== Modo tienda (varios giros) =====
+ * Con 2 o más giros, cada giro trabaja como una tienda: al entrar se elige la tienda y la app muestra solo lo suyo.
+ * Cada venta, gasto, cobro, compra y pago guarda en qué tienda se hizo. Con «una caja por tienda» (Ajustes) cada
+ * tienda cuenta y cierra su propio efectivo. Un usuario con tienda asignada solo ve la suya (lo hace cumplir el servidor).
+ * En las hojas, la tienda de cada movimiento y la asignada a cada usuario van en la columna «sucursal»
+ * (la columna «tienda» de Productos ya se usa para «sale en la tienda en línea»). */
+// Tienda con la que trabaja esta solicitud: la asignada al usuario manda; si no, la que eligió en la app ('' = todas)
+function tiendaReq_(u, d) {
+  const act = girosActivos_(); if (act.length < 2) return '';
+  if (u && u.sucursal && act.indexOf(u.sucursal) >= 0) return u.sucursal;
+  const t = String((d && d.tienda) || ''); return act.indexOf(t) >= 0 ? t : '';
+}
+function cajaPorTienda_() { return girosActivos_().length > 1 && config_().cajaTienda !== 'no'; }
+// Tienda de un movimiento: la que tiene anotada; si no, la de su giro (gastos) o la principal
+function tiendaDoc_(x, act) { if (x.sucursal && act.indexOf(x.sucursal) >= 0) return x.sucursal; if (x.giro && act.indexOf(x.giro) >= 0) return x.giro; return act[0]; }
+// Tienda de cada venta (por id): la anotada; en ventas anteriores, la sección que más vendió en ella
+function tiendasVentas_(ventas, det, act) {
+  const sin = ventas.filter(v => !(v.sucursal && act.indexOf(v.sucursal) >= 0)), out = {};
+  ventas.forEach(v => { if (v.sucursal && act.indexOf(v.sucursal) >= 0) out[v.id] = v.sucursal; });
+  if (sin.length) {
+    const ids = new Set(sin.map(v => v.id)), sp = seccionesDe_(sin, (det || rows_('VentaDetalle')).filter(x => ids.has(x.ventaId)), act, porId_(rows_('Productos')));
+    sin.forEach(v => { const w = sp.peso[v.id] || {}, g = Object.keys(w).reduce((a, b) => !a || w[b] > w[a] ? b : a, ''); out[v.id] = act.indexOf(g) >= 0 ? g : act[0]; });
+  }
+  return out;
+}
+// Giros que trae un pedido en línea (por sus productos; las compras desde enlace son de «Compras en línea»)
+function girosPedido_(p, pm, act) {
+  const s = {}; (Array.isArray(p.items) ? p.items : parseJ_(p.items, [])).forEach(i => { const g = i && i.tipo === 'compra' ? 'compras' : i && i.productoId && pm[i.productoId] ? giroDeProd_(pm[i.productoId], act) : act[0]; s[act.indexOf(g) >= 0 ? g : act[0]] = 1; });
+  return Object.keys(s);
+}
+// Resumen de cada tienda para la pantalla «¿A qué tienda entras?»
+function tiendas_(u) {
+  const act = girosActivos_(); if (act.length < 2) return { tiendas: [] };
+  const h = hoy_(), vent = ventanaMs_(), ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && v.fecha.slice(0, 10) === h);
+  const tv = tiendasVentas_(ventas, rowsDesde_('VentaDetalle', vent), act), pm = porId_(rows_('Productos')), cfg = config_(), porCaja = cajaPorTienda_();
+  const ped = rows_('Pedidos').filter(p => p.estado === 'nuevo');
+  const lista = act.filter(t => !(u.sucursal && act.indexOf(u.sucursal) >= 0) || t === u.sucursal).map(t => {
+    const vs = ventas.filter(v => tv[v.id] === t && (u.rol === 'admin' || v.usuarioId === u.id));
+    const o = { id: t, nombre: GIROS[t].n, hoy: r2_(vs.reduce((a, v) => a + v.total, 0)), n: vs.length, pedidos: ped.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0).length,
+      productos: rows_('Productos').filter(p => p.activo && giroDeProd_(p, act) === t).length };
+    if (porCaja && u.rol !== 'bodega') { const k = cajaCalc_(ventanaCaja_(t), t); o.caja = r2_((Number(cfg.fondoCaja) || 0) + k.ventas + k.cobros - k.gastos - k.pagos - k.compras); }
+    return o;
+  });
+  return { tiendas: lista, asignada: u.sucursal && act.indexOf(u.sucursal) >= 0 ? u.sucursal : '', porCaja: porCaja };
+}
 // Los gastos sin sección (alquiler, luz, planilla…) se reparten según lo que vendió cada sección; sin ventas, por partes iguales
 function repartoGeneral_(netas, lista) {
   const t = lista.reduce((a, g) => a + Math.max(0, netas[g] || 0), 0), o = {};

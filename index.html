@@ -526,6 +526,23 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .tr.tot{border-bottom:0;border-top:2px solid var(--line)}
 .gf-sec .chip .sd{margin-right:1px}
 .chip.on .sd{box-shadow:0 0 0 2px rgba(255,255,255,.9)}
+/* Modo tienda */
+.t-pill{margin:10px auto 0;display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.16);color:inherit;border-radius:99px;padding:6px 14px;font:600 13.5px var(--font);cursor:pointer;position:relative;z-index:1}
+.t-pill .sd{box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.hero-c .t-pill{display:inline-flex}
+.bar-st{display:block;font:500 12px var(--font);letter-spacing:0;opacity:.85;margin-top:-1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.td-g{display:grid;gap:10px}
+.td-c{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:1px solid var(--line);border-left:5px solid var(--sc,var(--pri));background:var(--card);border-radius:18px;padding:14px;font:inherit;color:var(--ink);cursor:pointer;box-shadow:var(--sh);position:relative}
+.td-c.on{border-color:var(--pri);box-shadow:0 0 0 3px var(--pri2)}
+.td-c.td-all{border-left-color:var(--mut)}
+.td-emo{width:46px;height:46px;border-radius:15px;display:grid;place-items:center;font-size:24px;flex:none;background:var(--pri2);background:color-mix(in srgb,var(--sc,var(--pri)) 15%,transparent)}
+.td-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.td-tx b{font-size:16px}.td-tx small{font-size:12.5px;color:var(--mut)}.td-tx small b{font-size:12.5px;color:var(--ink)}
+.td-ped{position:absolute;top:-8px;right:12px;background:var(--acc,#f25c05);color:#fff;font-size:11px;font-weight:600;padding:2px 9px;border-radius:99px}
+.cj-t{display:flex;gap:8px;overflow-x:auto;margin:0 0 12px;scrollbar-width:none}
+.cj-t button{flex:none;border:1px solid var(--line);border-left:4px solid var(--sc);background:var(--card);border-radius:14px;padding:8px 12px;text-align:left;font:inherit;color:var(--ink);cursor:pointer}
+.cj-t button.on{border-color:var(--pri);box-shadow:0 0 0 2px var(--pri2)}
+.cj-t small{display:block;font-size:11.5px;color:var(--mut)}.cj-t b{font-size:14px}
+.u-td{color:var(--mut)}
 /* Editar venta */
 .ev-h{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;background:var(--pri2);border-radius:14px;font-size:13px;color:var(--mut);margin-bottom:6px}.ev-h b{color:var(--ink);font-size:15px}
 .ev-ant{color:var(--warn);font-weight:600}.ev-nuevo{color:var(--ok);font-weight:600}
@@ -1239,7 +1256,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.10';
+const APP_VER = '1.9.11';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -1374,6 +1391,7 @@ function apiUrl() { return LS.get('api', '') || API_URL_DEFAULT; }
 
 /* ===================== SERVIDOR ===================== */
 async function api(action, data, silent) {
+  if (S.tienda && TIENDA_ACC.has(action) && !(data && data.tienda !== undefined)) data = Object.assign({ tienda: S.tienda }, data || {});
   if (DEMO.on) return demoApi(action, data, silent);
   const url = apiUrl();
   if (!url) throw new Error('Configura primero la URL del servidor (Apps Script)');
@@ -1629,10 +1647,10 @@ function pintarHeader() {
   const bell = puede('admin', 'cajero') ? `<button class="hbtn" data-a="ir" data-v="pedidos" aria-label="Pedidos">${ic('bell', 20)}${S.pedidosNuevos ? `<span class="dot">${S.pedidosNuevos}</span>` : ''}</button>` : '';
   if (S.vista === 'inicio') {
     $('#hdr').innerHTML = `<div class="hero"><div class="hero-top"><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button>${demo}<div class="grp">${bell}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}${S.soporteNuevos ? `<span class="dot">${S.soporteNuevos}</span>` : ''}</button><button class="hbtn" data-a="ir" data-v="ajustes" aria-label="Ajustes">${ic('gear', 20)}</button></div></div>
-      <div class="hero-c">${monograma()}<div class="hero-name">${esc(S.config.nombre || 'Mi Negocio')}</div><div class="hero-tag">${esc(S.config.eslogan || giroNombre() || 'Gestión de negocio')}</div></div></div>`;
+      <div class="hero-c">${monograma()}<div class="hero-name">${esc(S.config.nombre || 'Mi Negocio')}</div>${modoTienda() && !S.config.eslogan ? '' : `<div class="hero-tag">${esc(S.config.eslogan || giroNombre() || 'Gestión de negocio')}</div>`}${pillTienda()}</div></div>`;
   } else {
     const extra = (R[S.vista + '_bar'] && R[S.vista + '_bar']()) || '';
-    $('#hdr').innerHTML = `<div class="bar"><div class="bar-in"><button class="hbtn" data-a="ir" data-v="inicio" aria-label="Volver">${ic('left', 22)}</button><div class="bar-t">${esc(v.t)}</div>${demo}${extra}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}${S.soporteNuevos ? `<span class="dot">${S.soporteNuevos}</span>` : ''}</button><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button></div></div>`;
+    $('#hdr').innerHTML = `<div class="bar"><div class="bar-in"><button class="hbtn" data-a="ir" data-v="inicio" aria-label="Volver">${ic('left', 22)}</button><div class="bar-t">${esc(v.t)}${modoTienda() ? `<small class="bar-st">${S.tienda ? esc(secNom(S.tienda)) : '🏬 Todas las tiendas'}</small>` : ''}</div>${demo}${extra}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}${S.soporteNuevos ? `<span class="dot">${S.soporteNuevos}</span>` : ''}</button><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button></div></div>`;
   }
 }
 function pintarNav() {
@@ -1668,6 +1686,7 @@ ACC.ir = el => { cerrarHojas(); ir(el.dataset.v, el.dataset.p ? JSON.parse(el.da
 ACC.mas = () => {
   const items = Object.keys(VISTAS).filter(k => k !== 'inicio' && puedeVer(k));
   const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}"><i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i><span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : k === 'mensajes' && S.chatsNuevos ? `<b class="cnt">${S.chatsNuevos}</b>` : ''}</button>`).join('')}</div>
+    ${modoTienda() && !tiendaFija() ? `<button class="me-ay" data-a="cambiarTienda">${ic('store', 20)}<span><b>Cambiar de tienda</b><small>Estás en ${S.tienda ? esc(secNom(S.tienda)) : 'todas las tiendas'}</small></span>${ic('right', 18)}</button>` : ''}
     ${(S.negocios || []).length > 1 ? `<button class="me-ay" data-a="cambiarNegocio">${ic('refresh', 20)}<span><b>Cambiar de negocio</b><small>Estás en ${esc(S.config.nombre || '')} · tienes ${S.negocios.length} negocios</small></span>${ic('right', 18)}</button>` : ''}
     <button class="me-ay" data-a="ayuda">${ic('help', 20)}<span><b>Ayuda y novedades</b><small>Cómo se usa cada pantalla · versión ${APP_VER}</small></span>${ic('right', 18)}</button>
     <div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.config.nombre || '')}</small></div><button class="btn sm bad" data-a="logout">${ic('logout', 16)} Salir</button></div>` });
@@ -1684,7 +1703,7 @@ async function arrancar() {
     S.inicio = d.inicio || null; delete d.inicio;
     aplicarDatos(d);
     try { LS.set(cacheKey(), JSON.stringify(d)); } catch (e) {}
-    if (!cache) mostrarApp(); else render();
+    if (!cache) mostrarApp(); else if (S.vista && !puedeVer(S.vista)) ir('inicio'); else render(); // si cambió el usuario o su permiso, no se queda en una pantalla que ya no le toca
   } catch (e) {
     if (!cache || !S.token) throw e;
     toast('Sin conexión: mostrando los últimos datos guardados', 'error');
@@ -1702,6 +1721,7 @@ function aplicarDatos(d) {
   if (d.multi !== undefined) { S.multi = !!d.multi; LS.set('multi', S.multi ? '1' : '0'); }
   if (d.usuario) S.user = d.usuario;
   if (d.version) S.version = d.version;
+  if (S.user) prepararTienda();
   if (d.sar) S.sar = d.sar;
   aplicarTema(S.config.tema || LS.get('tema', TEMA_DEF));
   document.title = (S.config.nombre || 'Mi Negocio') + ' · Gestión de Negocio VM';
@@ -1737,6 +1757,7 @@ function mostrarApp() {
   document.body.classList.add('app');
   const h = location.hash.slice(1);
   ir(VISTAS[h] ? h : 'inicio', {}, true);
+  if (S.elegirTienda) { S.elegirTienda = false; setTimeout(() => elegirTienda(true), 300); }
   vigilarPedidos();
   revisarNovedades();
   setTimeout(ofrecerApk, 2500);
@@ -1753,6 +1774,7 @@ function salir(expirada) {
 function limpiarSesion() {
   S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; try { guardarTicket(); } catch (e) {} // el ticket no pasa al siguiente usuario
   S.hProv = null;
+  S.tienda = undefined; S.elegirTienda = false;
   S.pedidosNuevos = 0; S.chatsNuevos = 0; S.chatsL = null; S.pedidosL = null; S.cajaD = null; S.proyL = null; S.hProy = null; S.f = {}; S.yaReviso = false; S.ventasL = null; S.gastosL = null; S.comprasL = null; S.hist = null; S.inicioT = 0;
   try { history.replaceState(null, '', '#inicio'); } catch (e) {}
 }
@@ -1867,6 +1889,62 @@ ACC.cambiarNegocio = () => {
     } catch (x) { err(x); }
   });
 };
+/* ===================== MODO TIENDA (varios giros) =====================
+ * Con 2 o más giros, cada giro trabaja como una tienda. Al entrar se elige la tienda y la app muestra solo lo suyo:
+ * Inicio, Vender, Productos, Pedidos, Ventas, Gastos, Compras, Caja y Reportes. El administrador también puede ver
+ * «Todas las tiendas». Un usuario con tienda asignada entra directo a la suya y no puede cambiarla (el servidor lo cumple). */
+const TIENDA_ACC = new Set(['bootstrap', 'inicio', 'ventas', 'venta', 'gastos', 'guardarGasto', 'abono', 'compra', 'compras', 'pago', 'caja', 'cerrarCaja', 'pedidos', 'pendientes']);
+const modoTienda = () => !!(S.user && S.config) && girosOn().length > 1;
+const tiendaFija = () => modoTienda() && S.user.sucursal && girosOn().includes(S.user.sucursal) ? S.user.sucursal : ''; // «sucursal»: tienda asignada al usuario
+const tiendaKey = () => 'tienda_' + (S.negocioId || '') + '_' + (S.user ? S.user.id : '');
+const enTiendaP = p => !S.tienda || giroDeP(p) === S.tienda;
+// Decide la tienda al cargar los datos: la asignada, la que se recordó en este equipo o se pregunta al entrar
+function prepararTienda() {
+  if (!modoTienda()) { S.tienda = ''; return; }
+  const fija = tiendaFija();
+  if (fija) { S.tienda = fija; return; }
+  if (S.tienda !== undefined && (!S.tienda || girosOn().includes(S.tienda))) { if (!S.tienda && !puede('admin')) { S.tienda = girosOn()[0]; } return; }
+  const g = LS.get(tiendaKey(), '');
+  if (g === '*' && puede('admin')) { S.tienda = ''; return; }
+  if (g && girosOn().includes(g)) { S.tienda = g; return; }
+  S.tienda = puede('admin') ? '' : girosOn()[0]; S.elegirTienda = true;
+}
+function pillTienda() {
+  if (!modoTienda()) return '';
+  const t = S.tienda, fija = tiendaFija();
+  return `<button class="t-pill" ${fija ? '' : 'data-a="cambiarTienda"'} ${t ? `style="--sc:${secColor(t)}"` : ''}>${t ? `<i class="sd" style="background:${secColor(t)}"></i>${esc(secNom(t))}` : '🏬 Todas las tiendas'}${fija ? '' : ' ' + ic('down', 14)}</button>`;
+}
+ACC.cambiarTienda = () => elegirTienda(false);
+async function elegirTienda(alEntrar) {
+  if (tiendaFija()) return;
+  const h = hoja({ titulo: '¿A qué tienda entras?', html: '<div id="tdas"><div class="empty">Cargando tus tiendas…</div></div>' });
+  let d = null; try { d = await api('tiendas', {}, true); } catch (e) {}
+  const l = d && d.tiendas && d.tiendas.length ? d.tiendas : girosOn().map(id => ({ id, nombre: giroN(id) }));
+  const rec = LS.get(tiendaKey(), '');
+  const card = t => `<button class="td-c ${S.tienda === t.id ? 'on' : ''}" data-t="${t.id}" style="--sc:${secColor(t.id)}"><span class="td-emo">${GIRO_EMO[t.id] || '📦'}</span><span class="td-tx"><b>${esc(giroCorto(t.id))}</b>
+      ${t.hoy !== undefined ? `<small>Hoy <b class="n">${money(t.hoy)}</b> · ${t.n === 1 ? '1 venta' : t.n + ' ventas'}</small>` : ''}${t.caja !== undefined ? `<small>En caja <b class="n">${money(t.caja)}</b></small>` : ''}</span>
+      ${t.pedidos ? `<span class="td-ped">${t.pedidos} ${t.pedidos === 1 ? 'pedido nuevo' : 'pedidos nuevos'}</span>` : ''}${ic('right', 18)}</button>`;
+  $('#tdas', h.el).innerHTML = `<p class="sm mut" style="margin:0 2px 12px">${esc(S.config.nombre || 'Tu negocio')} tiene ${l.length} tiendas. Elige con cuál vas a trabajar: verás solo sus ventas, su caja, sus pedidos y sus productos.</p>
+    <div class="td-g">${l.map(card).join('')}${puede('admin') ? `<button class="td-c td-all ${!S.tienda && !alEntrar ? 'on' : ''}" data-t="*"><span class="td-emo">🏬</span><span class="td-tx"><b>Todas las tiendas</b><small>El negocio completo, con los reportes por sección</small></span>${ic('right', 18)}</button>` : ''}</div>
+    <label class="chk" style="margin-top:12px"><input type="checkbox" id="td-rec" ${rec ? 'checked' : ''}> Recordar mi elección en este equipo</label>`;
+  h.el.addEventListener('click', e => {
+    const b = e.target.closest('[data-t]'); if (!b) return;
+    const t = b.dataset.t === '*' ? '' : b.dataset.t;
+    if ($('#td-rec', h.el).checked) LS.set(tiendaKey(), t || '*'); else LS.del(tiendaKey());
+    h.cerrar(); aplicarTienda(t);
+  });
+}
+function aplicarTienda(t) {
+  const cambio = (S.tienda || '') !== t;
+  S.tienda = t;
+  if (cambio) { // lo guardado de la otra tienda ya no sirve
+    S.inicio = null; S.ventasL = null; S.pedidosL = null; S.cajaD = null; S.gastosL = null; S.comprasL = null; S.cuentasL = null;
+    S.f.vcat = ''; S.f.pcat = ''; S.f.cjt = '';
+    if (S.ticket.items.length && !S.ticket.items.every(i => !i.productoId || enTiendaP(byId(S.productos, i.productoId) || {}))) toast('El ticket tiene productos de otra tienda: revísalo antes de cobrar', 'error', 5000);
+  }
+  pintarHeader(); pintarNav(); render();
+  toast(t ? 'Estás en ' + secNom(t) : 'Estás viendo todas las tiendas', 'ok');
+}
 let registrando = false;
 async function registrarse(ev) {
   ev.preventDefault();
@@ -2765,8 +2843,8 @@ async function abrirCuenta(per) {
   h.per = per; h.botones([]);
   let d, extra = null;
   try {
-    d = await api('reporte', { desde, hasta }, true);
-    if (per === 'hoy' && !d.kpi.n) { const [d7, h7] = rangoPer('d7'); extra = await api('reporte', { desde: d7, hasta: h7 }, true); }
+    d = await api('reporte', { desde, hasta, giro: S.tienda || '' }, true);
+    if (per === 'hoy' && !d.kpi.n) { const [d7, h7] = rangoPer('d7'); extra = await api('reporte', { desde: d7, hasta: h7, giro: S.tienda || '' }, true); }
   } catch (e) { $('#cu-b', h.b).innerHTML = `<div class="empty">${esc(e.message || e)}</div>`; return; }
   if (h.cerrado || h.per !== per) return;
   const k = d.kpi, { frases, animo } = cuentaTexto(per, d, extra);
@@ -2839,12 +2917,12 @@ function agregarAlTicket(p, n, variante) {
 }
 R.vender_bar = () => `<button class="hbtn" data-a="escanear" aria-label="Escanear código">${ic('barcode', 20)}</button>`;
 R.vender = () => {
-  const cats = [...new Set(S.productos.filter(p => p.activo).map(p => p.categoria))].sort();
+  const cats = [...new Set(S.productos.filter(p => p.activo && enTiendaP(p)).map(p => p.categoria))].sort();
   const f = S.f;
   if (f.vcat && !cats.includes(f.vcat)) f.vcat = '';
   $('#main').innerHTML = `<button class="btn pri big" style="width:100%;justify-content:center;margin-bottom:12px" data-a="nuevaFactura">${ic('doc', 20)} ${S.ticket.items.length ? 'Seguir la factura · ' + money(calcTotales(S.ticket).total) : 'Nueva factura'}</button><div class="pos-top"><div class="srch grow">${ic('search', 18)}<input id="v-q" placeholder="Buscar producto o código…" value="${esc(f.vq || '')}" autocomplete="off" enterkeyhint="search"></div>
     <button class="btn icon" data-a="escanear" title="Escanear código de barras">${ic('barcode')}</button><button class="btn icon" data-a="itemLibre" title="Artículo sin registrar">${ic('plus')}</button></div>
-    <div class="chips" id="v-cats"><button class="chip ${!f.vcat ? 'on' : ''}" data-a="vcat" data-c="">Todo <span class="c">${S.productos.filter(p => p.activo).length}</span></button>${cats.map(c => `<button class="chip ${f.vcat === c ? 'on' : ''}" data-a="vcat" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+    <div class="chips" id="v-cats"><button class="chip ${!f.vcat ? 'on' : ''}" data-a="vcat" data-c="">Todo <span class="c">${S.productos.filter(p => p.activo && enTiendaP(p)).length}</span></button>${cats.map(c => `<button class="chip ${f.vcat === c ? 'on' : ''}" data-a="vcat" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
     <div class="pgrid" id="v-grid"></div>
     ${S.ticket.pedidoId ? `<div class="aviso info" style="margin-top:12px">${ic('inbox', 20)}<div><b>Cobrando un pedido en línea</b><small>Al cobrar, el pedido queda como entregado.</small></div><button class="btn sm" data-a="limpiarTicket">Quitar</button></div>` : ''}
     <div id="v-bar"></div>`;
@@ -2853,7 +2931,7 @@ R.vender = () => {
   q.addEventListener('keydown', e => {
     if (e.key !== 'Enter') return;
     const v = q.value.trim().toLowerCase();
-    const p = S.productos.find(x => x.activo && x.codigo && x.codigo.toLowerCase() === v);
+    const p = S.productos.find(x => x.activo && enTiendaP(x) && x.codigo && x.codigo.toLowerCase() === v);
     if (p) { if (agregarAlTicket(p)) toast('+1 ' + p.nombre, 'ok', 1500); q.value = ''; S.f.vq = ''; pintarGridVenta(); }
     else if (q.value.trim()) { const l = filtrarVenta(); if (l.length === 1) { agregarAlTicket(l[0]); q.value = ''; S.f.vq = ''; pintarGridVenta(); } }
   });
@@ -2883,8 +2961,8 @@ function abrirFactura() {
 }
 ACC.fxEscanear = () => escanearCodigo(codigoLeido);
 ACC.fxBuscar = () => {
-  const h = hoja({ titulo: 'Buscar producto', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="fxb-q" placeholder="Nombre, código o categoría…" autocomplete="off"></div><div class="list" id="fxb-l"></div>`, foco: '#fxb-q' });
-  const l = S.productos.filter(p => p.activo).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const h = hoja({ titulo: S.tienda ? 'Buscar en ' + esc(secNom(S.tienda)) : 'Buscar producto', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="fxb-q" placeholder="Nombre, código o categoría…" autocomplete="off"></div><div class="list" id="fxb-l"></div>`, foco: '#fxb-q' });
+  const l = S.productos.filter(p => p.activo && enTiendaP(p)).sort((a, b) => a.nombre.localeCompare(b.nombre));
   const filtra = q => l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q));
   const pinta = () => { const q = norm($('#fxb-q', h.el).value); $('#fxb-l', h.el).innerHTML = filtra(q).slice(0, 40).map(p => `<div class="li" data-fx="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.categoria)}${p.codigo ? ' · ' + esc(p.codigo) : ''}${p.tipo === 'producto' ? ' · ' + cant(p.stock) + ' disp.' : ''}</small></div><div class="am n">${money(p.precio)}</div></div>`).join('') || '<div class="empty">Sin resultados</div>'; };
   const elegir = async p => { let v = ''; if (modOn('variantes') && p.opciones) { v = await elegirVariante(p); if (v === null) return; } if (agregarAlTicket(p, 1, v)) { toast('+1 ' + p.nombre, 'ok', 1500); h.cerrar(); S.hFact && S.hFact.pinta(); pintarGridVenta(); } };
@@ -2911,7 +2989,7 @@ ACC.fxCliente = () => {
 };
 function filtrarVenta() {
   const q = norm(S.f.vq || '');
-  return S.productos.filter(p => p.activo && (!S.f.vcat || p.categoria === S.f.vcat) && (!q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q)))
+  return S.productos.filter(p => p.activo && enTiendaP(p) && (!S.f.vcat || p.categoria === S.f.vcat) && (!q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q)))
     .sort((a, b) => a.nombre.localeCompare(b.nombre));
 }
 function pintarGridVenta() {
@@ -2968,6 +3046,7 @@ function codigoLeido(code) {
   const c = String(code).trim().toLowerCase();
   const p = S.productos.find(x => x.activo && x.codigo && String(x.codigo).toLowerCase() === c);
   if (!p) { toast('No hay producto con el código ' + code, 'error'); return false; }
+  if (!enTiendaP(p)) { toast('«' + p.nombre + '» es de ' + secNom(giroDeP(p)) + ', no de esta tienda', 'error'); return false; }
   if (!agregarAlTicket(p)) return true;
   toast('+1 ' + p.nombre + ' · ' + (enTicket(p.id) === 1 ? '1 en el ticket' : cant(enTicket(p.id)) + ' en el ticket'), 'ok', 2000);
   if (S.hFact) { S.hFact.pinta(); pintarGridVenta(); return true; }
@@ -3265,7 +3344,7 @@ function editarVenta(v) {
 }
 // Buscar un producto o servicio para agregarlo a una venta que se está editando
 function elegirParaVenta(cb) {
-  const l = S.productos.filter(p => p.activo).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const l = S.productos.filter(p => p.activo && enTiendaP(p)).sort((a, b) => a.nombre.localeCompare(b.nombre));
   const h = hoja({ titulo: 'Agregar producto', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="ea-q" placeholder="Buscar producto o código…"></div><div class="list" id="ea-l"></div>`, foco: '#ea-q' });
   const pinta = () => { const q = norm($('#ea-q', h.el).value); $('#ea-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q)).slice(0, 80).map(p => `<div class="li ch" data-p="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${money(p.precio)}${p.tipo === 'producto' ? ' · hay ' + cant(p.stock) : ''}</small></div></div>`).join('') || '<div class="empty sm">No hay productos con ese nombre</div>'; };
   $('#ea-q', h.el).addEventListener('input', pinta); pinta();
@@ -3525,7 +3604,7 @@ R.productos_bar = () => puede('admin', 'bodega') ? `<button class="hbtn" data-a=
 R.productos = () => {
   const f = S.f;
   if (S.params.filtro) { f.pfil = S.params.filtro; S.params.filtro = ''; }
-  const act = S.productos.filter(p => p.activo), ctrl = act.filter(p => p.tipo === 'producto');
+  const act = S.productos.filter(p => p.activo && enTiendaP(p)), ctrl = act.filter(p => p.tipo === 'producto');
   const bajos = ctrl.filter(p => p.stock <= p.stockMin), agot = ctrl.filter(p => p.stock <= 0);
   const valor = ctrl.reduce((a, p) => a + Math.max(0, p.stock) * p.costo, 0);
   const cats = catsUsadas();
@@ -3542,7 +3621,7 @@ R.productos = () => {
 };
 function listaProductos() {
   const f = S.f, q = norm(f.pq || '');
-  let l = S.productos.filter(p => (f.pfil === 'inactivos' ? !p.activo : p.activo));
+  let l = S.productos.filter(p => enTiendaP(p) && (f.pfil === 'inactivos' ? !p.activo : p.activo));
   if (f.pfil === 'bajos') l = l.filter(p => p.tipo === 'producto' && p.stock <= p.stockMin);
   if (f.pfil === 'agotados') l = l.filter(p => p.tipo === 'producto' && p.stock <= 0);
   if (f.pfil === 'tienda') l = l.filter(p => p.tienda);
@@ -3599,7 +3678,7 @@ function formProducto(p, onSave, pre) {
     <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. Camiseta básica"></label>
     <div class="f2"><label class="fld"><span>Código de barras</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div></label>
       <label class="fld"><span>Categoría</span><input id="pf-cat" list="dl-cat" maxlength="40" value="${esc(p.categoria || '')}" placeholder="General"><datalist id="dl-cat">${catsSugeridas().map(c => `<option value="${esc(c)}">`).join('')}</datalist></label></div>
-    ${girosOn().length > 1 ? `<span class="op-l" style="margin-top:4px">Sección de la tienda</span><div class="chips" id="pf-giro" style="flex-wrap:wrap;margin-bottom:10px">${girosOn().map(id => `<button type="button" class="chip ${giroDeP(p) === id ? 'on' : ''}" data-g="${id}">${GIRO_EMO[id] || '📦'} ${esc(giroN(id).replace(/ \(.*\)$/, ''))}</button>`).join('')}</div>` : ''}
+    ${girosOn().length > 1 ? `<span class="op-l" style="margin-top:4px">Sección de la tienda</span><div class="chips" id="pf-giro" style="flex-wrap:wrap;margin-bottom:10px">${girosOn().map(id => `<button type="button" class="chip ${(p.id ? giroDeP(p) : S.tienda || giroDeP(p)) === id ? 'on' : ''}" data-g="${id}">${GIRO_EMO[id] || '📦'} ${esc(giroN(id).replace(/ \(.*\)$/, ''))}</button>`).join('')}</div>` : ''}
     ${susOn() ? susFormProducto(p) : ''}
     ${(S.plus || modOn('variantes')) && girosOn().some(id => opcGiro(id).filtro) ? opcForm(p) : ''}
     <div class="precio-box"><h4>${ic('tag', 18)} Precio de venta</h4>
@@ -3736,7 +3815,7 @@ async function kardex(p) {
 /* ===================== PRECIOS ===================== */
 R.precios = () => {
   const f = S.f, cats = catsUsadas();
-  const l0 = S.productos.filter(p => p.activo);
+  const l0 = S.productos.filter(p => p.activo && enTiendaP(p));
   const conM = l0.map(p => ({ p, m: margenInfo(p.precio, p.costo, tasaDe(p)) }));
   const sinCosto = conM.filter(x => !x.m).length, bajos = conM.filter(x => x.m && x.m.sobreCosto < 15).length;
   const prom = conM.filter(x => x.m); const mProm = prom.length ? prom.reduce((a, x) => a + x.m.sobreCosto, 0) / prom.length : 0;
@@ -3811,7 +3890,7 @@ ACC.cpAplicar = () => {
 };
 function listaPrecios() {
   const q = norm(S.f.prq || ''), fil = S.f.prf || '';
-  const l = S.productos.filter(p => p.activo && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q))).map(p => ({ p, m: margenInfo(p.precio, p.costo, tasaDe(p)) }))
+  const l = S.productos.filter(p => p.activo && enTiendaP(p) && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q))).map(p => ({ p, m: margenInfo(p.precio, p.costo, tasaDe(p)) }))
     .filter(x => !fil || (fil === 'sin' ? !x.m : x.m && x.m.sobreCosto < 15)).sort((a, b) => a.p.nombre.localeCompare(b.p.nombre));
   $('#pr-l').innerHTML = `<div class="pt-h"><span>Producto</span><span>Costo</span><span>Precio</span><span>Ganancia</span></div>` + l.map(({ p, m }) => `<div class="pt-r" data-a="editPrecio" data-id="${p.id}"><span class="pt-n">${avatarProd(p, 'av sm')}<b>${esc(p.nombre)}</b></span><span class="n">${p.costo ? money(p.costo) : '<i class="mut">—</i>'}</span><span class="n"><b>${money(p.precio)}</b></span><span><span class="badge ${claseMargen(m ? m.sobreCosto : null)}">${m ? fmtN(m.sobreCosto, 0) + '%' : 'Sin costo'}</span></span></div>`).join('') + (l.length ? '' : '<div class="empty">Nada por aquí</div>');
 }
@@ -4226,7 +4305,7 @@ function formGasto(g) {
   const cats = [...new Set(S.gastoCats.map(c => c.categoria).concat(CATS_GASTO))];
   // Con varias secciones (giros), el gasto puede ser de una sola o general (se reparte en los reportes)
   const secs = repMulti() ? girosOn().concat(g.giro && !girosOn().includes(g.giro) ? [g.giro] : []) : [];
-  let giroG = g.giro || '';
+  let giroG = g.giro || (nuevo ? S.tienda || '' : '');
   const h = hoja({ titulo: nuevo ? 'Registrar gasto' : g.anulado ? 'Gasto anulado' : 'Gasto', html: `${g.anulado ? `<div class="aviso bad">${ic('x', 18)}<div><b>Anulado</b><small>${esc(g.nota)}</small></div></div>` : ''}
     <div class="fld"><span>Categoría</span><div class="chips wrap" id="gf-cats">${cats.slice(0, 12).map(c => `<button type="button" class="chip ${g.categoria === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div><input id="gf-c" list="dl-gc" value="${esc(g.categoria || '')}" placeholder="O escribe una nueva" style="margin-top:8px"><datalist id="dl-gc">${cats.map(c => `<option value="${esc(c)}">`).join('')}</datalist></div>
     <label class="fld"><span>Detalle</span><input id="gf-d" list="dl-gd" value="${esc(g.detalle || '')}" placeholder="Ej. Energía eléctrica"><datalist id="dl-gd"></datalist><small class="hint" id="gf-ult"></small></label>
@@ -4268,12 +4347,14 @@ const smoney = n => (n < 0 ? '−' : '+') + money(Math.abs(n));
 R.caja = async () => {
   const m = $('#main');
   if (!S.cajaD) m.innerHTML = '<div class="empty">Cargando…</div>';
-  const d = await api('caja', {}, !!S.cajaD);
+  const d = await api('caja', S.tienda ? {} : { caja: S.f.cjt || '' }, !!S.cajaD);
   if (S.vista !== 'caja') return;
   S.cajaD = d;
   const k = d.k, esp = r2(d.fondo + k.ventas + k.cobros - k.gastos - k.pagos - k.compras);
   const fila = (t, v, signo, cls) => `<div class="cj-r ${cls || ''}"><span>${t}</span><b class="n">${signo}${money(v)}</b></div>`;
-  m.innerHTML = `<div class="caja-card"><small>Efectivo que debería haber en caja</small><div class="big n">${money(esp)}</div><span class="desde">Desde ${esc(fFecha(d.desde))} ${fHora(d.desde)} · ${k.nVentas} ventas</span></div>
+  // Una caja por tienda: en «todas las tiendas» se elige cuál caja ver o cerrar
+  const cajasT = d.cajas ? `<div class="cj-t">${d.cajas.map(c => `<button class="${c.id === d.tienda ? 'on' : ''}" data-a="cjTienda" data-k="${c.id}" style="--sc:${secColor(c.id)}"><small>${esc(secNom(c.id))}</small><b class="n">${money(c.esperado)}</b></button>`).join('')}</div>` : '';
+  m.innerHTML = cajasT + `<div class="caja-card"><small>Efectivo que debería haber en ${d.tienda ? 'la caja de ' + esc(giroCorto(d.tienda)) : 'caja'}</small><div class="big n">${money(esp)}</div><span class="desde">Desde ${esc(fFecha(d.desde))} ${fHora(d.desde)} · ${k.nVentas} ventas</span></div>
     <div class="panel"><h3>Movimiento de efectivo</h3>${fila('Fondo inicial', d.fondo, '')}${fila('Ventas en efectivo', k.ventas, '+ ', 'pos')}${fila('Cobros de clientes', k.cobros, '+ ', 'pos')}${fila('Gastos en efectivo' + (k.proyectos ? ` <small class="cj-sub">incluye ${money(k.proyectos)} de proyectos</small>` : ''), k.gastos, '− ', 'neg')}${k.compras ? fila('Compras en efectivo', k.compras, '− ', 'neg') : ''}${k.pagos ? fila('Pagos a proveedores', k.pagos, '− ', 'neg') : ''}${fila('Esperado en caja', esp, '', 'tot')}${k.anulaciones ? `<p class="xs mut" style="margin:8px 0 0">Incluye ${k.anulaciones === 1 ? '1 anulación' : k.anulaciones + ' anulaciones'} de movimientos que ya estaban en un cierre anterior (el dinero devuelto sale de esta caja).</p>` : ''}</div>
     <div class="kpis"><div class="kpi" style="--k:#1b4fd8"><small>Tarjeta</small><b class="n">${money(k.tarjeta)}</b></div><div class="kpi" style="--k:#00a8b5"><small>Transferencias</small><b class="n">${money(k.transferencia)}</b></div><div class="kpi" style="--k:#f25c05"><small>Vendido al crédito</small><b class="n">${money(k.credito)}</b></div></div>
     <button class="btn pri big" data-a="cerrarCaja">${ic('lock', 20)} Hacer cierre de caja</button>
@@ -4300,6 +4381,7 @@ function ventasHoyHTML(l) {
         ${l.length > (S.f.cjMax || 100) ? `<button class="btn" style="width:100%;margin-top:10px" data-a="cjMas">Ver ${Math.min(100, l.length - (S.f.cjMax || 100))} ventas más · ${l.length - (S.f.cjMax || 100)} ${l.length - (S.f.cjMax || 100) === 1 ? "pendiente" : "pendientes"} de mostrar</button>` : ''}</div>`}`;
 }
 ACC.cjv = el => { S.f.cjv = el.dataset.m; S.f.cjMax = 0; R.caja(); };
+ACC.cjTienda = el => { S.f.cjt = el.dataset.k; S.cajaD = null; R.caja(); };
 ACC.cjTg = el => { const ab = el.classList.toggle('open'); const l = S.f.cjOpen || (S.f.cjOpen = []); const i = l.indexOf(el.dataset.id); if (ab && i < 0) l.push(el.dataset.id); if (!ab && i >= 0) l.splice(i, 1); };
 ACC.cjMas = () => { S.f.cjMax = (S.f.cjMax || 100) + 100; R.caja(); };
 ACC.cjVer = async el => {
@@ -4318,7 +4400,7 @@ ACC.cerrarCaja = () => {
   const d = S.cajaD; if (!d) return;
   const k = d.k, base = r2(k.ventas + k.cobros - k.gastos - k.pagos - k.compras);
   const cuenta = {};
-  const h = hoja({ titulo: 'Cierre de caja', html: `<div class="f2"><label class="fld"><span>Fondo inicial</span><input id="cc-f" inputmode="decimal" value="${d.fondo}"></label><label class="fld"><span>Efectivo contado</span><input id="cc-c" inputmode="decimal" placeholder="0.00"></label></div>
+  const h = hoja({ titulo: d.tienda ? 'Cierre de caja · ' + esc(giroCorto(d.tienda)) : 'Cierre de caja', html: `<div class="f2"><label class="fld"><span>Fondo inicial</span><input id="cc-f" inputmode="decimal" value="${d.fondo}"></label><label class="fld"><span>Efectivo contado</span><input id="cc-c" inputmode="decimal" placeholder="0.00"></label></div>
     <details class="billetes"><summary>${ic('cash', 18)} Contar billetes y monedas</summary><div class="den">${DENOM.map(x => `<label><span>${S.config.moneda || 'L'} ${x}</span><input data-d="${x}" inputmode="numeric" placeholder="0"></label>`).join('')}<label><span>Centavos</span><input data-d="c" inputmode="decimal" placeholder="0.00"></label></div></details>
     <div class="cj-res"><div class="cj-r"><span>Esperado</span><b class="n" id="cc-e"></b></div><div class="cj-r"><span>Contado</span><b class="n" id="cc-k"></b></div><div class="cambio" id="cc-d"></div></div>
     <label class="fld"><span>Nota</span><input id="cc-n" maxlength="200" placeholder="Ej. Faltaron L 20 de cambio"></label>` });
@@ -4333,10 +4415,10 @@ ACC.cerrarCaja = () => {
   ['#cc-f', '#cc-c'].forEach(s => $(s, h.el).addEventListener('input', act)); act();
   h.botones([{ t: 'Guardar cierre', cls: 'pri', fn: async () => {
     if ($('#cc-c', h.el).value.trim() === '') throw new Error('Escribe cuánto efectivo contaste');
-    const r = await api('cerrarCaja', { fondo: num($('#cc-f', h.el).value), contado: num($('#cc-c', h.el).value), nota: $('#cc-n', h.el).value });
+    const r = await api('cerrarCaja', { fondo: num($('#cc-f', h.el).value), contado: num($('#cc-c', h.el).value), nota: $('#cc-n', h.el).value, caja: d.tienda || '' });
     S.cajaD = r.caja; S.inicio = null; h.cerrar();
     const c = r.cierre;
-    const txt = `*Cierre de caja · ${S.config.nombre}*\n${fFechaC(c.hasta)} ${fHora(c.hasta)} · ${S.user.nombre}\nFondo: ${money(c.fondo)}\nVentas en efectivo: ${money(c.ventas)}\nCobros: ${money(c.cobros)}\nGastos y compras: −${money(c.gastos)}\nPagos: −${money(c.pagos)}\nEsperado: ${money(c.esperado)}\nContado: ${money(c.contado)}\nDiferencia: ${money(c.diferencia)}${c.nota ? '\nNota: ' + c.nota : ''}`;
+    const txt = `*Cierre de caja · ${S.config.nombre}${d.tienda ? ' · ' + giroCorto(d.tienda) : ''}*\n${fFechaC(c.hasta)} ${fHora(c.hasta)} · ${S.user.nombre}\nFondo: ${money(c.fondo)}\nVentas en efectivo: ${money(c.ventas)}\nCobros: ${money(c.cobros)}\nGastos y compras: −${money(c.gastos)}\nPagos: −${money(c.pagos)}\nEsperado: ${money(c.esperado)}\nContado: ${money(c.contado)}\nDiferencia: ${money(c.diferencia)}${c.nota ? '\nNota: ' + c.nota : ''}`;
     const ok = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic('check', 40)}</i><h2>Caja cerrada</h2><p class="mut">Esperado ${money(c.esperado)} · contado ${money(c.contado)}</p><div class="cambio ${Math.abs(c.diferencia) < 0.01 ? '' : c.diferencia > 0 ? 'info' : 'bad'}"><span>${Math.abs(c.diferencia) < 0.01 ? 'Cuadró' : c.diferencia > 0 ? 'Sobrante' : 'Faltante'}</span><b class="n">${money(Math.abs(c.diferencia))}</b></div></div>
       <div class="acciones"><a class="btn wa" href="${waLink('', txt)}" target="_blank" rel="noopener">${ic('wa', 18)} Enviar resumen</a></div>` });
     ok.botones([{ t: 'Listo', cls: 'pri big', fn: () => ok.cerrar() }]);
@@ -4398,6 +4480,7 @@ R.reportes_bar = () => `<button class="hbtn" data-a="repCSV" aria-label="Descarg
 R.reportes = () => {
   if (S.params.tab) { S.f.rtab = S.params.tab; S.params.tab = ''; }
   if (S.params.giro !== undefined) { S.f.rgiro = S.params.giro; delete S.params.giro; }
+  if ((S.tienda || '') !== (S.f.rgiroT || '')) { S.f.rgiro = S.tienda || ''; S.f.rgiroT = S.tienda || ''; }
   const multi = repMulti();
   if (!multi) S.f.rgiro = '';
   else if (S.f.rgiro && !girosOn().includes(S.f.rgiro)) S.f.rgiro = '';
@@ -4602,7 +4685,7 @@ async function repCuentas() {
 R.usuarios_bar = () => `<button class="hbtn" data-a="nuevoUsuario" aria-label="Nuevo usuario">${ic('userplus', 22)}</button>`;
 R.usuarios = () => {
   $('#main').innerHTML = `<p class="sm mut" style="margin:0 2px 12px">Cada persona entra con ${S.multi ? 'su WhatsApp y su PIN' : 'su usuario y contraseña'}. El rol define lo que puede hacer.</p>
-    <div class="list">${S.usuarios.map(u => `<div class="li ${u.activo ? '' : 'anul'}" data-a="editUsuario" data-id="${u.id}"><div class="av" style="background:${esc(u.color || 'var(--pri)')}">${esc(iniciales(u.nombre))}</div><div class="tx"><b>${esc(u.nombre)}${u.id === S.user.id ? ' (tú)' : ''}</b><small>${esc(S.multi ? fmtWA(u.usuario) : u.usuario)}${u.activo ? '' : ' · inactivo'}</small></div><div class="am"><span class="badge">${ROLES[u.rol]}</span></div></div>`).join('')}</div>
+    <div class="list">${S.usuarios.map(u => `<div class="li ${u.activo ? '' : 'anul'}" data-a="editUsuario" data-id="${u.id}"><div class="av" style="background:${esc(u.color || 'var(--pri)')}">${esc(iniciales(u.nombre))}</div><div class="tx"><b>${esc(u.nombre)}${u.id === S.user.id ? ' (tú)' : ''}</b><small>${esc(S.multi ? fmtWA(u.usuario) : u.usuario)}${repMulti() && u.rol !== 'admin' ? ` · <span class="u-td">${u.sucursal && girosOn().includes(u.sucursal) ? esc(secNom(u.sucursal)) : 'cualquier tienda'}</span>` : ''}${u.activo ? '' : ' · inactivo'}</small></div><div class="am"><span class="badge">${ROLES[u.rol]}</span></div></div>`).join('')}</div>
     <div class="panel" style="margin-top:14px"><h3>Roles</h3>${Object.keys(ROLES).map(r => `<p class="sm" style="margin:6px 0"><b>${ROLES[r]}:</b> <span class="mut">${ROL_DESC[r]}</span></p>`).join('')}</div>`;
 };
 ACC.nuevoUsuario = () => formUsuario(null);
@@ -4610,17 +4693,19 @@ ACC.editUsuario = el => formUsuario(byId(S.usuarios, el.dataset.id));
 function formUsuario(u) {
   const nuevo = !u; u = u || { rol: 'cajero', activo: true, color: '#1f7cff' };
   const cols = ['#d10f6f', '#1f7cff', '#00b56e', '#ff9500', '#8a3ffc', '#00b3bf', '#f2234b', '#4c22d0'];
-  let rol = u.rol, color = u.color;
+  let rol = u.rol, color = u.color, tienda = u.sucursal || '';
   const h = hoja({ titulo: nuevo ? 'Nuevo usuario' : 'Editar usuario', html: `<label class="fld"><span>Nombre</span><input id="uf-n" value="${esc(u.nombre || '')}"></label>
     <label class="fld"><span>${S.multi ? 'WhatsApp (con este entra)' : 'Usuario'}</span><input id="uf-u" ${S.multi ? 'type="tel" inputmode="tel" placeholder="9876-5432"' : 'autocapitalize="none"'} value="${esc(S.multi && u.usuario ? fmtWA(u.usuario).replace('+504 ', '') : u.usuario || '')}"></label>
     <div class="fld"><span>Rol</span><div class="roles" id="uf-r">${Object.keys(ROLES).map(r => `<button type="button" class="rol ${rol === r ? 'on' : ''}" data-r="${r}"><b>${ROLES[r]}</b><small>${ROL_DESC[r]}</small></button>`).join('')}</div></div>
+    ${repMulti() ? `<div class="fld" id="uf-tw" ${rol === 'admin' ? 'hidden' : ''}><span>Tienda</span><div class="chips wrap" id="uf-t">${[''].concat(girosOn()).map(id => `<button type="button" class="chip ${tienda === id ? 'on' : ''}" data-t="${id}">${id ? `<i class="sd" style="background:${secColor(id)}"></i>${esc(secNom(id))}` : 'Cualquier tienda'}</button>`).join('')}</div><small class="hint">Con una tienda asignada entra directo a ella y solo ve lo suyo: ventas, caja, pedidos y productos.</small></div>` : ''}
     <div class="fld"><span>Color</span><div class="cols" id="uf-c">${cols.map(c => `<button type="button" style="background:${c}" class="${c === color ? 'on' : ''}" data-c="${c}"></button>`).join('')}</div></div>
     <label class="fld"><span>${nuevo ? (S.multi ? 'PIN (4 a 6 números)' : 'Contraseña') : (S.multi ? 'Nuevo PIN (déjalo vacío para no cambiarlo)' : 'Nueva contraseña (opcional)')}</span>${pw(`id="uf-p" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''} autocomplete="new-password"`)}</label>
     ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="uf-a" ${u.activo ? 'checked' : ''}><span class="sw"></span><div><b>Puede entrar al sistema</b></div></label>` : ''}` });
-  $('#uf-r', h.el).addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (!b) return; rol = b.dataset.r; $$('#uf-r .rol', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  $('#uf-r', h.el).addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (!b) return; rol = b.dataset.r; $$('#uf-r .rol', h.el).forEach(x => x.classList.toggle('on', x === b)); const tw = $('#uf-tw', h.el); if (tw) tw.hidden = rol === 'admin'; });
+  const ut = $('#uf-t', h.el); if (ut) ut.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; tienda = b.dataset.t; $$('.chip', ut).forEach(x => x.classList.toggle('on', x === b)); });
   $('#uf-c', h.el).addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; color = b.dataset.c; $$('#uf-c button', h.el).forEach(x => x.classList.toggle('on', x === b)); });
   h.botones([{ t: 'Guardar', cls: 'pri', fn: async () => {
-    const g = await api('guardarUsuario', { registro: { id: u.id, nombre: $('#uf-n', h.el).value, usuario: $('#uf-u', h.el).value, rol, color, activo: $('#uf-a', h.el) ? $('#uf-a', h.el).checked : true }, clave: $('#uf-p', h.el).value.trim() });
+    const g = await api('guardarUsuario', { registro: { id: u.id, nombre: $('#uf-n', h.el).value, usuario: $('#uf-u', h.el).value, rol, color, activo: $('#uf-a', h.el) ? $('#uf-a', h.el).checked : true, tienda: repMulti() ? (rol === 'admin' ? '' : tienda) : undefined }, clave: $('#uf-p', h.el).value.trim() });
     const i = S.usuarios.findIndex(x => x.id === g.id); if (i >= 0) S.usuarios[i] = g; else S.usuarios.push(g);
     if (g.id === S.user.id) Object.assign(S.user, g);
     guardarCache(); h.cerrar(); toast('Usuario guardado', 'ok'); R.usuarios();
@@ -4643,6 +4728,7 @@ R.ajustes = () => {
     <div class="f3"><label class="fld"><span>Moneda</span><input data-k="moneda" value="${v('moneda')}" maxlength="4"></label><label class="fld"><span>ISV general</span>${sel('isv', [['0.15', '15%'], ['0.18', '18%'], ['0', 'No cobro ISV']])}</label><label class="fld"><span>Los precios…</span>${sel('preciosConISV', [['si', 'Ya incluyen ISV'], ['no', 'No incluyen ISV']])}</label></div>
     <div class="f2"><label class="fld"><span>Fondo de caja (para empezar el día)</span><input data-k="fondoCaja" inputmode="decimal" value="${v('fondoCaja')}"></label><label class="fld"><span>Sin existencias…</span>${sel('venderSinStock', [['no', 'No dejar vender'], ['si', 'Dejar vender igual']])}</label></div>
     <label class="fld"><span>Vender empieza en</span>${sel('venderInicio', [['catalogo', 'Catálogo con fotos (tocar productos)'], ['factura', 'Nueva factura (escanear o buscar)']])}</label>
+    ${repMulti() ? `<label class="fld"><span>Caja con varias tiendas</span>${sel('cajaTienda', [['si', 'Una caja por tienda (cada una cuenta y cierra la suya)'], ['no', 'Una sola caja para todas']])}</label>` : ''}
     <label class="fld"><span>Mensaje al pie del comprobante</span><input data-k="mensajeRecibo" value="${v('mensajeRecibo')}" maxlength="120"></label>
     <button class="btn pri" data-a="guardarAj" data-s="negocio">Guardar</button>`);
   if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
@@ -6216,6 +6302,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.11', fecha: '2026-10-27', items: [
+    { i: 'store', t: 'Cada sección es una tienda', d: 'Al entrar eliges la tienda y el programa te muestra solo lo suyo: ventas, caja, pedidos, productos, gastos y reportes. Cambias de tienda desde el botón debajo del nombre de tu negocio. Cada tienda tiene su propia caja y su cierre, y a cada usuario le puedes asignar su tienda en Usuarios.', si: () => repMulti() }
+  ] },
   { v: '1.9.10', fecha: '2026-10-27', items: [
     { i: 'edit', t: 'Editar una venta', d: 'Abre una venta en Ventas y toca «Editar»: cambia cantidades, precios, productos, el cliente, la forma de pago o el descuento. Conserva su número y su fecha, el inventario se ajusta solo y te dice cuánto devolver o cobrar en efectivo. Queda guardado cómo era antes y por qué cambió.', ir: 'ventas' }
   ] },
