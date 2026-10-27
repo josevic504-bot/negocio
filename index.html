@@ -1196,7 +1196,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.7';
+const APP_VER = '1.9.8';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -2777,7 +2777,7 @@ function abrirFactura() {
       <div class="fx-top"><button class="btn pri" data-a="fxEscanear">${ic('barcode', 20)} Escanear</button><button class="btn" data-a="fxBuscar">${ic('search', 20)} Buscar</button></div>
       ${n ? `<div class="tks">${t.items.map((i, k) => { const p = i.productoId ? byId(S.productos, i.productoId) : null; return `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${admin || !i.productoId ? `<a data-a="cbPrecio" data-k="${k}">${money(i.precio)} c/u ✎</a>` : money(i.precio) + ' c/u'}${p && p.codigo ? ' · ' + esc(p.codigo) : ''}</small></div><div class="qty"><button data-a="cbQ" data-k="${k}" data-d="-1">−</button><span data-a="cbCant" data-k="${k}">${cant(i.cantidad)}</span><button data-a="cbQ" data-k="${k}" data-d="1">+</button></div><b class="n tkt">${money(i.cantidad * i.precio)}</b></div>`; }).join('')}</div>
         <div class="fx-tot"><span class="mut">${n === 1 ? '1 artículo' : n + ' artículos'} · ${cant(u)} ${u === 1 ? 'unidad' : 'unidades'}</span><b class="n">${money(tot.total)}</b></div>`
-      : `<div class="fx-emp">${ic('cart', 36)}<p><b>Factura nueva</b><br>Escanea el código de barras o busca el producto. Cada lectura agrega una unidad.</p></div>`}`;
+      : `<div class="fx-emp">${ic('cart', 36)}<p><b>Factura nueva</b><br>Dispara tu lector de códigos, usa la cámara con Escanear o busca el producto. Cada lectura agrega una unidad.</p></div>`}`;
     h.botones([{ t: ic('trash', 18), cls: 'bad icon', fn: async () => { if (!n) return; if (await confirmar('¿Vaciar la factura?', { si: 'Vaciar' })) { S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket(); pinta(); pintarGridVenta(); } } },
       { t: n ? `${ic('check')} Cobrar ${money(tot.total)}` : 'Cobrar', cls: 'pri big', fn: () => { if (!n) return toast('Agrega productos a la factura', 'error'); abrirCobro(); } }]);
   };
@@ -2789,9 +2789,22 @@ ACC.fxEscanear = () => escanearCodigo(codigoLeido);
 ACC.fxBuscar = () => {
   const h = hoja({ titulo: 'Buscar producto', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="fxb-q" placeholder="Nombre, código o categoría…" autocomplete="off"></div><div class="list" id="fxb-l"></div>`, foco: '#fxb-q' });
   const l = S.productos.filter(p => p.activo).sort((a, b) => a.nombre.localeCompare(b.nombre));
-  const pinta = () => { const q = norm($('#fxb-q', h.el).value); $('#fxb-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q)).slice(0, 40).map(p => `<div class="li" data-fx="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.categoria)}${p.codigo ? ' · ' + esc(p.codigo) : ''}${p.tipo === 'producto' ? ' · ' + cant(p.stock) + ' disp.' : ''}</small></div><div class="am n">${money(p.precio)}</div></div>`).join('') || '<div class="empty">Sin resultados</div>'; };
-  $('#fxb-q', h.el).addEventListener('input', debounce(pinta, 100)); pinta();
-  h.b.addEventListener('click', async e => { const x = e.target.closest('[data-fx]'); if (!x) return; const p = byId(S.productos, x.dataset.fx); let v = ''; if (modOn('variantes') && p.opciones) { v = await elegirVariante(p); if (v === null) return; } if (agregarAlTicket(p, 1, v)) { toast('+1 ' + p.nombre, 'ok', 1500); h.cerrar(); S.hFact && S.hFact.pinta(); pintarGridVenta(); } });
+  const filtra = q => l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q) || norm(p.categoria).includes(q));
+  const pinta = () => { const q = norm($('#fxb-q', h.el).value); $('#fxb-l', h.el).innerHTML = filtra(q).slice(0, 40).map(p => `<div class="li" data-fx="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.categoria)}${p.codigo ? ' · ' + esc(p.codigo) : ''}${p.tipo === 'producto' ? ' · ' + cant(p.stock) + ' disp.' : ''}</small></div><div class="am n">${money(p.precio)}</div></div>`).join('') || '<div class="empty">Sin resultados</div>'; };
+  const elegir = async p => { let v = ''; if (modOn('variantes') && p.opciones) { v = await elegirVariante(p); if (v === null) return; } if (agregarAlTicket(p, 1, v)) { toast('+1 ' + p.nombre, 'ok', 1500); h.cerrar(); S.hFact && S.hFact.pinta(); pintarGridVenta(); } };
+  const q = $('#fxb-q', h.el);
+  q.addEventListener('input', debounce(pinta, 100)); pinta();
+  // Enter (la pistola lectora termina con Enter): entra el producto con ese código, o el único resultado
+  q.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return; e.preventDefault();
+    const t = q.value.trim(); if (!t) return;
+    const p = l.find(x => x.codigo && String(x.codigo).toLowerCase() === t.toLowerCase());
+    if (p) return elegir(p);
+    const r = filtra(norm(t));
+    if (r.length === 1) return elegir(r[0]);
+    toast(r.length ? r.length + ' productos coinciden: toca el que quieres' : 'No hay producto con «' + t + '»', r.length ? '' : 'error');
+  });
+  h.b.addEventListener('click', e => { const x = e.target.closest('[data-fx]'); if (x) elegir(byId(S.productos, x.dataset.fx)); });
 };
 ACC.fxCliente = () => {
   const h = hoja({ titulo: 'Cliente de la factura', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="fxc-q" placeholder="Buscar cliente…" autocomplete="off"></div><div class="list" id="fxc-l"></div>`, foco: '#fxc-q' });
@@ -2844,7 +2857,9 @@ ACC.itemLibre = () => {
 (() => {
   let buf = '', t0 = 0;
   document.addEventListener('keydown', e => {
-    if (S.vista !== 'vender' || !S.user || PILA.length) return;
+    // Funciona en Vender y también con «Nueva factura» abierta (siempre que no haya otra ventana encima)
+    const enFactura = !!S.hFact && PILA[PILA.length - 1] === S.hFact;
+    if (!S.user || !(enFactura || (S.vista === 'vender' && !PILA.length))) return;
     const el = document.activeElement, enInput = el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable);
     if (enInput) return;
     const ahora = Date.now(); if (ahora - t0 > 120) buf = ''; t0 = ahora;
@@ -5943,6 +5958,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.8', fecha: '2026-10-27', items: [
+    { i: 'barcode', t: 'Lector de códigos también en Nueva factura', d: 'Si usas una pistola lectora (USB o Bluetooth) en la computadora o la tablet, ahora también funciona con Nueva factura abierta: solo dispara y el producto se agrega. Y en Buscar, al dar Enter entra el producto si el código coincide o hay un solo resultado.', ir: 'vender' }
+  ] },
   { v: '1.9.7', fecha: '2026-10-25', items: [
     { i: 'edit', t: 'Editar pedidos en línea', d: 'Si algo se agotó o hubo un error, abre el pedido y toca «Editar»: cambia cantidades o quita productos, el total se recalcula y le avisas al cliente por WhatsApp con el motivo.', ir: 'pedidos' }
   ] },
