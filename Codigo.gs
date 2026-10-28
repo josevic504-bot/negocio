@@ -77,7 +77,7 @@ const SCHEMA = {
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
-  Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota'],
+  Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo'],
   Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
@@ -322,7 +322,7 @@ function lock_(fn) {
   EN_LOCK++;
   try { return fn(); } finally {
     EN_LOCK--; try { SpreadsheetApp.flush(); } catch (e) {} // flush: lo escrito queda confirmado antes de soltar el candado (evita registros duplicados)
-    if (!EN_LOCK && INV_LOCK.length) { try { const cs = CacheService.getScriptCache(); INV_LOCK.splice(0).forEach(n => { cs.remove(ck_(n)); cs.put('V' + ck_(n), String(Date.now()) + Math.random(), 21600); }); } catch (e) {} }
+    if (!EN_LOCK && INV_LOCK.length) { try { const cs = CacheService.getScriptCache(), ks = INV_LOCK.splice(0), v = {}; ks.forEach(k => { v['V' + k] = String(Date.now()) + Math.random(); }); cs.removeAll(ks); cs.putAll(v, 21600); } catch (e) {} }
     l.releaseLock();
   }
 }
@@ -416,13 +416,14 @@ function ventanaMs_() { return msDeLocal_(diasAtras_(DIAS_VENTANA) + 'T00:00'); 
 // Primera fila de la hoja (contando desde 1) cuyo id es de desdeMs en adelante. Se recuerda unas horas.
 function filaDesde_(name, n, desdeMs) {
   const s = sh_(name), cs = CacheService.getScriptCache(), key = 'W_' + ck_(name) + '_' + Math.floor(desdeMs / 3600000);
-  try { const c = cs.get(key); if (c && Number(c) >= 2 && Number(c) <= n + 1) return Number(c); } catch (e) {}
+  // Se recuerda «fila|desde»: la fila sirve solo si se calculó para una fecha igual o anterior a la pedida (si no, se saltarían filas)
+  try { const c = String(cs.get(key) || '').split('|'); if (c[0] && Number(c[0]) >= 2 && Number(c[0]) <= n + 1 && (!c[1] || Number(c[1]) <= desdeMs)) return Number(c[0]); } catch (e) {}
   const ids = s.getRange(2, 1, n - 1, 1).getValues();
   // De atrás hacia adelante hasta ver 50 filas seguidas más viejas que la ventana (tolera ids fuera de orden)
   let inicio = ids.length, viejos = 0;
   for (let i = ids.length - 1; i >= 0; i--) { const t = idMs_(ids[i][0]); if (t && t < desdeMs) { if (++viejos >= 50) break; } else { viejos = 0; inicio = i; } }
   const fila = inicio + 2;
-  try { cs.put(key, String(fila), 21600); } catch (e) {}
+  try { cs.put(key, fila + '|' + desdeMs, 21600); } catch (e) {}
   return fila;
 }
 function rowsDesde_(name, desdeMs) {
@@ -451,7 +452,7 @@ function columna_(name, col) {
 }
 const INV_LOCK = [];
 function invalidar_(name) {
-  if (EN_LOCK && INV_LOCK.indexOf(name) < 0) INV_LOCK.push(name);
+  if (EN_LOCK && CACHE_HOJAS.indexOf(name) >= 0 && INV_LOCK.indexOf(ck_(name)) < 0) INV_LOCK.push(ck_(name));
   delete MEMO[name];
   Object.keys(MEMO).forEach(k => { if (k.indexOf('_w_' + name + '_') === 0 || k.indexOf('_c_' + name + '_') === 0) delete MEMO[k]; });
   if (name === 'Ventas' || name === 'Gastos' || name === 'Distribuciones') { try { CacheService.getScriptCache().remove('RM_' + (NEG ? NEG.id : '')); } catch (e) {} }
@@ -938,7 +939,7 @@ function loginMulti_(d) {
   // Una persona puede tener varios negocios con el mismo WhatsApp y PIN (los vincula Vic desde el Panel)
   const accs = mRows_('Accesos').filter(x => String(x.whatsapp) === wa && x.activo);
   if (!accs.length) throw falla();
-  const validos = [];
+  const validos = []; let errHoja = null;
   accs.forEach(acc => {
     const lic = negocioPorId_(acc.negocioId);
     if (!lic) return;
@@ -946,8 +947,9 @@ function loginMulti_(d) {
       cambiarA_(lic);
       const u = rows_('Usuarios').find(x => x.id === acc.usuarioId);
       if (u && u.activo && hash_(String(d.pin || ''), u.salt) === u.hash) validos.push({ lic: lic, u: u });
-    } catch (e) {}
+    } catch (e) { errHoja = e; }
   });
+  if (!validos.length && errHoja) throw errHoja; // la hoja no abrió: no es un PIN malo
   if (!validos.length) throw falla();
   c.remove(kf);
   let v = validos[0];
@@ -1787,7 +1789,7 @@ function guardar_(u, d) {
       if (prev && prev !== reg.tiendaPortada) borrarFoto_(prev);
     }
     ['tiendaAbre', 'tiendaCierra'].forEach(k => { if (reg[k] && !/^([01]\d|2[0-3]):[0-5]\d$/.test(reg[k])) throw new Error('Escribe la hora con el formato 08:00'); });
-    if (reg.tiendaMapa && !/^https?:\/\//i.test(reg.tiendaMapa.trim())) throw new Error('El enlace de Google Maps debe empezar con https://'); // solo enlaces web
+    if (reg.tiendaMapa) { const t = reg.tiendaMapa.trim(); if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de Google Maps debe ser una dirección web (https://…)'); reg.tiendaMapa = /^https?:\/\//i.test(t) ? t : 'https://' + t; }
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
     if (reg.isv !== undefined && !(Number(reg.isv) >= 0 && Number(reg.isv) < 1)) throw new Error('ISV no válido');
     if (reg.tienda === 'si' && !plus_()) throw new Error('La tienda en línea es parte del plan Plus');
@@ -2052,7 +2054,7 @@ function instalarLimpiezaDiaria() {
 /* ===================== INVENTARIO ===================== */
 
 // Cambia existencias y deja registro en la hoja Inventario. cambios = { productoId: +/-cantidad }
-function moverStock_(cambios, tipo, refId, u, nota, fecha) {
+function moverStock_(cambios, tipo, refId, u, nota, fecha, costos) {
   const ids = Object.keys(cambios);
   if (!ids.length) return;
   const pm = porId_(rows_('Productos')), mov = [], f = fecha || ahora_();
@@ -2061,7 +2063,7 @@ function moverStock_(cambios, tipo, refId, u, nota, fecha) {
     if (!p || p.tipo !== 'producto') return;
     const nuevo = r3_(p.stock + cambios[id]);
     upsert_('Productos', { id: id, stock: nuevo });
-    mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: r3_(cambios[id]), stock: nuevo, refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '' });
+    mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: r3_(cambios[id]), stock: nuevo, refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '', costo: r4_(costos && costos[id] !== undefined ? costos[id] : p.costo) }); // costo unitario del momento
   });
   appendRows_('Inventario', mov);
 }
@@ -2085,7 +2087,7 @@ function ajusteStock_(u, d) {
   if (!delta) return rows_('Productos').find(x => x.id === p.id);
   if (modo !== 'conteo' && !(n > 0)) throw new Error('La cantidad debe ser mayor a cero');
   const motivo = txt_(d.motivo, 120) || (modo === 'conteo' ? 'Conteo físico' : modo === 'entrada' ? 'Entrada' : 'Salida');
-  moverStock_({ [p.id]: delta }, 'ajuste', '', u, motivo);
+  moverStock_({ [p.id]: delta }, 'ajuste', '', u, motivo, undefined, { [p.id]: p.costo });
   return rows_('Productos').find(x => x.id === p.id);
 }
 
@@ -2177,6 +2179,7 @@ function venta_(u, d, interno) {
   // Las líneas se redondean primero: así el detalle siempre suma el subtotal
   const subtotal = r2_(items.reduce((a, i) => a + r2_(i.cantidad * i.precio), 0));
   const descuento = r2_(Math.min(Math.max(0, Number(d.descuento) || 0), subtotal));
+  if (u.rol !== 'admin' && subtotal > 0 && descuento > subtotal * 0.5 + 0.004) throw new Error('El descuento máximo es del 50 % (' + money_(r2_(subtotal * 0.5), cfg) + '). Un descuento mayor lo da el administrador.');
   const factor = subtotal ? (subtotal - descuento) / subtotal : 1;
   const F = { exento: 0, exonerado: 0, g15: 0, g18: 0, i15: 0, i18: 0 }, B = { 15: 0, 18: 0 };
   items.forEach(i => {
@@ -2252,7 +2255,6 @@ function venta_(u, d, interno) {
   }));
   if (girosActivos_(cfg).length > 1) venta.sucursal = ed && ed.tienda ? ed.tienda : tiendaReq_(u, d) || gDom;
   appendRows_('Ventas', [venta]);
-  if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} } // desde aquí un reintento devuelve esta venta
   appendRows_('VentaDetalle', detalle);
   const cambios = {};
   Object.keys(pedido).forEach(id => { cambios[id] = -pedido[id]; });
@@ -2260,6 +2262,7 @@ function venta_(u, d, interno) {
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   const nuevasSus = susRegistrar_(u, planSus, venta);
   cerrarLigados_(d, venta);
+  if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} } // la venta quedó completa: un reintento la devuelve
   if (MULTI_NEGOCIO && NEG && !ed) { try { mSet_('Licencias', NEG.lic, usoLic_(1)); } catch (e) {} }
   return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
 }
@@ -2304,7 +2307,7 @@ function anularVenta_(u, d) {
   if (!v) throw new Error('La venta no existe');
   if (v.anulada) throw new Error('La venta ya está anulada');
   if (rows_('Abonos').some(a => !a.anulado && parseJ_(a.aplicado, []).some(x => x.id === v.id))) throw new Error('Esta venta tiene abonos. Anula primero los abonos del cliente.');
-  noMuyViejo_(v, v.metodo === 'Efectivo' || Number(v.recibido) > 0, 'Esta venta');
+  noMuyViejo_(v, v.metodo === 'Efectivo' || (v.metodo === 'Crédito' && Number(v.recibido) > 0), 'Esta venta');
   moverStock_(salidoDe_(v), 'anulación', v.id, u, 'Anulación ' + v.numero);
   upsert_('Ventas', { id: v.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (v.nota ? v.nota + ' · ' : '') + 'Anulada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') + (d.motivo ? ': ' + txt_(d.motivo, 120) : '') });
   if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
@@ -2331,7 +2334,7 @@ function editarVenta_(u, d) {
   if (v.corregida) throw new Error('Esta venta ya se editó. Abre la versión corregida para cambiarla otra vez.');
   if (v.anulada) throw new Error('No se puede editar una venta anulada');
   if (Number(v.anticipo) > 0) throw new Error('Esta venta se cobró con un anticipo (orden, cita, encargo o pedido). Para cambiarla, anúlala y vuelve a cobrarla desde ahí.');
-  noMuyViejo_(v, v.metodo === 'Efectivo' || Number(v.recibido) > 0, 'Esta venta');
+  noMuyViejo_(v, v.metodo === 'Efectivo' || (v.metodo === 'Crédito' && Number(v.recibido) > 0), 'Esta venta');
   const motivo = txt_(d.motivo, 120);
   if (!motivo) throw new Error('Escribe por qué cambias la venta');
   const det = rows_('VentaDetalle').filter(x => x.ventaId === v.id);
@@ -2645,7 +2648,8 @@ function guardarGasto_(u, d) {
   if (!(r.monto > 0)) throw new Error('El monto debe ser mayor a cero');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(r.fechaGasto || ''))) r.fechaGasto = hoy_();
   if (r.fechaGasto > hoy_()) throw new Error('La fecha del gasto no puede ser futura');
-  if (mesCerrado_(r.fechaGasto) || (prev && mesCerrado_(prev.fechaGasto) && (Math.abs(prev.monto - r.monto) > 0.004 || prev.metodo !== r.metodo || prev.categoria.toLowerCase() !== r.categoria.toLowerCase() || prev.fechaGasto !== r.fechaGasto)))
+  const cambiaG = prev && (Math.abs(prev.monto - r.monto) > 0.004 || prev.metodo !== r.metodo || prev.categoria.toLowerCase() !== r.categoria.toLowerCase() || prev.fechaGasto !== r.fechaGasto);
+  if ((!prev && mesCerrado_(r.fechaGasto)) || (cambiaG && (mesCerrado_(prev.fechaGasto) || mesCerrado_(r.fechaGasto))))
     throw new Error('Ese mes ya está cerrado en Contabilidad: el gasto no se puede registrar ni cambiar en él. Usa una fecha del mes abierto (o anúlalo).');
   const cats = catalogoGastos_();
   const cat = cats.find(c => c.categoria.toLowerCase() === r.categoria.toLowerCase());
@@ -3496,7 +3500,9 @@ function gastoProyecto_(u, d) {
   const ci = CAT_PROY.find(c => c.toLowerCase() === cat.toLowerCase()); if (ci) cat = ci;
   const dia = /^\d{4}-\d{2}-\d{2}$/.test(String(r.dia || '')) ? r.dia : hoy_();
   if (dia > hoy_()) throw new Error('La fecha no puede ser futura');
-  if ((mesCerrado_(dia) || (prev && mesCerrado_(prev.dia))) && (!!r.caja || (prev && prev.caja))) throw new Error('Ese mes ya está cerrado en Contabilidad: usa una fecha del mes abierto.');
+  const cajaP = !!r.caja && u.rol !== 'bodega';
+  if (!prev ? (cajaP && mesCerrado_(dia)) : ((prev.caja || cajaP) && (mesCerrado_(prev.dia) || mesCerrado_(dia)) && (Math.abs(prev.monto - r2_(r.monto > 0 ? r.monto : r3_(r.cantidad) * r4_(r.costoUnit))) > 0.004 || !!prev.caja !== cajaP || prev.dia !== dia)))
+    throw new Error('Ese mes ya está cerrado en Contabilidad: usa una fecha del mes abierto.');
   const rec = { proyectoId: p.id, dia: dia, categoria: cat, descripcion: txt_(r.descripcion, 120), caja: !!r.caja && u.rol !== 'bodega' };
   let mover = null;
   if (!prev && r.productoId) {
@@ -3617,7 +3623,7 @@ function proyectoAInventario_(u, d) {
         precio: precio, costo: cu, margen: det.r.margen, stock: 0, stockMin: 0, tasaIsv: '', icono: txt_(it.icono, 4), foto: '', fotoFecha: '', descripcion: '',
         tienda: false, activo: true, creado: ahora_(), giro: actP.indexOf(String(it.giro || gP)) > 0 ? String(it.giro || gP) : '' });
     }
-    moverStock_({ [prod.id]: x.cantidad }, 'producción', p.id, u, p.nombre);
+    moverStock_({ [prod.id]: x.cantidad }, 'producción', p.id, u, p.nombre, undefined, { [prod.id]: cu });
     upsert_('ProyectoProductos', { id: x.id, productoId: prod.id, inventario: hoy_() });
     n++;
   });
@@ -4224,18 +4230,19 @@ function contabOn_() {
 const PLAN_BASE = [
   ['1101','Caja general','activo','deudora'], ['1102','Bancos','activo','deudora'], ['1103','Cuentas por cobrar clientes','activo','deudora'],
   ['1104','Inventario de mercadería','activo','deudora'], ['1105','ISV crédito fiscal (pagado en compras)','activo','deudora'], ['1106','Retenciones ISR a favor (1 %)','activo','deudora'],
-  ['1201','Mobiliario y equipo','activo','deudora'], ['1202','Depreciación acumulada','activo','acreedora'],
+  ['1107','Producción en proceso (proyectos)','activo','deudora'], ['1201','Mobiliario y equipo','activo','deudora'], ['1202','Depreciación acumulada','activo','acreedora'],
   ['2101','Cuentas por pagar proveedores','pasivo','acreedora'], ['2102','ISV por pagar (cobrado en ventas)','pasivo','acreedora'], ['2103','Retenciones por pagar','pasivo','acreedora'], ['2104','Préstamos por pagar','pasivo','acreedora'],
-  ['3101','Capital','capital','acreedora'], ['3102','Utilidades acumuladas','capital','acreedora'], ['3103','Retiros del propietario','capital','deudora'],
+  ['3101','Capital','capital','acreedora'], ['3102','Utilidades acumuladas','capital','acreedora'], ['3103','Retiros del propietario','capital','deudora'], ['3104','Aportes del propietario (gastos pagados fuera de caja)','capital','acreedora'],
   ['4101','Ventas','ingreso','acreedora'], ['4102','Otros ingresos','ingreso','acreedora'],
   ['5101','Costo de ventas','costo','deudora'], ['5102','Compras de mercadería (inventario periódico)','costo','deudora'],
   ['6101','Sueldos y salarios','gasto','deudora'], ['6102','Alquiler','gasto','deudora'], ['6103','Servicios públicos','gasto','deudora'], ['6104','Transporte y combustible','gasto','deudora'],
   ['6105','Comisiones bancarias','gasto','deudora'], ['6106','Depreciación','gasto','deudora'], ['6107','Publicidad','gasto','deudora'], ['6108','Mantenimiento y reparaciones','gasto','deudora'],
-  ['6109','Impuestos y tasas municipales','gasto','deudora'], ['6199','Otros gastos','gasto','deudora']
+  ['6109','Impuestos y tasas municipales','gasto','deudora'], ['6110','Ajustes y mermas de inventario','gasto','deudora'], ['6199','Otros gastos','gasto','deudora']
 ];
 
 const MAPEO_BASE = { caja:'1101', banco:'1102', cxc:'1103', inventario:'1104', isvCredito:'1105', retFavor:'1106', cxp:'2101', isvPagar:'2102', retPagar:'2103',
   capital:'3101', utilAcum:'3102', ventas:'4101', otrosIngresos:'4102', costoVentas:'5101', compras:'5102', comisiones:'6105', gastoDefault:'6199',
+  produccion:'1107', aportes:'3104', ajusteInv:'6110',
   metodos: { Efectivo:'caja', Tarjeta:'banco', Transferencia:'banco' }, gastos: {} };
 
 function contabCfg_() { const c = config_(); return { inventario: c.contabInventario === 'periodico' ? 'periodico' : 'perpetuo', isvCompras: c.contabIsvCompras !== 'no', cerrado: String(c.contabCerrado || '') }; }
@@ -4253,6 +4260,10 @@ function contabMapeo_() {
 function planCuentas_() {
   let p = rows_('PlanCuentas');
   if (!p.length && !EN_LOCK) return lock_(() => planCuentas_()); // se vuelve a revisar ya dentro del candado
+  if (p.length) { // cuentas base nuevas en esta versión (producción, aportes, ajustes): se agregan si faltan
+    const hay = new Set(p.map(x => x.codigo)), falta = PLAN_BASE.filter(x => ['1107', '3104', '6110'].indexOf(x[0]) >= 0 && !hay.has(x[0]));
+    if (falta.length) { const ahora = ahora_(); appendRows_('PlanCuentas', falta.map(x => ({ id: newId_('PlanCuentas'), codigo: x[0], nombre: x[1], tipo: x[2], naturaleza: x[3], padre: '', activo: true, creado: ahora }))); invalidar_('PlanCuentas'); p = rows_('PlanCuentas'); }
+  }
   if (!p.length) {
     const ahora = ahora_();
     appendRows_('PlanCuentas', PLAN_BASE.map(x => ({ id: newId_('PlanCuentas'), codigo: x[0], nombre: x[1], tipo: x[2], naturaleza: x[3], padre: '', activo: true, creado: ahora })));
@@ -4308,6 +4319,8 @@ function partirIsv_(total, conIsv) { if (!conIsv) return { base: r2_(total), isv
 function ctaMetodo_(m, metodo) { const k = m.metodos[metodo] || 'caja'; return m[k] || m.caja; }
 
 // Asientos derivados de la operación del negocio, entre dos fechas (YYYY-MM-DD, inclusive).
+// Desde esta fecha, anular algo de un mes anterior genera una reversión en el mes de la anulación (lo anterior no cambia)
+const CONTAB_REV_DESDE = '2026-10-28';
 function asientosDerivados_(desde, hasta) {
   const m = contabMapeo_(), cfg = contabCfg_();
   const cm = porId_(rows_('Clientes')), pv = porId_(rows_('Proveedores'));
@@ -4320,7 +4333,7 @@ function asientosDerivados_(desde, hasta) {
   const fechaMs_ = ms => Utilities.formatDate(new Date(ms), TZ, "yyyy-MM-dd'T'HH:mm");
   const emite = (id, fecha, tipo, concepto, ref, L, anulado, tercero, fechaAnul) => {
     const fa = anulado ? (fechaAnul || '') : '';
-    if (anulado && fa && fa.slice(0, 7) > String(fecha).slice(0, 7)) {
+    if (anulado && fa && fa >= CONTAB_REV_DESDE && fa.slice(0, 7) > String(fecha).slice(0, 7)) {
       if (en(fecha)) push(id, fecha, tipo, concepto, ref, L, false, tercero);
       if (en(fa)) push(id + 'R', fa, tipo, 'Anulación · ' + concepto, ref, L.map(l => lin_(l.cuenta, l.haber, l.debe, l.detalle)), false, tercero);
     } else if (en(fecha)) push(id, fecha, tipo, concepto, ref, L, anulado, tercero);
@@ -4375,11 +4388,27 @@ function asientosDerivados_(desde, hasta) {
     const f = g.fechaGasto + 'T' + (String(g.creado).slice(0, 10) === g.fechaGasto ? String(g.creado).slice(11, 16) : '00:00');
     emite(g.id, f, 'gasto', (g.categoria ? g.categoria + ' · ' : '') + (g.detalle || 'Gasto'), g.id, gastoLineas(g.categoria, g.monto, g.metodo, g.detalle), g.anulado, g.proveedor || '', fAnul(g));
   });
-  const pj = porId_(rows_('Proyectos'));
+  // Proyectos (producción): lo que se gasta va a «Producción en proceso»; cuando lo producido entra al inventario, pasa a Inventario;
+  // al venderse sale como costo de ventas. Material del inventario: de Inventario a Producción. Gastos pagados con la caja salen de Caja;
+  // los demás (transferencia, dinero del dueño) se abonan a «Aportes del propietario» (o la cuenta que elija el contador).
+  const pj = porId_(rows_('Proyectos')), nomP = g => 'Proyecto ' + (pj[g.proyectoId] ? pj[g.proyectoId].nombre : '') + ' · ' + (g.descripcion || g.categoria);
   rows_('ProyectoGastos').forEach(g => {
-    if (!g.caja) return;
-    emite(g.id, g.dia + 'T00:00', 'gasto', 'Proyecto ' + (pj[g.proyectoId] ? pj[g.proyectoId].nombre : '') + ' · ' + (g.descripcion || g.categoria), g.id, gastoLineas('Proyecto · ' + g.categoria, g.monto, 'Efectivo', g.descripcion), g.anulado, '', fAnul(g));
+    const L = g.productoId ? [lin_(m.produccion, g.monto, 0, 'Material: ' + (g.descripcion || '')), lin_(m.inventario, 0, g.monto, 'Salida de inventario')]
+      : [lin_(m.produccion, g.monto, 0, g.descripcion || g.categoria), lin_(g.caja ? m.caja : m.aportes, 0, g.monto, g.caja ? 'Efectivo de la caja' : 'Pagado fuera de la caja')];
+    emite(g.id, g.dia + 'T00:00', g.productoId ? 'inventario' : 'gasto', nomP(g), g.id, L, g.anulado, '', fAnul(g));
   });
+  if (cfg.inventario === 'perpetuo') {
+    const pm = porId_(rows_('Productos'));
+    rows_('Inventario').forEach(x => {
+      if (x.tipo !== 'producción' && x.tipo !== 'ajuste') return;
+      const monto = r2_(Math.abs(Number(x.cantidad) || 0) * (Number(x.costo) || (pm[x.productoId] ? pm[x.productoId].costo : 0))); if (!(monto > 0)) return;
+      const nombre = pm[x.productoId] ? pm[x.productoId].nombre : 'Producto', cant = Number(x.cantidad) || 0;
+      const L = x.tipo === 'producción' ? [lin_(m.inventario, monto, 0, 'Producción: ' + nombre), lin_(m.produccion, 0, monto, 'Sale de producción en proceso')]
+        : cant > 0 ? [lin_(m.inventario, monto, 0, 'Ajuste: entra ' + nombre), lin_(m.ajusteInv, 0, monto, x.nota || 'Ajuste de inventario')]
+        : [lin_(m.ajusteInv, monto, 0, x.nota || 'Ajuste de inventario'), lin_(m.inventario, 0, monto, 'Ajuste: sale ' + nombre)];
+      emite(x.id, x.fecha, 'inventario', (x.tipo === 'producción' ? 'Producción · ' : 'Ajuste de inventario · ') + nombre + ' (' + cant + ')', x.refId, L, false, '', '');
+    });
+  }
   return out;
 }
 

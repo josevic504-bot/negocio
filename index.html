@@ -1250,7 +1250,9 @@ function demoShims(DEMO) {
   const CacheService = { getScriptCache: () => ({
     get: k => { const x = DEMO.cache[k]; if (!x) return null; if (x.e < Date.now()) { delete DEMO.cache[k]; return null; } return x.v; },
     put: (k, v, seg) => { if (k.indexOf('H_') === 0) return; DEMO.cache[k] = { v: String(v), e: Date.now() + (seg || 600) * 1000 }; },
-    remove: k => { delete DEMO.cache[k]; }
+    remove: k => { delete DEMO.cache[k]; },
+    removeAll: ks => { (ks || []).forEach(k => { delete DEMO.cache[k]; }); },
+    putAll: (o, seg) => { Object.keys(o || {}).forEach(k => { if (k.indexOf('H_') === 0) return; DEMO.cache[k] = { v: String(o[k]), e: Date.now() + (seg || 600) * 1000 }; }); }
   }) };
   const LockService = { getScriptLock: () => ({ waitLock: () => {}, releaseLock: () => {} }) };
   const PropertiesService = { getScriptProperties: () => ({ getProperty: k => ((db().props || {})[k] === undefined ? null : db().props[k]), setProperty: (k, v) => { (db().props = db().props || {})[k] = String(v); } }) };
@@ -1307,7 +1309,8 @@ const esc = s => String(s === undefined || s === null ? '' : s).replace(/[&<>"']
 const num = v => {
   if (typeof v === 'number') return isNaN(v) ? 0 : v;
   let t = String(v === undefined || v === null ? '' : v).trim();
-  if (t.indexOf(',') >= 0 && t.indexOf('.') < 0 && /^-?\d+,\d{1,2}$/.test(t)) t = t.replace(',', '.'); // una sola coma con 1 o 2 decimales: es decimal
+  if (t.indexOf(',') >= 0 && t.indexOf('.') < 0 && /^-?\d+,\d{1,2}\s*%?$/.test(t) && !/^-?\d{1,3},\d{3}$/.test(t.replace(/\s*%$/, ''))) t = t.replace(',', '.'); // «200,50»: coma decimal (pero «1,234» son miles)
+  else if (/^-?\d+,\d{4,}$/.test(t) || /^-?0,\d+$/.test(t)) t = t.replace(',', '.'); // «0,125» o «2,1250»: no pueden ser miles
   const n = parseFloat(t.replace(/,/g, '')); return isNaN(n) ? 0 : n;
 };
 const r2 = n => Math.round(num(n) * 100) / 100;
@@ -1721,6 +1724,8 @@ function bannerCobro() {
  * Si pasan los días de gracia sin que se registre el pago, el servidor pausa el programa (pantalla «Programa en pausa»). */
 const debeAvisarCobro = () => !!(S.user && puede('admin') && S.cobroVM && S.cobroVM.vencidas && S.cobroVM.vencidas.length && !S.cobroVisto);
 ACC.verCobro = () => avisoCobro();
+// Cuando hay otra hoja abierta (elegir tienda, novedades), el recordatorio espera a que se cierre
+function avisoCobroLuego() { let n = 0; const p = () => { if (!debeAvisarCobro()) return; if (PILA.length) { if (++n < 60) setTimeout(p, 1500); return; } avisoCobro(); }; p(); }
 function avisoCobro(luego) {
   const c = S.cobroVM; if (!S.user || S.vencidaVista || !c || !c.vencidas || !c.vencidas.length) { if (luego && S.user) luego(); return; }
   S.cobroVisto = true;
@@ -1757,7 +1762,7 @@ async function arrancar() {
     // D7: el Inicio que trae el arranque solo sirve si es de la tienda en la que se quedó (pudo elegir otra mientras cargaba)
     if ((S.tienda || '') === tReq || tiendaFija()) { S.inicio = ini; if (ini) S.inicioT = Date.now(); } else S.inicio = null;
     try { LS.set(cacheKey(), JSON.stringify(d)); } catch (e) {}
-    if (!cache) mostrarApp(); else { if (S.vista && !puedeVer(S.vista)) ir('inicio'); else render(); if (debeAvisarCobro() && !PILA.length) avisoCobro(); } // si cambió el usuario o su permiso, no se queda en una pantalla que ya no le toca
+    if (!cache) mostrarApp(); else { if (S.vista && !puedeVer(S.vista)) ir('inicio'); else render(); avisoCobroLuego(); } // si cambió el usuario o su permiso, no se queda en una pantalla que ya no le toca
   } catch (e) {
     if (!cache || !S.token) throw e;
     toast('Sin conexión: mostrando los últimos datos guardados', 'error');
@@ -2081,7 +2086,7 @@ ACC.menuDemo = () => {
   h.botones([
     { t: 'Reiniciar datos', cls: 'bad', fn: async () => {
       if (!(await confirmar('Se borrarán todos los datos de prueba.', { si: 'Reiniciar', peligro: 1 }))) return;
-      ['demo_db', 'demo_cache', 'token_demo', 'cache_demo', 'cuenta', 'ticket'].forEach(k => LS.del(k));
+      ['demo_db', 'demo_cache', 'token_demo', 'cache_demo', 'ticket_demo', 'nombre_demo', 'logo_demo', 'eslogan_demo'].forEach(k => LS.del(k));
       DEMO.route = null; DEMO.db = null; DEMO.cache = null; S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 };
       h.cerrar(); salir(true); S.lmodo = 'demo'; pintarLogin(); toast('Datos de prueba reiniciados', 'ok');
     } },
@@ -2243,7 +2248,7 @@ ACC.verSoporte = el => verSoporte(el.dataset.id);
 async function listaSoporte(box) {
   try {
     const l = await api('soporteLista', {}, true);
-    box.innerHTML = l.length ? `<div class="sec-t"><h3>Tus conversaciones</h3></div><div class="list">${l.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="verSoporte" data-id="${c.id}"><div class="av t-pri">VM</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo).slice(3))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^\p{L}\p{N}]+/u, '')) : ''}</b><span class="h">${hace(String(c.ultimo).replace(' ', 'T'))}</span></div><small>${c.deCliente ? 'Tú: ' : ''}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : ''}</div>`).join('')}</div>` : '';
+    box.innerHTML = l.length ? `<div class="sec-t"><h3>Tus conversaciones</h3></div><div class="list">${l.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="verSoporte" data-id="${c.id}"><div class="av t-pri">VM</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo).slice(3))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]+/, '')) : ''}</b><span class="h">${hace(String(c.ultimo).replace(' ', 'T'))}</span></div><small>${c.deCliente ? 'Tú: ' : ''}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : ''}</div>`).join('')}</div>` : '';
   } catch (e) { box.innerHTML = ''; }
 }
 // Tarjeta en Inicio durante la prueba: día 3 (¿qué tal?) y día 6 (vence mañana)
@@ -2765,7 +2770,7 @@ ACC.panelSoporteLista = async () => {
   const vis = l.filter(c => !f.mot || (f.mot === 'sin' ? c.sinLeer : c.motivo === f.mot));
   $('#main').innerHTML = `<div class="ch-sum"><div><b>${sin.length}</b><small>sin responder</small></div><div><b>${err_.length}</b><small>error${err_.length === 1 ? '' : 'es'} abierto${err_.length === 1 ? '' : 's'}</small></div><div><b>${l.length}</b><small>conversaciones</small></div></div>
     <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['sin', 'Sin responder']].concat(MOTIVOS_UI.map(m => [m[0], m[1] + ' ' + m[2].split(' ')[0]])).map(x => `<button class="chip ${(f.mot || '') === x[0] ? 'on' : ''}" data-a="panelSopFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
-    <div class="list">${vis.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av ${colorDe(c.negocio)}">${esc(iniciales(c.negocio))}</div><div class="tx"><div class="row sp"><b>${esc(c.negocio)}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small><span class="badge ${c.motivo === 'error' ? 'b-bad' : c.motivo === 'prueba' ? 'b-warn' : c.motivo === 'idea' ? 'b-ok' : 'b-info'}">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^\p{L}\p{N}]+/u, '')) : ''}</span> ${c.deCliente ? '' : 'Tú: '}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">✓</span>' : ''}</div>`).join('') || '<div class="empty">Sin conversaciones</div>'}</div>`;
+    <div class="list">${vis.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av ${colorDe(c.negocio)}">${esc(iniciales(c.negocio))}</div><div class="tx"><div class="row sp"><b>${esc(c.negocio)}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small><span class="badge ${c.motivo === 'error' ? 'b-bad' : c.motivo === 'prueba' ? 'b-warn' : c.motivo === 'idea' ? 'b-ok' : 'b-info'}">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]+/, '')) : ''}</span> ${c.deCliente ? '' : 'Tú: '}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">✓</span>' : ''}</div>`).join('') || '<div class="empty">Sin conversaciones</div>'}</div>`;
 };
 ACC.panelSopFiltro = el => { P.f.mot = el.dataset.k; ACC.panelSoporteLista(); };
 ACC.panelSoporteVer = el => panelChat(el.dataset.id);
@@ -3077,7 +3082,7 @@ function refrescarPrecios() {
   t.items.forEach((i, k) => {
     if (!i.productoId || i.precioMan) return;
     const p = byId(S.productos, i.productoId); if (!p) return;
-    const meses = t.sus && t.sus[k] && t.sus[k].meses ? Number(t.sus[k].meses) : 1, esp = r2(num(p.precio) * meses);
+    const meses = susOn() && t.sus && t.sus[k] && t.sus[k].meses && esSus(p) ? Number(t.sus[k].meses) : 1, esp = r2(num(p.precio) * meses);
     if (Math.abs(esp - num(i.precio)) > 0.004) { i.precio = esp; cambio = true; }
   });
   if (cambio) guardarTicket();
@@ -3373,7 +3378,10 @@ function abrirCobro() {
       if (rtn.replace(/\D/g, '') && rtn.replace(/\D/g, '').length !== 14) throw new Error('El RTN del cliente debe tener 14 números');
       datos.fiscal = { rtn: rtn.replace(/\D/g, ''), nombre: ($('#cb-nf', h.el) || {}).value || '', exonerado: !!exo, oce: fz.oce || '', cre: fz.cre || '', sag: fz.sag || '' };
     }
-    datos.clave = S.ticket.clave + '-' + firmaTxt(JSON.stringify([datos.items, datos.clienteId, datos.metodo, datos.descuento, datos.pedidoId, datos.ordenId, datos.agendaId, datos.sus || '', datos.fiscal || '']));
+    const firma = firmaTxt(JSON.stringify([datos.items, datos.descuento, datos.pedidoId, datos.ordenId, datos.agendaId, datos.sus || '']));
+    const otra = JSON.stringify([datos.clienteId, datos.metodo, datos.fiscal || '']);
+    if (S.ticket.enviado && S.ticket.enviado.f === firma && S.ticket.enviado.o !== otra && !(await confirmar('Este cobro ya se intentó una vez con otra forma de pago o cliente y no se supo si quedó registrado. ¿Lo mandas otra vez? Revisa en Ventas antes de cobrar dos veces.', { si: 'Mandar otra vez', peligro: 1 }))) return;
+    datos.clave = S.ticket.clave + '-' + firma; S.ticket.enviado = { f: firma, o: otra }; guardarTicket();
     const r = await api('venta', datos);
     try { navigator.vibrate && navigator.vibrate([35, 50, 70]); } catch (e) {}
     if (r.sar) S.sar = r.sar;
@@ -3427,6 +3435,7 @@ ACC.cbDesc = async () => {
   if (v === null) return;
   const s = String(v).trim();
   S.ticket.descuento = s.endsWith('%') ? r2(t.subtotal * num(s) / 100) : r2(s);
+  if (!puede('admin') && S.ticket.descuento > t.subtotal * 0.5 + 0.004) { S.ticket.descuento = r2(t.subtotal * 0.5); toast('El descuento máximo es del 50 %: queda en ' + money(S.ticket.descuento), 'error', 4000); }
   guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta();
 };
 ACC.nuevoClienteRapido = () => formCliente(null, c => { S.ticket.clienteId = c.id; guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta(); });
@@ -5687,7 +5696,7 @@ ACC.cbCerrar = async () => {
 };
 
 /* ---------- Diario ---------- */
-const CB_ICON = { venta: 'cart', cobro: 'cash', compra: 'truck', pago: 'wallet', gasto: 'receipt', manual: 'edit', apertura: 'layers', ajuste: 'edit', concil: 'bank' };
+const CB_ICON = { venta: 'cart', cobro: 'cash', compra: 'truck', pago: 'wallet', gasto: 'receipt', manual: 'edit', apertura: 'layers', ajuste: 'edit', concil: 'bank', inventario: 'box' };
 function cbLineasHTML(L) {
   return `<div class="tabla cb-lin">${L.map(l => `<div class="tr"><span style="${l.haber > 0 ? 'padding-left:18px;color:var(--mut)' : ''}">${esc(cbNom(l.cuenta))}${l.detalle ? ` <small class="mut">· ${esc(l.detalle)}</small>` : ''}</span><span class="n">${l.debe > 0 ? money(l.debe) : ''}</span><span class="n">${l.haber > 0 ? money(l.haber) : ''}</span></div>`).join('')}</div>`;
 }
@@ -5838,7 +5847,7 @@ ACC.cbPDF = () => { // imprime la pestaña actual (el usuario elige "Guardar com
   document.body.classList.add('imp-hoja');
   const pg = document.createElement('style'); pg.textContent = '@page{size:auto;margin:12mm}'; document.head.appendChild(pg);
   const fin = () => { document.body.classList.remove('imp-hoja'); pg.remove(); window.removeEventListener('afterprint', fin); };
-  window.addEventListener('afterprint', fin); setTimeout(fin, 300000);
+  window.addEventListener('afterprint', fin); setTimeout(fin, 15000);
   const pa = $('#print-area'); pa.innerHTML = `<div style="font-family:Arial,sans-serif;padding:24px;max-width:720px;margin:auto"><h2 style="margin:0">${esc(S.config.nombre || '')}</h2><p style="margin:4px 0 16px;color:#555">${cbTab() === 'balance' ? 'Balance general' : 'Estado de resultados'} · ${fMes(cbMes())}</p>${$('#cb .tabla').outerHTML}<p style="font-size:11px;color:#777;margin-top:18px">Reporte para control interno generado por el negocio. Cifras en lempiras.</p></div>`;
   window.print();
 };
@@ -5910,7 +5919,8 @@ function cbPlan() {
     html += `<p class="mut" style="font-size:13px">A qué cuenta va cada movimiento del programa. Viene listo; tu contador puede ajustarlo.</p>
       <div class="sec-t">Dinero y cobros</div><div class="f2">${sel('Ventas en efectivo (caja)', 'caja')}${sel('Tarjeta y transferencia (banco)', 'banco')}${sel('Ventas al crédito (clientes)', 'cxc')}${sel('Compras al crédito (proveedores)', 'cxp')}</div>
       <div class="sec-t">Ventas e impuestos</div><div class="f2">${sel('Ingreso por ventas', 'ventas')}${sel('ISV cobrado (15 %)', 'isvPagar')}${sel('ISV pagado en compras', 'isvCredito')}${sel('Retención ISR a favor', 'retFavor')}${sel('Otros ingresos (intereses)', 'otrosIngresos')}${sel('Comisiones bancarias', 'comisiones')}</div>
-      <div class="sec-t">Inventario</div><div class="f2">${sel('Inventario', 'inventario')}${sel('Costo de ventas', 'costoVentas')}</div>
+      <div class="sec-t">Inventario</div><div class="f2">${sel('Inventario', 'inventario')}${sel('Costo de ventas', 'costoVentas')}${sel('Ajustes y mermas de inventario', 'ajusteInv')}</div>
+      <div class="sec-t">Proyectos (producción)</div><div class="f2">${sel('Producción en proceso', 'produccion')}${sel('Gastos pagados fuera de la caja', 'aportes')}</div>
       <label class="fld"><span>Método de inventario</span><select id="cb-inv"><option value="perpetuo" ${cfg.inventario === 'perpetuo' ? 'selected' : ''}>Perpetuo · costo en cada venta (productos con costo)</option><option value="periodico" ${cfg.inventario === 'periodico' ? 'selected' : ''}>Periódico · compras al costo y conteo al cierre</option></select></label>
       <label class="sw-row"><input type="checkbox" id="cb-isvc" ${cfg.isvCompras ? 'checked' : ''}><span class="sw"></span> Las compras a proveedores incluyen ISV (separar el 15 % como crédito fiscal)</label>
       <div class="sec-t">Gastos por categoría</div><p class="mut" style="font-size:12px">Cuenta de gasto y si el monto incluye ISV.</p>
@@ -6004,7 +6014,7 @@ ACC.cbPaqueteExcel = async () => {
 };
 
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
-const API_MIN = '1.4'; // versión mínima del Code.gs que necesita esta app
+const API_MIN = '1.9.16'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
 const MODULOS_INFO = {
@@ -6544,6 +6554,7 @@ function confirmarGiro(id) {
   h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: 'Cambiar tipo de negocio', cls: 'pri', fn: async () => {
     const r = await api('cambiarGiro', { giro: id, ejemplos: $('#cg-ej', h.el).checked, desactivar: !!($('#cg-des', h.el) && $('#cg-des', h.el).checked) });
     S.config = r.config; S.productos = r.productos; if (r.girosActivos) S.girosActivos = r.girosActivos; S.inicio = null; S.susL = null; S.cuentasL = null; guardarCache();
+    S.tienda = undefined; prepararTienda(); S.elegirTienda = false; if (modoTienda() && !tiendaFija() && !S.tienda && !puede('admin')) S.tienda = girosOn()[0]; // la tienda se decide de nuevo con los giros nuevos
     if (!r.girosActivos) recargar(true).catch(() => {}); // servidor anterior: se piden los datos de nuevo
     h.cerrar(); toast(`Ahora tu negocio es ${g.n}${r.agregados ? ' · ' + r.agregados + ' productos de ejemplo' : ''}`, 'ok', 4000);
     ir('inicio');
