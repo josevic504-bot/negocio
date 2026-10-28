@@ -781,6 +781,7 @@ body.en-tienda{padding-bottom:110px}
   #print-area{display:block!important;color:#000;font:12px/1.35 'Courier New',monospace;width:74mm}
   .ticket .pc{text-align:center;margin-bottom:6px;display:block;border:0;border-radius:0;box-shadow:none;background:none;overflow:visible;padding:0}.ticket .pc img{max-width:40mm;max-height:18mm;display:block;margin:0 auto 4px}.ticket .pc b{font-size:15px;display:block}
   .ticket .ps{border-top:1px dashed #000;padding:5px 0}.ticket .pl{display:flex;justify-content:space-between;gap:6px}.ticket .pt{font-weight:bold;font-size:14px}
+  body.imp-hoja #print-area{width:auto!important;font:13px/1.45 Arial,sans-serif!important} /* reportes de Contabilidad: hoja completa, no ticket */
 }
 /* ===== Proyectos ===== */
 .pj-ley{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--mut);margin:2px 2px 12px}
@@ -1077,6 +1078,7 @@ const ICP = {
   gear: '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>', minus: '<path d="M5 12h14"/>',
   dots: '<circle cx="12" cy="5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="19" r="1.6" fill="currentColor"/>',
+  calc: '<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8M8 12h1.5M11.25 12h1.5M14.5 12h1.5M8 16h1.5M11.25 16h1.5M14.5 16h1.5"/>',
   coin: '<circle cx="12" cy="12" r="9"/><path d="M14.8 9.2c-.4-1-1.5-1.6-2.8-1.6-1.6 0-2.8.8-2.8 2.1 0 2.9 5.8 1.5 5.8 4.4 0 1.3-1.3 2.2-3 2.2-1.4 0-2.6-.7-3-1.8M12 6v1.6M12 16.4V18"/>',
   receipt: '<path d="M6 3h12v18l-3-2-3 2-3-2-3 2z"/><path d="M9 8h6M9 12h6M9 16h3"/>',
   doc: '<path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',
@@ -1273,7 +1275,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.15';
+const APP_VER = '1.9.16';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -1285,21 +1287,29 @@ const LS = {
   del(k) { try { localStorage.removeItem(LS_NS + k); } catch (e) {} },
   json(k, d) { try { const v = localStorage.getItem(LS_NS + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 };
-const DEMO = { src: null, on: LS.get('modo', (API_URL_DEFAULT || LS.get('api', '')) ? 'real' : 'demo') === 'demo', route: null, db: null, cache: null, B: null };
+const modoSes = () => { try { return sessionStorage.getItem(LS_NS + 'modoSes') || ''; } catch (e) { return ''; } }; // demo solo en esta pestaña
+const DEMO = { src: null, on: (modoSes() || LS.get('modo', (API_URL_DEFAULT || LS.get('api', '')) ? 'real' : 'demo')) === 'demo', route: null, db: null, cache: null, B: null };
+const mk = k => DEMO.on ? k + '_demo' : k; // marca y ticket separados entre el modo prueba y el programa real
 const tokenKey = () => DEMO.on ? 'token_demo' : 'token';
 const cacheKey = () => 'cache_' + (DEMO.on ? 'demo' : 'real');
 
 const S = {
   token: LS.get(tokenKey(), ''), user: null, config: {}, usuarios: [], productos: [], clientes: [], proveedores: [], gastoCats: [], giros: [],
   licencia: null, plus: false, negocioId: '', multi: LS.get('multi', '1') === '1', vista: 'inicio', params: {}, inicio: null,
-  ticket: LS.json('ticket', { items: [], clienteId: '', pedidoId: '', descuento: 0 }), pedidosNuevos: 0, chatsNuevos: 0, charts: {}, f: {}
+  ticket: LS.json(mk('ticket'), { items: [], clienteId: '', pedidoId: '', descuento: 0 }), pedidosNuevos: 0, chatsNuevos: 0, charts: {}, f: {}
 };
 
 /* ===================== UTILIDADES ===================== */
 const $ = (s, r) => (r || document).querySelector(s);
 const $$ = (s, r) => Array.from((r || document).querySelectorAll(s));
 const esc = s => String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-const num = v => { const n = parseFloat(String(v === undefined || v === null ? '' : v).replace(/,/g, '')); return isNaN(n) ? 0 : n; };
+// Números escritos: «1,234.50» (la coma separa miles) y también «200,50» cuando el teclado del teléfono pone coma decimal
+const num = v => {
+  if (typeof v === 'number') return isNaN(v) ? 0 : v;
+  let t = String(v === undefined || v === null ? '' : v).trim();
+  if (t.indexOf(',') >= 0 && t.indexOf('.') < 0 && /^-?\d+,\d{1,2}$/.test(t)) t = t.replace(',', '.'); // una sola coma con 1 o 2 decimales: es decimal
+  const n = parseFloat(t.replace(/,/g, '')); return isNaN(n) ? 0 : n;
+};
 const r2 = n => Math.round(num(n) * 100) / 100;
 const fmtN = (n, d) => num(n).toLocaleString('es-HN', { minimumFractionDigits: d === undefined ? 2 : d, maximumFractionDigits: d === undefined ? 2 : d });
 const money = n => (S.config.moneda || 'L') + '\u00a0' + fmtN(n); // espacio que no se corta: «L» y el monto siempre juntos
@@ -1426,7 +1436,7 @@ async function api(action, data, silent) {
 }
 function manejarError(m) {
   m = String(m || 'Error');
-  if (m.indexOf('PRUEBA_VENCIDA|') === 0) { let info = {}; try { info = JSON.parse(m.slice(15)); } catch (e) {} if (!S.enTienda) mostrarVencida(info); throw new Error(info.tipo === 'pago' ? 'El programa está en pausa por un pago pendiente' : info.tipo === 'bloqueada' ? 'El acceso está pausado' : 'Tu período de prueba terminó'); }
+  if (m.indexOf('PRUEBA_VENCIDA|') === 0) { let info = {}; try { info = JSON.parse(m.slice(15)); } catch (e) {} if (!S.enTienda && !S.sinPausa) mostrarVencida(info); throw new Error(info.tipo === 'pago' ? 'El programa está en pausa por un pago pendiente' : info.tipo === 'bloqueada' ? 'El acceso está pausado' : 'Tu período de prueba terminó'); }
   if (m === 'SESION') { if (!S.enTienda && !S.vencidaVista) salir(true); throw new Error('Tu sesión expiró. Ingresa de nuevo.'); } // con la pantalla de pausa a la vista, no se cambia por la de ingreso
   if (m === 'PANEL') { if (S.enPanel) { cerrarHojas(); panelLogin(); } throw new Error('Tu sesión del panel expiró. Entra de nuevo.'); }
   if (m.indexOf('Acción no válida') === 0) throw new Error('Esta función necesita la versión nueva del servidor. Escríbenos por WhatsApp al +504 3313-0265 para activarla.');
@@ -1434,11 +1444,12 @@ function manejarError(m) {
 }
 async function demoApi(action, data, silent) {
   if (!silent) loader(true);
+  const token = S.token, panel = S.enPanel ? P.tok : undefined, dat = JSON.parse(JSON.stringify(data || {})); // como en el servidor real: lo que se mandó al tocar
   try {
     await (DEMO.src ? new Promise(r => setTimeout(r, 120)) : demoFuente());
     const route = demoBackend();
     let res;
-    try { res = route({ action, token: S.token, panel: S.enPanel ? P.tok : undefined, data: JSON.parse(JSON.stringify(data || {})) }); }
+    try { res = route({ action, token: token, panel: panel, data: dat }); }
     catch (e) { demoGuardar(); return manejarError(e && e.message ? e.message : e); }
     demoGuardar();
     return res === undefined ? null : JSON.parse(JSON.stringify(res));
@@ -1737,11 +1748,14 @@ ACC.logout = async () => { if (await confirmar('¿Cerrar sesión en este equipo?
 /* ===================== SESIÓN ===================== */
 async function arrancar() {
   let cache = LS.json(cacheKey(), null);
-  if (cache && cache.usuario) { aplicarDatos(cache); mostrarApp(); } else cache = null;
+  if (cache && cache.usuario) { aplicarDatos(cache); S.cobroVM = null; mostrarApp(); } else cache = null; // el pago pendiente se toma del dato fresco
   try {
+    const tReq = S.tienda || '';
     const d = await api('bootstrap', { inicio: true, app: APP_VER, vid: DEMO.on ? '' : miOrigen().v || '' }, !!cache);
-    S.inicio = d.inicio || null; delete d.inicio;
+    const ini = d.inicio || null; delete d.inicio;
     aplicarDatos(d);
+    // D7: el Inicio que trae el arranque solo sirve si es de la tienda en la que se quedó (pudo elegir otra mientras cargaba)
+    if ((S.tienda || '') === tReq || tiendaFija()) { S.inicio = ini; if (ini) S.inicioT = Date.now(); } else S.inicio = null;
     try { LS.set(cacheKey(), JSON.stringify(d)); } catch (e) {}
     if (!cache) mostrarApp(); else { if (S.vista && !puedeVer(S.vista)) ir('inicio'); else render(); if (debeAvisarCobro() && !PILA.length) avisoCobro(); } // si cambió el usuario o su permiso, no se queda en una pantalla que ya no le toca
   } catch (e) {
@@ -1765,9 +1779,9 @@ function aplicarDatos(d) {
   if (d.sar) S.sar = d.sar;
   aplicarTema(S.config.tema || LS.get('tema', TEMA_DEF));
   document.title = (S.config.nombre || 'Mi Negocio') + ' · Gestión de Negocio VM';
-  LS.set('nombre', S.config.nombre || '');
-  if (S.config.logo) LS.set('logo', S.config.logo); else LS.del('logo');
-  LS.set('eslogan', S.config.eslogan || '');
+  LS.set(mk('nombre'), S.config.nombre || '');
+  if (S.config.logo) LS.set(mk('logo'), S.config.logo); else LS.del(mk('logo'));
+  LS.set(mk('eslogan'), S.config.eslogan || '');
 }
 function guardarCache() {
   try {
@@ -1785,7 +1799,7 @@ async function recargar(silent) {
 }
 function mostrarSplash() {
   const sp = $('#splash'); if (!sp) return;
-  const nombre = LS.get('nombre', ''), logo = LS.get('logo', '');
+  const nombre = LS.get(mk('nombre'), ''), logo = LS.get(mk('logo'), '');
   $('#sp-logo').innerHTML = logo ? `<img src="${esc(logo)}" alt="">` : esc(iniciales(nombre || 'VM'));
   $('#sp-name').textContent = nombre || 'Gestión de Negocio VM';
   sp.hidden = false; sp.classList.remove('out');
@@ -1817,9 +1831,11 @@ function limpiarSesion() {
   S.hProv = null;
   S.tienda = undefined; S.elegirTienda = false;
   S.pedidosNuevos = 0; S.chatsNuevos = 0; S.chatsL = null; S.pedidosL = null; S.cajaD = null; S.proyL = null; S.hProy = null; S.f = {}; S.yaReviso = false; S.ventasL = null; S.gastosL = null; S.comprasL = null; S.hist = null; S.inicioT = 0;
+  S.inicio = null; S.cb = null; S.cuentasL = null; S.susL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; S.ag_citax = null; S.ag_encargox = null; S.repCSV = null; S.cobroVisto = false; S.cobroVM = null; // nada del negocio o usuario anterior
   try { history.replaceState(null, '', '#inicio'); } catch (e) {}
 }
 function mostrarVencida(info) {
+  S.elegirTienda = false; // que el selector de tienda no se abra encima de esta pantalla
   S.token = ''; S.user = null; LS.del(tokenKey()); LS.del(cacheKey());
   S.vencidaVista = true; // al abrir la app, no se tapa con la pantalla de ingreso
   cerrarHojas();
@@ -1852,7 +1868,7 @@ function pintarLogin() {
   if (DEMO.on && !LS.get('cuenta', '') && !S.lmodoElegido) S.lmodo = 'demo';
   if (!S.multi && S.lmodo === 'reg') S.lmodo = 'ing';
   const reg = S.lmodo === 'reg', demo = S.lmodo === 'demo';
-  const nombre = LS.get('nombre', ''), logo = LS.get('logo', ''), eslogan = LS.get('eslogan', '');
+  const nombre = LS.get(mk('nombre'), ''), logo = LS.get(mk('logo'), ''), eslogan = LS.get(mk('eslogan'), '');
   const marca = !reg && !demo && nombre;
   const multi = S.multi;
   const giros = (S.giros.length ? S.giros : GIROS_LOCAL);
@@ -1896,7 +1912,8 @@ async function ingresar(ev) {
   try {
     const cred = S.multi ? { whatsapp: $('#l-user').value, pin: $('#l-pass').value.trim() } : { usuario: $('#l-user').value.trim(), clave: $('#l-pass').value };
     const pref = S.multi ? LS.get('negPref_' + String(cred.whatsapp).replace(/\D/g, '').slice(-8), '') : '';
-    let r = await api('login', pref ? Object.assign({ negocioId: pref }, cred) : cred);
+    let r = await api('login', pref ? Object.assign({ negocioId: pref, pref: 1 }, cred) : cred);
+    if (r.prefNo) { LS.del('negPref_' + String(cred.whatsapp).replace(/\D/g, '').slice(-8)); toast('El negocio que recordabas está en pausa: elige a cuál entrar', 'error', 5000); }
     if (r.elegir) r = await elegirNegocioLogin(r.elegir, cred);
     if (!r) return;
     await entrarCon(r);
@@ -1930,29 +1947,35 @@ function elegirNegocioLogin(lista, cred) {
 // «Cambiar de negocio» desde el menú (misma persona, mismo WhatsApp y PIN)
 ACC.cambiarNegocio = () => {
   const l = S.negocios || [];
-  const h = hoja({ titulo: 'Cambiar de negocio', cls: 'chica', html: `<div class="list">${l.map(n => `<div class="li ${n.actual ? '' : 'ch'}" data-n="${esc(n.id)}"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}</b><small>${esc(n.giro || '')}${n.actual ? ' · Estás aquí' : ''}</small></div><div class="am mut">${n.actual ? ic('check', 18) : '›'}</div></div>`).join('')}</div>` });
+  const EST = { prueba: 'En prueba', vencida: 'Prueba vencida', bloqueada: 'En pausa' };
+  const h = hoja({ titulo: 'Cambiar de negocio', cls: 'chica', html: `<div class="list">${l.map(n => `<div class="li ${n.actual ? '' : 'ch'}" data-n="${esc(n.id)}"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}</b><small>${esc(n.giro || '')}${n.actual ? ' · Estás aquí' : EST[n.estado] ? ' · ' + EST[n.estado] : ''}</small></div><div class="am mut">${n.actual ? ic('check', 18) : '›'}</div></div>`).join('')}</div>` });
+  let yendo = false;
   h.el.addEventListener('click', async e => {
-    const it = e.target.closest('.li.ch[data-n]'); if (!it) return;
+    const it = e.target.closest('.li.ch[data-n]'); if (!it || yendo) return;
+    yendo = true; // un doble toque no cambia dos veces
     try {
-      const r = await api('cambiarNegocio', { negocioId: it.dataset.n });
+      S.sinPausa = true; let r;
+      try { r = await api('cambiarNegocio', { negocioId: it.dataset.n }); } finally { S.sinPausa = false; }
       h.cerrar(); LS.del(cacheKey()); S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; try { guardarTicket(); } catch (x) {}
       S.vista = 'inicio'; await entrarCon(r);
       toast('Estás en ' + (S.config.nombre || 'tu negocio'), 'ok');
-    } catch (x) { err(x); }
+    } catch (x) { err(x); } finally { yendo = false; }
   });
 };
 /* ===================== MODO TIENDA (varios giros) =====================
  * Con 2 o más giros, cada giro trabaja como una tienda. Al entrar se elige la tienda y la app muestra solo lo suyo:
  * Inicio, Vender, Productos, Pedidos, Ventas, Gastos, Compras, Caja y Reportes. El administrador también puede ver
  * «Todas las tiendas». Un usuario con tienda asignada entra directo a la suya y no puede cambiarla (el servidor lo cumple). */
-const TIENDA_ACC = new Set(['bootstrap', 'inicio', 'ventas', 'venta', 'gastos', 'guardarGasto', 'abono', 'compra', 'compras', 'pago', 'caja', 'cerrarCaja', 'pedidos', 'pendientes']);
+const TIENDA_ACC = new Set(['bootstrap', 'inicio', 'ventas', 'venta', 'gastos', 'guardarGasto', 'abono', 'compra', 'compras', 'pago', 'caja', 'cerrarCaja', 'pedidos', 'pendientes',
+  'ordenGuardar', 'agendaGuardar', 'gastoProyecto', 'anticipoPedido', 'proyectoAInventario']); // también anticipos y gastos de proyecto: entran o salen de la caja de la tienda
 const modoTienda = () => !!(S.user && S.config) && girosOn().length > 1;
-const tiendaFija = () => modoTienda() && S.user.sucursal && girosOn().includes(S.user.sucursal) ? S.user.sucursal : ''; // «sucursal»: tienda asignada al usuario
+// «sucursal»: tienda asignada al usuario. El administrador ve todas; si la tienda de un usuario se apagó, trabaja en la principal (como el servidor)
+const tiendaFija = () => !modoTienda() || S.user.rol === 'admin' || !S.user.sucursal ? '' : girosOn().includes(S.user.sucursal) ? S.user.sucursal : girosOn()[0];
 const tiendaKey = () => 'tienda_' + (S.negocioId || '') + '_' + (S.user ? S.user.id : '');
 const enTiendaP = p => !S.tienda || giroDeP(p) === S.tienda;
 // Decide la tienda al cargar los datos: la asignada, la que se recordó en este equipo o se pregunta al entrar
 function prepararTienda() {
-  if (!modoTienda()) { S.tienda = ''; return; }
+  if (!modoTienda()) { S.tienda = undefined; return; } // sin decidir: si luego se activa otro giro, se usa la tienda recordada o se pregunta
   const fija = tiendaFija();
   if (fija) { S.tienda = fija; return; }
   if (S.tienda !== undefined && (!S.tienda || girosOn().includes(S.tienda))) { if (!S.tienda && !puede('admin')) { S.tienda = girosOn()[0]; } return; }
@@ -1968,7 +1991,7 @@ function pillTienda() {
 }
 ACC.cambiarTienda = () => elegirTienda(false);
 async function elegirTienda(alEntrar) {
-  if (tiendaFija()) return;
+  if (!S.user || S.vencidaVista || tiendaFija()) return;
   const h = hoja({ titulo: '¿A qué tienda entras?', html: '<div id="tdas"><div class="empty">Cargando tus tiendas…</div></div>' });
   let d = null; try { d = await api('tiendas', {}, true); } catch (e) {}
   const l = d && d.tiendas && d.tiendas.length ? d.tiendas : girosOn().map(id => ({ id, nombre: giroN(id) }));
@@ -2022,14 +2045,23 @@ ACC.demoEjemplo = async el => {
   try {
     await demoFuente(); demoBackend();
     let r;
+    const B = DEMO.B, licEj = () => B.mRows_('Licencias').filter(l => l.whatsapp === '50498760000' && String(l.estado).toLowerCase() !== 'eliminada').pop();
+    S.sinPausa = true;
     try { r = await api('login', { whatsapp: '9876-0000', pin: '1234' }); }
     catch (e) {
+      const ej = licEj();
+      if (ej && /prueba|pausa/i.test(String(e.message))) { // un ejemplo de antes que ya «venció»: se deja activo
+        const sh = DEMO.db.sheets.Licencias, hd = sh[0], f = sh.find(x => x[0] === ej.id); f[hd.indexOf('estado')] = 'Activa';
+        Object.keys(DEMO.cache || {}).forEach(k => { if (k.indexOf('L_') === 0) delete DEMO.cache[k]; }); demoGuardar(); DEMO.route = null; demoBackend();
+        r = await api('login', { whatsapp: '9876-0000', pin: '1234' });
+      } else {
       r = await api('registrar', { negocio: 'Variedades Sofía', giro: 'variedades', nombre: 'Sofía Hernández', whatsapp: '9876-0000', pin: '1234' });
       const B = DEMO.B;
-      B.setNegocio_(B.negocioPorId_(B.mRows_('Licencias').find(l => l.whatsapp === '50498760000').id));
+      B.setNegocio_(B.negocioPorId_(licEj().id));
       B.sembrarEjemplo_(r.usuario.id);
       demoGuardar();
-    }
+      }
+    } finally { S.sinPausa = false; }
     S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing'); if (!DEMO.on) mvMarca('mv_cliente');
     limpiarSesion();
     await arrancar();
@@ -2038,7 +2070,7 @@ ACC.demoEjemplo = async el => {
 };
 ACC.alternarDemo = () => {
   DEMO.on = !DEMO.on;
-  LS.set('modo', DEMO.on ? 'demo' : 'real');
+  LS.set('modo', DEMO.on ? 'demo' : 'real'); try { sessionStorage.removeItem(LS_NS + 'modoSes'); } catch (e) {}
   S.token = LS.get(tokenKey(), '');
   S.lmodo = DEMO.on ? 'demo' : null;
   if (!DEMO.on) detectarModo().then(pintarLogin); else { S.multi = true; pintarLogin(); }
@@ -2114,13 +2146,13 @@ async function notificar(tipo, titulo, cuerpo, vista, forzar) {
   try {
     const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
     if (reg && reg.showNotification) { await reg.showNotification(titulo, o); return; }
-    const n = new Notification(titulo, o); n.onclick = () => { window.focus(); ir(vista || 'inicio'); n.close(); };
+    const n = new Notification(titulo, o); n.onclick = () => { window.focus(); if (S.user) ir(vista || 'inicio'); n.close(); };
   } catch (e) {}
 }
 // Avisos del día: cada uno se muestra una sola vez por día y por equipo
 function avisosDelDia(a) {
   if (!avisosOn()) return;
-  const h = hoy(), una = (k, t, c, v) => { const key = 'avd_' + k; if (LS.get(key, '') === h) return; LS.set(key, h); notificar(k.split(':')[0], t, c, v); };
+  const h = hoy(), una = (k, t, c, v) => { const key = 'avd_' + (S.negocioId || '') + '_' + k; if (LS.get(key, '') === h) return; LS.set(key, h); notificar(k.split(':')[0], t, c, v); };
   if (a.susHoy) una('vencimientos:hoy', a.susHoy === 1 ? '1 suscripción vence hoy' : a.susHoy + ' suscripciones vencen hoy', 'Recuérdales por WhatsApp o renueva con un toque.', 'vencimientos');
   if (a.susVenc) una('vencimientos:venc', a.susVenc === 1 ? '1 suscripción venció' : a.susVenc + ' suscripciones vencieron', 'Revisa Vencimientos para avisar o liberar el perfil.', 'vencimientos');
   if (a.citasHoy) una('citas:hoy', a.citasHoy === 1 ? 'Hoy tienes 1 cita' : 'Hoy tienes ' + a.citasHoy + ' citas', 'Ábrelas en Agenda.', 'agenda');
@@ -2211,7 +2243,7 @@ ACC.verSoporte = el => verSoporte(el.dataset.id);
 async function listaSoporte(box) {
   try {
     const l = await api('soporteLista', {}, true);
-    box.innerHTML = l.length ? `<div class="sec-t"><h3>Tus conversaciones</h3></div><div class="list">${l.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="verSoporte" data-id="${c.id}"><div class="av t-pri">VM</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo).slice(3))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^\\S+ /, '')) : ''}</b><span class="h">${hace(String(c.ultimo).replace(' ', 'T'))}</span></div><small>${c.deCliente ? 'Tú: ' : ''}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : ''}</div>`).join('')}</div>` : '';
+    box.innerHTML = l.length ? `<div class="sec-t"><h3>Tus conversaciones</h3></div><div class="list">${l.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="verSoporte" data-id="${c.id}"><div class="av t-pri">VM</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo).slice(3))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^\p{L}\p{N}]+/u, '')) : ''}</b><span class="h">${hace(String(c.ultimo).replace(' ', 'T'))}</span></div><small>${c.deCliente ? 'Tú: ' : ''}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : ''}</div>`).join('')}</div>` : '';
   } catch (e) { box.innerHTML = ''; }
 }
 // Tarjeta en Inicio durante la prueba: día 3 (¿qué tal?) y día 6 (vence mañana)
@@ -2240,7 +2272,8 @@ function iniciarPanel() {
   S.enPanel = true; mvMarca('mv_yo'); document.title = 'Panel Molina · Gestión de Negocio VM';
   $('#login').hidden = true; $('#tienda').hidden = true; $('#app').hidden = false; document.body.classList.add('app', 'panel');
   $('#bnav').style.display = 'none'; $('#tnav').style.display = 'none';
-  if (P.tok) panelResumen().catch(() => panelLogin()); else panelLogin();
+  if (P.tok) panelResumen().catch(e => { if (!P.tok) return; err(e); $('#main').innerHTML = `<div class="empty-big">${ic('alert', 40)}<h3>No se pudo cargar el Panel</h3><p>${esc(e.message || 'Revisa tu internet.')}</p><button class="btn pri" data-a="panelInicio">${ic('refresh', 18)} Intentar de nuevo</button></div>`; });
+  else panelLogin(); // solo se pide la clave otra vez si la sesión del panel venció (eso lo resuelve manejarError)
 }
 function panelCab(t, atras) {
   $('#hdr').innerHTML = `<div class="bar"><div class="bar-in">${atras ? `<button class="hbtn" data-a="panelInicio" aria-label="Volver">${ic('left', 22)}</button>` : `<span class="hbtn" style="pointer-events:none">${ic('store', 20)}</span>`}<div class="bar-t">${esc(t)}</div>${P.tok ? `<button class="hbtn" data-a="panelSoporteLista" aria-label="Soporte">${ic('chat', 20)}${P.d && P.d.soporteSin ? `<span class="dot">${P.d.soporteSin}</span>` : ''}</button><button class="hbtn" data-a="panelPlantillas" aria-label="Plantillas">${ic('edit', 20)}</button><button class="hbtn" data-a="panelSalir" aria-label="Salir">${ic('logout', 20)}</button>` : ''}</div></div>`;
@@ -2250,7 +2283,7 @@ function panelLogin() {
   $('#main').innerHTML = `<div class="panel" style="max-width:420px;margin:30px auto"><h3 style="margin-bottom:6px">Súper administrador</h3><p class="sm mut" style="margin-bottom:12px">Administra todos los negocios de Gestión de Negocio VM: licencias, pruebas, pagos, seguimiento y soporte.</p>
     <form id="f-panel"><label class="fld"><span>Clave del panel</span>${pw('id="pn-clave" autocomplete="current-password" required')}</label><button class="btn pri big" type="submit">Entrar</button><div class="lg-err" id="pn-err"></div></form>
     <p class="credit" style="margin-top:16px">La clave se define en el Apps Script: Propiedades del script → PANEL_CLAVE</p></div>`;
-  $('#f-panel').addEventListener('submit', async e => { e.preventDefault(); try { const r = await api('panelLogin', { clave: $('#pn-clave').value }); P.tok = r.token; LS.set('panelTok', r.token); P.pl = r.plantillas || {}; await panelResumen(); } catch (x) { $('#pn-err').textContent = x.message; } });
+  $('#f-panel').addEventListener('submit', async e => { e.preventDefault(); try { const r = await api('panelLogin', { clave: $('#pn-clave').value }); P.tok = r.token; LS.set('panelTok', r.token); P.pl = r.plantillas || {}; await panelResumen(); } catch (x) { const el = $('#pn-err'); if (el) el.textContent = x.message; else err(x); } });
 }
 ACC.panelSalir = async () => { try { await api('panelSalir', {}, true); } catch (e) {} panelLogin(); };
 ACC.panelInicio = () => panelResumen();
@@ -2287,8 +2320,8 @@ async function panelResumen() {
   const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'atender' ? !!(n.contactar || n.sop) : f.est === 'sin' ? (n.sinVender >= 7 && n.estado !== 'vencida' && n.estado !== 'bloqueada') : n.estado === f.est)) && (!f.etq || n.etiqueta === f.etq) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); l = l.map((n, i) => [n, i]).sort((a, b) => (pendCli(b[0]) - pendCli(a[0])) || (a[1] - b[1])).map(x => x[0]); $('#pn-list').innerHTML = l.map(tarjetaCli).join('') || '<div class="empty">Sin resultados</div>'; };
   $('#pn-q').addEventListener('input', debounce(e => { f.q = e.target.value; pinta(); }, 150)); P.pinta = pinta; pinta();
 }
-ACC.panelFiltro = el => { P.f.est = el.dataset.k; panelResumen(); };
-ACC.panelFiltroEtq = el => { P.f.etq = el.dataset.k; panelResumen(); };
+ACC.panelFiltro = el => { P.f.est = el.dataset.k; return panelResumen(); };
+ACC.panelFiltroEtq = el => { P.f.etq = el.dataset.k; return panelResumen(); };
 // Una sola tarjeta por cliente: datos, estado y lo pendiente (mensajes de soporte y a quién escribirle hoy)
 const pendCli = n => (n.sop ? 2 : 0) + (n.contactar === 'vence' ? 2 : n.contactar ? 1 : 0) + (n.cobro && n.cobro.vencidas && n.cobro.vencidas.length ? 2 : 0);
 /* ---- Pagos programados: en la tarjeta del cliente, lo que debe hoy o si ya está en pausa ---- */
@@ -2331,8 +2364,9 @@ ACC.panelAccion = async el => { const r = await panelEjecutar(el.dataset.id, el.
 const VIS_PAG = { negocio: 'Negocio VM', demo: 'Demo Negocio VM', catalogo: 'Catálogo', salon: 'Salón VM', eventos: 'Eventos VM' };
 const VIS_ORI = { tiktok: ['TikTok', 'tv'], wa: ['WhatsApp', 'wa'], whatsapp: ['WhatsApp', 'wa'], facebook: ['Facebook', 'fb'], fb: ['Facebook', 'fb'], instagram: ['Instagram', 'insta'], ig: ['Instagram', 'insta'], google: ['Google', 'search'], youtube: ['YouTube', 'tv'], estado: ['Estado de WhatsApp', 'wa'], 'mis-paginas': ['Desde tus páginas', 'layers'], 'otro-sitio': ['Otro sitio web', 'globe'], directo: ['Directo (sin etiqueta)', 'right'] };
 const VIS_LINKS = [['negocio', 'https://josevic504-bot.github.io/negocio/'], ['demo', 'https://josevic504-bot.github.io/negocio/?demo'], ['salon', 'https://josevic504-bot.github.io/salonlicencias/'], ['eventos', 'https://josevic504-bot.github.io/eventos/']];
-const visOri = k => VIS_ORI[k] || [k.charAt(0).toUpperCase() + k.slice(1), 'tag'];
-const visPag = k => VIS_PAG[k] || k;
+const tiene = (o, k) => Object.prototype.hasOwnProperty.call(o, k); // la clave viene de afuera: «constructor» no es un canal
+const visOri = k => tiene(VIS_ORI, k) ? VIS_ORI[k] : [String(k || '').charAt(0).toUpperCase() + String(k || '').slice(1), 'tag'];
+const visPag = k => tiene(VIS_PAG, k) ? VIS_PAG[k] : k;
 const visLink = (u, src) => u + (src ? (u.includes('?') ? '&' : '?') + 'src=' + src : '');
 const h12 = hhmm => { const h = Number(String(hhmm).slice(0, 2)), m = String(hhmm).slice(3, 5); return (h % 12 || 12) + (m ? ':' + m : '') + (h < 12 ? ' a. m.' : ' p. m.'); };
 // Barras de porcentaje (de dónde vienen / qué página)
@@ -2472,7 +2506,7 @@ ACC.panelGasto = el => {
 // Bienvenida: imagen con los módulos y tipos de negocio + mensaje de la plantilla «Bienvenida»
 function panelBienvenida(n) {
   const IMG = 'bienvenida.png';
-  const h = hoja({ titulo: 'Bienvenida para ' + n.negocio, html: `<img src="${IMG}" alt="Imagen de bienvenida" style="width:100%;border-radius:14px;display:block;margin-bottom:12px">
+  const h = hoja({ titulo: 'Bienvenida para ' + esc(n.negocio), html: `<img src="${IMG}" alt="Imagen de bienvenida" style="width:100%;border-radius:14px;display:block;margin-bottom:12px">
     <div class="msg-prev" style="white-space:pre-line;max-height:180px;overflow:auto">${esc((P.pl.bienvenida || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio))}</div>
     <p class="h" style="font-size:12px;margin:10px 0 0">1) Envía la imagen y elige el chat de ${esc(String(n.dueno || '').split(' ')[0])}. 2) Envía el mensaje (se abre su chat con el texto listo).</p>` });
   h.botones([{ t: '1 · Enviar imagen', fn: async () => { const b = await (await fetch(IMG)).blob(); await compartirArchivo(b, 'Bienvenida-Gestion-de-Negocio-VM.png', ''); } },
@@ -2480,7 +2514,7 @@ function panelBienvenida(n) {
 }
 /* ---- ¿Cómo llegó? Canal (WhatsApp, Facebook, TikTok…) y publicidad ---- */
 const CANAL_TX = { wa: 'Por WhatsApp', whatsapp: 'Por WhatsApp', estado: 'Por tu estado de WhatsApp', facebook: 'Por Facebook', fb: 'Por Facebook', instagram: 'Por Instagram', ig: 'Por Instagram', tiktok: 'Por TikTok', google: 'Por Google', youtube: 'Por YouTube', directo: 'Entró directo', 'mis-paginas': 'Desde tus páginas', 'otro-sitio': 'Desde otro sitio web' };
-const canalTx = k => CANAL_TX[k] || (k ? 'Por ' + visOri(k)[0] : '');
+const canalTx = k => tiene(CANAL_TX, k) ? CANAL_TX[k] : (k ? 'Por ' + visOri(k)[0] : '');
 function llegoHTML(n) {
   const o = n.origen || {}, k = o.canal || '', l = n.llego || {};
   const canal = k ? `<div class="lleg"><div class="av ${colorDe(visOri(k)[0])}">${ic(visOri(k)[1], 18)}</div><div class="tx"><b>${esc(canalTx(k))}</b><small>${o.visitas ? `${o.visitas === 1 ? '1 visita' : o.visitas + ' visitas'} antes de registrarse${o.primera ? ' · la primera el ' + esc(fFechaC(String(o.primera.f).slice(0, 10))) + (o.primera.o && o.primera.o !== k ? ' (' + esc(visOri(o.primera.o)[0]) + ')' : '') : ''}` : k === 'directo' ? 'Abrió el enlace sin etiqueta (?src=…). Usa tus enlaces con etiqueta para saber de dónde vienen.' : 'Según el enlace con el que se registró.'}</small></div></div>`
@@ -2516,7 +2550,7 @@ function panelEliminar(n) {
   });
 }
 async function panelEjecutar(id, accion, extra) {
-  const n = (P.d && P.d.negocios.find(x => x.id === id)) || { negocio: '' };
+  const n0 = (P.d && P.d.negocios.find(x => x.id === id)) || { negocio: '' }, n = { negocio: esc(n0.negocio) }; // el nombre lo escribe el cliente: va escapado
   const preg = { activar: '¿Activar la licencia de ' + n.negocio + '?', plus: '¿Activar Plus (tienda en línea) para ' + n.negocio + '?', quitarPlus: '¿Quitar Plus a ' + n.negocio + '?', quitarContab: '¿Quitar el módulo de Contabilidad a ' + n.negocio + '? (sus asientos manuales se conservan)', extender: '¿Dar 7 días más de prueba a ' + n.negocio + '?', pausar: '¿Pausar el acceso de ' + n.negocio + '? No podrán entrar hasta reanudar.', reanudar: '¿Reanudar el acceso de ' + n.negocio + '?' }[accion];
   let datos = { id, accion, dias: 7 };
   if (accion === 'activar' || accion === 'plus' || accion === 'contab') {
@@ -2614,7 +2648,7 @@ async function panelGuardarGiros(n, el) {
   if (nuevos.length) {
     const r = await panelFormPago(nuevos.length === 1 ? 'Activar giro extra' : 'Activar ' + nuevos.length + ' giros extra', nuevos.length === 1 ? 'Giro extra: ' + ((n.girosTodos.find(x => x.id === nuevos[0]) || {}).n || '') : nuevos.length + ' giros extra', PRECIO_GIRO * nuevos.length);
     if (!r) return false; Object.assign(datos, r);
-  } else if (!(await confirmar('¿Quitar ' + (quitados.length === 1 ? 'el giro' : quitados.length + ' giros') + ' de la tienda de ' + n.negocio + '? Sus productos se conservan.', { si: 'Quitar' }))) return false;
+  } else if (!(await confirmar('¿Quitar ' + (quitados.length === 1 ? 'el giro' : quitados.length + ' giros') + ' de la tienda de ' + esc(n.negocio) + '? Sus productos se conservan.', { si: 'Quitar' }))) return false;
   await api('panelAccion', datos); toast('Giros guardados', 'ok'); return true;
 }
 function panelSecGrupo(n) {
@@ -2629,7 +2663,7 @@ function panelAgregarNegocio(n) {
   return new Promise(res => {
     let hecho = false;
     const todos = n.girosTodos || [];
-    const h = hoja({ titulo: 'Otro negocio para ' + (n.dueno || '').split(' ')[0], cls: 'chica', html: `<p class="sm mut" style="margin-bottom:10px">Hoja nueva con su propio inventario, caja y tienda. Entra con el mismo WhatsApp (${esc(fmtWA(n.whatsapp))}) y el mismo PIN.</p>
+    const h = hoja({ titulo: 'Otro negocio para ' + esc((n.dueno || '').split(' ')[0]), cls: 'chica', html: `<p class="sm mut" style="margin-bottom:10px">Hoja nueva con su propio inventario, caja y tienda. Entra con el mismo WhatsApp (${esc(fmtWA(n.whatsapp))}) y el mismo PIN.</p>
       <label class="fld"><span>Nombre del negocio</span><input id="ga-n" maxlength="60" placeholder="Ej. Antojitos Karla"></label>
       <label class="fld"><span>Tipo de negocio</span><select id="ga-g">${todos.map(g => `<option value="${g.id}">${GIRO_EMO[g.id] || '📦'} ${esc(g.n)}</option>`).join('')}</select></label>
       <span class="op-l">Licencia</span><div class="chips" id="ga-l"><button type="button" class="chip on" data-l="0">Comparte su prueba</button><button type="button" class="chip" data-l="1">Activar ya (L ${PRECIO_NEGOCIO.toLocaleString('es-HN')})</button></div>
@@ -2661,14 +2695,14 @@ function panelVincularNegocio(n) {
     $('#gv-q', h.el).addEventListener('input', pinta); pinta();
     $('#gv-l', h.el).onclick = async e => {
       const it = e.target.closest('[data-id]'); if (!it) return; const o = lista.find(x => x.id === it.dataset.id);
-      if (!(await confirmar(`¿Vincular «${o.negocio}» a ${n.dueno}? Su dueño pasará a entrar con ${fmtWA(n.whatsapp)} y el PIN de ${n.dueno.split(' ')[0]}.`, { si: 'Vincular' }))) return;
+      if (!(await confirmar(`¿Vincular «${esc(o.negocio)}» a ${esc(n.dueno)}? Su dueño pasará a entrar con ${fmtWA(n.whatsapp)} y el PIN de ${esc(n.dueno.split(' ')[0])}.`, { si: 'Vincular' }))) return;
       try { await api('panelAccion', { id: n.id, accion: 'vincularNegocio', otroId: o.id }); hecho = true; toast(o.negocio + ' vinculado', 'ok'); h.cerrar(); } catch (x) { err(x); }
     };
     h.botones([]);
   });
 }
 async function panelFicha(id) {
-  const h = hoja({ titulo: 'Cargando…', ancho: 1, html: '<div class="empty">Cargando…</div>', onClose: () => { if (S.enPanel) panelResumen(); } });
+  const h = hoja({ titulo: 'Cargando…', ancho: 1, html: '<div class="empty">Cargando…</div>', onClose: () => { if (S.enPanel) panelResumen().catch(err); } });
   let n;
   const pinta = async () => {
     n = await api('panelNegocio', { id }); $('.sheet-h h3', h.el).textContent = n.negocio;
@@ -2719,8 +2753,8 @@ async function panelFicha(id) {
         await pinta();
       } catch (er) { err(er); }
     };
-    h.b.addEventListener('click', e => { const a = e.target.closest('a[data-t]'); if (a) api('panelContacto', { id, tipo: a.dataset.t, nota: 'WhatsApp · ' + a.textContent.trim() }, true).then(() => setTimeout(pinta, 1500)).catch(() => {}); });
   };
+  h.b.addEventListener('click', e => { const a = e.target.closest('a[data-t]'); if (a) api('panelContacto', { id, tipo: a.dataset.t, nota: 'WhatsApp · ' + a.textContent.trim() }, true).then(() => setTimeout(() => { if (!h.cerrado) pinta().catch(err); }, 1500)).catch(() => {}); });
   try { await pinta(); } catch (e) { h.cerrar(); throw e; }
 }
 ACC.panelSoporteLista = async () => {
@@ -2731,7 +2765,7 @@ ACC.panelSoporteLista = async () => {
   const vis = l.filter(c => !f.mot || (f.mot === 'sin' ? c.sinLeer : c.motivo === f.mot));
   $('#main').innerHTML = `<div class="ch-sum"><div><b>${sin.length}</b><small>sin responder</small></div><div><b>${err_.length}</b><small>error${err_.length === 1 ? '' : 'es'} abierto${err_.length === 1 ? '' : 's'}</small></div><div><b>${l.length}</b><small>conversaciones</small></div></div>
     <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['sin', 'Sin responder']].concat(MOTIVOS_UI.map(m => [m[0], m[1] + ' ' + m[2].split(' ')[0]])).map(x => `<button class="chip ${(f.mot || '') === x[0] ? 'on' : ''}" data-a="panelSopFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
-    <div class="list">${vis.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av ${colorDe(c.negocio)}">${esc(iniciales(c.negocio))}</div><div class="tx"><div class="row sp"><b>${esc(c.negocio)}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small><span class="badge ${c.motivo === 'error' ? 'b-bad' : c.motivo === 'prueba' ? 'b-warn' : c.motivo === 'idea' ? 'b-ok' : 'b-info'}">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^\\S+ /, '')) : ''}</span> ${c.deCliente ? '' : 'Tú: '}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">✓</span>' : ''}</div>`).join('') || '<div class="empty">Sin conversaciones</div>'}</div>`;
+    <div class="list">${vis.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av ${colorDe(c.negocio)}">${esc(iniciales(c.negocio))}</div><div class="tx"><div class="row sp"><b>${esc(c.negocio)}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small><span class="badge ${c.motivo === 'error' ? 'b-bad' : c.motivo === 'prueba' ? 'b-warn' : c.motivo === 'idea' ? 'b-ok' : 'b-info'}">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^\p{L}\p{N}]+/u, '')) : ''}</span> ${c.deCliente ? '' : 'Tú: '}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">✓</span>' : ''}</div>`).join('') || '<div class="empty">Sin conversaciones</div>'}</div>`;
 };
 ACC.panelSopFiltro = el => { P.f.mot = el.dataset.k; ACC.panelSoporteLista(); };
 ACC.panelSoporteVer = el => panelChat(el.dataset.id);
@@ -2776,7 +2810,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   aplicarTema(LS.get('tema', TEMA_DEF));
   const q = new URLSearchParams(location.search);
   // Enlace de demostración: …/?demo abre el negocio de ejemplo
-  if (q.has('demo')) { LS.set('modo', 'demo'); if (!LS.get('cuenta', '')) S.lmodo = 'demo'; history.replaceState(null, '', location.pathname); if (!DEMO.on) { location.reload(); return; } }
+  if (q.has('demo')) { if (LS.get('token', '') && !DEMO.on) { try { sessionStorage.setItem(LS_NS + 'modoSes', 'demo'); } catch (e) {} } else LS.set('modo', 'demo'); // con una sesión real guardada, la demo es solo de esta pestaña
+    if (!LS.get('cuenta', '')) S.lmodo = 'demo'; history.replaceState(null, '', location.pathname); if (!DEMO.on) { location.reload(); return; } }
   if (q.has('tienda')) { S.enTienda = true; return iniciarTienda(q.get('tienda')); }
   if (q.has('panel')) { if (DEMO.on) { try { await demoFuente(); demoBackend(); } catch (e) { toast(e.message, 'error'); } } return iniciarPanel(); }
   // Contador de visitas (Panel Molina): cuenta a quien abre el enlace; no a los clientes con sesión
@@ -2807,7 +2842,8 @@ const qa = (act, icn, t, c1, c2, attrs) => `<button data-a="${act}" ${attrs || '
 R.inicio = () => {
   const d = S.inicio, m = $('#main');
   if (!d || Date.now() - (S.inicioT || 0) > 20000) {
-    api('inicio', {}, !!d).then(x => { S.inicio = x; S.inicioT = Date.now(); if (S.vista === 'inicio' && (!PILA.length || $('#main .today.sk'))) R.inicio(); }).catch(e => { if (!d) err(e); });
+    const t0 = S.tienda || ''; // si mientras tanto se eligió otra tienda, esta respuesta ya no sirve
+    api('inicio', {}, !!d).then(x => { if ((S.tienda || '') !== t0) return; S.inicio = x; S.inicioT = Date.now(); if (S.vista === 'inicio' && (!PILA.length || $('#main .today.sk'))) R.inicio(); }).catch(e => { if (!d && (S.tienda || '') === t0) err(e); });
     if (!d) { m.innerHTML = `<div class="today sk"><div class="skl" style="width:40%"></div><div class="skl big"></div><div class="skl" style="width:60%"></div></div>`; return; }
   }
   const rol = S.user.rol, hoyTxt = cap(fFechaL(hoy()));
@@ -2947,7 +2983,7 @@ function cuentaTexto(per, d, extra) {
     else F.push(`${p[1]} no hay ventas anotadas. No pasa nada: lo importante es seguir abriendo, atendiendo y anotando.`);
     const ini = S.inicio || {}, tareas = [];
     if (ini.porCobrar && ini.porCobrar.total > 0) {
-      const con = S.clientes.filter(c => c.saldo > 0.004).sort((a, b) => b.saldo - a.saldo).slice(0, 2).map(c => '*' + c.nombre.split(' ')[0] + '*');
+      const con = S.tienda ? [] : S.clientes.filter(c => c.saldo > 0.004).sort((a, b) => b.saldo - a.saldo).slice(0, 2).map(c => '*' + c.nombre.split(' ')[0] + '*'); // en una tienda no se nombran deudores de las otras
       tareas.push(`tienes *${money(ini.porCobrar.total)}* por cobrar${con.length ? ': hoy puede ser un buen día para recordarle a ' + con.join(' y a ') : ''}`);
     }
     if (ini.pedidos && ini.pedidos.nuevos) tareas.push(`*${ini.pedidos.nuevos === 1 ? '1 pedido nuevo' : ini.pedidos.nuevos + ' pedidos nuevos'}* en la tienda en línea ${ini.pedidos.nuevos === 1 ? 'espera' : 'esperan'} tu confirmación`);
@@ -2963,7 +2999,7 @@ function cuentaTexto(per, d, extra) {
   else F.push(`Tu ganancia bruta fue *${money(k.bruta)}* (no hay costos anotados en estos productos, así que se calcula sobre todo lo vendido).`);
   if (k.gastos > 0) F.push(`Pagaste *${money(k.gastos)}* de gastos y te quedan *${money(k.neta)}* de ganancia neta, un margen del *${cant(Math.round(k.margen))} %*.`);
   else F.push(`No hubo gastos anotados, así que la ganancia neta queda en *${money(k.neta)}*, un margen del *${cant(Math.round(k.margen))} %*.`);
-  if (d.secciones && d.secciones.length > 1) { const sv = d.secciones.filter(x => x.ventas > 0).sort((a, b) => b.ventas - a.ventas); if (sv.length > 1) F.push(`Por sección: ${sv.map(x => `${giroCorto(x.id)} *${money(x.ventas)}*`).join(', ')}.`); }
+  if (!S.tienda && d.secciones && d.secciones.length > 1) { const sv = d.secciones.filter(x => x.ventas > 0).sort((a, b) => b.ventas - a.ventas); if (sv.length > 1) F.push(`Por sección: ${sv.map(x => `${giroCorto(x.id)} *${money(x.ventas)}*`).join(', ')}.`); }
   if (d.top && d.top.length) { const t = d.top[0]; F.push(`El producto más vendido fue *${t.nombre}* (${cant(t.cantidad)} ${t.cantidad === 1 ? 'unidad' : 'unidades'}, ${money(t.total)}).`); }
   const mov = [];
   if (k.compras > 0) mov.push(`compraste *${money(k.compras)}* a proveedores`);
@@ -2992,11 +3028,11 @@ async function abrirCuenta(per) {
   try {
     d = await api('reporte', { desde, hasta, giro: S.tienda || '' }, true);
     if (per === 'hoy' && !d.kpi.n) { const [d7, h7] = rangoPer('d7'); extra = await api('reporte', { desde: d7, hasta: h7, giro: S.tienda || '' }, true); }
-  } catch (e) { $('#cu-b', h.b).innerHTML = `<div class="empty">${esc(e.message || e)}</div>`; return; }
+  } catch (e) { if (!h.cerrado && h.per === per) $('#cu-b', h.b).innerHTML = `<div class="empty">${esc(e.message || e)}</div>`; return; }
   if (h.cerrado || h.per !== per) return;
   const k = d.kpi, { frases, animo } = cuentaTexto(per, d, extra);
   const titulo = per === 'hoy' || per === 'ayer' ? cap(fFechaL(desde)) : `${fFechaL(desde)} – ${fFechaL(hasta)}`;
-  const kpi = (t, v, c, s) => `<div class="kpi" style="--k:${c || 'var(--pri)'}"><small>${t}</small><b class="n">${v}</b>${s ? `<i>${s}</i>` : ''}</div>`;
+  const kpi = (t, v, c, s) => `<div class="kpi" style="--k:${c || 'var(--pri)'}"><small>${t}</small><b class="n">${v}</b>${s ? `<i>${esc(s)}</i>` : ''}</div>`;
   let cards = '';
   if (animo) {
     const ini = S.inicio || {};
@@ -3008,7 +3044,7 @@ async function abrirCuenta(per) {
     const acc = `<div class="row" style="flex-wrap:wrap;gap:8px;margin-top:4px">${ini.porCobrar && ini.porCobrar.total > 0 ? `<button class="btn sm pri" data-a="ir" data-v="clientes" data-p='{"saldo":1}'>${ic('coin', 16)} Cobrar</button>` : ''}${ini.pedidos && ini.pedidos.nuevos ? `<button class="btn sm" data-a="ir" data-v="pedidos">${ic('inbox', 16)} Ver pedidos</button>` : ''}${S.plus ? `<button class="btn sm" data-a="ir" data-v="tienda">${ic('store', 16)} Mi tienda en línea</button>` : ''}</div>`;
     cards = (cards ? `<div class="kpis">${cards}</div>` : '') + acc + `<p class="xs mut" style="margin:12px 2px 0">Cuando registres la primera venta ${per === 'hoy' ? 'del día' : 'del período'}, aquí verás tu resumen con cifras.</p>`;
   } else {
-    cards = `<div class="kpis">${kpi('Facturas', String(k.n), 'var(--pri)', k.articulos ? cant(k.articulos) + ' artículos' : '')}${kpi('Vendido', money(k.ventas), '#00b56e', 'ticket ' + money(k.ticket))}${kpi('Costo de lo vendido', money(k.costo), '#f25c05')}${kpi('Ganancia bruta', money(k.bruta), '#00b56e')}${kpi('Gastos', money(k.gastos), '#f25c05')}${kpi('Ganancia neta', money(k.neta), '#00b56e', 'margen ' + cant(Math.round(k.margen)) + ' %')}${d.top && d.top.length ? kpi('Más vendido', `<span style="font-size:16px;line-height:1.2;display:block">${esc(d.top[0].nombre)}</span>`, 'var(--a1)', cant(d.top[0].cantidad) + (d.top[0].cantidad === 1 ? ' unidad' : ' unidades')) : ''}${kpi('Compras', money(k.compras), '#1b4fd8')}${kpi('Pagos a proveedores', money(k.pagos || 0), '#1b4fd8')}${kpi('Cobros a clientes', money(k.cobros), '#00a8b5')}${kpi('Vendido al crédito', money(k.credito), '#f25c05')}${kpi('Clientes nuevos', String(k.clientesNuevos), '#00a8b5')}</div>
+    cards = `<div class="kpis">${kpi('Facturas', String(k.n), 'var(--pri)', k.articulos ? cant(k.articulos) + ' artículos' : '')}${kpi('Vendido', money(k.ventas), '#00b56e', 'ticket ' + money(k.ticket))}${kpi('Costo de lo vendido', money(k.costo), '#f25c05')}${kpi('Ganancia bruta', money(k.bruta), '#00b56e')}${kpi('Gastos', money(k.gastos), '#f25c05')}${kpi('Ganancia neta', money(k.neta), '#00b56e', 'margen ' + cant(Math.round(k.margen)) + ' %')}${d.top && d.top.length ? kpi('Más vendido', `<span style="font-size:16px;line-height:1.2;display:block">${esc(d.top[0].nombre)}</span>`, 'var(--a1)', cant(d.top[0].cantidad) + (d.top[0].cantidad === 1 ? ' unidad' : ' unidades')) : ''}${kpi('Compras', money(k.compras), '#1b4fd8')}${kpi('Pagos a proveedores', money(k.pagos || 0), '#1b4fd8')}${kpi('Cobros a clientes', money(k.cobros), '#00a8b5')}${kpi('Vendido al crédito', money(k.credito), '#f25c05')}${S.tienda ? '' : kpi('Clientes nuevos', String(k.clientesNuevos), '#00a8b5')}</div>
       <p class="xs mut" style="margin:0 2px">La ganancia no incluye ISV. Las compras no son gasto: se vuelven inventario. <a data-a="ir" data-v="reportes">Ver reportes completos</a></p>`;
   }
   $('#cu-b', h.b).innerHTML = `<div class="cuenta-box" id="cu-box"><div class="cb-f">${ic('sparkle', 14)} ${esc(titulo)}</div>${frases.map((f, i) => `<p class="${animo && i === frases.length - 1 ? 'animo' : ''}">${negrita(f)}</p>`).join('')}</div>${cards}`;
@@ -3032,7 +3068,30 @@ ACC.cuenta = () => abrirCuenta('hoy');
 ACC.cuentaPer = el => abrirCuenta(el.dataset.k);
 
 /* ===================== VENDER ===================== */
-function guardarTicket() { LS.set('ticket', JSON.stringify(S.ticket)); }
+function guardarTicket() { LS.set(mk('ticket'), JSON.stringify(S.ticket)); }
+// E3: si un precio cambió mientras el producto estaba en el ticket, se cobra el precio de hoy (salvo los puestos a mano,
+// los de un pedido en línea y los de una orden o cita, que tienen su precio acordado). Las suscripciones: precio × meses.
+function refrescarPrecios() {
+  const t = S.ticket; if (t.ordenId || t.agendaId || t.pedidoId) return false;
+  let cambio = false;
+  t.items.forEach((i, k) => {
+    if (!i.productoId || i.precioMan) return;
+    const p = byId(S.productos, i.productoId); if (!p) return;
+    const meses = t.sus && t.sus[k] && t.sus[k].meses ? Number(t.sus[k].meses) : 1, esp = r2(num(p.precio) * meses);
+    if (Math.abs(esp - num(i.precio)) > 0.004) { i.precio = esp; cambio = true; }
+  });
+  if (cambio) guardarTicket();
+  return cambio;
+}
+// F1: quitar una línea del ticket mueve también los datos de suscripción de las líneas siguientes (van por posición)
+function quitarLinea(k) {
+  S.ticket.items.splice(k, 1);
+  const sus = S.ticket.sus; if (!sus) return;
+  const nuevo = {}; Object.keys(sus).forEach(x => { const n = Number(x); if (n < k) nuevo[n] = sus[x]; else if (n > k) nuevo[n - 1] = sus[x]; });
+  S.ticket.sus = nuevo;
+}
+// E4: la marca contra cobros repetidos cambia si cambia lo que se cobra (un reintento igual devuelve la misma venta)
+const firmaTxt = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
 // Mismo cálculo que el servidor: cada línea redondeada, cada parte del ISV redondeada y el total = suma de las partes
 function calcTotales(t, exo) {
   const cfg = S.config, incl = cfg.preciosConISV !== 'no', isvG = num(cfg.isv);
@@ -3084,7 +3143,7 @@ R.vender = () => {
   });
   pintarGridVenta();
   if (S.params.cobrar) { S.params.cobrar = 0; setTimeout(abrirCobro, 60); }
-  else if (S.config.venderInicio === 'factura' && !S.hFact && !PILA.length && !S.ticket.pedidoId) setTimeout(abrirFactura, 60);
+  else if (S.config.venderInicio === 'factura' && !S.hFact && !PILA.length && !S.ticket.pedidoId) setTimeout(() => { if (!PILA.length && !S.hFact && S.vista === 'vender') abrirFactura(); }, 60);
 };
 /* Nueva factura: la venta como lista (escanear o buscar), pensada para negocios con código de barras */
 ACC.nuevaFactura = () => abrirFactura();
@@ -3092,6 +3151,7 @@ function abrirFactura() {
   if (S.hFact) return;
   const h = hoja({ titulo: 'Nueva factura', ancho: 1, html: '<div id="fx"></div>' });
   const pinta = () => {
+    refrescarPrecios();
     const t = S.ticket, cli = t.clienteId ? byId(S.clientes, t.clienteId) : null, tot = calcTotales(t), n = t.items.length, u = t.items.reduce((a, i) => a + i.cantidad, 0);
     const admin = puede('admin');
     $('#fx', h.el).innerHTML = `<div class="fx-cli">${ic('user', 18)}<b>${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : 'Consumidor final')}</b><a data-a="fxCliente">${cli ? 'Cambiar' : 'Elegir'}</a></div>
@@ -3167,8 +3227,9 @@ ACC.itemLibre = () => {
   const h = hoja({ titulo: 'Artículo sin registrar', cls: 'chica', foco: '#il-d', html: `<label class="fld"><span>Descripción</span><input id="il-d" maxlength="80" placeholder="Ej. Servicio de envío"></label>
     <div class="f2"><label class="fld"><span>Precio</span><input id="il-p" inputmode="decimal" placeholder="0.00"></label><label class="fld"><span>Cantidad</span><input id="il-c" inputmode="decimal" value="1"></label></div>` });
   h.botones([{ t: 'Agregar al ticket', cls: 'pri', fn: () => {
-    const d = $('#il-d').value.trim(), p = r2($('#il-p').value), c = num($('#il-c').value) || 1;
+    const d = $('#il-d').value.trim(), p = r2($('#il-p').value), cv = $('#il-c').value.trim(), c = cv === '' ? 1 : num(cv);
     if (!d) throw new Error('Escribe la descripción');
+    if (!(c > 0)) throw new Error('La cantidad debe ser mayor que cero');
     if (!(p > 0)) throw new Error('Escribe el precio');
     S.ticket.items.push({ productoId: '', descripcion: d, cantidad: c, precio: p }); guardarTicket(); h.cerrar(); pintarGridVenta();
   } }]);
@@ -3214,9 +3275,11 @@ async function escanearCodigo(cb, una) {
     if (!nativo) { // respaldo: ZXing lee EAN, UPC, Code 128, QR… desde el video
       lector = new ZXing.BrowserMultiFormatReader();
       await lector.decodeFromVideoDevice(undefined, v, r => { if (activo && r) leido(r.getText()); });
+      if (!activo) { try { lector.reset(); } catch (e) {} } // E15: se cerró mientras la cámara arrancaba
       return;
     }
     stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    if (!activo) { stream.getTracks().forEach(t => t.stop()); return; } // E15: se cerró antes de dar permiso: la cámara no queda encendida
     v.srcObject = stream; await v.play();
     const det = new BarcodeDetector();
     const loop = async () => {
@@ -3236,10 +3299,11 @@ function abrirCobro() {
   const h = hoja({ titulo: 'Cobrar', cls: 'cobro', html: `<div id="cb"></div>` });
   const pagos = [['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer'], ['Crédito', 'cal']];
   const pinta = () => {
+    refrescarPrecios();
     const t0 = calcTotales(S.ticket), cli = S.ticket.clienteId ? byId(S.clientes, S.ticket.clienteId) : null;
     const admin = puede('admin'), fz = S.ticket.fiscal || (S.ticket.fiscal = {});
     const exo = sarOn() && fz.exonerado, t = exo ? calcTotales(S.ticket, true) : t0;
-    const ant = (S.ticket.ordenId || S.ticket.agendaId) ? Math.min(num(S.ticket.anticipo), t.total) : 0, porPagar = r2(t.total - ant);
+    const ant = (S.ticket.ordenId || S.ticket.agendaId || S.ticket.pedidoId) ? Math.min(num(S.ticket.anticipo), t.total) : 0, porPagar = r2(t.total - ant);
     $('#cb', h.el).innerHTML = `
       <div class="fld"><span>Cliente</span><div class="input-row"><input id="cb-cli" list="dl-cli" placeholder="Consumidor final" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '')}" autocomplete="off"><button class="btn icon" data-a="nuevoClienteRapido" title="Nuevo cliente">${ic('userplus')}</button></div>
       <datalist id="dl-cli">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist>
@@ -3301,8 +3365,7 @@ function abrirCobro() {
     if (modOn('comanda') && (S.ticket.servicio || S.ticket.mesa || S.ticket.cocina)) { datos.servicio = S.ticket.servicio || 'mesa'; datos.mesa = S.ticket.mesa || ''; datos.cocina = S.ticket.cocina || ''; }
     if (susOn()) { const sd = susDatosVenta(); if (sd.length) datos.sus = sd; }
     if (!S.ticket.clave) { S.ticket.clave = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); guardarTicket(); }
-    datos.clave = S.ticket.clave;
-    const antC = (S.ticket.ordenId || S.ticket.agendaId) ? Math.min(num(S.ticket.anticipo), t.total) : 0;
+    const antC = (S.ticket.ordenId || S.ticket.agendaId || S.ticket.pedidoId) ? Math.min(num(S.ticket.anticipo), t.total) : 0;
     if (metodo === 'Efectivo') datos.recibido = S.ticket.recibido && String(S.ticket.recibido).trim() ? num(S.ticket.recibido) : r2(t.total - antC);
     if (metodo === 'Crédito') { if (!S.ticket.clienteId) throw new Error('Elige un cliente para vender al crédito'); datos.recibido = num(S.ticket.anticipoCred); }
     if (sarOn()) {
@@ -3310,6 +3373,7 @@ function abrirCobro() {
       if (rtn.replace(/\D/g, '') && rtn.replace(/\D/g, '').length !== 14) throw new Error('El RTN del cliente debe tener 14 números');
       datos.fiscal = { rtn: rtn.replace(/\D/g, ''), nombre: ($('#cb-nf', h.el) || {}).value || '', exonerado: !!exo, oce: fz.oce || '', cre: fz.cre || '', sag: fz.sag || '' };
     }
+    datos.clave = S.ticket.clave + '-' + firmaTxt(JSON.stringify([datos.items, datos.clienteId, datos.metodo, datos.descuento, datos.pedidoId, datos.ordenId, datos.agendaId, datos.sus || '', datos.fiscal || '']));
     const r = await api('venta', datos);
     try { navigator.vibrate && navigator.vibrate([35, 50, 70]); } catch (e) {}
     if (r.sar) S.sar = r.sar;
@@ -3336,7 +3400,7 @@ ACC.cbQ = el => {
   if (!it) return;
   if (d > 0 && it.productoId) { const p = byId(S.productos, it.productoId); if (p && p.tipo === 'producto' && S.config.venderSinStock !== 'si' && enTicket(p.id) + 1 > p.stock) { toast('Solo hay ' + cant(p.stock) + ' de «' + p.nombre + '»', 'error'); return; } }
   it.cantidad = r2(it.cantidad + d);
-  if (it.cantidad <= 0) S.ticket.items.splice(k, 1);
+  if (it.cantidad <= 0) quitarLinea(k);
   guardarTicket();
   if (!S.ticket.items.length) { S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket(); S.hCobro && S.hCobro.cerrar(); S.hFact && S.hFact.pinta(); return; }
   S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta();
@@ -3353,8 +3417,8 @@ ACC.cbCant = async el => {
 ACC.cbPrecio = async el => {
   const it = S.ticket.items[Number(el.dataset.k)];
   const v = await pedirTexto('Precio de «' + esc(it.descripcion) + '»', { label: 'Precio por unidad', valor: it.precio, modo: 'decimal' });
-  if (v === null) return;
-  const p = r2(v); if (!(p >= 0)) return toast('Precio no válido', 'error');
+  if (v === null || String(v).trim() === '') return; // vacío = no cambiar
+  const p = r2(num(v)); if (!(p >= 0)) return toast('Precio no válido', 'error');
   it.precio = p; it.precioMan = 1; guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta();
 };
 ACC.cbDesc = async () => {
@@ -3375,6 +3439,7 @@ function ventaLista(v, det, accesos) {
     <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${modOn('comanda') && v.servicio ? `<button class="btn" data-a="comanda">${ic('receipt', 18)} Comanda</button>` : ''}${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, det) + textoAccesos(accesos))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
   S.ultVenta = { v, det };
   h.botones([{ t: `${ic('cart')} Nueva venta`, cls: 'pri big', fn: () => h.cerrar() }]);
+  h.onClose = () => { if (S.vista === 'vender' && S.config.venderInicio === 'factura') setTimeout(() => { if (!PILA.length && !S.hFact && S.vista === 'vender') abrirFactura(); }, 60); };
 }
 ACC.recVenta = () => S.ultVenta && imagenRecibo('venta', S.ultVenta);
 ACC.impVenta = () => S.ultVenta && imprimirTicket(S.ultVenta.v, S.ultVenta.det);
@@ -3415,15 +3480,18 @@ ACC.verVentaAnt = () => { const a = S.ventaAnt; if (a) detalleVenta(Object.assig
  * la diferencia en efectivo entra o sale de la caja de hoy y el inventario se ajusta solo. */
 const MOTIVOS_VENTA = ['Error de cantidad', 'Error de precio', 'Producto equivocado', 'El cliente devolvió algo', 'Otro'];
 function editarVenta(v) {
-  const fz = fiscalDe(v), exo = !!(fz && (fz.oce || fz.cre || fz.sag));
-  const varDe = i => { const p = i.productoId ? byId(S.productos, i.productoId) : null; return p && i.descripcion.indexOf(p.nombre + ' · ') === 0 ? i.descripcion.slice(p.nombre.length + 3) : ''; };
+  const fz = fiscalDe(v), exo0 = !!(fz && (fz.oce || fz.cre || fz.sag));
+  // E6: como el servidor, la exoneración solo sigue si hay SAR y el cliente no cambió
+  const exoE = () => sarOn() && exo0 && E.clienteId === (v.clienteId || '');
+  // E22: la variante (talla, color…) es lo que va después del nombre; si el producto se renombró, lo que va después de « · »
+  const varDe = i => { const p = i.productoId ? byId(S.productos, i.productoId) : null; if (!p || i.descripcion === p.nombre) return ''; if (i.descripcion.indexOf(p.nombre + ' · ') === 0) return i.descripcion.slice(p.nombre.length + 3); const ix = i.descripcion.indexOf(' · '); return ix > 0 ? i.descripcion.slice(ix + 3) : ''; };
   const E = { items: v.detalle.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, variante: varDe(i), cantidad: i.cantidad, precio: i.precio, costo: i.costo, serie: i.serie || '', antes: i.cantidad, pAntes: i.precio })),
     clienteId: v.clienteId || '', metodo: v.metodo, descuento: v.descuento || 0, abono: v.metodo === 'Crédito' ? v.recibido : '', motivo: '', otro: '' };
   const pagos = [['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer'], ['Crédito', 'cal']];
   const efectivo = (met, total, rec) => met === 'Efectivo' ? total : met === 'Crédito' ? Math.min(num(rec), total) : 0;
   const h = hoja({ titulo: 'Editar ' + (v.factura ? 'factura' : 'venta') + ' ' + esc(v.numero), html: '<div id="ev"></div>' });
   const pinta = () => {
-    const vivos = E.items.filter(i => i.cantidad > 0), t = calcTotales({ items: vivos, descuento: E.descuento }, exo), cli = E.clienteId ? byId(S.clientes, E.clienteId) : null;
+    const vivos = E.items.filter(i => i.cantidad > 0), t = calcTotales({ items: vivos, descuento: E.descuento }, exoE()), cli = E.clienteId ? byId(S.clientes, E.clienteId) : null;
     const dif = r2(t.total - v.total), cajaDif = r2(efectivo(E.metodo, t.total, E.abono) - efectivo(v.metodo, v.total, v.recibido));
     const cambioItems = E.items.some(i => i.cantidad !== i.antes || i.precio !== i.pAntes), cambio = cambioItems || E.clienteId !== (v.clienteId || '') || E.metodo !== v.metodo || r2(num(E.descuento)) !== r2(v.descuento || 0) || (E.metodo === 'Crédito' && r2(num(E.abono)) !== r2(v.recibido));
     // Qué pasa con el inventario: diferencia por producto
@@ -3437,7 +3505,7 @@ function editarVenta(v) {
     if (E.metodo === 'Crédito' && cli) { const ant = v.metodo === 'Crédito' && v.clienteId === E.clienteId ? v.saldo : 0, nuevo = r2(t.total - Math.min(num(E.abono), t.total) - (v.metodo === 'Crédito' ? r2(v.total - v.recibido - v.saldo) : 0)); efe.push(['user', `Lo que debe ${esc(cli.nombre.split(' ')[0])} por esta venta: <b>${money(ant)} → ${money(Math.max(0, nuevo))}</b>.`]); }
     if (vuelven.length) efe.push(['box', `Vuelven al inventario: ${vuelven.map(nomP).join(', ')}.`]);
     if (salen.length) efe.push(['box', `Salen del inventario: ${salen.map(nomP).join(', ')}.`]);
-    efe.push(['doc', v.factura ? `La factura ${esc(v.factura)} queda <b>anulada</b> y se emite una nueva con el número que sigue (así lo pide el SAR).` : `Conserva su número <b>${esc(v.numero)}</b> y su fecha (${esc(fFechaC(v.fecha))}). Queda guardado cómo era antes.`]);
+    efe.push(['doc', v.factura ? `La factura ${esc(v.factura)} queda <b>anulada</b> y se emite una nueva con el número que sigue${sarOn() ? ' y la <b>fecha de hoy</b>' : ''} (así lo pide el SAR).` : `Conserva su número <b>${esc(v.numero)}</b> y su fecha (${esc(fFechaC(v.fecha))}). Queda guardado cómo era antes.`]);
     $('#ev', h.el).innerHTML = `<div class="ev-h"><span>${esc(fFechaC(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)}${v.clienteId ? ' · ' + esc(nomCliente(v.clienteId)) : ''}</span><b class="n">${money(v.total)}</b></div>
       <div class="tks">${E.items.map((i, k) => i.cantidad > 0 ? `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small><a data-ep="${k}">${money(i.precio)} c/u ✎</a>${i.antes && i.cantidad !== i.antes ? ` · <span class="ev-ant">antes ${cant(i.antes)}</span>` : !i.antes ? ' · <span class="ev-nuevo">nuevo</span>' : ''}${i.precio !== i.pAntes && i.antes ? ` · <span class="ev-ant">antes ${money(i.pAntes)}</span>` : ''}</small></div>
           <div class="qty"><button data-k="${k}" data-d="-1">−</button><span data-eq="${k}">${cant(i.cantidad)}</span><button data-k="${k}" data-d="1">+</button></div><button class="btn icon sm ghost" data-x="${k}" aria-label="Quitar" style="color:var(--bad)">${ic('trash', 16)}</button></div>`
@@ -3464,7 +3532,7 @@ function editarVenta(v) {
     const motivo = E.motivo === 'Otro' ? E.otro.trim() : E.motivo;
     if (!motivo) throw new Error('Escribe el motivo');
     if (E.metodo === 'Crédito' && !E.clienteId) throw new Error('Para dejarla al crédito elige un cliente');
-    const t = calcTotales({ items: vivos, descuento: E.descuento }, exo);
+    const t = calcTotales({ items: vivos, descuento: E.descuento }, exoE());
     const r = await api('editarVenta', { id: v.id, motivo, clienteId: E.clienteId, metodo: E.metodo, descuento: E.descuento || 0,
       recibido: E.metodo === 'Crédito' ? num(E.abono) : E.metodo === 'Efectivo' ? t.total : undefined,
       items: vivos.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, variante: i.variante, cantidad: i.cantidad, precio: i.precio, costo: i.costo, serie: i.serie })) });
@@ -3474,7 +3542,7 @@ function editarVenta(v) {
     S.inicio = null; S.cuentasL = null; S.susL = null; guardarCache();
     h.cerrar(); toast('Venta ' + r.venta.numero + ' corregida', 'ok');
     if (S.vista === 'ventas') R.ventas();
-    detalleVenta(Object.assign({}, r.venta, { detalle: r.detalle, anterior: Object.assign({}, v) }));
+    detalleVenta(Object.assign({}, r.venta, { detalle: r.detalle, anterior: Object.assign({}, v, { anulada: true, corregida: r.venta.id }) })); // E7: la de antes ya no se puede editar ni anular
   };
   h.el.addEventListener('click', async e => {
     const d = e.target.closest('[data-d]'); if (d) { const it = E.items[Number(d.dataset.k)]; it.cantidad = Math.max(0, r2(it.cantidad + Number(d.dataset.d))); return pinta(); }
@@ -3484,7 +3552,7 @@ function editarVenta(v) {
     const mo = e.target.closest('[data-mo]'); if (mo) { E.motivo = mo.dataset.mo; return pinta(); }
     const q = e.target.closest('[data-eq]'); if (q) { const it = E.items[Number(q.dataset.eq)]; const n = await pedirTexto('Cantidad de «' + esc(it.descripcion) + '»', { label: 'Cantidad', valor: it.cantidad, modo: 'decimal' }); if (n !== null && num(n) >= 0) { it.cantidad = Math.round(num(n) * 1000) / 1000; pinta(); } return; }
     const pr = e.target.closest('[data-ep]'); if (pr) { const it = E.items[Number(pr.dataset.ep)]; const n = await pedirTexto('Precio de «' + esc(it.descripcion) + '»', { label: 'Precio por unidad', valor: it.precio, modo: 'decimal' }); if (n !== null && r2(n) >= 0) { it.precio = r2(n); pinta(); } return; }
-    if (e.target.closest('[data-desc]')) { const t = calcTotales({ items: E.items.filter(i => i.cantidad > 0), descuento: 0 }, exo); const n = await pedirTexto('Descuento', { label: 'Monto o porcentaje (ej. 50 o 10%)', valor: E.descuento || '', ph: '0.00', msg: `Subtotal: <b>${money(t.subtotal)}</b>` }); if (n !== null) { const z = String(n).trim(); E.descuento = z.endsWith('%') ? r2(t.subtotal * num(z) / 100) : r2(z); pinta(); } return; }
+    if (e.target.closest('[data-desc]')) { const t = calcTotales({ items: E.items.filter(i => i.cantidad > 0), descuento: 0 }, exoE()); const n = await pedirTexto('Descuento', { label: 'Monto o porcentaje (ej. 50 o 10%)', valor: E.descuento || '', ph: '0.00', msg: `Subtotal: <b>${money(t.subtotal)}</b>` }); if (n !== null) { const z = String(n).trim(); E.descuento = z.endsWith('%') ? r2(t.subtotal * num(z) / 100) : r2(z); pinta(); } return; }
     if (e.target.closest('[data-agregar]')) elegirParaVenta(p => { const ya = E.items.find(i => i.productoId === p.id && !i.variante); if (ya) ya.cantidad = r2(ya.cantidad + 1); else E.items.push({ productoId: p.id, descripcion: p.nombre, variante: '', cantidad: 1, precio: p.precio, costo: p.costo, serie: '', antes: 0, pAntes: p.precio }); pinta(); });
   });
   pinta();
@@ -3521,8 +3589,10 @@ R.pedidos = async () => {
     ? `<div class="link-card"><div class="li-ic">${ic('store', 22)}</div><div class="tx"><b>Tu tienda en línea está abierta</b><small>${esc(linkTienda())}</small></div><div class="row"><button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a></div></div>`
     : `<div class="aviso info">${ic('store', 20)}<div><b>Tu tienda en línea está apagada</b><small>Actívala para recibir pedidos por internet.</small></div>${puede('admin') ? `<button class="btn sm pri" data-a="ir" data-v="tienda">Activar</button>` : ''}</div>`;
   if (!S.pedidosL) m.innerHTML = tienda + '<div class="empty">Cargando pedidos…</div>';
-  try { S.pedidosL = await api('pedidos', {}, !!S.pedidosL); } catch (e) { if (S.pedidosL && m.querySelector('.ords')) return err(e); throw e; }
-  if (S.vista !== 'pedidos') return;
+  const t0 = S.tienda || ''; let lp;
+  try { lp = await api('pedidos', {}, !!S.pedidosL); } catch (e) { if (S.pedidosL && m.querySelector('.ords')) return err(e); throw e; }
+  if (S.vista !== 'pedidos' || (S.tienda || '') !== t0) return;
+  S.pedidosL = lp;
   const l = S.pedidosL, cnt = k => l.filter(p => p.estado === k).length;
   S.pedidosNuevos = cnt('nuevo'); pintarNav();
   if (!S.f.pest || (S.f.pestAuto && !cnt(S.f.pest))) { S.f.pest = ['nuevo', 'confirmado', 'listo'].find(k => cnt(k)) || 'nuevo'; S.f.pestAuto = 1; }
@@ -3539,7 +3609,7 @@ function cardPedido(p) {
   const accion = { nuevo: ['Confirmar', 'confirmado'], confirmado: ['Marcar listo', 'listo'], listo: ['Entregar y cobrar', 'cobrar'] }[p.estado];
   return `<div class="ord ${p.estado === 'nuevo' ? 'new' : ''}"><div class="ord-h"><span class="oav ${colorDe(p.nombre)}">${esc(iniciales(p.nombre))}</span><div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.numero)} · ${hace(p.fecha)}</small></div><span class="badge ${e.c}">${e.t}</span></div>
     ${e.s >= 0 ? `<div class="steps">${[0, 1, 2, 3].map(i => `<i class="${i <= e.s ? 'on' : ''}"></i>`).join('')}</div>` : ''}
-    <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${money(i.total)}</span></div>`).join('')}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
+    <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${money(i.total)}</span></div>`).join('')}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir${num(p.anticipoPagado) >= num(p.anticipo) ? ' · pagado ✓' : num(p.anticipoPagado) > 0 ? ' · pagó ' + money(p.anticipoPagado) : ''}</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
     <div class="ord-f"><span class="t n">${money(p.total)}</span><span class="badge b-mut">${ic(p.entrega === 'domicilio' ? 'truck' : 'store', 14)} ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge b-mut">${esc(p.pago)}</span></div>
     ${p.entrega === 'domicilio' && p.direccion ? `<p class="xs mut" style="margin:8px 0 0">${ic('pin', 13)} ${esc(p.direccion)}</p>` : ''}${p.nota ? `<p class="xs mut" style="margin:6px 0 0">📝 ${esc(p.nota)}</p>` : ''}
     <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a><button class="btn sm" data-a="verPedido" data-id="${p.id}">${ic('eye', 16)} Ver</button>
@@ -3562,10 +3632,11 @@ ACC.pedAccion = async el => {
   h.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; h.f.hidden = false;
   h.f.firstChild.addEventListener('click', () => setTimeout(() => h.cerrar(), 300));
 };
-function cobrarPedido(p) {
-  if (S.ticket.items.length && !S.ticket.pedidoId) { /* se reemplaza el ticket actual */ }
+async function cobrarPedido(p) {
+  // E16: si hay otra venta a medias en el ticket, se pregunta antes de reemplazarla
+  if (S.ticket.items.length && S.ticket.pedidoId !== p.id && !(await confirmar('Tienes otra venta a medias en el ticket. ¿La reemplazas por el pedido ' + esc(p.numero) + '?', { si: 'Reemplazar' }))) return;
   S.ticket = { items: p.items.map(i => ({ productoId: byId(S.productos, i.productoId) ? i.productoId : '', descripcion: i.nombre, cantidad: i.cantidad, precio: i.precio, precioMan: 1 })),
-    clienteId: p.clienteId || '', pedidoId: p.id, descuento: 0, metodo: ['Efectivo', 'Tarjeta', 'Transferencia'].includes(p.pago) ? p.pago : 'Efectivo' };
+    clienteId: p.clienteId || '', pedidoId: p.id, descuento: 0, metodo: ['Efectivo', 'Tarjeta', 'Transferencia'].includes(p.pago) ? p.pago : 'Efectivo', anticipo: num(p.anticipoPagado) }; // el anticipo que ya pagó se descuenta
   if (p.envio) S.ticket.items.push({ productoId: '', descripcion: 'Envío a domicilio', cantidad: 1, precio: p.envio });
   guardarTicket();
   cerrarHojas();
@@ -3628,10 +3699,12 @@ async function verChat(id) {
     try { d = await api('chatResponder', { id, texto }, true); inp.value = ''; inp.style.height = ''; pintaMsgs(); }
     finally { enviando = false; $('#ch-send', h.el).disabled = false; }
   };
-  ACC.chPedido = () => {
+  ACC.chPedido = async () => {
     const c = d.chat;
-    S.ticket = { items: d.producto ? [{ productoId: d.producto.id, descripcion: d.producto.nombre, cantidad: 1, precio: d.producto.precio }] : [], clienteId: c.clienteId || '', pedidoId: '', descuento: 0 };
-    guardarTicket(); h.cerrar(); ir('vender'); toast(d.producto ? 'Producto agregado al ticket' : 'Ticket listo para ' + c.nombre, 'ok', 2500);
+    if (S.ticket.items.length && !(await confirmar('Tienes otra venta a medias en el ticket. ¿La reemplazas?', { si: 'Reemplazar' }))) return;
+    const prod = d.producto && enTiendaP(d.producto) ? d.producto : null; // un producto de otra tienda no entra al ticket de esta
+    S.ticket = { items: prod ? [{ productoId: prod.id, descripcion: prod.nombre, cantidad: 1, precio: prod.precio }] : [], clienteId: c.clienteId || '', pedidoId: '', descuento: 0 };
+    guardarTicket(); h.cerrar(); ir('vender'); toast(prod ? 'Producto agregado al ticket' : d.producto ? 'Ese producto es de otra tienda: búscalo allá' : 'Ticket listo para ' + c.nombre, prod || !d.producto ? 'ok' : 'error', 3000);
   };
   ACC.chBorrar = async () => {
     if (!(await confirmar(`¿Borrar la conversación con ${esc(d.chat.nombre)}?`, { si: 'Borrar', peligro: 1 }))) return;
@@ -3650,7 +3723,7 @@ ACC.verPedido = el => {
     <div><small>Entrega</small>${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger en el negocio'}</div><div><small>Pago</small>${esc(p.pago)}</div></div>
     ${p.direccion ? `<p class="sm">${ic('pin', 15)} ${esc(p.direccion)} · <a href="https://www.google.com/maps/search/${encodeURIComponent(p.direccion)}" target="_blank" rel="noopener">Ver en mapa</a></p>` : ''}
     <div class="tks">${p.items.map(i => `<div class="tk"><div class="tx"><b>${esc(i.nombre)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}${i.tipo === 'compra' ? ` · US$${Number(i.usd || 0).toFixed(2)} c/u` : ''}</small>${i.tipo === 'compra' ? `<small style="word-break:break-all"><a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">${ic('globe', 13)} ${esc(i.enlace)}</a></small>` : ''}</div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
-    <div class="tots">${p.envio ? `<div class="tot"><span>Envío</span><b class="n">${money(p.envio)}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(p.total)}</b></div>${p.anticipo ? `<div class="tot"><span>Anticipo para pedir el artículo</span><b class="n" style="color:var(--pri)">${money(p.anticipo)}</b></div>` : ''}</div>${p.nota ? `<p class="sm mut">Nota: ${esc(p.nota)}</p>` : ''}` });
+    <div class="tots">${p.envio ? `<div class="tot"><span>Envío</span><b class="n">${money(p.envio)}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(p.total)}</b></div>${p.anticipo ? `<div class="tot"><span>Anticipo para pedir el artículo</span><b class="n" style="color:var(--pri)">${money(p.anticipo)}</b></div>` : ''}${num(p.anticipoPagado) > 0 ? `<div class="tot"><span>Anticipo pagado ✓</span><b class="n" style="color:var(--ok)">${money(p.anticipoPagado)}</b></div><div class="tot g"><span>Falta por pagar</span><b class="n">${money(p.total - p.anticipoPagado)}</b></div>` : ''}</div>${p.nota ? `<p class="sm mut">Nota: ${esc(p.nota)}</p>` : ''}` });
   const bs = [];
   if (['nuevo', 'confirmado', 'listo'].includes(p.estado)) bs.push({ t: 'Cancelar pedido', cls: 'bad', fn: async () => {
     const m = await pedirTexto('Cancelar ' + p.numero, { label: 'Motivo (se guarda en el pedido)', si: 'Cancelar pedido', peligro: 1 });
@@ -3659,9 +3732,24 @@ ACC.verPedido = el => {
     h.cerrar(); toast('Pedido cancelado', 'ok'); R.pedidos();
   } });
   if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !p.ventaId) bs.push({ t: `${ic('edit', 18)} Editar`, fn: () => { h.cerrar(); editarPedido(p); } });
+  if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !p.ventaId && num(p.anticipo) > 0 && num(p.anticipoPagado) < num(p.anticipo) - 0.004)
+    bs.unshift({ t: `${ic('coin', 18)} Recibí el anticipo`, cls: 'pri', fn: () => { h.cerrar(); anticipoPedido(p); } });
   bs.push({ t: `${ic('wa', 18)} WhatsApp`, cls: 'wa', fn: () => { window.open(waLink(p.telefono, msjPedido(p)), '_blank'); } });
   h.botones(bs);
 };
+// El cliente entregó el anticipo de su compra en línea: entra a la caja y al cobrar el pedido se descuenta solo
+function anticipoPedido(p) {
+  const falta = r2(num(p.anticipo) - num(p.anticipoPagado));
+  let metodo = 'Efectivo';
+  const h = hoja({ titulo: 'Anticipo · ' + esc(p.numero), cls: 'chica', html: `<p class="sm mut" style="margin-bottom:10px">${esc(p.nombre)} paga el anticipo para que pidas su compra en línea. Entra a tu caja hoy y, al entregar el pedido, se descuenta del total.</p>
+    <label class="fld"><span>Monto recibido</span><input id="ap-m" inputmode="decimal" value="${falta > 0 ? fmtN(falta) : ''}"></label>
+    <div class="fld"><span>¿Cómo pagó?</span><div class="pays" id="ap-p">${[['Efectivo', 'cash'], ['Transferencia', 'transfer'], ['Tarjeta', 'card']].map(([m, i]) => `<button class="pay ${m === metodo ? 'on' : ''}" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div></div>` });
+  $('#ap-p', h.el).addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; metodo = b.dataset.m; $$('#ap-p .pay', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: 'Registrar anticipo', cls: 'pri', fn: async () => {
+    const g = await api('anticipoPedido', { id: p.id, monto: num($('#ap-m', h.el).value), metodo });
+    Object.assign(p, g); S.cajaD = null; S.inicio = null; h.cerrar(); toast('Anticipo registrado: ' + money(g.anticipoPagado), 'ok'); if (S.vista === 'pedidos') R.pedidos();
+  } }]);
+}
 // Corregir un pedido en línea: cambiar cantidades o quitar productos y avisarle al cliente
 const MOTIVOS_PED = [['Se agotó', ' porque se agotó'], ['Error de precio', ' por un error de nuestra parte'], ['El cliente lo pidió', ' como nos pediste']];
 function editarPedido(p) {
@@ -3724,7 +3812,7 @@ ACC.qrTienda = async () => {
 /* ===================== PRODUCTOS ===================== */
 const EMOJIS = ['📦','🛍️','👕','👗','👖','👟','👜','🧢','💄','💅','🧴','🌸','🍚','🫘','🥤','💧','🥛','☕','🍞','🥐','🍰','🍪','🍗','🌮','🍛','🍕','🍔','🥗','🍎','🧃','💊','🩹','👶','🔨','🪛','🔧','💡','🔌','🔋','🎨','🧱','📱','🎧','🔊','💻','📓','✏️','🎒','🧸','🎁','🏠','🛎️','⭐','🧰','🛞','🛢️','🐶','🌿'];
 const UNIDADES = ['unidad', 'par', 'docena', 'caja', 'paquete', 'bolsa', 'libra', 'kilo', 'onza', 'litro', 'galón', 'metro', 'yarda', 'servicio', 'hora', 'plato'];
-const catsUsadas = () => [...new Set(S.productos.map(p => p.categoria).filter(Boolean))].sort();
+const catsUsadas = () => [...new Set(S.productos.filter(enTiendaP).map(p => p.categoria).filter(Boolean))].sort(); // en una tienda, sus categorías
 const catsSugeridas = () => { const cats = []; girosOn().forEach(id => { const g = S.giros.find(x => x.id === id); if (g) cats.push(...g.cats); }); return [...new Set(catsUsadas().concat(cats))]; };
 // Varios giros en la misma tienda (los activa Vic desde el Panel): el principal primero
 const girosOn = () => (S.girosActivos && S.girosActivos.length ? S.girosActivos : [S.config.giro || 'otro']);
@@ -3827,7 +3915,7 @@ function formProducto(p, onSave, pre) {
       <label class="fld"><span>Categoría</span><input id="pf-cat" list="dl-cat" maxlength="40" value="${esc(p.categoria || '')}" placeholder="General"><datalist id="dl-cat">${catsSugeridas().map(c => `<option value="${esc(c)}">`).join('')}</datalist></label></div>
     ${girosOn().length > 1 ? `<span class="op-l" style="margin-top:4px">Sección de la tienda</span><div class="chips" id="pf-giro" style="flex-wrap:wrap;margin-bottom:10px">${girosOn().map(id => `<button type="button" class="chip ${(p.id ? giroDeP(p) : S.tienda || giroDeP(p)) === id ? 'on' : ''}" data-g="${id}">${GIRO_EMO[id] || '📦'} ${esc(giroN(id).replace(/ \(.*\)$/, ''))}</button>`).join('')}</div>` : ''}
     ${susOn() ? susFormProducto(p) : ''}
-    ${(S.plus || modOn('variantes')) && girosOn().some(id => opcGiro(id).filtro) ? opcForm(p) : ''}
+    ${opcArriba() ? opcForm(p) : ''}
     <div class="precio-box"><h4>${ic('tag', 18)} Precio de venta</h4>
       <div class="f2"><label class="fld"><span>Costo ${nuevo ? '(opcional)' : 'promedio'}</span><input id="pf-costo" inputmode="decimal" value="${p.costo ? p.costo : ''}" placeholder="¿Cuánto te cuesta?"></label>
       <label class="fld"><span>Precio de venta *</span><input id="pf-precio" inputmode="decimal" value="${p.precio ? p.precio : ''}" placeholder="0.00"></label></div>
@@ -3849,7 +3937,7 @@ function formProducto(p, onSave, pre) {
       <label class="fld"><span>Se vende por</span><select id="pf-uni">${UNIDADES.map(u => `<option ${p.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
     ${S.plus ? `<label class="sw-row"><input type="checkbox" id="pf-tienda" ${p.tienda ? 'checked' : ''}><span class="sw"></span><div><b>Mostrar en la tienda en línea</b><small>Tus clientes lo verán en tu catálogo</small></div></label>
       <label class="fld"><span>Descripción para la tienda</span><textarea id="pf-desc" rows="2" maxlength="300" placeholder="Opcional: material, detalles…">${esc(p.descripcion || '')}</textarea></label>
-      ${opcGiro(S.config.giro).filtro ? '' : opcForm(p)}` : (modOn('variantes') && !opcGiro(S.config.giro).filtro ? opcForm(p) : '')}
+      ${opcArriba() || opcGiro(S.config.giro).filtro ? '' : opcForm(p)}` : (modOn('variantes') && !opcArriba() && !opcGiro(S.config.giro).filtro ? opcForm(p) : '')}
     ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="pf-act" ${p.activo ? 'checked' : ''}><span class="sw"></span><div><b>Producto activo</b><small>Los inactivos no aparecen para vender</small></div></label>` : ''}
     </details>` });
   $('#pf-isv', h.el).value = p.tasaIsv || '';
@@ -3900,7 +3988,7 @@ function formProducto(p, onSave, pre) {
     if (!nombre) throw new Error('Escribe el nombre del producto');
     if (!(num(precio.value) > 0)) throw new Error('Escribe el precio de venta');
     const reg = { id: p.id, nombre, codigo: $('#pf-cod', h.el).value.trim(), categoria: $('#pf-cat', h.el).value.trim() || 'General', precio: r2(precio.value),
-      costo: r2(costo.value), margen: pct.value ? r2(pct.value) : (p.margen || 0), tasaIsv: isvSel.value, unidad: $('#pf-uni', h.el).value, icono: st.icono,
+      costo: Math.round(num(costo.value) * 10000) / 10000, margen: pct.value ? r2(pct.value) : (p.margen || 0), tasaIsv: isvSel.value, unidad: $('#pf-uni', h.el).value, icono: st.icono,
       tipo: ctrl.checked ? 'producto' : 'servicio', stockMin: num($('#pf-min', h.el).value) };
     if (nuevo) reg.stock = num(($('#pf-stock', h.el) || {}).value);
     const gSel = $('#pf-giro .chip.on', h.el); if (gSel) reg.giro = gSel.dataset.g === girosOn()[0] ? '' : gSel.dataset.g;
@@ -3921,6 +4009,8 @@ function formProducto(p, onSave, pre) {
   } });
   h.botones(bs);
 }
+// E11: el bloque de opciones va arriba si algún giro activo filtra por talla/color; así nunca se pinta dos veces
+const opcArriba = () => (S.plus || modOn('variantes')) && girosOn().some(id => opcGiro(id).filtro);
 // Opciones que el cliente elige en la tienda (según el tipo de negocio)
 function opcForm(p) {
   const cfg = opcGiro(S.config.giro), act = leerOpc(p.opciones);
@@ -3948,7 +4038,7 @@ function ajusteStock(p, cb) {
   } }]);
 }
 ACC.ajusteRapido = () => {
-  const l = S.productos.filter(p => p.activo && p.tipo === 'producto').sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const l = S.productos.filter(p => p.activo && p.tipo === 'producto' && enTiendaP(p)).sort((a, b) => a.nombre.localeCompare(b.nombre));
   const h = hoja({ titulo: '¿Qué producto ajustas?', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="ar-q" placeholder="Buscar…"></div><div class="list" id="ar-l"></div>`, foco: '#ar-q' });
   const pinta = () => { const q = norm($('#ar-q', h.el).value); $('#ar-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q)).slice(0, 60).map(p => `<div class="li" data-ar="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.categoria)}</small></div><div class="am">${cant(p.stock)}</div></div>`).join(''); };
   $('#ar-q', h.el).addEventListener('input', pinta); pinta();
@@ -4029,7 +4119,7 @@ ACC.cpNuevo = () => {
 };
 ACC.cpAplicar = () => {
   const x = calcPrecio(S.f.calc); if (!x || x.error) return;
-  const l = S.productos.filter(p => p.activo).sort((a, b) => a.nombre.localeCompare(b.nombre));
+  const l = S.productos.filter(p => p.activo && enTiendaP(p)).sort((a, b) => a.nombre.localeCompare(b.nombre));
   const h = hoja({ titulo: '¿A qué producto?', html: `<p class="sm mut" style="margin-top:0">Precio nuevo <b>${money(x.precio)}</b> · costo ${money(x.costo)}. Antes de guardar lo puedes revisar.</p><div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="ca-q" placeholder="Buscar producto…"></div><div class="list" id="ca-l"></div>`, foco: '#ca-q' });
   const pinta = () => { const q = norm($('#ca-q', h.el).value); $('#ca-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q)).slice(0, 80).map(p => `<div class="li" data-p="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>Costo ${p.costo ? money(p.costo) : '—'}</small></div><div class="am">${money(p.precio)}<small>precio actual</small></div></div>`).join('') || '<div class="empty">Sin resultados</div>'; };
   $('#ca-q', h.el).addEventListener('input', pinta); pinta();
@@ -4066,7 +4156,7 @@ function editarPrecio(p, pre) {
 ACC.pbVer = () => {
   const cat = $('#pb-cat').value, met = $('#pb-met').value, pct = num($('#pb-pct').value), red = $('#pb-red').value, conIsv = $('#pb-isv').checked;
   if (!(pct > 0)) return toast('Escribe el porcentaje', 'error');
-  const l = S.productos.filter(p => p.activo && (!cat || p.categoria === cat));
+  const l = S.productos.filter(p => p.activo && enTiendaP(p) && (!cat || p.categoria === cat)); // en una tienda, solo sus productos
   const filas = l.map(p => {
     let nuevo = null, motivo = '';
     if (met === 'costo') { if (p.costo > 0) nuevo = precioDesdeCosto(p.costo, pct, conIsv, tasaDe(p), red); else motivo = 'Sin costo'; }
@@ -4270,8 +4360,8 @@ function rangoPer(k) {
 R.compras = async () => {
   const per = S.f.cper || 'mes', [desde, hasta] = rangoPer(per);
   $('#main').innerHTML = `<div class="chips" style="margin-bottom:12px">${['mes', 'ant', 'm3', 'anio'].map(k => `<button class="chip ${per === k ? 'on' : ''}" data-a="cper" data-k="${k}">${PERIODOS[k]}</button>`).join('')}</div><div id="co-b"><div class="empty">Cargando…</div></div>`;
-  const d = await api('compras', { desde, hasta }, true);
-  if (S.vista !== 'compras') return;
+  const llave = per + '|' + (S.tienda || ''), d = await api('compras', { desde, hasta }, true);
+  if (S.vista !== 'compras' || llave !== (S.f.cper || 'mes') + '|' + (S.tienda || '')) return;
   const l = d.lista || d; S.comprasL = l;
   const act = l.filter(c => !c.anulada), rs = d.resumen || { total: act.reduce((a, c) => a + c.total, 0), n: act.length, pendiente: act.reduce((a, c) => a + c.saldo, 0) };
   $('#co-b').innerHTML = `<div class="kpis"><div class="kpi" style="--k:#1b4fd8"><small>Total comprado</small><b class="n">${money(rs.total)}</b><i>${rs.n} compras</i></div><div class="kpi" style="--k:#f25c05"><small>Pendiente de pagar</small><b class="n">${money(rs.pendiente)}</b></div></div>${d.recortada ? `<p class="xs mut" style="margin:-4px 2px 10px">Se muestran las ${l.length} compras más recientes; los totales son de todo el período.</p>` : ''}
@@ -4432,8 +4522,8 @@ R.gastos_bar = () => `<button class="hbtn" data-a="nuevoGasto" aria-label="Regis
 R.gastos = async () => {
   const per = S.f.gper || 'mes', [desde, hasta] = rangoPer(per);
   $('#main').innerHTML = `<div class="chips" style="margin-bottom:12px">${['hoy', 'mes', 'ant', 'anio'].map(k => `<button class="chip ${per === k ? 'on' : ''}" data-a="gper" data-k="${k}">${PERIODOS[k]}</button>`).join('')}</div><div id="ga-b"><div class="empty">Cargando…</div></div>`;
-  const l = await api('gastos', { desde, hasta }, true);
-  if (S.vista !== 'gastos') return;
+  const llave = per + '|' + (S.tienda || ''), l = await api('gastos', { desde, hasta }, true);
+  if (S.vista !== 'gastos' || llave !== (S.f.gper || 'mes') + '|' + (S.tienda || '')) return;
   S.gastosL = l;
   const act = l.filter(g => !g.anulado), tot = act.reduce((a, g) => a + g.monto, 0);
   const pc = {}; act.forEach(g => { pc[g.categoria] = (pc[g.categoria] || 0) + g.monto; });
@@ -4459,7 +4549,7 @@ function formGasto(g) {
     <div class="f2"><label class="fld"><span>Monto</span><input id="gf-m" inputmode="decimal" value="${g.monto || ''}"></label><label class="fld"><span>Fecha</span><input id="gf-f" type="date" value="${g.fechaGasto}" max="${hoy()}"></label></div>
     <label class="fld"><span>Pagado a (opcional)</span><input id="gf-p" list="dl-gp" value="${esc(g.proveedor || '')}"><datalist id="dl-gp">${[...new Set([].concat(...S.gastoCats.map(c => c.proveedores)))].map(p => `<option value="${esc(p)}">`).join('')}</datalist></label>
     <div class="fld"><span>Forma de pago</span><div class="pays three" id="gf-mt">${[['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer']].map(([m, i]) => `<button class="pay ${m === metodo ? 'on' : ''}" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div><small class="hint">Los gastos en efectivo se restan de la caja.</small></div>
-    ${secs.length ? `<div class="fld"><span>¿De qué sección es?</span><div class="chips wrap gf-sec" id="gf-g">${[''].concat(secs).map(id => `<button type="button" class="chip ${(g.giro || '') === id ? 'on' : ''}" data-g="${id}">${id ? `<i class="sd" style="background:${secColor(id)}"></i>${esc(secNom(id))}` : 'General · se reparte'}</button>`).join('')}</div><small class="hint">Lo general (alquiler, luz, planilla…) se reparte entre las secciones según lo que vende cada una.</small></div>` : ''}
+    ${secs.length ? `<div class="fld"><span>¿De qué sección es?</span><div class="chips wrap gf-sec" id="gf-g">${[''].concat(secs).map(id => `<button type="button" class="chip ${giroG === id ? 'on' : ''}" data-g="${id}">${id ? `<i class="sd" style="background:${secColor(id)}"></i>${esc(secNom(id))}` : 'General · se reparte'}</button>`).join('')}</div><small class="hint">Lo general (alquiler, luz, planilla…) se reparte entre las secciones según lo que vende cada una.</small></div>` : ''}
     <label class="fld"><span>Nota</span><input id="gf-n" maxlength="200" value="${esc(g.anulado ? '' : g.nota || '')}"></label>` });
   const ci = $('#gf-c', h.el), di = $('#gf-d', h.el);
   const actDet = () => {
@@ -4494,8 +4584,8 @@ const smoney = n => (n < 0 ? '−' : '+') + money(Math.abs(n));
 R.caja = async () => {
   const m = $('#main');
   if (!S.cajaD) m.innerHTML = '<div class="empty">Cargando…</div>';
-  const d = await api('caja', S.tienda ? {} : { caja: S.f.cjt || '' }, !!S.cajaD);
-  if (S.vista !== 'caja') return;
+  const llave = (S.tienda || '') + '|' + (S.f.cjt || ''), d = await api('caja', S.tienda ? {} : { caja: S.f.cjt || '' }, !!S.cajaD);
+  if (S.vista !== 'caja' || llave !== (S.tienda || '') + '|' + (S.f.cjt || '')) return; // otra caja elegida mientras cargaba
   S.cajaD = d;
   const k = d.k, esp = r2(d.fondo + k.ventas + k.cobros - k.gastos - k.pagos - k.compras);
   const fila = (t, v, signo, cls) => `<div class="cj-r ${cls || ''}"><span>${t}</span><b class="n">${signo}${money(v)}</b></div>`;
@@ -4512,7 +4602,7 @@ R.caja = async () => {
 function ventasHoyHTML(l) {
   const act = l.filter(v => !v.anulada), tot = act.reduce((a, v) => a + v.total, 0), web = act.filter(v => v.pedido);
   const art = {};
-  act.forEach(v => v.detalle.forEach(i => { const k = i.productoId || i.descripcion; const x = art[k] || (art[k] = { nombre: i.descripcion, cantidad: 0, total: 0, envio: !i.productoId && /^env[ií]o/i.test(i.descripcion) }); x.cantidad += i.cantidad; x.total += i.total; }));
+  act.forEach(v => v.detalle.forEach(i => { const k = (i.productoId || '') + '|' + i.descripcion; const x = art[k] || (art[k] = { nombre: i.descripcion, cantidad: 0, total: 0, envio: !i.productoId && /^env[ií]o/i.test(i.descripcion) }); x.cantidad += i.cantidad; x.total += i.total; }));
   const arts = Object.values(art).sort((a, b) => a.envio - b.envio || b.total - a.total), nArt = arts.reduce((a, x) => a + (x.envio ? 0 : x.cantidad), 0);
   const modo = S.f.cjv || 'venta';
   const MET = { Efectivo: 'b-ok', Tarjeta: 'b-info', Transferencia: 'b-info', 'Crédito': 'b-warn' };
@@ -4579,8 +4669,8 @@ R.ventas = async () => {
   $('#main').innerHTML = `<div class="chips" style="margin-bottom:10px">${['hoy', 'ayer', 'd7', 'mes', 'ant'].map(k => `<button class="chip ${per === k ? 'on' : ''}" data-a="vper" data-k="${k}">${PERIODOS[k]}</button>`).join('')}</div>
     <div class="srch" style="margin-bottom:12px">${ic('search', 18)}<input id="vh-q" placeholder="Buscar por número, cliente o producto…" value="${esc(S.f.vhq || '')}"></div><div id="vh-b"><div class="empty">Cargando…</div></div>`;
   $('#vh-q').addEventListener('input', debounce(e => { S.f.vhq = e.target.value; listaVentas(); }, 150));
-  const d = await api('ventas', { desde, hasta }, true);
-  if (S.vista !== 'ventas') return;
+  const llave = per + '|' + (S.tienda || ''), d = await api('ventas', { desde, hasta }, true);
+  if (S.vista !== 'ventas' || llave !== (S.f.vper || 'hoy') + '|' + (S.tienda || '')) return; // llegó tarde: ya se eligió otro período o tienda
   S.ventasL = d.lista || d; S.ventasR = d.resumen ? d : null; listaVentas();
 };
 function listaVentas() {
@@ -4611,6 +4701,7 @@ function graficoBarras(id, etiquetas, series, opts) {
     const cv = $('#' + id); if (!cv) return;
     const css = getComputedStyle(document.documentElement);
     const ink = css.getPropertyValue('--mut').trim(), line = css.getPropertyValue('--line').trim();
+    if (S.charts[id]) { try { S.charts[id].destroy(); } catch (e) {} } // E23: la gráfica anterior se libera (cambiar período o sección no acumula memoria)
     S.charts[id] = new Chart(cv, {
       type: 'bar',
       data: { labels: etiquetas, datasets: series.map((s, i) => ({ label: s.label, data: s.data, backgroundColor: serie(i), borderRadius: 4, borderSkipped: 'bottom', maxBarThickness: 22, categoryPercentage: 0.7, barPercentage: 0.9 })) },
@@ -4668,7 +4759,7 @@ async function repResumen() {
     ${per === 'otro' ? `<div class="row" style="margin-bottom:10px"><input type="date" id="r-d" value="${desde}" max="${hoy()}" style="width:auto"><span class="mut">a</span><input type="date" id="r-h" value="${hasta}" max="${hoy()}" style="width:auto"><button class="btn pri sm" data-a="rVer">Ver</button></div>` : ''}<div id="rp-b"><div class="empty">Calculando…</div></div>`;
   const giro = S.f.rgiro || '';
   const d = await api('reporte', { desde, hasta, giro }, true);
-  if (!enRep('resumen') || (S.f.rper || 'mes') !== per || (S.f.rgiro || '') !== giro) return;
+  if (!enRep('resumen') || (S.f.rper || 'mes') !== per || (S.f.rgiro || '') !== giro || (per === 'otro' && ((S.f.rdesde || hoy()) !== desde || (S.f.rhasta || hoy()) !== hasta))) return;
   const k = d.kpi;
   const sinCosto = S.productos.filter(p => p.activo && !(p.costo > 0)).length;
   const kp = (t, v, s, color, cls) => `<div class="kpi" style="--k:${color}"><small>${t}</small><b class="n ${cls || ''}">${v}</b>${s ? `<i>${s}</i>` : ''}</div>`;
@@ -4962,15 +5053,17 @@ R.tienda = () => {
   const pf = $('#td-portada'); if (pf) pf.addEventListener('change', subirPortada);
   $('#td-fuentes').addEventListener('click', async e => {
     const b = e.target.closest('[data-f]'); if (!b) return;
+    const antes = $('#td-fuentes .fuente.on');
     $$('#td-fuentes .fuente').forEach(x => x.classList.toggle('on', x === b));
-    const cf = await api('guardar', { entidad: 'Config', registro: { tiendaFuente: b.dataset.f } }, true);
-    S.config = cf; guardarCache(); toast('Letra aplicada: ' + FUENTES[b.dataset.f].n, 'ok', 1800);
+    try { const cf = await api('guardar', { entidad: 'Config', registro: { tiendaFuente: b.dataset.f } }, true); S.config = cf; guardarCache(); toast('Letra aplicada: ' + FUENTES[b.dataset.f].n, 'ok', 1800); }
+    catch (x) { $$('#td-fuentes .fuente').forEach(y => y.classList.toggle('on', y === antes)); err(x); }
   });
   $('#td-modos').addEventListener('click', async e => {
     const b = e.target.closest('[data-m]'); if (!b) return;
+    const antes = $('#td-modos .pay.on');
     $$('#td-modos .pay').forEach(x => x.classList.toggle('on', x === b));
-    const cf = await api('guardar', { entidad: 'Config', registro: { tiendaModo: b.dataset.m } }, true);
-    S.config = cf; guardarCache(); toast(b.dataset.m === 'auto' ? 'La tienda sigue el modo del cliente' : 'Tienda siempre en modo ' + b.dataset.m, 'ok', 1800);
+    try { const cf = await api('guardar', { entidad: 'Config', registro: { tiendaModo: b.dataset.m } }, true); S.config = cf; guardarCache(); toast(b.dataset.m === 'auto' ? 'La tienda sigue el modo del cliente' : 'Tienda siempre en modo ' + b.dataset.m, 'ok', 1800); }
+    catch (x) { $$('#td-modos .pay').forEach(y => y.classList.toggle('on', y === antes)); err(x); }
   });
   if (S.params.sec) { const el = $('#aj-' + S.params.sec); S.params.sec = ''; if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
 };
@@ -5375,7 +5468,7 @@ function facturaHTML(v, det) {
     <div class="fac-m">${dato('Fecha', fNum(v.fecha) + ' ' + fHora(v.fecha))}${dato('Forma de pago', esc(v.metodo))}${dato('Cliente', esc(f.nombre || 'Consumidor Final'))}${dato('RTN del cliente', esc(fmtRtn(f.rtn)))}</div>
     <table class="fac-i"><thead><tr><th>Cant.</th><th>Descripción</th><th>P. unit.</th><th>Total</th></tr></thead><tbody>${det.map(i => `<tr><td>${cant(i.cantidad)}</td><td>${esc(i.descripcion)}</td><td>${fmtN(i.precio)}</td><td>${fmtN(i.total)}</td></tr>`).join('')}</tbody></table>
     <div class="fac-s">${filasFiscales(v, f).map(([a, b]) => `<div><span>${a}</span><span>${b < 0 ? '− ' + fmtN(-b) : fmtN(b || 0)}</span></div>`).join('')}
-      <div class="fac-tot"><span>TOTAL A PAGAR</span><b>${money(v.total)}</b></div></div>
+      <div class="fac-tot"><span>TOTAL A PAGAR</span><b>${money(v.total)}</b></div>${num(v.anticipo) > 0 ? `<div class="fac-tot" style="font-size:12px"><span>Anticipo ya pagado · pagado hoy</span><b>−${money(v.anticipo)} · ${money(v.total - v.anticipo)}</b></div>` : ''}</div>
     <p class="fac-l">SON: ${esc(f.letras || '')}</p>
     ${v.metodo === 'Efectivo' ? `<p class="fac-x">Recibido ${money(v.recibido)} · cambio ${money(v.cambio)}</p>` : ''}${v.metodo === 'Crédito' ? `<p class="fac-x">Anticipo ${money(v.recibido)} · saldo ${money(v.saldo)}</p>` : ''}
     <div class="fac-e"><div><span>N.º correlativo de orden de compra exenta</span><span>${esc(f.oce || '')}</span></div><div><span>N.º correlativo de constancia de registro de exonerado</span><span>${esc(f.cre || '')}</span></div><div><span>N.º identificativo del registro de la SAG</span><span>${esc(f.sag || '')}</span></div></div>
@@ -5389,7 +5482,7 @@ function ticketFacturaHTML(v, det, copia) {
     <div class="ps pc"><b>FACTURA</b><div>N.º ${esc(v.factura)}</div><div>CAI: ${esc(f.cai)}</div></div>
     <div class="ps">${L('Fecha', fNum(v.fecha) + ' ' + fHora(v.fecha))}${L('Cliente', esc(f.nombre || 'Consumidor Final'))}${L('RTN', esc(fmtRtn(f.rtn)) || '—')}${L('Atendió', esc(nomUsuario(v.usuarioId)))}</div>
     <div class="ps">${det.map(i => `<div>${esc(i.descripcion)}</div>${L('&nbsp;&nbsp;' + cant(i.cantidad) + ' × ' + fmtN(i.precio), fmtN(i.total))}`).join('')}</div>
-    <div class="ps">${filasFiscales(v, f).map(([a, b]) => L(a, b < 0 ? '−' + fmtN(-b) : fmtN(b || 0))).join('')}<div class="pl pt"><span>TOTAL</span><span>${money(v.total)}</span></div>${L('Pago', esc(v.metodo))}${v.metodo === 'Efectivo' ? L('Recibido', money(v.recibido)) + L('Cambio', money(v.cambio)) : ''}${v.metodo === 'Crédito' ? L('Anticipo', money(v.recibido)) + L('Saldo', money(v.saldo)) : ''}</div>
+    <div class="ps">${filasFiscales(v, f).map(([a, b]) => L(a, b < 0 ? '−' + fmtN(-b) : fmtN(b || 0))).join('')}<div class="pl pt"><span>TOTAL</span><span>${money(v.total)}</span></div>${num(v.anticipo) > 0 ? L('Anticipo ya pagado', '−' + money(v.anticipo)) + L('Pagado hoy', money(v.total - v.anticipo)) : ''}${L('Pago', esc(v.metodo))}${v.metodo === 'Efectivo' ? L('Recibido', money(v.recibido)) + L('Cambio', money(v.cambio)) : ''}${v.metodo === 'Crédito' ? L('Anticipo', money(v.recibido)) + L('Saldo', money(v.saldo)) : ''}</div>
     <div class="ps"><div>SON: ${esc(f.letras || '')}</div></div>
     <div class="ps"><div>N.º correlativo orden de compra exenta: ${esc(f.oce || '')}</div><div>N.º correlativo constancia de registro de exonerado: ${esc(f.cre || '')}</div><div>N.º identificativo registro SAG: ${esc(f.sag || '')}</div></div>
     <div class="ps"><div>Rango autorizado: ${esc(f.desde)} al ${esc(f.hasta)}</div><div>Fecha límite de emisión: ${esc(fNum(f.limite))}</div></div>
@@ -5431,7 +5524,7 @@ function initSarAjustes() {
     if (on.checked) { S.f.sarAbierto = 1; $('#sar-f').hidden = false; return; }
     if (!sarOn()) { S.f.sarAbierto = 0; $('#sar-f').hidden = true; return; }
     if (!(await confirmar('¿Apagar la facturación SAR? Desde ahora las ventas saldrán como comprobante (no fiscal). Tus datos del CAI se conservan.', { si: 'Apagar', peligro: 1 }))) { on.checked = true; return; }
-    const r = await api('guardarSAR', { registro: { activo: false } });
+    let r; try { r = await api('guardarSAR', { registro: { activo: false } }); } catch (x) { on.checked = true; err(x); return; } // no se apagó: el interruptor vuelve a encendido
     S.config = Object.assign(S.config, r.config); S.sar = r.sar; S.f.sarAbierto = 0; guardarCache(); toast('Facturación SAR apagada', 'ok'); R.ajustes();
   });
 }
@@ -5478,8 +5571,9 @@ async function repLibroSAR() {
 }
 ACC.lbVer = async el => {
   const f = el.dataset.f.slice(0, 10);
-  const r = await api('ventas', { desde: f, hasta: f }), l = r.lista || r;
-  const v = l.find(x => x.id === el.dataset.id); if (v) detalleVenta(v);
+  const r = await api('ventas', { desde: f, hasta: f, tienda: '' }), l = r.lista || r; // F14: de cualquier sección, y también las que se editaron
+  const v = l.find(x => x.id === el.dataset.id) || l.map(x => x.anterior).find(x => x && x.id === el.dataset.id);
+  if (v) detalleVenta(v); else toast('No encontré esa factura en las ventas de ese día', 'error');
 };
 
 /* ===================== CONTABILIDAD (módulo Plus) =====================
@@ -5542,6 +5636,7 @@ R.contabilidad_bar = () => {
 R.contabilidad = async () => {
   const m = $('#main');
   if (!S.contab) { ir('inicio', {}, true); return; }
+  if (!S.params._cb) { S.params._cb = 1; S.cb = null; } // al entrar: datos frescos; al cambiar de pestaña o de mes, se reusan
   if (S.params.tab) { S.f.cbtab = S.params.tab; S.params.tab = ''; }
   const tab = cbTab(), mes = cbMes();
   const meses = []; for (let i = 0; i < 12; i++) { const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i); const ym = toLocal(d).slice(0, 7); meses.push(`<option value="${ym}" ${ym === mes ? 'selected' : ''}>${fMes(ym)}</option>`); }
@@ -5555,7 +5650,7 @@ R.contabilidad = async () => {
   $('#cb-est').className = 'badge ' + (cerrado ? 'b-mut' : 'b-ok'); $('#cb-est').textContent = cerrado ? 'Mes cerrado' : 'Período abierto';
   ({ inicio: cbInicio, diario: cbDiario, mayor: cbMayor, balanza: cbBalanza, resultados: cbResultados, balance: cbBalance, auxiliares: cbAuxiliares, concil: cbConcil, plan: cbPlan, paquete: cbPaquete })[tab]();
 };
-ACC.cbTab = el => { S.f.cbtab = el.dataset.k; R.contabilidad().catch(err); };
+ACC.cbTab = el => { S.f.cbtab = el.dataset.k; pintarHeader(); R.contabilidad().catch(err); };
 ACC.cbMes = () => {};
 ACC.cbCSV = () => { if (S.repCSV) S.repCSV(); else toast('Esta pestaña no tiene descarga', 'error'); };
 
@@ -5628,8 +5723,9 @@ const CB_PLANTILLAS = {
   traslado:     { concepto: 'Depósito de caja a banco', lineas: m => [[m.banco, 'debe'], [m.caja, 'haber']] }
 };
 function cbSelectCta(val, extra) {
-  const grupos = {}; S.cb.plan.filter(p => p.activo !== false).forEach(p => (grupos[p.tipo] = grupos[p.tipo] || []).push(p));
-  return `<select class="cb-cta" ${extra || ''}>${Object.keys(CB_TIPOS).filter(t => grupos[t]).map(t => `<optgroup label="${CB_TIPOS[t]}">${grupos[t].map(p => `<option value="${p.codigo}" ${p.codigo === val ? 'selected' : ''}>${p.codigo} ${esc(p.nombre)}</option>`).join('')}</optgroup>`).join('')}</select>`;
+  // F18: la cuenta elegida aparece aunque esté inactiva (si no, al guardar se cambiaría sola por otra)
+  const grupos = {}; S.cb.plan.filter(p => p.activo !== false || p.codigo === val).forEach(p => (grupos[p.tipo] = grupos[p.tipo] || []).push(p));
+  return `<select class="cb-cta" ${extra || ''}>${Object.keys(CB_TIPOS).filter(t => grupos[t]).map(t => `<optgroup label="${CB_TIPOS[t]}">${grupos[t].map(p => `<option value="${p.codigo}" ${p.codigo === val ? 'selected' : ''}>${p.codigo} ${esc(p.nombre)}${p.activo === false ? ' (inactiva)' : ''}</option>`).join('')}</optgroup>`).join('')}</select>`;
 }
 function cbLineaForm(cta, debe, haber) {
   return `<div class="row cb-l" style="margin-bottom:6px;align-items:center">${cbSelectCta(cta, 'style="flex:1;min-width:0"')}<input type="number" step="0.01" min="0" class="cb-d n" placeholder="Debe" value="${debe || ''}" style="width:92px"><input type="number" step="0.01" min="0" class="cb-h n" placeholder="Haber" value="${haber || ''}" style="width:92px"><button class="btn icon ghost sm" data-cbquitar aria-label="Quitar">${ic('x', 16)}</button></div>`;
@@ -5711,9 +5807,9 @@ function cbResultados() {
   const TI = sum(ing), TC = sum(cos), TG = sum(gas), UB = r2(TI - TC), UN = r2(UB - TG);
   const fila = (t, v, cls) => `<div class="tr ${cls || ''}"><span>${t}</span><span class="n">${money(v)}</span></div>`;
   $('#cb').innerHTML = `<div class="card" style="text-align:center;margin:10px 0"><small class="mut">Utilidad neta · ${fMes(cbMes())}</small><div class="n" style="font-size:30px;font-weight:700;color:${UN < 0 ? 'var(--bad)' : 'var(--ok)'}">${money(UN)}</div><small class="mut">Margen neto ${TI ? fmtN(UN / TI * 100, 1) : '0'} %</small></div>
-    <div class="tabla cb2">${ing.map(x => fila(cbNom(x.c), x.v)).join('')}${fila('<b>Total ingresos</b>', TI, 'th')}
-    ${cos.map(x => fila('(−) ' + cbNom(x.c), x.v)).join('')}${fila('<b>Utilidad bruta</b>', UB, 'th')}
-    ${gas.map(x => fila('(−) ' + cbNom(x.c), x.v)).join('')}${fila('<b>Total gastos</b>', TG, 'th')}${fila('<b>Utilidad neta</b>', UN, 'th')}</div>
+    <div class="tabla cb2">${ing.map(x => fila(esc(cbNom(x.c)), x.v)).join('')}${fila('<b>Total ingresos</b>', TI, 'th')}
+    ${cos.map(x => fila('(−) ' + esc(cbNom(x.c)), x.v)).join('')}${fila('<b>Utilidad bruta</b>', UB, 'th')}
+    ${gas.map(x => fila('(−) ' + esc(cbNom(x.c)), x.v)).join('')}${fila('<b>Total gastos</b>', TG, 'th')}${fila('<b>Utilidad neta</b>', UN, 'th')}</div>
     <p class="mut" style="font-size:12px">Reporte para control interno. Las declaraciones ante el SAR se preparan con tu contador.</p>
     <div class="row"><button class="btn pri grow" data-a="cbPDF" data-t="resultados">${ic('print', 18)} PDF</button><button class="btn" data-a="cbCSV">${ic('save', 18)} CSV</button></div>`;
   S.repCSV = () => csv(`resultados-${cbMes()}.csv`, [['Concepto', 'Monto']].concat(ing.map(x => [cbNom(x.c), x.v]), [['Total ingresos', TI]], cos.map(x => [cbNom(x.c), -x.v]), [['Utilidad bruta', UB]], gas.map(x => [cbNom(x.c), -x.v]), [['Total gastos', TG], ['Utilidad neta', UN]]));
@@ -5729,15 +5825,20 @@ function cbBalance() {
   const TA = sum(act), TP = sum(pas), TCa = r2(sum(cap) + resAnt + resMes);
   const fila = (t, v, cls) => `<div class="tr ${cls || ''}"><span>${t}</span><span class="n">${money(v)}</span></div>`;
   $('#cb').innerHTML = `<p class="mut" style="margin:10px 0 4px">Al ${fFecha(S.cb.hasta)}</p><div class="tabla cb2">
-    <div class="tr th"><span>ACTIVO</span><span></span></div>${act.map(x => fila(cbNom(x.c), x.v)).join('')}${fila('<b>Total activo</b>', TA, 'th')}
-    <div class="tr th"><span>PASIVO</span><span></span></div>${pas.map(x => fila(cbNom(x.c), x.v)).join('')}${fila('<b>Total pasivo</b>', TP, 'th')}
-    <div class="tr th"><span>CAPITAL</span><span></span></div>${cap.map(x => fila(cbNom(x.c), x.v)).join('')}${fila('Resultados de períodos anteriores', resAnt)}${fila('Resultado del período', resMes)}${fila('<b>Total capital</b>', TCa, 'th')}
+    <div class="tr th"><span>ACTIVO</span><span></span></div>${act.map(x => fila(esc(cbNom(x.c)), x.v)).join('')}${fila('<b>Total activo</b>', TA, 'th')}
+    <div class="tr th"><span>PASIVO</span><span></span></div>${pas.map(x => fila(esc(cbNom(x.c)), x.v)).join('')}${fila('<b>Total pasivo</b>', TP, 'th')}
+    <div class="tr th"><span>CAPITAL</span><span></span></div>${cap.map(x => fila(esc(cbNom(x.c)), x.v)).join('')}${fila('Resultados de períodos anteriores', resAnt)}${fila('Resultado del período', resMes)}${fila('<b>Total capital</b>', TCa, 'th')}
     ${fila('<b>Pasivo + capital</b>', r2(TP + TCa), 'th')}</div>
     ${Math.abs(TA - TP - TCa) > 0.01 ? `<div class="aviso bad">${ic('alert', 18)} El balance no cuadra por ${money(r2(TA - TP - TCa))}. Normalmente falta el asiento de apertura o hay un asiento manual descuadrado.</div>` : `<div class="aviso info">${ic('info', 18)} Activo = pasivo + capital. Balance cuadrado.</div>`}
     <div class="row"><button class="btn pri grow" data-a="cbPDF" data-t="balance">${ic('print', 18)} PDF</button><button class="btn" data-a="cbCSV">${ic('save', 18)} CSV</button></div>`;
   S.repCSV = () => csv(`balance-${cbMes()}.csv`, [['Grupo', 'Cuenta', 'Monto']].concat(act.map(x => ['Activo', cbNom(x.c), x.v]), pas.map(x => ['Pasivo', cbNom(x.c), x.v]), cap.map(x => ['Capital', cbNom(x.c), x.v]), [['Capital', 'Resultados anteriores', resAnt], ['Capital', 'Resultado del período', resMes]]));
 }
 ACC.cbPDF = () => { // imprime la pestaña actual (el usuario elige "Guardar como PDF")
+  // F15: en hoja carta/A4 y no en el ancho del ticket de 80 mm
+  document.body.classList.add('imp-hoja');
+  const pg = document.createElement('style'); pg.textContent = '@page{size:auto;margin:12mm}'; document.head.appendChild(pg);
+  const fin = () => { document.body.classList.remove('imp-hoja'); pg.remove(); window.removeEventListener('afterprint', fin); };
+  window.addEventListener('afterprint', fin); setTimeout(fin, 300000);
   const pa = $('#print-area'); pa.innerHTML = `<div style="font-family:Arial,sans-serif;padding:24px;max-width:720px;margin:auto"><h2 style="margin:0">${esc(S.config.nombre || '')}</h2><p style="margin:4px 0 16px;color:#555">${cbTab() === 'balance' ? 'Balance general' : 'Estado de resultados'} · ${fMes(cbMes())}</p>${$('#cb .tabla').outerHTML}<p style="font-size:11px;color:#777;margin-top:18px">Reporte para control interno generado por el negocio. Cifras en lempiras.</p></div>`;
   window.print();
 };
@@ -6058,8 +6159,8 @@ async function pintarAgenda(tipo) {
   if (!S[key]) m.innerHTML = '<div class="empty">Cargando…</div>';
   const dia = S.f[key + 'd'] || hoy(), h = hoy();
   const fuera = dia < mesesSumarDia(-7) || dia > mesesSumarDia(60);
-  const l = S[key] = fuera ? await api('agenda', { tipo, desde: dia, hasta: dia }, false) : await api('agenda', { tipo }, !!S[key]);
-  if (fuera) S[key] = null;
+  const l = fuera ? await api('agenda', { tipo, desde: dia, hasta: dia }, false) : await api('agenda', { tipo }, !!S[key]);
+  if (fuera) S[key + 'x'] = l; else S[key] = l; // las de un día lejano se guardan aparte para poder abrirlas
   if (S.vista !== C.vista) return;
   const del = l.filter(a => a.dia === dia), atras = l.filter(a => a.estado === 'pendiente' && a.dia < h);
   const pend = del.filter(a => a.estado === 'pendiente');
@@ -6077,7 +6178,7 @@ R.agenda = () => pintarAgenda('cita');
 R.encargos = () => pintarAgenda('encargo');
 ACC.agDia = el => { S.f['ag_' + el.dataset.t + 'd'] = el.dataset.d; pintarAgenda(el.dataset.t); };
 ACC.nuevaAgenda = el => formAgenda(null, el.dataset.t);
-ACC.verAgenda = el => { const a = (S['ag_' + el.dataset.t] || []).find(x => x.id === el.dataset.id); if (a) formAgenda(a, a.tipo); };
+ACC.verAgenda = el => { const k = 'ag_' + el.dataset.t, a = (S[k] || []).concat(S[k + 'x'] || []).find(x => x.id === el.dataset.id); if (a) formAgenda(a, a.tipo); };
 function formAgenda(a, tipo) {
   const C = agendaCfg(tipo), nuevo = !a; a = a || { tipo, dia: S.f['ag_' + tipo + 'd'] || hoy(), estado: 'pendiente' };
   const cli = a.clienteId ? byId(S.clientes, a.clienteId) : null, serv = S.productos.filter(p => p.activo && (tipo === 'cita' ? p.tipo === 'servicio' : true)).sort((x, y) => x.nombre.localeCompare(y.nombre));
@@ -6295,7 +6396,7 @@ function tarjetaCuenta(c) {
   const n = c.perfilesL.length, oc = c.completa ? n : c.ocupados, h = hoy();
   const estado = c.completa ? `<span class="badge ${c.completa.estado === 'vencida' ? 'b-bad' : 'b-ok'}">Completa</span>` : `<span class="badge ${oc >= n ? 'b-warn' : 'b-ok'}">${oc}/${n}</span>`;
   const prov = c.vence ? (c.vence < h ? `<b style="color:var(--bad)">venció con el proveedor el ${fFechaC(c.vence)}</b>` : 'vence con el proveedor el ' + fFechaC(c.vence)) : '';
-  return `<div class="ord ${c.activo ? '' : 'anul'}"><div class="ord-h" data-a="editCuenta" data-id="${c.id}">${platAv(c.plataforma, 'oav')}<div class="tx"><b>${esc(c.nombre)}${c.correo ? ' · ' + esc(c.correo) : ''}</b><small>${c.clave ? 'Clave ' + claveOculta(c.clave) + (prov ? ' · ' : '') : ''}${prov}${!c.clave && !prov ? (c.nota || 'Toca para editar') : ''}</small></div>${estado}</div>
+  return `<div class="ord ${c.activo ? '' : 'anul'}"><div class="ord-h" data-a="editCuenta" data-id="${c.id}">${platAv(c.plataforma, 'oav')}<div class="tx"><b>${esc(c.nombre)}${c.correo ? ' · ' + esc(c.correo) : ''}</b><small>${c.clave ? 'Clave ' + claveOculta(c.clave) + (prov ? ' · ' : '') : ''}${prov}${!c.clave && !prov ? esc(c.nota || 'Toca para editar') : ''}</small></div>${estado}</div>
     <div class="list" style="margin-top:8px">${c.completa ? `<div class="li"><div class="av t-pri">${ic('user', 18)}</div><div class="tx"><b>${esc(c.completa.cliente || 'Cliente')}</b><small>Cuenta completa · ${c.completa.estado === 'vencida' ? 'venció' : 'vence'} ${fFechaC(c.completa.vence)}</small></div>${c.completa.estado === 'vencida' ? '<span class="badge b-bad">Vencido</span>' : ''}</div>`
       : c.perfilesL.map(p => p.susId ? `<div class="li" data-a="susAbrir" data-id="${p.susId}"><div class="av t-pri">${p.n}</div><div class="tx"><b>${esc(p.cliente || 'Cliente')}</b><small>${p.pin ? 'PIN ' + esc(p.pin) + ' · ' : ''}${p.estado === 'vencida' ? 'venció' : 'vence'} ${fFechaC(p.vence)}</small></div>${p.estado === 'vencida' ? '<span class="badge b-bad">Vencido</span>' : ''}</div>`
         : `<div class="li"><div class="av t-verde">${p.n}</div><div class="tx"><b>Libre</b><small>Disponible para vender</small></div>${c.activo && puede('admin', 'cajero') ? `<button class="btn sm pri" data-a="venderPerfil" data-id="${c.id}" data-n="${p.n}">Vender</button>` : ''}</div>`).join('')}</div></div>`;
@@ -6356,7 +6457,7 @@ function susBloqueCobro(k) {
     l.forEach(c => {
       if (e.entrega === 'cuenta') { const libre = !c.completa && !c.ocupados; if (libre || (a.cuentaId === c.id)) o += `<option value="${c.id}:0" ${a.cuentaId === c.id ? 'selected' : ''}>${esc(c.nombre)} · cuenta completa${libre ? '' : ' (ocupada)'}</option>`; return; }
       if (c.completa) return;
-      c.perfilesL.forEach(pf => { const key = c.id + ':' + pf.n, mia = a.cuentaId === c.id && Number(a.perfil) === pf.n; if ((!pf.susId || mia || pf.estado === 'vencida') && (!usados.includes(key) || mia)) o += `<option value="${key}" ${mia ? 'selected' : ''}>${esc(c.nombre)} · perfil ${pf.n}${pf.susId && !mia ? ' (vencido de ' + esc(pf.cliente || '') + ')' : ' (libre)'}</option>`; });
+      c.perfilesL.forEach(pf => { const key = c.id + ':' + pf.n, mia = a.cuentaId === c.id && Number(a.perfil) === pf.n; if ((!pf.susId || mia || (d.renuevaId && pf.susId === d.renuevaId)) && (!usados.includes(key) || mia)) o += `<option value="${key}" ${mia ? 'selected' : ''}>${esc(c.nombre)} · perfil ${pf.n}${pf.susId && !mia ? ' (vencido de ' + esc(pf.cliente || '') + ')' : ' (libre)'}</option>`; });
     });
     return o;
   };
@@ -6435,20 +6536,26 @@ function confirmarGiro(id) {
   const fila = (av, t, s) => `<div class="li"><div class="av ${av}">${av === 't-verde' ? '+' : av === 't-pri' ? '↻' : '−'}</div><div class="tx"><b>${t}</b><small>${s}</small></div></div>`;
   const h = hoja({ titulo: 'Confirmar cambio', html: `<div style="text-align:center;padding:6px 0 10px"><div style="font-size:44px">${GIRO_EMO[ant.id] || '📦'} → ${GIRO_EMO[id] || '📦'}</div><h3 style="margin-top:6px">De ${esc(ant.n)} a ${esc(g.n)}</h3></div>
     <div class="aviso info sm">${ic('info', 18)}<div><b>Tus datos se conservan.</b> Productos, clientes, ventas, caja y reportes siguen igual; solo cambia lo que la app te muestra.</div></div>
-    <div class="list" style="margin-top:10px">${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Suscripciones') : ''}
+    <div class="list" style="margin-top:10px">${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
     ${fila('t-pri', 'Categorías nuevas', esc(g.cats.slice(0, 6).join(' · ')))}${opcGiro(id).g.length ? fila('t-pri', 'Opción en productos: ' + esc(opcGiro(id).g[0]), esc(opcGiro(id).ej[0] || '')) : ''}
     ${nAnt ? fila('t-mut', `Se pueden ocultar ${nAnt} productos de ${esc(ant.n)}`, 'Quedan guardados; abajo eliges si desactivarlos') : ''}</div>
     <label class="chk" style="margin-top:12px"><input type="checkbox" id="cg-ej" checked> Cargar productos de ejemplo del nuevo tipo</label>
     ${nAnt ? `<label class="chk"><input type="checkbox" id="cg-des"> Desactivar los ${nAnt} productos del tipo anterior</label>` : ''}` });
   h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: 'Cambiar tipo de negocio', cls: 'pri', fn: async () => {
     const r = await api('cambiarGiro', { giro: id, ejemplos: $('#cg-ej', h.el).checked, desactivar: !!($('#cg-des', h.el) && $('#cg-des', h.el).checked) });
-    S.config = r.config; S.productos = r.productos; S.inicio = null; S.susL = null; S.cuentasL = null; guardarCache();
+    S.config = r.config; S.productos = r.productos; if (r.girosActivos) S.girosActivos = r.girosActivos; S.inicio = null; S.susL = null; S.cuentasL = null; guardarCache();
+    if (!r.girosActivos) recargar(true).catch(() => {}); // servidor anterior: se piden los datos de nuevo
     h.cerrar(); toast(`Ahora tu negocio es ${g.n}${r.agregados ? ' · ' + r.agregados + ' productos de ejemplo' : ''}`, 'ok', 4000);
     ir('inicio');
   } }]);
 }
 
 const NOVEDADES = [
+  { v: '1.9.16', fecha: '2026-10-28', items: [
+    { i: 'sparkle', t: 'Revisión completa del programa', d: 'Revisamos cada pantalla y cada cálculo: la caja de cada tienda, los anticipos, las suscripciones, las facturas editadas y la contabilidad cuadran mejor que nunca. Tus datos siguen igual.' },
+    { i: 'coin', t: 'Anticipo de las compras en línea', d: 'En un pedido de Shein, Temu o Amazon toca «Recibí el anticipo»: entra a tu caja ese día y, al entregar el pedido, se descuenta solo del total.', si: () => girosOn().includes('compras') },
+    { i: 'tag', t: 'Centavos con coma o con punto', d: 'Puedes escribir 200,50 o 200.50: el programa entiende los centavos en los dos casos. Y si cambias un precio mientras el producto está en el ticket, se cobra el precio nuevo.' }
+  ] },
   { v: '1.9.11', fecha: '2026-10-27', items: [
     { i: 'store', t: 'Cada sección es una tienda', d: 'Al entrar eliges la tienda y el programa te muestra solo lo suyo: ventas, caja, pedidos, productos, gastos y reportes. Cambias de tienda desde el botón debajo del nombre de tu negocio. Cada tienda tiene su propia caja y su cierre, y a cada usuario le puedes asignar su tienda en Usuarios.', si: () => repMulti() }
   ] },
@@ -6497,7 +6604,7 @@ const NOVEDADES = [
     { i: 'clock', t: 'Vencimientos', d: 'Qué suscripciones vencen hoy, esta semana o ya vencieron. Con un toque mandas el recordatorio por WhatsApp o renuevas un mes más.', ir: 'vencimientos' },
     { i: 'key', t: 'Cuentas y perfiles', d: 'Registra tus cuentas madre con sus perfiles; la app te dice cuáles están libres y a quién le diste cada uno.', ir: 'cuentas' },
     { i: 'eye', t: 'Botón para ver la contraseña', d: 'En el PIN de entrada, las claves de usuarios y la clave de cada cuenta madre hay un ojo para mostrarla u ocultarla. En las listas las claves salen tapadas: tócalas para verlas.' },
-    { i: 'store', t: 'Cambia el tipo de negocio cuando quieras', d: 'En Ajustes › Mi negocio › Cambiar. Tus datos se conservan; puedes cargar productos de ejemplo del nuevo tipo y ocultar los del anterior. Si no eres de streaming pero vendes mensualidades, enciende «Vender suscripciones» en Ajustes.', ir: 'ajustes' },
+    { i: 'store', t: 'Cambia el tipo de negocio cuando quieras', d: 'En Ajustes › Mi negocio › Cambiar. Tus datos se conservan; puedes cargar productos de ejemplo del nuevo tipo y ocultar los del anterior. Si no eres de streaming pero vendes mensualidades, enciende «Suscripciones» en Ajustes › Funciones por tipo de negocio.', ir: 'ajustes' },
   ] },
   { v: '1.7', fecha: '2026-10-21', items: [
     { i: 'chat', t: 'Contactar al administrador desde la app', d: 'En Ayuda › Contactar al administrador eliges el motivo (error, duda, prueba y activación, sugerencia…), cuentas qué pasó, adjuntas una captura y te respondemos ahí mismo. Te avisamos con un punto en el botón de Ayuda.' },
@@ -6575,7 +6682,7 @@ const AYUDA = {
     t: ['El cliente ve tu respuesta cuando vuelve a abrir la tienda; si es urgente, avísale por WhatsApp.', 'Las conversaciones sin mensajes nuevos por 2 meses se borran solas.'] },
   pedidos: { d: 'Los pedidos que tus clientes hacen en tu tienda en línea (plan Plus).',
     p: ['Comparte el enlace o el código QR de tu tienda.', 'Cuando llega un pedido nuevo te avisamos. Tócalo para <b>Confirmar</b> y avisa al cliente por WhatsApp.', 'Márcalo <b>Listo</b> cuando lo tengas preparado.', 'Al entregarlo toca <b>Entregar y cobrar</b>: se registra la venta y se descuenta el inventario.'],
-    t: ['Para cancelar un pedido ábrelo con «Ver».', 'En Ajustes › Tienda en línea defines el envío, el pedido mínimo y las formas de pago.'] },
+    t: ['Para cancelar un pedido ábrelo con «Ver».', 'En Mi tienda en línea › Entregas y pagos defines el envío, el pedido mínimo y las formas de pago.'] },
   productos: { d: 'Tu catálogo y tus existencias.',
     p: ['Toca <b>+</b> para agregar un producto: nombre, precio y, si lo sabes, el costo.', 'Activa <b>Controlar existencias</b> para llevar inventario; apágalo para servicios o platos.', 'Toca un producto para editarlo, <b>Ajustar</b> existencias o ver sus <b>Movimientos</b>.'],
     t: ['Usa los filtros «Por agotarse» y «Agotados» para saber qué comprar.', 'Si no conoces el costo, deja el campo vacío: el costo promedio se calcula solo con las compras.'] },
@@ -6606,7 +6713,7 @@ const AYUDA = {
   usuarios: { d: 'Tu equipo y lo que puede hacer cada uno.',
     p: ['Toca <b>+</b> y escribe el nombre, el WhatsApp y un PIN para la persona.', 'Elige el rol: <b>Administrador</b> (todo), <b>Cajero</b> (vende, cobra y cierra caja) o <b>Bodega</b> (productos, compras, inventario y proyectos).', 'Desactiva a alguien para quitarle el acceso.'], t: ['Cada persona entra con su propio WhatsApp y PIN.'] },
   ajustes: { d: 'Datos de tu negocio y cómo se ve el sistema.',
-    p: ['<b>Mi negocio</b>: nombre, logo, teléfono, ISV y mensaje del comprobante.', '<b>Apariencia</b>: 12 colores y modo oscuro.', '<b>Tienda en línea</b> y <b>Plan Plus</b>.', '<b>Facturación SAR</b> (opcional): enciéndela solo si tu negocio está registrado como autoimpresor. Copia tu RTN, CAI, rango y fecha límite tal como te los dio el SAR.', '<b>Mi cuenta</b>: cambia tu PIN.'],
+    p: ['<b>Mi negocio</b>: nombre, teléfono, ISV y mensaje del comprobante.', '<b>Apariencia</b>: logo, 12 colores y modo oscuro.', '<b>Funciones por tipo de negocio</b>: enciende lo que te sirve (suscripciones, órdenes, agenda…).', '<b>Tienda en línea</b> y <b>Plan Plus</b>.', '<b>Facturación SAR</b> (opcional): enciéndela solo si tu negocio está registrado como autoimpresor. Copia tu RTN, CAI, rango y fecha límite tal como te los dio el SAR.', '<b>Mi cuenta</b>: cambia tu PIN.'],
     t: ['Con la facturación SAR apagada tus ventas salen como comprobante, como siempre.', 'El sistema te avisa cuando se acerca la fecha límite o quedan pocas facturas del rango.'] }
 };
 
@@ -6652,8 +6759,15 @@ function mostrarNovedades(desde) {
 ACC.verNovedades = () => { cerrarHojas(); mostrarNovedades(''); };
 function revisarNovedades() {
   const visto = LS.get('verVisto', '');
-  LS.set('verVisto', APP_VER);
-  if (visto && cmpVer(APP_VER, visto) > 0) setTimeout(() => { if (S.user && !PILA.length) mostrarNovedades(visto); }, 900);
+  if (!visto) { LS.set('verVisto', APP_VER); return; } // primera vez en este equipo: no hay «novedades»
+  if (cmpVer(APP_VER, visto) <= 0) return;
+  let intentos = 0;
+  const probar = () => {
+    if (!S.user || S.vencidaVista) return;
+    if (PILA.length) { if (++intentos < 60) setTimeout(probar, 1500); return; } // por ejemplo, mientras elige la tienda
+    LS.set('verVisto', APP_VER); mostrarNovedades(visto);
+  };
+  setTimeout(probar, 900);
 }
 
 /* ---------- ¿Hay una versión nueva publicada? ---------- */
@@ -6797,7 +6911,7 @@ function imprimirTicket(v, det) {
   $('#print-area').innerHTML = `<div class="ticket"><div class="pc">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : ''}<b>${esc(c.nombre || '')}</b>${c.rtn ? `<div>RTN ${esc(c.rtn)}</div>` : ''}${c.direccion ? `<div>${esc(c.direccion)}</div>` : ''}${c.telefono ? `<div>Tel. ${esc(c.telefono)}</div>` : ''}</div>
     <div class="ps">${L('Comprobante', esc(v.numero))}${L('Fecha', esc(fFechaC(v.fecha)) + ' ' + fHora(v.fecha))}${L('Cliente', esc(cli ? cli.nombre : 'Consumidor final'))}${L('Atendió', esc(nomUsuario(v.usuarioId)))}</div>
     <div class="ps">${det.map(i => `<div>${esc(i.descripcion)}</div>${i.serie ? `<div>&nbsp;&nbsp;Serie ${esc(i.serie)}</div>` : ''}${i.garantia ? `<div>&nbsp;&nbsp;Garantía hasta ${fFechaC(garantiaHasta(v.fecha, i.garantia))}</div>` : ''}${L('&nbsp;&nbsp;' + cant(i.cantidad) + ' × ' + money(i.precio), money(i.total))}`).join('')}</div>${v.servicio ? `<div class="ps">${L('Servicio', v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio')}</div>` : ''}
-    <div class="ps">${L('Subtotal', money(v.subtotal))}${v.descuento ? L('Descuento', '−' + money(v.descuento)) : ''}${L('ISV', money(v.isv))}<div class="pl pt"><span>TOTAL</span><span>${money(v.total)}</span></div>${L('Pago', esc(v.metodo))}${v.metodo === 'Efectivo' ? L('Recibido', money(v.recibido)) + L('Cambio', money(v.cambio)) : ''}${v.metodo === 'Crédito' ? L('Anticipo', money(v.recibido)) + L('Saldo', money(v.saldo)) : ''}</div>
+    <div class="ps">${L('Subtotal', money(v.subtotal))}${v.descuento ? L('Descuento', '−' + money(v.descuento)) : ''}${L('ISV', money(v.isv))}<div class="pl pt"><span>TOTAL</span><span>${money(v.total)}</span></div>${num(v.anticipo) > 0 ? L('Anticipo ya pagado', '−' + money(v.anticipo)) + L('Pagado hoy', money(v.total - v.anticipo)) : ''}${L('Pago', esc(v.metodo))}${v.metodo === 'Efectivo' ? L('Recibido', money(v.recibido)) + L('Cambio', money(v.cambio)) : ''}${v.metodo === 'Crédito' ? L('Anticipo', money(v.recibido)) + L('Saldo', money(v.saldo)) : ''}</div>
     <div class="pc"><div>${esc(c.mensajeRecibo || '¡Gracias por su compra!')}</div><small>Este comprobante no sustituye la factura fiscal</small></div></div>`;
   if (window.AndroidApp && AndroidApp.imprimir) { AndroidApp.imprimir(); return; }
   setTimeout(() => window.print(), 80);
@@ -6890,6 +7004,11 @@ async function iniciarTienda(id) {
   const ids = new Set(T.info.productos.map(p => p.id));
   Object.keys(T.cart).forEach(k => { if (!ids.has(kId(k))) delete T.cart[k]; });
   T.info.productos.forEach(p => { p.ops = leerOpc(p.opciones); });
+  // F13: el carrito guardado se ajusta a lo que hay hoy (agotados fuera; cantidades hasta lo disponible)
+  let ajustado = false; const usado = {};
+  Object.keys(T.cart).forEach(k => { const p = T.info.productos.find(x => x.id === kId(k)); if (!p) return; const max = maxDe(p) - (usado[p.id] || 0), q = Math.min(num(T.cart[k]), Math.max(0, max));
+    if (q !== num(T.cart[k])) { ajustado = true; if (q > 0) T.cart[k] = q; else delete T.cart[k]; } usado[p.id] = (usado[p.id] || 0) + Math.max(0, q); });
+  if (ajustado) { try { LS.set(tKey('carrito'), JSON.stringify(T.cart)); } catch (e) {} setTimeout(() => toast('Actualizamos tu pedido: algunos productos se agotaron o quedan menos', 'error', 5000), 600); }
   if (!comprasOn()) T.compras = [];
   const gs = (n.giros || []).map(g => g.id);
   if (T.giro && !gs.includes(T.giro)) T.giro = '';
@@ -6938,7 +7057,7 @@ function pintarTienda() {
   const enl = conEnlace ? `<div class="t-enl"><span class="mi">🔗</span><div style="flex:1"><b>¿Lo viste en ${esc(n.compras.tiendas || 'otra tienda')}?</b><small>Pega el enlace y te decimos cuánto te sale en lempiras.</small></div><button class="btn pri sm" data-compra="1">Pedir por enlace</button></div>` : '';
   const entTxt = n.entrega === 'ambos' ? `A domicilio <b>${n.envio ? money(n.envio) : 'gratis'}</b> · o recoges en el negocio` : n.entrega === 'domicilio' ? `Entrega a domicilio <b>${n.envio ? money(n.envio) : 'gratis'}</b>` : 'Para recoger en el negocio';
   const ab = abiertoAhora(n);
-  const insta = redSocial(n.instagram, 'https://instagram.com/'), fb = redSocial(n.facebook, 'https://facebook.com/'), mapa = n.mapa || (n.direccion ? 'https://maps.google.com/?q=' + encodeURIComponent(n.direccion) : '');
+  const insta = redSocial(n.instagram, 'https://instagram.com/'), fb = redSocial(n.facebook, 'https://facebook.com/'), mapa = (/^https?:\/\//i.test(n.mapa || '') ? n.mapa : '') || (n.direccion ? 'https://maps.google.com/?q=' + encodeURIComponent(n.direccion) : '');
   const acts = [
     n.telefono ? `<a class="wa" href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener"><i>${ic('wa', 21)}</i>WhatsApp</a>` : '',
     mapa ? `<a href="${esc(mapa)}" target="_blank" rel="noopener"><i>${ic('pin', 21)}</i>Cómo llegar</a>` : '',
