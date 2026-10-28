@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.14 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.15 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.14';
+const VERSION = '1.9.15';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -333,12 +333,19 @@ function ss_() {
 }
 function ck_(name) { return 'H_' + (NEG ? NEG.id + '_' : '') + name; }
 
+// Google Sheets crea cada hoja con 26 columnas (A–Z). Si el esquema tiene más (Ventas tiene 28), se agregan las que falten:
+// leer o escribir fuera de la hoja da «The coordinates of the range are outside the dimensions of the sheet».
+function anchoHoja_(s, n) {
+  try { const m = s.getMaxColumns(); if (m < n) s.insertColumnsAfter(m, n - m); } catch (e) {}
+}
 function sh_(name) {
   const ss = ss_();
   let s = ss.getSheetByName(name);
+  if (s && !MEMO['_anc_' + ck_(name)]) { MEMO['_anc_' + ck_(name)] = 1; anchoHoja_(s, SCHEMA[name].length); }
   if (!s) {
     s = ss.insertSheet(name);
     const h = SCHEMA[name];
+    anchoHoja_(s, h.length);
     s.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
     s.setFrozenRows(1);
     h.forEach((k, i) => { if (TEXTO.has(k)) s.getRange(2, i + 1, s.getMaxRows() - 1, 1).setNumberFormat('@'); });
@@ -764,6 +771,7 @@ function masterSheet_(name) {
   if (s && !MEMO['_hm_' + name]) {
     // Después de actualizar el sistema: agrega al final las columnas nuevas del esquema
     MEMO['_hm_' + name] = 1;
+    anchoHoja_(s, SCHEMA_M[name].length);
     try {
       const h = SCHEMA_M[name], nc = s.getLastColumn(), cur = nc ? s.getRange(1, 1, 1, nc).getValues()[0].filter(x => x !== '') : [];
       if (cur.length && cur.length < h.length && cur.every((k, i) => k === h[i])) s.getRange(1, cur.length + 1, 1, h.length - cur.length).setValues([h.slice(cur.length)]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
@@ -772,6 +780,7 @@ function masterSheet_(name) {
   if (!s) {
     s = m.insertSheet(name);
     const h = SCHEMA_M[name];
+    anchoHoja_(s, h.length);
     s.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
     s.setFrozenRows(1);
     h.forEach((k, i) => { if (M_TEXTO.indexOf(k) >= 0) s.getRange(2, i + 1, s.getMaxRows() - 1, 1).setNumberFormat('@'); });
@@ -3164,6 +3173,7 @@ function asegurarEncabezados_() {
   const ss = ss_();
   Object.keys(SCHEMA).forEach(n => {
     const sh = ss.getSheetByName(n); if (!sh) { sh_(n); return; }
+    anchoHoja_(sh, SCHEMA[n].length);
     const h = SCHEMA[n], ancho = Math.max(1, sh.getLastColumn());
     const actual = sh.getRange(1, 1, 1, Math.max(ancho, h.length)).getValues()[0];
     if (h.some((k, i) => actual[i] !== k)) {

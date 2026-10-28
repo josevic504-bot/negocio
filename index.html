@@ -1188,7 +1188,11 @@ function demoShims(DEMO) {
     this.getLastRow = () => ultima(n);
     this.getMaxRows = () => Math.max(1000, filas(n).length);
     this.getLastColumn = () => filas(n).reduce((m, r) => Math.max(m, (r || []).length), 0);
-    this.getRange = (r, c, nr, nc) => new Rango(n, r, c, nr || 1, nc || 1, bk);
+    // Como Google Sheets: una hoja nueva tiene 26 columnas y fuera de ellas no se puede leer ni escribir
+    const cols = () => { const b = bk ? db().books[bk] : db(); return (b.cols = b.cols || {}); };
+    this.getMaxColumns = () => Math.max(26, cols()[n] || 0, this.getLastColumn());
+    this.insertColumnsAfter = (pos, k) => { cols()[n] = this.getMaxColumns() + (k || 1); return this; };
+    this.getRange = (r, c, nr, nc) => { if (c - 1 + (nc || 1) > this.getMaxColumns()) throw new Error('The coordinates of the range are outside the dimensions of the sheet.'); return new Rango(n, r, c, nr || 1, nc || 1, bk); };
     this.setFrozenRows = () => {};
     this.appendRow = row => { const rs = filas(n); rs.length = ultima(n); rs.push(row.map(q)); return this; };
     this.insertRowsAfter = () => this;
@@ -1269,7 +1273,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.14';
+const APP_VER = '1.9.15';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
