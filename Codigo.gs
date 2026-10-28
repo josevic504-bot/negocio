@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.15';
+const VERSION = '1.9.16';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -63,8 +63,9 @@ const SCHEMA = {
   Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
+  Conciliacion:   ['id','mes','saldoBanco','marcados','nota','actualizado','listo'],
   Cuentas:        ['id','plataforma','nombre','correo','clave','perfiles','costo','vence','nota','activo','creado'],
-  Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado'],
+  Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado','renueva'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
   Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal'],
@@ -76,12 +77,12 @@ const SCHEMA = {
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
-  Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota'],
+  Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo'],
   Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado'],
-  ProyectoGastos: ['id','proyectoId','dia','categoria','descripcion','cantidad','costoUnit','monto','productoId','caja','usuarioId','anulado','creado','anulacion'],
+  ProyectoGastos: ['id','proyectoId','dia','categoria','descripcion','cantidad','costoUnit','monto','productoId','caja','usuarioId','anulado','creado','anulacion','sucursal'],
   ProyectoProductos: ['id','proyectoId','nombre','cantidad','unidad','peso','precio','productoId','inventario','creado'],
   Chats:          ['id','telefono','nombre','clienteId','clave','productoId','producto','ultimo','ultimoTexto','deCliente','sinLeer','creado'],
   Mensajes:       ['id','chatId','de','texto','usuarioId','fecha'],
@@ -93,7 +94,7 @@ const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','li
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa']);
-const TEXTO = new Set(['lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio']);
+const TEXTO = new Set(['marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -210,12 +211,14 @@ function route_(req) {
   if (a === 'chatVer') return chatVer_(d);
   // Panel Molina (súper admin)
   if (a === 'panelLogin') return panelLogin_(d);
-  if (a.indexOf('panel') === 0) { panelAuth_(req); return lock_(() => rutaPanel_(a, d)); }
+  if (a.indexOf('panel') === 0) { panelAuth_(req); if (a === 'panelSalir') d._tok = String(req.panel || ''); return PANEL_LECTURA.indexOf(a) >= 0 ? rutaPanel_(a, d) : lock_(() => rutaPanel_(a, d)); }
   const u = auth_(req.token);
   const res = rutaUsuario_(a, u, d, req);
   return u.rol === 'cajero' ? sinCostos_(res) : res;
 }
 
+// Acciones del Panel que solo leen: no esperan ni frenan el candado que usan las ventas de todos los negocios
+const PANEL_LECTURA = ['panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelSalir'];
 function sinCostos_(x) {
   if (Array.isArray(x)) return x.map(sinCostos_);
   if (!x || typeof x !== 'object') return x;
@@ -260,13 +263,14 @@ function rutaUsuario_(a, u, d, req) {
     case 'pedidos':         return pedidos_(u, d);
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
     case 'editarPedido':    return lock_(() => editarPedido_(u, d));
+    case 'anticipoPedido':  return lock_(() => anticipoPedido_(u, d));
     case 'chats':           return chats_(u);
     case 'chat':            return lock_(() => chat_(u, d));
     case 'chatResponder':   return lock_(() => chatResponder_(u, d));
     case 'chatBorrar':      return lock_(() => chatBorrar_(u, d));
     case 'soporteCrear':    return lock_(() => soporteCrear_(u, d));
     case 'soporteLista':    return soporteLista_(u);
-    case 'soporteVer':      return soporteVer_(u, d);
+    case 'soporteVer':      return lock_(() => soporteVer_(u, d));
     case 'soporteEnviar':   return lock_(() => soporteEnviar_(u, d));
     case 'susCuentas':      return susCuentas_(u);
     case 'suscripciones':   return suscripciones_(u);
@@ -316,7 +320,11 @@ function lock_(fn) {
   l.waitLock(25000);
   if (!EN_LOCK) Object.keys(MEMO).forEach(k => { if (k !== '_ss' && k.indexOf('_m_') !== 0) delete MEMO[k]; }); // lo leído antes del candado puede estar viejo
   EN_LOCK++;
-  try { return fn(); } finally { EN_LOCK--; try { SpreadsheetApp.flush(); } catch (e) {} l.releaseLock(); } // flush: lo escrito queda confirmado antes de soltar el candado (evita registros duplicados)
+  try { return fn(); } finally {
+    EN_LOCK--; try { SpreadsheetApp.flush(); } catch (e) {} // flush: lo escrito queda confirmado antes de soltar el candado (evita registros duplicados)
+    if (!EN_LOCK && INV_LOCK.length) { try { const cs = CacheService.getScriptCache(), ks = INV_LOCK.splice(0), v = {}; ks.forEach(k => { v['V' + k] = String(Date.now()) + Math.random(); }); cs.removeAll(ks); cs.putAll(v, 21600); } catch (e) {} }
+    l.releaseLock();
+  }
 }
 function own_(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
 
@@ -408,13 +416,14 @@ function ventanaMs_() { return msDeLocal_(diasAtras_(DIAS_VENTANA) + 'T00:00'); 
 // Primera fila de la hoja (contando desde 1) cuyo id es de desdeMs en adelante. Se recuerda unas horas.
 function filaDesde_(name, n, desdeMs) {
   const s = sh_(name), cs = CacheService.getScriptCache(), key = 'W_' + ck_(name) + '_' + Math.floor(desdeMs / 3600000);
-  try { const c = cs.get(key); if (c && Number(c) >= 2 && Number(c) <= n + 1) return Number(c); } catch (e) {}
+  // Se recuerda «fila|desde»: la fila sirve solo si se calculó para una fecha igual o anterior a la pedida (si no, se saltarían filas)
+  try { const c = String(cs.get(key) || '').split('|'); if (c[0] && Number(c[0]) >= 2 && Number(c[0]) <= n + 1 && (!c[1] || Number(c[1]) <= desdeMs)) return Number(c[0]); } catch (e) {}
   const ids = s.getRange(2, 1, n - 1, 1).getValues();
   // De atrás hacia adelante hasta ver 50 filas seguidas más viejas que la ventana (tolera ids fuera de orden)
   let inicio = ids.length, viejos = 0;
   for (let i = ids.length - 1; i >= 0; i--) { const t = idMs_(ids[i][0]); if (t && t < desdeMs) { if (++viejos >= 50) break; } else { viejos = 0; inicio = i; } }
   const fila = inicio + 2;
-  try { cs.put(key, String(fila), 21600); } catch (e) {}
+  try { cs.put(key, fila + '|' + desdeMs, 21600); } catch (e) {}
   return fila;
 }
 function rowsDesde_(name, desdeMs) {
@@ -441,7 +450,9 @@ function columna_(name, col) {
   }
   return MEMO[k];
 }
+const INV_LOCK = [];
 function invalidar_(name) {
+  if (EN_LOCK && CACHE_HOJAS.indexOf(name) >= 0 && INV_LOCK.indexOf(ck_(name)) < 0) INV_LOCK.push(ck_(name));
   delete MEMO[name];
   Object.keys(MEMO).forEach(k => { if (k.indexOf('_w_' + name + '_') === 0 || k.indexOf('_c_' + name + '_') === 0) delete MEMO[k]; });
   if (name === 'Ventas' || name === 'Gastos' || name === 'Distribuciones') { try { CacheService.getScriptCache().remove('RM_' + (NEG ? NEG.id : '')); } catch (e) {} }
@@ -494,7 +505,7 @@ function upsert_(name, rec) {
   if (r) s.getRange(r, 1, 1, h.length).setValues([row]);
   else s.getRange(filasLibres_(s, name, 1), 1, 1, h.length).setValues([row]);
   invalidar_(name);
-  return obj_(h, h.map(k => cell_(full[k])));
+  return obj_(h, h.map(k => full[k] === undefined || full[k] === null ? '' : full[k]));
 }
 
 function appendRows_(name, objs) {
@@ -619,7 +630,8 @@ function guardarUsuario_(u, d) {
   if (!r.usuario || !r.nombre) throw new Error(MULTI_NEGOCIO ? 'Nombre y WhatsApp son obligatorios' : 'Usuario y nombre son obligatorios');
   if (MULTI_NEGOCIO) {
     if (r.usuario.length < 10) throw new Error('Escribe un número de WhatsApp válido');
-    if (mRows_('Accesos').some(x => String(x.whatsapp) === r.usuario && !(x.negocioId === NEG.id && x.usuarioId === r.id))) throw new Error('Ese WhatsApp ya está registrado en otra cuenta');
+    const grupo = new Set(grupoDe_(NEG.lic).map(x => x.id));
+    if (mRows_('Accesos').some(x => String(x.whatsapp) === r.usuario && !(x.negocioId === NEG.id && x.usuarioId === r.id) && !grupo.has(x.negocioId))) throw new Error('Ese WhatsApp ya está registrado en otra cuenta');
   }
   if (/\s/.test(r.usuario)) throw new Error('El usuario no debe tener espacios');
   if (todos.some(x => x.usuario === r.usuario && x.id !== r.id)) throw new Error('Ese usuario ya existe');
@@ -628,6 +640,7 @@ function guardarUsuario_(u, d) {
   // Tienda asignada (con varios giros): el cajero o bodega solo ve la suya; el administrador ve todas
   const suc = r.tienda !== undefined ? r.tienda : r.sucursal; delete r.tienda; delete r.sucursal;
   if (suc !== undefined) r.sucursal = r.rol !== 'admin' && girosActivos_().indexOf(String(suc)) >= 0 ? String(suc) : '';
+  if (r.rol === 'admin') r.sucursal = ''; // el administrador ve todas las tiendas
   delete r.hash; delete r.salt;
   if (d.clave) {
     if (MULTI_NEGOCIO && !/^\d{4,6}$/.test(String(d.clave))) throw new Error('El PIN debe tener de 4 a 6 números');
@@ -926,22 +939,28 @@ function loginMulti_(d) {
   // Una persona puede tener varios negocios con el mismo WhatsApp y PIN (los vincula Vic desde el Panel)
   const accs = mRows_('Accesos').filter(x => String(x.whatsapp) === wa && x.activo);
   if (!accs.length) throw falla();
-  const validos = [];
+  const validos = []; let errHoja = null;
   accs.forEach(acc => {
     const lic = negocioPorId_(acc.negocioId);
     if (!lic) return;
-    cambiarA_(lic);
-    const u = rows_('Usuarios').find(x => x.id === acc.usuarioId);
-    if (u && u.activo && hash_(String(d.pin || ''), u.salt) === u.hash) validos.push({ lic: lic, u: u });
+    try { // si la hoja de uno de sus negocios no abre, puede entrar a los demás
+      cambiarA_(lic);
+      const u = rows_('Usuarios').find(x => x.id === acc.usuarioId);
+      if (u && u.activo && hash_(String(d.pin || ''), u.salt) === u.hash) validos.push({ lic: lic, u: u });
+    } catch (e) { errHoja = e; }
   });
+  if (!validos.length && errHoja) throw errHoja; // la hoja no abrió: no es un PIN malo
   if (!validos.length) throw falla();
   c.remove(kf);
   let v = validos[0];
+  const lista = () => validos.map(x => ({ id: x.lic.id, negocio: x.lic.negocio, giro: x.lic.giro, estado: licNegocio_(x.lic).estado }));
   if (validos.length > 1) {
     v = d.negocioId ? validos.find(x => x.lic.id === String(d.negocioId)) : null;
-    if (!v) return { elegir: validos.map(x => ({ id: x.lic.id, negocio: x.lic.negocio, giro: x.lic.giro, estado: licNegocio_(x.lic).estado })) };
+    if (!v) return { elegir: lista() };
   }
   cambiarA_(v.lic);
+  // El negocio recordado en este equipo está en pausa: se le muestra la lista para que entre a otro (no queda fuera)
+  if (d.pref && validos.length > 1) { try { bloquearSiVence_(); } catch (e) { if (String(e.message).indexOf('PRUEBA_VENCIDA|') === 0) return { elegir: lista(), prefNo: true }; throw e; } }
   bloquearSiVence_();
   return { token: nuevoToken_(v.lic.id + '|' + v.u.id + '|' + String(v.u.salt).slice(0, 8)), usuario: publico_(v.u) };
 }
@@ -961,7 +980,7 @@ function misNegocios_(u) {
   const wa = waDe_(u);
   if (!wa) return [];
   const l = mRows_('Accesos').filter(x => String(x.whatsapp) === wa && x.activo).map(a => negocioPorId_(a.negocioId)).filter(Boolean)
-    .map(x => ({ id: x.id, negocio: x.negocio, giro: x.giro, actual: x.id === NEG.id }));
+    .map(x => { const e = licNegocio_(x).estado; return { id: x.id, negocio: x.negocio, giro: x.giro, actual: x.id === NEG.id, estado: e === 'completa' ? 'activa' : e }; });
   return l.length > 1 ? l : [];
 }
 function cambiarNegocio_(u, d) {
@@ -1077,14 +1096,16 @@ function ordenGuardar_(u, d) {
   if (!prev && !r.cliente && !r.clienteId) throw new Error('Escribe el nombre del cliente');
   if (!prev && !r.equipo) throw new Error('Escribe qué equipo o vehículo recibes');
   if (r.estado !== undefined && EST_ORDEN.indexOf(r.estado) < 0) throw new Error('Estado no válido');
-  if (r.anticipo !== undefined) r.anticipo = r2_(r.anticipo);
-  if (r.presupuesto !== undefined) r.presupuesto = r2_(r.presupuesto);
+  if (r.anticipo !== undefined) r.anticipo = Math.max(0, r2_(r.anticipo));
+  if (r.presupuesto !== undefined) r.presupuesto = Math.max(0, r2_(r.presupuesto));
   if (r.promesa !== undefined && r.promesa && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.promesa))) r.promesa = '';
   if (!prev) { r.numero = siguiente_('O'); r.estado = r.estado || 'recibido'; r.usuarioId = u.id; r.creado = ahora_(); }
   r.actualizado = ahora_();
   if (prev && r.anticipo !== undefined && Number(prev.anticipo) > 0) delete r.anticipo; // el anticipo ya cobrado no se edita
+  const antNuevo = r.anticipo > 0 && !(prev && Number(prev.anticipo) > 0); // también si se agrega al editar una orden que no tenía
+  if (antNuevo && prev && prev.ventaId) throw new Error('Esta orden ya se cobró');
   const o = upsert_('Ordenes', r);
-  if (!prev && o.anticipo > 0) anticipoRegistrar_(u, o.anticipo, o.clienteId, 'Anticipo orden ' + o.numero, o.id, d.metodo);
+  if (antNuevo) anticipoRegistrar_(u, o.anticipo, o.clienteId, 'Anticipo orden ' + o.numero, o.id, d.metodo, d);
   return o;
 }
 function ordenResumen_() {
@@ -1122,14 +1143,16 @@ function agendaGuardar_(u, d) {
   if (r.hora !== undefined) { r.hora = String(r.hora || '').slice(0, 5); if (r.hora && !/^\d{2}:\d{2}$/.test(r.hora)) throw new Error('Hora no válida'); }
   if (r.productoId !== undefined) { const p = r.productoId ? rows_('Productos').find(x => x.id === r.productoId) : null; if (r.productoId && !p) throw new Error('El producto ya no existe'); if (p && !r.detalle) r.detalle = p.nombre; if (p && r.monto === undefined) r.monto = p.precio; }
   if (!prev && !r.detalle) throw new Error((r.tipo === 'encargo' ? 'Escribe qué encargó' : 'Escribe el servicio'));
-  if (r.monto !== undefined) r.monto = r2_(r.monto);
-  if (r.anticipo !== undefined) r.anticipo = r2_(r.anticipo);
+  if (r.monto !== undefined) r.monto = Math.max(0, r2_(r.monto));
+  if (r.anticipo !== undefined) r.anticipo = Math.max(0, r2_(r.anticipo));
   if (r.estado !== undefined && EST_AGENDA.indexOf(r.estado) < 0) throw new Error('Estado no válido');
   if (!prev) { r.estado = r.estado || 'pendiente'; r.usuarioId = u.id; r.creado = ahora_(); }
   if (prev && r.anticipo !== undefined && Number(prev.anticipo) > 0) delete r.anticipo;
   r.actualizado = ahora_();
+  const antNuevo = r.anticipo > 0 && !(prev && Number(prev.anticipo) > 0);
+  if (antNuevo && prev && prev.ventaId) throw new Error('Ya se cobró');
   const a = upsert_('Agenda', r);
-  if (!prev && a.anticipo > 0) anticipoRegistrar_(u, a.anticipo, a.clienteId, 'Anticipo ' + (a.tipo === 'encargo' ? 'encargo' : 'cita') + ' · ' + a.detalle, a.id, d.metodo);
+  if (antNuevo) anticipoRegistrar_(u, a.anticipo, a.clienteId, 'Anticipo ' + (a.tipo === 'encargo' ? 'encargo' : 'cita') + ' · ' + a.detalle, a.id, d.metodo, d);
   return a;
 }
 function agendaResumen_(tipo) {
@@ -1138,18 +1161,26 @@ function agendaResumen_(tipo) {
   return { hoy: hoyL.length, manana: man, atrasados: atras, lista: hoyL.slice(0, 6).map(a => ({ id: a.id, hora: a.hora, cliente: a.cliente, detalle: a.detalle, atiende: a.atiende, anticipo: a.anticipo, monto: a.monto })), montoHoy: r2_(hoyL.reduce((t, a) => t + (Number(a.monto) || 0), 0)) };
 }
 // El anticipo entra a caja como un abono (sin venta todavía) ligado a la orden o encargo
-function anticipoRegistrar_(u, monto, clienteId, nota, ref, metodo) {
+function anticipoRegistrar_(u, monto, clienteId, nota, ref, metodo, d) {
   metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(metodo) >= 0 ? metodo : 'Efectivo';
-  upsert_('Abonos', { fecha: ahora_(), clienteId: clienteId || '', monto: r2_(monto), metodo: metodo, aplicado: '[]', usuarioId: u.id, nota: txt_(nota, 200), anulado: false, ref: ref });
+  const act = girosActivos_(); // con varias tiendas, el anticipo entra a la caja de la tienda donde se recibió
+  upsert_('Abonos', { fecha: ahora_(), clienteId: clienteId || '', monto: r2_(monto), metodo: metodo, aplicado: '[]', usuarioId: u.id, nota: txt_(nota, 200), anulado: false, ref: ref,
+    sucursal: act.length > 1 ? (tiendaReq_(u, d || {}) || act[0]) : '' });
 }
 // Anticipo pendiente de aplicar de una orden/cita (lo que ya pagó el cliente y aún no se descontó de una venta)
 function anticipoDe_(ref) {
   if (!ref) return 0;
-  const o = rows_('Ordenes').find(x => x.id === ref) || rows_('Agenda').find(x => x.id === ref);
+  const o = rows_('Ordenes').find(x => x.id === ref) || rows_('Agenda').find(x => x.id === ref) || rows_('Pedidos').find(x => x.id === ref);
   if (!o || o.ventaId) return 0;
   return r2_(rows_('Abonos').filter(a => a.ref === ref && !a.anulado).reduce((t, a) => t + (Number(a.monto) || 0), 0));
 }
 // Al cobrar una venta ligada a una orden, cita o encargo, se cierra solo
+// Lo que salió del inventario con una venta (si un artículo era servicio al venderse, no se devuelve nada)
+function salidoDe_(v) {
+  const o = {};
+  rowsDesde_('Inventario', (idMs_(v.id) || 0) - 60000).forEach(m => { if (m.refId === v.id && m.tipo === 'venta') o[m.productoId] = r3_((o[m.productoId] || 0) - Number(m.cantidad)); });
+  return o;
+}
 function cerrarLigados_(d, venta) {
   if (d.ordenId) { const o = rows_('Ordenes').find(x => x.id === d.ordenId); if (o && o.estado !== 'entregado') upsert_('Ordenes', { id: o.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
   if (d.agendaId) { const a = rows_('Agenda').find(x => x.id === d.agendaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
@@ -1213,10 +1244,11 @@ function susEstado_(u, d) {
   return suscripciones_(u);
 }
 // Al registrar una venta: crea las suscripciones que vienen en d.sus = [{ idx, meses, vence, renuevaId, asig: [{ plataforma, cuentaId, perfil, pin }] }]
-function susRegistrar_(u, d, venta, items, pm) {
+// Arma (y valida) las suscripciones de una venta SIN escribir nada: así un perfil ocupado no deja la venta grabada a medias
+function susPlan_(d, items, clienteId) {
   if (!Array.isArray(d.sus) || !d.sus.length) return [];
-  const h = hoy_(), oc = ocupados_(), cu = porId_(rows_('Cuentas')), cli = venta.clienteId ? rows_('Clientes').find(x => x.id === venta.clienteId) : null;
-  const nuevas = [];
+  const h = hoy_(), oc = ocupados_(), cu = porId_(rows_('Cuentas')), cli = clienteId ? rows_('Clientes').find(x => x.id === clienteId) : null;
+  const plan = [];
   d.sus.forEach(sd => {
     const it = items[Number(sd.idx)]; if (!it || !it.p) return;
     const entregas = susDeProducto_(it.p); if (!entregas.length) return;
@@ -1225,6 +1257,8 @@ function susRegistrar_(u, d, venta, items, pm) {
     if (vence < h) throw new Error('La fecha de vencimiento de «' + it.p.nombre + '» ya pasó');
     const asig = Array.isArray(sd.asig) ? sd.asig : [];
     const veces = Math.max(1, Math.min(10, Math.round(it.cantidad) || 1)), total = entregas.reduce((t, x) => t + x.n, 0) * veces;
+    const prevR = sd.renuevaId ? rows_('Suscripciones').find(x => x.id === sd.renuevaId) : null;
+    const renuevaId = prevR && entregas.some(e => norm_(e.plataforma) === norm_(prevR.plataforma)) ? prevR.id : ''; // solo se renueva una de la misma plataforma
     let k = 0;
     entregas.forEach(e => {
       for (let i = 0; i < e.n * veces; i++) {
@@ -1233,22 +1267,42 @@ function susRegistrar_(u, d, venta, items, pm) {
         if (venceA < h) throw new Error('La fecha de vencimiento de ' + e.plataforma + ' ya pasó');
         const c = a.cuentaId ? cu[a.cuentaId] : null;
         if (a.cuentaId && !c) throw new Error('La cuenta elegida para ' + e.plataforma + ' ya no existe');
+        if (c && norm_(c.plataforma) !== norm_(e.plataforma)) throw new Error('La cuenta ' + c.nombre + ' es de ' + c.plataforma + ', no de ' + e.plataforma + '. Revisa los perfiles del cobro.');
         const perfil = c ? (e.entrega === 'cuenta' ? 0 : Math.max(1, Math.min(Number(c.perfiles) || 1, parseInt(a.perfil, 10) || 1))) : '';
         if (c) {
-          const ya = (oc[c.id] || {})[String(perfil)];
-          if (ya && ya.id !== sd.renuevaId) throw new Error((perfil ? 'El perfil ' + perfil + ' de ' : 'La cuenta ') + c.nombre + ' ya está ocupado por ' + (ya.cliente || 'otro cliente'));
-          if (perfil === 0 && Object.keys(oc[c.id] || {}).some(p => p !== '0' && (oc[c.id][p].id !== sd.renuevaId))) throw new Error('La cuenta ' + c.nombre + ' tiene perfiles vendidos por separado');
-          (oc[c.id] = oc[c.id] || {})[String(perfil)] = { id: '_', cliente: cli ? cli.nombre : '' };
+          const ocC = oc[c.id] || {}, ya = ocC[String(perfil)];
+          if (ya && ya.id !== renuevaId) throw new Error((perfil ? 'El perfil ' + perfil + ' de ' : 'La cuenta ') + c.nombre + ' ya está ocupado por ' + (ya.cliente || 'otro cliente'));
+          if (perfil !== 0 && ocC['0'] && ocC['0'].id !== renuevaId) throw new Error('La cuenta ' + c.nombre + ' se vendió completa a ' + (ocC['0'].cliente || 'otro cliente'));
+          if (perfil === 0 && Object.keys(ocC).some(p => p !== '0' && ocC[p].id !== renuevaId)) throw new Error('La cuenta ' + c.nombre + ' tiene perfiles vendidos por separado');
+          (oc[c.id] = ocC)[String(perfil)] = { id: '_', cliente: cli ? cli.nombre : '' };
         }
-        const s = upsert_('Suscripciones', { ventaId: venta.id, clienteId: venta.clienteId || '', cliente: cli ? cli.nombre : txt_(sd.cliente, 60), telefono: cli ? cli.telefono : '',
-          productoId: it.p.id, producto: it.p.nombre, plataforma: e.plataforma, cuentaId: c ? c.id : '', perfil: perfil, pin: txt_(a.pin, 12), inicio: h, vence: venceA, meses: meses,
-          precio: r2_(it.precio * it.cantidad / total), estado: 'activa', nota: '', creado: ahora_() });
-        nuevas.push(s);
+        plan.push({ it: it, e: e, c: c, perfil: perfil, pin: a.pin, venceA: venceA, meses: meses, total: total, cliente: cli, nombre: sd.cliente, renuevaId: renuevaId });
       }
     });
-    if (sd.renuevaId) { const prev = rows_('Suscripciones').find(x => x.id === sd.renuevaId); if (prev) upsert_('Suscripciones', { id: prev.id, estado: 'renovada' }); }
   });
+  return plan;
+}
+function susRegistrar_(u, plan, venta) {
+  const nuevas = [], renovadas = {};
+  (plan || []).forEach(x => {
+    const s = upsert_('Suscripciones', { ventaId: venta.id, clienteId: venta.clienteId || '', cliente: x.cliente ? x.cliente.nombre : txt_(x.nombre, 60), telefono: x.cliente ? x.cliente.telefono : '',
+      productoId: x.it.p.id, producto: x.it.p.nombre, plataforma: x.e.plataforma, cuentaId: x.c ? x.c.id : '', perfil: x.perfil, pin: txt_(x.pin, 12), inicio: hoy_(), vence: x.venceA, meses: x.meses,
+      precio: r2_(x.it.precio * x.it.cantidad / x.total), estado: 'activa', nota: '', creado: ahora_(), renueva: x.renuevaId });
+    nuevas.push(s);
+    if (x.renuevaId) renovadas[x.renuevaId] = 1;
+  });
+  Object.keys(renovadas).forEach(id => upsert_('Suscripciones', { id: id, estado: 'renovada' }));
   return nuevas;
+}
+// Si se anula la venta de una renovación, la suscripción anterior vuelve a estar vigente
+function susDeshacer_(lista, nota) {
+  lista.forEach(x => {
+    if (x.estado === 'cancelada' || x.estado === 'renovada') return;
+    upsert_('Suscripciones', { id: x.id, estado: 'cancelada', nota: nota });
+    if (x.renueva && !rows_('Suscripciones').some(y => y.renueva === x.renueva && y.id !== x.id && y.estado !== 'cancelada')) {
+      const ant = rows_('Suscripciones').find(y => y.id === x.renueva); if (ant && ant.estado === 'renovada') upsert_('Suscripciones', { id: ant.id, estado: 'activa' });
+    }
+  });
 }
 // Datos de acceso para el comprobante del cliente
 function susAccesos_(lista) {
@@ -1268,7 +1322,7 @@ function cambiarGiro_(u, d) {
   req_(u, ['admin']);
   if (!own_(GIROS, d.giro)) throw new Error('Tipo de negocio no válido');
   const cfg = config_(), ant = cfg.giro;
-  if (ant === d.giro) return { config: sinInternos_(config_()), productos: rows_('Productos') };
+  if (ant === d.giro) return { config: sinInternos_(config_()), productos: rows_('Productos'), girosActivos: girosActivos_() };
   let desactivados = 0;
   if (d.desactivar && own_(GIROS, ant)) {
     const cats = GIROS[ant].cats.map(c => c.toLowerCase());
@@ -1278,7 +1332,7 @@ function cambiarGiro_(u, d) {
   let agregados = 0;
   if (d.ejemplos) agregados = cargarEjemplos_(u, { giro: d.giro }).agregados;
   if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, { giro: GIROS[d.giro].n }); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
-  return { config: sinInternos_(config_()), productos: rows_('Productos'), agregados: agregados, desactivados: desactivados };
+  return { config: sinInternos_(config_()), productos: rows_('Productos'), agregados: agregados, desactivados: desactivados, girosActivos: girosActivos_() };
 }
 
 /* ===================== PANEL MOLINA (súper admin) Y SOPORTE ===================== */
@@ -1324,7 +1378,7 @@ function rutaPanel_(a, d) {
     case 'panelTasa':              return { tasa: tasaDolar_(d && d.forzar) };
     case 'panelLlego':             return panelLlego_(d);
     case 'panelVisitas':           return panelVisitas_(d);
-    case 'panelSalir':             return true;
+    case 'panelSalir':             { try { if (d && d._tok) CacheService.getScriptCache().remove('P_' + d._tok); } catch (e) {} return true; }
   }
   throw new Error('Acción no válida: ' + a);
 }
@@ -1379,6 +1433,7 @@ function panelLimpiarDuplicados_() {
   return { marcadas: n, total: dup.length };
 }
 function panelResumen_() {
+  try { const cs = CacheService.getScriptCache(); if (!cs.get('VPURGA')) { cs.put('VPURGA', '1', 21600); lock_(() => borrarVisitasViejas_()); } } catch (e) {} // visitas viejas: cada 6 horas
   const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), vivas = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)), org = origenesLic_(vivas);
   const lics = vivas.map(l => { const f = panelFicha_(l, segs); f.canal = (org[l.id] || {}).canal || ''; return f; });
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
@@ -1400,12 +1455,12 @@ function panelResumen_() {
   });
   lics.forEach(x => { x.sop = sopDe[x.id] || null; });
   const n = k => lics.filter(x => x.estado === k).length;
-  const gastos = mRows_('GastosPanel').filter(g => !esSi_(g.anulado)), gastosMes = r2_(gastos.filter(g => String(g.fecha).slice(0, 7) === mes).reduce((a, g) => a + (Number(g.monto) || 0), 0));
+  const gastos = mRows_('GastosPanel').filter(g => !esSi_(g.anulado)), gastosMes = r2_(gastos.filter(g => fecha10_(g.fecha).slice(0, 7) === mes).reduce((a, g) => a + (Number(g.monto) || 0), 0));
   const ingresosMes = r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0));
   const rc = resumenCampanas_();
   const orden = { dia3: 0, vence: 1, inactivo: 2, vencida: 3 };
   return { kpis: { activos: n('activa'), prueba: n('prueba'), vencidos: n('vencida'), bloqueados: n('bloqueada'), plus: lics.filter(x => x.plus).length, venceManana: lics.filter(x => x.estado === 'prueba' && x.diasRestantes <= 1).length,
-      ingresosMes: ingresosMes, pagosMes: pagos.length, gastosMes: gastosMes, gastosMesN: gastos.filter(g => String(g.fecha).slice(0, 7) === mes).length, resultadoMes: r2_(ingresosMes - gastosMes),
+      ingresosMes: ingresosMes, pagosMes: pagos.length, gastosMes: gastosMes, gastosMesN: gastos.filter(g => fecha10_(g.fecha).slice(0, 7) === mes).length, resultadoMes: r2_(ingresosMes - gastosMes),
       invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION,
@@ -1466,8 +1521,12 @@ function duenoDe_(lic) {
   return { acc: acc, u: u };
 }
 // Crea otro negocio para la misma persona: hoja nueva, mismo WhatsApp y PIN; la prueba es por persona (comparte la fecha de vencimiento)
+function baseViva_(l) { // el negocio principal de la persona; si se eliminó, el primero que siga vivo
+  const b = mRows_('Licencias').find(x => x.id === (l.persona || l.id)) || l;
+  return esEliminada_(b) ? (grupoDe_(b)[0] || l) : b;
+}
 function panelAgregarNegocio_(l, d) {
-  const base = mRows_('Licencias').find(x => x.id === (l.persona || l.id)) || l;
+  const base = baseViva_(l);
   const negocio = txt_(d.negocio, 60), giro = own_(GIROS, d.giro) ? d.giro : 'otro';
   if (!negocio) throw new Error('Escribe el nombre del nuevo negocio');
   if (grupoDe_(base).some(x => norm_(x.negocio) === norm_(negocio))) throw new Error('Esta persona ya tiene un negocio con ese nombre');
@@ -1478,7 +1537,7 @@ function panelAgregarNegocio_(l, d) {
   try { DriveApp.getFileById(libro.getId()).moveTo(carpeta_()); } catch (e) {}
   const id = 'N' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase(), ahora = ahora_().replace('T', ' ');
   const lic = { id: id, negocio: negocio, giro: GIROS[giro].n, dueno: base.dueno, whatsapp: base.whatsapp, registro: ahora, vencePrueba: String(base.vencePrueba || '').slice(0, 10),
-    estado: d.activar ? 'Activa' : 'Prueba', usuarios: 1 + otrosU.length, ultimaConexion: '', hojaId: libro.getId(), persona: base.id, llegoPor: (function () { try { const c = campanaDe_(base, campanas_()); return c ? c.id : 'directo'; } catch (e) { return 'directo'; } })() };
+    estado: d.activar ? 'Activa' : 'Prueba', usuarios: 1 + otrosU.length, ultimaConexion: '', hojaId: libro.getId(), persona: base.persona || base.id, llegoPor: 'directo', origen: base.origen || '' }; // es otro negocio de la misma persona: no es un registro nuevo de publicidad
   cambiarA_(lic); MEMO._ss = libro;
   instalarNegocio_({ nombre: negocio, giro: giro, telefono: cfgBase.telefono, admin: { usuario: du.u.usuario, nombre: du.u.nombre, pin: Utilities.getUuid() } });
   const adm = rows_('Usuarios').find(x => x.usuario === du.u.usuario);
@@ -1495,7 +1554,7 @@ function panelAgregarNegocio_(l, d) {
 }
 // Une a esta persona un negocio que se registró con otro número: su dueño pasa a entrar con el WhatsApp y PIN de la persona
 function panelVincularNegocio_(l, d) {
-  const base = mRows_('Licencias').find(x => x.id === (l.persona || l.id)) || l;
+  const base = baseViva_(l);
   const otro = mRows_('Licencias').find(x => x.id === String(d.otroId || ''));
   if (!otro || esEliminada_(otro)) throw new Error('Elige el negocio que quieres vincular');
   if (grupoDe_(base).some(x => x.id === otro.id)) throw new Error('Ese negocio ya es de esta persona');
@@ -1504,17 +1563,28 @@ function panelVincularNegocio_(l, d) {
   cambiarA_(otro);
   upsert_('Usuarios', { id: duO.u.id, usuario: du.u.usuario, nombre: du.u.nombre, hash: du.u.hash, salt: du.u.salt });
   mSet_('Accesos', duO.acc, { whatsapp: du.acc.whatsapp, activo: true });
-  mSet_('Licencias', otro, { persona: base.id, dueno: base.dueno, whatsapp: base.whatsapp, notas: ('Antes entraba con ' + otro.whatsapp + (otro.notas ? ' · ' + otro.notas : '')).slice(0, 500) });
+  mSet_('Licencias', otro, { persona: base.persona || base.id, dueno: base.dueno, whatsapp: base.whatsapp, notas: ('Antes entraba con ' + otro.whatsapp + (otro.notas ? ' · ' + otro.notas : '')).slice(0, 500) });
   CacheService.getScriptCache().remove('L_' + otro.id);
   mAppend_('Seguimiento', { id: mId_('S'), negocioId: otro.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Vinculado a ' + base.dueno + ' (' + base.negocio + '). Ahora entra con ' + base.whatsapp });
   NEG = null; delete MEMO._ss;
   return otro;
 }
+// Al reanudar vuelve el estado de antes de la pausa: una licencia pagada no regresa a prueba y una prueba no se vuelve pagada
+function estadoAntesPausa_(l) {
+  const seg = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : (b._fila || 0) - (a._fila || 0));
+  // El evento más reciente que dice cómo estaba: la pausa (anota el estado previo), una activación o una extensión de prueba
+  const ev = seg.find(x => /^(Acceso pausado · estaba (Activa|Prueba|Vencida)|Licencia activada|Prueba extendida)/.test(String(x.nota)));
+  const vencida = !((msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now());
+  let e = ev ? (/estaba Activa|^Licencia activada/.test(ev.nota) ? 'Activa' : 'Prueba') : (vencida ? 'Activa' : 'Prueba'); // sin historial: la regla de antes
+  // Una prueba ya vencida con pagos anotados es de alguien que pagó (por ejemplo, activado a mano en la hoja)
+  if (e === 'Prueba' && vencida && mRows_('PagosLic').some(x => x.negocioId === l.id && Number(x.monto) > 0)) e = 'Activa';
+  return e; // una prueba con la fecha pasada queda «Vencida» sola
+}
 const ETIQUETAS_LIC = ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido'];
 function panelAccion_(d) {
   const l = licDe_(d.id), f = ahora_().replace('T', ' ');
   const upd = {}; let nota = '';
-  const pago = (concepto) => { if (Number(d.monto) > 0) mAppend_('PagosLic', { id: mId_('G'), negocioId: l.id, fecha: f, monto: r2_(Number(d.monto)), concepto: txt_(d.concepto, 60) || concepto, metodo: txt_(d.metodo, 20) || 'Efectivo', nota: '' }); };
+  const pago = (concepto, idNeg) => { if (Number(d.monto) > 0) mAppend_('PagosLic', { id: mId_('G'), negocioId: idNeg || l.id, fecha: f, monto: r2_(Number(d.monto)), concepto: txt_(d.concepto, 60) || concepto, metodo: txt_(d.metodo, 20) || 'Efectivo', nota: '' }); };
   switch (d.accion) {
     case 'activar':    upd.estado = 'Activa'; nota = 'Licencia activada'; pago('Licencia'); break;
     case 'plus':       upd.plus = 'Sí'; nota = 'Plus activado'; pago('Plus'); break;
@@ -1523,8 +1593,10 @@ function panelAccion_(d) {
     case 'quitarContab': upd.contab = ''; nota = 'Contabilidad desactivada'; break;
     case 'extender': { const dias = Math.max(1, Math.min(90, Number(d.dias) || 7)); const base = Math.max(Date.now(), msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T00:00') || 0);
       upd.vencePrueba = Utilities.formatDate(new Date(base + dias * 86400000), TZ, 'yyyy-MM-dd'); upd.estado = 'Prueba'; nota = 'Prueba extendida ' + dias + ' días'; break; }
-    case 'pausar':     upd.estado = 'Bloqueada'; nota = 'Acceso pausado'; break;
-    case 'reanudar':   upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Activa'; nota = 'Acceso reanudado'; break;
+    case 'pausar': { // se anota cómo estaba para devolverlo igual al reanudar
+      const e0 = String(l.estado || '').trim().toLowerCase();
+      upd.estado = 'Bloqueada'; nota = 'Acceso pausado' + (['activa', 'prueba', 'vencida'].indexOf(e0) >= 0 ? ' · estaba ' + e0.charAt(0).toUpperCase() + e0.slice(1) : ''); break; }
+    case 'reanudar':   upd.estado = estadoAntesPausa_(l); nota = 'Acceso reanudado'; break;
     case 'eliminar': {
       if (norm_(d.confirmar) !== norm_(l.negocio)) throw new Error('El nombre no coincide. Escribe el nombre del negocio tal como aparece.');
       // 1) Nadie de ese negocio vuelve a entrar y su WhatsApp queda libre
@@ -1548,7 +1620,7 @@ function panelAccion_(d) {
       if (nuevos.length) pago(nuevos.length === 1 ? 'Giro extra: ' + GIROS[nuevos[0]].n : nuevos.length + ' giros extra');
       break;
     }
-    case 'agregarNegocio': { const nuevo = panelAgregarNegocio_(l, d); nota = 'Negocio agregado a esta persona: ' + nuevo.negocio + (d.activar ? ' (licencia activada)' : ' (comparte la prueba de la persona)'); if (d.activar) pago('Licencia · ' + nuevo.negocio); break; }
+    case 'agregarNegocio': { const nuevo = panelAgregarNegocio_(l, d); nota = 'Negocio agregado a esta persona: ' + nuevo.negocio + (d.activar ? ' (licencia activada)' : ' (comparte la prueba de la persona)'); if (d.activar) pago('Licencia · ' + nuevo.negocio, nuevo.id); break; }
     case 'vincularNegocio': { const otro = panelVincularNegocio_(l, d); nota = 'Negocio vinculado a esta persona: ' + otro.negocio; break; }
     default: throw new Error('Acción no válida');
   }
@@ -1635,11 +1707,12 @@ function soporteCrear_(u, d) {
   const motivo = own_(MOTIVOS, d.motivo) ? d.motivo : 'otro', texto = String(d.texto || '').trim().slice(0, 800);
   if (texto.length < 3) throw new Error('Cuéntanos qué pasó');
   if (mRows_('Soporte').filter(c => c.negocioId === NEG.id && c.estado !== 'resuelto').length >= 5) throw new Error('Ya tienes 5 conversaciones abiertas. Continúa en una de ellas.');
+  const foto = fotoChat_(d.foto); // si la captura no sirve, no queda una conversación vacía
   const f = ahora_().replace('T', ' '), lic = NEG.lic, id = mId_('T');
   const c = { id: id, negocioId: NEG.id, negocio: lic.negocio, dueno: u.nombre || lic.dueno, whatsapp: lic.whatsapp, motivo: motivo, modulo: txt_(d.modulo, 40), estado: 'abierto', version: txt_(d.version, 12),
     diaPrueba: licNegocio_(lic).estado === 'prueba' ? diaPrueba_(lic) : '', ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: true, sinLeerAdm: 1, sinLeerCli: 0, creado: f };
   mAppend_('Soporte', c);
-  mAppend_('SoporteMsg', { id: mId_('M'), chatId: id, de: 'cli', texto: texto, foto: fotoChat_(d.foto), quien: u.nombre || '', fecha: f });
+  mAppend_('SoporteMsg', { id: mId_('M'), chatId: id, de: 'cli', texto: texto, foto: foto, quien: u.nombre || '', fecha: f });
   return { chat: sopPublico_(c, 'cli'), mensajes: sopMsgs_(id) };
 }
 function soporteLista_(u) {
@@ -1685,10 +1758,11 @@ function resumenPanelDiario() {
   if (!r.contactar.length && !sop.length) return;
   const wa = (x, t) => 'https://wa.me/' + x.whatsapp + '?text=' + encodeURIComponent(String(P[t] || '').replace(/\{dueno\}/g, String(x.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, x.negocio));
   const T = { dia3: 'Día 3 de prueba · ¿qué tal?', vence: 'Vence mañana', inactivo: 'Sin entrar hace días', vencida: 'Prueba vencida' };
+  const e = t => String(t === undefined || t === null ? '' : t).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   let h = '<h2 style="font-family:sans-serif">Gestión de Negocio VM · ' + r.hoy + '</h2>';
   h += '<p style="font-family:sans-serif">Activos ' + r.kpis.activos + ' · En prueba ' + r.kpis.prueba + ' · Vencidos ' + r.kpis.vencidos + ' · Ingresos del mes L ' + r.kpis.ingresosMes + '</p>';
-  if (r.contactar.length) h += '<h3 style="font-family:sans-serif">Para contactar hoy</h3><ul style="font-family:sans-serif">' + r.contactar.map(x => '<li><b>' + x.negocio + '</b> (' + x.dueno + ') · ' + T[x.contactar] + ' · <a href="' + wa(x, x.contactar) + '">WhatsApp</a></li>').join('') + '</ul>';
-  if (sop.length) h += '<h3 style="font-family:sans-serif">Soporte sin responder</h3><ul style="font-family:sans-serif">' + sop.map(c => '<li><b>' + c.negocio + '</b> · ' + (MOTIVOS[c.motivo] || c.motivo) + (c.modulo ? ' · ' + c.modulo : '') + ': ' + c.ultimoTexto + '</li>').join('') + '</ul>';
+  if (r.contactar.length) h += '<h3 style="font-family:sans-serif">Para contactar hoy</h3><ul style="font-family:sans-serif">' + r.contactar.map(x => '<li><b>' + e(x.negocio) + '</b> (' + e(x.dueno) + ') · ' + T[x.contactar] + ' · <a href="' + e(wa(x, x.contactar)) + '">WhatsApp</a></li>').join('') + '</ul>';
+  if (sop.length) h += '<h3 style="font-family:sans-serif">Soporte sin responder</h3><ul style="font-family:sans-serif">' + sop.map(c => '<li><b>' + e(c.negocio) + '</b> · ' + e(MOTIVOS[c.motivo] || c.motivo) + (c.modulo ? ' · ' + e(c.modulo) : '') + ': ' + e(c.ultimoTexto) + '</li>').join('') + '</ul>';
   h += '<p style="font-family:sans-serif"><a href="' + URL_APP + '?panel">Abrir el Panel Molina</a></p>';
   MailApp.sendEmail({ to: correo, subject: 'Negocio VM · ' + r.contactar.length + ' por contactar · ' + sop.length + ' en soporte', htmlBody: h });
 }
@@ -1715,6 +1789,7 @@ function guardar_(u, d) {
       if (prev && prev !== reg.tiendaPortada) borrarFoto_(prev);
     }
     ['tiendaAbre', 'tiendaCierra'].forEach(k => { if (reg[k] && !/^([01]\d|2[0-3]):[0-5]\d$/.test(reg[k])) throw new Error('Escribe la hora con el formato 08:00'); });
+    if (reg.tiendaMapa) { const t = reg.tiendaMapa.trim(); if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de Google Maps debe ser una dirección web (https://…)'); reg.tiendaMapa = /^https?:\/\//i.test(t) ? t : 'https://' + t; }
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
     if (reg.isv !== undefined && !(Number(reg.isv) >= 0 && Number(reg.isv) < 1)) throw new Error('ISV no válido');
     if (reg.tienda === 'si' && !plus_()) throw new Error('La tienda en línea es parte del plan Plus');
@@ -1801,7 +1876,10 @@ function eliminar_(u, d) {
   if (!d.id || !rows_(ent).some(x => x.id === d.id)) throw new Error('El registro ya no existe');
   // Si ya tiene movimientos, se desactiva en lugar de borrarse (para no perder la historia)
   let usado = false;
-  if (ent === 'Productos') usado = rows_('VentaDetalle').some(x => x.productoId === d.id) || rows_('CompraDetalle').some(x => x.productoId === d.id);
+  if (ent === 'Productos') { const pr = rows_('Productos').find(x => x.id === d.id);
+    usado = Math.abs(Number(pr.stock) || 0) > 0.0005 || rows_('VentaDetalle').some(x => x.productoId === d.id) || rows_('CompraDetalle').some(x => x.productoId === d.id) || rows_('Inventario').some(x => x.productoId === d.id)
+      || rows_('ProyectoGastos').some(x => x.productoId === d.id) || rows_('ProyectoProductos').some(x => x.productoId === d.id)
+      || rows_('Pedidos').some(x => ['nuevo', 'confirmado', 'listo'].indexOf(x.estado) >= 0 && String(x.items).indexOf(d.id) >= 0); }
   if (ent === 'Clientes') usado = rows_('Ventas').some(x => x.clienteId === d.id) || rows_('Abonos').some(x => x.clienteId === d.id);
   if (ent === 'Proveedores') usado = rows_('Compras').some(x => x.proveedorId === d.id) || rows_('Pagos').some(x => x.proveedorId === d.id);
   if (ent === 'Cuentas') usado = rows_('Suscripciones').some(x => x.cuentaId === d.id);
@@ -1914,9 +1992,11 @@ function precios_(u, d) {
   const pm = porId_(rows_('Productos'));
   const l = Array.isArray(d.cambios) ? d.cambios : [];
   if (!l.length) throw new Error('No hay precios para cambiar');
+  const actP = girosActivos_(), fija = tiendaAsignada_(u, actP);
   const upds = l.map(x => {
     const p = x && typeof x === 'object' ? pm[x.id] : null;
     if (!p) throw new Error('Un producto ya no existe');
+    if (fija && giroDeProd_(p, actP) !== fija) throw new Error('«' + p.nombre + '» es de otra tienda');
     if (!esNum_(x.precio) || !(r2_(x.precio) > 0)) throw new Error('Precio no válido en «' + p.nombre + '»');
     const upd = { id: p.id, precio: r2_(x.precio) };
     if (esNum_(x.margen)) { if (!(Number(x.margen) >= 0 && Number(x.margen) <= 10000)) throw new Error('% de ganancia no válido en «' + p.nombre + '»'); upd.margen = r2_(x.margen); }
@@ -1974,7 +2054,7 @@ function instalarLimpiezaDiaria() {
 /* ===================== INVENTARIO ===================== */
 
 // Cambia existencias y deja registro en la hoja Inventario. cambios = { productoId: +/-cantidad }
-function moverStock_(cambios, tipo, refId, u, nota, fecha) {
+function moverStock_(cambios, tipo, refId, u, nota, fecha, costos) {
   const ids = Object.keys(cambios);
   if (!ids.length) return;
   const pm = porId_(rows_('Productos')), mov = [], f = fecha || ahora_();
@@ -1983,7 +2063,7 @@ function moverStock_(cambios, tipo, refId, u, nota, fecha) {
     if (!p || p.tipo !== 'producto') return;
     const nuevo = r3_(p.stock + cambios[id]);
     upsert_('Productos', { id: id, stock: nuevo });
-    mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: r3_(cambios[id]), stock: nuevo, refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '' });
+    mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: r3_(cambios[id]), stock: nuevo, refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '', costo: r4_(costos && costos[id] !== undefined ? costos[id] : p.costo) }); // costo unitario del momento
   });
   appendRows_('Inventario', mov);
 }
@@ -1993,6 +2073,8 @@ function ajusteStock_(u, d) {
   const p = rows_('Productos').find(x => x.id === d.id);
   if (!p) throw new Error('El producto no existe');
   if (p.tipo !== 'producto') throw new Error('Este artículo no controla existencias');
+  const actA = girosActivos_(), fijaA = tiendaAsignada_(u, actA);
+  if (fijaA && giroDeProd_(p, actA) !== fijaA) throw new Error('«' + p.nombre + '» es de otra tienda');
   const modo = d.modo; // 'entrada' | 'salida' | 'conteo'
   if (!esNum_(d.cantidad)) throw new Error('Escribe la cantidad');
   const n = r3_(d.cantidad);
@@ -2005,7 +2087,7 @@ function ajusteStock_(u, d) {
   if (!delta) return rows_('Productos').find(x => x.id === p.id);
   if (modo !== 'conteo' && !(n > 0)) throw new Error('La cantidad debe ser mayor a cero');
   const motivo = txt_(d.motivo, 120) || (modo === 'conteo' ? 'Conteo físico' : modo === 'entrada' ? 'Entrada' : 'Salida');
-  moverStock_({ [p.id]: delta }, 'ajuste', '', u, motivo);
+  moverStock_({ [p.id]: delta }, 'ajuste', '', u, motivo, undefined, { [p.id]: p.costo });
   return rows_('Productos').find(x => x.id === p.id);
 }
 
@@ -2023,13 +2105,14 @@ function tasaLinea_(p, cfg) {
   return Number(cfg.isv) || 0;
 }
 
-function venta_(u, d) {
+function venta_(u, d, interno) {
   req_(u, ['admin','cajero']);
+  interno = interno || {}; // datos internos de editarVenta_: nunca vienen de la app
   const cfg = config_();
   const incl = cfg.preciosConISV !== 'no';
   // Si la misma venta llega dos veces (se cortó la conexión y se volvió a tocar Cobrar), se devuelve la primera
   // ed: datos de la venta que se está corrigiendo (editarVenta_). Lo devuelto por la original cuenta como existencia.
-  const ed = d._ed || null, dev = ed ? ed.devuelto : {};
+  const ed = interno.ed || null, dev = ed ? ed.devuelto : {};
   const clave = ed ? '' : txt_(d.clave, 60), kc = clave ? 'VK_' + (NEG ? NEG.id : '') + '_' + clave : '';
   if (kc) {
     let vid = null; try { vid = CacheService.getScriptCache().get(kc); } catch (e) {}
@@ -2040,7 +2123,8 @@ function venta_(u, d) {
   // Pedido en línea: debe estar pendiente; sus precios son los que vio el cliente
   const preciosPedido = Object.create(null);
   // Venta ligada a una cita/encargo: vale el precio acordado en la cita (lo puso quien la agendó)
-  const precioLigado = !!(d.agendaId && rows_('Agenda').some(x => x.id === d.agendaId && x.estado === 'pendiente'));
+  const agLig = d.agendaId ? rows_('Agenda').find(x => x.id === d.agendaId && x.estado === 'pendiente') : null;
+  const precioLigado = p => !!agLig && (!agLig.productoId || agLig.productoId === p.id); // solo la línea de la cita
   if (d.pedidoId) {
     const pe = rows_('Pedidos').find(x => x.id === d.pedidoId);
     if (!pe) throw new Error('El pedido en línea ya no existe');
@@ -2063,7 +2147,7 @@ function venta_(u, d) {
     if (!(cant > 0)) throw new Error('Cantidad no válida');
     if (!(i.precio === undefined || i.precio === '' || i.precio === null) && !esNum_(i.precio)) throw new Error('Precio no válido');
     let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? p.precio : 0) : r2_(i.precio);
-    if (p && u.rol !== 'admin' && !precioLigado) { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
+    if (p && u.rol !== 'admin' && !precioLigado(p)) { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
       const delPedido = preciosPedido[p.id];
       if (Math.abs(precio - p.precio) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005)) precio = delPedido !== undefined ? delPedido : p.precio;
     }
@@ -2071,7 +2155,8 @@ function venta_(u, d) {
     const desc = p ? p.nombre + (i.variante ? ' · ' + txt_(i.variante, 60) : '') : txt_(i.descripcion, 80);
     if (!desc) throw new Error('Escribe la descripción del artículo');
     if (!p && !(i.costo === undefined || i.costo === '' || i.costo === null) && !(Number(i.costo) >= 0)) throw new Error('El costo de «' + desc + '» no es válido');
-    return { p: p, productoId: p ? p.id : '', descripcion: desc, cantidad: cant, precio: precio, costo: p ? p.costo : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
+    const costoP = p ? (ed && ed.costos && ed.costos[p.id] !== undefined ? ed.costos[p.id] : p.costo) : 0; // al editar, lo ya vendido conserva su costo
+    return { p: p, productoId: p ? p.id : '', descripcion: desc, cantidad: cant, precio: precio, costo: p ? costoP : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
   });
   if (!items.length) throw new Error('El ticket está vacío');
   // Existencias
@@ -2094,6 +2179,7 @@ function venta_(u, d) {
   // Las líneas se redondean primero: así el detalle siempre suma el subtotal
   const subtotal = r2_(items.reduce((a, i) => a + r2_(i.cantidad * i.precio), 0));
   const descuento = r2_(Math.min(Math.max(0, Number(d.descuento) || 0), subtotal));
+  if (u.rol !== 'admin' && subtotal > 0 && descuento > subtotal * 0.5 + 0.004) throw new Error('El descuento máximo es del 50 % (' + money_(r2_(subtotal * 0.5), cfg) + '). Un descuento mayor lo da el administrador.');
   const factor = subtotal ? (subtotal - descuento) / subtotal : 1;
   const F = { exento: 0, exonerado: 0, g15: 0, g18: 0, i15: 0, i18: 0 }, B = { 15: 0, 18: 0 };
   items.forEach(i => {
@@ -2113,7 +2199,9 @@ function venta_(u, d) {
   let recibido = 0, cambio = 0, saldo = 0;
   const clienteId = d.clienteId && rows_('Clientes').some(c => c.id === d.clienteId) ? d.clienteId : '';
   // Anticipo ya pagado (orden de trabajo, cita o encargo): se descuenta de lo que falta por pagar, no del total de la venta
-  const anticipo = r2_(Math.min(anticipoDe_(d.ordenId || d.agendaId), total));
+  const antTot = anticipoDe_(d.ordenId || d.agendaId || d.pedidoId);
+  if (antTot > total + 0.004) throw new Error('El anticipo ya pagado (' + money_(antTot, cfg) + ') es mayor que el total (' + money_(total, cfg) + '). Revisa el total: si vas a devolver la diferencia, regístrala como gasto «Devolución de anticipo».');
+  const anticipo = r2_(Math.min(antTot, total));
   const porPagar = r2_(total - anticipo);
   if (metodo === 'Crédito') {
     if (!clienteId) throw new Error('Para vender al crédito selecciona un cliente registrado');
@@ -2130,14 +2218,17 @@ function venta_(u, d) {
   } else {
     recibido = porPagar;
   }
+  // Todo lo que puede fallar se revisa antes de escribir: RTN y suscripciones (perfiles ocupados, cuentas)
+  const cliF = sar && clienteId ? rows_('Clientes').find(c => c.id === clienteId) : null;
+  const rtnC = sar ? String(fd.rtn !== undefined && fd.rtn !== null ? fd.rtn : (cliF && cliF.rtn) || '').replace(/\D/g, '') : '';
+  if (rtnC && rtnC.length !== 14) throw new Error('El RTN del cliente debe tener 14 números');
+  const planSus = susPlan_(d, items, clienteId);
   // Solo validar (editarVenta_ revisa todo antes de tocar la venta original)
-  if (d.soloValidar) return { total: total, saldo: saldo, recibido: recibido, metodo: metodo, clienteId: clienteId };
+  if (interno.soloValidar) return { total: total, saldo: saldo, recibido: recibido, metodo: metodo, clienteId: clienteId };
   // Número de factura: se toma al final, cuando ya pasaron todas las validaciones (no deja huecos)
   let factura = '', fiscal = '';
   if (sar) {
-    const cli = clienteId ? rows_('Clientes').find(c => c.id === clienteId) : null;
-    const rtnC = String(fd.rtn !== undefined && fd.rtn !== null ? fd.rtn : (cli && cli.rtn) || '').replace(/\D/g, '');
-    if (rtnC && rtnC.length !== 14) throw new Error('El RTN del cliente debe tener 14 números');
+    const cli = cliF;
     const n = Number(cfg.seqF) || Number(cfg.sarDesde);
     factura = numFactura_(cfg, n);
     guardarConfig_({ seqF: String(n + 1) });
@@ -2147,8 +2238,9 @@ function venta_(u, d) {
   }
   const fecha = ahora_();
   const venta = {
-    // Una venta corregida conserva su número interno, su fecha y quién la vendió (la factura SAR sí es nueva)
-    id: newId_('Ventas'), numero: ed ? ed.numero : siguiente_('V'), fecha: ed ? ed.fecha : fecha, clienteId: clienteId, usuarioId: ed ? ed.usuarioId : u.id,
+    // Una venta corregida conserva su número interno, su fecha y quién la vendió. Si lleva factura SAR nueva (o su mes ya
+    // se cerró en Contabilidad), queda con la fecha de hoy: una factura no se emite con fecha atrasada.
+    id: newId_('Ventas'), numero: ed ? ed.numero : siguiente_('V'), fecha: ed && !factura && !mesCerrado_(ed.fecha) ? ed.fecha : fecha, clienteId: clienteId, usuarioId: ed ? ed.usuarioId : u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
     recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200),
     factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo
@@ -2168,11 +2260,18 @@ function venta_(u, d) {
   Object.keys(pedido).forEach(id => { cambios[id] = -pedido[id]; });
   moverStock_(cambios, 'venta', venta.id, u, ed ? 'Edición ' + venta.numero : venta.numero, fecha);
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
-  const nuevasSus = susRegistrar_(u, d, venta, items, pm);
+  const nuevasSus = susRegistrar_(u, planSus, venta);
   cerrarLigados_(d, venta);
-  if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} }
+  if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} } // la venta quedó completa: un reintento la devuelve
   if (MULTI_NEGOCIO && NEG && !ed) { try { mSet_('Licencias', NEG.lic, usoLic_(1)); } catch (e) {} }
   return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
+}
+
+// ¿El mes de esta fecha ya se cerró en Contabilidad? (si el módulo está activo)
+function mesCerrado_(fecha) { try { if (!contabOn_()) return false; const c = contabCfg_().cerrado; return !!c && String(fecha || '').slice(0, 7) <= c; } catch (e) { return false; } }
+// Anular o editar algo de hace más de 90 días que movió efectivo descuadraría la caja abierta (esa ventana es la que lee la caja)
+function noMuyViejo_(x, efectivo, que) {
+  if (efectivo && (idMs_(x.id) || 0) && idMs_(x.id) < ventanaMs_()) throw new Error((que || 'Este movimiento') + ' es de hace más de ' + DIAS_VENTANA + ' días y movió efectivo: ya no se puede anular ni cambiar desde aquí. Registra la devolución o el ajuste con fecha de hoy.');
 }
 
 function rango_(d) {
@@ -2208,13 +2307,14 @@ function anularVenta_(u, d) {
   if (!v) throw new Error('La venta no existe');
   if (v.anulada) throw new Error('La venta ya está anulada');
   if (rows_('Abonos').some(a => !a.anulado && parseJ_(a.aplicado, []).some(x => x.id === v.id))) throw new Error('Esta venta tiene abonos. Anula primero los abonos del cliente.');
-  const det = rows_('VentaDetalle').filter(x => x.ventaId === v.id);
-  const cambios = {};
-  det.forEach(i => { if (i.productoId) cambios[i.productoId] = r3_((cambios[i.productoId] || 0) + i.cantidad); });
-  moverStock_(cambios, 'anulación', v.id, u, 'Anulación ' + v.numero);
+  noMuyViejo_(v, v.metodo === 'Efectivo' || (v.metodo === 'Crédito' && Number(v.recibido) > 0), 'Esta venta');
+  moverStock_(salidoDe_(v), 'anulación', v.id, u, 'Anulación ' + v.numero);
   upsert_('Ventas', { id: v.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (v.nota ? v.nota + ' · ' : '') + 'Anulada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') + (d.motivo ? ': ' + txt_(d.motivo, 120) : '') });
   if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
-  try { rows_('Suscripciones').filter(x => x.ventaId === d.id && x.estado === 'activa').forEach(x => upsert_('Suscripciones', { id: x.id, estado: 'cancelada', nota: 'Venta anulada' })); } catch (e) {}
+  try { susDeshacer_(rows_('Suscripciones').filter(x => x.ventaId === d.id), 'Venta anulada'); } catch (e) {}
+  // La orden o cita que se cobró con esta venta vuelve a quedar por cobrar (con su anticipo)
+  rows_('Ordenes').filter(o => o.ventaId === v.id).forEach(o => upsert_('Ordenes', { id: o.id, estado: 'listo', ventaId: '', actualizado: ahora_() }));
+  rows_('Agenda').filter(a => a.ventaId === v.id).forEach(a => upsert_('Agenda', { id: a.id, estado: 'pendiente', ventaId: '', actualizado: ahora_() }));
   return { productos: rows_('Productos') };
 }
 
@@ -2233,7 +2333,8 @@ function editarVenta_(u, d) {
   if (!v) throw new Error('La venta no existe');
   if (v.corregida) throw new Error('Esta venta ya se editó. Abre la versión corregida para cambiarla otra vez.');
   if (v.anulada) throw new Error('No se puede editar una venta anulada');
-  if (Number(v.anticipo) > 0) throw new Error('Esta venta viene de una orden o cita con anticipo. Para cambiarla, anúlala y vuelve a cobrarla desde ahí.');
+  if (Number(v.anticipo) > 0) throw new Error('Esta venta se cobró con un anticipo (orden, cita, encargo o pedido). Para cambiarla, anúlala y vuelve a cobrarla desde ahí.');
+  noMuyViejo_(v, v.metodo === 'Efectivo' || (v.metodo === 'Crédito' && Number(v.recibido) > 0), 'Esta venta');
   const motivo = txt_(d.motivo, 120);
   if (!motivo) throw new Error('Escribe por qué cambias la venta');
   const det = rows_('VentaDetalle').filter(x => x.ventaId === v.id);
@@ -2243,15 +2344,19 @@ function editarVenta_(u, d) {
   const cfg = config_();
   if (pagado > 0 && d.clienteId !== v.clienteId) throw new Error('Esta venta ya tiene abonos del cliente (' + money_(pagado, cfg) + '): no se puede cambiar de cliente.');
   if (pagado > 0 && d.metodo !== 'Crédito') throw new Error('Esta venta ya tiene abonos (' + money_(pagado, cfg) + '): debe seguir al crédito.');
-  const devuelto = {};
-  det.forEach(i => { if (i.productoId) devuelto[i.productoId] = r3_((devuelto[i.productoId] || 0) + i.cantidad); });
-  const ed = { de: v.id, devuelto: devuelto, saldoAnt: v.saldo, pagado: pagado, cliente: v.clienteId, fecha: v.fecha, numero: v.numero, usuarioId: v.usuarioId, listo: false, tienda: v.sucursal || '' };
+  const devuelto = salidoDe_(v), costos = {};
+  det.forEach(i => { if (i.productoId && costos[i.productoId] === undefined) costos[i.productoId] = Number(i.costo) || 0; });
+  // Una suscripción nueva necesita sus datos de acceso: eso se cobra como venta nueva, no editando
+  const pmE = porId_(rows_('Productos')), yaEstaban = new Set(det.map(i => i.productoId).filter(Boolean));
+  const susNueva = (d.items || []).map(i => i && pmE[i.productoId]).find(p => p && !yaEstaban.has(p.id) && susDeProducto_(p).length);
+  if (susNueva) throw new Error('«' + susNueva.nombre + '» es una suscripción: para venderla usa Vender (ahí eliges la cuenta y el perfil).');
+  const ed = { de: v.id, devuelto: devuelto, costos: costos, saldoAnt: v.saldo, pagado: pagado, cliente: v.clienteId, fecha: v.fecha, numero: v.numero, usuarioId: v.usuarioId, listo: false, tienda: v.sucursal || '' };
   // Datos fiscales de la factura anterior (si el cliente no cambió, se conservan)
   const fzA = parseJ_(v.fiscal, null), fd = d.fiscal || (fzA && d.clienteId === v.clienteId ? { rtn: fzA.rtn, nombre: fzA.nombre, exonerado: !!(fzA.oce || fzA.cre || fzA.sag), oce: fzA.oce, cre: fzA.cre, sag: fzA.sag } : undefined);
   const nd = { items: d.items, clienteId: d.clienteId, metodo: d.metodo, descuento: d.descuento, recibido: d.recibido, nota: d.nota === undefined ? v.nota : d.nota, pedidoId: v.pedidoId,
-    fiscal: fd, servicio: v.servicio, mesa: v.mesa, cocina: v.cocina, _ed: ed };
+    fiscal: fd, servicio: v.servicio, mesa: v.mesa, cocina: v.cocina };
   // 1) Validar todo (existencias, límite de crédito, abonos) sin escribir nada
-  const pre = venta_(u, Object.assign({ soloValidar: true }, nd));
+  const pre = venta_(u, nd, { ed: ed, soloValidar: true });
   if (pre.saldo - pagado < -0.004) throw new Error('El nuevo total es menor que lo que el cliente ya abonó (' + money_(pagado, cfg) + '). Anula primero ese abono o deja un total mayor.');
   // 2) La original queda anulada: vuelve su inventario
   const subs = (() => { try { return rows_('Suscripciones').filter(x => x.ventaId === v.id); } catch (e) { return []; } })();
@@ -2260,7 +2365,7 @@ function editarVenta_(u, d) {
   if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
   // 3) La versión corregida
   ed.listo = true;
-  const r = venta_(u, nd);
+  const r = venta_(u, nd, { ed: ed });
   const nv = r.venta;
   upsert_('Ventas', { id: v.id, corregida: nv.id });
   abonos.forEach(a => { upsert_('Abonos', { id: a.id, aplicado: JSON.stringify(parseJ_(a.aplicado, []).map(x => x.id === v.id ? Object.assign({}, x, { id: nv.id, numero: nv.numero }) : x)) }); });
@@ -2268,7 +2373,8 @@ function editarVenta_(u, d) {
   upsert_('Ventas', { id: nv.id, saldo: r2_(Math.max(0, nv.saldo - pagado)), corrige: v.id, edicion: JSON.stringify(edicion) });
   // Suscripciones (streaming): siguen con la venta si su producto sigue en ella; si se quitó, se cancelan
   const sigue = new Set(r.detalle.map(x => x.productoId).filter(Boolean));
-  subs.forEach(x => { if (x.estado === 'cancelada' || x.estado === 'renovada') return; if (sigue.has(x.productoId)) upsert_('Suscripciones', { id: x.id, ventaId: nv.id }); else upsert_('Suscripciones', { id: x.id, estado: 'cancelada', nota: 'Se quitó al editar la venta ' + v.numero }); });
+  subs.forEach(x => { if (x.estado !== 'cancelada' && x.estado !== 'renovada' && sigue.has(x.productoId)) upsert_('Suscripciones', { id: x.id, ventaId: nv.id }); });
+  susDeshacer_(subs.filter(x => !sigue.has(x.productoId)), 'Se quitó al editar la venta ' + v.numero);
   const vf = rows_('Ventas').find(x => x.id === nv.id);
   return { venta: vf, detalle: r.detalle, anterior: v.id, productos: rows_('Productos'), saldoCliente: vf.clienteId ? (saldosClientes_()[vf.clienteId] || 0) : 0, sar: r.sar };
 }
@@ -2303,6 +2409,9 @@ function anularAbono_(u, d) {
   const a = rows_('Abonos').find(x => x.id === d.id);
   if (!a) throw new Error('El abono no existe');
   if (a.anulado) throw new Error('El abono ya está anulado');
+  if (a.ref) { const lig = rows_('Ordenes').find(x => x.id === a.ref) || rows_('Agenda').find(x => x.id === a.ref) || rows_('Pedidos').find(x => x.id === a.ref); const vl = lig && lig.ventaId ? rows_('Ventas').find(x => x.id === lig.ventaId && !x.anulada) : null;
+    if (vl) throw new Error('Este anticipo ya se aplicó en la venta ' + vl.numero + '. Anula primero esa venta.'); }
+  noMuyViejo_(a, a.metodo === 'Efectivo', 'Este abono');
   const vm = porId_(rows_('Ventas'));
   parseJ_(a.aplicado, []).forEach(x => { const v = vm[x.id]; if (v && !v.anulada) upsert_('Ventas', { id: v.id, saldo: r2_(v.saldo + x.monto) }); });
   upsert_('Abonos', { id: a.id, anulado: true, anulacion: marca_(), nota: (a.nota ? a.nota + ' · ' : '') + 'Anulado por ' + u.nombre + ' ' + ahora_().replace('T', ' ') });
@@ -2344,7 +2453,8 @@ function compra_(u, d) {
       if (codigo && codigos[codigo.toLowerCase()]) throw new Error('El código ' + codigo + ' ya es de «' + codigos[codigo.toLowerCase()].nombre + '»');
       if (!(precio > 0)) throw new Error('Ponle el precio de venta a «' + nombre + '»');
       const tasa = ['', '0', '15', '18'].indexOf(String(n.tasaIsv === undefined ? '' : n.tasaIsv)) >= 0 ? String(n.tasaIsv === undefined ? '' : n.tasaIsv) : '';
-      p = { _nuevo: true, nombre: nombre, codigo: codigo, categoria: txt_(n.categoria, 40) || 'General', unidad: txt_(n.unidad, 20) || 'unidad', tasaIsv: tasa, tipo: 'producto', stock: 0, costo: 0 };
+      const actC = girosActivos_(), gN = tiendaReq_(u, d) || String(n.giro || ''); // en una tienda que no es la principal, el producto queda en esa tienda
+      p = { _nuevo: true, nombre: nombre, codigo: codigo, categoria: txt_(n.categoria, 40) || 'General', unidad: txt_(n.unidad, 20) || 'unidad', tasaIsv: tasa, tipo: 'producto', stock: 0, costo: 0, giro: actC.indexOf(gN) > 0 ? gN : '' };
       nombres[clave] = p; if (codigo) codigos[codigo.toLowerCase()] = p;
     } else {
       p = pm[i.productoId];
@@ -2363,6 +2473,7 @@ function compra_(u, d) {
   if (metodo === 'Crédito' && !prov) throw new Error('Para comprar al crédito selecciona un proveedor');
   const total = r2_(items.reduce((a, i) => a + r2_(i.cantidad * i.costo), 0));
   const fecha = /^\d{4}-\d{2}-\d{2}$/.test(String(d.fecha || '')) && d.fecha <= hoy_() ? (d.fecha === hoy_() ? ahora_() : d.fecha + 'T12:00') : ahora_();
+  if (mesCerrado_(fecha)) throw new Error('Ese mes ya está cerrado en Contabilidad: registra la compra con fecha del mes abierto.');
   // Ya validado todo: se crean los productos nuevos (sin existencias; las suma la compra)
   const cats = {};
   prods.forEach(p => { if (p.categoria) cats[String(p.categoria).toLowerCase()] = p.categoria; });
@@ -2372,7 +2483,7 @@ function compra_(u, d) {
     const x = i.p, cat = cats[x.categoria.toLowerCase()] || x.categoria;
     cats[cat.toLowerCase()] = cat;
     const g = upsert_('Productos', { codigo: x.codigo, nombre: x.nombre, categoria: cat, tipo: 'producto', unidad: x.unidad, precio: i.precio, costo: 0, margen: i.margen === null ? 0 : i.margen,
-      stock: 0, stockMin: 0, tasaIsv: x.tasaIsv, icono: '', foto: '', fotoFecha: '', descripcion: '', tienda: true, activo: true, creado: ahora_() });
+      stock: 0, stockMin: 0, tasaIsv: x.tasaIsv, icono: '', foto: '', fotoFecha: '', descripcion: '', tienda: true, activo: true, creado: ahora_(), giro: x.giro || '' });
     i.p = g; nuevos.push(g.id);
   });
   const c = {
@@ -2537,6 +2648,9 @@ function guardarGasto_(u, d) {
   if (!(r.monto > 0)) throw new Error('El monto debe ser mayor a cero');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(String(r.fechaGasto || ''))) r.fechaGasto = hoy_();
   if (r.fechaGasto > hoy_()) throw new Error('La fecha del gasto no puede ser futura');
+  const cambiaG = prev && (Math.abs(prev.monto - r.monto) > 0.004 || prev.metodo !== r.metodo || prev.categoria.toLowerCase() !== r.categoria.toLowerCase() || prev.fechaGasto !== r.fechaGasto);
+  if ((!prev && mesCerrado_(r.fechaGasto)) || (cambiaG && (mesCerrado_(prev.fechaGasto) || mesCerrado_(r.fechaGasto))))
+    throw new Error('Ese mes ya está cerrado en Contabilidad: el gasto no se puede registrar ni cambiar en él. Usa una fecha del mes abierto (o anúlalo).');
   const cats = catalogoGastos_();
   const cat = cats.find(c => c.categoria.toLowerCase() === r.categoria.toLowerCase());
   if (cat) {
@@ -2549,7 +2663,7 @@ function guardarGasto_(u, d) {
   r.metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(r.metodo) >= 0 ? r.metodo : 'Efectivo';
   // Sección del gasto (solo si la tienda tiene varias): vacío = gasto general, que el reporte reparte entre las secciones
   if (r.giro === undefined) delete r.giro; else r.giro = girosActivos_().indexOf(String(r.giro)) >= 0 ? String(r.giro) : (prev && giroValido_(prev.giro) === String(r.giro) ? prev.giro : '');
-  if (prev && (prev.metodo === 'Efectivo' || r.metodo === 'Efectivo') && (Math.abs(prev.monto - r.monto) > 0.004 || prev.metodo !== r.metodo) && idMs_(prev.id) <= ventanaCaja_().desdeMs)
+  if (prev && (prev.metodo === 'Efectivo' || r.metodo === 'Efectivo') && (Math.abs(prev.monto - r.monto) > 0.004 || prev.metodo !== r.metodo) && idMs_(prev.id) <= ventanaCaja_(cajaPorTienda_() ? tiendaDoc_(prev, girosActivos_()) : '').desdeMs) // con una caja por tienda: el cierre de SU tienda
     throw new Error('Este gasto ya entró en un cierre de caja. Para cambiar el monto o la forma de pago, anúlalo y regístralo de nuevo.');
   if (!prev) { r.usuarioId = u.id; r.creado = ahora_(); r.anulado = false; }
   else { delete r.usuarioId; delete r.creado; delete r.anulado; }
@@ -2574,7 +2688,8 @@ function pedidos_(u, d) {
   const lim = diasAtras_(45) + 'T00:00';
   let l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo'].indexOf(p.estado) >= 0 || p.fecha >= lim);
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); l = l.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
-  return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); return p; });
+  const pagos = {}; rows_('Abonos').forEach(a => { if (a.ref && !a.anulado) pagos[a.ref] = r2_((pagos[a.ref] || 0) + (Number(a.monto) || 0)); });
+  return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); return p; });
 }
 
 function pendientes_(u, d) {
@@ -2608,10 +2723,26 @@ function estadoPedido_(u, d) {
   if (!p) throw new Error('El pedido no existe');
   if (EST_PEDIDO.indexOf(d.estado) < 0 || d.estado === 'entregado') throw new Error('Estado no válido');
   if (p.estado === 'entregado' || p.estado === 'cancelado') throw new Error('Este pedido ya está ' + p.estado);
+  const pagado = anticipoDe_(p.id);
+  if (d.estado === 'cancelado' && pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de cancelar.');
   const upd = { id: p.id, estado: d.estado, actualizado: ahora_() };
   if (d.estado === 'cancelado' && d.motivo) upd.nota = (p.nota ? p.nota + ' · ' : '') + 'Cancelado: ' + txt_(d.motivo, 120);
   const g = upsert_('Pedidos', upd);
-  g.items = parseJ_(g.items, []);
+  g.items = parseJ_(g.items, []); g.anticipoPagado = pagado;
+  return g;
+}
+// Anticipo de un pedido (compras en línea): entra a caja como abono ligado al pedido y se descuenta solo al cobrarlo
+function anticipoPedido_(u, d) {
+  req_(u, ['admin','cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('El pedido no existe');
+  if (p.ventaId || ['nuevo', 'confirmado', 'listo'].indexOf(p.estado) < 0) throw new Error('Este pedido ya está ' + p.estado);
+  const ya = anticipoDe_(p.id), monto = r2_(d.monto), cfg = config_();
+  if (!esNum_(d.monto) || !(monto > 0)) throw new Error('Escribe el monto del anticipo');
+  if (ya + monto > Number(p.total) + 0.004) throw new Error('Con este anticipo pagaría más que el total del pedido (' + money_(p.total, cfg) + ')');
+  anticipoRegistrar_(u, monto, p.clienteId, 'Anticipo pedido ' + p.numero, p.id, d.metodo, d);
+  const g = upsert_('Pedidos', { id: p.id, actualizado: ahora_(), nota: ((p.nota ? p.nota + ' · ' : '') + 'Anticipo ' + money_(monto, cfg) + ' recibido ' + ahora_().slice(5, 16).replace('T', ' ')).slice(0, 1000) });
+  g.items = parseJ_(g.items, []); g.anticipoPagado = r2_(ya + monto);
   return g;
 }
 
@@ -2644,8 +2775,10 @@ function editarPedido_(u, d) {
   const anticipo = Math.ceil(items.filter(i => i.tipo === 'compra').reduce((a, i) => a + i.total, 0) * pct / 100);
   const motivo = txt_(d.motivo, 80);
   const nota = ((p.nota ? p.nota + ' · ' : '') + 'Editado ' + ahora_().replace('T', ' ').slice(5, 16) + ' por ' + String(u.nombre || '').split(' ')[0] + (motivo ? ' (' + motivo + ')' : '') + ': ' + lineas.map(x => x.slice(2)).join('; ')).slice(0, 1000);
+  const pagadoP = anticipoDe_(p.id);
+  if (pagadoP > r2_(subtotal + (Number(p.envio) || 0)) + 0.004) throw new Error('El cliente ya pagó ' + money_(pagadoP, cfg) + ' de anticipo: el nuevo total no puede ser menor.');
   const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(items), subtotal: subtotal, total: r2_(subtotal + (Number(p.envio) || 0)), anticipo: anticipo, nota: nota, actualizado: ahora_() });
-  g.items = parseJ_(g.items, []);
+  g.items = parseJ_(g.items, []); g.anticipoPagado = pagadoP;
   g.cambios = lineas;
   return g;
 }
@@ -2670,7 +2803,7 @@ function cajaCalc_(w, tienda) {
   const vent = Math.min(w.desdeMs, ventanaMs_()), todas = name => rowsDesde_(name, vent);
   // Con tienda: solo los movimientos de esa tienda (su caja)
   const act = tienda ? girosActivos_() : null, tv = tienda ? tiendasVentas_(todas('Ventas'), todas('VentaDetalle'), act) : null;
-  const rows_ = name => !tienda ? todas(name) : todas(name).filter(x => (name === 'Ventas' ? tv[x.id] : name === 'ProyectoGastos' ? act[0] : tiendaDoc_(x, act)) === tienda);
+  const rows_ = name => !tienda ? todas(name) : todas(name).filter(x => (name === 'Ventas' ? tv[x.id] : tiendaDoc_(x, act)) === tienda);
   // signo: +1 entra efectivo, -1 sale. Devuelve true si el movimiento se cuenta normalmente.
   const mira = (x, anulado, efectivo, aplicar) => {
     const t = idMs_(x.id), ta = Number(x.anulacion) || 0;
@@ -2690,11 +2823,21 @@ function cajaCalc_(w, tienda) {
   rows_('Pagos').forEach(p => { if (p.metodo === 'Efectivo') mira(p, p.anulado, true, s => { k.pagos += s * p.monto; }); });
   rows_('Compras').forEach(c => { if (c.metodo === 'Efectivo') mira(c, c.anulada, true, s => { k.compras += s * c.total; }); });
   // Gastos de proyectos pagados con el efectivo de la caja (cuentan como gasto en efectivo)
-  rows_('ProyectoGastos').forEach(g => { if (g.caja) mira(g, g.anulado, true, s => { k.gastos += s * g.monto; k.proyectos += s * g.monto; }); });
+  rows_('ProyectoGastos').forEach(g => { if (g.caja) mira(g, g.anulado, true, s => { k.gastos += s * g.monto; k.proyectos += s * g.monto; }); }); // su tienda: la anotada o la principal
   Object.keys(k).forEach(x => { k[x] = r2_(k[x]); });
   return k;
 }
 
+// Una sola caja justo después de haber usado una caja por tienda: cada tienda cuenta desde SU último cierre, así lo que
+// una tienda vendió antes del cierre de otra no se pierde ni se cuenta dos veces. Devuelve null si no hace falta.
+function cajaMixta_(hastaMs) {
+  const act = girosActivos_(); if (act.length < 2) return null;
+  const ci = rows_('Cierres'), gen = desc_(ci.filter(c => !c.sucursal), 'hasta')[0];
+  if (!ci.some(c => c.sucursal && (!gen || c.hasta > gen.hasta))) return null;
+  const k = {}; let desde = '';
+  act.forEach(g => { const w = ventanaCaja_(g); if (hastaMs) w.hastaMs = hastaMs; const kk = cajaCalc_(w, g); Object.keys(kk).forEach(x => { k[x] = r2_((k[x] || 0) + kk[x]); }); if (!desde || w.desde < desde) desde = w.desde; });
+  return { k: k, desde: desde };
+}
 // Tienda cuya caja se ve o se cierra: con una caja por tienda siempre hay una (la principal si se eligió «todas»)
 function tiendaCaja_(u, d) {
   if (!cajaPorTienda_()) return '';
@@ -2703,8 +2846,8 @@ function tiendaCaja_(u, d) {
 }
 function caja_(u, d) {
   req_(u, ['admin','cajero']);
-  const t = tiendaCaja_(u, d), w = ventanaCaja_(t), cierres = w.cierres, desde = w.desde;
-  const k = cajaCalc_(w, t);
+  const t = tiendaCaja_(u, d), w = ventanaCaja_(t), cierres = w.cierres, mx = t ? null : cajaMixta_();
+  const desde = mx ? mx.desde : w.desde, k = mx ? mx.k : cajaCalc_(w, t);
   const us = porId_(rows_('Usuarios'));
   const r = { desde: desde, ahora: ahora_(), fondo: Number(config_().fondoCaja) || 0, k: k, ventasHoy: ventasDelDia_(hoy_(), t || tiendaReq_(u, d)), tienda: t,
     cierres: cierres.slice(0, 30).map(c => { c.usuario = us[c.usuarioId] ? us[c.usuarioId].nombre : ''; return c; }) };
@@ -2733,7 +2876,8 @@ function cerrarCaja_(u, d) {
   const t = tiendaCaja_(u, d), w = ventanaCaja_(t);
   if (marca - w.desdeMs < 3000) throw new Error('Espera unos segundos antes de hacer otro cierre');
   w.hastaMs = marca;
-  const k = cajaCalc_(w, t);
+  const mx = t ? null : cajaMixta_(marca), k = mx ? mx.k : cajaCalc_(w, t);
+  if (mx) w.desde = mx.desde;
   if (!esNum_(d.contado) || !(Number(d.contado) >= 0)) throw new Error('Escribe cuánto efectivo contaste');
   if (d.fondo !== undefined && d.fondo !== '' && (!esNum_(d.fondo) || Number(d.fondo) < 0)) throw new Error('El fondo de caja no es válido');
   const fondo = d.fondo === undefined || d.fondo === '' ? (Number(config_().fondoCaja) || 0) : r2_(d.fondo);
@@ -2783,9 +2927,9 @@ function inicio_(u, d) {
       vsT.forEach(v => { if (tvT[v.id] === t) cs[v.clienteId] = (cs[v.clienteId] || 0) + v.saldo; });
       out.porCobrar = { total: r2_(Object.keys(cs).reduce((a, k) => a + cs[k], 0)), clientes: Object.keys(cs).length };
     }
-    const tc = cajaPorTienda_() ? (t || act && act[0] || girosActivos_()[0]) : '';
-    const k = cajaCalc_(ventanaCaja_(tc), tc);
-    out.caja = r2_((Number(config_().fondoCaja) || 0) + k.ventas + k.cobros - k.gastos - k.pagos - k.compras);
+    // Con una caja por tienda: la de la tienda elegida, o la suma de todas las cajas en «todas las tiendas»
+    const cajasI = cajaPorTienda_() ? (t ? [t] : girosActivos_()) : [''];
+    out.caja = r2_(cajasI.reduce((tot, tc) => { const k = tc ? cajaCalc_(ventanaCaja_(tc), tc) : ((cajaMixta_() || {}).k || cajaCalc_(ventanaCaja_(''), '')); return tot + (Number(config_().fondoCaja) || 0) + k.ventas + k.cobros - k.gastos - k.pagos - k.compras; }, 0));
   }
   if (u.rol === 'admin') {
     const ventasMes = rowsDesde_('Ventas', vent).filter(v => !v.anulada && v.fecha.slice(0, 7) === mes && deT(v, 'Ventas'));
@@ -2834,6 +2978,16 @@ function reporte_(u, d) {
   const activos = girosActivos_(), giro = giroValido_(d.giro);
   const sec = seccionesDe_(ventas, det, activos, pm);
   const w = v => giro ? (sec.peso[v.id][giro] || 0) : 1;
+  // El ISV de cada venta se reparte entre secciones según la tasa de cada línea (un exento no carga ISV), no según lo vendido
+  const cfgR = config_(), inclR = cfgR.preciosConISV !== 'no', porV = {}, isvW = {};
+  det.forEach(x => { (porV[x.ventaId] = porV[x.ventaId] || []).push(x); });
+  ventas.forEach(v => {
+    const m = {}; let tot = 0;
+    (porV[v.id] || []).forEach(x => { const t = tasaLinea_(pm[x.productoId] || null, cfgR), b = Math.max(0, Number(x.total) || 0), imp = t ? (inclR ? b - b / (1 + t) : b * t) : 0, g = sec.lin[x.id]; m[g] = (m[g] || 0) + imp; tot += imp; });
+    const o = {}; if (tot > 0) Object.keys(m).forEach(g => { if (m[g] > 0) o[g] = m[g] / tot; });
+    isvW[v.id] = tot > 0 ? o : sec.peso[v.id];
+  });
+  const wi = v => giro ? (isvW[v.id][giro] || 0) : 1;
   const vs = giro ? ventas.filter(v => w(v) > 0) : ventas;
   const ds = giro ? det.filter(x => sec.lin[x.id] === giro) : det;
   const k = { ventas: 0, n: vs.length, ticket: 0, isv: 0, descuentos: 0, costo: 0, bruta: 0, gastos: 0, neta: 0, margen: 0,
@@ -2841,9 +2995,9 @@ function reporte_(u, d) {
   const porDia = {}, gastosDia = {}, porMetodo = {}, porCat = {}, top = {}, porUsuario = {}, porHora = {};
   vs.forEach(v => {
     const p = w(v);
-    k.ventas += v.total * p; k.isv += v.isv * p; k.descuentos += v.descuento * p;
+    k.ventas += v.total * p; k.isv += v.isv * wi(v); k.descuentos += v.descuento * p;
     if (!giro) k.costo += v.costo;
-    if (v.metodo === 'Crédito') k.credito += (v.total - v.recibido) * p;
+    if (v.metodo === 'Crédito') k.credito += (v.total - (Number(v.anticipo) || 0) - v.recibido) * p; // el anticipo ya estaba pagado
     const dia = v.fecha.slice(0, 10);
     porDia[dia] = (porDia[dia] || 0) + v.total * p;
     porMetodo[v.metodo] = (porMetodo[v.metodo] || 0) + v.total * p;
@@ -2868,7 +3022,7 @@ function reporte_(u, d) {
   const secs = {};
   const sx = g => secs[g] || (secs[g] = { id: g, nombre: GIROS[g] ? GIROS[g].n : g, activa: activos.indexOf(g) >= 0, ventas: 0, isv: 0, costo: 0, n: 0, articulos: 0, propios: 0, top: {} });
   activos.forEach(sx);
-  ventas.forEach(v => { const pw = sec.peso[v.id]; Object.keys(pw).forEach(g => { const s = sx(g); s.ventas += v.total * pw[g]; s.isv += v.isv * pw[g]; s.n++; }); });
+  ventas.forEach(v => { const pw = sec.peso[v.id], iw = isvW[v.id]; Object.keys(pw).forEach(g => { const s = sx(g); s.ventas += v.total * pw[g]; s.n++; }); Object.keys(iw).forEach(g => { sx(g).isv += v.isv * iw[g]; }); });
   det.forEach(i => {
     const s = sx(sec.lin[i.id]), key = i.productoId || ('*' + i.descripcion);
     s.costo += i.cantidad * i.costo; s.articulos += i.cantidad;
@@ -2888,13 +3042,14 @@ function reporte_(u, d) {
     const c = giro && !gg ? 'Parte de gastos generales' : g.categoria;
     gastosCat[c] = (gastosCat[c] || 0) + m;
   });
-  if (!giro) {
-    rows_('Abonos').forEach(a => { if (!a.anulado && a.fecha >= r.desde && a.fecha <= r.hasta) k.cobros += a.monto; });
-    rows_('Compras').forEach(c => { if (!c.anulada && c.fecha >= r.desde && c.fecha <= r.hasta) k.compras += c.total; });
-    rows_('Pagos').forEach(p => { if (!p.anulado && p.fecha >= r.desde && p.fecha <= r.hasta) k.pagos += p.monto; });
-    k.anuladas = rows_('Ventas').filter(v => v.anulada && v.fecha >= r.desde && v.fecha <= r.hasta).length;
-    k.clientesNuevos = rows_('Clientes').filter(c => c.creado >= r.desde && c.creado <= r.hasta).length;
-  }
+  // Cobros, compras y pagos: con una sección elegida, solo los registrados en esa tienda
+  const deG = x => !giro || tiendaDoc_(x, activos) === giro, enR = f => f >= r.desde && f <= r.hasta;
+  rows_('Abonos').forEach(a => { if (!a.anulado && enR(a.fecha) && deG(a)) k.cobros += a.monto; });
+  rows_('Compras').forEach(c => { if (!c.anulada && enR(c.fecha) && deG(c)) k.compras += c.total; });
+  rows_('Pagos').forEach(p => { if (!p.anulado && enR(p.fecha) && deG(p)) k.pagos += p.monto; });
+  const anul = rows_('Ventas').filter(v => v.anulada && !v.corregida && enR(v.fecha)); // las editadas no cuentan como anuladas
+  k.anuladas = giro ? (() => { const tv = tiendasVentas_(anul, null, activos); return anul.filter(v => tv[v.id] === giro).length; })() : anul.length;
+  if (!giro) k.clientesNuevos = rows_('Clientes').filter(c => enR(c.creado)).length;
   k.ticket = vs.length ? k.ventas / vs.length : 0;
   k.bruta = k.ventas - k.isv - k.costo;
   k.neta = k.bruta - k.gastos;
@@ -2908,7 +3063,7 @@ function reporte_(u, d) {
     usuarios: Object.keys(porUsuario).map(x => { const o = porUsuario[x]; o.ventas = r2_(o.ventas); return o; }).sort((a, b) => b.ventas - a.ventas),
     porHora: porHora, giro: giro
   };
-  if (lista.length > 1 || giro) {
+  if ((activos.length > 1 && lista.length > 1) || giro) { // con un solo giro activo no hay secciones (aunque haya ventas de un giro de antes)
     res.gastosGenerales = r2_(general);
     res.secciones = lista.filter(g => secs[g].activa || secs[g].n || secs[g].propios).map(g => {
       const s = secs[g], gen = general * parte[g], bruta = s.ventas - s.isv - s.costo, neta = bruta - s.propios - gen, t = Object.keys(s.top).map(x => s.top[x]).sort((a, b) => b.total - a.total)[0];
@@ -3001,7 +3156,7 @@ function diario_(u, d) {
   rows_('VentaDetalle').forEach(x => { if (det[x.ventaId]) det[x.ventaId].push(x.descripcion + (x.cantidad !== 1 ? ' ×' + x.cantidad : '')); });
   const mov = ventas.map(v => ({ id: v.id, fecha: v.fecha, tipo: 'venta', numero: v.numero, concepto: (det[v.id].join(', ') || 'Venta') + (v.corregida ? ' (antes de editarla)' : v.corrige ? ' (editada)' : ''), categoria: 'Venta',
     tercero: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final', metodo: v.metodo, usuario: us[v.usuarioId] ? us[v.usuarioId].nombre : '',
-    monto: v.total, cobrado: v.metodo === 'Crédito' ? v.recibido : v.total, anulado: v.anulada }));
+    monto: v.total, cobrado: v.metodo === 'Crédito' ? v.recibido : r2_(v.total - (Number(v.anticipo) || 0)), anulado: v.anulada })); // el anticipo ya entró antes como cobro
   rows_('Abonos').filter(a => a.fecha.slice(0, 7) === mes).forEach(a => mov.push({ id: a.id, fecha: a.fecha, tipo: 'cobro', numero: '', concepto: 'Abono a cuenta', categoria: 'Cobro',
     tercero: cm[a.clienteId] ? cm[a.clienteId].nombre : 'Cliente', metodo: a.metodo, usuario: us[a.usuarioId] ? us[a.usuarioId].nombre : '', monto: a.monto, cobrado: a.monto, anulado: a.anulado }));
   rows_('Gastos').filter(g => g.fechaGasto.slice(0, 7) === mes).forEach(g => mov.push({ id: g.id,
@@ -3345,6 +3500,9 @@ function gastoProyecto_(u, d) {
   const ci = CAT_PROY.find(c => c.toLowerCase() === cat.toLowerCase()); if (ci) cat = ci;
   const dia = /^\d{4}-\d{2}-\d{2}$/.test(String(r.dia || '')) ? r.dia : hoy_();
   if (dia > hoy_()) throw new Error('La fecha no puede ser futura');
+  const cajaP = !!r.caja && u.rol !== 'bodega';
+  if (!prev ? (cajaP && mesCerrado_(dia)) : ((prev.caja || cajaP) && (mesCerrado_(prev.dia) || mesCerrado_(dia)) && (Math.abs(prev.monto - r2_(r.monto > 0 ? r.monto : r3_(r.cantidad) * r4_(r.costoUnit))) > 0.004 || !!prev.caja !== cajaP || prev.dia !== dia)))
+    throw new Error('Ese mes ya está cerrado en Contabilidad: usa una fecha del mes abierto.');
   const rec = { proyectoId: p.id, dia: dia, categoria: cat, descripcion: txt_(r.descripcion, 120), caja: !!r.caja && u.rol !== 'bodega' };
   let mover = null;
   if (!prev && r.productoId) {
@@ -3368,10 +3526,10 @@ function gastoProyecto_(u, d) {
   }
   if (!rec.descripcion) throw new Error('Escribe qué fue el gasto');
   if (!(rec.monto > 0)) throw new Error('El monto debe ser mayor a cero');
-  if (prev && (prev.caja || rec.caja) && (Math.abs(prev.monto - rec.monto) > 0.004 || !!prev.caja !== rec.caja) && idMs_(prev.id) <= ventanaCaja_().desdeMs)
+  if (prev && (prev.caja || rec.caja) && (Math.abs(prev.monto - rec.monto) > 0.004 || !!prev.caja !== rec.caja) && idMs_(prev.id) <= ventanaCaja_(cajaPorTienda_() ? tiendaDoc_(prev, girosActivos_()) : '').desdeMs) // la caja de la tienda donde se pagó
     throw new Error('Este gasto ya entró en un cierre de caja. Para cambiar el monto o si se pagó con la caja, anúlalo y regístralo de nuevo.');
   if (prev) rec.id = prev.id;
-  else Object.assign(rec, { usuarioId: u.id, anulado: false, creado: ahora_() });
+  else { Object.assign(rec, { usuarioId: u.id, anulado: false, creado: ahora_() }); const act = girosActivos_(); if (act.length > 1) rec.sucursal = tiendaReq_(u, d) || act[0]; } // de qué caja sale
   const g = upsert_('ProyectoGastos', rec);
   if (mover) moverStock_({ [mover.pid]: -mover.cant }, 'proyecto', g.id, u, p.nombre);
   tocarProyecto_(p.id);
@@ -3450,6 +3608,7 @@ function proyectoAInventario_(u, d) {
   const destinos = plan.filter(z => z.prod).map(z => z.prod.id);
   if (destinos.some((id, i) => destinos.indexOf(id) !== i)) throw new Error('Dos productos del proyecto van al mismo producto del inventario. Pásalos por separado.');
   let n = 0;
+  const actP = girosActivos_(), gP = tiendaReq_(u, d); // con varias tiendas, lo producido queda en la tienda donde se trabaja
   plan.forEach(z => {
     const it = z.it, x = z.x;
     const cu = x.costoUnit, precio = r2_(it.precio) > 0 ? r2_(it.precio) : (x.precio > 0 ? x.precio : x.sugerido);
@@ -3462,9 +3621,9 @@ function proyectoAInventario_(u, d) {
     } else {
       prod = upsert_('Productos', { codigo: '', nombre: x.nombre, categoria: txt_(it.categoria, 40) || 'Producción', tipo: 'producto', unidad: x.unidad || 'unidad',
         precio: precio, costo: cu, margen: det.r.margen, stock: 0, stockMin: 0, tasaIsv: '', icono: txt_(it.icono, 4), foto: '', fotoFecha: '', descripcion: '',
-        tienda: false, activo: true, creado: ahora_() });
+        tienda: false, activo: true, creado: ahora_(), giro: actP.indexOf(String(it.giro || gP)) > 0 ? String(it.giro || gP) : '' });
     }
-    moverStock_({ [prod.id]: x.cantidad }, 'producción', p.id, u, p.nombre);
+    moverStock_({ [prod.id]: x.cantidad }, 'producción', p.id, u, p.nombre, undefined, { [prod.id]: cu });
     upsert_('ProyectoProductos', { id: x.id, productoId: prod.id, inventario: hoy_() });
     n++;
   });
@@ -3482,7 +3641,8 @@ function tiendaNeg_(d) {
     const lic = negocioPorId_(String(d.negocio || ''));
     if (!lic) throw new Error('Este enlace de tienda no es válido');
     setNegocio_(lic);
-    const L = licencia_();
+    const L = licencia_(), cbT = cobroDe_(lic);
+    if (cbT && cbT.pausado) L.estado = 'bloqueada'; // programa en pausa por un pago: nadie atiende la tienda
     if (L.estado === 'vencida' || L.estado === 'bloqueada') { const c0 = config_(); throw new Error('TIENDA_CERRADA|' + JSON.stringify({ vencida: L.estado, nombre: c0.nombre, telefono: c0.telefono, tema: c0.tema, logo: c0.logo, fuente: c0.tiendaFuente, modo: c0.tiendaModo, contacto: CONTACTO_WA })); }
   } else {
     const L = licencia_();
@@ -3565,6 +3725,7 @@ function pedir_(d) {
     suma[p.id] = (suma[p.id] || 0) + cant;
     if (p.tipo === 'producto' && !sin && p.stock < suma[p.id]) throw new Error(p.stock > 0 ? 'Solo quedan ' + Math.floor(p.stock) + ' de «' + p.nombre + '»' : '«' + p.nombre + '» se agotó');
     const op = txt_(i.opcion, 160), nom = op ? txt_(p.nombre + ' (' + op + ')', 240) : p.nombre;
+    if (giroDeProd_(p, girosActivos_(cfg)) === 'recargas' && !/ID de jugador:\s*\S/i.test(op)) throw new Error('Escribe tu ID de jugador para «' + p.nombre + '»');
     const ya = items.find(x => x.productoId === p.id && x.nombre === nom);
     if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * p.precio); }
     else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: p.precio, total: r2_(cant * p.precio) });
@@ -3756,7 +3917,7 @@ function sembrarEjemplo_(adminId) {
   RELOJ_ = reloj;
   try {
     const admin = rows_('Usuarios').find(x => x.id === adminId);
-    if (MULTI_NEGOCIO && NEG) { mSet_('Licencias', NEG.lic, { plus: 'Sí' }); NEG.lic.plus = 'Sí'; CacheService.getScriptCache().remove('L_' + NEG.id); }
+    if (MULTI_NEGOCIO && NEG) { mSet_('Licencias', NEG.lic, { plus: 'Sí', estado: 'Activa' }); NEG.lic.plus = 'Sí'; NEG.lic.estado = 'Activa'; CacheService.getScriptCache().remove('L_' + NEG.id); } // el ejemplo no vence
     else PropertiesService.getScriptProperties().setProperty('PLUS', 'activo');
     guardarConfig_({ eslogan: 'Todo lo que buscas, en un solo lugar', direccion: 'Barrio Guamilito, 5 calle, San Pedro Sula', telefono: '9999-0000',
       tienda: 'si', tiendaEnvio: '60', tiendaMinimo: '100', tiendaHorario: 'Lunes a sábado · 8:00 a. m. a 7:00 p. m.',
@@ -3949,8 +4110,8 @@ function girosActivos_(cfg) {
 // A qué giro pertenece un producto: el que tenga anotado; si no, el giro activo que tenga su categoría; si no, el principal
 function giroDeProd_(p, activos) {
   if (p.giro && activos.indexOf(p.giro) >= 0) return p.giro;
-  const c = String(p.categoria || '').toLowerCase();
-  if (c) for (let i = 0; i < activos.length; i++) { if (GIROS[activos[i]].cats.some(x => x.toLowerCase() === c)) return activos[i]; }
+  const c = norm_(p.categoria); // igual que en la app: sin tildes ni mayúsculas
+  if (c) for (let i = 0; i < activos.length; i++) { if (GIROS[activos[i]].cats.some(x => norm_(x) === c)) return activos[i]; }
   return activos[0];
 }
 /* ===== Reportes por sección (giro) =====
@@ -3990,8 +4151,13 @@ const giroValido_ = g => (g && own_(GIROS, String(g)) ? String(g) : '');
 // Tienda con la que trabaja esta solicitud: la asignada al usuario manda; si no, la que eligió en la app ('' = todas)
 function tiendaReq_(u, d) {
   const act = girosActivos_(); if (act.length < 2) return '';
-  if (u && u.sucursal && act.indexOf(u.sucursal) >= 0) return u.sucursal;
+  const fija = tiendaAsignada_(u, act); if (fija) return fija;
   const t = String((d && d.tienda) || ''); return act.indexOf(t) >= 0 ? t : '';
+}
+// Tienda fija del usuario: el administrador no tiene (ve todas). Si su tienda se apagó, trabaja en la principal (nunca en todas)
+function tiendaAsignada_(u, act) {
+  if (!u || u.rol === 'admin' || !u.sucursal) return '';
+  return act.indexOf(u.sucursal) >= 0 ? u.sucursal : act[0];
 }
 function cajaPorTienda_() { return girosActivos_().length > 1 && config_().cajaTienda !== 'no'; }
 // Tienda de un movimiento: la que tiene anotada; si no, la de su giro (gastos) o la principal
@@ -4017,14 +4183,15 @@ function tiendas_(u) {
   const h = hoy_(), vent = ventanaMs_(), ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && v.fecha.slice(0, 10) === h);
   const tv = tiendasVentas_(ventas, rowsDesde_('VentaDetalle', vent), act), pm = porId_(rows_('Productos')), cfg = config_(), porCaja = cajaPorTienda_();
   const ped = rows_('Pedidos').filter(p => p.estado === 'nuevo');
-  const lista = act.filter(t => !(u.sucursal && act.indexOf(u.sucursal) >= 0) || t === u.sucursal).map(t => {
+  const fija = tiendaAsignada_(u, act);
+  const lista = act.filter(t => !fija || t === fija).map(t => {
     const vs = ventas.filter(v => tv[v.id] === t && (u.rol === 'admin' || v.usuarioId === u.id));
     const o = { id: t, nombre: GIROS[t].n, hoy: r2_(vs.reduce((a, v) => a + v.total, 0)), n: vs.length, pedidos: ped.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0).length,
       productos: rows_('Productos').filter(p => p.activo && giroDeProd_(p, act) === t).length };
     if (porCaja && u.rol !== 'bodega') { const k = cajaCalc_(ventanaCaja_(t), t); o.caja = r2_((Number(cfg.fondoCaja) || 0) + k.ventas + k.cobros - k.gastos - k.pagos - k.compras); }
     return o;
   });
-  return { tiendas: lista, asignada: u.sucursal && act.indexOf(u.sucursal) >= 0 ? u.sucursal : '', porCaja: porCaja };
+  return { tiendas: lista, asignada: fija, porCaja: porCaja };
 }
 // Los gastos sin sección (alquiler, luz, planilla…) se reparten según lo que vendió cada sección; sin ventas, por partes iguales
 function repartoGeneral_(netas, lista) {
@@ -4063,18 +4230,19 @@ function contabOn_() {
 const PLAN_BASE = [
   ['1101','Caja general','activo','deudora'], ['1102','Bancos','activo','deudora'], ['1103','Cuentas por cobrar clientes','activo','deudora'],
   ['1104','Inventario de mercadería','activo','deudora'], ['1105','ISV crédito fiscal (pagado en compras)','activo','deudora'], ['1106','Retenciones ISR a favor (1 %)','activo','deudora'],
-  ['1201','Mobiliario y equipo','activo','deudora'], ['1202','Depreciación acumulada','activo','acreedora'],
+  ['1107','Producción en proceso (proyectos)','activo','deudora'], ['1201','Mobiliario y equipo','activo','deudora'], ['1202','Depreciación acumulada','activo','acreedora'],
   ['2101','Cuentas por pagar proveedores','pasivo','acreedora'], ['2102','ISV por pagar (cobrado en ventas)','pasivo','acreedora'], ['2103','Retenciones por pagar','pasivo','acreedora'], ['2104','Préstamos por pagar','pasivo','acreedora'],
-  ['3101','Capital','capital','acreedora'], ['3102','Utilidades acumuladas','capital','acreedora'], ['3103','Retiros del propietario','capital','deudora'],
+  ['3101','Capital','capital','acreedora'], ['3102','Utilidades acumuladas','capital','acreedora'], ['3103','Retiros del propietario','capital','deudora'], ['3104','Aportes del propietario (gastos pagados fuera de caja)','capital','acreedora'],
   ['4101','Ventas','ingreso','acreedora'], ['4102','Otros ingresos','ingreso','acreedora'],
   ['5101','Costo de ventas','costo','deudora'], ['5102','Compras de mercadería (inventario periódico)','costo','deudora'],
   ['6101','Sueldos y salarios','gasto','deudora'], ['6102','Alquiler','gasto','deudora'], ['6103','Servicios públicos','gasto','deudora'], ['6104','Transporte y combustible','gasto','deudora'],
   ['6105','Comisiones bancarias','gasto','deudora'], ['6106','Depreciación','gasto','deudora'], ['6107','Publicidad','gasto','deudora'], ['6108','Mantenimiento y reparaciones','gasto','deudora'],
-  ['6109','Impuestos y tasas municipales','gasto','deudora'], ['6199','Otros gastos','gasto','deudora']
+  ['6109','Impuestos y tasas municipales','gasto','deudora'], ['6110','Ajustes y mermas de inventario','gasto','deudora'], ['6199','Otros gastos','gasto','deudora']
 ];
 
 const MAPEO_BASE = { caja:'1101', banco:'1102', cxc:'1103', inventario:'1104', isvCredito:'1105', retFavor:'1106', cxp:'2101', isvPagar:'2102', retPagar:'2103',
   capital:'3101', utilAcum:'3102', ventas:'4101', otrosIngresos:'4102', costoVentas:'5101', compras:'5102', comisiones:'6105', gastoDefault:'6199',
+  produccion:'1107', aportes:'3104', ajusteInv:'6110',
   metodos: { Efectivo:'caja', Tarjeta:'banco', Transferencia:'banco' }, gastos: {} };
 
 function contabCfg_() { const c = config_(); return { inventario: c.contabInventario === 'periodico' ? 'periodico' : 'perpetuo', isvCompras: c.contabIsvCompras !== 'no', cerrado: String(c.contabCerrado || '') }; }
@@ -4091,6 +4259,11 @@ function contabMapeo_() {
 // Plan de cuentas; la primera vez siembra el plan base.
 function planCuentas_() {
   let p = rows_('PlanCuentas');
+  if (!p.length && !EN_LOCK) return lock_(() => planCuentas_()); // se vuelve a revisar ya dentro del candado
+  if (p.length) { // cuentas base nuevas en esta versión (producción, aportes, ajustes): se agregan si faltan
+    const hay = new Set(p.map(x => x.codigo)), falta = PLAN_BASE.filter(x => ['1107', '3104', '6110'].indexOf(x[0]) >= 0 && !hay.has(x[0]));
+    if (falta.length) { const ahora = ahora_(); appendRows_('PlanCuentas', falta.map(x => ({ id: newId_('PlanCuentas'), codigo: x[0], nombre: x[1], tipo: x[2], naturaleza: x[3], padre: '', activo: true, creado: ahora }))); invalidar_('PlanCuentas'); p = rows_('PlanCuentas'); }
+  }
   if (!p.length) {
     const ahora = ahora_();
     appendRows_('PlanCuentas', PLAN_BASE.map(x => ({ id: newId_('PlanCuentas'), codigo: x[0], nombre: x[1], tipo: x[2], naturaleza: x[3], padre: '', activo: true, creado: ahora })));
@@ -4099,10 +4272,11 @@ function planCuentas_() {
   return p.slice().sort((a, b) => String(a.codigo).localeCompare(String(b.codigo)));
 }
 
-function contabPlan_(u, d) { req_(u, ['admin']); return { plan: planCuentas_(), mapeo: contabMapeo_(), gastoCats: catalogoGastos_() }; }
+function reqContab_() { if (!contabOn_()) throw new Error('Contabilidad no está activada para este negocio.'); }
+function contabPlan_(u, d) { req_(u, ['admin']); reqContab_(); return { plan: planCuentas_(), mapeo: contabMapeo_(), gastoCats: catalogoGastos_() }; }
 
 function guardarCuenta_(u, d) {
-  req_(u, ['admin']);
+  req_(u, ['admin']); reqContab_();
   const r = d.registro || {};
   const codigo = String(r.codigo || '').replace(/\D/g, '');
   if (!/^\d{4,6}$/.test(codigo)) throw new Error('El código debe tener de 4 a 6 dígitos (ej. 1101).');
@@ -4112,6 +4286,13 @@ function guardarCuenta_(u, d) {
   const plan = planCuentas_();
   const dup = plan.find(x => x.codigo === codigo && x.id !== r.id);
   if (dup) throw new Error('Ya existe la cuenta ' + codigo + ' · ' + dup.nombre);
+  // C20: el código de una cuenta en uso (mapeo o asientos) no se cambia: los movimientos quedarían apuntando al viejo
+  const antes = r.id ? plan.find(x => x.id === r.id) : null;
+  if (antes && antes.codigo !== codigo) {
+    const mp = contabMapeo_(), enMapeo = JSON.stringify(mp).indexOf('"' + antes.codigo + '"') >= 0;
+    const enAsientos = rows_('Asientos').some(a => String(a.lineas).indexOf('"cuenta":"' + antes.codigo + '"') >= 0);
+    if (enMapeo || enAsientos) throw new Error('La cuenta ' + antes.codigo + ' ya se usa' + (enMapeo ? ' en el mapeo' : ' en asientos') + ': no se le puede cambiar el código. Crea una cuenta nueva si la necesitas.');
+  }
   const rec = { id: r.id || newId_('PlanCuentas'), codigo: codigo, nombre: txt_(r.nombre), tipo: tipo, naturaleza: nat, padre: '', activo: r.activo !== false, creado: r.id ? undefined : ahora_() };
   if (r.id) delete rec.creado;
   upsert_('PlanCuentas', rec);
@@ -4120,7 +4301,7 @@ function guardarCuenta_(u, d) {
 }
 
 function guardarMapeo_(u, d) {
-  req_(u, ['admin']);
+  req_(u, ['admin']); reqContab_();
   const m = d.mapeo || {};
   const codigos = new Set(planCuentas_().map(x => x.codigo));
   Object.keys(m).forEach(k => { if (typeof m[k] === 'string' && m[k] && !codigos.has(m[k])) throw new Error('La cuenta ' + m[k] + ' no existe en el plan.'); });
@@ -4138,6 +4319,8 @@ function partirIsv_(total, conIsv) { if (!conIsv) return { base: r2_(total), isv
 function ctaMetodo_(m, metodo) { const k = m.metodos[metodo] || 'caja'; return m[k] || m.caja; }
 
 // Asientos derivados de la operación del negocio, entre dos fechas (YYYY-MM-DD, inclusive).
+// Desde esta fecha, anular algo de un mes anterior genera una reversión en el mes de la anulación (lo anterior no cambia)
+const CONTAB_REV_DESDE = '2026-10-28';
 function asientosDerivados_(desde, hasta) {
   const m = contabMapeo_(), cfg = contabCfg_();
   const cm = porId_(rows_('Clientes')), pv = porId_(rows_('Proveedores'));
@@ -4145,38 +4328,52 @@ function asientosDerivados_(desde, hasta) {
   const en = f => f >= d0 && f <= d1;
   const out = [];
   const push = (id, fecha, tipo, concepto, ref, lineas, anulado, tercero) => out.push({ id: 'D' + id, fecha: fecha, tipo: tipo, concepto: concepto, ref: ref || '', lineas: lineas, anulado: !!anulado, auto: true, tercero: tercero || '' });
+  // Lo anulado en un mes posterior no cambia su mes (que pudo cerrarse o declararse): el original se queda y la reversión
+  // entra el día de la anulación. Lo anulado dentro del mismo mes se muestra anulado, como siempre.
+  const fechaMs_ = ms => Utilities.formatDate(new Date(ms), TZ, "yyyy-MM-dd'T'HH:mm");
+  const emite = (id, fecha, tipo, concepto, ref, L, anulado, tercero, fechaAnul) => {
+    const fa = anulado ? (fechaAnul || '') : '';
+    if (anulado && fa && fa >= CONTAB_REV_DESDE && fa.slice(0, 7) > String(fecha).slice(0, 7)) {
+      if (en(fecha)) push(id, fecha, tipo, concepto, ref, L, false, tercero);
+      if (en(fa)) push(id + 'R', fa, tipo, 'Anulación · ' + concepto, ref, L.map(l => lin_(l.cuenta, l.haber, l.debe, l.detalle)), false, tercero);
+    } else if (en(fecha)) push(id, fecha, tipo, concepto, ref, L, anulado, tercero);
+  };
+  const fAnul = x => Number(x.anulacion) > 0 ? fechaMs_(Number(x.anulacion)) : '';
 
+  const vm = porId_(rows_('Ventas'));
   rows_('Ventas').forEach(v => {
-    if (!en(v.fecha)) return;
+    // Una venta editada se revierte en la fecha de su versión corregida (que conserva la fecha, o es de hoy si llevó factura nueva)
+    const fa = v.anulada ? (v.corregida && vm[v.corregida] ? vm[v.corregida].fecha : fAnul(v)) : '';
+    if (!en(v.fecha) && !(fa && en(fa))) return;
     const neto = r2_(v.total - (v.isv || 0));
-    const cobrado = v.metodo === 'Crédito' ? r2_(Math.min(v.recibido || 0, v.total)) : v.total;
-    const credito = v.metodo === 'Crédito' ? r2_(v.total - cobrado) : 0;
+    // El anticipo (orden, cita o encargo) ya entró como cobro contra Cuentas por cobrar: aquí se aplica y solo el resto entra a caja o banco
+    const ant = r2_(Math.min(Number(v.anticipo) || 0, v.total)), resto = r2_(v.total - ant);
+    const cobrado = v.metodo === 'Crédito' ? r2_(Math.min(v.recibido || 0, resto)) : resto;
+    const credito = v.metodo === 'Crédito' ? r2_(resto - cobrado) : 0;
     const L = [];
     if (cobrado > 0) L.push(lin_(ctaMetodo_(m, v.metodo === 'Crédito' ? 'Efectivo' : v.metodo), cobrado, 0, v.metodo));
     if (credito > 0) L.push(lin_(m.cxc, credito, 0, cm[v.clienteId] ? cm[v.clienteId].nombre : 'Cliente'));
+    if (ant > 0) L.push(lin_(m.cxc, ant, 0, 'Anticipo aplicado'));
     L.push(lin_(m.ventas, 0, neto, 'Venta ' + v.numero));
     if (v.isv > 0) L.push(lin_(m.isvPagar, 0, v.isv, 'ISV 15 %'));
     if (cfg.inventario === 'perpetuo' && v.costo > 0) { L.push(lin_(m.costoVentas, v.costo, 0, 'Costo de lo vendido')); L.push(lin_(m.inventario, 0, v.costo, 'Salida de inventario')); }
-    push(v.id, v.fecha, 'venta', 'Venta ' + v.numero + (v.factura ? ' · Fact. ' + v.factura : ''), v.id, L, v.anulada, cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final');
+    emite(v.id, v.fecha, 'venta', 'Venta ' + v.numero + (v.factura ? ' · Fact. ' + v.factura : ''), v.id, L, v.anulada, cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final', fa);
   });
 
   rows_('Abonos').forEach(a => {
-    if (!en(a.fecha)) return;
-    push(a.id, a.fecha, 'cobro', 'Cobro a cliente' + (a.ref ? ' · ' + a.ref : ''), a.id, [lin_(ctaMetodo_(m, a.metodo), a.monto, 0, a.metodo), lin_(m.cxc, 0, a.monto, cm[a.clienteId] ? cm[a.clienteId].nombre : 'Cliente')], a.anulado, cm[a.clienteId] ? cm[a.clienteId].nombre : '');
+    emite(a.id, a.fecha, 'cobro', (a.ref ? 'Anticipo de cliente' : 'Cobro a cliente') + (a.ref ? ' · ' + a.ref : ''), a.id, [lin_(ctaMetodo_(m, a.metodo), a.monto, 0, a.metodo), lin_(m.cxc, 0, a.monto, cm[a.clienteId] ? cm[a.clienteId].nombre : 'Cliente')], a.anulado, cm[a.clienteId] ? cm[a.clienteId].nombre : '', fAnul(a));
   });
 
   rows_('Compras').forEach(c => {
-    if (!en(c.fecha)) return;
     const p = partirIsv_(c.total, cfg.isvCompras);
     const L = [lin_(cfg.inventario === 'perpetuo' ? m.inventario : m.compras, p.base, 0, 'Mercadería')];
     if (p.isv > 0) L.push(lin_(m.isvCredito, p.isv, 0, 'ISV pagado'));
     L.push(c.metodo === 'Crédito' ? lin_(m.cxp, 0, c.total, pv[c.proveedorId] ? pv[c.proveedorId].nombre : 'Proveedor') : lin_(ctaMetodo_(m, c.metodo), 0, c.total, c.metodo));
-    push(c.id, c.fecha, 'compra', 'Compra ' + c.numero + (c.factura ? ' · Fact. ' + c.factura : ''), c.id, L, c.anulada, pv[c.proveedorId] ? pv[c.proveedorId].nombre : '');
+    emite(c.id, c.fecha, 'compra', 'Compra ' + c.numero + (c.factura ? ' · Fact. ' + c.factura : ''), c.id, L, c.anulada, pv[c.proveedorId] ? pv[c.proveedorId].nombre : '', fAnul(c));
   });
 
   rows_('Pagos').forEach(p => {
-    if (!en(p.fecha)) return;
-    push(p.id, p.fecha, 'pago', 'Pago a proveedor', p.id, [lin_(m.cxp, p.monto, 0, pv[p.proveedorId] ? pv[p.proveedorId].nombre : 'Proveedor'), lin_(ctaMetodo_(m, p.metodo), 0, p.monto, p.metodo)], p.anulado, pv[p.proveedorId] ? pv[p.proveedorId].nombre : '');
+    emite(p.id, p.fecha, 'pago', 'Pago a proveedor', p.id, [lin_(m.cxp, p.monto, 0, pv[p.proveedorId] ? pv[p.proveedorId].nombre : 'Proveedor'), lin_(ctaMetodo_(m, p.metodo), 0, p.monto, p.metodo)], p.anulado, pv[p.proveedorId] ? pv[p.proveedorId].nombre : '', fAnul(p));
   });
 
   const gastoLineas = (categoria, monto, metodo, detalle) => {
@@ -4188,14 +4385,30 @@ function asientosDerivados_(desde, hasta) {
     return L;
   };
   rows_('Gastos').forEach(g => {
-    if (!(g.fechaGasto >= desde && g.fechaGasto <= hasta)) return;
-    push(g.id, g.fechaGasto + 'T' + (String(g.creado).slice(0, 10) === g.fechaGasto ? String(g.creado).slice(11, 16) : '00:00'), 'gasto', (g.categoria ? g.categoria + ' · ' : '') + (g.detalle || 'Gasto'), g.id, gastoLineas(g.categoria, g.monto, g.metodo, g.detalle), g.anulado, g.proveedor || '');
+    const f = g.fechaGasto + 'T' + (String(g.creado).slice(0, 10) === g.fechaGasto ? String(g.creado).slice(11, 16) : '00:00');
+    emite(g.id, f, 'gasto', (g.categoria ? g.categoria + ' · ' : '') + (g.detalle || 'Gasto'), g.id, gastoLineas(g.categoria, g.monto, g.metodo, g.detalle), g.anulado, g.proveedor || '', fAnul(g));
   });
-  const pj = porId_(rows_('Proyectos'));
+  // Proyectos (producción): lo que se gasta va a «Producción en proceso»; cuando lo producido entra al inventario, pasa a Inventario;
+  // al venderse sale como costo de ventas. Material del inventario: de Inventario a Producción. Gastos pagados con la caja salen de Caja;
+  // los demás (transferencia, dinero del dueño) se abonan a «Aportes del propietario» (o la cuenta que elija el contador).
+  const pj = porId_(rows_('Proyectos')), nomP = g => 'Proyecto ' + (pj[g.proyectoId] ? pj[g.proyectoId].nombre : '') + ' · ' + (g.descripcion || g.categoria);
   rows_('ProyectoGastos').forEach(g => {
-    if (!g.caja || !(String(g.dia) >= desde && String(g.dia) <= hasta)) return;
-    push(g.id, g.dia + 'T00:00', 'gasto', 'Proyecto ' + (pj[g.proyectoId] ? pj[g.proyectoId].nombre : '') + ' · ' + (g.descripcion || g.categoria), g.id, gastoLineas('Proyecto · ' + g.categoria, g.monto, 'Efectivo', g.descripcion), g.anulado, '');
+    const L = g.productoId ? [lin_(m.produccion, g.monto, 0, 'Material: ' + (g.descripcion || '')), lin_(m.inventario, 0, g.monto, 'Salida de inventario')]
+      : [lin_(m.produccion, g.monto, 0, g.descripcion || g.categoria), lin_(g.caja ? m.caja : m.aportes, 0, g.monto, g.caja ? 'Efectivo de la caja' : 'Pagado fuera de la caja')];
+    emite(g.id, g.dia + 'T00:00', g.productoId ? 'inventario' : 'gasto', nomP(g), g.id, L, g.anulado, '', fAnul(g));
   });
+  if (cfg.inventario === 'perpetuo') {
+    const pm = porId_(rows_('Productos'));
+    rows_('Inventario').forEach(x => {
+      if (x.tipo !== 'producción' && x.tipo !== 'ajuste') return;
+      const monto = r2_(Math.abs(Number(x.cantidad) || 0) * (Number(x.costo) || (pm[x.productoId] ? pm[x.productoId].costo : 0))); if (!(monto > 0)) return;
+      const nombre = pm[x.productoId] ? pm[x.productoId].nombre : 'Producto', cant = Number(x.cantidad) || 0;
+      const L = x.tipo === 'producción' ? [lin_(m.inventario, monto, 0, 'Producción: ' + nombre), lin_(m.produccion, 0, monto, 'Sale de producción en proceso')]
+        : cant > 0 ? [lin_(m.inventario, monto, 0, 'Ajuste: entra ' + nombre), lin_(m.ajusteInv, 0, monto, x.nota || 'Ajuste de inventario')]
+        : [lin_(m.ajusteInv, monto, 0, x.nota || 'Ajuste de inventario'), lin_(m.inventario, 0, monto, 'Ajuste: sale ' + nombre)];
+      emite(x.id, x.fecha, 'inventario', (x.tipo === 'producción' ? 'Producción · ' : 'Ajuste de inventario · ') + nombre + ' (' + cant + ')', x.refId, L, false, '', '');
+    });
+  }
   return out;
 }
 
@@ -4236,10 +4449,9 @@ function contabilidad_(u, d) {
   const periodo = asientos_(desde < inicio ? inicio : desde, hasta, inicio);
   const anterior = inicio <= addDiasIso_(desde, -1) ? asientos_(inicio, addDiasIso_(desde, -1), inicio) : [];
   const cxcp = cuentas_(u, {});
-  let concil = {}; try { concil = JSON.parse(config_().contabConcil || '{}'); } catch (e) { concil = {}; }
   const cfg = contabCfg_();
   return { desde: desde, hasta: hasta, plan: plan, mapeo: contabMapeo_(), config: cfg, asientos: periodo, saldosIniciales: saldos_(anterior),
-    cobrar: cxcp.cobrar, pagar: cxcp.pagar, concil: concil[hasta.slice(0, 7)] || null, cerrado: cfg.cerrado, aperturaHecha: !!ap, inicio: inicio };
+    cobrar: cxcp.cobrar, pagar: cxcp.pagar, concil: concilDe_(hasta.slice(0, 7)), cerrado: cfg.cerrado, aperturaHecha: !!ap, inicio: inicio };
 }
 function addDiasIso_(iso, n) { const dt = new Date(iso + 'T12:00:00'); dt.setDate(dt.getDate() + n); return Utilities.formatDate(dt, 'America/Tegucigalpa', 'yyyy-MM-dd'); }
 
@@ -4272,7 +4484,7 @@ function guardarAsiento_(u, d) {
 
 // Anular = marcar y crear la reversión (contrapartida), nunca borrar.
 function anularAsiento_(u, d) {
-  req_(u, ['admin']);
+  req_(u, ['admin']); reqContab_();
   const a = rows_('Asientos').find(x => x.id === d.id);
   if (!a) throw new Error('Asiento no encontrado.');
   if (a.anulado) throw new Error('Este asiento ya está anulado.');
@@ -4284,7 +4496,7 @@ function anularAsiento_(u, d) {
 }
 
 function cerrarPeriodo_(u, d) {
-  req_(u, ['admin']);
+  req_(u, ['admin']); reqContab_();
   const mes = /^\d{4}-\d{2}$/.test(String(d.mes || '')) ? d.mes : '';
   if (!mes) throw new Error('Mes no válido.');
   const cfg = contabCfg_();
@@ -4298,11 +4510,19 @@ function addMes_(ym, n) { const y = Number(ym.slice(0, 4)), m = Number(ym.slice(
 
 /* ---------- conciliación bancaria ---------- */
 // d = { mes:'2026-10', saldoBanco: 63935, marcados:['Dxxx', ...], nuevos:[{tipo:'comision'|'interes'|'otro', monto, detalle, fecha}], nota }
+// Conciliación de un mes: en su hoja (una fila por mes); las de versiones anteriores se leen de Config
+function concilDe_(mes) {
+  const f = rows_('Conciliacion').find(x => x.mes === mes);
+  if (f) return { saldoBanco: Number(f.saldoBanco) || 0, marcados: parseJ_(f.marcados, []), nota: f.nota, actualizado: f.actualizado, listo: f.listo === 'si' };
+  let todo = {}; try { todo = JSON.parse(config_().contabConcil || '{}'); } catch (e) { todo = {}; }
+  return todo[mes] || null;
+}
 function guardarConcil_(u, d) {
-  req_(u, ['admin']);
+  req_(u, ['admin']); reqContab_();
   const mes = /^\d{4}-\d{2}$/.test(String(d.mes || '')) ? d.mes : hoy_().slice(0, 7);
   const m = contabMapeo_();
   const creados = [];
+  if ((d.nuevos || []).some(n => Number(n.monto)) && mes <= contabCfg_().cerrado) throw new Error(mes + ' está cerrado: no se pueden agregar partidas. Reábrelo o regístralas en el mes abierto.');
   (d.nuevos || []).forEach(n => {
     const monto = r2_(Math.abs(Number(n.monto) || 0)); if (!monto) return;
     const fecha = /^\d{4}-\d{2}-\d{2}$/.test(String(n.fecha || '')) ? n.fecha + 'T12:00' : mes + '-28T12:00';
@@ -4312,12 +4532,11 @@ function guardarConcil_(u, d) {
     appendRows_('Asientos', [rec]); creados.push(rec.id);
   });
   if (creados.length) invalidar_('Asientos');
-  let todo = {}; try { todo = JSON.parse(config_().contabConcil || '{}'); } catch (e) { todo = {}; }
-  const prev = todo[mes] || {};
-  todo[mes] = { saldoBanco: r2_(Number(d.saldoBanco) || 0), marcados: Array.isArray(d.marcados) ? d.marcados.slice(0, 400) : (prev.marcados || []), nota: txt_(d.nota), actualizado: ahora_(), listo: !!d.listo };
-  const meses = Object.keys(todo).sort(); while (meses.length > 24) delete todo[meses.shift()];
-  guardarConfig_({ contabConcil: JSON.stringify(todo) });
-  return { concil: todo[mes], creados: creados };
+  const prev = concilDe_(mes) || {};
+  const marcados = Array.isArray(d.marcados) ? d.marcados.map(x => String(x).slice(0, 40)) : (prev.marcados || []), mj = JSON.stringify(marcados);
+  if (mj.length > 45000) throw new Error('Son demasiados movimientos marcados en un mes (' + marcados.length + '). Concilia por semanas o marca solo los que no aparecen en el banco.');
+  upsert_('Conciliacion', { id: 'CC' + mes.replace('-', ''), mes: mes, saldoBanco: r2_(Number(d.saldoBanco) || 0), marcados: mj, nota: txt_(d.nota), actualizado: ahora_(), listo: d.listo ? 'si' : '' });
+  return { concil: concilDe_(mes), creados: creados };
 }
 
 function norm_(t) { return String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim(); }
@@ -4330,10 +4549,11 @@ function esSi_(v) { return v === true || ['true', 'sí', 'si', '1', 'x'].indexOf
 // Fecha «año-mes-día» de una celda, aunque Google Sheets la haya guardado como fecha con hora («2026-10-25 00:00») o como 25/10/2026
 function fecha10_(v) {
   if (v instanceof Date) return Utilities.formatDate(v, TZ, 'yyyy-MM-dd');
-  const t = String(v || '').trim(); let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
-  if (m) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
-  m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
-  if (m) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);
+  const t = String(v || '').trim(), ok = (y, mo, d) => Number(mo) >= 1 && Number(mo) <= 12 && Number(d) >= 1 && Number(d) <= 31 ? y + '-' + ('0' + mo).slice(-2) + '-' + ('0' + d).slice(-2) : '';
+  let m = t.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  if (m) return ok(m[1], m[2], m[3]);
+  m = t.match(/^(\d{1,2})[\/.-](\d{1,2})[\/.-](\d{4})/); // día/mes/año (así se escribe en Honduras)
+  if (m) return ok(m[3], m[2], m[1]);
   // Número de serie de Sheets (días desde el 30/12/1899), si la celda quedó con formato de número
   if (/^\d{5}(\.\d+)?$/.test(t)) return Utilities.formatDate(new Date(Math.round((Number(t) - 25569) * 86400000)), 'UTC', 'yyyy-MM-dd');
   return '';
@@ -4343,20 +4563,20 @@ function campanas_() {
   // Antes se exigía «2026-10-25» exacto: si Sheets guardaba la fecha con hora, la publicidad no aparecía en ninguna parte
   // Ninguna publicidad se pierde: si no se entiende su fecha de inicio, se usa la del gasto, la de registro o la de hoy
   return mRows_('GastosPanel').filter(g => esPub_(g) && !esSi_(g.anulado))
-    .map(g => Object.assign({}, g, { desde: fecha10_(g.desde) || fecha10_(g.fecha) || fecha10_(g.creado) || hoy_(), hasta: fecha10_(g.hasta) }))
-    .sort((a, b) => a.desde < b.desde ? 1 : -1);
+    .map(g => { const desde = fecha10_(g.desde) || fecha10_(g.fecha) || fecha10_(g.creado) || hoy_(); return Object.assign({}, g, { desde: desde, hasta: String(g.hasta || '').trim() ? (fecha10_(g.hasta) || desde) : '' }); })
+    .sort((a, b) => a.desde < b.desde ? 1 : a.desde > b.desde ? -1 : (b._fila || 0) - (a._fila || 0));
 }
 /* ===== ¿Por dónde llegó cada cliente? =====
  * Al registrarse, la app manda el canal del enlace con el que entró (?src=wa, ?src=facebook, TikTok o Facebook por la app
  * donde se abrió…) y el número al azar del navegador (vid) que usa el contador de visitas. Con ese vid se buscan sus visitas
  * anteriores al registro. Para clientes de antes, el vid se toma la próxima vez que el dueño abre su programa. */
-const CANAL_PLAT = { facebook: /facebook|instagram|meta/i, instagram: /instagram|facebook|meta/i, tiktok: /tiktok/i, wa: /whatsapp/i, whatsapp: /whatsapp/i, estado: /whatsapp/i, google: /google/i, youtube: /youtube|google/i };
+const CANAL_PLAT = { facebook: /facebook|instagram|meta/i, fb: /facebook|instagram|meta/i, meta: /facebook|instagram|meta/i, messenger: /facebook|instagram|meta|messenger/i, msg: /facebook|instagram|meta|messenger/i,
+  instagram: /instagram|facebook|meta/i, ig: /instagram|facebook|meta/i, tiktok: /tiktok/i, tt: /tiktok/i, wa: /whatsapp/i, whatsapp: /whatsapp/i, estado: /whatsapp/i, google: /google/i, youtube: /youtube|google/i, yt: /youtube|google/i };
 const SIN_CANAL = ['', 'directo', 'mis-paginas', 'otro-sitio'];
 function origenesLic_(lics) {
-  if (!MEMO._orig) {
-    const vids = {}; lics.forEach(l => { if (l.vid) vids[l.vid] = 1; });
+  if (!MEMO._orig) { // todas las visitas por vid (una sola lectura por solicitud, sirve para cualquier lista)
     const porVid = {};
-    if (Object.keys(vids).length) { try { visitasFilas_(60000).forEach(x => { if (vids[x.vid]) (porVid[x.vid] = porVid[x.vid] || []).push(x); }); } catch (e) {} }
+    if (lics.some(l => l.vid)) { try { visitasFilas_(60000).forEach(x => { if (x.vid) (porVid[x.vid] = porVid[x.vid] || []).push(x); }); } catch (e) {} }
     MEMO._orig = porVid;
   }
   const out = {};
@@ -4370,7 +4590,7 @@ function origenesLic_(lics) {
   return out;
 }
 // ¿La publicidad es del canal por donde llegó? (Facebook/Instagram, TikTok, WhatsApp, Google…)
-function canalDePub_(plataforma, canal) { const r = CANAL_PLAT[canal]; return !!r && r.test(String(plataforma || '')); }
+function canalDePub_(plataforma, canal) { const r = own_(CANAL_PLAT, canal) ? CANAL_PLAT[canal] : null; return !!r && r.test(String(plataforma || '')); }
 // Publicidad a la que se atribuye un cliente: la que se marcó a mano o, si no, la activa el día que se registró.
 // Si se sabe por qué canal llegó, solo cuenta una publicidad de ese canal (llegó por WhatsApp → no es de la de TikTok).
 function campanaDe_(l, camps, canal) {
@@ -4388,7 +4608,7 @@ function resumenCampanas_() {
   // Conversión y ticket históricos, para estimar la posible recuperación
   const terminadas = lics.filter(l => ['activa', 'vencida', 'bloqueada'].indexOf(licNegocio_(l).estado === 'completa' ? 'activa' : licNegocio_(l).estado) >= 0);
   const pagaron = lics.filter(l => pagoDe[l.id] > 0);
-  const conv = terminadas.length ? pagaron.length / terminadas.length : 0.3;
+  const idsT = new Set(terminadas.map(l => l.id)), conv = terminadas.length ? Math.min(1, pagaron.filter(l => idsT.has(l.id)).length / terminadas.length) : 0.3;
   const ticket = pagaron.length ? r2_(pagaron.reduce((a, l) => a + pagoDe[l.id], 0) / pagaron.length) : 3000;
   let invertido = 0, recuperado = 0;
   const lista = camps.map(c => {
@@ -4407,7 +4627,7 @@ function panelGastos_() {
   const otros = mRows_('GastosPanel').filter(g => !esPub_(g) && !esSi_(g.anulado)).sort((a, b) => a.fecha < b.fecha ? 1 : -1)
     .map(g => ({ id: g.id, fecha: g.fecha, nombre: g.nombre, nota: g.nota, moneda: g.moneda, montoOrig: Number(g.montoOrig) || 0, tasa: Number(g.tasa) || 0, monto: Number(g.monto) || 0 }));
   const todos = mRows_('GastosPanel').filter(g => !esSi_(g.anulado));
-  const porMes = {}; todos.forEach(g => { const m = String(g.fecha).slice(0, 7); porMes[m] = r2_((porMes[m] || 0) + (Number(g.monto) || 0)); });
+  const porMes = {}; todos.forEach(g => { const m = fecha10_(g.fecha).slice(0, 7); porMes[m] = r2_((porMes[m] || 0) + (Number(g.monto) || 0)); });
   return { campanas: rc.lista.map(c => ({ id: c.id, fecha: c.fecha, plataforma: c.plataforma, nombre: c.nombre, desde: c.desde, hasta: c.hasta, nota: c.nota, moneda: c.moneda,
       montoOrig: Number(c.montoOrig) || 0, tasa: Number(c.tasa) || 0, monto: c.monto, registros: c.registros, activaron: c.activaron, pagado: c.pagado, recuperacion: c.recuperacion,
       costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso })),
@@ -4476,12 +4696,17 @@ function slug_(x, n) { return String(x || '').toLowerCase().normalize('NFD').rep
 function visita_(d) {
   if (!MULTI_NEGOCIO) return false;
   const pagina = slug_(d.p, 30); if (!pagina) return false;
-  const vid = String(d.v || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24);
+  let vid = String(d.v || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24);
+  if (vid.length < 6) vid = ''; // el contador de la página siempre manda uno de 8 o más
   const c = CacheService.getScriptCache(), k = 'VI_' + vid + '_' + pagina;
   if (vid && c.get(k)) return true;
-  const min = 'VIM_' + Utilities.formatDate(new Date(), TZ, 'HHmm'), n = Number(c.get(min) || 0);
+  const ahoraV = new Date(), min = 'VIM_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), n = Number(c.get(min) || 0);
   if (n >= 150) return false; // freno contra abusos: máximo 150 visitas por minuto
-  c.put(min, String(n + 1), 120);
+  const dia = 'VID_' + Utilities.formatDate(ahoraV, TZ, 'yyyyMMdd'), nd = Number(c.get(dia) || 0);
+  if (nd >= 5000) return false; // y 5,000 por día: un abuso no puede llenar la hoja maestra
+  const sinV = 'VIS_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), ns = Number(c.get(sinV) || 0);
+  if (!vid && ns >= 20) return false; // sin número de navegador, máximo 20 por minuto
+  c.put(min, String(n + 1), 120); c.put(dia, String(nd + 1), 90000); if (!vid) c.put(sinV, String(ns + 1), 120);
   if (vid) c.put(k, '1', 1800);
   mAppend_('Visitas', { id: mId_('VI'), fecha: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), pagina: pagina, origen: slug_(d.o, 20) || 'directo',
     disp: d.d === 'pc' ? 'pc' : 'cel', vid: vid, ref: String(d.r || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 60) });
@@ -4504,7 +4729,9 @@ function visitasMini_() {
   } catch (e) { return { hoy: 0, semana: 0, unicos: 0 }; }
 }
 function borrarVisitasViejas_() {
-  const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 3) return;
+  const s = masterSheet_('Visitas'), n = s.getLastRow();
+  try { const ex = s.getMaxColumns() - SCHEMA_M.Visitas.length; if (ex > 0) s.deleteColumns(SCHEMA_M.Visitas.length + 1, ex); } catch (e) {} // cada fila ocupa solo sus columnas
+  if (n < 3) return;
   const limite = diaMenos_(VISITA_DIAS), col = s.getRange(2, 2, Math.min(n - 1, 20000), 1).getValues();
   let k = 0; while (k < col.length && String(col[k][0] instanceof Date ? Utilities.formatDate(col[k][0], TZ, 'yyyy-MM-dd') : col[k][0]).slice(0, 10) < limite) k++;
   if (k > 0) s.deleteRows(2, k);
@@ -4527,7 +4754,7 @@ function panelVisitasDia_(dia) {
     min: diaMenos_(VISITA_DIAS - 1) };
 }
 function panelVisitas_(d) {
-  try { borrarVisitasViejas_(); } catch (e) {}
+  try { lock_(() => borrarVisitasViejas_()); } catch (e) {} // borra con candado (la pantalla de visitas ya no lo toma)
   const dia = String((d && d.dia) || '');
   if (/^\d{4}-\d{2}-\d{2}$/.test(dia) && dia <= hoy_() && dia >= diaMenos_(VISITA_DIAS - 1)) return panelVisitasDia_(dia);
   const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
