@@ -537,6 +537,23 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .cobro-h small{color:var(--mut);font-size:13px}.cobro-h b{font-size:30px;font-weight:700}
 .cobro-ic{width:54px;height:54px;border-radius:18px;display:grid;place-items:center;background:var(--card);color:var(--warn);margin-bottom:4px;box-shadow:var(--sh)}
 .banner.cobro-b{background:var(--card);background:color-mix(in srgb,var(--warn) 14%,var(--card));border-color:color-mix(in srgb,var(--warn) 45%,var(--line))}.banner.cobro-b svg{color:var(--warn)}
+.banner.contr-b{background:var(--card);background:color-mix(in srgb,var(--pri) 10%,var(--card));border-color:color-mix(in srgb,var(--pri) 40%,var(--line))}.banner.contr-b svg{color:var(--pri)}
+.aviso.ok{background:var(--okb);border-color:color-mix(in srgb,var(--ok) 30%,transparent)}.aviso.ok>.ic{color:var(--ok)}
+/* ===== Contrato de licencia: documento, firma y recibo ===== */
+.cdoc{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px 16px;font-size:14px;line-height:1.55;color:var(--ink)}
+.cdoc-h{display:flex;justify-content:space-between;gap:10px;border-bottom:2px solid var(--ink);padding-bottom:8px;margin-bottom:12px}.cdoc-h b{font-size:15px}.cdoc-h small,.cdoc-ref small{display:block;color:var(--mut);font-size:12px}.cdoc-ref{text-align:right;flex-shrink:0}
+.cdoc h1{font-size:17px;text-align:center;margin:10px 0 14px;letter-spacing:.2px}.cdoc p{margin:0 0 10px}@media(min-width:600px){.cdoc p{text-align:justify}}.cdoc p b{font-weight:700}
+.cdoc-firmas{display:flex;gap:18px;margin:26px 0 20px}.cdoc-f{flex:1;text-align:center;min-width:0}.cdoc-f b,.cdoc-f small{display:block}.cdoc-f b{font-size:13px}.cdoc-f small{color:var(--mut);font-size:11.5px}
+.cdoc-img{height:84px;border-bottom:1.5px solid var(--ink);display:flex;align-items:flex-end;justify-content:center;margin-bottom:6px;padding-bottom:4px}.cdoc-img img{max-height:76px;max-width:100%}.cdoc-pend{color:var(--mut);font-style:italic;font-size:12px;padding-bottom:12px}
+.cdoc-rec{border:1.5px dashed var(--line2,var(--line));border-radius:14px;padding:14px;margin-top:8px}.cdoc-rec h2{font-size:16px;margin:0}.cdoc-rec>small{display:block;color:var(--mut);font-size:12px}
+.cdoc-rec table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px}.cdoc-rec th,.cdoc-rec td{padding:7px 4px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}.cdoc-rec th{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.3px}.cdoc-rec .n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.cdoc-rec tfoot td{font-weight:700;border-bottom:0}.cdoc-rec .sal td{color:var(--bad)}.cdoc-rec td small{color:var(--mut)}.cdoc-np{color:var(--mut);font-style:italic}
+.cdoc-pie{display:block;margin-top:10px;color:var(--mut);font-size:11.5px}
+.sheet.contr .sheet-b{padding-top:6px}
+.firma-pad{position:relative;height:190px;border:2px dashed var(--pri);border-radius:16px;background:#fff;margin:4px 0 14px;overflow:hidden;touch-action:none}
+.firma-pad canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+.firma-l{position:absolute;left:0;right:0;bottom:30px;text-align:center;color:#b9bfcc;font-size:15px;pointer-events:none;border-top:1px solid #dfe3ea;margin:0 24px;padding-top:6px}.con-firma .firma-l{color:transparent}
+.firma-x{position:absolute;top:8px;right:8px}
+@media print{.cdoc-print .cdoc{border:0;border-radius:0;padding:0;font-size:11.5pt;color:#000}.cdoc-print .cdoc-h,.cdoc-print .cdoc-img{border-color:#000}.cdoc-print .cdoc-rec{page-break-inside:avoid;border-color:#999}.cdoc-print .cdoc-h small,.cdoc-print .cdoc-ref small,.cdoc-print .cdoc-f small,.cdoc-print .cdoc-rec>small,.cdoc-print .cdoc-pie,.cdoc-print th{color:#444}}
 .li.cu{flex-wrap:wrap}.li.cu .cu-e{display:inline-block;margin-top:4px;font-size:10.5px;white-space:normal}.li.cu .cu-bt{flex-basis:100%;display:flex;gap:6px;flex-wrap:wrap;padding-left:56px;margin-top:2px}.li.cu.pagada{opacity:.75}
 .cq-prev .cq-f{display:grid;grid-template-columns:1fr auto auto;gap:10px;padding:6px 0;border-bottom:1px dashed var(--line);font-size:13px}.cq-prev .cq-f.tot{border-bottom:0;font-weight:600}
 /* Modo tienda */
@@ -1255,7 +1272,7 @@ function demoShims(DEMO) {
     putAll: (o, seg) => { Object.keys(o || {}).forEach(k => { if (k.indexOf('H_') === 0) return; DEMO.cache[k] = { v: String(o[k]), e: Date.now() + (seg || 600) * 1000 }; }); }
   }) };
   const LockService = { getScriptLock: () => ({ waitLock: () => {}, releaseLock: () => {} }) };
-  const PropertiesService = { getScriptProperties: () => ({ getProperty: k => ((db().props || {})[k] === undefined ? null : db().props[k]), setProperty: (k, v) => { (db().props = db().props || {})[k] = String(v); } }) };
+  const PropertiesService = { getScriptProperties: () => ({ getProperty: k => ((db().props || {})[k] === undefined ? null : db().props[k]), setProperty: (k, v) => { (db().props = db().props || {})[k] = String(v); }, deleteProperty: k => { if (db().props) delete db().props[k]; } }) };
   const Logger = { log: m => console.log('[demo]', m) };
   const ContentService = { createTextOutput: t => ({ setMimeType: () => t }), MimeType: { JSON: 'json' } };
   return [SpreadsheetApp, Utilities, CacheService, LockService, Logger, ContentService, PropertiesService, DriveApp];
@@ -1277,7 +1294,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.16';
+const APP_VER = '1.9.17';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -1738,6 +1755,83 @@ function avisoCobro(luego) {
   h.f.innerHTML = `<a class="btn wa big" href="${waLink(CONTACTO_WA, msj)}" target="_blank" rel="noopener">${ic('wa')} Ya pagué · enviar comprobante</a><button class="btn ghost" data-cerrar="1">Recordar más tarde</button>`; h.f.hidden = false;
   h.f.querySelector('[data-cerrar]').onclick = () => h.cerrar();
 }
+/* ---------- Contrato de licencia (lo crea Vic desde el Panel; el administrador del negocio lo firma desde aquí) ----------
+ * No es obligatorio: si hay un contrato pendiente, al abrir la app se ofrece firmarlo y se puede dejar para después.
+ * Al final del documento va el recibo con los pagos recibidos. */
+const contratoPend = () => S.contratoVM && S.contratoVM.pendiente;
+const debeAvisarContrato = () => !!(S.user && puede('admin') && contratoPend() && !S.contratoVisto);
+function bannerContrato() {
+  const c = contratoPend(); if (!c || !puede('admin')) return '';
+  return `<div class="banner contr-b">${ic('doc', 18)}<span>Tienes un <b>contrato pendiente de firma</b>${c.monto ? ' · ' + money(c.monto) : ''}</span><button class="btn sm acc" data-a="verContrato" data-id="${esc(c.id)}">Ver</button></div>`;
+}
+function avisoContratoLuego() { let n = 0; const p = () => { if (!debeAvisarContrato()) return; if (PILA.length) { if (++n < 80) setTimeout(p, 1500); return; } avisoContrato(); }; setTimeout(p, 600); }
+function avisoContrato() {
+  const c = contratoPend(); if (!S.user || S.vencidaVista || !c) return;
+  S.contratoVisto = true;
+  const h = hoja({ titulo: 'Contrato pendiente de firma', cls: 'chica', html: `<div class="cobro-h"><div class="cobro-ic" style="color:var(--pri)">${ic('doc', 30)}</div><small>Molina Soluciones Digitales te envió</small><b style="font-size:19px;line-height:1.3">${esc(c.titulo)}</b><small>${esc(fFechaC(c.fecha))}${c.monto ? ' · ' + money(c.monto) : ''}</small></div>
+    <p class="sm" style="margin:0 2px 6px">Es el contrato de tu licencia de Gestión de Negocio VM para <b>${esc(S.config.nombre || '')}</b>. Léelo con calma y, si estás de acuerdo, fírmalo con el dedo desde tu celular. Al final del documento va el recibo de tus pagos.</p>
+    <p class="xs mut" style="margin:0 2px">Firmarlo no es obligatorio para seguir usando el programa; te lo recordaremos cada vez que abras la app.</p>` });
+  h.botones([{ t: `${ic('doc', 18)} Leer y firmar`, cls: 'pri', fn: () => { h.cerrar(); verContrato(c.id); } }, { t: 'Más tarde', cls: 'ghost', fn: () => h.cerrar() }]);
+}
+ACC.verContrato = el => verContrato(el.dataset.id);
+// Documento completo (contrato + firma + recibo). El servidor arma el HTML con los datos escapados.
+async function verContrato(id, datos) {
+  const h = hoja({ titulo: 'Contrato', ancho: 1, cls: 'contr', html: '<div class="empty">Cargando…</div>' });
+  let d = datos;
+  const pinta = () => {
+    const c = d.contrato;
+    h.b.innerHTML = `${c.estado === 'firmado' ? `<div class="aviso ok sm">${ic('check', 18)}<div>Firmado por <b>${esc(c.firmadoPor)}</b> el ${esc(fFechaC(String(c.firmadoEl).slice(0, 10)))} a las ${esc(String(c.firmadoEl).slice(11, 16))}${c.huella ? ` · huella ${esc(c.huella)}` : ''}</div></div>` : `<div class="aviso warn sm">${ic('alert', 18)}<div>Pendiente de firma. Léelo completo; el botón para firmar está abajo.</div></div>`}<div id="cdoc-w">${d.html}</div>`;
+    const bs = [{ t: `${ic('print', 18)} Imprimir o guardar PDF`, cls: '', fn: () => imprimirContrato(d.html) }];
+    if (c.pdf) bs.push({ t: `${ic('doc', 18)} Abrir PDF`, cls: '', fn: () => window.open(c.pdf, '_blank', 'noopener') });
+    if (c.estado === 'pendiente' && puede('admin')) bs.unshift({ t: `${ic('edit', 18)} Firmar`, cls: 'pri', fn: async () => { const r = await firmarContrato(c); if (r) { d = r; pinta(); } } });
+    h.botones(bs);
+  };
+  try { if (!d) d = await api('contratoVer', { id }); pinta(); } catch (e) { h.cerrar(); throw e; }
+}
+function imprimirContrato(html) { // en hoja carta/A4, con el mismo mecanismo de los reportes de Contabilidad
+  document.body.classList.add('imp-hoja');
+  const pg = document.createElement('style'); pg.textContent = '@page{size:auto;margin:14mm}'; document.head.appendChild(pg);
+  const pa = $('#print-area'); pa.innerHTML = `<div class="cdoc-print">${html}</div>`;
+  const fin = () => { document.body.classList.remove('imp-hoja'); pg.remove(); pa.innerHTML = ''; window.removeEventListener('afterprint', fin); };
+  window.addEventListener('afterprint', fin); setTimeout(fin, 15000);
+  window.print();
+}
+// Hoja de firma: recuadro para dibujar con el dedo + «He leído y acepto»
+function firmarContrato(c) {
+  return new Promise(ok => {
+    const h = hoja({ titulo: 'Firmar contrato', cls: 'firma', fijo: true, onClose: () => ok(null), html: `<p class="sm" style="margin-top:0"><b>${esc(c.titulo)}</b><br><span class="mut">Firma dentro del recuadro, como lo harías en papel.</span></p>
+      <div class="firma-pad"><canvas id="fp-c"></canvas><span class="firma-l">Firma aquí</span><button type="button" class="btn sm ghost firma-x" id="fp-x">Borrar</button></div>
+      <label class="fld"><span>Nombre de quien firma</span><input id="fp-n" maxlength="80" value="${esc(S.user.nombre || '')}"></label>
+      <label class="chk" style="margin:4px 0 2px"><input type="checkbox" id="fp-ok"><span>He leído el contrato completo y lo acepto en nombre de <b>${esc(S.config.nombre || 'mi negocio')}</b>.</span></label>
+      <p class="xs mut" style="margin:6px 2px 0">Se guardará tu firma con la fecha, la hora y una huella digital del documento.</p>` });
+    const cv = $('#fp-c', h.el), ctx = cv.getContext('2d'); let trazos = 0, dib = false, ult = null;
+    const medir = () => { const r = cv.parentElement.getBoundingClientRect(), k = Math.min(2, window.devicePixelRatio || 1), img = trazos ? cv.toDataURL() : null; cv.width = Math.round(r.width * k); cv.height = Math.round(r.height * k); cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; ctx.setTransform(k, 0, 0, k, 0, 0); ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1b2a4a'; if (img) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = img; } };
+    const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    cv.addEventListener('pointerdown', e => { e.preventDefault(); dib = true; ult = pos(e); cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.arc(ult.x, ult.y, 1.1, 0, 7); ctx.fillStyle = ctx.strokeStyle; ctx.fill(); trazos++; h.el.classList.add('con-firma'); });
+    cv.addEventListener('pointermove', e => { if (!dib) return; e.preventDefault(); const p = pos(e); ctx.beginPath(); ctx.moveTo(ult.x, ult.y); ctx.lineTo(p.x, p.y); ctx.stroke(); ult = p; });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => cv.addEventListener(ev, () => { dib = false; }));
+    $('#fp-x', h.el).onclick = () => { ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, cv.width, cv.height); ctx.restore(); trazos = 0; h.el.classList.remove('con-firma'); };
+    setTimeout(medir, 260); window.addEventListener('resize', medir, { once: true });
+    // La firma se guarda pequeña (ancho 600) y recortada a los trazos, para que quepa en la hoja
+    const exportar = () => {
+      const k = cv.width / cv.clientWidth, px = ctx.getImageData(0, 0, cv.width, cv.height).data; let x0 = cv.width, y0 = cv.height, x1 = 0, y1 = 0;
+      for (let y = 0; y < cv.height; y++) for (let x = 0; x < cv.width; x++) if (px[(y * cv.width + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+      if (x1 <= x0 || y1 <= y0) return '';
+      const m = Math.round(10 * k), w = x1 - x0 + 2 * m, hh = y1 - y0 + 2 * m, out = document.createElement('canvas'), esc_ = Math.min(1, 600 / w);
+      out.width = Math.round(w * esc_); out.height = Math.round(hh * esc_);
+      out.getContext('2d').drawImage(cv, x0 - m, y0 - m, w, hh, 0, 0, out.width, out.height);
+      let u = out.toDataURL('image/png'); if (u.length > 48000) u = out.toDataURL('image/jpeg', 0.7); return u;
+    };
+    h.botones([{ t: `${ic('check', 18)} Firmar y aceptar`, cls: 'pri', fn: async () => {
+      if (!trazos) throw new Error('Dibuja tu firma en el recuadro');
+      if (!$('#fp-ok', h.el).checked) throw new Error('Marca que leíste y aceptas el contrato');
+      const firma = exportar(); if (!firma) throw new Error('Dibuja tu firma en el recuadro');
+      const r = await api('contratoFirmar', { id: c.id, firma, nombre: $('#fp-n', h.el).value, acepto: true });
+      S.contratoVM = r.resumen || null; toast('Contrato firmado. ¡Gracias!', 'ok'); if (S.vista === 'inicio') render();
+      h.onClose = null; h.cerrar(); ok(r);
+    } }, { t: 'Cancelar', cls: 'ghost', fn: () => h.cerrar() }]);
+  });
+}
 ACC.ir = el => { cerrarHojas(); ir(el.dataset.v, el.dataset.p ? JSON.parse(el.dataset.p) : {}); };
 ACC.mas = () => {
   const items = Object.keys(VISTAS).filter(k => k !== 'inicio' && puedeVer(k));
@@ -1753,7 +1847,7 @@ ACC.logout = async () => { if (await confirmar('¿Cerrar sesión en este equipo?
 /* ===================== SESIÓN ===================== */
 async function arrancar() {
   let cache = LS.json(cacheKey(), null);
-  if (cache && cache.usuario) { aplicarDatos(cache); S.cobroVM = null; mostrarApp(); } else cache = null; // el pago pendiente se toma del dato fresco
+  if (cache && cache.usuario) { aplicarDatos(cache); S.cobroVM = null; S.contratoVM = null; mostrarApp(); } else cache = null; // el pago pendiente se toma del dato fresco
   try {
     const tReq = S.tienda || '';
     const d = await api('bootstrap', { inicio: true, app: APP_VER, vid: DEMO.on ? '' : miOrigen().v || '' }, !!cache);
@@ -1762,7 +1856,7 @@ async function arrancar() {
     // D7: el Inicio que trae el arranque solo sirve si es de la tienda en la que se quedó (pudo elegir otra mientras cargaba)
     if ((S.tienda || '') === tReq || tiendaFija()) { S.inicio = ini; if (ini) S.inicioT = Date.now(); } else S.inicio = null;
     try { LS.set(cacheKey(), JSON.stringify(d)); } catch (e) {}
-    if (!cache) mostrarApp(); else { if (S.vista && !puedeVer(S.vista)) ir('inicio'); else render(); avisoCobroLuego(); } // si cambió el usuario o su permiso, no se queda en una pantalla que ya no le toca
+    if (!cache) mostrarApp(); else { if (S.vista && !puedeVer(S.vista)) ir('inicio'); else render(); avisoCobroLuego(); avisoContratoLuego(); } // si cambió el usuario o su permiso, no se queda en una pantalla que ya no le toca
   } catch (e) {
     if (!cache || !S.token) throw e;
     toast('Sin conexión: mostrando los últimos datos guardados', 'error');
@@ -1778,7 +1872,7 @@ function aplicarDatos(d) {
   if (d.negocios) S.negocios = d.negocios;
   if (d.negocioId !== undefined) S.negocioId = d.negocioId;
   if (d.multi !== undefined) { S.multi = !!d.multi; LS.set('multi', S.multi ? '1' : '0'); }
-  if (d.usuario) { S.user = d.usuario; S.cobroVM = d.cobroVM || null; }
+  if (d.usuario) { S.user = d.usuario; S.cobroVM = d.cobroVM || null; S.contratoVM = d.contratoVM || null; }
   if (d.version) S.version = d.version;
   if (S.user) prepararTienda();
   if (d.sar) S.sar = d.sar;
@@ -1818,6 +1912,7 @@ function mostrarApp() {
   ir(VISTAS[h] ? h : 'inicio', {}, true);
   const tiendaLuego = () => { if (S.elegirTienda) { S.elegirTienda = false; setTimeout(() => elegirTienda(true), 300); } };
   if (debeAvisarCobro()) setTimeout(() => avisoCobro(tiendaLuego), 400); else tiendaLuego();
+  avisoContratoLuego();
   vigilarPedidos();
   revisarNovedades();
   setTimeout(ofrecerApk, 2500);
@@ -1836,7 +1931,7 @@ function limpiarSesion() {
   S.hProv = null;
   S.tienda = undefined; S.elegirTienda = false;
   S.pedidosNuevos = 0; S.chatsNuevos = 0; S.chatsL = null; S.pedidosL = null; S.cajaD = null; S.proyL = null; S.hProy = null; S.f = {}; S.yaReviso = false; S.ventasL = null; S.gastosL = null; S.comprasL = null; S.hist = null; S.inicioT = 0;
-  S.inicio = null; S.cb = null; S.cuentasL = null; S.susL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; S.ag_citax = null; S.ag_encargox = null; S.repCSV = null; S.cobroVisto = false; S.cobroVM = null; // nada del negocio o usuario anterior
+  S.inicio = null; S.cb = null; S.cuentasL = null; S.susL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; S.ag_citax = null; S.ag_encargox = null; S.repCSV = null; S.cobroVisto = false; S.cobroVM = null; S.contratoVM = null; S.contratoVisto = false; // nada del negocio o usuario anterior
   try { history.replaceState(null, '', '#inicio'); } catch (e) {}
 }
 function mostrarVencida(info) {
@@ -2581,6 +2676,37 @@ function panelSecCuotas(n) {
       ${c.estado === 'pendiente' ? `<div class="cu-bt"><button class="btn sm pri" data-x="cuotaPagar" data-id="${c.id}">${ic('check', 15)} Recibido</button><button class="btn sm" data-x="cuotaMover" data-id="${c.id}">Prórroga</button><button class="btn sm ghost" data-x="cuotaQuitar" data-id="${c.id}">Quitar</button></div>` : ''}</div>`; }).join('')}</div>`
     : `<p class="h" style="margin:-4px 2px 0">Programa aquí sus cuotas o mensualidades. Desde la fecha de pago, su app le recuerda pagar cada vez que la abre; si pasan los días de gracia sin que lo marques como recibido, el programa se pausa hasta que lo marques.</p>`}`;
 }
+// Contratos de licencia del cliente (se firman desde su app)
+const CONTR_E = { pendiente: ['t-naranja', 'b-warn', 'Pendiente de firma'], firmado: ['t-verde', 'b-ok', 'Firmado'], anulado: ['t-gris', 'b-mut', 'Anulado'] };
+function panelSecContratos(n) {
+  const l = n.contratos || [], pend = l.some(c => c.estado === 'pendiente');
+  return `<div class="sec-t"><h3>Contrato</h3>${pend ? '' : '<a data-x="contratoNuevo">+ Nuevo contrato</a>'}</div>
+    ${l.length ? `<div class="list">${l.map(c => { const e = CONTR_E[c.estado] || CONTR_E.anulado; return `<div class="li cu"><div class="av ${e[0]}">${ic(c.estado === 'firmado' ? 'check' : 'doc', 18)}</div><div class="tx"><b>${esc(c.titulo)}</b><small>${esc(fFechaC(c.fecha))}${c.monto ? ' · ' + money(c.monto) : ''}${c.estado === 'firmado' ? ' · firmado por ' + esc(c.firmadoPor) + ' el ' + esc(fFechaC(String(c.firmadoEl).slice(0, 10))) : ''}</small><span class="badge ${e[1]} cu-e">${e[2]}</span></div>
+      <div class="cu-bt"><button class="btn sm pri" data-x="contratoVer" data-id="${c.id}">${ic('doc', 15)} Ver</button>${c.estado !== 'anulado' ? `<a class="btn sm wa" href="${waLink(n.whatsapp, c.estado === 'firmado' ? `Hola ${esc(String(n.dueno).split(' ')[0])}, gracias por firmar el contrato de tu licencia de Gestión de Negocio VM. Lo puedes ver cuando quieras en Ajustes › Mi cuenta${c.pdf ? ' o aquí: ' + c.pdf : ''}.` : `Hola ${esc(String(n.dueno).split(' ')[0])}, te dejé el contrato de tu licencia de Gestión de Negocio VM para ${esc(n.negocio)}. Al abrir la app te aparece para leerlo y firmarlo con el dedo; también lo encuentras en Ajustes › Mi cuenta. Cualquier duda me escribes 🙂`)}" target="_blank" rel="noopener">${ic('wa', 14)} Avisar</a>` : ''}${c.estado === 'firmado' ? `<button class="btn sm" data-x="contratoPdf" data-id="${c.id}">${c.pdf ? 'PDF nuevo' : 'Guardar PDF en Drive'}</button>` : ''}${c.estado !== 'anulado' ? `<button class="btn sm ghost" data-x="contratoAnular" data-id="${c.id}">Anular</button>` : ''}</div></div>`; }).join('')}</div>`
+    : `<p class="h" style="margin:-4px 2px 0">Crea el contrato de licencia de este cliente: lo lee y lo firma con el dedo desde su celular, y al final lleva el recibo con los pagos que le has anotado. Firmarlo no es obligatorio; se le recuerda cada vez que abre la app.</p>`}`;
+}
+function panelNuevoContrato(n) {
+  return new Promise(ok => {
+    const sug = (n.cuotas || []).filter(c => c.estado === 'pendiente').reduce((a, c) => a + c.monto, 0) + (n.pagos || []).reduce((a, p) => a + (Number(p.monto) || 0), 0); // lo pagado más lo programado
+    const h = hoja({ titulo: 'Nuevo contrato', ancho: 1, html: `<p class="sm mut" style="margin-top:0">${esc(n.negocio)} · ${esc(n.dueno)} · ${esc(fmtWA(n.whatsapp))}${n.datos && n.datos.rtn ? ' · RTN ' + esc(n.datos.rtn) : ''}</p>
+      <label class="fld"><span>Título</span><input id="ct-t" maxlength="120" value="Contrato de licencia de uso · Gestión de Negocio VM"></label>
+      <div class="f2"><label class="fld"><span>Valor de la licencia</span><input id="ct-m" inputmode="decimal" value="${sug ? fmtN(sug) : ''}" placeholder="0.00"></label><label class="fld"><span>Rige desde</span><input id="ct-d" type="date" value="${hoy()}"></label></div>
+      <label class="fld"><span>Vence (vacío = de por vida)</span><input id="ct-h" type="date"></label>
+      <label class="fld"><span>Texto del contrato</span><textarea id="ct-x" rows="14" style="font-size:13px;line-height:1.45">${esc(P.pl.contrato || '')}</textarea></label>
+      <small class="hint" style="display:block;margin:-6px 0 8px">Los campos entre llaves se rellenan solos con los datos del cliente: {negocio}, {dueno}, {whatsapp}, {rtn}, {direccion}, {monto}, {cuotas} (sus pagos programados), {plan}, {desde}, {hasta}, {vigencia} y {fecha}. Para cambiar el texto base de todos los contratos, usa «Mensajes» en el Panel.</small>` });
+    const leer = () => ({ titulo: $('#ct-t', h.el).value, monto: num($('#ct-m', h.el).value), desde: $('#ct-d', h.el).value, hasta: $('#ct-h', h.el).value, texto: $('#ct-x', h.el).value, datos: n.datos || {} });
+    h.onClose = () => ok(false);
+    h.botones([{ t: `${ic('eye', 18)} Vista previa`, fn: async () => { const r = await api('panelContrato', Object.assign({ id: n.id, accion: 'previa' }, leer())); panelVerContrato(n, { contrato: { estado: 'pendiente', titulo: leer().titulo }, html: r.html }, true); } },
+      { t: '✓ Crear y enviar a firma', cls: 'pri', fn: async () => { await api('panelContrato', Object.assign({ id: n.id, accion: 'crear' }, leer())); toast('Contrato creado. Le aparece al abrir su app.', 'ok'); h.onClose = null; h.cerrar(); ok(true); } }]);
+  });
+}
+function panelVerContrato(n, d, previa) {
+  const c = d.contrato;
+  const h = hoja({ titulo: previa ? 'Vista previa' : 'Contrato', ancho: 1, cls: 'contr', html: `${previa ? `<div class="aviso info sm">${ic('eye', 18)}<div>Así lo verá ${esc(String(n.dueno).split(' ')[0])}. Todavía no se ha creado.</div></div>` : c.estado === 'firmado' ? `<div class="aviso ok sm">${ic('check', 18)}<div>Firmado por <b>${esc(c.firmadoPor)}</b> el ${esc(fFechaC(String(c.firmadoEl).slice(0, 10)))} a las ${esc(String(c.firmadoEl).slice(11, 16))}${c.huella ? ` · huella ${esc(c.huella)}` : ''}</div></div>` : c.estado === 'anulado' ? `<div class="aviso bad sm">${ic('x', 18)}<div>Contrato anulado</div></div>` : `<div class="aviso warn sm">${ic('alert', 18)}<div>Pendiente: el cliente aún no lo ha firmado.</div></div>`}<div id="cdoc-w">${d.html}</div>` });
+  const bs = [{ t: `${ic('print', 18)} Imprimir o guardar PDF`, fn: () => imprimirContrato(d.html) }];
+  if (c.pdf) bs.push({ t: `${ic('doc', 18)} Abrir PDF de Drive`, fn: () => window.open(c.pdf, '_blank', 'noopener') });
+  h.botones(bs);
+}
 function panelProgramarPagos(n) {
   return new Promise(ok => {
     let con = CONCEPTOS_CUOTA[0];
@@ -2724,7 +2850,7 @@ async function panelFicha(id) {
       <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<button class="btn wa sm" data-x="bienv">${ic('sparkle', 14)} Bienvenida + imagen</button><a class="btn sm" href="${esc(location.href.split('?')[0] + '?tienda=' + encodeURIComponent(n.id))}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
       <div class="sec-t"><h3>¿Cómo llegó?</h3>${(n.campanas || []).length ? '<a data-x="llego">Cambiar</a>' : ''}</div>
       ${llegoHTML(n)}
-      ${panelSecCuotas(n)}
+      ${panelSecCuotas(n)}${panelSecContratos(n)}
       <div class="sec-t"><h3>Pagos recibidos</h3><a data-x="pago">+ Anotar pago</a></div>
       <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small>${n.llego && n.llego.id ? `<small style="color:var(--pri)">${ic('sparkle', 12)} Llegó por ${esc(n.llego.nombre)}</small>` : ''}</div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
       ${n.soporte.length ? `<div class="sec-t"><h3>Soporte</h3></div><div class="list">${n.soporte.slice(0, 5).map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av t-pri">${ic('chat', 18)}</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small>${esc(c.ultimoTexto)}</small></div>${c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : ''}</div>`).join('')}</div>` : ''}
@@ -2744,6 +2870,10 @@ async function panelFicha(id) {
         else if (x === 'cuotaNueva') { if (!(await panelProgramarPagos(n))) return; }
         else if (x === 'cuotaPagar' || x === 'cuotaMover' || x === 'cuotaQuitar') { if (!(await panelCuotaAccion(n, x, b.dataset.id))) return; }
         else if (x === 'bienv') { panelBienvenida(n); return; }
+        else if (x === 'contratoNuevo') { if (!P.pl.contrato) P.pl = await api('panelPlantillas', {}); if (!(await panelNuevoContrato(n))) return; }
+        else if (x === 'contratoVer') { panelVerContrato(n, await api('panelContrato', { id, accion: 'ver', contratoId: b.dataset.id })); return; }
+        else if (x === 'contratoPdf') { const r = await api('panelContrato', { id, accion: 'pdf', contratoId: b.dataset.id }); toast('PDF guardado en Drive', 'ok'); if (r.contrato.pdf) window.open(r.contrato.pdf, '_blank', 'noopener'); }
+        else if (x === 'contratoAnular') { const c = n.contratos.find(k => k.id === b.dataset.id); if (!(await confirmar(c.estado === 'firmado' ? `Este contrato ya está firmado por ${esc(c.firmadoPor)}. ¿Anularlo de todos modos?` : '¿Anular este contrato? El cliente ya no lo verá.', { si: 'Anular' }))) return; await api('panelContrato', { id, accion: 'anular', contratoId: c.id, confirmar: true }); toast('Contrato anulado', 'ok'); }
         else if (x === 'llego') {
           const v = await panelElegirLlego(n); if (v === null) return;
           await api('panelLlego', { id, llegoPor: v }); toast('Guardado', 'ok');
@@ -2806,7 +2936,9 @@ async function panelChat(id) {
 ACC.panelPlantillas = async () => {
   const pl = await api('panelPlantillas', {}); P.pl = pl;
   const N = { dia3: 'Día 3 · ¿qué tal la prueba?', vence: 'Vence mañana', inactivo: 'Sin entrar hace días', vencida: 'Prueba vencida', activada: 'Licencia activada', bienvenida: 'Bienvenida' };
-  const h = hoja({ titulo: 'Mensajes de WhatsApp', ancho: 1, html: `<p class="sm mut" style="margin-bottom:10px">Usa <b>{dueno}</b> y <b>{negocio}</b> y se rellenan solos.</p>${Object.keys(N).map(k => `<label class="fld"><span>${N[k]}</span><textarea data-k="${k}" rows="3" maxlength="600">${esc(pl[k] || '')}</textarea></label>`).join('')}` });
+  const h = hoja({ titulo: 'Mensajes y contrato', ancho: 1, html: `<p class="sm mut" style="margin-bottom:10px">Usa <b>{dueno}</b> y <b>{negocio}</b> y se rellenan solos.</p>${Object.keys(N).map(k => `<label class="fld"><span>${N[k]}</span><textarea data-k="${k}" rows="3" maxlength="600">${esc(pl[k] || '')}</textarea></label>`).join('')}
+    <div class="sec-t" style="margin-top:14px"><h3>Texto base del contrato de licencia</h3></div><p class="xs mut" style="margin:-4px 2px 8px">Se usa al crear el contrato de cada cliente (en su ficha). Campos: {negocio}, {dueno}, {whatsapp}, {rtn}, {direccion}, {monto}, {cuotas}, {plan}, {desde}, {hasta}, {vigencia}, {fecha}. Si lo dejas vacío, vuelve al texto original.</p>
+    <textarea data-k="contrato" rows="16" maxlength="6000" style="font-size:13px;line-height:1.45">${esc(pl.contrato || '')}</textarea>` });
   h.botones([{ t: 'Guardar', cls: 'pri', fn: async () => { const p = {}; $$('[data-k]', h.el).forEach(t => { p[t.dataset.k] = t.value; }); P.pl = await api('panelPlantillasGuardar', { plantillas: p }); h.cerrar(); toast('Mensajes guardados', 'ok'); if ($('#pn-list')) panelResumen(); } }]);
 };
 
@@ -2906,7 +3038,7 @@ R.inicio = () => {
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
   const ofAvisos = puede('admin', 'cajero') && 'Notification' in window && Notification.permission !== 'denied' && !avisosOn() && LS.get('avisosOferta', '') !== 'no' && !DEMO.on ? `<div class="aviso info">${ic('bell', 20)}<div><b>Recibe avisos en este teléfono.</b><small>Pedidos nuevos, mensajes, vencimientos y citas, aunque la app esté en segundo plano.</small></div><div class="row"><button class="btn sm pri" data-a="avisosActivar">Activar</button><button class="btn sm ghost icon" data-a="avisosCerrar" aria-label="Cerrar">${ic('x', 16)}</button></div></div>` : '';
   const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerCobro()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${today}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${vacio}${aviso}${listas}</div>`;
 };
 ACC.verVenta = async el => {
   const f = el.dataset.f.slice(0, 10);
@@ -4993,6 +5125,7 @@ R.ajustes = () => {
   if (adm) h += sec('plus', 'sparkle', 'Plan Plus', S.plus ? (S.plusIncluido ? `<p class="sm"><span class="plus-b">PLUS</span> Incluido en tu prueba gratis: tienda en línea y fotos de productos. ✦</p><p class="xs mut">Cuando actives tu licencia, el plan Plus se activa por separado. Escríbenos y lo dejamos listo.</p>${plusCard(1)}` : `<p class="sm"><span class="plus-b">PLUS</span> Activo: tienda en línea y fotos de productos. ✦</p>`) : plusCard(1));
   h += sec('cuenta', 'user', 'Mi cuenta', `<div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.multi ? fmtWA(S.user.usuario) : S.user.usuario)}</small></div></div>
     ${adm && L.estado ? `<p class="sm">${L.estado === 'prueba' ? `Prueba gratis: ${L.diasRestantes === 1 ? 'queda 1 día' : 'quedan ' + L.diasRestantes + ' días'} (vence ${esc(fFechaC(L.vence))}).` : 'Licencia activa de por vida ✓'}</p>` : ''}
+    ${adm && S.contratoVM ? `<p class="sm" style="margin:6px 0 4px"><b>Mi contrato</b> <span class="mut">· con Molina Soluciones Digitales</span></p><div class="list" style="margin:2px 0 10px">${[S.contratoVM.pendiente].concat(S.contratoVM.firmados || []).filter(Boolean).map(k => `<div class="li" data-a="verContrato" data-id="${esc(k.id)}"><div class="av ${k.estado === 'firmado' ? 't-verde' : 't-naranja'}">${ic('doc', 18)}</div><div class="tx"><b>${esc(k.titulo)}</b><small>${k.estado === 'firmado' ? 'Firmado el ' + esc(fFechaC(String(k.firmadoEl).slice(0, 10))) : 'Pendiente de firma · ' + esc(fFechaC(k.fecha))}</small></div><span class="badge ${k.estado === 'firmado' ? 'b-ok' : 'b-warn'}">${k.estado === 'firmado' ? 'Firmado' : 'Firmar'}</span></div>`).join('')}</div>` : ''}
     <div class="row"><button class="btn" data-a="cambiarClave">${ic('key', 18)} Cambiar ${S.multi ? 'PIN' : 'contraseña'}</button><button class="btn bad" data-a="logout">${ic('logout', 18)} Cerrar sesión</button></div>`);
   h += `<p class="credit" style="opacity:.8">Gestión de Negocio VM · versión ${APP_VER}<br>Software creado por José Vicdonio Molina · WhatsApp <a href="https://wa.me/${CONTACTO_WA}" target="_blank" rel="noopener">+504 3313-0265</a></p>`;
   $('#main').innerHTML = h;
@@ -6014,7 +6147,7 @@ ACC.cbPaqueteExcel = async () => {
 };
 
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
-const API_MIN = '1.9.16'; // versión mínima del Code.gs que necesita esta app
+const API_MIN = '1.9.17'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
 const MODULOS_INFO = {
@@ -6562,6 +6695,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.17', fecha: '2026-10-29', items: [
+    { i: 'doc', t: 'Tu contrato de licencia, firmado desde el celular', d: 'Cuando Molina Soluciones Digitales te envíe el contrato de tu licencia, te aparece al abrir la app: lo lees, lo firmas con el dedo y al final lleva el recibo de tus pagos. Lo encuentras siempre en Ajustes › Mi cuenta. Firmarlo no es obligatorio.', si: () => puede('admin') && S.multi }
+  ] },
   { v: '1.9.16', fecha: '2026-10-28', items: [
     { i: 'sparkle', t: 'Revisión completa del programa', d: 'Revisamos cada pantalla y cada cálculo: la caja de cada tienda, los anticipos, las suscripciones, las facturas editadas y la contabilidad cuadran mejor que nunca. Tus datos siguen igual.' },
     { i: 'coin', t: 'Anticipo de las compras en línea', d: 'En un pedido de Shein, Temu o Amazon toca «Recibí el anticipo»: entra a tu caja ese día y, al entregar el pedido, se descuenta solo del total.', si: () => girosOn().includes('compras') },
