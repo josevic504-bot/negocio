@@ -1016,6 +1016,62 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .cc-a.w{background:var(--warnb)}.cc-a.b{background:var(--badb)}.cc-a.i{background:var(--infob)}
 .cc-a .tx{flex:1;min-width:0}.cc-a b{display:block;font-size:13px}.cc-a small{display:block;color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cc-a .bt{flex-basis:100%;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}
+/* ===== Veterinaria: mascotas, expediente, receta y carnet ===== */
+.av.pet{background:linear-gradient(135deg,color-mix(in srgb,var(--h2) 22%,var(--card)),color-mix(in srgb,var(--a1) 18%,var(--card)));color:var(--ink)}
+.av.pet .emo{font-size:24px}.av.lg.pet .emo{font-size:32px}.av.sm.pet .emo{font-size:17px}
+.tx small .ow{color:var(--ink);opacity:.8}
+.f2.lado{grid-template-columns:1fr 1fr}
+.seg.full{display:flex}.seg.full button{flex:1}
+.chips.wrap{flex-wrap:wrap;overflow:visible}
+.alergia{display:flex;gap:10px;align-items:center;background:var(--badb);color:var(--bad);border-radius:14px;padding:9px 12px;font-size:13.5px;font-weight:500;margin:0 0 12px}
+.alergia .ic{flex:none}
+.kpis.k3{grid-template-columns:repeat(3,1fr)}.kpis.k3 .kpi b{font-size:18px}.kpis.k3 .kpi{padding:11px 12px}
+.vet-sec{display:flex;align-items:center;justify-content:space-between;margin:14px 2px 8px}.vet-sec b{font-size:14px;color:var(--mut);font-weight:500}
+.vet-l .li{box-shadow:none;padding:9px 11px;align-items:flex-start}.vet-l .li .tx small,.vet-l .li .tx b{white-space:normal;line-height:1.35}
+.vet-l .am .btn{margin-top:-2px}
+.rx-n{width:28px;height:28px;border-radius:9px;display:grid;place-items:center;flex:none;font:600 13px var(--font);color:var(--pri);background:var(--pri2);margin-top:2px}
+.rx-tag{display:inline-flex;gap:4px;align-items:center;font-size:11.5px;font-weight:500;border-radius:99px;padding:1px 8px;margin-top:5px}
+.rx-tag.v{background:var(--okb);color:var(--ok)}.rx-tag.s{background:color-mix(in srgb,var(--mut) 14%,transparent);color:var(--mut)}.rx-tag.b{background:var(--badb);color:var(--bad)}
+.tot-row{display:flex;justify-content:space-between;align-items:baseline;padding:8px 4px 4px;font-size:15px}.tot-row b{font-size:19px}
+.alerta-med{display:flex;gap:10px;align-items:flex-start;background:var(--badb);border:1px solid color-mix(in srgb,var(--bad) 30%,transparent);border-radius:16px;padding:11px 12px;margin:2px 0 12px;font-size:13.5px}
+.alerta-med .ic{color:var(--bad);flex:none;margin-top:1px}.alerta-med b{display:block;color:var(--bad)}
+.vet-sug{display:flex;flex-direction:column;gap:6px;margin:-6px 0 12px}.vet-sug .li{box-shadow:none;padding:8px 10px}
+.vet-peso{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px}
+.vet-peso svg{display:block;width:100%;height:120px}
+.vet-wa{background:#e9e1d8;border-radius:16px;padding:12px}.vet-wa div{background:#d9fdd3;color:#111b21;border-radius:12px 12px 4px 12px;padding:8px 10px;margin-left:auto;max-width:92%;font-size:13.5px;line-height:1.4;white-space:pre-wrap}
+:root.dark .vet-wa{background:#0b141a}
+.firma-prev{width:150px;height:56px;border:1px dashed var(--line);border-radius:12px;display:grid;place-items:center;background:#fff;overflow:hidden;color:var(--mut);font-size:12px}.firma-prev img{max-width:100%;max-height:100%}
+/* Documentos para el dueño (receta y carnet): se ven igual en la app, en la imagen y al imprimir */
+.vdoc{border-radius:22px;overflow:hidden;border:1px solid var(--line);background:#fff;color:#1f2a2e;box-shadow:var(--sh);-webkit-print-color-adjust:exact;print-color-adjust:exact;font-family:var(--font)}
+.vdoc .vd-h{display:flex;align-items:center;gap:12px;padding:16px;background:linear-gradient(135deg,var(--h2),var(--h1));color:#fff}
+.vdoc .vd-lg{width:48px;height:48px;border-radius:50%;border:1.5px solid var(--tag);display:grid;place-items:center;font:600 20px var(--serif);color:var(--tag);flex:none;overflow:hidden;background:rgba(255,255,255,.08)}
+.vdoc .vd-lg img{width:100%;height:100%;object-fit:contain;background:#fff}
+.vdoc .vd-h b{font:600 24px/1.05 var(--serif);display:block}.vdoc .vd-h small{display:block;font-size:11px;opacity:.88;margin-top:3px}
+.vdoc .vd-c{text-align:center;display:block}.vdoc .vd-c .vd-lg{margin:0 auto 6px}
+.vdoc .vd-sub{font-size:10.5px;letter-spacing:.3em;text-transform:uppercase;color:var(--tag);margin-top:6px}
+.vdoc .vd-tt{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 16px 6px}
+.vdoc .vd-tt h4{margin:0;font:500 italic 21px var(--serif);color:var(--pri)}.vdoc .vd-tt span{font-size:12px;color:#6b7478;text-align:right}
+.vdoc .vd-pac{margin:0 16px;padding:10px 12px;border-radius:14px;background:#f2f6f7;display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;font-size:12.5px}
+.vdoc .vd-pac small{display:block;color:#6b7478;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.vdoc .vd-dx{padding:10px 16px 0;font-size:13px}.vdoc .vd-dx small{color:#6b7478}
+.vdoc .vd-rp{display:flex;gap:10px;padding:12px 16px 2px}.vdoc .vd-rp .rp{font:600 italic 30px/1 var(--serif);color:var(--pri)}
+.vdoc .vd-meds{flex:1;min-width:0}.vdoc .vd-meds div{padding:8px 0;border-bottom:1px dashed #d9e1e3;font-size:13px;line-height:1.4}.vdoc .vd-meds div:last-child{border-bottom:0}
+.vdoc .vd-meds b{font-size:14px}.vdoc .vd-meds small{display:block;color:#56646a;font-size:12.5px}
+.vdoc .vd-ind{margin:8px 16px 0;font-size:12.5px;line-height:1.45}.vdoc .vd-ind b{display:block;font-size:10.5px;color:#6b7478;text-transform:uppercase;letter-spacing:.06em;font-weight:500;margin-bottom:2px}
+.vdoc .vd-ctl{margin:10px 16px 0;padding:8px 12px;border-radius:12px;background:#fff3dc;font-size:13px}.vdoc .vd-ctl b{color:#b86f00}
+.vdoc .vd-ft{display:flex;justify-content:space-between;align-items:flex-end;padding:18px 16px 16px;font-size:11px;color:#6b7478;gap:10px}
+.vdoc .vd-fm{text-align:center;min-width:150px}.vdoc .vd-fm i{display:block;font:italic 22px/1 var(--serif);color:#1f2a2e;opacity:.75;margin-bottom:2px}
+.vdoc .vd-fm img{display:block;max-width:160px;max-height:56px;margin:0 auto 2px}
+.vdoc .vd-fm span{display:block;border-top:1px solid #8a9599;padding-top:4px;color:#1f2a2e;font-size:11.5px}
+.vdoc .vd-sec{padding:10px 16px 0;font:600 15px var(--serif);color:var(--pri)}
+.vdoc table{width:calc(100% - 16px);margin:0 8px;border-collapse:collapse;font-size:12.5px;table-layout:fixed}
+.vdoc th{text-align:left;font-weight:500;color:#6b7478;font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;padding:6px 8px;border-bottom:1px solid #d9e1e3}
+.vdoc td{padding:8px;border-bottom:1px solid #e6ecee;vertical-align:top}.vdoc td b{font-weight:600;display:block}.vdoc td small{color:#6b7478;font-size:11px}
+.vdoc col.c1{width:44%}.vdoc .prox{color:#b86f00;font-weight:600}.vdoc .venc{color:#d61f3c;font-weight:600}
+.vdoc .vd-pet{display:flex;gap:12px;align-items:center;padding:14px 16px 4px}.vdoc .vd-pet b{font:600 24px/1.1 var(--serif);display:block}.vdoc .vd-pet small{color:#6b7478;font-size:12.5px;display:block}
+.vdoc .vd-pet .av{background:#eef4f5;color:#1f2a2e}
+.vdoc .vd-nada{padding:6px 16px 0;font-size:12.5px;color:#6b7478}
+@media print{.vdoc-print .vdoc{border:0;border-radius:0;box-shadow:none;max-width:560px;margin:0 auto}}
 </style>
 <script src="visitas.js?v=2" defer></script>
 </head>
@@ -1147,7 +1203,11 @@ const ICP = {
   fb: '<path d="M14 21v-7h2.5l.5-3.5h-3V8.6c0-1 .4-1.6 1.7-1.6H17V3.9C16.6 3.8 15.6 3.7 14.6 3.7 12.2 3.7 10.5 5.2 10.5 7.9v2.6H8V14h2.5v7"/>',
   map: '<path d="M3 6.5l6-2.5 6 2.5 6-2.5v14l-6 2.5-6-2.5-6 2.5z"/><path d="M9 4v14M15 6.5v14"/>',
   share: '<circle cx="18" cy="5.5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="18.5" r="2.5"/><path d="M8.2 10.8l7.6-4.1M8.2 13.2l7.6 4.1"/>',
-  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>'
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>',
+  paw: '<circle cx="6.5" cy="10" r="1.9"/><circle cx="10" cy="5.8" r="1.9"/><circle cx="14.6" cy="5.8" r="1.9"/><circle cx="18" cy="10" r="1.9"/><path d="M12.3 11.6c-2.6 0-5.3 3.4-5.3 5.9 0 1.6 1.2 2.6 2.7 2.3 1-.2 1.7-.5 2.6-.5s1.6.3 2.6.5c1.5.3 2.7-.7 2.7-2.3 0-2.5-2.7-5.9-5.3-5.9z"/>',
+  syringe: '<path d="M18 2.5l3.5 3.5M19.7 4.3l-3 3M14.5 5.3l4.2 4.2M16.6 7.4L8 16H5.5v-2.5L14.1 4.9M5.5 18.5L2.5 21.5M9 10.5l1.8 1.8M11.4 8.1l1.8 1.8"/>',
+  steth: '<path d="M5 3H4v5a5 5 0 0 0 10 0V3h-1M9 13v1.5a5.5 5.5 0 0 0 11 0V13"/><circle cx="20" cy="11" r="2"/>',
+  bed: '<path d="M3 18V6M3 14h18v4M21 14v-2a3 3 0 0 0-3-3h-7v5"/><circle cx="7" cy="11" r="2"/>'
 };
 const ic = (n, sz = 22) => `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICP[n] || ''}</svg>`;
 
@@ -1294,7 +1354,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.17';
+const APP_VER = '1.9.18';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -1370,6 +1430,14 @@ const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ
 const colorDe = s => { const c = ['t-pri', 't-azul', 't-morado', 't-cian', 't-naranja', 't-rojo', 't-verde', 't-acc']; let h = 0; String(s || '').split('').forEach(ch => { h = (h * 31 + ch.charCodeAt(0)) | 0; }); return c[Math.abs(h) % c.length]; };
 // Ilustraciones de línea por categoría/nombre, para productos sin foto (dibujos propios, 48×48)
 const ILUS = [
+  // Veterinaria
+  [/vacuna|antirrab|triple felina|desparasit|inyecc/, 'M34 6l8 8M38 10l-6 6M29 11l8 8M33 15L16 32h-5v-5l17-17M11 37l-6 6M18 21l3 3M23 16l3 3'],
+  [/consulta|chequeo|revision|control o revision|veterin/, 'M12 6h-2v10a9 9 0 0 0 18 0V6h-2M19 25v4a10 10 0 0 0 20 0v-4M35 21a4 4 0 1 0 8 0a4 4 0 1 0-8 0'],
+  [/bano|corte de pelo|estetica|grooming|pipeta|antipulga/, 'M9.2 20a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0-7.6 0M16.2 11.6a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0-7.6 0M25.4 11.6a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0-7.6 0M32.2 20a3.8 3.8 0 1 0 7.6 0a3.8 3.8 0 1 0-7.6 0M24.6 23.2c-5.2 0-10.6 6.8-10.6 11.8 0 3.2 2.4 5.2 5.4 4.6 2-.4 3.4-1 5.2-1s3.2.6 5.2 1c3 .6 5.4-1.4 5.4-4.6 0-5-5.4-11.8-10.6-11.8z'],
+  [/hospedaje|guarderia|pension/, 'M8 22L24 8l16 14M12 19v21h24V19M20 40V30h8v10'],
+  [/alimento (perro|gato)|croqueta|concentrado/, 'M6 24h36a18 15 0 0 1-36 0zM15 24c1-4 5-7 9-7s8 3 9 7'],
+  [/arena para gato/, 'M10 16h28l-3 26H13zM7 16h34M18 9l6 7 6-7'],
+  [/collar|correa/, 'M24 9a13 13 0 1 0 .1 0M24 35v7M20 42h8a4 4 0 0 1-8 0'],
   [/vestido|falda/, 'M17 5l-1 11 4 4-7 22h22l-7-22 4-4-1-11M17 5c1 4 3 6 7 6s6-2 7-6'],
   [/pantal|jean|short|leggin/, 'M14 6h20l2 36h-8l-4-22-4 22h-8zM14 14h20'],
   [/zapat|tenis|calzado|sandal|bota|tacon|chancl/, 'M6 36h36v3H6zM6 36c0-7 6-10 12-10l6-9 6 2c1 6 8 10 16 12v5M18 26c2 2 5 3 8 3'],
@@ -1641,8 +1709,10 @@ const VISTAS = {
   precios:     { t: 'Precios', i: 'tag', roles: ['admin', 'bodega'] },
   proyectos:   { t: 'Proyectos', i: 'layers', roles: ['admin', 'bodega'] },
   clientes:    { t: 'Clientes', i: 'users', roles: ['admin', 'cajero'] },
-  ordenes:     { t: 'Órdenes de trabajo', c: 'Órdenes', i: 'wrench', roles: TODOS, si: () => modOn('ordenes') },
+  ordenes:     { get t() { return vetOrd() ? 'Hospedaje y estética' : 'Órdenes de trabajo'; }, get c() { return vetOrd() ? 'Hospedaje' : 'Órdenes'; }, get i() { return vetOrd() ? 'bed' : 'wrench'; }, roles: TODOS, si: () => modOn('ordenes') },
   agenda:      { t: 'Agenda de citas', c: 'Agenda', i: 'cal', roles: TODOS, si: () => modOn('agenda') },
+  mascotas:    { t: 'Mascotas', i: 'paw', roles: ['admin', 'cajero'], si: () => modOn('mascotas') },
+  vacunas:     { t: 'Vacunas', c: 'Vacunas', i: 'syringe', roles: ['admin', 'cajero'], si: () => modOn('mascotas') },
   encargos:    { t: 'Encargos', i: 'gift', roles: TODOS, si: () => modOn('encargos') },
   vencimientos:{ t: 'Vencimientos', i: 'clock', roles: ['admin', 'cajero'], si: () => susOn() },
   cuentas:     { t: 'Cuentas y perfiles', c: 'Cuentas', i: 'key', roles: ['admin', 'cajero'], si: () => susOn() },
@@ -1655,7 +1725,7 @@ const VISTAS = {
   usuarios:    { t: 'Usuarios', i: 'user', roles: ['admin'] },
   ajustes:     { t: 'Ajustes', i: 'gear', roles: TODOS }
 };
-const NAV_PC = ['inicio', 'vender', 'pedidos', 'ordenes', 'agenda', 'encargos', 'mensajes', 'tienda', 'productos', 'vencimientos', 'cuentas', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
+const NAV_PC = ['inicio', 'vender', 'pedidos', 'mascotas', 'agenda', 'vacunas', 'ordenes', 'encargos', 'mensajes', 'tienda', 'productos', 'vencimientos', 'cuentas', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
 const R = {}; // funciones que pintan cada vista
 const puedeVer = v => VISTAS[v] && VISTAS[v].roles.includes(S.user.rol) && (!VISTAS[v].si || VISTAS[v].si());
 
@@ -1708,10 +1778,12 @@ function pintarNav() {
     `<button class="${pc.includes(S.vista) ? '' : 'on'}" data-a="mas">${pc.includes(S.vista) ? 'Más' : esc(VISTAS[S.vista].c || VISTAS[S.vista].t)} ▾</button>`;
   const b = (k, lbl, icn) => `<button class="${S.vista === k ? 'on' : ''}" data-a="ir" data-v="${k}">${ic(icn)}${k === 'pedidos' && S.pedidosNuevos ? `<span class="cnt">${S.pedidosNuevos}</span>` : ''}${lbl}</button>`;
   const centro = (k, lbl, icn) => `<button class="sell ${S.vista === k ? 'on' : ''}" data-a="ir" data-v="${k}"><i>${ic(icn, 26)}</i>${lbl}</button>`;
-  const masOn = !['inicio', 'pedidos', 'vender', 'productos', 'precios', 'compras'].includes(S.vista);
+  const vetNav = rol !== 'bodega' && modOn('mascotas');
+  const masOn = !(vetNav ? ['inicio', 'agenda', 'vender', 'mascotas'] : ['inicio', 'pedidos', 'vender', 'productos', 'precios', 'compras']).includes(S.vista);
   const mas = `<button class="${masOn ? 'on' : ''}" data-a="mas">${ic('grid')}${S.chatsNuevos && rol !== 'bodega' ? `<span class="cnt">${S.chatsNuevos}</span>` : ''}Más</button>`;
   $('#bnav').innerHTML = rol === 'bodega'
     ? b('inicio', 'Inicio', 'home') + b('precios', 'Precios', 'tag') + centro('compras', 'Compras', 'bag') + b('productos', 'Productos', 'box') + mas
+    : vetNav ? b('inicio', 'Inicio', 'home') + (modOn('agenda') ? b('agenda', 'Agenda', 'cal') : b('pedidos', 'Pedidos', 'inbox')) + centro('vender', 'Vender', 'cart') + b('mascotas', 'Mascotas', 'paw') + mas
     : b('inicio', 'Inicio', 'home') + b('pedidos', 'Pedidos', 'inbox') + centro('vender', 'Vender', 'cart') + b('productos', 'Productos', 'box') + mas;
 }
 function bannerPrueba() {
@@ -1931,7 +2003,7 @@ function limpiarSesion() {
   S.hProv = null;
   S.tienda = undefined; S.elegirTienda = false;
   S.pedidosNuevos = 0; S.chatsNuevos = 0; S.chatsL = null; S.pedidosL = null; S.cajaD = null; S.proyL = null; S.hProy = null; S.f = {}; S.yaReviso = false; S.ventasL = null; S.gastosL = null; S.comprasL = null; S.hist = null; S.inicioT = 0;
-  S.inicio = null; S.cb = null; S.cuentasL = null; S.susL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; S.ag_citax = null; S.ag_encargox = null; S.repCSV = null; S.cobroVisto = false; S.cobroVM = null; S.contratoVM = null; S.contratoVisto = false; // nada del negocio o usuario anterior
+  S.inicio = null; S.cb = null; S.cuentasL = null; S.susL = null; S.ordenesL = null; S.mascotasL = null; S.vacL = null; S.ag_cita = null; S.ag_encargo = null; S.ag_citax = null; S.ag_encargox = null; S.repCSV = null; S.cobroVisto = false; S.cobroVM = null; S.contratoVM = null; S.contratoVisto = false; // nada del negocio o usuario anterior
   try { history.replaceState(null, '', '#inicio'); } catch (e) {}
 }
 function mostrarVencida(info) {
@@ -1982,7 +2054,7 @@ function pintarLogin() {
     : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo: ventas, inventario, clientes, compras, gastos, caja y reportes.</p>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
-        <label class="fld"><span>Tipo de negocio</span><select id="r-giro">${giros.map(g => `<option value="${g.id}">${GIRO_EMO[g.id] || '📦'} ${esc(g.n)}${['compras', 'recargas'].includes(g.id) ? ' · Nuevo' : ''}</option>`).join('')}</select></label>
+        <label class="fld"><span>Tipo de negocio</span><select id="r-giro">${giros.map(g => `<option value="${g.id}">${GIRO_EMO[g.id] || '📦'} ${esc(g.n)}${['compras', 'recargas', 'veterinaria'].includes(g.id) ? ' · Nuevo' : ''}</option>`).join('')}</select></label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
@@ -2004,7 +2076,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 async function ingresar(ev) {
   ev.preventDefault();
@@ -2261,6 +2333,7 @@ function avisosDelDia(a) {
   (a.encProx || []).forEach(c => una('encargos:' + c.hora + c.cliente, 'Entrega a las ' + fHoraC(c.hora) + ' · ' + c.cliente, c.detalle, 'encargos'));
   if (a.cadVenc) una('caducidad:venc', a.cadVenc === 1 ? '1 producto vencido en existencia' : a.cadVenc + ' productos vencidos en existencia', 'Revísalos en Productos › Por caducar.', 'productos');
   else if (a.cadProx) una('caducidad:prox', a.cadProx === 1 ? '1 producto caduca pronto' : a.cadProx + ' productos caducan pronto', 'En los próximos 30 días.', 'productos');
+  if (a.vacHoy) una('vacunas:hoy', a.vacHoy === 1 ? 'Hoy toca vacunar a 1 mascota' : 'Hoy toca vacunar a ' + a.vacHoy + ' mascotas', 'Mándales el recordatorio desde Vacunas.', 'vacunas');
   if (a.ordAtras) una('ordenes:atras', a.ordAtras === 1 ? '1 orden de trabajo atrasada' : a.ordAtras + ' órdenes de trabajo atrasadas', 'Pasó la fecha de entrega prometida.', 'ordenes');
 }
 ACC.avisosActivar = async el => { if (await activarAvisos()) { toast('Avisos activados', 'ok'); render(); } };
@@ -2989,13 +3062,21 @@ R.inicio = () => {
     today = `<div class="today"><div class="today-h"><div><small>${rol === 'admin' ? 'Ventas de hoy' : 'Mis ventas de hoy'} · ${esc(hoyTxt)}</small><div class="big n">${money(d.hoy.ventas)}</div>
       <div class="sub">${d.hoy.n === 1 ? '1 venta' : d.hoy.n + ' ventas'}</div></div>${sparkSVG(d.spark || [0, 0])}</div>
       <div class="tstats">${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Ganancia hoy</small><b class="n ok">${money(d.hoy.ganancia)}</b></button>` : ''}<button data-a="ir" data-v="caja"><small>Caja ahora</small><b class="n">${money(d.caja)}</b></button>${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Este mes</small><b class="n">${money(d.mes.ganancia)}</b></button>` : `<button data-a="ir" data-v="pedidos"><small>Pedidos</small><b class="n">${S.plus ? (d.pedidos.nuevos ? d.pedidos.nuevos + ' nuevos' : 'Al día') : '—'}</b></button>`}</div>
-      <div class="qa">${qa('ir', 'cart', 'Vender', 'var(--h1)', 'var(--h2)', 'data-v="vender"')}${qa('nuevoGasto', 'receipt', 'Gasto', '#f25c05', '#ffa83a')}
-      ${rol === 'admin' ? qa('nuevaCompra', 'truck', 'Compra', '#1b4fd8', '#3d9bff') : qa('ir', 'wallet', 'Caja', '#6a1fe0', '#b06cff', 'data-v="caja"')}${qa('cobrarCliente', 'coin', 'Cobrar', '#00915a', '#2fd58b')}</div></div>`;
+      <div class="qa">${modOn('mascotas') ? qa('ir', 'cart', 'Vender', 'var(--h1)', 'var(--h2)', 'data-v="vender"') + qa('vetConsultaRapida', 'steth', 'Consulta', '#00915a', '#2fd58b') + (modOn('agenda') ? qa('nuevaAgenda', 'cal', 'Cita', '#1b4fd8', '#3d9bff', 'data-t="cita"') : qa('cobrarCliente', 'coin', 'Cobrar', '#1b4fd8', '#3d9bff')) + qa('nuevoGasto', 'receipt', 'Gasto', '#f25c05', '#ffa83a')
+        : `${qa('ir', 'cart', 'Vender', 'var(--h1)', 'var(--h2)', 'data-v="vender"')}${qa('nuevoGasto', 'receipt', 'Gasto', '#f25c05', '#ffa83a')}
+      ${rol === 'admin' ? qa('nuevaCompra', 'truck', 'Compra', '#1b4fd8', '#3d9bff') : qa('ir', 'wallet', 'Caja', '#6a1fe0', '#b06cff', 'data-v="caja"')}${qa('cobrarCliente', 'coin', 'Cobrar', '#00915a', '#2fd58b')}`}</div></div>`;
+    const vetT = !!(d.vet && modOn('mascotas'));
+    if (vetT) { // veterinaria: primero citas, vacunas, hospedaje y mascotas
+      if (d.agenda && modOn('agenda')) tiles += tile('t-cian', 'cal', 'Citas de hoy', String(d.agenda.hoy), d.agenda.atrasados ? d.agenda.atrasados + ' sin cerrar' : d.agenda.manana + ' mañana', ['ir', 'agenda']);
+      tiles += tile('t-pri', 'syringe', 'Vacunas por aplicar', d.vet.semana ? d.vet.semana + (d.vet.dias === 7 ? ' esta semana' : ' en ' + d.vet.dias + ' días') : 'Al día', (d.vet.vencidas ? d.vet.vencidas + (d.vet.vencidas === 1 ? ' vencida' : ' vencidas') : 'Ninguna vencida') + (d.vet.monto ? ' · ' + money(d.vet.monto) : ''), ['ir', 'vacunas']);
+      if (d.ordenes && modOn('ordenes')) tiles += tile('t-azul', vetOrd() ? 'bed' : 'wrench', vetOrd() ? 'Hospedaje y estética' : 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : String(d.ordenes.recibido + d.ordenes.proceso), d.ordenes.listo ? (d.ordenes.recibido + d.ordenes.proceso) + ' más en la clínica' : 'en la clínica ahora', ['ir', 'ordenes']);
+      tiles += tile('t-verde', 'paw', 'Mascotas', String(d.vet.mascotas), d.vet.nuevas === 1 ? '1 nueva este mes' : d.vet.nuevas + ' nuevas este mes', ['ir', 'mascotas']);
+    }
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus ✦', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
-    if (d.ordenes && modOn('ordenes')) tiles += tile('t-azul', 'wrench', 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : (d.ordenes.recibido + d.ordenes.proceso) + ' abiertas', d.ordenes.atrasadas ? d.ordenes.atrasadas + ' atrasadas' : d.ordenes.proceso + ' en proceso · ' + d.ordenes.recibido + ' recibidas', ['ir', 'ordenes']);
-    if (d.agenda && modOn('agenda')) tiles += tile('t-cian', 'cal', 'Citas de hoy', String(d.agenda.hoy), d.agenda.atrasados ? d.agenda.atrasados + ' sin cerrar' : d.agenda.manana + ' mañana', ['ir', 'agenda']);
+    if (d.ordenes && modOn('ordenes') && !vetT) tiles += tile('t-azul', 'wrench', 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : (d.ordenes.recibido + d.ordenes.proceso) + ' abiertas', d.ordenes.atrasadas ? d.ordenes.atrasadas + ' atrasadas' : d.ordenes.proceso + ' en proceso · ' + d.ordenes.recibido + ' recibidas', ['ir', 'ordenes']);
+    if (d.agenda && modOn('agenda') && !vetT) tiles += tile('t-cian', 'cal', 'Citas de hoy', String(d.agenda.hoy), d.agenda.atrasados ? d.agenda.atrasados + ' sin cerrar' : d.agenda.manana + ' mañana', ['ir', 'agenda']);
     if (d.encargos && modOn('encargos')) tiles += tile('t-naranja', 'gift', 'Entregas de hoy', String(d.encargos.hoy), d.encargos.atrasados ? d.encargos.atrasados + ' sin entregar' : d.encargos.manana + ' mañana', ['ir', 'encargos']);
     if (d.caducan && modOn('caducidad') && (rol === 'admin')) tiles += tile('t-rojo', 'alert', 'Por caducar', d.caducan.n === 1 ? '1 producto' : d.caducan.n + ' productos', d.caducan.vencidos ? d.caducan.vencidos + ' ya vencidos' : 'En los próximos 30 días', ['ir', 'productos', { filtro: 'caducan' }]);
     if (d.sus && susOn()) {
@@ -3023,7 +3104,7 @@ R.inicio = () => {
   ['agenda', 'encargos'].forEach(k => {
     if (!(d[k] && modOn(k) && d[k].lista.length)) return;
     const C = agendaCfg(k === 'agenda' ? 'cita' : 'encargo');
-    listas += `<div class="sec-t"><h3>${k === 'agenda' ? 'Citas de hoy' : 'Entregas de hoy'}</h3><a data-a="ir" data-v="${k}">Ver ${k}</a></div><div class="list">${d[k].lista.map(a => `<div class="li" data-a="verAgendaInicio" data-id="${a.id}" data-t="${C.uno}"><div class="av t-pri">${a.hora ? horaAv(a.hora) : esc(iniciales(a.cliente))}</div><div class="tx"><b>${esc(a.cliente)}</b><small>${esc(a.detalle)}${a.atiende ? ' · ' + esc(a.atiende) : ''}</small></div>${a.monto ? `<div class="am n">${money(a.monto)}</div>` : ''}</div>`).join('')}</div>`;
+    listas += `<div class="sec-t"><h3>${k === 'agenda' ? 'Citas de hoy' : 'Entregas de hoy'}</h3><a data-a="ir" data-v="${k}">Ver ${k}</a></div><div class="list">${d[k].lista.map(a => `<div class="li" data-a="verAgendaInicio" data-id="${a.id}" data-t="${C.uno}"><div class="av t-pri">${a.hora ? horaAv(a.hora) : esc(iniciales(a.cliente))}</div><div class="tx"><b>${esc(a.mascota ? a.mascota + ' · ' + a.cliente : a.cliente)}</b><small>${esc(a.detalle)}${a.atiende ? ' · ' + esc(a.atiende) : ''}</small></div>${a.monto ? `<div class="am n">${money(a.monto)}</div>` : ''}</div>`).join('')}</div>`;
   });
   if (d.caducan && modOn('caducidad') && d.caducan.lista.length && rol !== 'cajero') {
     listas += `<div class="sec-t"><h3>Por caducar</h3><a data-a="ir" data-v="productos" data-p='{"filtro":"caducan"}'>Ver todos</a></div><div class="list">${d.caducan.lista.map(p => `<div class="li" data-a="verProducto" data-id="${p.id}"><div class="av ${p.vencido ? 't-rojo' : 't-naranja'}">${ic('alert', 20)}</div><div class="tx"><b>${esc(p.nombre)}</b><small>${p.vencido ? 'Venció el ' : 'Caduca el '}${fFechaC(p.caduca)} · ${cant(p.stock)} en existencia</small></div><span class="badge ${p.vencido ? 'b-bad' : 'b-warn'}">${p.vencido ? 'Vencido' : fFechaC(p.caduca)}</span></div>`).join('')}</div>`;
@@ -3038,8 +3119,13 @@ R.inicio = () => {
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
   const ofAvisos = puede('admin', 'cajero') && 'Notification' in window && Notification.permission !== 'denied' && !avisosOn() && LS.get('avisosOferta', '') !== 'no' && !DEMO.on ? `<div class="aviso info">${ic('bell', 20)}<div><b>Recibe avisos en este teléfono.</b><small>Pedidos nuevos, mensajes, vencimientos y citas, aunque la app esté en segundo plano.</small></div><div class="row"><button class="btn sm pri" data-a="avisosActivar">Activar</button><button class="btn sm ghost icon" data-a="avisosCerrar" aria-label="Cerrar">${ic('x', 16)}</button></div></div>` : '';
   const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${today}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${avisoVacunas(d)}${vacio}${aviso}${listas}</div>`;
 };
+function avisoVacunas(d) {
+  const v = d.vet; if (!v || !modOn('mascotas') || !(v.semana || v.vencidas)) return '';
+  const t = [v.semana ? (v.dias === 7 ? 'Esta semana' : 'En ' + v.dias + ' días') + ' toca vacunar a ' + v.semana + (v.semana === 1 ? ' mascota' : ' mascotas') : '', v.vencidas ? v.vencidas + (v.vencidas === 1 ? ' vacuna vencida' : ' vacunas vencidas') : ''].filter(Boolean).join(' · ');
+  return `<div class="aviso">${ic('syringe', 20)}<div><b>${t}${v.monto ? ' · ' + money(v.monto) : ''}</b><small>Mándales el recordatorio por WhatsApp con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vacunas">Ver</button></div>`;
+}
 ACC.verVenta = async el => {
   const f = el.dataset.f.slice(0, 10);
   const r = await api('ventas', { desde: f, hasta: f }), l = r.lista || r;
@@ -3209,7 +3295,7 @@ function guardarTicket() { LS.set(mk('ticket'), JSON.stringify(S.ticket)); }
 // E3: si un precio cambió mientras el producto estaba en el ticket, se cobra el precio de hoy (salvo los puestos a mano,
 // los de un pedido en línea y los de una orden o cita, que tienen su precio acordado). Las suscripciones: precio × meses.
 function refrescarPrecios() {
-  const t = S.ticket; if (t.ordenId || t.agendaId || t.pedidoId) return false;
+  const t = S.ticket; if (t.ordenId || t.agendaId || t.pedidoId || t.consultaId) return false;
   let cambio = false;
   t.items.forEach((i, k) => {
     if (!i.productoId || i.precioMan) return;
@@ -3498,7 +3584,7 @@ function abrirCobro() {
     const fz = S.ticket.fiscal || {}, exo = sarOn() && fz.exonerado;
     const t = calcTotales(S.ticket, exo);
     const datos = { items: S.ticket.items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, variante: i.variante || '', serie: i.serie || '' })),
-      clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '', ordenId: S.ticket.ordenId || '', agendaId: S.ticket.agendaId || '' };
+      clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '', ordenId: S.ticket.ordenId || '', agendaId: S.ticket.agendaId || '', consultaId: S.ticket.consultaId || '' };
     if (modOn('comanda') && (S.ticket.servicio || S.ticket.mesa || S.ticket.cocina)) { datos.servicio = S.ticket.servicio || 'mesa'; datos.mesa = S.ticket.mesa || ''; datos.cocina = S.ticket.cocina || ''; }
     if (susOn()) { const sd = susDatosVenta(); if (sd.length) datos.sus = sd; }
     if (!S.ticket.clave) { S.ticket.clave = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); guardarTicket(); }
@@ -3520,7 +3606,7 @@ function abrirCobro() {
     S.productos = r.productos;
     if (S.ticket.clienteId) { const c = byId(S.clientes, S.ticket.clienteId); if (c) c.saldo = r.saldoCliente; }
     S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket();
-    S.inicio = null; S.pedidosL = null; S.susL = null; S.cuentasL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; guardarCache();
+    S.inicio = null; S.pedidosL = null; S.susL = null; S.cuentasL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; S.mascotasL = null; S.vacL = null; guardarCache();
     h.onClose = null; h.cerrar(); S.hCobro = null;
     if (S.hFact) { const f = S.hFact; f.onClose = null; S.hFact = null; f.cerrar(); }
     if (S.vista === 'vender') R.vender();
@@ -5110,6 +5196,14 @@ R.ajustes = () => {
     ${repMulti() ? `<label class="fld"><span>Caja con varias tiendas</span>${sel('cajaTienda', [['si', 'Una caja por tienda (cada una cuenta y cierra la suya)'], ['no', 'Una sola caja para todas']])}</label>` : ''}
     <label class="fld"><span>Mensaje al pie del comprobante</span><input data-k="mensajeRecibo" value="${v('mensajeRecibo')}" maxlength="120"></label>
     <button class="btn pri" data-a="guardarAj" data-s="negocio">Guardar</button>`);
+  if (adm && modOn('mascotas')) h += sec('vet', 'paw', 'Veterinaria: recetas y vacunas', `<p class="sm mut" style="margin:0 0 10px">Así salen tus recetas y los recordatorios de vacunas que mandas por WhatsApp.</p>
+    <div class="f2"><label class="fld"><span>Veterinario que firma las recetas</span><input data-k="vetNombre" value="${v('vetNombre')}" maxlength="80" placeholder="Ej. Dra. Andrea Paz"></label><label class="fld"><span>Registro profesional</span><input data-k="vetRegistro" value="${v('vetRegistro')}" maxlength="40" placeholder="Opcional"></label></div>
+    <div class="fld"><span>Firma (opcional)</span><div class="row"><div class="firma-prev">${c.vetFirma ? `<img src="${esc(c.vetFirma)}" alt="Firma">` : 'Sin firma'}</div><label class="btn">${ic('image', 18)} Subir firma<input type="file" accept="image/*" id="aj-firma" hidden></label>${c.vetFirma ? `<button class="btn ghost" data-a="quitarFirma">${ic('trash', 18)}</button>` : ''}</div><small class="hint">Firma en una hoja blanca y tómale una foto de cerca. Si no subes firma, sale tu nombre.</small></div>
+    <div class="f2"><label class="fld"><span>Diagnóstico en la receta</span>${sel('recetaDx', [['si', 'Sí, que aparezca'], ['no', 'No, solo los medicamentos']])}</label><label class="fld"><span>Avisar vacunas con anticipación de</span>${sel('vacAviso', [['3', '3 días'], ['5', '5 días'], ['7', '7 días'], ['10', '10 días'], ['15', '15 días'], ['30', '30 días']])}</label></div>
+    <p class="xs mut">En los mensajes puedes usar {cliente}, {mascota}, {vacuna}, {fecha} y {negocio}.</p>
+    <label class="fld"><span>Recordatorio de vacuna</span><textarea data-k="msjVacuna" rows="3" maxlength="600">${v('msjVacuna')}</textarea></label>
+    <label class="fld"><span>Cuando la vacuna ya está atrasada</span><textarea data-k="msjVacunaVencida" rows="3" maxlength="600">${v('msjVacunaVencida')}</textarea></label>
+    <button class="btn pri" data-a="guardarAj" data-s="vet">Guardar</button>`, c.vetNombre ? 'Firma: ' + esc(c.vetNombre) : 'Falta el nombre del veterinario');
   if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
   if (puede('admin', 'cajero')) h += sec('avisos', 'bell', 'Avisos en el teléfono', avisosAjustesHTML(), avisosOn() ? '<span class="badge b-ok">Activos</span>' : '');
   h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `<div class="temas">${Object.keys(TEMAS).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div><p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
@@ -5131,6 +5225,7 @@ R.ajustes = () => {
   $('#main').innerHTML = h;
   const lg = $('#aj-logo'); if (lg) lg.addEventListener('change', subirLogo);
   const df = $('#aj-dfoto'); if (df) df.addEventListener('change', subirDuenoFoto);
+  const fi = $('#aj-firma'); if (fi) fi.addEventListener('change', subirFirma);
   initSarAjustes();
   if (S.params.sec) { const el = $('#aj-' + S.params.sec); S.params.sec = ''; if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
 };
@@ -5249,6 +5344,16 @@ async function subirDuenoFoto(e) {
     S.config = c; guardarCache(); toast('Foto guardada', 'ok'); S.params.sec = 'dueno'; render();
   } catch (x) { err(x); }
 }
+async function subirFirma(e) {
+  const f = e.target.files[0]; if (!f) return;
+  try {
+    let d = await comprimirImagen(f, 420);
+    if (d.length > 46000) d = await comprimirImagen(f, 280);
+    const c = await api('guardar', { entidad: 'Config', registro: { vetFirma: d } });
+    S.config = c; guardarCache(); toast('Firma guardada', 'ok'); S.params.sec = 'vet'; render();
+  } catch (x) { err(x); }
+}
+ACC.quitarFirma = async () => { const c = await api('guardar', { entidad: 'Config', registro: { vetFirma: '' } }); S.config = c; guardarCache(); S.params.sec = 'vet'; render(); };
 ACC.quitarDuenoFoto = async () => { const c = await api('guardar', { entidad: 'Config', registro: { duenoFoto: '' } }); S.config = c; guardarCache(); S.params.sec = 'dueno'; render(); };
 async function subirLogo(e) {
   const f = e.target.files[0]; if (!f) return;
@@ -6147,9 +6252,9 @@ ACC.cbPaqueteExcel = async () => {
 };
 
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
-const API_MIN = '1.9.17'; // versión mínima del Code.gs que necesita esta app
+const API_MIN = '1.9.18'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
@@ -6158,10 +6263,31 @@ const MODULOS_INFO = {
   variantes:     { n: 'Talla y color al vender', d: 'Si el producto tiene opciones (talla, color…), al tocarlo en Vender eliges cuál y el ticket lo dice.', g: 'boutique, variedades' },
   encargos:      { n: 'Encargos con fecha de entrega', d: 'Pedidos por encargo con día, hora y anticipo; en Inicio ves las entregas de hoy.', g: 'panadería, repostería' },
   agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios' },
-  suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' }
+  suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' },
+  mascotas:      { n: 'Mascotas, recetas y vacunas', d: 'Expediente de cada mascota con su dueño, consultas con receta, carnet de vacunación y recordatorios por WhatsApp.', g: 'veterinaria' }
 };
 const modOn = k => !!S.config && (S.config[k] === 'si' || girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k)));
 const modDelGiro = k => !!S.config && girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k));
+// Órdenes de trabajo en veterinaria: «Hospedaje y estética» (la mascota entra, se atiende y se entrega)
+const vetOrd = () => !!S.config && girosOn().includes('veterinaria') && !girosOn().some(g => ['repuestos', 'servicios'].includes(g));
+const EST_ORD_VET = { recibido: 'Recibida', proceso: 'En atención', listo: 'Lista', entregado: 'Entregada', cancelado: 'Cancelada' };
+function estOrd(k) { const e = EST_ORD[k] || EST_ORD.recibido; return vetOrd() ? [EST_ORD_VET[k] || e[0], e[1]] : e; }
+function otx() {
+  if (vetOrd()) return { vet: true, proceso: 'En atención', paraEntregar: 'para recoger', nueva: 'Recibir mascota', buscar: 'Mascota, dueño o servicio…', ico: 'bed', vacio: 'Nadie en la clínica',
+    vacioTxt: 'Cuando recibas una mascota para baño, corte, hospedaje u observación, anótala aquí: queda con su servicio, sus indicaciones y su estado.', titulo: 'Recibir mascota',
+    equipo: 'Mascota', equipoEj: 'Ej. Canela', placa: 'Servicio', placaEj: 'Ej. Baño y corte, hospedaje 3 noches', falla: 'Indicaciones', fallaEj: 'Ej. Corte corto, sin perfume. Come 2 veces al día.',
+    dx: 'Cómo le fue / lo que se hizo', promesa: 'Sale o se entrega', precio: 'Precio', nota: 'Pertenencias', notaEj: 'Correa, cama, comida…', faltaEquipo: 'Escribe el nombre de la mascota', faltaFalla: 'Escribe las indicaciones',
+    tLista: 'Lista para recoger', tProceso: 'En atención', guardada: 'Guardado', creada: g => g.equipo + ' quedó recibida',
+    msjListo: o => `Hola ${o.cliente.split(' ')[0]} 👋 Te avisamos de ${S.config.nombre || 'la clínica'}: ${o.equipo} ya puede irse a casa 🐾${o.presupuesto ? ' Total: ' + money(o.presupuesto) + (o.anticipo ? ' (anticipo ' + money(o.anticipo) + ')' : '') + '.' : ''} Te esperamos.`,
+    msjRecibo: g => `*${S.config.nombre || ''}* · ${g.numero}\nRecibimos a: ${g.equipo}${g.placa ? '\nServicio: ' + g.placa : ''}\nIndicaciones: ${g.falla}${g.promesa ? '\nSale: ' + fFechaC(g.promesa) : ''}${g.presupuesto ? '\nPrecio: ' + money(g.presupuesto) : ''}${g.anticipo ? '\nAnticipo recibido: ' + money(g.anticipo) : ''}${g.nota ? '\nPertenencias: ' + g.nota : ''}\nTe avisamos cuando esté lista para recoger 🐾` };
+  return { vet: false, proceso: 'En proceso', paraEntregar: 'para entregar', nueva: 'Nueva orden', buscar: 'Cliente, equipo, placa…', ico: 'wrench', vacio: 'Sin órdenes todavía',
+    vacioTxt: 'Cuando recibas un equipo o vehículo, crea la orden: queda con su número, el cliente, la falla y su estado.', titulo: 'Nueva orden de trabajo',
+    equipo: 'Equipo o vehículo', equipoEj: 'Ej. Toyota Hilux 2015 / Laptop HP', placa: 'Placa / serie', placaEj: 'Opcional', falla: 'Falla o trabajo a realizar', fallaEj: 'Qué reporta el cliente o qué se va a hacer',
+    dx: 'Diagnóstico / trabajo realizado', promesa: 'Entrega prometida', precio: 'Presupuesto', nota: 'Nota', notaEj: '', faltaEquipo: 'Escribe qué equipo o vehículo recibes', faltaFalla: 'Describe la falla o el trabajo',
+    tLista: 'Orden lista para entregar', tProceso: 'Orden en proceso', guardada: 'Orden guardada', creada: g => 'Orden ' + g.numero + ' creada',
+    msjListo: o => `Hola ${o.cliente.split(' ')[0]} 👋 Tu ${o.equipo}${o.placa ? ' (' + o.placa + ')' : ''} ya está listo${o.presupuesto ? '. Total: ' + money(o.presupuesto) + (o.anticipo ? ' (anticipo ' + money(o.anticipo) + ')' : '') : ''}. Te esperamos en ${S.config.nombre || 'el taller'}.`,
+    msjRecibo: g => `*${S.config.nombre || ''}* · Orden ${g.numero}\nRecibimos: ${g.equipo}${g.placa ? ' (' + g.placa + ')' : ''}\nTrabajo: ${g.falla}${g.promesa ? '\nEntrega estimada: ' + fFechaC(g.promesa) : ''}${g.presupuesto ? '\nPresupuesto: ' + money(g.presupuesto) : ''}${g.anticipo ? '\nAnticipo recibido: ' + money(g.anticipo) : ''}\nTe avisamos cuando esté listo.` };
+}
 const EST_ORD = { recibido: ['Recibido', 'b-mut'], proceso: ['En proceso', 'b-warn'], listo: ['Listo', 'b-ok'], entregado: ['Entregado', 'b-mut'], cancelado: ['Cancelado', 'b-bad'] };
 const horaAv = h => { const t = fHoraC(h).split(' '); return `<span class="ha">${esc(t[0])}</span><span class="hb">${esc(t.slice(1).join(' '))}</span>`; };
 const fHoraC = h => { if (!h) return ''; const [hh, mm] = h.split(':').map(Number); return (hh % 12 || 12) + ':' + String(mm).padStart(2, '0') + (hh < 12 ? ' a. m.' : ' p. m.'); };
@@ -6222,7 +6348,7 @@ const garantiaHasta = (fecha, dias) => { if (!dias) return ''; const d = parseLo
 
 /* ---- Órdenes de trabajo ---- */
 R.ordenes = async () => {
-  const m = $('#main');
+  const m = $('#main'), OT = otx();
   if (!S.ordenesL) m.innerHTML = '<div class="empty">Cargando…</div>';
   const l = S.ordenesL = await api('ordenes', {}, !!S.ordenesL);
   if (S.vista !== 'ordenes') return;
@@ -6231,17 +6357,17 @@ R.ordenes = async () => {
   let lista = f === 'abiertas' ? l.filter(o => ['recibido', 'proceso', 'listo'].includes(o.estado)) : f === 'todas' ? l : l.filter(o => o.estado === f);
   if (q) lista = lista.filter(o => norm(o.cliente + ' ' + o.equipo + ' ' + o.placa + ' ' + o.numero + ' ' + o.falla).includes(q));
   const chip = (k, t) => `<button class="chip ${f === k ? 'on' : ''}" data-a="ordF" data-f="${k}">${t}</button>`;
-  m.innerHTML = `<div class="kpis k4"><div class="kpi"><small>Recibidas</small><b>${n('recibido')}</b><i>por revisar</i></div><div class="kpi" style="--k:var(--warn)"><small>En proceso</small><b>${n('proceso')}</b><i>${atr ? atr + ' atrasadas' : 'en tiempo'}</i></div><div class="kpi" style="--k:#00b56e"><small>Listas</small><b>${n('listo')}</b><i>para entregar</i></div><div class="kpi"><small>Entregadas</small><b>${n('entregado')}</b><i>últimos 90 días</i></div></div>
-    <div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="nuevaOrden">${ic('plus', 18)} Nueva orden</button><div class="srch grow">${ic('search', 18)}<input id="ord-q" placeholder="Cliente, equipo, placa…" value="${esc(S.f.ordQ || '')}"></div></div>
-    <div class="chips" style="margin-bottom:10px">${chip('abiertas', 'Abiertas')}${chip('recibido', 'Recibidas')}${chip('proceso', 'En proceso')}${chip('listo', 'Listas')}${chip('entregado', 'Entregadas')}${chip('todas', 'Todas')}</div>
-    ${lista.length ? lista.map(o => tarjetaOrden(o)).join('') : `<div class="empty-big">${ic('wrench', 40)}<h3>${l.length ? 'Nada por aquí' : 'Sin órdenes todavía'}</h3><p>${l.length ? 'Prueba con otro filtro.' : 'Cuando recibas un equipo o vehículo, crea la orden: queda con su número, el cliente, la falla y su estado.'}</p></div>`}`;
+  m.innerHTML = `<div class="kpis k4"><div class="kpi"><small>Recibidas</small><b>${n('recibido')}</b><i>por revisar</i></div><div class="kpi" style="--k:var(--warn)"><small>${OT.proceso}</small><b>${n('proceso')}</b><i>${atr ? atr + ' atrasadas' : 'en tiempo'}</i></div><div class="kpi" style="--k:#00b56e"><small>Listas</small><b>${n('listo')}</b><i>${OT.paraEntregar}</i></div><div class="kpi"><small>Entregadas</small><b>${n('entregado')}</b><i>últimos 90 días</i></div></div>
+    <div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="nuevaOrden">${ic('plus', 18)} ${OT.nueva}</button><div class="srch grow">${ic('search', 18)}<input id="ord-q" placeholder="${OT.buscar}" value="${esc(S.f.ordQ || '')}"></div></div>
+    <div class="chips" style="margin-bottom:10px">${chip('abiertas', 'Abiertas')}${chip('recibido', 'Recibidas')}${chip('proceso', OT.proceso)}${chip('listo', 'Listas')}${chip('entregado', 'Entregadas')}${chip('todas', 'Todas')}</div>
+    ${lista.length ? lista.map(o => tarjetaOrden(o)).join('') : `<div class="empty-big">${ic(OT.ico, 40)}<h3>${l.length ? 'Nada por aquí' : OT.vacio}</h3><p>${l.length ? 'Prueba con otro filtro.' : OT.vacioTxt}</p></div>`}`;
   const qi = $('#ord-q', m); if (qi) qi.addEventListener('input', () => { S.f.ordQ = qi.value; clearTimeout(S._ordT); S._ordT = setTimeout(() => R.ordenes(), 250); });
 };
 function tarjetaOrden(o) {
-  const e = EST_ORD[o.estado] || EST_ORD.recibido, h = hoy(), atr = ['recibido', 'proceso'].includes(o.estado) && o.promesa && o.promesa < h;
+  const e = estOrd(o.estado), OT = otx(), h = hoy(), atr = ['recibido', 'proceso'].includes(o.estado) && o.promesa && o.promesa < h;
   return `<div class="ord ${o.estado === 'listo' ? 'new' : ''}" data-a="verOrden" data-id="${o.id}"><div class="ord-h"><span class="oav ${colorDe(o.cliente)}">${esc(iniciales(o.cliente))}</span><div class="tx"><b>${esc(o.cliente)} · ${esc(o.equipo)}${o.placa ? ' · ' + esc(o.placa) : ''}</b><small>${esc(o.numero)} · ${esc(o.falla || '').slice(0, 60)}${o.promesa ? ` · ${atr ? '<b style="color:var(--bad)">prometida ' + fFechaC(o.promesa) + '</b>' : 'entrega ' + fFechaC(o.promesa)}` : ''}</small></div><span class="badge ${e[1]}">${e[0]}</span></div>
-    ${['recibido', 'proceso', 'listo'].includes(o.estado) ? `<div class="row" style="margin-top:10px">${o.estado === 'listo' && o.telefono ? `<a class="btn wa sm" href="${waLink(o.telefono, `Hola ${o.cliente.split(' ')[0]} 👋 Tu ${o.equipo}${o.placa ? ' (' + o.placa + ')' : ''} ya está listo${o.presupuesto ? '. Total: ' + money(o.presupuesto) + (o.anticipo ? ' (anticipo ' + money(o.anticipo) + ')' : '') : ''}. Te esperamos en ${S.config.nombre || 'el taller'}.`)}" target="_blank" rel="noopener">${ic('wa', 16)} Avisar</a>` : ''}
-      ${o.estado === 'recibido' ? `<button class="btn sm" data-a="ordEstado" data-id="${o.id}" data-e="proceso">${ic('refresh', 16)} En proceso</button>` : o.estado === 'proceso' ? `<button class="btn sm" data-a="ordEstado" data-id="${o.id}" data-e="listo">${ic('check', 16)} Listo</button>` : ''}
+    ${['recibido', 'proceso', 'listo'].includes(o.estado) ? `<div class="row" style="margin-top:10px">${o.estado === 'listo' && o.telefono ? `<a class="btn wa sm" href="${waLink(o.telefono, OT.msjListo(o))}" target="_blank" rel="noopener">${ic('wa', 16)} Avisar</a>` : ''}
+      ${o.estado === 'recibido' ? `<button class="btn sm" data-a="ordEstado" data-id="${o.id}" data-e="proceso">${ic('refresh', 16)} ${OT.proceso}</button>` : o.estado === 'proceso' ? `<button class="btn sm" data-a="ordEstado" data-id="${o.id}" data-e="listo">${ic('check', 16)} Listo</button>` : ''}
       ${o.estado === 'listo' && puede('admin', 'cajero') ? `<button class="btn sm pri" style="margin-left:auto" data-a="ordCobrar" data-id="${o.id}">${ic('cash', 16)} Cobrar${o.presupuesto ? ' · ' + money(Math.max(0, o.presupuesto - (o.anticipo || 0))) : ''}</button>` : ''}</div>` : ''}</div>`;
 }
 ACC.ordF = el => { S.f.ordF = el.dataset.f; R.ordenes(); };
@@ -6250,7 +6376,7 @@ ACC.verOrden = el => { const o = (S.ordenesL || []).find(x => x.id === el.datase
 ACC.ordEstado = async el => {
   const o = (S.ordenesL || []).find(x => x.id === el.dataset.id); if (!o) return;
   await api('ordenGuardar', { registro: { id: o.id, estado: el.dataset.e } });
-  S.ordenesL = null; S.inicio = null; toast(el.dataset.e === 'listo' ? 'Orden lista para entregar' : 'Orden en proceso', 'ok'); cerrarHojas(); if (S.vista === 'ordenes') R.ordenes(); else if (S.vista === 'inicio') R.inicio();
+  S.ordenesL = null; S.inicio = null; toast(el.dataset.e === 'listo' ? otx().tLista : otx().tProceso, 'ok'); cerrarHojas(); if (S.vista === 'ordenes') R.ordenes(); else if (S.vista === 'inicio') R.inicio();
 };
 ACC.ordCobrar = async el => {
   const o = (S.ordenesL || []).find(x => x.id === el.dataset.id); if (!o) return;
@@ -6260,34 +6386,35 @@ ACC.ordCobrar = async el => {
   guardarTicket(); cerrarHojas(); ir('vender'); abrirCobro();
 };
 function formOrden(o) {
-  const nuevo = !o; o = o || { estado: 'recibido' };
+  const nuevo = !o, OT = otx(); o = o || { estado: 'recibido' };
   const cli = o.clienteId ? byId(S.clientes, o.clienteId) : null;
-  const h = hoja({ titulo: nuevo ? 'Nueva orden de trabajo' : esc(o.numero), ancho: 1, foco: nuevo ? '#or-cli' : null, html: `
-    ${!nuevo ? `<div class="kv"><div><small>Estado</small><span class="badge ${EST_ORD[o.estado][1]}">${EST_ORD[o.estado][0]}</span></div><div><small>Recibido</small>${esc(fFechaC(o.creado))} · ${fHora(o.creado)}</div><div><small>Atendió</small>${esc(nomUsuario(o.usuarioId))}</div>${o.ventaId ? `<div><small>Cobrada</small>Sí</div>` : ''}</div>` : ''}
+  const h = hoja({ titulo: nuevo ? OT.titulo : esc(o.numero), ancho: 1, foco: nuevo ? '#or-cli' : null, html: `
+    ${!nuevo ? `<div class="kv"><div><small>Estado</small><span class="badge ${estOrd(o.estado)[1]}">${estOrd(o.estado)[0]}</span></div><div><small>Recibido</small>${esc(fFechaC(o.creado))} · ${fHora(o.creado)}</div><div><small>Atendió</small>${esc(nomUsuario(o.usuarioId))}</div>${o.ventaId ? `<div><small>Cobrada</small>Sí</div>` : ''}</div>` : ''}
     ${clienteCampo('or-cli', cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : o.cliente)}
-    ${!o.clienteId && nuevo ? '' : ''}<div class="f2"><label class="fld"><span>Equipo o vehículo *</span><input id="or-eq" maxlength="80" value="${esc(o.equipo || (cli && cli.equipo ? cli.equipo.split(' · ')[0] : ''))}" placeholder="Ej. Toyota Hilux 2015 / Laptop HP"></label><label class="fld"><span>Placa / serie</span><input id="or-pl" maxlength="80" value="${esc(o.placa || (cli && cli.equipo && cli.equipo.includes(' · ') ? cli.equipo.split(' · ')[1] : ''))}" placeholder="Opcional"></label></div>
-    <label class="fld"><span>Falla o trabajo a realizar *</span><textarea id="or-fa" rows="2" maxlength="400" placeholder="Qué reporta el cliente o qué se va a hacer">${esc(o.falla || '')}</textarea></label>
-    ${!nuevo ? `<label class="fld"><span>Diagnóstico / trabajo realizado</span><textarea id="or-dg" rows="2" maxlength="400">${esc(o.diagnostico || '')}</textarea></label>` : ''}
-    <div class="f3"><label class="fld"><span>Entrega prometida</span><input id="or-pr" type="date" value="${esc(o.promesa || '')}"></label><label class="fld"><span>Presupuesto</span><input id="or-pp" inputmode="decimal" value="${o.presupuesto ? o.presupuesto : ''}" placeholder="0.00"></label><label class="fld"><span>Anticipo</span><input id="or-an" inputmode="decimal" value="${o.anticipo ? o.anticipo : ''}" placeholder="0.00" ${!nuevo && o.anticipo ? 'readonly' : ''}></label></div>
-    <label class="fld"><span>Nota</span><input id="or-no" maxlength="400" value="${esc(o.nota || '')}"></label>
-    ${!nuevo ? `<div class="fld"><span>Estado</span><div class="pays">${['recibido', 'proceso', 'listo', 'entregado', 'cancelado'].map(k => `<button type="button" class="pay ${o.estado === k ? 'on' : ''}" data-e="${k}">${EST_ORD[k][0]}</button>`).join('')}</div></div>` : ''}` });
+    ${!o.clienteId && nuevo ? '' : ''}<div class="f2"><label class="fld"><span>${OT.equipo} *</span><input id="or-eq" maxlength="80" value="${esc(o.equipo || (!OT.vet && cli && cli.equipo ? cli.equipo.split(' · ')[0] : ''))}" placeholder="${OT.equipoEj}" ${OT.vet ? 'list="dl-or-eq" autocomplete="off"' : ''}>${OT.vet ? '<datalist id="dl-or-eq"></datalist>' : ''}</label><label class="fld"><span>${OT.placa}</span><input id="or-pl" maxlength="80" value="${esc(o.placa || (!OT.vet && cli && cli.equipo && cli.equipo.includes(' · ') ? cli.equipo.split(' · ')[1] : ''))}" placeholder="${OT.placaEj}" ${OT.vet ? 'list="dl-or-pl" autocomplete="off"' : ''}>${OT.vet ? `<datalist id="dl-or-pl">${S.productos.filter(p => p.activo && p.tipo === 'servicio').map(p => `<option value="${esc(p.nombre)}">`).join('')}</datalist>` : ''}</label></div>
+    <label class="fld"><span>${OT.falla} *</span><textarea id="or-fa" rows="2" maxlength="400" placeholder="${OT.fallaEj}">${esc(o.falla || '')}</textarea></label>
+    ${!nuevo ? `<label class="fld"><span>${OT.dx}</span><textarea id="or-dg" rows="2" maxlength="400">${esc(o.diagnostico || '')}</textarea></label>` : ''}
+    <div class="f3"><label class="fld"><span>${OT.promesa}</span><input id="or-pr" type="date" value="${esc(o.promesa || '')}"></label><label class="fld"><span>${OT.precio}</span><input id="or-pp" inputmode="decimal" value="${o.presupuesto ? o.presupuesto : ''}" placeholder="0.00"></label><label class="fld"><span>Anticipo</span><input id="or-an" inputmode="decimal" value="${o.anticipo ? o.anticipo : ''}" placeholder="0.00" ${!nuevo && o.anticipo ? 'readonly' : ''}></label></div>
+    <label class="fld"><span>${OT.nota}</span><input id="or-no" maxlength="400" value="${esc(o.nota || '')}" placeholder="${OT.notaEj}"></label>
+    ${!nuevo ? `<div class="fld"><span>Estado</span><div class="pays">${['recibido', 'proceso', 'listo', 'entregado', 'cancelado'].map(k => `<button type="button" class="pay ${o.estado === k ? 'on' : ''}" data-e="${k}">${estOrd(k)[0]}</button>`).join('')}</div></div>` : ''}` });
   let estado = o.estado;
+  if (OT.vet) vetEnlazarOrden(h);
   if (!nuevo) $$('[data-e]', h.el).forEach(b => b.addEventListener('click', () => { estado = b.dataset.e; $$('[data-e]', h.el).forEach(x => x.classList.toggle('on', x === b)); }));
   const bs = [];
-  if (!nuevo && o.telefono && o.estado === 'listo') bs.push({ t: ic('wa', 18), cls: 'wa icon', fn: () => window.open(waLink(o.telefono, `Hola ${o.cliente.split(' ')[0]} 👋 Tu ${o.equipo} ya está listo. Te esperamos en ${S.config.nombre || 'el taller'}.`), '_blank') });
-  bs.push({ t: nuevo ? 'Crear orden' : 'Guardar', cls: 'pri', fn: async () => {
+  if (!nuevo && o.telefono && o.estado === 'listo') bs.push({ t: ic('wa', 18), cls: 'wa icon', fn: () => window.open(waLink(o.telefono, OT.msjListo(o)), '_blank') });
+  bs.push({ t: nuevo ? (OT.vet ? 'Recibir' : 'Crear orden') : 'Guardar', cls: 'pri', fn: async () => {
     const c = clienteLeer($('#or-cli', h.el), o);
     if (!c.cliente) throw new Error('Escribe el nombre del cliente');
     const reg = Object.assign({ id: o.id, equipo: $('#or-eq', h.el).value.trim(), placa: $('#or-pl', h.el).value.trim(), falla: $('#or-fa', h.el).value.trim(), promesa: $('#or-pr', h.el).value, presupuesto: r2($('#or-pp', h.el).value), nota: $('#or-no', h.el).value.trim(), estado }, c);
     if (nuevo || !o.anticipo) reg.anticipo = r2($('#or-an', h.el).value);
     if (!nuevo) reg.diagnostico = $('#or-dg', h.el).value.trim();
-    if (!reg.equipo) throw new Error('Escribe qué equipo o vehículo recibes');
-    if (!reg.falla) throw new Error('Describe la falla o el trabajo');
+    if (!reg.equipo) throw new Error(OT.faltaEquipo);
+    if (!reg.falla) throw new Error(OT.faltaFalla);
     if (!reg.id) delete reg.id;
     const g = await api('ordenGuardar', { registro: reg });
-    S.ordenesL = null; S.inicio = null; h.cerrar(); toast(nuevo ? 'Orden ' + g.numero + ' creada' : 'Orden guardada', 'ok');
+    S.ordenesL = null; S.inicio = null; h.cerrar(); toast(nuevo ? OT.creada(g) : OT.guardada, 'ok');
     if (S.vista === 'ordenes') R.ordenes(); else if (S.vista === 'inicio') R.inicio();
-    if (nuevo && g.telefono) { if (await confirmar(`¿Enviar al cliente el comprobante de recepción por WhatsApp?`, { si: 'Enviar' })) window.open(waLink(g.telefono, `*${S.config.nombre || ''}* · Orden ${g.numero}\nRecibimos: ${g.equipo}${g.placa ? ' (' + g.placa + ')' : ''}\nTrabajo: ${g.falla}${g.promesa ? '\nEntrega estimada: ' + fFechaC(g.promesa) : ''}${g.presupuesto ? '\nPresupuesto: ' + money(g.presupuesto) : ''}${g.anticipo ? '\nAnticipo recibido: ' + money(g.anticipo) : ''}\nTe avisamos cuando esté listo.`), '_blank'); }
+    if (nuevo && g.telefono) { if (await confirmar(`¿Enviar al cliente el comprobante de recepción por WhatsApp?`, { si: 'Enviar' })) window.open(waLink(g.telefono, OT.msjRecibo(g)), '_blank'); }
   } });
   h.botones(bs);
 }
@@ -6315,28 +6442,37 @@ async function pintarAgenda(tipo) {
 }
 function filaAgenda(a, C, conDia) {
   const cerrado = a.estado !== 'pendiente';
-  return `<div class="li ${cerrado ? 'anul' : ''}" data-a="verAgenda" data-id="${a.id}" data-t="${a.tipo}"><div class="av ${cerrado ? 't-mut' : colorDe(a.cliente)}" style="${cerrado ? 'background:var(--line);color:var(--mut)' : ''}">${a.hora ? horaAv(a.hora) : esc(iniciales(a.cliente))}</div><div class="tx"><b>${esc(a.cliente)}</b><small>${conDia ? esc(fFechaC(a.dia)) + ' · ' : ''}${esc(a.detalle)}${a.atiende ? ' · ' + esc(a.atiende) : ''}${a.anticipo ? ' · anticipo ' + money(a.anticipo) : ''}</small></div><div class="am">${cerrado ? `<span class="badge b-mut">${a.estado === 'cancelado' ? 'Cancelado' : C.listo}</span>` : a.monto ? `<b class="n">${money(a.monto)}</b>` : ''}</div></div>`;
+  return `<div class="li ${cerrado ? 'anul' : ''}" data-a="verAgenda" data-id="${a.id}" data-t="${a.tipo}"><div class="av ${cerrado ? 't-mut' : colorDe(a.cliente)}" style="${cerrado ? 'background:var(--line);color:var(--mut)' : ''}">${a.hora ? horaAv(a.hora) : esc(iniciales(a.cliente))}</div><div class="tx"><b>${esc(a.mascota ? a.mascota + ' · ' + a.cliente : a.cliente)}</b><small>${conDia ? esc(fFechaC(a.dia)) + ' · ' : ''}${esc(a.detalle)}${a.atiende ? ' · ' + esc(a.atiende) : ''}${a.anticipo ? ' · anticipo ' + money(a.anticipo) : ''}</small></div><div class="am">${cerrado ? `<span class="badge b-mut">${a.estado === 'cancelado' ? 'Cancelado' : C.listo}</span>` : a.monto ? `<b class="n">${money(a.monto)}</b>` : ''}</div></div>`;
 }
 R.agenda = () => pintarAgenda('cita');
 R.encargos = () => pintarAgenda('encargo');
 ACC.agDia = el => { S.f['ag_' + el.dataset.t + 'd'] = el.dataset.d; pintarAgenda(el.dataset.t); };
-ACC.nuevaAgenda = el => formAgenda(null, el.dataset.t);
+ACC.nuevaAgenda = el => formAgenda(null, el.dataset.t || 'cita');
 ACC.verAgenda = el => { const k = 'ag_' + el.dataset.t, a = (S[k] || []).concat(S[k + 'x'] || []).find(x => x.id === el.dataset.id); if (a) formAgenda(a, a.tipo); };
-function formAgenda(a, tipo) {
-  const C = agendaCfg(tipo), nuevo = !a; a = a || { tipo, dia: S.f['ag_' + tipo + 'd'] || hoy(), estado: 'pendiente' };
-  const cli = a.clienteId ? byId(S.clientes, a.clienteId) : null, serv = S.productos.filter(p => p.activo && (tipo === 'cita' ? p.tipo === 'servicio' : true)).sort((x, y) => x.nombre.localeCompare(y.nombre));
-  const h = hoja({ titulo: nuevo ? C.nuevo : (C.uno === 'cita' ? 'Cita' : 'Encargo') + ' · ' + esc(a.cliente), ancho: 1, foco: nuevo ? '#ag-cli' : null, html: `
+function formAgenda(a, tipo, pre) {
+  const C = agendaCfg(tipo), nuevo = !a; a = a || Object.assign({ tipo, dia: S.f['ag_' + tipo + 'd'] || hoy(), estado: 'pendiente' }, pre || {});
+  const vetAg = tipo === 'cita' && modOn('mascotas'), maIni = a.mascota ? a.mascota + (a.cliente ? ' · ' + a.cliente : '') : '';
+  const cli = a.clienteId ? byId(S.clientes, a.clienteId) : null, serv = S.productos.filter(p => p.activo && (tipo === 'cita' ? p.tipo === 'servicio' || (modOn('mascotas') && (esVacuna(p) || esDesparasit(p))) : true)).sort((x, y) => x.nombre.localeCompare(y.nombre)); // veterinaria: también vacunas y desparasitantes
+  const h = hoja({ titulo: nuevo ? C.nuevo : (C.uno === 'cita' ? 'Cita' : 'Encargo') + ' · ' + esc(a.mascota || a.cliente), ancho: 1, foco: nuevo ? (vetAg && !a.mascota ? '#ag-ma' : '#ag-cli') : null, html: `
+    ${vetAg ? `<label class="fld"><span>Mascota</span><input id="ag-ma" list="dl-ag-ma" maxlength="80" value="${esc(maIni)}" placeholder="Busca la mascota o su dueño" autocomplete="off"><datalist id="dl-ag-ma"></datalist></label>` : ''}
     ${clienteCampo('ag-cli', cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : a.cliente)}
     <div class="f2"><label class="fld"><span>Día *</span><input id="ag-d" type="date" value="${esc(a.dia)}"></label><label class="fld"><span>Hora</span><input id="ag-h" type="time" value="${esc(a.hora || '')}"></label></div>
     <label class="fld"><span>${C.que} *</span><input id="ag-q" list="dl-ag" maxlength="400" value="${esc(a.detalle || '')}" placeholder="${esc(C.queEj)}" autocomplete="off"><datalist id="dl-ag">${serv.map(p => `<option value="${esc(p.nombre)}">`).join('')}</datalist></label>
     <div class="f3"><label class="fld"><span>Precio</span><input id="ag-m" inputmode="decimal" value="${a.monto ? a.monto : ''}" placeholder="0.00"></label>${tipo === 'encargo' ? `<label class="fld"><span>Anticipo</span><input id="ag-an" inputmode="decimal" value="${a.anticipo ? a.anticipo : ''}" placeholder="0.00"></label>` : `<label class="fld"><span>Quién atiende</span><input id="ag-at" list="dl-at" maxlength="80" value="${esc(a.atiende || '')}" autocomplete="off"><datalist id="dl-at">${S.usuarios.filter(u => u.activo).map(u => `<option value="${esc(u.nombre)}">`).join('')}</datalist></label>`}<label class="fld"><span>Nota</span><input id="ag-n" maxlength="400" value="${esc(a.nota || '')}"></label></div>
     ${!nuevo && a.estado !== 'pendiente' ? `<p class="sm mut">Estado: <b>${a.estado === 'cancelado' ? 'Cancelado' : C.listo}</b>${a.ventaId ? ' · cobrado' : ''}</p>` : ''}` });
   $('#ag-q', h.el).addEventListener('change', () => { const p = serv.find(x => x.nombre === $('#ag-q', h.el).value.trim()); if (p && !$('#ag-m', h.el).value) $('#ag-m', h.el).value = p.precio; });
+  // Veterinaria: al elegir la mascota, su dueño queda como cliente de la cita
+  const petDe = v => (S.mascotasL || []).find(x => x.activo && (etiquetaPet(x) === v || (x.nombre === v && (S.mascotasL || []).filter(y => y.nombre === v).length === 1)));
+  if (vetAg) {
+    vetMascotas().then(l => { const dl = $('#dl-ag-ma', h.el); if (dl) dl.innerHTML = l.filter(x => x.activo).map(x => `<option value="${esc(etiquetaPet(x))}">`).join(''); }).catch(() => {});
+    $('#ag-ma', h.el).addEventListener('change', () => { const x = petDe($('#ag-ma', h.el).value.trim()); if (!x) return; const c = byId(S.clientes, x.clienteId); if (c) $('#ag-cli', h.el).value = c.nombre + (c.telefono ? ' · ' + c.telefono : ''); });
+  }
   const guardar = async extra => {
     const c = clienteLeer($('#ag-cli', h.el), a);
     if (!c.cliente) throw new Error('Escribe el nombre del cliente');
     const reg = Object.assign({ id: a.id, tipo, dia: $('#ag-d', h.el).value, hora: $('#ag-h', h.el).value, detalle: $('#ag-q', h.el).value.trim(), monto: r2($('#ag-m', h.el).value), nota: $('#ag-n', h.el).value.trim() }, c, extra || {});
     const p = serv.find(x => x.nombre === reg.detalle); reg.productoId = p ? p.id : '';
+    if (vetAg) { const v = $('#ag-ma', h.el).value.trim(), x = v && v !== maIni ? petDe(v) : null; if (v && v !== maIni && !x) throw new Error('Elige la mascota de la lista o regístrala en Mascotas'); reg.mascotaId = !v ? '' : x ? x.id : (a.mascotaId || ''); if (x) { const c = byId(S.clientes, x.clienteId); if (c) Object.assign(reg, { clienteId: c.id, cliente: c.nombre, telefono: c.telefono }); } }
     if ($('#ag-an', h.el)) reg.anticipo = r2($('#ag-an', h.el).value);
     if ($('#ag-at', h.el)) reg.atiende = $('#ag-at', h.el).value.trim();
     if (!reg.dia) throw new Error('Elige el día');
@@ -6349,9 +6485,17 @@ function formAgenda(a, tipo) {
   };
   const bs = [];
   if (!nuevo && a.estado === 'pendiente') {
-    if (a.telefono) bs.push({ t: ic('wa', 18), cls: 'wa icon', fn: () => window.open(waLink(a.telefono, tipo === 'cita' ? `Hola ${a.cliente.split(' ')[0]} 👋 Te recordamos tu cita en ${S.config.nombre || ''}: ${diaTxt(a.dia).toLowerCase() === 'hoy' ? 'hoy' : fFechaC(a.dia)}${a.hora ? ' a las ' + fHoraC(a.hora) : ''} · ${a.detalle}${a.atiende ? ' con ' + a.atiende : ''}. ¡Te esperamos!` : `Hola ${a.cliente.split(' ')[0]} 👋 Tu encargo en ${S.config.nombre || ''} (${a.detalle}) estará listo ${fFechaC(a.dia)}${a.hora ? ' a las ' + fHoraC(a.hora) : ''}.${a.monto ? ' Total ' + money(a.monto) + (a.anticipo ? ' · anticipo ' + money(a.anticipo) : '') : ''}`), '_blank') });
+    if (a.telefono) bs.push({ t: ic('wa', 18), cls: 'wa icon', fn: () => window.open(waLink(a.telefono, tipo === 'cita' ? `Hola ${a.cliente.split(' ')[0]} 👋 Te recordamos ${a.mascota ? 'la cita de ' + a.mascota : 'tu cita'} en ${S.config.nombre || ''}: ${diaTxt(a.dia).toLowerCase() === 'hoy' ? 'hoy' : fFechaC(a.dia)}${a.hora ? ' a las ' + fHoraC(a.hora) : ''} · ${a.detalle}${a.atiende ? ' con ' + a.atiende : ''}. ¡Te esperamos!` : `Hola ${a.cliente.split(' ')[0]} 👋 Tu encargo en ${S.config.nombre || ''} (${a.detalle}) estará listo ${fFechaC(a.dia)}${a.hora ? ' a las ' + fHoraC(a.hora) : ''}.${a.monto ? ' Total ' + money(a.monto) + (a.anticipo ? ' · anticipo ' + money(a.anticipo) : '') : ''}`), '_blank') });
     bs.push({ t: ic('x', 18), cls: 'bad icon', fn: async () => { if (!(await confirmar('¿Cancelar?', { si: 'Sí, cancelar', peligro: 1 }))) return; await guardar({ estado: 'cancelado' }); toast('Cancelado', 'ok'); } });
-    if (puede('admin', 'cajero')) bs.push({ t: `${ic('cash', 16)} Cobrar`, cls: 'acc', fn: async () => {
+    if (vetAg && puede('admin', 'cajero')) bs.push({ t: `${ic('steth', 16)} Atender`, cls: 'acc', fn: async () => {
+      const g = await guardar();
+      if (!g.mascotaId) throw new Error('Elige la mascota de la cita');
+      await abrirExpediente(g.mascotaId);
+      const p = g.productoId ? byId(S.productos, g.productoId) : null, pr = num(g.monto) || (p ? p.precio : 0), vc = vacDeProducto(p, pr);
+      // Si la cita era de una vacuna o desparasitación, entra como vacuna (queda en el carnet con su próxima fecha)
+      formConsulta(S.exp.d, null, vc ? { agendaId: g.id, motivo: g.detalle, vacuna: vc } : { agendaId: g.id, motivo: g.detalle, items: pr ? [{ productoId: p ? p.id : '', descripcion: p ? p.nombre : g.detalle, cantidad: 1, precio: pr }] : [] });
+    } });
+    else if (puede('admin', 'cajero')) bs.push({ t: `${ic('cash', 16)} Cobrar`, cls: 'acc', fn: async () => {
       const g = await guardar();
       if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo?', { si: 'Reemplazar' }))) return;
       const p = g.productoId ? byId(S.productos, g.productoId) : null, total = num(g.monto) || (p ? p.precio : 0);
@@ -6372,10 +6516,518 @@ function modulosAjustesHTML() {
 
 ACC.verAgendaInicio = async el => { const t = el.dataset.t; if (!S['ag_' + t]) S['ag_' + t] = await api('agenda', { tipo: t }, true); const a = S['ag_' + t].find(x => x.id === el.dataset.id); if (a) formAgenda(a, t); };
 
+/* ===================== VETERINARIA: mascotas, expediente, consulta, receta, carnet y vacunas ===================== */
+// Lo mejor de cada programa: agenda (Salón), recordatorios por WhatsApp (streaming), hospedaje y estética como órdenes (taller),
+// caducidad (farmacia) y documentos elegantes para el cliente (Eventos). Lo que se usa en la consulta se cobra con una venta normal.
+const parseJ = (s, def) => { try { return s ? (typeof s === 'string' ? JSON.parse(s) : s) : def; } catch (e) { return def; } };
+const minus1 = s => s ? s.charAt(0).toLowerCase() + s.slice(1) : '';
+const ESPECIES = [['Perro', '🐶'], ['Gato', '🐱'], ['Ave', '🐦'], ['Conejo', '🐰'], ['Hámster', '🐹'], ['Tortuga', '🐢'], ['Pez', '🐟'], ['Otra', '🐾']];
+const emoEsp = e => (ESPECIES.find(x => norm(x[0]) === norm(e)) || ESPECIES[ESPECIES.length - 1])[1];
+const petAv = (m, cls) => `<div class="av pet ${cls || ''}"><span class="emo">${emoEsp(m && m.especie)}</span></div>`;
+const vacDias = () => Math.max(1, Math.min(30, parseInt(S.config.vacAviso, 10) || 7));
+const diasHasta = f => Math.round((parseLocal(String(f).slice(0, 10)) - parseLocal(hoy())) / 864e5);
+const fDiaCorto = f => { if (!f) return ''; const d = parseLocal(String(f).slice(0, 10)); return d.toLocaleDateString('es-HN', d.getFullYear() === new Date().getFullYear() ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' }); };
+const kg = n => cant(n) + ' kg';
+const VIAS = ['Oral', 'Ótica', 'Oftálmica', 'Tópica', 'Inyectable', 'Otra'];
+const CADAS = ['4 h', '6 h', '8 h', '12 h', '24 h', 'Una vez'];
+const TIPO_CONS = { consulta: ['Consulta', 'steth', 't-pri'], control: ['Control', 'steth', 't-pri'], vacuna: ['Vacunación', 'syringe', 't-verde'], estetica: ['Estética', 'bed', 't-cian'], cirugia: ['Cirugía', 'steth', 't-rojo'], nota: ['Nota', 'edit', 't-morado'] };
+function edadTxt(n) {
+  if (!n) return '';
+  const a = parseLocal(n), h = new Date();
+  let meses = (h.getFullYear() - a.getFullYear()) * 12 + h.getMonth() - a.getMonth();
+  if (h.getDate() < a.getDate()) meses--;
+  if (meses < 0) return '';
+  if (meses < 1) { const d = Math.max(0, Math.floor((h - a) / 864e5)); return d === 1 ? '1 día' : d + ' días'; }
+  if (meses < 24) return meses === 1 ? '1 mes' : meses + ' meses';
+  return Math.floor(meses / 12) + ' años';
+}
+// Instrucción en palabras sencillas para el dueño: «4 gotas en el oído derecho, cada 12 horas durante 7 días.»
+function medFrase(x) {
+  const via = { oral: 'por la boca', otica: 'en el oído', oftalmica: 'en el ojo', topica: 'sobre la piel', inyectable: 'inyectado' }[norm(x.via)] || '';
+  const cada = x.cada === 'Una vez' ? 'una sola vez' : x.cada === '24 h' ? 'una vez al día' : x.cada ? 'cada ' + x.cada.replace(' h', ' horas') : '';
+  const t = [x.dosis, x.ind || via].filter(Boolean).join(' ');
+  return cap([t, cada + (x.dias && x.cada !== 'Una vez' ? ' durante ' + x.dias + (x.dias === 1 ? ' día' : ' días') : '')].filter(Boolean).join(', ')) + '.';
+}
+// Aviso de alergia: compara con lo anotado en el expediente y con familias de medicamentos conocidas
+const FAM_MED = [['las penicilinas', /penicil|amoxicil|ampicil|cloxacil|oxacil|piperacil/], ['las cefalosporinas', /cefal|cefa[dlz]|cefo|cefp|ceftri|cefur|cefov/],
+  ['las sulfas', /sulfa|trimetoprim/], ['los antiinflamatorios (AINE)', /aine|antiinflamatorio|meloxicam|carprofen|firocoxib|ketoprofen|robenacoxib|aspirin|ibuprofen|diclofenac|flunixin|metamizol|dipirona/],
+  ['las ivermectinas', /ivermectin|milbemicin|moxidectin|selamectin/], ['las tetraciclinas', /tetracicl|doxicicl|minocicl/], ['las quinolonas', /floxacin|quinolon/]];
+function alergiaMed(alergias, med) {
+  const a = norm(alergias), m = norm(med);
+  if (!a || !m) return '';
+  const fam = FAM_MED.find(f => f[1].test(a) && f[1].test(m));
+  if (fam) return `${cap(med)} es de la familia de ${fam[0]}.`;
+  const pal = a.split(/[^a-z0-9]+/).filter(w => w.length >= 5 && !['alergico', 'alergica', 'alergia', 'alergias', 'reaccion', 'intolerante'].includes(w));
+  return pal.some(w => m.includes(w)) ? `${cap(med)} coincide con lo anotado en sus alergias.` : '';
+}
+async function vetMascotas(forzar) {
+  if (!S.mascotasL || forzar) S.mascotasL = await api('mascotas', {}, true);
+  return S.mascotasL;
+}
+const etiquetaPet = x => x.nombre + (x.dueno ? ' · ' + x.dueno : '');
+
+/* ---- Lista de mascotas ---- */
+R.mascotas = async () => {
+  const m = $('#main');
+  if (!S.mascotasL) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const l = S.mascotasL = await api('mascotas', {}, !!S.mascotasL);
+  if (S.vista !== 'mascotas') return;
+  const f = S.f.mascF || 'todas', q = norm(S.f.mascQ || ''), act = l.filter(x => x.activo);
+  const pendV = x => x.vacuna && diasHasta(x.vacuna.proxima) <= vacDias();
+  const esp = x => norm(x.especie);
+  const grupos = { todas: act, perro: act.filter(x => esp(x) === 'perro'), gato: act.filter(x => esp(x) === 'gato'), otras: act.filter(x => !['perro', 'gato'].includes(esp(x))), vacuna: act.filter(pendV), clinica: act.filter(x => x.clinica), inactivas: l.filter(x => !x.activo) };
+  let lista = grupos[f] || act;
+  if (q) lista = lista.filter(x => norm([x.nombre, x.raza, x.especie, x.dueno, x.telefono, x.chip].join(' ')).includes(q));
+  const chip = (k, t) => grupos[k].length || k === 'todas' ? `<button class="chip ${f === k ? 'on' : ''}" data-a="mascF" data-f="${k}">${t} <span class="c">${grupos[k].length}</span></button>` : '';
+  m.innerHTML = `<div class="row" style="margin-bottom:10px"><div class="srch grow">${ic('search', 18)}<input id="ma-q" placeholder="Mascota, dueño o teléfono" value="${esc(S.f.mascQ || '')}"></div><button class="btn pri" data-a="nuevaMascota">${ic('plus', 18)} Nueva</button></div>
+    <div class="chips" style="margin-bottom:10px">${chip('todas', 'Todas')}${chip('perro', '🐶 Perros')}${chip('gato', '🐱 Gatos')}${chip('otras', 'Otras')}${chip('vacuna', 'Vacuna pendiente')}${chip('clinica', 'En la clínica')}${chip('inactivas', 'Inactivas')}</div>
+    ${lista.length ? `<div class="list">${lista.slice(0, 300).map(filaMascota).join('')}</div>` : `<div class="empty-big">${ic('paw', 40)}<h3>${l.length ? 'Nada por aquí' : 'Todavía no hay mascotas'}</h3><p>${l.length ? 'Prueba con otra búsqueda.' : 'Registra cada mascota con su dueño: ahí queda su historial, sus vacunas y sus recetas.'}</p>${l.length ? '' : `<button class="btn pri" data-a="nuevaMascota">${ic('plus', 18)} Nueva mascota</button>`}</div>`}`;
+  const qi = $('#ma-q', m); qi.addEventListener('input', () => { S.f.mascQ = qi.value; clearTimeout(S._maT); S._maT = setTimeout(() => R.mascotas().then(() => { const x = $('#ma-q'); if (x) { x.focus(); x.setSelectionRange(x.value.length, x.value.length); } }), 250); });
+};
+function filaMascota(x) {
+  const dv = x.vacuna ? diasHasta(x.vacuna.proxima) : null, dc = x.control ? diasHasta(x.control) : null;
+  const badge = !x.activo ? '<span class="badge b-mut">Inactiva</span>'
+    : x.clinica ? `<span class="badge b-info">${x.clinica === 'listo' ? 'Lista para recoger' : 'En la clínica'}</span>`
+    : dv !== null && dv < 0 ? '<span class="badge b-bad">Vacuna vencida</span>'
+    : dv !== null && dv <= vacDias() ? `<span class="badge b-warn">${dv === 0 ? 'Vacuna hoy' : 'Vacuna ' + fDiaCorto(x.vacuna.proxima)}</span>`
+    : dc !== null && dc <= 14 ? `<span class="badge b-warn">Control ${fDiaCorto(x.control)}</span>`
+    : x.vacuna ? '<span class="badge b-ok">Al día</span>' : '';
+  return `<div class="li" data-a="verMascota" data-id="${x.id}">${petAv(x)}<div class="tx"><b>${esc(x.nombre)}</b><small>${esc([x.raza || x.especie, edadTxt(x.nacimiento)].filter(Boolean).join(' · '))}${x.dueno ? ' · <span class="ow">' + esc(x.dueno) + '</span>' : ''}</small></div><div class="am">${badge}</div></div>`;
+}
+ACC.mascF = el => { S.f.mascF = el.dataset.f; R.mascotas(); };
+ACC.nuevaMascota = () => formMascota(null, x => abrirExpediente(x.id));
+ACC.verMascota = el => abrirExpediente(el.dataset.id);
+
+/* ---- Registrar o editar una mascota ---- */
+function formMascota(x, onSave, pre) {
+  const nuevo = !x; x = x || Object.assign({ especie: 'Perro', activo: true }, pre || {});
+  const cli = x.clienteId ? byId(S.clientes, x.clienteId) : null;
+  let especie = x.especie || 'Perro', sexo = x.sexo || '', ester = x.esterilizado || '';
+  const h = hoja({ titulo: nuevo ? 'Nueva mascota' : 'Editar · ' + esc(x.nombre), ancho: 1, foco: nuevo ? '#ma-n' : null, html: `
+    <label class="fld"><span>Nombre de la mascota *</span><input id="ma-n" maxlength="60" value="${esc(x.nombre || '')}" placeholder="Ej. Max"></label>
+    <div class="fld"><span>Especie</span><div class="chips wrap" id="ma-e">${ESPECIES.map(([e, em]) => `<button type="button" class="chip ${norm(especie) === norm(e) ? 'on' : ''}" data-e="${e}">${em} ${e}</button>`).join('')}</div></div>
+    <div class="f2 lado"><label class="fld"><span>Raza</span><input id="ma-r" maxlength="60" value="${esc(x.raza || '')}" placeholder="Ej. Mestizo"></label><label class="fld"><span>Color</span><input id="ma-c" maxlength="60" value="${esc(x.color || '')}"></label></div>
+    <div class="f2 lado"><div class="fld"><span>Sexo</span><div class="seg full" id="ma-s"><button type="button" class="${sexo === 'Macho' ? 'on' : ''}" data-v="Macho">Macho</button><button type="button" class="${sexo === 'Hembra' ? 'on' : ''}" data-v="Hembra">Hembra</button></div></div>
+      <div class="fld"><span>Esterilizado</span><div class="seg full" id="ma-es"><button type="button" class="${ester === 'si' ? 'on' : ''}" data-v="si">Sí</button><button type="button" class="${ester === 'no' ? 'on' : ''}" data-v="no">No</button></div></div></div>
+    <div class="f2 lado"><label class="fld"><span>Nacimiento (aprox.)</span><input id="ma-na" type="date" max="${hoy()}" value="${esc(x.nacimiento || '')}"></label><label class="fld"><span>Peso (kg)</span><input id="ma-p" inputmode="decimal" value="${x.peso ? x.peso : ''}" placeholder="0.0"></label></div>
+    <label class="fld"><span>Alergias o condiciones importantes</span><input id="ma-al" maxlength="300" value="${esc(x.alergias || '')}" placeholder="Ej. Alérgico a la penicilina"></label>
+    <label class="fld"><span>Dueño *</span><div class="input-row"><input id="ma-du" list="dl-ma-du" maxlength="80" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '')}" placeholder="Nombre o busca un cliente" autocomplete="off"><button class="btn icon" type="button" data-a="nuevoClienteCampo" data-t="ma-du" title="Nuevo cliente">${ic('userplus')}</button></div><datalist id="dl-ma-du">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist></label>
+    <label class="fld" id="ma-tw"><span>WhatsApp del dueño</span><input id="ma-tel" type="tel" inputmode="tel" maxlength="30" placeholder="9876-5432"><small class="hint">Solo si es un dueño nuevo: queda guardado en Clientes.</small></label>
+    <div class="f2 lado"><label class="fld"><span>Microchip</span><input id="ma-ch" maxlength="60" value="${esc(x.chip || '')}" placeholder="Opcional"></label><label class="fld"><span>Notas</span><input id="ma-no" maxlength="300" value="${esc(x.notas || '')}" placeholder="Opcional"></label></div>
+    ${!nuevo ? `<label class="chk"><input type="checkbox" id="ma-ac" ${x.activo ? 'checked' : ''}> Mascota activa (desmárcala si ya no viene o falleció)</label>` : ''}` });
+  const grupo = (sel, fn) => $(sel, h.el).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; fn(b); $$(sel + ' button', h.el).forEach(y => y.classList.toggle('on', y === b)); });
+  grupo('#ma-e', b => { especie = b.dataset.e; }); grupo('#ma-s', b => { sexo = b.dataset.v; }); grupo('#ma-es', b => { ester = b.dataset.v; });
+  const du = $('#ma-du', h.el), tw = $('#ma-tw', h.el);
+  const verTel = () => { const c = clienteLeer(du, { clienteId: x.clienteId, cliente: cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '' }); tw.hidden = !!c.clienteId || !du.value.trim(); };
+  du.addEventListener('input', verTel); verTel();
+  h.botones([{ t: nuevo ? 'Registrar mascota' : 'Guardar', cls: 'pri', fn: async () => {
+    const reg = { id: x.id, nombre: $('#ma-n', h.el).value.trim(), especie, raza: $('#ma-r', h.el).value.trim(), color: $('#ma-c', h.el).value.trim(), sexo, esterilizado: ester,
+      nacimiento: $('#ma-na', h.el).value, peso: r2($('#ma-p', h.el).value), alergias: $('#ma-al', h.el).value.trim(), chip: $('#ma-ch', h.el).value.trim(), notas: $('#ma-no', h.el).value.trim() };
+    if (!reg.nombre) throw new Error('Escribe el nombre de la mascota');
+    const c = clienteLeer(du, { clienteId: x.clienteId, cliente: cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '' });
+    if (c.clienteId) reg.clienteId = c.clienteId; else if (c.cliente) { reg.dueno = c.cliente; reg.telefono = $('#ma-tel', h.el).value.trim(); } else throw new Error('Escribe el nombre del dueño');
+    if (!nuevo) reg.activo = $('#ma-ac', h.el).checked;
+    if (!reg.id) delete reg.id;
+    const r = await api('mascotaGuardar', { registro: reg });
+    if (r.cliente && !byId(S.clientes, r.cliente.id)) { S.clientes.push(r.cliente); guardarCache(); }
+    S.mascotasL = null; S.vacL = null; S.inicio = null; h.cerrar(); toast(nuevo ? r.mascota.nombre + ' quedó registrado' : 'Guardado', 'ok');
+    if (S.vista === 'mascotas') R.mascotas();
+    if (onSave) onSave(r.mascota);
+  } }]);
+}
+
+/* ---- Expediente: datos, historial, vacunas, recetas y peso ---- */
+async function abrirExpediente(id, tab) {
+  const h = hoja({ titulo: 'Mascota', ancho: 1, extra: `<button class="btn icon ghost" data-a="expEditar" title="Editar" aria-label="Editar">${ic('edit', 18)}</button>`, html: '<div class="empty">Cargando…</div>' });
+  let d = null, t = tab || 'hist';
+  const pinta = async recargar => {
+    if (recargar || !d) d = await api('expediente', { id }, false);
+    const m = d.mascota, du = d.dueno, cons = d.consultas, vac = d.vacunas, pend = d.pendientes;
+    S.exp = { d, pinta, h };
+    $('.sheet-h h3', h.el).innerHTML = esc(m.nombre) + ' ' + emoEsp(m.especie);
+    const pesos = cons.filter(c => c.peso > 0).map(c => ({ f: c.fecha, p: num(c.peso) })).reverse();
+    const difP = pesos.length > 1 ? r2(pesos[pesos.length - 1].p - pesos[pesos.length - 2].p) : null;
+    const prox = pend[0], dp = prox ? diasHasta(prox.proxima) : null;
+    const recs = cons.filter(c => c.numero);
+    const tabB = (k, txt) => `<button class="${t === k ? 'on' : ''}" data-tab="${k}">${txt}</button>`;
+    let cuerpo = '';
+    if (t === 'hist') cuerpo = cons.length ? `<div class="list">${cons.map(c => { const tc = TIPO_CONS[c.tipo] || TIPO_CONS.consulta, med = parseJ(c.receta, []);
+      return `<div class="li" data-c="${c.id}"><div class="av ${tc[2]}">${ic(tc[1], 20)}</div><div class="tx"><b>${esc(tc[0])}${c.diagnostico || c.motivo ? ' · ' + esc(c.diagnostico || c.motivo) : ''}</b><small>${esc(fFechaC(c.fecha))}${c.atiende ? ' · ' + esc(c.atiende) : ''}${med.length ? ' · receta ' + esc(c.numero) : ''}${c.tratamiento ? '<br>' + esc(c.tratamiento.slice(0, 90)) : ''}</small></div><div class="am">${c.ventaId && !c.ventaAnulada ? `<b class="n">${money(c.total)}</b>` : '<span class="badge b-warn">Sin cobrar</span>'}</div></div>`; }).join('')}</div>`
+      : `<div class="empty-big">${ic('steth', 36)}<h3>Sin consultas todavía</h3><p>Cada consulta queda aquí con su diagnóstico, tratamiento y receta.</p></div>`;
+    if (t === 'vac') {
+      const aplic = vac.filter(v => v.estado !== 'anulada');
+      cuerpo = `${pend.length ? `<div class="vet-sec"><b>Próximas</b></div><div class="list vet-l">${pend.map(v => { const dd = diasHasta(v.proxima); return `<div class="li" data-v="${v.id}"><div class="av ${v.tipo === 'vacuna' ? 't-verde' : 't-naranja'}">${ic(v.tipo === 'vacuna' ? 'syringe' : 'paw', 20)}</div><div class="tx"><b>${esc(v.nombre)}</b><small>Le toca el ${esc(fFechaC(v.proxima))}</small></div><div class="am"><span class="badge ${dd < 0 ? 'b-bad' : dd <= vacDias() ? 'b-warn' : 'b-mut'}">${dd < 0 ? 'Hace ' + (-dd) + (dd === -1 ? ' día' : ' días') : dd === 0 ? 'Hoy' : 'En ' + dd + (dd === 1 ? ' día' : ' días')}</span></div></div>`; }).join('')}</div>` : ''}
+        <div class="vet-sec"><b>Aplicadas</b><button class="btn sm ghost" style="color:var(--pri)" data-a="vacAnterior">${ic('plus', 16)} Agregar una anterior</button></div>
+        ${aplic.length ? `<div class="list vet-l">${aplic.map(v => `<div class="li" data-v="${v.id}"><div class="av ${v.tipo === 'vacuna' ? 't-verde' : 't-naranja'}">${ic(v.tipo === 'vacuna' ? 'syringe' : 'paw', 20)}</div><div class="tx"><b>${esc(v.nombre)}</b><small>${esc(fFechaC(v.fecha))}${v.lote ? ' · lote ' + esc(v.lote) : ''}${v.proxima ? ' · próxima ' + esc(fFechaC(v.proxima)) : ''}${v.consultaId ? '' : ' · anotada (de antes)'}</small></div></div>`).join('')}</div>` : '<p class="sm mut">Todavía no tiene vacunas anotadas.</p>'}`;
+    }
+    if (t === 'rec') cuerpo = recs.length ? `<div class="list">${recs.map(c => { const med = parseJ(c.receta, []); return `<div class="li" data-r="${c.id}"><div class="av t-pri">${ic('doc', 20)}</div><div class="tx"><b>Receta ${esc(c.numero)}</b><small>${esc(fFechaC(c.fecha))} · ${esc(med.map(x => x.n).join(', ').slice(0, 90))}</small></div><div class="am">${ic('right', 18)}</div></div>`; }).join('')}</div>`
+      : `<div class="empty-big">${ic('doc', 36)}<h3>Sin recetas</h3><p>Cuando una consulta lleve medicamentos, su receta queda aquí para reenviarla.</p></div>`;
+    if (t === 'peso') cuerpo = pesos.length ? `<div class="vet-peso">${pesoSVG(pesos)}</div><div class="list" style="margin-top:10px">${pesos.slice().reverse().map(x => `<div class="li"><div class="av t-cian">${ic('trend', 20)}</div><div class="tx"><b>${kg(x.p)}</b><small>${esc(fFechaC(x.f))}</small></div></div>`).join('')}</div>`
+      : `<div class="empty-big">${ic('trend', 36)}<h3>Sin pesos anotados</h3><p>Anota el peso en cada consulta y aquí ves cómo va.</p></div>`;
+    h.b.innerHTML = `<div class="cli-h">${petAv(m, 'lg')}<div class="tx"><b>${esc([m.raza || m.especie, m.sexo, edadTxt(m.nacimiento)].filter(Boolean).join(' · '))}</b><small>${du ? esc(du.nombre) + (du.telefono ? ' · ' + esc(du.telefono) : '') : 'Sin dueño'}${[m.color, m.esterilizado === 'si' ? 'esterilizado' : m.esterilizado === 'no' ? 'sin esterilizar' : '', m.chip ? 'chip ' + m.chip : ''].filter(Boolean).length ? '<br>' + esc([m.color, m.esterilizado === 'si' ? 'esterilizado' : m.esterilizado === 'no' ? 'sin esterilizar' : '', m.chip ? 'chip ' + m.chip : ''].filter(Boolean).join(' · ')) : ''}</small></div></div>
+      ${!m.activo ? '<div class="aviso sm">' + ic('info', 18) + '<div>Mascota inactiva</div></div>' : ''}
+      ${m.alergias ? `<div class="alergia">${ic('alert', 18)}${esc(m.alergias)}</div>` : ''}
+      <div class="kpis k3"><div class="kpi" style="--k:var(--pri)"><small>Peso</small><b class="n">${m.peso ? kg(m.peso) : '—'}</b><i>${difP === null ? (pesos.length ? 'última consulta' : m.peso ? 'al registrarlo' : 'sin medir') : difP === 0 ? 'igual que antes' : (difP > 0 ? '▲ ' : '▼ ') + kg(Math.abs(difP))}</i></div>
+        <div class="kpi" style="--k:${dp !== null && dp < 0 ? 'var(--bad)' : 'var(--warn)'}"><small>Vacuna</small><b>${prox ? esc(fDiaCorto(prox.proxima)) : '—'}</b><i>${prox ? esc(prox.nombre) : 'nada pendiente'}</i></div>
+        <div class="kpi" style="--k:#7a5af8"><small>Visitas</small><b class="n">${cons.length}</b><i>${cons.length ? 'desde ' + esc(String(cons[cons.length - 1].fecha).slice(0, 4)) : 'ninguna aún'}</i></div></div>
+      <div class="acciones"><button class="btn acc" data-a="expConsulta">${ic('steth', 18)} Consulta</button>${modOn('agenda') ? `<button class="btn" data-a="expCita">${ic('cal', 18)} Cita</button>` : ''}<button class="btn" data-a="expCarnet">${ic('doc', 18)} Carnet</button>${du && du.telefono ? `<a class="btn wa icon" href="${waLink(du.telefono, '')}" target="_blank" rel="noopener" title="WhatsApp">${ic('wa', 18)}</a>` : ''}</div>
+      <div class="seg tabs" style="margin:12px 0 10px">${tabB('hist', 'Historial')}${tabB('vac', 'Vacunas')}${tabB('rec', 'Recetas' + (recs.length ? ' ' + recs.length : ''))}${tabB('peso', 'Peso')}</div>
+      ${cuerpo}`;
+  };
+  h.b.addEventListener('click', e => {
+    const tb = e.target.closest('[data-tab]'); if (tb) { t = tb.dataset.tab; pinta().catch(err); return; }
+    const c = e.target.closest('[data-c]'); if (c && d) { const x = d.consultas.find(y => y.id === c.dataset.c); if (x) verConsulta(x, d); return; }
+    const r = e.target.closest('[data-r]'); if (r && d) { const x = d.consultas.find(y => y.id === r.dataset.r); if (x) verReceta(x, d); return; }
+    const v = e.target.closest('[data-v]'); if (v && d) { const x = d.vacunas.find(y => y.id === v.dataset.v); if (x) formVacunaReg(x, d); }
+  });
+  try { await pinta(); } catch (e) { err(e); h.cerrar(); }
+  return h;
+}
+function pesoSVG(l) {
+  const w = 320, hh = 120, ps = l.map(x => x.p), mx = Math.max(...ps), mn = Math.min(...ps), rg = Math.max(0.5, mx - mn), n = l.length;
+  const pt = l.map((x, i) => [16 + (n === 1 ? (w - 32) / 2 : i * (w - 32) / (n - 1)), hh - 22 - ((x.p - mn) / rg) * (hh - 44)]);
+  const dd = pt.map((p, i) => (i ? 'L' : 'M') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+  return `<svg viewBox="0 0 ${w} ${hh}" aria-hidden="true"><path d="${dd}" fill="none" stroke="var(--h2)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>${pt.map((p, i) => `<circle cx="${p[0]}" cy="${p[1]}" r="3.5" fill="var(--h2)"/><text x="${p[0]}" y="${p[1] - 8}" font-size="10" text-anchor="middle" fill="currentColor">${cant(l[i].p)}</text>`).join('')}</svg>`;
+}
+const expAct = () => S.exp && S.exp.d;
+ACC.expEditar = () => { const d = expAct(); if (d) formMascota(Object.assign({}, d.mascota), () => S.exp.pinta(true).catch(err)); };
+ACC.expConsulta = () => { const d = expAct(); if (d) formConsulta(d); };
+ACC.expCita = () => { const d = expAct(); if (!d) return; formAgenda(null, 'cita', { mascotaId: d.mascota.id, mascota: d.mascota.nombre, clienteId: d.dueno ? d.dueno.id : '', cliente: d.dueno ? d.dueno.nombre : '' }); };
+ACC.expCarnet = () => { const d = expAct(); if (d) verCarnet(d); };
+ACC.vacAnterior = () => { const d = expAct(); if (d) formVacunaHoy(d.mascota, v => { api('vacunaGuardar', { registro: Object.assign({ mascotaId: d.mascota.id }, v) }).then(() => { S.vacL = null; S.mascotasL = null; toast('Vacuna anotada', 'ok'); return S.exp.pinta(true); }).catch(err); }, true); };
+
+/* ---- Detalle de una consulta ---- */
+function verConsulta(c, d) {
+  const med = parseJ(c.receta, []), tc = TIPO_CONS[c.tipo] || TIPO_CONS.consulta, vacs = d.vacunas.filter(v => v.consultaId === c.id);
+  const fila = (k, v) => v ? `<div><small>${k}</small>${esc(v)}</div>` : '';
+  const h = hoja({ titulo: esc(tc[0]) + ' · ' + esc(fFechaC(c.fecha)), ancho: 1, html: `
+    <div class="kv">${fila('Atendió', c.atiende)}${c.peso ? `<div><small>Peso</small>${kg(c.peso)}</div>` : ''}${c.temperatura ? `<div><small>Temperatura</small>${cant(c.temperatura)} °C</div>` : ''}<div><small>Cobro</small>${c.ventaId && !c.ventaAnulada ? money(c.total) : 'Sin cobrar'}</div></div>
+    ${c.motivo ? `<p class="sm"><b>Motivo:</b> ${esc(c.motivo)}</p>` : ''}${c.diagnostico ? `<p class="sm"><b>Diagnóstico:</b> ${esc(c.diagnostico)}</p>` : ''}${c.tratamiento ? `<p class="sm"><b>Tratamiento:</b> ${esc(c.tratamiento)}</p>` : ''}
+    ${vacs.length ? `<p class="sm"><b>Aplicado:</b> ${vacs.map(v => esc(v.nombre) + (v.proxima ? ' (próxima ' + esc(fFechaC(v.proxima)) + ')' : '')).join(', ')}</p>` : ''}
+    ${med.length ? `<p class="sm"><b>Receta ${esc(c.numero)}:</b> ${med.map(x => esc(x.n)).join(', ')}</p>` : ''}${c.indicaciones ? `<p class="sm"><b>Indicaciones:</b> ${esc(c.indicaciones)}</p>` : ''}${c.control ? `<p class="sm"><b>Próximo control:</b> ${esc(fFechaL(c.control))}</p>` : ''}` });
+  const bs = [];
+  if (puede('admin') || !c.ventaId) bs.push({ t: ic('trash', 18), cls: 'bad icon', fn: async () => {
+    if (!(await confirmar(c.ventaId && !c.ventaAnulada ? 'Esta consulta ya se cobró. ¿Quitarla del historial? La venta no se anula: si hace falta, anúlala en Ventas.' : '¿Quitar esta consulta del historial? Sus vacunas también se quitan.', { si: 'Quitar', peligro: 1 }))) return;
+    await api('consultaGuardar', { registro: { id: c.id, anulada: true } }); S.vacL = null; S.mascotasL = null; h.cerrar(); toast('Consulta quitada', 'ok'); S.exp && S.exp.pinta(true).catch(err);
+  } });
+  bs.push({ t: `${ic('edit', 16)} Editar`, fn: () => { h.cerrar(); formConsulta(d, c); } });
+  if (med.length) bs.push({ t: `${ic('doc', 16)} Receta`, fn: () => verReceta(c, d) });
+  if ((!c.ventaId || c.ventaAnulada) && puede('admin', 'cajero')) bs.push({ t: `${ic('cash', 16)} Cobrar`, cls: 'pri', fn: () => { h.cerrar(); cobrarConsulta(c, d, null); } });
+  h.botones(bs);
+}
+
+/* ---- Nueva consulta (o editar una) ---- */
+// Lo que se cobra: servicios y productos puestos a mano + vacunas aplicadas + medicamentos que se lleva
+function formConsulta(d, c, extra) {
+  const m = d.mascota, nuevo = !c; c = c || {}; extra = extra || {};
+  const st = { meds: parseJ(c.receta, []), vacs: [], items: (extra.items || []).slice(), alergias: m.alergias || '' };
+  if (nuevo && extra.vacuna) st.vacs.push(extra.vacuna);
+  const ultimo = (d.consultas.find(x => x.peso > 0) || {}).peso || m.peso || '';
+  const h = hoja({ titulo: (nuevo ? 'Consulta' : 'Editar consulta') + ' · ' + esc(m.nombre) + ' ' + emoEsp(m.especie), ancho: 1, foco: nuevo ? '#co-mo' : null, html: `
+    <div id="co-al"></div>
+    <label class="fld"><span>Motivo de la visita</span><input id="co-mo" maxlength="300" value="${esc(c.motivo || extra.motivo || '')}" placeholder="Ej. Se rasca la oreja derecha"></label>
+    <div class="f2 lado"><label class="fld"><span>Peso (kg)</span><input id="co-pe" inputmode="decimal" value="${c.peso ? c.peso : ''}" placeholder="${ultimo ? 'Antes ' + cant(ultimo) : '0.0'}"></label><label class="fld"><span>Temperatura (°C)</span><input id="co-te" inputmode="decimal" value="${c.temperatura ? c.temperatura : ''}" placeholder="38.5"></label></div>
+    <label class="fld"><span>Diagnóstico</span><textarea id="co-dx" rows="2" maxlength="800">${esc(c.diagnostico || '')}</textarea></label>
+    <label class="fld"><span>Tratamiento y notas clínicas</span><textarea id="co-tr" rows="2" maxlength="800">${esc(c.tratamiento || '')}</textarea></label>
+    ${nuevo ? `<div class="fld"><span>Vacunas y desparasitación de hoy</span><div id="co-va"></div><button type="button" class="btn sm ghost" style="margin-top:6px;color:var(--pri)" data-x="vac">${ic('plus', 16)} Vacuna o desparasitación</button></div>` : ''}
+    <div class="fld"><span>Receta</span><div id="co-rx"></div><button type="button" class="btn sm ghost" style="margin-top:6px;color:var(--pri)" data-x="med">${ic('plus', 16)} Agregar medicamento</button></div>
+    <label class="fld"><span>Indicaciones para el dueño</span><textarea id="co-in" rows="2" maxlength="800" placeholder="Ej. Que no se moje las orejas.">${esc(c.indicaciones || '')}</textarea></label>
+    ${nuevo ? `<div class="fld"><span>Se cobra</span><div id="co-co"></div><button type="button" class="btn sm ghost" style="margin-top:6px;color:var(--pri)" data-x="prod">${ic('plus', 16)} Agregar servicio o producto</button><div class="tot-row"><span class="mut">Total</span><b class="n" id="co-tot"></b></div></div>` : ''}
+    <label class="fld"><span>Próximo control</span><input id="co-ct" type="date" min="${hoy()}" value="${esc(c.control || '')}"></label>
+    ${nuevo && modOn('agenda') ? `<label class="chk"><input type="checkbox" id="co-ag" checked> Anotar el control en la Agenda</label>` : ''}` });
+  const totalCobro = () => cobroItems().reduce((t, i) => t + r2(i.precio * i.cantidad), 0);
+  const cobroItems = () => st.items.concat(st.vacs.filter(v => v.cobra && v.productoId).map(v => ({ productoId: v.productoId, descripcion: v.nombre, cantidad: 1, precio: v.precio, de: 'vac' })))
+    .concat(st.meds.filter(x => x.lleva && x.productoId).map(x => { const p = byId(S.productos, x.productoId); return { productoId: x.productoId, descripcion: x.n, cantidad: x.cant || 1, precio: p ? p.precio : 0, de: 'rx' }; }));
+  const pinta = () => {
+    $('#co-al', h.el).innerHTML = st.alergias ? `<div class="alergia">${ic('alert', 18)}${esc(st.alergias)}${st.meds.length ? ' · revisa la receta' : ''}</div>` : '';
+    $('#co-rx', h.el).innerHTML = st.meds.length ? `<div class="list vet-l">${st.meds.map((x, i) => `<div class="li"><div class="rx-n">${i + 1}</div><div class="tx"><b>${esc(x.n)}</b><small>${esc(medFrase(x))}</small>${x.alerta ? '<span class="rx-tag b">' + ic('alert', 12) + ' Choca con una alergia</span> ' : ''}${x.productoId ? (x.lleva ? `<span class="rx-tag v">${ic('check', 12)} Se lo lleva · ${money(((byId(S.productos, x.productoId) || {}).precio || 0) * (x.cant || 1))}</span>` : '<span class="rx-tag s">Solo receta</span>') : '<span class="rx-tag s">Solo receta · lo compra afuera</span>'}</div><div class="am"><button type="button" class="btn sm icon ghost" data-ed="${i}">${ic('edit', 16)}</button><button type="button" class="btn sm icon ghost" data-qm="${i}">${ic('x', 16)}</button></div></div>`).join('')}</div>` : '';
+    if (!nuevo) return;
+    $('#co-va', h.el).innerHTML = st.vacs.length ? `<div class="list vet-l">${st.vacs.map((v, i) => `<div class="li"><div class="av sm ${v.tipo === 'vacuna' ? 't-verde' : 't-naranja'}">${ic(v.tipo === 'vacuna' ? 'syringe' : 'paw', 16)}</div><div class="tx"><b>${esc(v.nombre)}</b><small>${v.lote ? 'Lote ' + esc(v.lote) + ' · ' : ''}${v.proxima ? 'próxima ' + esc(fFechaC(v.proxima)) : 'sin próxima fecha'}</small></div><div class="am">${v.cobra && v.productoId ? `<span class="n sm">${money(v.precio)}</span>` : ''}<button type="button" class="btn sm icon ghost" data-qv="${i}">${ic('x', 16)}</button></div></div>`).join('')}</div>` : '';
+    $('#co-co', h.el).innerHTML = cobroItems().length ? `<div class="list vet-l">${cobroItems().map(i => `<div class="li"><div class="av sm t-pri">${ic(i.de === 'vac' ? 'syringe' : i.de === 'rx' ? 'box' : 'tag', 16)}</div><div class="tx"><b>${esc(i.descripcion)}</b><small>${i.cantidad !== 1 ? fmtN(i.cantidad) + ' × ' + money(i.precio) + ' · ' : ''}${i.de === 'vac' ? 'de la vacuna' : i.de === 'rx' ? 'de la receta' : ''}</small></div><div class="am"><b class="n">${money(i.precio * i.cantidad)}</b>${i.de ? '' : `<button type="button" class="btn sm icon ghost" data-qi="${st.items.indexOf(i)}">${ic('x', 16)}</button>`}</div></div>`).join('')}</div>` : '<p class="xs mut" style="margin:2px 0 0">Nada todavía. Agrega la consulta y lo que se usó.</p>';
+    $('#co-tot', h.el).textContent = money(totalCobro());
+    botones();
+  };
+  h.b.addEventListener('click', e => {
+    const x = e.target.closest('[data-x]');
+    if (x && x.dataset.x === 'med') return formMed(m, st.alergias, null, r => { st.meds.push(r); pinta(); });
+    if (x && x.dataset.x === 'vac') return formVacunaHoy(m, v => { st.vacs.push(v); pinta(); });
+    if (x && x.dataset.x === 'prod') return elegirCobro(p => { const ya = st.items.find(i => i.productoId === p.id); if (ya) ya.cantidad++; else st.items.push({ productoId: p.id, descripcion: p.nombre, cantidad: 1, precio: p.precio }); pinta(); });
+    const ed = e.target.closest('[data-ed]'); if (ed) { const i = Number(ed.dataset.ed); return formMed(m, st.alergias, st.meds[i], r => { st.meds[i] = r; pinta(); }); }
+    const qm = e.target.closest('[data-qm]'); if (qm) { st.meds.splice(Number(qm.dataset.qm), 1); return pinta(); }
+    const qv = e.target.closest('[data-qv]'); if (qv) { st.vacs.splice(Number(qv.dataset.qv), 1); return pinta(); }
+    const qi = e.target.closest('[data-qi]'); if (qi) { st.items.splice(Number(qi.dataset.qi), 1); return pinta(); }
+  });
+  const guardar = async () => {
+    const reg = { id: c.id, mascotaId: m.id, tipo: c.tipo || (st.vacs.length && !$('#co-dx', h.el).value.trim() ? 'vacuna' : 'consulta'), motivo: $('#co-mo', h.el).value.trim(), peso: r2($('#co-pe', h.el).value), temperatura: r2($('#co-te', h.el).value),
+      diagnostico: $('#co-dx', h.el).value.trim(), tratamiento: $('#co-tr', h.el).value.trim(), indicaciones: $('#co-in', h.el).value.trim(), control: $('#co-ct', h.el).value, receta: st.meds };
+    if (extra.agendaId) reg.agendaId = extra.agendaId;
+    if (nuevo && !reg.motivo && !reg.diagnostico && !st.meds.length && !st.vacs.length && !cobroItems().length) throw new Error('Escribe el motivo o el diagnóstico');
+    if (!reg.id) delete reg.id;
+    const r = await api('consultaGuardar', { registro: reg, vacunas: nuevo ? st.vacs.map(v => ({ tipo: v.tipo, nombre: v.nombre, productoId: v.productoId || '', lote: v.lote || '', proxima: v.proxima || '' })) : [] });
+    // El control queda en la Agenda (ahí se le recuerda por WhatsApp y se cobra)
+    if (nuevo && reg.control && $('#co-ag', h.el) && $('#co-ag', h.el).checked) {
+      const pc = S.productos.find(p => p.activo && p.tipo === 'servicio' && /control|revisi/.test(norm(p.nombre)));
+      try { await api('agendaGuardar', { registro: { tipo: 'cita', dia: reg.control, hora: '', detalle: pc ? pc.nombre : 'Control', productoId: pc ? pc.id : '', monto: pc ? pc.precio : 0, mascotaId: m.id, nota: reg.diagnostico ? 'Control: ' + reg.diagnostico.slice(0, 120) : '' } }, true); S.ag_cita = null; } catch (e) { toast('No se pudo anotar el control en la Agenda: ' + (e.message || e), 'error'); }
+    }
+    S.mascotasL = null; S.vacL = null; S.inicio = null;
+    return r.consulta;
+  };
+  const botones = () => {
+    const tot = nuevo ? totalCobro() : 0;
+    const bs = [{ t: 'Guardar', fn: async () => { const g = await guardar(); h.cerrar(); toast(nuevo ? 'Consulta guardada' : 'Cambios guardados', 'ok'); await refrescarExp(); if (g.numero && nuevo) verReceta(g, S.exp ? S.exp.d : d); } }];
+    if (nuevo && tot > 0 && puede('admin', 'cajero')) bs.push({ t: `${ic('cart', 18)} Guardar y cobrar · ${money(tot)}`, cls: 'pri', fn: async () => {
+      const items = cobroItems(), g = await guardar(); h.cerrar(); await refrescarExp();
+      if (g.numero) verReceta(g, S.exp ? S.exp.d : d, items); else cobrarConsulta(g, d, items);
+    } });
+    else if (nuevo) bs[0].cls = 'pri';
+    else bs[0].cls = 'pri';
+    h.botones(bs);
+  };
+  pinta(); if (!nuevo) botones();
+}
+async function refrescarExp() { if (S.exp && S.exp.h && !S.exp.h.cerrado) { try { await S.exp.pinta(true); } catch (e) {} } }
+// Elegir un servicio o producto para cobrar en la consulta
+function elegirCobro(cb) {
+  const l = S.productos.filter(p => p.activo).sort((a, b) => (a.tipo === 'servicio' ? 0 : 1) - (b.tipo === 'servicio' ? 0 : 1) || a.nombre.localeCompare(b.nombre));
+  const h = hoja({ titulo: 'Agregar al cobro', html: `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="ec-q" placeholder="Buscar servicio o producto…"></div><div class="list" id="ec-l"></div>`, foco: '#ec-q' });
+  const pinta = () => { const q = norm($('#ec-q', h.el).value); $('#ec-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre + ' ' + p.categoria).includes(q)).slice(0, 80).map(p => `<div class="li" data-p="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.categoria || '')}${p.tipo === 'producto' ? ' · quedan ' + cant(p.stock) : ''}</small></div><div class="am n">${money(p.precio)}</div></div>`).join('') || '<div class="empty">Nada con ese nombre</div>'; };
+  $('#ec-q', h.el).addEventListener('input', pinta); pinta();
+  $('#ec-l', h.el).addEventListener('click', e => { const x = e.target.closest('[data-p]'); if (!x) return; h.cerrar(); cb(byId(S.productos, x.dataset.p)); });
+}
+// Cobrar la consulta con el cobro normal (queda ligada; si vino de una cita, la cita se cierra sola)
+async function cobrarConsulta(c, d, items) {
+  if (!items) { // cobrar después: lo de la receta que se lleva + la consulta general si existe
+    items = parseJ(c.receta, []).filter(x => x.lleva && x.productoId).map(x => { const p = byId(S.productos, x.productoId); return { productoId: x.productoId, descripcion: x.n, cantidad: x.cant || 1, precio: p ? p.precio : 0 }; });
+    const pc = S.productos.find(p => p.activo && p.tipo === 'servicio' && /consulta/.test(norm(p.nombre)));
+    if (pc && c.tipo !== 'vacuna') items.unshift({ productoId: pc.id, descripcion: pc.nombre, cantidad: 1, precio: pc.precio });
+  }
+  if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo por el cobro de la consulta?', { si: 'Reemplazar' }))) return;
+  S.ticket = { items: items.map(i => ({ productoId: i.productoId || '', descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, costo: 0, precioMan: true })), clienteId: c.clienteId || (d.dueno ? d.dueno.id : ''), pedidoId: '', descuento: 0, consultaId: c.id, nota: 'Consulta · ' + d.mascota.nombre };
+  if (c.agendaId) S.ticket.agendaId = c.agendaId;
+  guardarTicket(); cerrarHojas(); ir('vender'); abrirCobro();
+}
+
+/* ---- Medicamento de la receta ---- */
+function formMed(m, alergias, x, cb) {
+  x = Object.assign({ n: '', productoId: '', dosis: '', via: 'Oral', cada: '12 h', dias: 7, ind: '', lleva: true, cant: 1 }, x || {});
+  const meds = S.productos.filter(p => p.activo && p.tipo === 'producto');
+  const h = hoja({ titulo: x.n ? 'Editar medicamento' : 'Agregar medicamento', ancho: 1, foco: x.n ? null : '#me-n', html: `
+    <label class="fld"><span>Medicamento</span><div class="srch">${ic('search', 18)}<input id="me-n" maxlength="80" value="${esc(x.n)}" placeholder="Búscalo en tu inventario o escríbelo" autocomplete="off"></div></label>
+    <div class="vet-sug" id="me-s"></div><div id="me-a"></div>
+    <div class="f2 lado"><label class="fld"><span>Dosis</span><input id="me-d" maxlength="60" value="${esc(x.dosis)}" placeholder="Ej. 1 tableta, 4 gotas"></label><label class="fld"><span>Durante (días)</span><input id="me-di" inputmode="numeric" value="${x.dias || ''}" placeholder="7"></label></div>
+    <div class="fld"><span>Cada</span><div class="seg full" id="me-c">${CADAS.map(k => `<button type="button" class="${x.cada === k ? 'on' : ''}" data-v="${k}">${k === 'Una vez' ? 'Única' : k}</button>`).join('')}</div></div>
+    <div class="fld"><span>Vía</span><div class="chips wrap" id="me-v">${VIAS.map(k => `<button type="button" class="chip ${x.via === k ? 'on' : ''}" data-v="${k}">${k}</button>`).join('')}</div></div>
+    <label class="fld"><span>Cómo o dónde (opcional)</span><input id="me-i" maxlength="200" value="${esc(x.ind)}" placeholder="Ej. en el oído derecho, con comida"></label>
+    <div id="me-ll"></div>` });
+  let sel = x.productoId ? byId(S.productos, x.productoId) : null, lleva = x.lleva, aviso = '';
+  const pintaLl = () => {
+    $('#me-ll', h.el).innerHTML = sel ? `<div class="fld"><span>¿Se lo lleva de la clínica?</span><div class="seg full" id="me-l"><button type="button" class="${lleva ? 'on' : ''}" data-v="1">Sí, se cobra</button><button type="button" class="${lleva ? '' : 'on'}" data-v="0">No, solo receta</button></div></div>${lleva ? `<label class="fld"><span>Cantidad que se lleva</span><input id="me-q" inputmode="decimal" value="${x.cant || 1}"><small class="hint">${esc(sel.nombre)} · ${money(sel.precio)} c/u · quedan ${cant(sel.stock)}</small></label>` : ''}` : '';
+  };
+  const revisar = () => {
+    const nom = $('#me-n', h.el).value.trim();
+    aviso = alergiaMed(alergias, nom);
+    $('#me-a', h.el).innerHTML = aviso ? `<div class="alerta-med">${ic('alert', 20)}<div><b>Ojo: ${esc(m.nombre)} tiene anotado «${esc(alergias)}»</b>${esc(aviso)} Revisa antes de recetarlo.</div></div>` : '';
+    const q = norm(nom);
+    $('#me-s', h.el).innerHTML = q.length >= 2 && !(sel && sel.nombre === nom) ? meds.filter(p => norm(p.nombre).includes(q)).slice(0, 5).map(p => `<div class="li" data-p="${p.id}">${avatarProd(p, 'av sm')}<div class="tx"><b>${esc(p.nombre)}</b><small>En inventario · quedan ${cant(p.stock)} · ${money(p.precio)} c/u</small></div></div>`).join('') : '';
+    h.botones(aviso ? [{ t: 'Cambiar medicamento', fn: () => { const i = $('#me-n', h.el); i.value = ''; sel = null; pintaLl(); revisar(); i.focus(); } }, { t: 'Agregar igual', cls: 'bad', fn: () => listo(true) }] : [{ t: x.n ? 'Guardar' : 'Agregar', cls: 'pri', fn: () => listo(false) }]);
+  };
+  const listo = alerta => {
+    const n = $('#me-n', h.el).value.trim(); if (!n) throw new Error('Escribe el medicamento');
+    const cada = ($('#me-c .on', h.el) || {}).dataset ? $('#me-c .on', h.el).dataset.v : '';
+    const via = ($('#me-v .on', h.el) || {}).dataset ? $('#me-v .on', h.el).dataset.v : '';
+    const r = { n, productoId: sel && sel.nombre === n ? sel.id : '', dosis: $('#me-d', h.el).value.trim(), via, cada, dias: parseInt($('#me-di', h.el).value, 10) || 0, ind: $('#me-i', h.el).value.trim(), alerta: !!alerta };
+    r.lleva = !!(r.productoId && lleva); r.cant = r.lleva ? Math.max(1, num(($('#me-q', h.el) || {}).value) || 1) : 0;
+    if (!r.dosis) throw new Error('Escribe la dosis');
+    h.cerrar(); cb(r);
+  };
+  $('#me-n', h.el).addEventListener('input', () => { if (sel && sel.nombre !== $('#me-n', h.el).value.trim()) { sel = null; pintaLl(); } revisar(); });
+  h.b.addEventListener('click', e => {
+    const p = e.target.closest('[data-p]'); if (p) { sel = byId(S.productos, p.dataset.p); $('#me-n', h.el).value = sel.nombre; lleva = true; pintaLl(); revisar(); return; }
+    const b = e.target.closest('#me-c button, #me-v button, #me-l button'); if (!b) return;
+    if (b.closest('#me-l')) { lleva = b.dataset.v === '1'; pintaLl(); return; }
+    $$('button', b.parentElement).forEach(y => y.classList.toggle('on', y === b));
+  });
+  pintaLl(); revisar();
+}
+
+/* ---- Vacuna o desparasitación (en la consulta, o una anterior para el carnet) ---- */
+const esVacuna = p => !!p && /vacun|antirrab|triple felina|multiple \(perro\)/.test(norm(p.categoria + ' ' + p.nombre));
+const esDesparasit = p => !!p && /desparasit|pipeta|antipulga|garrapat/.test(norm(p.categoria + ' ' + p.nombre));
+function proxVacuna(tipo) { const n = new Date(parseLocal(hoy())); if (tipo === 'vacuna') n.setFullYear(n.getFullYear() + 1); else n.setMonth(n.getMonth() + 3); return toLocal(n).slice(0, 10); }
+function vacDeProducto(p, precio) {
+  if (!esVacuna(p) && !esDesparasit(p)) return null;
+  const tipo = esVacuna(p) ? 'vacuna' : 'desparasitacion';
+  return { tipo, nombre: p.nombre, productoId: p.id, precio: precio || p.precio, cobra: true, lote: '', proxima: proxVacuna(tipo) };
+}
+function formVacunaHoy(m, cb, anterior) {
+  let tipo = 'vacuna';
+  const deTipo = t => S.productos.filter(p => p.activo && (t === 'vacuna' ? esVacuna(p) : esDesparasit(p)));
+  const prox = proxVacuna;
+  const h = hoja({ titulo: anterior ? 'Vacuna puesta antes' : 'Vacuna o desparasitación', ancho: 1, html: `
+    <div class="fld"><div class="seg full" id="vh-t"><button type="button" class="on" data-v="vacuna">Vacuna</button><button type="button" data-v="desparasitacion">Desparasitación</button></div></div>
+    <label class="fld"><span id="vh-nl">¿Cuál vacuna?</span><input id="vh-n" list="dl-vh" maxlength="80" autocomplete="off" placeholder="Elige de tu inventario o escríbela"><datalist id="dl-vh"></datalist></label>
+    ${anterior ? `<label class="fld"><span>Fecha en que se le puso</span><input id="vh-f" type="date" max="${hoy()}" value="${hoy()}"></label>` : ''}
+    <div class="f2 lado"><label class="fld"><span>Lote</span><input id="vh-l" maxlength="40" placeholder="Opcional"></label><label class="fld"><span>Próxima dosis</span><input id="vh-p" type="date" value="${prox('vacuna')}"></label></div>
+    <small class="hint" id="vh-h" style="margin-top:-6px">${anterior ? 'Queda en su carnet y en los recordatorios; no se cobra.' : 'Se cobra con la consulta si está en tu inventario. La próxima fecha entra a los recordatorios.'}</small>` });
+  const dl = () => { $('#dl-vh', h.el).innerHTML = deTipo(tipo).map(p => `<option value="${esc(p.nombre)}">`).join(''); $('#vh-nl', h.el).textContent = tipo === 'vacuna' ? '¿Cuál vacuna?' : '¿Qué desparasitante?'; };
+  $('#vh-t', h.el).addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; tipo = b.dataset.v; $$('#vh-t button', h.el).forEach(y => y.classList.toggle('on', y === b)); $('#vh-p', h.el).value = prox(tipo); dl(); });
+  dl();
+  h.botones([{ t: anterior ? 'Anotar' : 'Agregar', cls: 'pri', fn: () => {
+    const nombre = $('#vh-n', h.el).value.trim(); if (!nombre) throw new Error(tipo === 'vacuna' ? 'Escribe la vacuna' : 'Escribe el desparasitante');
+    const p = deTipo(tipo).find(x => x.nombre === nombre) || S.productos.find(x => x.activo && x.nombre === nombre);
+    const v = { tipo, nombre, productoId: p ? p.id : '', precio: p ? p.precio : 0, cobra: !anterior && !!p, lote: $('#vh-l', h.el).value.trim(), proxima: $('#vh-p', h.el).value };
+    if (anterior) v.fecha = $('#vh-f', h.el).value;
+    h.cerrar(); cb(v);
+  } }]);
+}
+// Editar una vacuna del carnet: próxima fecha, lote, «ya no aplica» o quitarla
+function formVacunaReg(v, d) {
+  const h = hoja({ titulo: esc(v.nombre), cls: 'chica', html: `<p class="sm mut" style="margin-top:0">${v.tipo === 'vacuna' ? 'Vacuna' : 'Desparasitación'} del ${esc(fFechaC(v.fecha))}${v.consultaId ? '' : ' (anotada de antes)'}</p>
+    <div class="f2 lado"><label class="fld"><span>Lote</span><input id="vr-l" maxlength="40" value="${esc(v.lote || '')}"></label><label class="fld"><span>Próxima dosis</span><input id="vr-p" type="date" value="${esc(v.proxima || '')}"></label></div>` });
+  const g = async o => { await api('vacunaGuardar', { registro: Object.assign({ id: v.id }, o) }); S.vacL = null; S.mascotasL = null; S.inicio = null; h.cerrar(); await refrescarExp(); if (S.vista === 'vacunas') R.vacunas(); };
+  h.botones([{ t: ic('trash', 18), cls: 'bad icon', fn: async () => { if (await confirmar('¿Quitar esta vacuna del carnet?', { si: 'Quitar', peligro: 1 })) { await g({ estado: 'anulada' }); toast('Quitada', 'ok'); } } },
+    ...(v.proxima ? [{ t: 'Ya no aplica', fn: async () => { await g({ estado: 'omitida' }); toast('Ya no se recordará', 'ok'); } }] : []),
+    { t: 'Guardar', cls: 'pri', fn: async () => { await g({ lote: $('#vr-l', h.el).value.trim(), proxima: $('#vr-p', h.el).value, estado: v.estado === 'omitida' && $('#vr-p', h.el).value ? '' : undefined }); toast('Guardado', 'ok'); } }]);
+  void d;
+}
+
+/* ---- Documentos para el dueño: receta y carnet ---- */
+function vetCabecera(centro, titulo) {
+  const c = S.config, lg = c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(iniciales(c.nombre || 'Mi Negocio'));
+  return centro ? `<div class="vd-h vd-c"><div class="vd-lg">${lg}</div><b>${esc(c.nombre || '')}</b><div class="vd-sub">${esc(c.eslogan || 'Clínica veterinaria')}</div>${titulo ? `<div style="margin-top:8px;font:500 italic 19px var(--serif)">${esc(titulo)}</div>` : ''}</div>`
+    : `<div class="vd-h"><div class="vd-lg">${lg}</div><div><b>${esc(c.nombre || '')}</b><small>${esc([c.eslogan || 'Clínica veterinaria', c.direccion].filter(Boolean).join(' · '))}</small>${c.telefono ? `<small>Tel. y WhatsApp ${esc(c.telefono)}</small>` : ''}</div></div>`;
+}
+function vetFirmaHTML(atiende) {
+  const c = S.config, nom = c.vetNombre || atiende || '';
+  if (!nom && !c.vetFirma) return '';
+  return `<div class="vd-fm">${c.vetFirma ? `<img src="${esc(c.vetFirma)}" alt="">` : `<i>${esc(nom.replace(/^(dra?|lic|dr)\.?\s+/i, ''))}</i>`}<span>${esc(nom)}${c.vetRegistro ? ' · Reg. prof. ' + esc(c.vetRegistro) : ''}</span></div>`;
+}
+function recetaHTML(c, d) {
+  const m = d.mascota, du = d.dueno || {}, med = parseJ(c.receta, []);
+  return `<div class="vdoc">${vetCabecera(false)}
+    <div class="vd-tt"><h4>Receta médica</h4><span>N.º ${esc(c.numero || '—')} · ${esc(fFechaC(c.fecha))}</span></div>
+    <div class="vd-pac"><div><small>Paciente</small>${esc(m.nombre)} · ${esc([m.especie, m.raza].filter(Boolean).join(' · '))}</div><div><small>Edad y peso</small>${esc([edadTxt(m.nacimiento), c.peso || m.peso ? kg(c.peso || m.peso) : ''].filter(Boolean).join(' · ') || '—')}</div><div><small>Dueño</small>${esc(du.nombre || '—')}</div><div><small>Teléfono</small>${esc(du.telefono || '—')}</div></div>
+    ${c.diagnostico && S.config.recetaDx !== 'no' ? `<div class="vd-dx"><small>Diagnóstico:</small> ${esc(c.diagnostico)}</div>` : ''}
+    <div class="vd-rp"><div class="rp">Rp/</div><div class="vd-meds">${med.map((x, i) => `<div><b>${i + 1}. ${esc(x.n)}</b><small>${esc(medFrase(x))}</small></div>`).join('')}</div></div>
+    ${c.indicaciones ? `<div class="vd-ind"><b>Indicaciones</b>${esc(c.indicaciones)}</div>` : ''}
+    ${c.control ? `<div class="vd-ctl">Próximo control: <b>${esc(fFechaL(c.control))}</b></div>` : ''}
+    <div class="vd-ft"><div>${m.alergias ? 'Alergias: ' + esc(m.alergias) : ''}</div>${vetFirmaHTML(c.atiende)}</div></div>`;
+}
+function carnetHTML(d) {
+  const m = d.mascota, du = d.dueno || {}, h = hoy(), lista = t => d.vacunas.filter(v => v.tipo === t && v.estado !== 'anulada').slice(0, 14);
+  const pendIds = new Set(d.pendientes.map(v => v.id));
+  const fila = v => `<tr><td><b>${esc(v.nombre)}</b>${v.lote ? `<small>Lote ${esc(v.lote)}</small>` : ''}</td><td>${esc(fFechaC(v.fecha))}</td><td class="${pendIds.has(v.id) ? (v.proxima < h ? 'venc' : diasHasta(v.proxima) <= 30 ? 'prox' : '') : ''}">${v.proxima ? esc(fFechaC(v.proxima)) : '—'}</td></tr>`;
+  const tabla = (t, titulo, col) => { const l = lista(t); return `<div class="vd-sec">${titulo}</div>${l.length ? `<table><colgroup><col class="c1"><col><col></colgroup><tr><th>${col}</th><th>Aplicada</th><th>Próxima</th></tr>${l.map(fila).join('')}</table>` : '<div class="vd-nada">Sin registros</div>'}`; };
+  return `<div class="vdoc">${vetCabecera(true, 'Carnet de vacunación')}
+    <div class="vd-pet">${petAv(m, 'lg')}<div><b>${esc(m.nombre)}</b><small>${esc([m.especie, m.raza, m.sexo, m.color].filter(Boolean).join(' · '))}</small><small>${m.nacimiento ? 'Nació el ' + esc(fFechaC(m.nacimiento)) + ' · ' : ''}Dueño: ${esc(du.nombre || '—')}</small></div></div>
+    ${tabla('vacuna', 'Vacunas', 'Vacuna')}${tabla('desparasitacion', 'Desparasitación', 'Tipo')}
+    <div class="vd-ft"><div>${esc(S.config.direccion || '')}${S.config.telefono ? '<br>Tel. ' + esc(S.config.telefono) : ''}</div>${vetFirmaHTML((d.consultas.find(x => x.atiende) || {}).atiende || '')}</div></div>`;
+}
+function docVet(titulo, html, archivo, texto, extraBotones) {
+  const h = hoja({ titulo, ancho: 1, html });
+  const el = () => $('.vdoc', h.el);
+  h.botones([{ t: `${ic('print', 18)} Imprimir`, fn: () => imprimirDocVet(html) }, { t: `${ic('wa', 18)} Enviar`, cls: 'wa', fn: async () => { const b = await aImagen(el()); await compartirArchivo(b, archivo, texto); } }].concat(extraBotones ? extraBotones(h) : []));
+  return h;
+}
+function imprimirDocVet(html) {
+  document.body.classList.add('imp-hoja');
+  const pg = document.createElement('style'); pg.textContent = '@page{size:auto;margin:12mm}'; document.head.appendChild(pg);
+  const pa = $('#print-area'); pa.innerHTML = `<div class="vdoc-print">${html}</div>`;
+  const fin = () => { document.body.classList.remove('imp-hoja'); pg.remove(); pa.innerHTML = ''; window.removeEventListener('afterprint', fin); };
+  window.addEventListener('afterprint', fin); setTimeout(fin, 15000);
+  if (window.AndroidApp && AndroidApp.imprimir) { AndroidApp.imprimir(); return; }
+  setTimeout(() => window.print(), 80);
+}
+function verReceta(c, d, cobro) {
+  const nom = norm(d.mascota.nombre).replace(/[^a-z0-9]+/g, '-');
+  return docVet('Receta de ' + esc(d.mascota.nombre), recetaHTML(c, d), `receta-${nom}-${(c.numero || '').toLowerCase()}.png`, `Receta de ${d.mascota.nombre} · ${S.config.nombre || ''}`,
+    h => cobro && cobro.length && puede('admin', 'cajero') ? [{ t: `${ic('cash', 18)} Cobrar · ${money(cobro.reduce((t, i) => t + i.precio * i.cantidad, 0))}`, cls: 'pri', fn: () => { h.cerrar(); cobrarConsulta(c, d, cobro); } }] : []);
+}
+function verCarnet(d) {
+  const nom = norm(d.mascota.nombre).replace(/[^a-z0-9]+/g, '-');
+  return docVet('Carnet de ' + esc(d.mascota.nombre), carnetHTML(d), `carnet-${nom}.png`, `Carnet de vacunación de ${d.mascota.nombre} · ${S.config.nombre || ''}`);
+}
+
+/* ---- Vacunas por aplicar (recordatorios) ---- */
+R.vacunas = async () => {
+  const m = $('#main');
+  if (!S.vacL) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const r = S.vacL = await api('vacunas', {}, !!S.vacL);
+  if (S.vista !== 'vacunas') return;
+  const f = S.f.vacF || 'por', q = norm(S.f.vacQ || ''), DA = vacDias();
+  const P = r.pendientes, dd = v => diasHasta(v.proxima);
+  const venc = P.filter(v => dd(v) < 0), sem = P.filter(v => dd(v) >= 0 && dd(v) <= DA), mes = P.filter(v => dd(v) >= 0 && dd(v) <= 30);
+  const suma = l => l.reduce((t, v) => t + num(v.precio), 0);
+  let lista = f === 'por' ? P.filter(v => dd(v) <= DA && dd(v) >= -60) : f === 'venc' ? venc : f === 'mes' ? mes : f === 'apl' ? r.aplicadas : P;
+  if (q) lista = lista.filter(v => norm([v.mascota, v.nombre, v.dueno, v.telefono].join(' ')).includes(q));
+  const chip = (k, t, n) => `<button class="chip ${f === k ? 'on' : ''}" data-a="vacF" data-f="${k}">${t}${n !== undefined ? ` <span class="c">${n}</span>` : ''}</button>`;
+  m.innerHTML = `<div class="kpis k3"><div class="kpi" style="--k:var(--warn)"><small>${DA === 7 ? 'Esta semana' : 'Próximos ' + DA + ' días'}</small><b class="n">${sem.length}</b><i>${money(suma(sem))}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidas</small><b class="n">${venc.length}</b><i>sin aplicar</i></div><div class="kpi" style="--k:var(--pri)"><small>Este mes</small><b class="n">${mes.length}</b><i>${money(suma(mes))}</i></div></div>
+    <div class="row" style="margin-bottom:10px"><div class="srch grow">${ic('search', 18)}<input id="va-q" placeholder="Mascota, vacuna o dueño" value="${esc(S.f.vacQ || '')}"></div>${puede('admin') ? `<button class="btn" data-a="ir" data-v="ajustes" data-p='{"sec":"vet"}'>${ic('wa', 18)} Mensajes</button>` : ''}</div>
+    <div class="chips" style="margin-bottom:10px">${chip('por', 'Por aplicar')}${chip('venc', 'Vencidas', venc.length)}${chip('mes', 'Este mes', mes.length)}${chip('todas', 'Todas', P.length)}${chip('apl', 'Aplicadas')}</div>
+    ${lista.length ? `<div class="list">${lista.map(v => f === 'apl' ? filaVacApl(v) : filaVac(v)).join('')}</div>` : `<div class="empty-big">${ic('syringe', 40)}<h3>${P.length || r.aplicadas.length ? 'Nada por aquí' : 'Sin recordatorios todavía'}</h3><p>${P.length || r.aplicadas.length ? 'Prueba con otro filtro.' : 'Cuando apliques una vacuna o desparasitación con su próxima fecha, aparece aquí para recordárselo al dueño por WhatsApp.'}</p></div>`}
+    ${lista.length && f !== 'apl' ? `<div class="sec-t"><h3>Así le llega al dueño</h3></div><div class="vet-wa"><div>${esc(textoVacuna(lista[0])).replace(/\*([^*\n]+)\*/g, '<b>$1</b>')}</div></div>` : ''}`;
+  const qi = $('#va-q', m); qi.addEventListener('input', () => { S.f.vacQ = qi.value; clearTimeout(S._vaT); S._vaT = setTimeout(() => R.vacunas().then(() => { const x = $('#va-q'); if (x) { x.focus(); x.setSelectionRange(x.value.length, x.value.length); } }), 250); });
+};
+function textoVacuna(v) {
+  const vencida = diasHasta(v.proxima) < 0, d = diasHasta(v.proxima);
+  return plantilla(vencida ? S.config.msjVacunaVencida : S.config.msjVacuna, { cliente: (v.dueno || '').split(' ')[0] || 'cliente', mascota: v.mascota, vacuna: v.tipo === 'vacuna' ? 'vacuna ' + minus1(v.nombre.replace(/^vacuna\s+/i, '')) : minus1(v.nombre), fecha: d === 0 ? 'hoy' : d === 1 ? 'mañana' : fFechaL(v.proxima), negocio: S.config.nombre || '' }).replace(/\bel \*?(hoy|mañana)\*?/, '*$1*');
+}
+function filaVac(v) {
+  const d = diasHasta(v.proxima);
+  const b = d < 0 ? `<span class="badge b-bad">Hace ${-d} ${d === -1 ? 'día' : 'días'}</span>` : d === 0 ? '<span class="badge b-warn">Hoy</span>' : `<span class="badge ${d <= vacDias() ? 'b-warn' : 'b-mut'}">En ${d} ${d === 1 ? 'día' : 'días'}</span>`;
+  return `<div class="li" data-a="vacVer" data-id="${v.id}">${petAv(v)}<div class="tx"><b>${esc(v.mascota)} · ${esc(v.nombre)}</b><small>${esc(v.dueno || 'Sin dueño')} · ${d < 0 ? 'le tocaba el ' + esc(fFechaC(v.proxima)) : esc(fFechaL(v.proxima))}${v.avisado ? ' · avisado ' + esc(fDiaCorto(v.avisado)) : ''}</small></div><div class="am">${b}${v.telefono ? `<br><a class="btn wa sm icon" style="margin-top:6px;width:32px;height:32px" href="${waLink(v.telefono, textoVacuna(v))}" target="_blank" rel="noopener" data-av="${v.id}">${ic('wa', 16)}</a>` : ''}</div></div>`;
+}
+function filaVacApl(v) {
+  return `<div class="li" data-a="vacVer" data-id="${v.id}">${petAv(v)}<div class="tx"><b>${esc(v.mascota)} · ${esc(v.nombre)}</b><small>${esc(v.dueno || '')} · ${esc(fFechaC(v.fecha))}${v.proxima ? ' · próxima ' + esc(fFechaC(v.proxima)) : ''}</small></div></div>`;
+}
+ACC.vacF = el => { S.f.vacF = el.dataset.f; R.vacunas(); };
+// Al tocar WhatsApp se marca como avisado (sin esperar)
+document.addEventListener('click', e => { const a = e.target.closest('[data-av]'); if (!a) return; e.stopPropagation(); api('vacunaGuardar', { registro: { id: a.dataset.av, avisado: 1 } }, true).then(() => { const v = S.vacL && S.vacL.pendientes.find(x => x.id === a.dataset.av); if (v) v.avisado = hoy(); }).catch(() => {}); }, true);
+ACC.vacVer = el => {
+  const r = S.vacL; if (!r) return;
+  const v = r.pendientes.concat(r.aplicadas).find(x => x.id === el.dataset.id); if (!v) return;
+  const pend = r.pendientes.some(x => x.id === v.id);
+  const h = hoja({ titulo: esc(v.mascota) + ' · ' + esc(v.nombre), cls: 'chica', html: `<div class="kv"><div><small>Dueño</small>${esc(v.dueno || '—')}</div><div><small>Teléfono</small>${esc(v.telefono || '—')}</div><div><small>Última</small>${esc(fFechaC(v.fecha))}</div><div><small>Próxima</small>${v.proxima ? esc(fFechaC(v.proxima)) : '—'}</div></div>
+    ${pend ? `<label class="fld"><span>Cambiar la próxima fecha</span><input id="vv-p" type="date" value="${esc(v.proxima || '')}"></label>` : ''}` });
+  const bs = [{ t: `${ic('paw', 16)} Expediente`, fn: () => { h.cerrar(); abrirExpediente(v.mascotaId, 'vac'); } }];
+  if (pend) {
+    bs.push({ t: 'Ya no aplica', fn: async () => { await api('vacunaGuardar', { registro: { id: v.id, estado: 'omitida' } }); S.vacL = null; S.inicio = null; h.cerrar(); toast('Ya no se recordará', 'ok'); R.vacunas(); } });
+    bs.push({ t: 'Guardar fecha', fn: async () => { await api('vacunaGuardar', { registro: { id: v.id, proxima: $('#vv-p', h.el).value } }); S.vacL = null; S.inicio = null; h.cerrar(); toast('Fecha cambiada', 'ok'); R.vacunas(); } });
+    if (puede('admin', 'cajero')) bs.push({ t: `${ic('syringe', 16)} Aplicar`, cls: 'pri', fn: async () => {
+      h.cerrar();
+      await abrirExpediente(v.mascotaId, 'vac');
+      const d = S.exp.d, p = v.productoId ? byId(S.productos, v.productoId) : null;
+      formConsulta(d, null, { motivo: (v.tipo === 'vacuna' ? 'Vacuna: ' : 'Desparasitación: ') + v.nombre, vacuna: { tipo: v.tipo, nombre: p ? p.nombre : v.nombre, productoId: p ? p.id : '', precio: p ? p.precio : 0, cobra: !!p, lote: '', proxima: proxVacuna(v.tipo) } });
+    } });
+  }
+  h.botones(bs);
+};
+
+/* ---- Hospedaje y estética: al escribir la mascota se llena su dueño ---- */
+function vetEnlazarOrden(h) {
+  const eq = $('#or-eq', h.el), dl = $('#dl-or-eq', h.el); if (!eq || !dl || !modOn('mascotas')) return;
+  vetMascotas().then(l => { dl.innerHTML = l.filter(x => x.activo).map(x => `<option value="${esc(etiquetaPet(x))}">`).join(''); }).catch(() => {});
+  eq.addEventListener('change', () => {
+    const v = eq.value.trim(), x = (S.mascotasL || []).find(y => y.activo && etiquetaPet(y) === v); if (!x) return;
+    eq.value = x.nombre;
+    const c = byId(S.clientes, x.clienteId), ci = $('#or-cli', h.el); if (c && ci) ci.value = c.nombre + (c.telefono ? ' · ' + c.telefono : '');
+  });
+}
+/* ---- Inicio rápido: consulta de una mascota (buscarla o registrarla) ---- */
+ACC.vetConsultaRapida = async () => {
+  const l = (await vetMascotas()).filter(x => x.activo);
+  const h = hoja({ titulo: '¿A quién atiendes?', html: `<div class="row" style="margin-bottom:10px"><div class="srch grow">${ic('search', 18)}<input id="vq-q" placeholder="Mascota o dueño"></div><button class="btn pri" id="vq-n">${ic('plus', 18)} Nueva</button></div><div class="list" id="vq-l"></div>`, foco: '#vq-q' });
+  const pinta = () => { const q = norm($('#vq-q', h.el).value); $('#vq-l', h.el).innerHTML = l.filter(x => !q || norm(x.nombre + ' ' + x.dueno + ' ' + x.telefono).includes(q)).slice(0, 60).map(filaMascota).join('') || '<div class="empty">Nada con ese nombre</div>'; };
+  $('#vq-q', h.el).addEventListener('input', pinta); pinta();
+  const ir1 = async id => { h.cerrar(); await abrirExpediente(id); formConsulta(S.exp.d); };
+  $('#vq-l', h.el).addEventListener('click', e => { const x = e.target.closest('[data-id]'); if (!x) return; e.stopPropagation(); ir1(x.dataset.id).catch(err); }, true);
+  $('#vq-n', h.el).onclick = () => { h.cerrar(); formMascota(null, x => ir1(x.id).catch(err)); };
+};
+
 /* ===================== SUSCRIPCIONES: vencimientos, cuentas y perfiles ===================== */
 const PLAT = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
 const susOn = () => modOn('suscripciones');
-const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', otro: '📦' };
+const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', otro: '📦' };
 // Plataformas: las conocidas + las que el negocio agregó ("+ Otra") + las que ya usa en productos o cuentas
 function platsTodas() {
   const l = PLAT.map(x => x[0]), add = n => { n = String(n || '').trim(); if (n && !l.some(x => x.toLowerCase() === n.toLowerCase())) l.push(n); };
@@ -6679,7 +7331,7 @@ function confirmarGiro(id) {
   const fila = (av, t, s) => `<div class="li"><div class="av ${av}">${av === 't-verde' ? '+' : av === 't-pri' ? '↻' : '−'}</div><div class="tx"><b>${t}</b><small>${s}</small></div></div>`;
   const h = hoja({ titulo: 'Confirmar cambio', html: `<div style="text-align:center;padding:6px 0 10px"><div style="font-size:44px">${GIRO_EMO[ant.id] || '📦'} → ${GIRO_EMO[id] || '📦'}</div><h3 style="margin-top:6px">De ${esc(ant.n)} a ${esc(g.n)}</h3></div>
     <div class="aviso info sm">${ic('info', 18)}<div><b>Tus datos se conservan.</b> Productos, clientes, ventas, caja y reportes siguen igual; solo cambia lo que la app te muestra.</div></div>
-    <div class="list" style="margin-top:10px">${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
+    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
     ${fila('t-pri', 'Categorías nuevas', esc(g.cats.slice(0, 6).join(' · ')))}${opcGiro(id).g.length ? fila('t-pri', 'Opción en productos: ' + esc(opcGiro(id).g[0]), esc(opcGiro(id).ej[0] || '')) : ''}
     ${nAnt ? fila('t-mut', `Se pueden ocultar ${nAnt} productos de ${esc(ant.n)}`, 'Quedan guardados; abajo eliges si desactivarlos') : ''}</div>
     <label class="chk" style="margin-top:12px"><input type="checkbox" id="cg-ej" checked> Cargar productos de ejemplo del nuevo tipo</label>
@@ -6695,6 +7347,12 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.18', fecha: '2026-10-29', items: [
+    { i: 'paw', t: 'Nuevo tipo de negocio: Veterinaria y mascotas', d: 'Para clínicas veterinarias y tiendas de mascotas: expediente de cada mascota con su dueño, consultas que se cobran al guardar, recetas, carnet de vacunación y recordatorios de vacunas por WhatsApp. También se puede agregar como sección extra de tu tienda.' },
+    { i: 'doc', t: 'Recetas para el dueño', d: 'En la consulta agregas cada medicamento con su dosis, cada cuántas horas y cuántos días. La receta sale con número, datos de la mascota, indicaciones, próximo control y tu firma; la mandas por WhatsApp o la imprimes. Si el medicamento choca con una alergia anotada, te avisa antes.', si: () => modOn('mascotas'), ir: 'mascotas' },
+    { i: 'syringe', t: 'Vacunas por aplicar', d: 'Cada vacuna o desparasitación queda con su próxima fecha. En Vacunas ves las de la semana y las atrasadas, y le mandas al dueño el recordatorio con un toque. El carnet de vacunación se arma solo.', si: () => modOn('mascotas'), ir: 'vacunas' },
+    { i: 'bed', t: 'Hospedaje y estética', d: 'Recibe a la mascota para baño, corte u hospedaje: anotas el servicio, las indicaciones y sus pertenencias; la marcas lista, le avisas al dueño por WhatsApp y la cobras.', si: () => vetOrd(), ir: 'ordenes' }
+  ] },
   { v: '1.9.17', fecha: '2026-10-29', items: [
     { i: 'doc', t: 'Tu contrato de licencia, firmado desde el celular', d: 'Cuando Molina Soluciones Digitales te envíe el contrato de tu licencia, te aparece al abrir la app: lo lees, lo firmas con el dedo y al final lleva el recibo de tus pagos. Lo encuentras siempre en Ajustes › Mi cuenta. Firmarlo no es obligatorio.', si: () => puede('admin') && S.multi }
   ] },
@@ -6800,6 +7458,12 @@ const NOVEDADES = [
 
 /* ---------- Guías por pantalla ---------- */
 const AYUDA = {
+  mascotas: { d: 'Cada mascota con su dueño, su historial clínico, sus vacunas, sus recetas y su peso.',
+    p: ['<b>Nueva</b>: nombre, especie, raza, sexo, nacimiento, peso, alergias y su dueño (si es nuevo, queda guardado en Clientes).', 'Toca una mascota para abrir su <b>expediente</b>: ahí están sus consultas, vacunas, recetas y cómo va su peso.', '<b>Consulta</b>: motivo, peso, temperatura, diagnóstico, tratamiento, vacunas de hoy y receta. Lo que se usó se cobra con «Guardar y cobrar».', '<b>Carnet</b>: el carnet de vacunación listo para mandarlo por WhatsApp o imprimirlo.'],
+    t: ['Si una mascota ya tenía vacunas de otra clínica, anótalas en Vacunas › «Agregar una anterior» para que salgan en su carnet y en los recordatorios.', 'Las alergias salen en rojo en el expediente y en la consulta, y la receta te avisa si un medicamento choca con ellas.'] },
+  vacunas: { d: 'Las vacunas y desparasitaciones que les tocan a tus pacientes: esta semana, este mes y las atrasadas.',
+    p: ['El botón verde manda al dueño el recordatorio por WhatsApp y queda marcado como avisado.', 'Toca una para <b>Aplicar</b> (abre la consulta con la vacuna lista), cambiar la fecha o marcar «Ya no aplica».', 'Los mensajes y con cuántos días de anticipación avisar se cambian en Ajustes › Veterinaria.'],
+    t: ['Al aplicar una vacuna en la consulta, la próxima fecha se llena sola: un año para vacunas y tres meses para desparasitación. Puedes cambiarla.'] },
   ordenes: { d: 'Órdenes de trabajo: cada equipo o vehículo que recibes, con su falla, presupuesto, anticipo y estado.',
     p: ['<b>Nueva orden</b>: cliente, equipo o vehículo, placa o serie, falla y entrega prometida. Puedes mandarle el comprobante de recepción por WhatsApp.', 'Avanza el estado con un toque: recibido → en proceso → listo. En <b>Listo</b> aparece <b>Avisar</b> por WhatsApp.', '<b>Cobrar</b> arma la venta con el presupuesto y descuenta el anticipo; la orden queda entregada.'],
     t: ['Si pones la fecha de entrega prometida, Inicio te avisa cuando se pasa.'] },
@@ -7103,6 +7767,7 @@ const OPC_GIRO = {
   streaming:  { g: ['Plan'], ej: ['1 mes, 3 meses, 6 meses'] },
   compras:    { g: ['Talla', 'Color'], ej: ['S, M, L, XL', 'Negro, Blanco'], filtro: 'Talla' },
   recargas:   { g: ['Paquete'], ej: ['100, 310, 520'], nota: 'ID de jugador', notaEj: 'Ej. 123456789', notaReq: true },
+  veterinaria: { g: ['Tamaño'], ej: ['Pequeño, Mediano, Grande'], nota: 'Nombre y raza de tu mascota', notaEj: 'Ej. Toby, poodle', notaReq: true, cita: true, soloServ: true },
   otro:       { g: ['Opción', 'Color'], ej: ['Pequeño, Grande', 'Negro, Blanco'] }
 };
 const opcGiro = g => OPC_GIRO[g] || OPC_GIRO.otro;
@@ -7118,10 +7783,11 @@ const T = { info: null, id: '', cat: '', q: '', f: '', cart: {}, entrega: '', gi
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
   boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'],
   tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
-  ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
+  ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;
 const tGiros = () => (T.info && T.info.negocio.giros) || [];
-const cfgDe = p => opcGiro((p && p.g) || T.info.negocio.gid);
+// En veterinaria solo los servicios piden fecha y nombre de la mascota; el alimento o un collar se piden como cualquier producto
+const cfgDe = p => { const c = opcGiro((p && p.g) || T.info.negocio.gid); return c.soloServ && !(p && p.serv) ? { g: c.g, ej: c.ej } : c; };
 const comprasOn = () => !!(T.info && T.info.negocio.compras);
 const precioCompraT = usd => { const c = T.info.negocio.compras; return Math.ceil(usd * c.cambio * (1 + c.recargo / 100) + c.envio); };
 function guardarCompras() { LS.set(tKey('compras'), JSON.stringify(T.compras)); }

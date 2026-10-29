@@ -1,6 +1,6 @@
 /*****************************************************************
  * GESTIÓN DE NEGOCIO VM · Servidor (Google Apps Script + Google Sheets)
- * Versión 1.9.15 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
+ * Versión 1.9.18 · Software creado por José Vicdonio Molina · WhatsApp +504 3313-0265
  *
  * 1) Crea una Hoja de cálculo nueva → Extensiones → Apps Script
  * 2) Pega este archivo como Code.gs, guarda y ejecuta instalar()
@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.17';
+const VERSION = '1.9.18';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -73,7 +73,11 @@ const SCHEMA = {
   Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
   Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
-  Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado'],
+  Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado','mascotaId','mascota'],
+  // Veterinaria: cada mascota con su dueño (un cliente), su historial clínico (consultas con receta) y sus vacunas y desparasitaciones
+  Mascotas:       ['id','clienteId','nombre','especie','raza','sexo','nacimiento','color','esterilizado','chip','alergias','notas','peso','activo','creado','actualizado'],
+  Consultas:      ['id','mascotaId','clienteId','fecha','tipo','motivo','peso','temperatura','diagnostico','tratamiento','receta','indicaciones','control','numero','atiende','usuarioId','ventaId','total','agendaId','anulada','creado','actualizado'],
+  Vacunas:        ['id','mascotaId','consultaId','tipo','nombre','productoId','fecha','proxima','lote','estado','avisado','usuarioId','creado'],
   Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','ref','sucursal'],
   Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion','sucursal'],
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
@@ -91,12 +95,12 @@ const SCHEMA = {
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L' };
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
-const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa']);
-const TEXTO = new Set(['marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio']);
+const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado']);
+const TEXTO = new Set(['marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -108,7 +112,11 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
+  vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
+  msjVacuna: 'Hola {cliente} 👋 Te escribimos de *{negocio}*. A *{mascota}* le toca su *{vacuna}* el *{fecha}* 💉 ¿Te reservamos un espacio? Responde con la hora que te queda mejor.',
+  msjVacunaVencida: 'Hola {cliente} 👋 Te escribimos de *{negocio}*. A *{mascota}* ya le tocaba su *{vacuna}* desde el {fecha}. Para tenerla protegida, ¿te reservamos un espacio esta semana?',
   // Compras en línea (giro «compras»): cómo se calcula lo que el cliente pide desde un enlace
   comprasCambio: '25', comprasRecargo: '15', comprasEnvio: '0', comprasAnticipo: '50', comprasDias: '15 a 20 días', comprasTiendas: 'Shein, Temu, Amazon',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
@@ -167,6 +175,11 @@ const GIROS = {
     ej: [['Free Fire · 100 diamantes','Free Fire','💎',30,22,0],['Free Fire · 310 diamantes','Free Fire','💎',90,66,0],['Free Fire · 520 diamantes','Free Fire','💎',145,108,0],['PUBG Mobile · 60 UC','PUBG Mobile','🎯',25,18,0],
       ['PUBG Mobile · 325 UC','PUBG Mobile','🎯',120,90,0],['Roblox · 400 Robux','Roblox','🧱',125,95,0],['Roblox · 800 Robux','Roblox','🧱',240,185,0],['Call of Duty Mobile · 80 CP','Call of Duty Mobile','🪖',30,22,0],
       ['Fortnite · 1,000 V-Bucks','Fortnite','🎮',230,175,0],['Tarjeta de regalo Google Play L 250','Tarjetas de regalo','🎁',265,250,0]] },
+  veterinaria: { n: 'Veterinaria y mascotas', cats: ['Consultas','Vacunas','Desparasitación','Medicamentos','Estética','Hospedaje','Alimentos','Accesorios'],
+    ej: [['Consulta general','Consultas','🩺',350,0,0],['Control o revisión','Consultas','🩺',200,0,0],['Vacuna antirrábica','Vacunas','💉',250,110,20],['Vacuna múltiple (perro)','Vacunas','💉',450,220,15],
+      ['Triple felina (gato)','Vacunas','💉',450,230,10],['Desparasitación interna','Desparasitación','💊',150,55,30],['Pipeta antipulgas','Desparasitación','🐾',280,160,12],['Gotas óticas 15 ml','Medicamentos','💧',170,90,10],
+      ['Baño y corte','Estética','🛁',300,0,0,'Tamaño: Pequeño, Mediano, Grande'],['Baño medicado','Estética','🧴',350,0,0,'Tamaño: Pequeño, Mediano, Grande'],['Hospedaje por noche','Hospedaje','🏠',250,0,0,'Tamaño: Pequeño, Mediano, Grande'],
+      ['Alimento perro adulto 4 kg','Alimentos','🦴',520,380,10],['Alimento gato 1.5 kg','Alimentos','🐟',260,180,10],['Arena para gato 5 kg','Accesorios','🐱',180,120,12],['Collar antipulgas','Accesorios','🐕',220,130,10]] },
   otro:       { n: 'Otro tipo de negocio', cats: ['General'],
     ej: [['Producto de ejemplo 1','General','📦',100,60,10],['Producto de ejemplo 2','General','🛍️',250,150,10],['Servicio de ejemplo','General','🛎️',300,0,0]] }
 };
@@ -285,6 +298,12 @@ function rutaUsuario_(a, u, d, req) {
     case 'ordenGuardar':    return lock_(() => ordenGuardar_(u, d));
     case 'agenda':          return agenda_(u, d);
     case 'agendaGuardar':   return lock_(() => agendaGuardar_(u, d));
+    case 'mascotas':        return mascotas_(u, d);
+    case 'mascotaGuardar':  return lock_(() => mascotaGuardar_(u, d));
+    case 'expediente':      return expediente_(u, d);
+    case 'consultaGuardar': return lock_(() => consultaGuardar_(u, d));
+    case 'vacunas':         return vacunas_(u, d);
+    case 'vacunaGuardar':   return lock_(() => vacunaGuardar_(u, d));
     case 'caja':            return caja_(u, d);
     case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
     case 'reporte':         return reporte_(u, d);
@@ -1061,7 +1080,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -1135,6 +1154,12 @@ function agendaGuardar_(u, d) {
   if (!prev && !r.tipo) r.tipo = 'cita';
   ['cliente', 'telefono', 'atiende'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
   ['detalle', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
+  if (r.mascotaId !== undefined) { // veterinaria: la cita es de una mascota y su dueño queda como cliente
+    const mm = r.mascotaId ? rows_('Mascotas').find(x => x.id === r.mascotaId) : null;
+    if (r.mascotaId && !mm) throw new Error('La mascota ya no existe');
+    r.mascota = mm ? mm.nombre : '';
+    if (mm && mm.clienteId && !r.clienteId) { r.clienteId = mm.clienteId; delete r.cliente; }
+  }
   if (prev && r.clienteId === '' && r.cliente === prev.cliente) { delete r.clienteId; delete r.cliente; delete r.telefono; }
   if (r.clienteId !== undefined) {
     const c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null;
@@ -1162,8 +1187,199 @@ function agendaGuardar_(u, d) {
 function agendaResumen_(tipo) {
   const h = hoy_(), l = rows_('Agenda').filter(a => a.tipo === tipo && a.estado === 'pendiente');
   const hoyL = l.filter(a => a.dia === h).sort((a, b) => a.hora < b.hora ? -1 : 1), man = l.filter(a => a.dia === diasAtras_(-1)).length, atras = l.filter(a => a.dia < h).length;
-  return { hoy: hoyL.length, manana: man, atrasados: atras, lista: hoyL.slice(0, 6).map(a => ({ id: a.id, hora: a.hora, cliente: a.cliente, detalle: a.detalle, atiende: a.atiende, anticipo: a.anticipo, monto: a.monto })), montoHoy: r2_(hoyL.reduce((t, a) => t + (Number(a.monto) || 0), 0)) };
+  return { hoy: hoyL.length, manana: man, atrasados: atras, lista: hoyL.slice(0, 6).map(a => ({ id: a.id, hora: a.hora, cliente: a.cliente, detalle: a.detalle, atiende: a.atiende, anticipo: a.anticipo, monto: a.monto, mascota: a.mascota || '' })), montoHoy: r2_(hoyL.reduce((t, a) => t + (Number(a.monto) || 0), 0)) };
 }
+/* ===================== VETERINARIA: mascotas, consultas, recetas y vacunas =====================
+ * Cada mascota tiene un dueño (un cliente de la hoja Clientes). La consulta guarda el historial clínico
+ * y la receta (con su número R-00001); lo que se usó se cobra con una venta normal que queda ligada a la consulta.
+ * Las vacunas y desparasitaciones guardan su próxima fecha: la más reciente de cada una es el recordatorio. */
+const TIPOS_CONSULTA = ['consulta', 'vacuna', 'estetica', 'control', 'cirugia', 'nota'];
+const FECHA_RE = /^\d{4}-\d{2}-\d{2}$/;
+function vetReq_(u) {
+  req_(u, ['admin', 'cajero']);
+  if (!modOn_('mascotas')) throw new Error('Activa «Mascotas» en Ajustes › Funciones por tipo de negocio');
+}
+function vacAviso_() { return Math.max(1, Math.min(30, parseInt(config_().vacAviso, 10) || 7)); }
+// Clave de una vacuna: el producto si viene del inventario; si no, el nombre escrito
+function vacClave_(v) { return v.mascotaId + '|' + (v.productoId || norm_(v.nombre)); }
+// Recordatorios: la aplicación más reciente de cada vacuna de cada mascota, si tiene próxima fecha y no se descartó
+function vacPendientes_(lista, masc) {
+  const ult = Object.create(null);
+  lista.forEach(v => {
+    if (v.estado === 'anulada') return;
+    const k = vacClave_(v), p = ult[k];
+    if (!p || (v.fecha + v.creado) > (p.fecha + p.creado)) ult[k] = v;
+  });
+  return Object.keys(ult).map(k => ult[k]).filter(v => v.proxima && v.estado !== 'omitida' && (!masc || (masc[v.mascotaId] && masc[v.mascotaId].activo)));
+}
+function vacunaLimpia_(x) {
+  x = x || {};
+  return { tipo: x.tipo === 'desparasitacion' ? 'desparasitacion' : 'vacuna', nombre: txt_(x.nombre, 80), productoId: txt_(x.productoId, 24), lote: txt_(x.lote, 40),
+    proxima: FECHA_RE.test(String(x.proxima || '')) ? String(x.proxima) : '' };
+}
+function vetResumen_() {
+  const ms = porId_(rows_('Mascotas')), h = hoy_(), lim = diasAtras_(-vacAviso_()), mes = h.slice(0, 7);
+  const pend = vacPendientes_(rows_('Vacunas'), ms), precio = Object.create(null);
+  rows_('Productos').forEach(p => { precio[p.id] = Number(p.precio) || 0; });
+  const sem = pend.filter(v => v.proxima >= h && v.proxima <= lim), venc = pend.filter(v => v.proxima < h && v.proxima >= diasAtras_(60));
+  const act = Object.keys(ms).map(k => ms[k]).filter(m => m.activo);
+  return { mascotas: act.length, nuevas: act.filter(m => String(m.creado).slice(0, 7) === mes).length, semana: sem.length, vencidas: venc.length, hoy: pend.filter(v => v.proxima === h).length,
+    monto: r2_(sem.concat(venc).reduce((t, v) => t + (precio[v.productoId] || 0), 0)), dias: vacAviso_() };
+}
+
+function mascotas_(u, d) {
+  vetReq_(u);
+  const cli = porId_(rows_('Clientes')), h = hoy_(), ms = rows_('Mascotas'), mm = porId_(ms);
+  const pv = Object.create(null);
+  vacPendientes_(rows_('Vacunas'), mm).forEach(v => { const x = pv[v.mascotaId]; if (!x || v.proxima < x.proxima) pv[v.mascotaId] = v; });
+  const ult = Object.create(null), ctl = Object.create(null);
+  rows_('Consultas').forEach(c => {
+    if (c.anulada) return;
+    if (!ult[c.mascotaId] || c.fecha > ult[c.mascotaId]) ult[c.mascotaId] = c.fecha;
+    if (c.control && c.control >= h && (!ctl[c.mascotaId] || c.control < ctl[c.mascotaId])) ctl[c.mascotaId] = c.control;
+  });
+  // En la clínica ahora: hospedaje, estética u observación (órdenes abiertas ligadas por el nombre de la mascota y su dueño)
+  const dentro = Object.create(null);
+  if (modOn_('ordenes')) rows_('Ordenes').filter(o => ['recibido', 'proceso', 'listo'].indexOf(o.estado) >= 0).forEach(o => { dentro[o.clienteId + '|' + norm_(o.equipo)] = o.estado; });
+  return ms.map(m => {
+    const c = cli[m.clienteId] || {}, v = pv[m.id];
+    return Object.assign({}, m, { dueno: c.nombre || '', telefono: c.telefono || '', ultima: ult[m.id] || '', control: ctl[m.id] || '',
+      vacuna: v ? { nombre: v.nombre, proxima: v.proxima } : null, clinica: dentro[m.clienteId + '|' + norm_(m.nombre)] || '' });
+  }).sort((a, b) => (Number(b.activo) - Number(a.activo)) || a.nombre.localeCompare(b.nombre));
+}
+
+function mascotaGuardar_(u, d) {
+  vetReq_(u);
+  const r = Object.assign({}, d.registro || {});
+  const prev = r.id ? rows_('Mascotas').find(x => x.id === r.id) : null;
+  if (r.id && !prev) throw new Error('La mascota ya no existe');
+  ['nombre', 'raza', 'color', 'chip'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 60); });
+  ['alergias', 'notas'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 300); });
+  if (r.especie !== undefined) r.especie = txt_(r.especie, 30) || 'Perro';
+  if (r.sexo !== undefined) r.sexo = ['Macho', 'Hembra'].indexOf(r.sexo) >= 0 ? r.sexo : '';
+  if (r.esterilizado !== undefined) r.esterilizado = r.esterilizado === 'si' || r.esterilizado === 'no' ? r.esterilizado : '';
+  if (r.nacimiento !== undefined && r.nacimiento && !(FECHA_RE.test(String(r.nacimiento)) && String(r.nacimiento) <= hoy_())) r.nacimiento = '';
+  if (r.peso !== undefined) r.peso = Math.max(0, Math.min(999, r2_(r.peso)));
+  if (r.activo !== undefined) r.activo = r.activo !== false;
+  // Dueño: un cliente que ya existe, o uno nuevo con el nombre y teléfono escritos (si ese teléfono ya es de un cliente, se usa ese)
+  let nuevoCli = null;
+  const dueno = txt_(r.dueno, 80), tel = txt_(r.telefono, 30);
+  delete r.dueno; delete r.telefono;
+  if (r.clienteId !== undefined || dueno) {
+    let c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null;
+    if (r.clienteId && !c) throw new Error('El dueño ya no existe en Clientes');
+    if (!c && dueno) {
+      c = tel ? rows_('Clientes').find(x => tel8_(x.telefono) && tel8_(x.telefono) === tel8_(tel)) : null;
+      if (!c) { c = upsert_('Clientes', { nombre: dueno, telefono: tel, activo: true, creado: ahora_() }); c.saldo = 0; nuevoCli = c; }
+    }
+    if (c) r.clienteId = c.id; else if (prev) delete r.clienteId;
+  }
+  if (!prev && !r.nombre) throw new Error('Escribe el nombre de la mascota');
+  if (prev && r.nombre !== undefined && !r.nombre) throw new Error('Escribe el nombre de la mascota');
+  if (!prev && !r.clienteId) throw new Error('Escribe el nombre del dueño');
+  if (!prev) { r.activo = r.activo !== false; r.creado = ahora_(); if (!r.especie) r.especie = 'Perro'; }
+  r.actualizado = ahora_();
+  return { mascota: upsert_('Mascotas', r), cliente: nuevoCli };
+}
+
+function expediente_(u, d) {
+  vetReq_(u);
+  const m = rows_('Mascotas').find(x => x.id === d.id);
+  if (!m) throw new Error('La mascota ya no existe');
+  const c = m.clienteId ? rows_('Clientes').find(x => x.id === m.clienteId) : null;
+  const cons = desc_(rows_('Consultas').filter(x => x.mascotaId === m.id && !x.anulada), 'fecha');
+  const vac = desc_(rows_('Vacunas').filter(x => x.mascotaId === m.id && x.estado !== 'anulada'), 'fecha');
+  // Si la venta de una consulta se anuló, la consulta vuelve a quedar por cobrar
+  const ids = new Set(cons.map(x => x.ventaId).filter(Boolean));
+  if (ids.size) {
+    const vi = columna_('Ventas', 'id'), va = columna_('Ventas', 'anulada'), anul = new Set();
+    for (let i = 0; i < vi.length; i++) if (va[i] && ids.has(vi[i])) anul.add(vi[i]);
+    cons.forEach(x => { if (anul.has(x.ventaId)) x.ventaAnulada = true; });
+  }
+  return { mascota: m, dueno: c ? { id: c.id, nombre: c.nombre, telefono: c.telefono } : null, consultas: cons, vacunas: vac,
+    pendientes: vacPendientes_(vac, null).sort((a, b) => a.proxima < b.proxima ? -1 : 1) };
+}
+
+function consultaGuardar_(u, d) {
+  vetReq_(u);
+  const r = Object.assign({}, d.registro || {});
+  const prev = r.id ? rows_('Consultas').find(x => x.id === r.id) : null;
+  if (r.id && !prev) throw new Error('La consulta ya no existe');
+  const m = rows_('Mascotas').find(x => x.id === (prev ? prev.mascotaId : r.mascotaId));
+  if (!m) throw new Error('La mascota ya no existe');
+  if (prev && r.anulada === true) { // quitar del historial (sus vacunas también)
+    if (prev.ventaId && u.rol !== 'admin') throw new Error('Esta consulta ya se cobró: solo el administrador la puede quitar');
+    rows_('Vacunas').filter(v => v.consultaId === prev.id && v.estado !== 'anulada').forEach(v => upsert_('Vacunas', { id: v.id, estado: 'anulada' }));
+    return { consulta: upsert_('Consultas', { id: prev.id, anulada: true, actualizado: ahora_() }) };
+  }
+  delete r.anulada; delete r.ventaId; delete r.numero; delete r.usuarioId; delete r.creado;
+  ['motivo', 'atiende'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], k === 'motivo' ? 300 : 80); });
+  ['diagnostico', 'tratamiento', 'indicaciones'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 800); });
+  if (r.tipo !== undefined && TIPOS_CONSULTA.indexOf(r.tipo) < 0) r.tipo = 'consulta';
+  if (r.peso !== undefined) r.peso = Math.max(0, Math.min(999, r2_(r.peso)));
+  if (r.temperatura !== undefined) r.temperatura = Math.max(0, Math.min(50, r2_(r.temperatura)));
+  if (r.control !== undefined && r.control && !FECHA_RE.test(String(r.control))) r.control = '';
+  if (r.total !== undefined) r.total = Math.max(0, r2_(r.total));
+  if (r.agendaId !== undefined && r.agendaId && !rows_('Agenda').some(x => x.id === r.agendaId)) r.agendaId = '';
+  if (r.receta !== undefined) {
+    const meds = (Array.isArray(r.receta) ? r.receta : parseJ_(r.receta, [])).slice(0, 15).map(x => ({ n: txt_(x && x.n, 80), productoId: txt_(x && x.productoId, 24), dosis: txt_(x && x.dosis, 60),
+      via: txt_(x && x.via, 30), cada: txt_(x && x.cada, 20), dias: Math.max(0, Math.min(365, parseInt(x && x.dias, 10) || 0)), ind: txt_(x && x.ind, 200), lleva: !!(x && x.lleva),
+      cant: Math.max(0, Math.min(999, r3_(x && x.cant))), alerta: !!(x && x.alerta) })).filter(x => x.n);
+    r.receta = meds.length ? JSON.stringify(meds) : '';
+    if (meds.length && !(prev && prev.numero)) r.numero = siguiente_('R'); // número de receta: solo la primera vez que lleva medicamentos
+  }
+  if (!prev) {
+    Object.assign(r, { mascotaId: m.id, clienteId: m.clienteId, fecha: ahora_(), usuarioId: u.id, creado: ahora_(), anulada: false });
+    if (!r.tipo) r.tipo = 'consulta';
+    if (!r.atiende) r.atiende = txt_(config_().vetNombre || u.nombre, 80);
+  } else { delete r.mascotaId; delete r.clienteId; delete r.fecha; }
+  r.actualizado = ahora_();
+  const c = upsert_('Consultas', r);
+  // La mascota queda con su último peso y, si se anotaron, sus alergias
+  const mu = { id: m.id, actualizado: ahora_() };
+  if (!prev && r.peso > 0) mu.peso = r.peso;
+  if (d.alergias !== undefined) mu.alergias = txt_(d.alergias, 300);
+  upsert_('Mascotas', mu);
+  // Vacunas y desparasitaciones aplicadas en esta consulta (solo al crearla)
+  let nv = 0;
+  if (!prev) (Array.isArray(d.vacunas) ? d.vacunas : []).slice(0, 10).map(vacunaLimpia_).filter(x => x.nombre).forEach(v => {
+    upsert_('Vacunas', Object.assign(v, { mascotaId: m.id, consultaId: c.id, fecha: hoy_(), estado: '', avisado: '', usuarioId: u.id, creado: ahora_() })); nv++;
+  });
+  return { consulta: c, vacunas: nv };
+}
+
+function vacunas_(u, d) {
+  vetReq_(u);
+  const ms = porId_(rows_('Mascotas')), cli = porId_(rows_('Clientes')), todas = rows_('Vacunas').filter(v => v.estado !== 'anulada'), precio = Object.create(null);
+  rows_('Productos').forEach(p => { precio[p.id] = Number(p.precio) || 0; });
+  const extra = v => { const m = ms[v.mascotaId] || {}, c = cli[m.clienteId] || {}; return Object.assign({}, v, { mascota: m.nombre || '', especie: m.especie || '', clienteId: m.clienteId || '', dueno: c.nombre || '', telefono: c.telefono || '', precio: precio[v.productoId] || 0 }); };
+  const lim = diasAtras_(60);
+  return { pendientes: vacPendientes_(todas, ms).map(extra).sort((a, b) => a.proxima < b.proxima ? -1 : 1),
+    aplicadas: desc_(todas.filter(v => v.fecha >= lim && ms[v.mascotaId]), 'fecha').slice(0, 150).map(extra), aviso: vacAviso_() };
+}
+
+function vacunaGuardar_(u, d) {
+  vetReq_(u);
+  const r = d.registro || {};
+  const prev = r.id ? rows_('Vacunas').find(x => x.id === r.id) : null;
+  if (r.id && !prev) throw new Error('El registro ya no existe');
+  if (prev) {
+    const o = { id: prev.id };
+    if (r.proxima !== undefined) o.proxima = FECHA_RE.test(String(r.proxima || '')) ? String(r.proxima) : '';
+    if (r.lote !== undefined) o.lote = txt_(r.lote, 40);
+    if (r.estado !== undefined) o.estado = ['', 'omitida', 'anulada'].indexOf(r.estado) >= 0 ? r.estado : prev.estado;
+    if (r.avisado) o.avisado = hoy_();
+    return upsert_('Vacunas', o);
+  }
+  // Una vacuna puesta antes (en otra clínica): queda en el carnet sin cobrarse
+  const m = rows_('Mascotas').find(x => x.id === r.mascotaId);
+  if (!m) throw new Error('La mascota ya no existe');
+  const o = Object.assign(vacunaLimpia_(r), { mascotaId: m.id, consultaId: '', estado: '', avisado: '', usuarioId: u.id, creado: ahora_() });
+  if (!o.nombre) throw new Error(o.tipo === 'vacuna' ? 'Escribe qué vacuna se le puso' : 'Escribe qué desparasitante se le dio');
+  o.fecha = FECHA_RE.test(String(r.fecha || '')) && String(r.fecha) <= hoy_() ? String(r.fecha) : hoy_();
+  return upsert_('Vacunas', o);
+}
+
 // El anticipo entra a caja como un abono (sin venta todavía) ligado a la orden o encargo
 function anticipoRegistrar_(u, monto, clienteId, nota, ref, metodo, d) {
   metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(metodo) >= 0 ? metodo : 'Efectivo';
@@ -1188,6 +1404,10 @@ function salidoDe_(v) {
 function cerrarLigados_(d, venta) {
   if (d.ordenId) { const o = rows_('Ordenes').find(x => x.id === d.ordenId); if (o && o.estado !== 'entregado') upsert_('Ordenes', { id: o.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
   if (d.agendaId) { const a = rows_('Agenda').find(x => x.id === d.agendaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
+  if (d.consultaId) { // si la venta anterior de la consulta se anuló, queda ligada a la nueva
+    const c = rows_('Consultas').find(x => x.id === d.consultaId);
+    if (c && !c.anulada && (!c.ventaId || (rows_('Ventas').find(v => v.id === c.ventaId) || { anulada: true }).anulada)) upsert_('Consultas', { id: c.id, ventaId: venta.id, total: venta.total, actualizado: ahora_() });
+  }
 }
 
 /* ===================== SUSCRIPCIONES (streaming, mensualidades) ===================== */
@@ -1923,7 +2143,9 @@ function guardar_(u, d) {
     req_(u, ['admin']);
     const reg = {};
     Object.keys(d.registro || {}).forEach(k => { if (CONFIG_EDITABLE.indexOf(k) >= 0) reg[k] = String(d.registro[k]); });
-    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && k !== 'tiendaPortada' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
+    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && k !== 'tiendaPortada' && k !== 'vetFirma' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
+    if (reg.vetFirma && (reg.vetFirma.length > 48000 || reg.vetFirma.indexOf('data:image/') !== 0)) throw new Error('La firma no es válida. Súbela de nuevo.');
+    if (reg.vacAviso !== undefined) reg.vacAviso = String(Math.max(1, Math.min(30, parseInt(reg.vacAviso, 10) || 7)));
     if (reg.duenoFoto && (reg.duenoFoto.length > 48000 || reg.duenoFoto.indexOf('data:image/') !== 0)) throw new Error('La foto del propietario no es válida. Súbela de nuevo.');
     if (reg.tiendaPortada !== undefined) {
       const prev = config_().tiendaPortada;
@@ -2022,7 +2244,7 @@ function eliminar_(u, d) {
     usado = Math.abs(Number(pr.stock) || 0) > 0.0005 || rows_('VentaDetalle').some(x => x.productoId === d.id) || rows_('CompraDetalle').some(x => x.productoId === d.id) || rows_('Inventario').some(x => x.productoId === d.id)
       || rows_('ProyectoGastos').some(x => x.productoId === d.id) || rows_('ProyectoProductos').some(x => x.productoId === d.id)
       || rows_('Pedidos').some(x => ['nuevo', 'confirmado', 'listo'].indexOf(x.estado) >= 0 && String(x.items).indexOf(d.id) >= 0); }
-  if (ent === 'Clientes') usado = rows_('Ventas').some(x => x.clienteId === d.id) || rows_('Abonos').some(x => x.clienteId === d.id);
+  if (ent === 'Clientes') usado = rows_('Ventas').some(x => x.clienteId === d.id) || rows_('Abonos').some(x => x.clienteId === d.id) || (modOn_('mascotas') && rows_('Mascotas').some(x => x.clienteId === d.id));
   if (ent === 'Proveedores') usado = rows_('Compras').some(x => x.proveedorId === d.id) || rows_('Pagos').some(x => x.proveedorId === d.id);
   if (ent === 'Cuentas') usado = rows_('Suscripciones').some(x => x.cuentaId === d.id);
   if (usado) { upsert_(ent, { id: d.id, activo: false }); return { desactivado: true }; }
@@ -2856,6 +3078,7 @@ function avisosDia_() {
   }
   if (modOn_('caducidad')) { const c = caducan_(); a.cadVenc = c.vencidos; a.cadProx = c.n - c.vencidos; }
   if (modOn_('ordenes')) a.ordAtras = rows_('Ordenes').filter(o => ['recibido', 'proceso'].indexOf(o.estado) >= 0 && o.promesa && o.promesa < h).length;
+  if (modOn_('mascotas')) a.vacHoy = vetResumen_().hoy;
   return a;
 }
 
@@ -3046,6 +3269,7 @@ function inicio_(u, d) {
     if (modOn_('ordenes')) out.ordenes = ordenResumen_();
     if (modOn_('agenda')) out.agenda = agendaResumen_('cita');
     if (modOn_('encargos')) out.encargos = agendaResumen_('encargo');
+    if (modOn_('mascotas') && u.rol !== 'bodega') out.vet = vetResumen_();
   } catch (e) {}
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && deT(v, 'Ventas'));
@@ -3813,6 +4037,7 @@ function tiendaInfo_(d) {
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
       const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '', g: giroDeProd_(p, activos) };
       if (String(p.creado).slice(0, 10) >= nuevoDesde) o.nuevo = true;
+      if (p.tipo === 'servicio') o.serv = 1;
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
       return o;
     }).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre)),
