@@ -1123,7 +1123,16 @@ const TEMAS = {
   uva:       { n: 'Uva',               h1: '#4f0a87', h2: '#d6219c', pri: '#9418b0', a1: '#ffb300', a2: '#ffd84d', tag: '#ffc9ef' },
   mango:     { n: 'Mango',             h1: '#d94b00', h2: '#ff9f00', pri: '#e85d00', a1: '#e6007e', a2: '#ff4fa8', tag: '#fff1b0' },
   coral:     { n: 'Coral',             h1: '#d92d4a', h2: '#ff8a65', pri: '#e8394f', a1: '#00b4a6', a2: '#3ee0c8', tag: '#ffe0d2' },
-  neon:      { n: 'Noche neón',        h1: '#0e0930', h2: '#4c22d0', pri: '#5730e6', a1: '#00c6f0', a2: '#5ef0ff', tag: '#86f4ff' }
+  neon:      { n: 'Noche neón',        h1: '#0e0930', h2: '#4c22d0', pri: '#5730e6', a1: '#00c6f0', a2: '#5ef0ff', tag: '#86f4ff' },
+  // Temas profesionales (sobrios): oficinas, clínicas, consultorías
+  marino:    { n: 'Azul marino',       h1: '#0b1f3a', h2: '#1f4a7a', pri: '#1d4f91', a1: '#c9a227', a2: '#e4c35a', tag: '#e4c35a', pro: 1 },
+  grafito:   { n: 'Grafito',           h1: '#1c1f24', h2: '#3a4049', pri: '#2f3640', a1: '#2f7df6', a2: '#5ea0ff', tag: '#cfd6e0', pro: 1 },
+  bosque:    { n: 'Verde bosque',      h1: '#0f3d2e', h2: '#1f6b50', pri: '#1a5c45', a1: '#d4a94a', a2: '#ecc96f', tag: '#d9e8c8', pro: 1 },
+  vino:      { n: 'Vino',              h1: '#4a0f1f', h2: '#7d1f3a', pri: '#6b1b33', a1: '#c9a227', a2: '#e4c35a', tag: '#f0d6a8', pro: 1 },
+  pizarra:   { n: 'Pizarra',           h1: '#1f2e3d', h2: '#3b5367', pri: '#345268', a1: '#e07b39', a2: '#f3a369', tag: '#d6e0e8', pro: 1 },
+  petroleo:  { n: 'Azul petróleo',     h1: '#0b2f3a', h2: '#145c6b', pri: '#13515f', a1: '#e8b23a', a2: '#f5cf6e', tag: '#cfe6ea', pro: 1 },
+  cafe:      { n: 'Café',              h1: '#3b2418', h2: '#6b4a32', pri: '#5a3c28', a1: '#c98b3a', a2: '#e3ad62', tag: '#e9d8c5', pro: 1 },
+  ciruela:   { n: 'Ciruela',           h1: '#2e1a3f', h2: '#5a3a78', pri: '#4e3269', a1: '#d6b35a', a2: '#ecd08a', tag: '#e2d4ee', pro: 1 }
 };
 const TEMA_DEF = 'fucsia';
 
@@ -1370,7 +1379,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.20';
+const APP_VER = '1.9.21';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -5254,7 +5263,7 @@ R.ajustes = () => {
     <button class="btn pri" data-a="guardarAj" data-s="cot">Guardar</button>`);
   if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
   if (puede('admin', 'cajero')) h += sec('avisos', 'bell', 'Avisos en el teléfono', avisosAjustesHTML(), avisosOn() ? '<span class="badge b-ok">Activos</span>' : '');
-  h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `<div class="temas">${Object.keys(TEMAS).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div><p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
+  h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `${[['Vivos', k => !TEMAS[k].pro], ['Profesionales', k => TEMAS[k].pro]].map(([tt, f]) => `<p class="sm mut" style="margin:${tt === 'Vivos' ? 0 : 14}px 0 8px">${tt}</p><div class="temas">${Object.keys(TEMAS).filter(f).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div>`).join('')}<p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
     <div class="fld" style="margin-top:12px"><span>Modo (solo en este equipo)</span><div class="modos">${[['auto', 'auto', 'Automático'], ['claro', 'sun', 'Claro'], ['oscuro', 'moon', 'Oscuro']].map(([k, i, t]) => `<button class="pay ${modo === k ? 'on' : ''}" data-a="modoColor" data-m="${k}">${ic(i)}${t}</button>`).join('')}</div></div>
     ${adm ? `<div class="fld"><span>Logo</span><div class="row"><div class="logo-prev">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(iniciales(c.nombre))}</div><label class="btn">${ic('image', 18)} Subir logo<input type="file" accept="image/*" id="aj-logo" hidden></label>${c.logo ? `<button class="btn ghost" data-a="quitarLogo">Quitar</button>` : ''}</div></div>` : ''}`);
   if (adm) h += sec('tienda', 'store', 'Tienda en línea', `<p class="sm" style="margin:0 0 10px">Todo lo de tu tienda (enlace, letra, información, propietario, entregas y pagos) ahora vive en su propio módulo.</p><button class="btn pri" data-a="ir" data-v="tienda">${ic('store', 18)} Abrir Mi tienda en línea</button>`, S.plus ? '<span class="plus-b">PLUS</span> activo' : '');
@@ -7673,6 +7682,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.21', fecha: '2026-10-29', items: [
+    { i: 'palette', t: '8 colores profesionales', d: 'Azul marino, Grafito, Verde bosque, Vino, Pizarra, Azul petróleo, Café y Ciruela: tonos sobrios para oficinas, clínicas y consultorías. Cámbialo en Ajustes › Apariencia; también se aplica a tu tienda en línea y a tus documentos.', ir: 'ajustes' }
+  ] },
   { v: '1.9.20', fecha: '2026-10-29', items: [
     { i: 'doc', t: 'Cotizaciones con plan de pagos', d: 'Para negocios de servicios: arma una cotización elegante con tus servicios, descuento, ISV y un plan de pagos con fechas. La envías por WhatsApp o la imprimes. Cuando el cliente la acepta, se vuelve un proyecto y cada pago queda agendado: lo ves en Inicio, lo recuerdas por WhatsApp y lo cobras con un toque.', si: () => cotOn(), ir: 'proyectos' },
     { i: 'edit', t: 'Contrato y acta firmados con el dedo', d: 'Del proyecto salen el contrato de aceptación de servicios y, al terminar, el acta de proyecto finalizado. El cliente los firma en tu teléfono y quedan guardados con fecha y hora. Los textos base se cambian en Ajustes › Cotizaciones y contratos.', si: () => cotOn() },
@@ -7858,7 +7870,7 @@ const AYUDA = {
   usuarios: { d: 'Tu equipo y lo que puede hacer cada uno.',
     p: ['Toca <b>+</b> y escribe el nombre, el WhatsApp y un PIN para la persona.', 'Elige el rol: <b>Administrador</b> (todo), <b>Cajero</b> (vende, cobra y cierra caja) o <b>Bodega</b> (productos, compras, inventario y proyectos).', 'Desactiva a alguien para quitarle el acceso.'], t: ['Cada persona entra con su propio WhatsApp y PIN.'] },
   ajustes: { d: 'Datos de tu negocio y cómo se ve el sistema.',
-    p: ['<b>Mi negocio</b>: nombre, teléfono, ISV y mensaje del comprobante.', '<b>Apariencia</b>: logo, 12 colores y modo oscuro.', '<b>Funciones por tipo de negocio</b>: enciende lo que te sirve (suscripciones, órdenes, agenda…).', '<b>Tienda en línea</b> y <b>Plan Plus</b>.', '<b>Facturación SAR</b> (opcional): enciéndela solo si tu negocio está registrado como autoimpresor. Copia tu RTN, CAI, rango y fecha límite tal como te los dio el SAR.', '<b>Mi cuenta</b>: cambia tu PIN.'],
+    p: ['<b>Mi negocio</b>: nombre, teléfono, ISV y mensaje del comprobante.', '<b>Apariencia</b>: logo, 20 colores (vivos y profesionales) y modo oscuro.', '<b>Funciones por tipo de negocio</b>: enciende lo que te sirve (suscripciones, órdenes, agenda…).', '<b>Tienda en línea</b> y <b>Plan Plus</b>.', '<b>Facturación SAR</b> (opcional): enciéndela solo si tu negocio está registrado como autoimpresor. Copia tu RTN, CAI, rango y fecha límite tal como te los dio el SAR.', '<b>Mi cuenta</b>: cambia tu PIN.'],
     t: ['Con la facturación SAR apagada tus ventas salen como comprobante, como siempre.', 'El sistema te avisa cuando se acerca la fecha límite o quedan pocas facturas del rango.'] }
 };
 
