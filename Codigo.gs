@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.16';
+const VERSION = '1.9.17';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -46,6 +46,8 @@ const SCHEMA_M = {
   CuotasLic:   ['id','negocioId','fecha','monto','concepto','gracia','estado','pagoId','pagadaEl','nota','creado'],
   // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
   GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado'],
+  // Contratos de licencia: Vic los crea desde el Panel y el dueño los firma desde su celular (la firma es una imagen pequeña)
+  Contratos:   ['id','negocioId','fecha','titulo','texto','monto','desde','hasta','estado','firma','firmadoEl','firmadoPor','huella','pdfId','creado'],
   // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
   Visitas:     ['id','fecha','pagina','origen','disp','vid','ref']
 };
@@ -268,6 +270,8 @@ function rutaUsuario_(a, u, d, req) {
     case 'chat':            return lock_(() => chat_(u, d));
     case 'chatResponder':   return lock_(() => chatResponder_(u, d));
     case 'chatBorrar':      return lock_(() => chatBorrar_(u, d));
+    case 'contratoVer':     return contratoVer_(u, d);
+    case 'contratoFirmar':  return contratoFirmar_(u, d);
     case 'soporteCrear':    return lock_(() => soporteCrear_(u, d));
     case 'soporteLista':    return soporteLista_(u);
     case 'soporteVer':      return lock_(() => soporteVer_(u, d));
@@ -740,7 +744,7 @@ function bootstrap_(u, d) {
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); if (d && d.vid && !NEG.lic.vid && u.rol === 'admin') upd.vid = String(d.vid).replace(/[^A-Za-z0-9]/g, '').slice(0, 24); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u, d);
-  if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && cb.vencidas.length) r.cobroVM = cb; }
+  if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && cb.vencidas.length) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
   return r;
 }
 
@@ -826,7 +830,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['persona','giros','pagina','origen','vid','ref','desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version'];
+const M_TEXTO = ['persona','giros','pagina','origen','vid','ref','desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version','firmadoEl','huella'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -1366,6 +1370,7 @@ function rutaPanel_(a, d) {
     case 'panelPago':              return panelPago_(d);
     case 'panelCuotas':            return panelCuotas_(d);
     case 'panelNota':              return panelNota_(d);
+    case 'panelContrato':          return panelContrato_(d);
     case 'panelPlantillas':        return plantillas_();
     case 'panelPlantillasGuardar': return plantillasGuardar_(d);
     case 'panelSoporte':           return panelSoporte_();
@@ -1390,13 +1395,32 @@ const PLANTILLAS_DEF = {
   activada: '¡Listo {dueno}! Tu licencia de Gestión de Negocio VM para {negocio} ya está activa. Gracias por confiar 🙌 Cualquier duda, me escribís.',
   bienvenida: '¡Hola {dueno}! 👋 Bienvenido a *Gestión de Negocio VM* 🎉\n\nGracias por confiar en nosotros para llevar el control de *{negocio}*. Desde hoy tenés en un solo lugar tus ventas, inventario, clientes, compras, gastos, caja y reportes, desde el teléfono o la computadora.\n\nPara empezar te recomiendo:\n1️⃣ Cargá tus productos con su costo y precio.\n2️⃣ Registrá tus ventas del día.\n3️⃣ Al cerrar, revisá tu caja y tus reportes.\n\nTe dejo la imagen con todo lo que incluye. Si tenés cualquier duda, escribime por aquí o desde *Ayuda* dentro de la app; con gusto te acompaño.\n\n_Molina Soluciones Digitales_'
 };
+// Texto del contrato de licencia. Se edita desde Panel › Mensajes; los {campos} se rellenan al crear cada contrato.
+const CONTRATO_DEF = `Entre MOLINA SOLUCIONES DIGITALES, representada por José Vicdonio Molina Izaguirre, en adelante «el Licenciante», y {dueno}, en representación del negocio {negocio}{rtn}{direccion}, con WhatsApp {whatsapp}, en adelante «el Cliente», se celebra el presente contrato bajo las siguientes cláusulas:
+
+PRIMERA · Objeto y alcance. El Licenciante otorga al Cliente una licencia de uso no exclusiva e intransferible del programa «Gestión de Negocio VM» para administrar el negocio {negocio}: ventas, inventario, clientes, compras, gastos, caja y reportes, según el plan contratado ({plan}). El plan Plus (tienda en línea y fotos), la Contabilidad y los giros adicionales se contratan por separado. Las mejoras y actualizaciones del programa se aplican de forma automática y sin costo adicional.
+
+SEGUNDA · Vigencia, precio y forma de pago. La licencia rige desde el {desde} y {vigencia}. El valor de la licencia es de {monto}. {cuotas} Si un pago no se recibe en la fecha acordada, el programa se lo recuerda al Cliente y, pasados los días de gracia, el acceso se pausa hasta que el pago se registre; los datos no se pierden durante la pausa. Los montos pagados no son reembolsables.
+
+TERCERA · Datos y soporte. La información registrada pertenece al Cliente y se guarda en una hoja de cálculo de Google exclusiva para su negocio, administrada por el Licenciante, quien no vende ni comparte estos datos y los usa solo para el funcionamiento del programa y el soporte. El Cliente puede solicitar una copia de sus datos en cualquier momento. El Licenciante brinda soporte por WhatsApp y desde la sección «Ayuda» del programa, en horario hábil y sin costo adicional, para dudas de uso y fallas del programa; la capacitación presencial y los desarrollos a medida se cotizan aparte.
+
+CUARTA · Obligaciones y responsabilidad. El Cliente es responsable del resguardo de sus PIN de acceso y de los usuarios que cree; de la veracidad de los datos que registra, incluidos los datos fiscales (RTN, CAI y rangos de facturación autorizados por el SAR) y sus declaraciones ante las autoridades; y de contar con conexión a internet. El Cliente no puede copiar, revender, ceder ni modificar el programa. El programa es una herramienta de apoyo administrativo: el Licenciante no responde por decisiones comerciales o fiscales del Cliente ni por interrupciones causadas por los servicios de Google, el proveedor de internet o el equipo del Cliente, y su responsabilidad se limita en todo caso al monto pagado por la licencia.
+
+QUINTA · Terminación y aceptación. El Cliente puede dejar de usar el programa cuando lo desee. El Licenciante puede dar por terminado el contrato por falta de pago mayor a sesenta (60) días o por uso indebido del programa; en ambos casos, el Cliente puede solicitar una copia de sus datos dentro de los treinta (30) días siguientes. Este contrato se acepta mediante firma electrónica desde el programa, en el celular o la computadora del Cliente; ambas partes reconocen que esa firma, junto con la fecha, la hora y la huella digital del documento, tiene la misma validez que una firma manuscrita.
+
+Honduras, {fecha}.`;
+function textoLargo_(s, max) { return String(s === undefined || s === null ? '' : s).replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, max || 6000); }
 function plantillas_() {
   let p = {}; try { p = JSON.parse(PropertiesService.getScriptProperties().getProperty('PANEL_PLANTILLAS') || '{}'); } catch (e) { p = {}; }
-  return Object.assign({}, PLANTILLAS_DEF, p);
+  const r = Object.assign({}, PLANTILLAS_DEF, p);
+  r.contrato = PropertiesService.getScriptProperties().getProperty('PANEL_CONTRATO') || CONTRATO_DEF; // va en su propia propiedad: es largo y conserva los saltos de línea
+  return r;
 }
 function plantillasGuardar_(d) {
   const p = {}; Object.keys(PLANTILLAS_DEF).forEach(k => { if (d.plantillas && d.plantillas[k] !== undefined) p[k] = txt_(d.plantillas[k], 600); });
-  PropertiesService.getScriptProperties().setProperty('PANEL_PLANTILLAS', JSON.stringify(p));
+  const ps = PropertiesService.getScriptProperties();
+  ps.setProperty('PANEL_PLANTILLAS', JSON.stringify(p));
+  if (d.plantillas && d.plantillas.contrato !== undefined) { const c = textoLargo_(d.plantillas.contrato, 6000); if (c && c !== CONTRATO_DEF) ps.setProperty('PANEL_CONTRATO', c); else ps.deleteProperty('PANEL_CONTRATO'); }
   return plantillas_();
 }
 function diasDesde_(f) { const ms = msDeLocal_(String(f || '').replace(' ', 'T')); return ms ? (Date.now() - ms) / 86400000 : 9999; }
@@ -1481,6 +1505,7 @@ function panelNegocio_(d) {
   f.campanas = camps.map(x => ({ id: x.id, nombre: x.plataforma + ' · «' + x.nombre + '»', desde: x.desde, hasta: x.hasta }));
   f.seguimiento = mRows_('Seguimiento').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
   f.pagos = mRows_('PagosLic').filter(x => x.negocioId === l.id).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+  f.contratos = contratosDe_(l.id).map(contratoPublico_);
   f.cuotas = cuotasDe_(l.id).map(c => ({ id: c.id, fecha: String(c.fecha).slice(0, 10), monto: Number(c.monto) || 0, concepto: c.concepto, gracia: esNum_(c.gracia) ? Number(c.gracia) : GRACIA_DEF, estado: c.estado, pagadaEl: c.pagadaEl, nota: c.nota }));
   f.soporte = mRows_('Soporte').filter(x => x.negocioId === l.id).sort((a, b) => a.ultimo < b.ultimo ? 1 : -1).map(c => sopPublico_(c, 'adm'));
   // Negocios de la misma persona y giros que se pueden activar
@@ -1495,6 +1520,7 @@ function panelNegocio_(d) {
     const lim = Date.now() - 30 * 86400000, v30 = rowsDesde_('Ventas', lim).filter(v => !v.anulada && msDeLocal_(v.fecha) >= lim);
     const cfg = config_();
     f.giroId = own_(GIROS, cfg.giro) ? cfg.giro : f.giroId;
+    f.datos = { rtn: cfg.sarRtn || cfg.rtn || '', direccion: cfg.sarDireccion || cfg.direccion || '', razon: cfg.sarRazon || '', telefono: cfg.telefono || '', correo: cfg.correo || '' }; // para rellenar el contrato
     f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
       pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
     // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
@@ -1694,6 +1720,122 @@ function panelCuotas_(d) {
   return panelNegocio_({ id: l.id });
 }
 function panelNota_(d) { const l = licDe_(d.id); mSet_('Licencias', l, { notas: txt_(d.notas, 500) }); return panelNegocio_({ id: l.id }); }
+
+/* ---- Contratos de licencia: se crean en el Panel y el dueño los firma desde la app ---- */
+const MESES_L = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+const MESES_C = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+function fechaCorta_(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? Number(m[3]) + ' ' + MESES_C[Number(m[2]) - 1] + ' ' + m[1] : String(iso || ''); }
+function fechaLetras_(iso) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(iso || '')); return m ? Number(m[3]) + ' de ' + MESES_L[Number(m[2]) - 1] + ' de ' + m[1] : String(iso || ''); }
+function escH_(s) { return String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]); }
+function waBonito_(w) { const d = String(w || '').replace(/\D/g, ''); return d.length === 11 && d.indexOf('504') === 0 ? '+504 ' + d.slice(3, 7) + '-' + d.slice(7) : d ? '+' + d : ''; }
+function contratosDe_(id) { return mRows_('Contratos').filter(c => c.negocioId === id).sort((a, b) => a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0); }
+function contratoPublico_(c) {
+  return { id: c.id, fecha: String(c.fecha).slice(0, 10), titulo: c.titulo, monto: Number(c.monto) || 0, desde: c.desde, hasta: c.hasta, estado: c.estado, firmadoEl: c.firmadoEl, firmadoPor: c.firmadoPor, huella: c.huella ? String(c.huella).slice(0, 12) : '', pdf: c.pdfId ? 'https://drive.google.com/file/d/' + c.pdfId + '/view' : '' };
+}
+// Lo que ve el administrador del negocio al abrir la app: el contrato pendiente de firma (si hay) y cuántos tiene firmados
+function contratosResumen_(negocioId) {
+  const l = contratosDe_(negocioId).filter(c => c.estado !== 'anulado');
+  if (!l.length) return null;
+  const p = l.find(c => c.estado === 'pendiente');
+  return { pendiente: p ? contratoPublico_(p) : null, firmados: l.filter(c => c.estado === 'firmado').map(contratoPublico_) };
+}
+// Rellena los {campos} del texto con los datos del negocio
+function contratoTexto_(txt, l, d) {
+  const cfg = d.datos || {}, monto = r2_(Number(d.monto) || 0), cu = cuotasDe_(l.id).filter(c => c.estado === 'pendiente');
+  const plan = ['Licencia del programa'].concat(esSi_(l.plus) ? ['Plus'] : [], esSi_(l.contab) ? ['Contabilidad'] : []).join(' + ');
+  const cuotas = cu.length ? 'Se paga en ' + cu.length + (cu.length === 1 ? ' pago' : ' pagos') + ': ' + cu.map(c => money_(Number(c.monto) || 0, { moneda: 'L' }) + ' el ' + fechaLetras_(String(c.fecha).slice(0, 10))).join(', ') + '.' : 'Se paga en un solo pago.';
+  const campos = { negocio: l.negocio, dueno: l.dueno, whatsapp: waBonito_(l.whatsapp), rtn: cfg.rtn ? ', RTN ' + cfg.rtn : '', direccion: cfg.direccion ? ', con domicilio en ' + cfg.direccion : '',
+    monto: monto > 0 ? money_(monto, { moneda: 'L' }) + ' (lempiras)' : 'el acordado entre las partes', fecha: fechaLetras_(d.fecha || hoy_()), desde: fechaLetras_(d.desde || hoy_()), hasta: d.hasta ? fechaLetras_(d.hasta) : '',
+    vigencia: d.hasta ? 'vence el ' + fechaLetras_(d.hasta) : 'es de por vida (pago único, sin mensualidades)', plan: plan, cuotas: cuotas };
+  return String(txt || '').replace(/\{(\w+)\}/g, (m, k) => own_(campos, k) ? campos[k] : m);
+}
+// El documento completo: contrato, firma (si ya firmó) y al final el recibo de los pagos recibidos
+function contratoHtml_(c, l) {
+  const pagos = mRows_('PagosLic').filter(p => p.negocioId === c.negocioId).sort((a, b) => a.fecha < b.fecha ? -1 : 1), tot = r2_(pagos.reduce((a, p) => a + (Number(p.monto) || 0), 0));
+  const M = n => money_(n, { moneda: 'L' }), firmado = c.estado === 'firmado';
+  const parr = String(c.texto || '').split(/\n\s*\n/).map(x => { const t = escH_(x.trim()); if (!t) return ''; const m = /^([A-ZÁÉÍÓÚÑ]+ · [^.]+\.)\s*/.exec(x.trim()); return m ? '<p><b>' + escH_(m[1]) + '</b> ' + escH_(x.trim().slice(m[0].length)) + '</p>' : '<p>' + t.replace(/\n/g, '<br>') + '</p>'; }).join('');
+  const ref = 'Contrato Nº ' + escH_(c.id) + (c.huella ? ' · Huella ' + escH_(String(c.huella).slice(0, 12)) : '');
+  return `<div class="cdoc"><div class="cdoc-h"><div><b>Molina Soluciones Digitales</b><small>Gestión de Negocio VM · WhatsApp +504 3313-0265</small></div><div class="cdoc-ref"><small>${ref}</small><small>${escH_(fechaLetras_(String(c.fecha).slice(0, 10)))}</small></div></div>
+    <h1>${escH_(c.titulo)}</h1>${parr}
+    <div class="cdoc-firmas"><div class="cdoc-f"><div class="cdoc-img"><span style="font-family:cursive;font-size:20px">José Vicdonio Molina Izaguirre</span></div><b>José Vicdonio Molina Izaguirre</b><small>Molina Soluciones Digitales · El Licenciante</small></div>
+    <div class="cdoc-f ${firmado ? 'ok' : 'pend'}"><div class="cdoc-img">${firmado && c.firma ? `<img src="${escH_(c.firma)}" alt="Firma">` : '<span class="cdoc-pend">Pendiente de firma</span>'}</div><b>${escH_(firmado ? c.firmadoPor || l.dueno : l.dueno)}</b><small>${escH_(l.negocio)} · El Cliente</small>${firmado ? `<small>Firmado el ${escH_(fechaLetras_(String(c.firmadoEl).slice(0, 10)))} a las ${escH_(String(c.firmadoEl).slice(11, 16))}</small>` : ''}</div></div>
+    <div class="cdoc-rec"><h2>Recibo de pago</h2><small>Pagos recibidos de ${escH_(l.negocio)} por su licencia de Gestión de Negocio VM</small>
+    ${pagos.length ? `<table><thead><tr><th>Fecha</th><th>Concepto</th><th>Forma de pago</th><th class="n">Monto</th></tr></thead><tbody>${pagos.map(p => `<tr><td>${escH_(fechaCorta_(String(p.fecha).slice(0, 10)))}</td><td>${escH_(p.concepto)}${p.nota ? '<br><small>' + escH_(p.nota) + '</small>' : ''}</td><td>${escH_(p.metodo)}</td><td class="n">${escH_(M(Number(p.monto) || 0))}</td></tr>`).join('')}</tbody><tfoot><tr><td colspan="3">Total recibido</td><td class="n">${escH_(M(tot))}</td></tr>${Number(c.monto) > tot ? `<tr class="sal"><td colspan="3">Saldo pendiente</td><td class="n">${escH_(M(r2_(Number(c.monto) - tot)))}</td></tr>` : ''}</tfoot></table>`
+      : '<p class="cdoc-np">Aún no hay pagos registrados.</p>'}
+    <small class="cdoc-pie">Este recibo se genera con los pagos anotados por Molina Soluciones Digitales al ${escH_(fechaLetras_(hoy_()))}. Molina Soluciones Digitales · Honduras</small></div></div>`;
+}
+function contratoPdf_(c, l) {
+  try {
+    const css = '<style>body{font-family:Arial,sans-serif;font-size:11pt;color:#222;margin:28px}h1{font-size:15pt;text-align:center;margin:18px 0}h2{font-size:13pt;margin:0 0 4px}p{line-height:1.5;text-align:justify;margin:0 0 9px}.cdoc-h{display:flex;justify-content:space-between;border-bottom:2px solid #222;padding-bottom:8px}.cdoc-h small,.cdoc-ref small{display:block;color:#555;font-size:9pt}.cdoc-ref{text-align:right}.cdoc-firmas{display:flex;gap:30px;margin:30px 0 24px}.cdoc-f{flex:1;text-align:center}.cdoc-f b,.cdoc-f small{display:block}.cdoc-f small{color:#555;font-size:9pt}.cdoc-img{height:80px;border-bottom:1px solid #222;display:flex;align-items:flex-end;justify-content:center;margin-bottom:6px}.cdoc-img img{max-height:76px;max-width:100%}.cdoc-pend{color:#999;font-style:italic;font-size:10pt;padding-bottom:10px}.cdoc-rec{border:1px solid #bbb;border-radius:8px;padding:14px 16px;page-break-inside:avoid}.cdoc-rec small{color:#555;font-size:9pt}table{width:100%;border-collapse:collapse;margin-top:10px;font-size:10pt}th,td{padding:6px 4px;border-bottom:1px solid #ddd;text-align:left}th{font-size:9pt;color:#555;text-transform:uppercase}.n{text-align:right;white-space:nowrap}tfoot td{font-weight:bold;border-bottom:0}.sal td{color:#b00}.cdoc-pie{display:block;margin-top:10px}</style>';
+    const html = '<!doctype html><html><head><meta charset="utf-8">' + css + '</head><body>' + contratoHtml_(c, l) + '</body></html>';
+    const nombre = 'Contrato ' + String(l.negocio || '').replace(/[\\/:*?"<>|]/g, ' ') + ' ' + String(c.firmadoEl || c.fecha).slice(0, 10) + '.pdf';
+    const f = carpeta_().createFile(Utilities.newBlob(html, 'text/html', nombre).getAs('application/pdf').setName(nombre));
+    try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+    return f.getId();
+  } catch (e) { return ''; }
+}
+function contratoDe_(id, negocioId) {
+  const c = mRows_('Contratos').find(x => x.id === String(id || '') && (!negocioId || x.negocioId === negocioId));
+  if (!c) throw new Error('Ese contrato no existe');
+  return c;
+}
+function panelContrato_(d) {
+  const l = licDe_(d.id), acc = d.accion;
+  if (acc === 'previa' || acc === 'crear') {
+    const titulo = txt_(d.titulo, 120) || 'Contrato de licencia de uso · Gestión de Negocio VM';
+    const texto = contratoTexto_(textoLargo_(d.texto || plantillas_().contrato, 12000), l, d);
+    if (texto.length < 50) throw new Error('Escribe el texto del contrato');
+    const monto = r2_(Number(d.monto) || 0), desde = /^\d{4}-\d{2}-\d{2}$/.test(String(d.desde || '')) ? d.desde : hoy_(), hasta = /^\d{4}-\d{2}-\d{2}$/.test(String(d.hasta || '')) ? d.hasta : '';
+    if (hasta && hasta < desde) throw new Error('La fecha de vencimiento no puede ser antes del inicio');
+    const c = { id: mId_('K'), negocioId: l.id, fecha: hoy_(), titulo: titulo, texto: texto, monto: monto, desde: desde, hasta: hasta, estado: 'pendiente', firma: '', firmadoEl: '', firmadoPor: '', huella: '', pdfId: '', creado: ahora_().replace('T', ' ') };
+    if (acc === 'previa') return { html: contratoHtml_(c, l), texto: texto };
+    if (contratosDe_(l.id).some(x => x.estado === 'pendiente')) throw new Error('Ya hay un contrato pendiente de firma. Anúlalo antes de crear otro.');
+    mAppend_('Contratos', c);
+    mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Contrato enviado a firma: ' + titulo + (monto > 0 ? ' · ' + money_(monto, { moneda: 'L' }) : '') });
+    CacheService.getScriptCache().remove('L_' + l.id);
+    return panelNegocio_({ id: l.id });
+  }
+  const c = contratoDe_(d.contratoId, l.id);
+  if (acc === 'ver') return { contrato: contratoPublico_(c), html: contratoHtml_(c, l) };
+  if (acc === 'anular') {
+    if (c.estado === 'anulado') throw new Error('Ese contrato ya está anulado');
+    if (c.estado === 'firmado' && !d.confirmar) throw new Error('Ese contrato ya está firmado. Confirma que quieres anularlo.');
+    mSet_('Contratos', c, { estado: 'anulado' });
+    mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Contrato anulado: ' + c.titulo });
+    return panelNegocio_({ id: l.id });
+  }
+  if (acc === 'pdf') { // vuelve a generar el PDF (por ejemplo, después de anotar más pagos)
+    const pdfId = contratoPdf_(c, l); if (!pdfId) throw new Error('No se pudo generar el PDF en Drive');
+    mSet_('Contratos', c, { pdfId: pdfId });
+    return { contrato: contratoPublico_(Object.assign({}, c, { pdfId: pdfId })) };
+  }
+  throw new Error('Acción no válida');
+}
+function contratoVer_(u, d) {
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('Los contratos solo existen en la versión multi-negocio');
+  if (u.rol !== 'admin') throw new Error('Solo el administrador del negocio puede ver el contrato');
+  const c = contratoDe_(d.id, NEG.id);
+  if (c.estado === 'anulado') throw new Error('Ese contrato fue anulado');
+  return { contrato: contratoPublico_(c), html: contratoHtml_(c, NEG.lic) };
+}
+function contratoFirmar_(u, d) {
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('Los contratos solo existen en la versión multi-negocio');
+  if (u.rol !== 'admin') throw new Error('Solo el administrador del negocio puede firmar el contrato');
+  const c = contratoDe_(d.id, NEG.id);
+  if (c.estado === 'firmado') throw new Error('Este contrato ya está firmado');
+  if (c.estado !== 'pendiente') throw new Error('Este contrato ya no está vigente');
+  if (!d.acepto) throw new Error('Marca que leíste y aceptas el contrato');
+  const firma = String(d.firma || '');
+  if (firma.indexOf('data:image/') !== 0 || firma.length < 200) throw new Error('Dibuja tu firma en el recuadro');
+  if (firma.length > 48000) throw new Error('La firma quedó muy grande. Bórrala y fírmala de nuevo con trazos más simples.');
+  const nombre = txt_(d.nombre, 80) || u.nombre || NEG.lic.dueno, el = ahora_().replace('T', ' ');
+  const huella = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, c.id + '|' + c.texto + '|' + firma + '|' + el, Utilities.Charset.UTF_8).map(b => ('0' + ((b + 256) % 256).toString(16)).slice(-2)).join('');
+  const upd = { estado: 'firmado', firma: firma, firmadoEl: el, firmadoPor: nombre, huella: huella };
+  mSet_('Contratos', c, upd); Object.assign(c, upd);
+  const pdfId = contratoPdf_(c, NEG.lic); if (pdfId) { mSet_('Contratos', c, { pdfId: pdfId }); c.pdfId = pdfId; }
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: NEG.id, tipo: 'accion', fecha: el, nota: 'Contrato firmado por ' + nombre + ': ' + c.titulo });
+  return { contrato: contratoPublico_(c), html: contratoHtml_(c, NEG.lic), resumen: contratosResumen_(NEG.id) };
+}
 
 /* ---- Soporte: chat del negocio con el administrador ---- */
 function sopPublico_(c, lado) {
