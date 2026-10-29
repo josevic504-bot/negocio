@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.18';
+const VERSION = '1.9.19';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -928,9 +928,11 @@ function usoLic_(recien) {
   return o;
 }
 
+// Colaborador: alguien que ayuda a mostrar el programa. Entra con todo activo (licencia, Plus, Contabilidad, todos los giros), sin cobro ni vencimiento, y no cuenta en los números del Panel
+function esColab_(l) { return String(l && l.estado || '').trim().toLowerCase() === 'colaborador'; }
 function licNegocio_(l) {
   const est = String(l.estado || '').trim().toLowerCase();
-  if (est === 'activa') return { estado: 'completa' };
+  if (est === 'activa' || est === 'colaborador') return { estado: 'completa' };
   if (est === 'bloqueada' || est === 'eliminada') return { estado: 'bloqueada', contacto: CONTACTO_WA };
   const vence = String(l.vencePrueba || '').slice(0, 10);
   const fin = /^\d{4}-\d{2}-\d{2}$/.test(vence) ? new Date(vence + 'T00:00:00').getTime() : 0;
@@ -1648,11 +1650,12 @@ function diasDesde_(f) { const ms = msDeLocal_(String(f || '').replace(' ', 'T')
 function panelFicha_(l, segs) {
   const lic = licNegocio_(l), mis = segs.filter(x => x.negocioId === l.id);
   const hecho = tipo => mis.filter(x => x.tipo === tipo).map(x => x.fecha).sort().pop() || '';
-  const est = lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
+  const est = esColab_(l) ? 'colaborador' : lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
     usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, contab: ['sí', 'si'].indexOf(String(l.contab).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
     ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '',
-    giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l) };
+    giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l), colab: esColab_(l) };
+  if (o.colab) { o.plus = true; o.contab = true; }
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
   else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
@@ -1679,7 +1682,8 @@ function panelLimpiarDuplicados_() {
 function panelResumen_() {
   try { const cs = CacheService.getScriptCache(); if (!cs.get('VPURGA')) { cs.put('VPURGA', '1', 21600); lock_(() => borrarVisitasViejas_()); } } catch (e) {} // visitas viejas: cada 6 horas
   const segs = mRows_('Seguimiento'), dup = licsDuplicadas_(), vivas = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)), org = origenesLic_(vivas);
-  const lics = vivas.map(l => { const f = panelFicha_(l, segs); f.canal = (org[l.id] || {}).canal || ''; return f; });
+  const todasL = vivas.map(l => { const f = panelFicha_(l, segs); f.canal = (org[l.id] || {}).canal || ''; return f; });
+  const colabs = todasL.filter(x => x.colab), lics = todasL.filter(x => !x.colab);
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
   const mes = hoy_().slice(0, 7), todosPagos = mRows_('PagosLic'), pagos = todosPagos.filter(p => String(p.fecha).slice(0, 7) === mes);
   // Conversión: de las pruebas que ya terminaron (o se activaron antes de terminar), cuántas compraron
@@ -1707,10 +1711,10 @@ function panelResumen_() {
       ingresosMes: ingresosMes, pagosMes: pagos.length, gastosMes: gastosMes, gastosMesN: gastos.filter(g => fecha10_(g.fecha).slice(0, 7) === mes).length, resultadoMes: r2_(ingresosMes - gastosMes),
       invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
-    porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION,
+    porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION, colaboradores: colabs.length,
     visitas: visitasMini_(),
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
-    negocios: lics, duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
+    negocios: lics.concat(colabs), duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
     soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
 }
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
@@ -1833,6 +1837,8 @@ function panelAccion_(d) {
   const pago = (concepto, idNeg) => { if (Number(d.monto) > 0) mAppend_('PagosLic', { id: mId_('G'), negocioId: idNeg || l.id, fecha: f, monto: r2_(Number(d.monto)), concepto: txt_(d.concepto, 60) || concepto, metodo: txt_(d.metodo, 20) || 'Efectivo', nota: '' }); };
   switch (d.accion) {
     case 'activar':    upd.estado = 'Activa'; nota = 'Licencia activada'; pago('Licencia'); break;
+    case 'colaborador': upd.estado = 'Colaborador'; upd.cobro = ''; nota = 'Marcado como colaborador · todo activo sin cobro' + (d.nota ? ' · ' + txt_(d.nota, 120) : ''); break;
+    case 'quitarColab': upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Vencida'; nota = 'Ya no es colaborador'; break;
     case 'plus':       upd.plus = 'Sí'; nota = 'Plus activado'; pago('Plus'); break;
     case 'quitarPlus': upd.plus = ''; nota = 'Plus desactivado'; break;
     case 'contab':     upd.contab = 'Sí'; nota = 'Contabilidad activada'; pago('Contabilidad'); break;
@@ -1863,7 +1869,7 @@ function panelAccion_(d) {
       if (nuevos.length && licNegocio_(l).estado !== 'completa') throw new Error('Durante la prueba gratis solo se permite un giro. Activa la licencia y luego enciende los giros extra.');
       upd.giros = lista.join(',');
       nota = [nuevos.length ? 'Giros activados: ' + nuevos.map(g => GIROS[g].n).join(', ') : '', quitados.length ? 'Giros quitados: ' + quitados.filter(g => own_(GIROS, g)).map(g => GIROS[g].n).join(', ') : ''].filter(Boolean).join(' · ') || 'Giros sin cambios';
-      if (nuevos.length) pago(nuevos.length === 1 ? 'Giro extra: ' + GIROS[nuevos[0]].n : nuevos.length + ' giros extra');
+      if (nuevos.length && !esColab_(l)) pago(nuevos.length === 1 ? 'Giro extra: ' + GIROS[nuevos[0]].n : nuevos.length + ' giros extra');
       break;
     }
     case 'agregarNegocio': { const nuevo = panelAgregarNegocio_(l, d); nota = 'Negocio agregado a esta persona: ' + nuevo.negocio + (d.activar ? ' (licencia activada)' : ' (comparte la prueba de la persona)'); if (d.activar) pago('Licencia · ' + nuevo.negocio, nuevo.id); break; }
@@ -1901,6 +1907,7 @@ function cobroResumen_(id) {
 }
 // Lo que el cliente debe a hoy: cuotas vencidas, total, días de atraso y desde cuándo se pausa
 function cobroDe_(l) {
+  if (esColab_(l)) return null; // los colaboradores no pagan
   const pend = parseJ_(l && l.cobro, []), h = hoy_();
   if (!Array.isArray(pend) || !pend.length) return null;
   const venc = pend.filter(c => c.f <= h), prox = pend.find(c => c.f > h) || null;
@@ -2318,6 +2325,7 @@ function autorizar() {
 function plusReal_() {
   if (MULTI_NEGOCIO) {
     if (!NEG) return false;
+    if (esColab_(NEG.lic)) return true;
     const v = String(NEG.lic.plus || '').trim().toLowerCase();
     return ['sí','si','activo','activa','true','1','x'].indexOf(v) >= 0;
   }
@@ -4589,7 +4597,7 @@ const CONTAB_TASA_ISV = 0.15;
 // El módulo solo existe para los negocios que Vic activa desde el Panel (columna «contab» en Licencias).
 // En modo de un solo negocio: propiedad del script CONTAB = 'activo'.
 function contabOn_() {
-  if (MULTI_NEGOCIO) { if (!NEG) return false; return ['sí','si','activo','activa','true','1','x'].indexOf(String(NEG.lic.contab || '').trim().toLowerCase()) >= 0; }
+  if (MULTI_NEGOCIO) { if (!NEG) return false; if (esColab_(NEG.lic)) return true; return ['sí','si','activo','activa','true','1','x'].indexOf(String(NEG.lic.contab || '').trim().toLowerCase()) >= 0; }
   return PropertiesService.getScriptProperties().getProperty('CONTAB') === 'activo';
 }
 
