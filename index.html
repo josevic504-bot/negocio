@@ -1075,6 +1075,19 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .vdoc .vd-pet .av{background:#eef4f5;color:#1f2a2e}
 .vdoc .vd-nada{padding:6px 16px 0;font-size:12.5px;color:#6b7478}
 @media print{.vdoc-print .vdoc{border:0;border-radius:0;box-shadow:none;max-width:560px;margin:0 auto}}
+.qdoc{border-radius:22px;overflow:hidden;border:1px solid var(--line);background:#fffdf9;color:#241f1c;box-shadow:var(--sh);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.qdoc .qh{text-align:center;padding:22px 16px 16px;background:radial-gradient(130% 160% at 10% 0%,var(--h2),var(--h1) 80%);color:#fff}
+.qdoc .qh .lg{width:52px;height:52px;border-radius:50%;border:1.5px solid var(--tag);display:grid;place-items:center;font:600 22px var(--serif);color:var(--tag);margin:0 auto 8px;overflow:hidden;background:rgba(255,255,255,.08)}.qdoc .qh .lg img{width:100%;height:100%;object-fit:contain;background:#fff}
+.qdoc .qh b{font:600 26px/1.05 var(--serif);display:block}.qdoc .qh small{display:block;font-size:10.5px;letter-spacing:.28em;text-transform:uppercase;color:var(--tag);margin-top:6px}
+.qdoc .qt{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:14px 16px 4px}.qdoc .qt h4{margin:0;font:500 italic 22px var(--serif);color:var(--pri)}.qdoc .qt span{font-size:12px;color:#7a716b;text-align:right}
+.qdoc .qp{margin:6px 16px 0;padding:10px 12px;border-radius:14px;background:#f6f1ea;display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;font-size:12.5px}.qdoc .qp small{display:block;color:#7a716b;font-size:10px;text-transform:uppercase;letter-spacing:.06em}
+.qdoc .qcat{padding:12px 16px 2px;font:500 italic 15px var(--serif);color:var(--pri)}
+.qdoc .qi{display:flex;justify-content:space-between;gap:10px;padding:7px 16px;font-size:13px;border-bottom:1px dashed #e7dfd5}.qdoc .qi small{color:#7a716b;display:block;font-size:11.5px}.qdoc .qi b{font-weight:500;white-space:nowrap}
+.qdoc .qs{display:flex;justify-content:space-between;padding:6px 16px;font-size:13px;color:#7a716b}.qdoc .qtot{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid #241f1c;margin:6px 16px 0;padding:10px 0 4px}.qdoc .qtot span{font-size:11px;letter-spacing:.2em;text-transform:uppercase}.qdoc .qtot b{font:600 26px var(--serif)}
+.qdoc .qant{margin:10px 16px 0;text-align:center;background:#f6f1ea;border-radius:14px;padding:10px}.qdoc .qant small{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#7a716b}.qdoc .qant b{font:600 22px var(--serif)}
+.qdoc .qc{padding:12px 16px 0;font-size:12px;line-height:1.5;color:#4a433e}.qdoc .qc b{display:block;font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--pri);margin-bottom:4px}.qdoc .qc .qs{padding-left:0;padding-right:0}
+.qdoc .qg{text-align:center;padding:18px 16px 20px;font:italic 17px var(--serif);color:#4a433e}
+@media print{.vdoc-print .qdoc,.vdoc-print .cdoc{border:0;border-radius:0;box-shadow:none;max-width:600px;margin:0 auto}}
 </style>
 <script src="visitas.js?v=2" defer></script>
 </head>
@@ -1357,7 +1370,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.19';
+const APP_VER = '1.9.20';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -1710,7 +1723,7 @@ const VISTAS = {
   tienda:      { t: 'Mi tienda en línea', c: 'Tienda', i: 'store', roles: ['admin'] },
   productos:   { t: 'Productos', i: 'box', roles: TODOS },
   precios:     { t: 'Precios', i: 'tag', roles: ['admin', 'bodega'] },
-  proyectos:   { t: 'Proyectos', i: 'layers', roles: ['admin', 'bodega'] },
+  proyectos:   { get t() { return modOn('cotizaciones') ? 'Cotizaciones y proyectos' : 'Proyectos'; }, c: 'Proyectos', i: 'layers', get roles() { return modOn('cotizaciones') ? TODOS : ['admin', 'bodega']; } },
   clientes:    { t: 'Clientes', i: 'users', roles: ['admin', 'cajero'] },
   ordenes:     { get t() { return vetOrd() ? 'Hospedaje y estética' : 'Órdenes de trabajo'; }, get c() { return vetOrd() ? 'Hospedaje' : 'Órdenes'; }, get i() { return vetOrd() ? 'bed' : 'wrench'; }, roles: TODOS, si: () => modOn('ordenes') },
   agenda:      { t: 'Agenda de citas', c: 'Agenda', i: 'cal', roles: TODOS, si: () => modOn('agenda') },
@@ -1872,14 +1885,9 @@ function imprimirContrato(html) { // en hoja carta/A4, con el mismo mecanismo de
   window.print();
 }
 // Hoja de firma: recuadro para dibujar con el dedo + «He leído y acepto»
-function firmarContrato(c) {
-  return new Promise(ok => {
-    const h = hoja({ titulo: 'Firmar contrato', cls: 'firma', fijo: true, onClose: () => ok(null), html: `<p class="sm" style="margin-top:0"><b>${esc(c.titulo)}</b><br><span class="mut">Firma dentro del recuadro, como lo harías en papel.</span></p>
-      <div class="firma-pad"><canvas id="fp-c"></canvas><span class="firma-l">Firma aquí</span><button type="button" class="btn sm ghost firma-x" id="fp-x">Borrar</button></div>
-      <label class="fld"><span>Nombre de quien firma</span><input id="fp-n" maxlength="80" value="${esc(S.user.nombre || '')}"></label>
-      <label class="chk" style="margin:4px 0 2px"><input type="checkbox" id="fp-ok"><span>He leído el contrato completo y lo acepto en nombre de <b>${esc(S.config.nombre || 'mi negocio')}</b>.</span></label>
-      <p class="xs mut" style="margin:6px 2px 0">Se guardará tu firma con la fecha, la hora y una huella digital del documento.</p>` });
-    const cv = $('#fp-c', h.el), ctx = cv.getContext('2d'); let trazos = 0, dib = false, ult = null;
+// Bloc de firma con el dedo (contratos de licencia, contratos de servicio y actas). Devuelve { trazos(), exportar() }
+function firmaPad(h) {
+  const cv = $('#fp-c', h.el), ctx = cv.getContext('2d'); let trazos = 0, dib = false, ult = null;
     const medir = () => { const r = cv.parentElement.getBoundingClientRect(), k = Math.min(2, window.devicePixelRatio || 1), img = trazos ? cv.toDataURL() : null; cv.width = Math.round(r.width * k); cv.height = Math.round(r.height * k); cv.style.width = r.width + 'px'; cv.style.height = r.height + 'px'; ctx.setTransform(k, 0, 0, k, 0, 0); ctx.lineWidth = 2.4; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.strokeStyle = '#1b2a4a'; if (img) { const im = new Image(); im.onload = () => ctx.drawImage(im, 0, 0, r.width, r.height); im.src = img; } };
     const pos = e => { const r = cv.getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
     cv.addEventListener('pointerdown', e => { e.preventDefault(); dib = true; ult = pos(e); cv.setPointerCapture(e.pointerId); ctx.beginPath(); ctx.arc(ult.x, ult.y, 1.1, 0, 7); ctx.fillStyle = ctx.strokeStyle; ctx.fill(); trazos++; h.el.classList.add('con-firma'); });
@@ -1897,10 +1905,20 @@ function firmarContrato(c) {
       out.getContext('2d').drawImage(cv, x0 - m, y0 - m, w, hh, 0, 0, out.width, out.height);
       let u = out.toDataURL('image/png'); if (u.length > 48000) u = out.toDataURL('image/jpeg', 0.7); return u;
     };
+  return { trazos: () => trazos, exportar };
+}
+function firmarContrato(c) {
+  return new Promise(ok => {
+    const h = hoja({ titulo: 'Firmar contrato', cls: 'firma', fijo: true, onClose: () => ok(null), html: `<p class="sm" style="margin-top:0"><b>${esc(c.titulo)}</b><br><span class="mut">Firma dentro del recuadro, como lo harías en papel.</span></p>
+      <div class="firma-pad"><canvas id="fp-c"></canvas><span class="firma-l">Firma aquí</span><button type="button" class="btn sm ghost firma-x" id="fp-x">Borrar</button></div>
+      <label class="fld"><span>Nombre de quien firma</span><input id="fp-n" maxlength="80" value="${esc(S.user.nombre || '')}"></label>
+      <label class="chk" style="margin:4px 0 2px"><input type="checkbox" id="fp-ok"><span>He leído el contrato completo y lo acepto en nombre de <b>${esc(S.config.nombre || 'mi negocio')}</b>.</span></label>
+      <p class="xs mut" style="margin:6px 2px 0">Se guardará tu firma con la fecha, la hora y una huella digital del documento.</p>` });
+    const pad = firmaPad(h);
     h.botones([{ t: `${ic('check', 18)} Firmar y aceptar`, cls: 'pri', fn: async () => {
-      if (!trazos) throw new Error('Dibuja tu firma en el recuadro');
+      if (!pad.trazos()) throw new Error('Dibuja tu firma en el recuadro');
       if (!$('#fp-ok', h.el).checked) throw new Error('Marca que leíste y aceptas el contrato');
-      const firma = exportar(); if (!firma) throw new Error('Dibuja tu firma en el recuadro');
+      const firma = pad.exportar(); if (!firma) throw new Error('Dibuja tu firma en el recuadro');
       const r = await api('contratoFirmar', { id: c.id, firma, nombre: $('#fp-n', h.el).value, acepto: true });
       S.contratoVM = r.resumen || null; toast('Contrato firmado. ¡Gracias!', 'ok'); if (S.vista === 'inicio') render();
       h.onClose = null; h.cerrar(); ok(r);
@@ -2336,6 +2354,8 @@ function avisosDelDia(a) {
   (a.encProx || []).forEach(c => una('encargos:' + c.hora + c.cliente, 'Entrega a las ' + fHoraC(c.hora) + ' · ' + c.cliente, c.detalle, 'encargos'));
   if (a.cadVenc) una('caducidad:venc', a.cadVenc === 1 ? '1 producto vencido en existencia' : a.cadVenc + ' productos vencidos en existencia', 'Revísalos en Productos › Por caducar.', 'productos');
   else if (a.cadProx) una('caducidad:prox', a.cadProx === 1 ? '1 producto caduca pronto' : a.cadProx + ' productos caducan pronto', 'En los próximos 30 días.', 'productos');
+  if (a.cotHoy) una('cot:hoy', a.cotHoy === 1 ? 'Hoy toca cobrar 1 pago de proyecto' : 'Hoy tocan ' + a.cotHoy + ' pagos de proyectos', 'Ábrelos en Proyectos.', 'proyectos');
+  if (a.cotAtras) una('cot:atras', a.cotAtras === 1 ? '1 pago de proyecto atrasado' : a.cotAtras + ' pagos de proyectos atrasados', 'Recuérdalos por WhatsApp desde el proyecto.', 'proyectos');
   if (a.vacHoy) una('vacunas:hoy', a.vacHoy === 1 ? 'Hoy toca vacunar a 1 mascota' : 'Hoy toca vacunar a ' + a.vacHoy + ' mascotas', 'Mándales el recordatorio desde Vacunas.', 'vacunas');
   if (a.ordAtras) una('ordenes:atras', a.ordAtras === 1 ? '1 orden de trabajo atrasada' : a.ordAtras + ' órdenes de trabajo atrasadas', 'Pasó la fecha de entrega prometida.', 'ordenes');
 }
@@ -3087,6 +3107,7 @@ R.inicio = () => {
       if (d.ordenes && modOn('ordenes')) tiles += tile('t-azul', vetOrd() ? 'bed' : 'wrench', vetOrd() ? 'Hospedaje y estética' : 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : String(d.ordenes.recibido + d.ordenes.proceso), d.ordenes.listo ? (d.ordenes.recibido + d.ordenes.proceso) + ' más en la clínica' : 'en la clínica ahora', ['ir', 'ordenes']);
       tiles += tile('t-verde', 'paw', 'Mascotas', String(d.vet.mascotas), d.vet.nuevas === 1 ? '1 nueva este mes' : d.vet.nuevas + ' nuevas este mes', ['ir', 'mascotas']);
     }
+    if (d.cot && cotOn()) tiles += tile('t-morado', 'doc', 'Pagos de proyectos', d.cot.atrasados ? d.cot.atrasados + (d.cot.atrasados === 1 ? ' atrasado' : ' atrasados') : d.cot.hoy ? d.cot.hoy + ' hoy' : d.cot.semana ? d.cot.semana + ' esta semana' : 'Al día', (d.cot.monto + d.cot.montoAtras ? money(d.cot.monto + d.cot.montoAtras) + ' por cobrar' : '') + (d.cot.enviadas ? (d.cot.monto + d.cot.montoAtras ? ' · ' : '') + d.cot.enviadas + (d.cot.enviadas === 1 ? ' cotización enviada' : ' cotizaciones enviadas') : ''), ['ir', 'proyectos']);
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus ✦', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
@@ -3134,8 +3155,13 @@ R.inicio = () => {
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
   const ofAvisos = puede('admin', 'cajero') && 'Notification' in window && Notification.permission !== 'denied' && !avisosOn() && LS.get('avisosOferta', '') !== 'no' && !DEMO.on ? `<div class="aviso info">${ic('bell', 20)}<div><b>Recibe avisos en este teléfono.</b><small>Pedidos nuevos, mensajes, vencimientos y citas, aunque la app esté en segundo plano.</small></div><div class="row"><button class="btn sm pri" data-a="avisosActivar">Activar</button><button class="btn sm ghost icon" data-a="avisosCerrar" aria-label="Cerrar">${ic('x', 16)}</button></div></div>` : '';
   const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${avisoVacunas(d)}${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${today}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${avisoVacunas(d)}${avisoPagosCot(d)}${vacio}${aviso}${listas}</div>`;
 };
+function avisoPagosCot(d) {
+  const c = d.cot; if (!c || !cotOn() || !c.lista.length) return '';
+  return `<div class="sec-t"><h3>Pagos de proyectos</h3><a data-a="ir" data-v="proyectos">Ver proyectos</a></div><div class="list">${c.lista.map(x => { const dd = diasHasta(x.f); return `<div class="li" data-a="pagoCotInicio" data-id="${x.id}"><div class="av ${dd < 0 ? 't-rojo' : dd === 0 ? 't-naranja' : 't-morado'}">${ic('coin', 20)}</div><div class="tx"><b>${esc(x.cliente)} · ${esc(x.n)}</b><small>${esc(x.proyecto)} · ${dd < 0 ? 'venció el ' + esc(fFechaC(x.f)) : dd === 0 ? 'hoy' : esc(fFechaL(x.f))}</small></div><div class="am n">${money(x.m)}</div></div>`; }).join('')}</div>`;
+}
+ACC.pagoCotInicio = async el => { const q = await api('cotizacion', { id: el.dataset.id }); if (q.proyectoId) verProyecto(await api('proyecto', { id: q.proyectoId })); };
 function avisoVacunas(d) {
   const v = d.vet; if (!v || !modOn('mascotas') || !(v.semana || v.vencidas)) return '';
   const t = [v.semana ? (v.dias === 7 ? 'Esta semana' : 'En ' + v.dias + ' días') + ' toca vacunar a ' + v.semana + (v.semana === 1 ? ' mascota' : ' mascotas') : '', v.vencidas ? v.vencidas + (v.vencidas === 1 ? ' vacuna vencida' : ' vacunas vencidas') : ''].filter(Boolean).join(' · ');
@@ -3310,7 +3336,7 @@ function guardarTicket() { LS.set(mk('ticket'), JSON.stringify(S.ticket)); }
 // E3: si un precio cambió mientras el producto estaba en el ticket, se cobra el precio de hoy (salvo los puestos a mano,
 // los de un pedido en línea y los de una orden o cita, que tienen su precio acordado). Las suscripciones: precio × meses.
 function refrescarPrecios() {
-  const t = S.ticket; if (t.ordenId || t.agendaId || t.pedidoId || t.consultaId) return false;
+  const t = S.ticket; if (t.ordenId || t.agendaId || t.pedidoId || t.consultaId || t.cotizacionId) return false;
   let cambio = false;
   t.items.forEach((i, k) => {
     if (!i.productoId || i.precioMan) return;
@@ -3541,7 +3567,7 @@ function abrirCobro() {
     const t0 = calcTotales(S.ticket), cli = S.ticket.clienteId ? byId(S.clientes, S.ticket.clienteId) : null;
     const admin = puede('admin'), fz = S.ticket.fiscal || (S.ticket.fiscal = {});
     const exo = sarOn() && fz.exonerado, t = exo ? calcTotales(S.ticket, true) : t0;
-    const ant = (S.ticket.ordenId || S.ticket.agendaId || S.ticket.pedidoId) ? Math.min(num(S.ticket.anticipo), t.total) : 0, porPagar = r2(t.total - ant);
+    const ant = (S.ticket.ordenId || S.ticket.agendaId || S.ticket.pedidoId || S.ticket.cotizacionId) ? Math.min(num(S.ticket.anticipo), t.total) : 0, porPagar = r2(t.total - ant);
     $('#cb', h.el).innerHTML = `
       <div class="fld"><span>Cliente</span><div class="input-row"><input id="cb-cli" list="dl-cli" placeholder="Consumidor final" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '')}" autocomplete="off"><button class="btn icon" data-a="nuevoClienteRapido" title="Nuevo cliente">${ic('userplus')}</button></div>
       <datalist id="dl-cli">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist>
@@ -3599,11 +3625,11 @@ function abrirCobro() {
     const fz = S.ticket.fiscal || {}, exo = sarOn() && fz.exonerado;
     const t = calcTotales(S.ticket, exo);
     const datos = { items: S.ticket.items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, variante: i.variante || '', serie: i.serie || '' })),
-      clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '', ordenId: S.ticket.ordenId || '', agendaId: S.ticket.agendaId || '', consultaId: S.ticket.consultaId || '' };
+      clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '', ordenId: S.ticket.ordenId || '', agendaId: S.ticket.agendaId || '', consultaId: S.ticket.consultaId || '', cotizacionId: S.ticket.cotizacionId || '' };
     if (modOn('comanda') && (S.ticket.servicio || S.ticket.mesa || S.ticket.cocina)) { datos.servicio = S.ticket.servicio || 'mesa'; datos.mesa = S.ticket.mesa || ''; datos.cocina = S.ticket.cocina || ''; }
     if (susOn()) { const sd = susDatosVenta(); if (sd.length) datos.sus = sd; }
     if (!S.ticket.clave) { S.ticket.clave = Date.now().toString(36) + Math.random().toString(36).slice(2, 10); guardarTicket(); }
-    const antC = (S.ticket.ordenId || S.ticket.agendaId || S.ticket.pedidoId) ? Math.min(num(S.ticket.anticipo), t.total) : 0;
+    const antC = (S.ticket.ordenId || S.ticket.agendaId || S.ticket.pedidoId || S.ticket.cotizacionId) ? Math.min(num(S.ticket.anticipo), t.total) : 0;
     if (metodo === 'Efectivo') datos.recibido = S.ticket.recibido && String(S.ticket.recibido).trim() ? num(S.ticket.recibido) : r2(t.total - antC);
     if (metodo === 'Crédito') { if (!S.ticket.clienteId) throw new Error('Elige un cliente para vender al crédito'); datos.recibido = num(S.ticket.anticipoCred); }
     if (sarOn()) {
@@ -3621,7 +3647,7 @@ function abrirCobro() {
     S.productos = r.productos;
     if (S.ticket.clienteId) { const c = byId(S.clientes, S.ticket.clienteId); if (c) c.saldo = r.saldoCliente; }
     S.ticket = { items: [], clienteId: '', pedidoId: '', descuento: 0 }; guardarTicket();
-    S.inicio = null; S.pedidosL = null; S.susL = null; S.cuentasL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; S.mascotasL = null; S.vacL = null; guardarCache();
+    S.inicio = null; S.pedidosL = null; S.susL = null; S.cuentasL = null; S.ordenesL = null; S.ag_cita = null; S.ag_encargo = null; S.mascotasL = null; S.vacL = null; S.cotL = null; S.proyL = null; guardarCache();
     h.onClose = null; h.cerrar(); S.hCobro = null;
     if (S.hFact) { const f = S.hFact; f.onClose = null; S.hFact = null; f.cerrar(); }
     if (S.vista === 'vender') R.vender();
@@ -5219,6 +5245,13 @@ R.ajustes = () => {
     <label class="fld"><span>Recordatorio de vacuna</span><textarea data-k="msjVacuna" rows="3" maxlength="600">${v('msjVacuna')}</textarea></label>
     <label class="fld"><span>Cuando la vacuna ya está atrasada</span><textarea data-k="msjVacunaVencida" rows="3" maxlength="600">${v('msjVacunaVencida')}</textarea></label>
     <button class="btn pri" data-a="guardarAj" data-s="vet">Guardar</button>`, c.vetNombre ? 'Firma: ' + esc(c.vetNombre) : 'Falta el nombre del veterinario');
+  if (adm && cotOn()) h += sec('cot', 'doc', 'Cotizaciones y contratos', `<p class="sm mut" style="margin:0 0 10px">Textos base de cada cotización nueva, del contrato de aceptación y del acta de proyecto terminado. Puedes usar {negocio}, {cliente}, {proyecto}, {numero}, {total}, {pagos}, {entrega}, {anticipo}, {validez}, {cobrado} y {saldo}.</p>
+    <div class="f2"><label class="fld"><span>Válida por (días)</span><input data-k="cotValidez" inputmode="numeric" value="${v('cotValidez')}"></label><label class="fld"><span>Anticipo %</span><input data-k="cotAnticipo" inputmode="numeric" value="${v('cotAnticipo')}"></label></div>
+    <label class="fld"><span>Condiciones de la cotización</span><textarea data-k="cotCond" rows="4" maxlength="1500">${v('cotCond')}</textarea></label>
+    <label class="fld"><span>Mensaje de cierre</span><input data-k="cotGracias" maxlength="200" value="${v('cotGracias')}"></label>
+    <label class="fld"><span>Contrato de aceptación de servicios</span><textarea data-k="cotContrato" rows="6" maxlength="3000">${v('cotContrato')}</textarea></label>
+    <label class="fld"><span>Acta de proyecto terminado</span><textarea data-k="cotActa" rows="5" maxlength="3000">${v('cotActa')}</textarea></label>
+    <button class="btn pri" data-a="guardarAj" data-s="cot">Guardar</button>`);
   if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
   if (puede('admin', 'cajero')) h += sec('avisos', 'bell', 'Avisos en el teléfono', avisosAjustesHTML(), avisosOn() ? '<span class="badge b-ok">Activos</span>' : '');
   h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `<div class="temas">${Object.keys(TEMAS).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div><p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
@@ -5398,8 +5431,14 @@ const pctTxt = p => (p > 0 ? '▲ ' : p < 0 ? '▼ ' : '') + fmtN(Math.abs(p), M
 const unidadTxt = (n, u) => cant(n) + ' ' + (u && u !== 'unidad' ? u : (num(n) === 1 ? 'unidad' : 'unidades'));
 
 R.proyectos_bar = () => `<button class="hbtn" data-a="nuevoProyecto" aria-label="Nuevo proyecto">${ic('plus', 22)}</button>`;
+function pjChips() {
+  const l = S.proyL || [], cnt = k => l.filter(p => p.estado === k).length;
+  return `<div class="chips" style="margin-bottom:8px">${(cotOn() ? [['cot', 'Cotizaciones']] : []).concat([['curso', 'En curso'], ['terminado', 'Terminados'], ['cancelado', 'Cancelados'], ['todos', 'Todos']]).map(([k, t]) => `<button class="chip ${S.f.pjest === k ? 'on' : ''}" data-a="pjEst" data-k="${k}">${t}${k !== 'todos' && k !== 'cot' ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>`;
+}
 R.proyectos = async () => {
   const m = $('#main');
+  if (cotOn() && !S.f.pjest) S.f.pjest = 'cot';
+  if (cotOn() && S.f.pjest === 'cot') { if (!S.proyL) { try { S.proyL = await api('proyectos', {}, true); } catch (e) {} } return pintarCotizaciones(m); }
   if (!S.proyL) m.innerHTML = '<div class="empty">Cargando proyectos…</div>';
   try { S.proyL = await api('proyectos', {}, !!S.proyL); } catch (e) { if (S.proyL && m.querySelector('.pj-grid,.pj-vacio')) return err(e); throw e; }
   if (S.vista !== 'proyectos') return;
@@ -5407,7 +5446,7 @@ R.proyectos = async () => {
   if (!S.f.pjest) S.f.pjest = cnt('curso') ? 'curso' : 'todos';
   const vis = l.filter(p => S.f.pjest === 'todos' || p.estado === S.f.pjest);
   if (!l.length) {
-    m.innerHTML = `<div class="empty-big pj-vacio">${ic('layers', 40)}<h3>Calcula cuánto ganas en cada proyecto</h3>
+    m.innerHTML = (cotOn() ? pjChips() : '') + `<div class="empty-big pj-vacio">${ic('layers', 40)}<h3>Calcula cuánto ganas en cada proyecto</h3>
       <p>Un proyecto es todo lo que haces para producir algo: una tanda de pan, 50 uniformes, canastas navideñas, un pedido especial…
       Registra lo que gastas (materiales, mano de obra, comida, transporte) y te dice el costo de cada unidad, el precio sugerido y cuánto ganas.</p>
       <button class="btn pri" data-a="nuevoProyecto">${ic('plus', 18)} Crear mi primer proyecto</button></div>`;
@@ -5417,12 +5456,15 @@ R.proyectos = async () => {
   const rojos = vis.filter(p => p.r.semaforo === 'rojo').length;
   m.innerHTML = `<div class="kpis"><div class="kpi" style="--k:var(--pri)"><small>Invertido</small><b class="n">${money(inv)}</b><i>${vis.length} ${vis.length === 1 ? 'proyecto' : 'proyectos'}</i></div>
       <div class="kpi" style="--k:${gan < 0 ? 'var(--bad)' : 'var(--ok)'}"><small>Ganancia esperada</small><b class="n ${gan < 0 ? 'neg' : ''}">${money(gan)}</b><i ${rojos ? 'class="neg"' : ''}>${rojos ? (rojos === 1 ? '1 proyecto con pérdida' : rojos + ' proyectos con pérdida') : 'con los precios de venta'}</i></div></div>
-    <div class="chips" style="margin-bottom:8px">${[['curso', 'En curso'], ['terminado', 'Terminados'], ['cancelado', 'Cancelados'], ['todos', 'Todos']].map(([k, t]) => `<button class="chip ${S.f.pjest === k ? 'on' : ''}" data-a="pjEst" data-k="${k}">${t}${k !== 'todos' ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
+    ${pjChips()}
     <div class="pj-ley"><span><i class="verde"></i>Ganas 30% o más</span><span><i class="amarillo"></i>Ganas menos</span><span><i class="rojo"></i>Pierdes</span></div>
     <div class="pj-grid">${vis.map(cardProyecto).join('') || '<div class="empty">No hay proyectos aquí</div>'}</div>`;
 };
 function cardProyecto(p) {
   const r = p.r, s = SEM[r.semaforo] || SEM.gris, uno = r.nProductos === 1;
+  if (p.cotizacionId) return `<button class="pj ${s.c}" data-a="verProyecto" data-id="${p.id}"><div class="pj-h"><b>${esc(p.nombre)}</b><span class="pj-pill">${r.pct === null ? 'Sin gastos' : pctTxt(r.pct)}</span></div>
+    <small class="pj-sub">${esc(p.cliente || '')}${p.entrega ? ' · entrega ' + esc(fFechaC(p.entrega)) : ''}${p.estado !== 'curso' ? ` · <em>${EST_PJ[p.estado]}</em>` : ''}</small>
+    <div class="pj-st"><div><small>Cotizado</small><b class="n">${money(p.presupuesto)}</b></div><div><small>Gastado</small><b class="n">${money(r.costo)}</b></div><div><small>Ganancia</small><b class="n">${r.ganancia === null ? money(p.presupuesto / (1 + r.tasa) - r.costo) : money(r.ganancia)}</b></div></div></button>`;
   const prod = r.productos.map(x => x.nombre).join(' · ');
   return `<button class="pj ${s.c}" data-a="verProyecto" data-id="${p.id}">
     <div class="pj-h"><b>${esc(p.nombre)}</b><span class="pj-pill">${r.pct === null ? (r.nProductos ? 'Sin precio' : 'Sin producto') : pctTxt(r.pct)}</span></div>
@@ -5465,13 +5507,14 @@ function verProyecto(d) {
     if (k === 'usarSug') { const x = d.r.productos.find(y => y.id === id); api('productoProyecto', { registro: Object.assign({}, x, { precio: x.sugerido }) }).then(r => { pinta(r); toast('Precio aplicado', 'ok'); }).catch(err); }
     if (k === 'inventario') pasarAInventario(d, pinta);
     if (k === 'editar') formProyecto(d, pinta);
+    if (d.cot && ['verCot', 'doc', 'entregable', 'avisarPago', 'pagosEditar', 'cobrarPago'].includes(k)) { if (k === 'avisarPago') e.stopPropagation(); accionProyCot(d, k, a, pinta).catch(err); }
   };
   pinta(d);
 }
 function htmlProyecto(d) {
   const r = d.r, s = SEM[r.semaforo] || SEM.gris, uno = r.nProductos === 1, p0 = r.productos[0];
   const dias = Math.max(1, Math.round((parseLocal(d.fin || hoy()) - parseLocal(d.inicio || hoy())) / 86400000) + 1);
-  const cab = `<div class="pj-cab"><span class="badge ${d.estado === 'curso' ? 'b-info' : d.estado === 'terminado' ? 'b-ok' : 'b-mut'}">${EST_PJ[d.estado]}</span>${d.cliente ? `<span class="badge b-mut">${ic('user', 13)} ${esc(d.cliente)}</span>` : ''}<span class="xs mut">${esc(fFechaC(d.inicio))}${d.fin ? ' – ' + esc(fFechaC(d.fin)) : ''} · ${dias} ${dias === 1 ? 'día' : 'días'}</span><button class="lnk" data-pj="editar">${ic('edit', 14)} Editar</button></div>${d.descripcion ? `<p class="sm mut pj-desc">${esc(d.descripcion)}</p>` : ''}`;
+  const cab = `<div class="pj-cab"><span class="badge ${d.estado === 'curso' ? 'b-info' : d.estado === 'terminado' ? 'b-ok' : 'b-mut'}">${EST_PJ[d.estado]}</span>${d.cliente ? `<span class="badge b-mut">${ic('user', 13)} ${esc(d.cliente)}</span>` : ''}<span class="xs mut">${esc(fFechaC(d.inicio))}${d.fin ? ' – ' + esc(fFechaC(d.fin)) : ''} · ${dias} ${dias === 1 ? 'día' : 'días'}</span><button class="lnk" data-pj="editar">${ic('edit', 14)} Editar</button></div>${d.descripcion ? `<p class="sm mut pj-desc">${esc(d.descripcion)}${d.entrega ? ' · entrega ' + esc(fFechaC(d.entrega)) : ''}${d.cot && d.cot.contratoEl ? ' · contrato firmado' : ''}</p>` : ''}`;
   let res;
   if (r.ganancia === null) {
     res = `<div class="pj-res gris"><div class="pj-res-t">${!r.nProductos ? 'Agrega el producto final para calcular el costo por unidad' : !(r.costo > 0) ? 'Registra los gastos para calcular el costo' : 'Pon el precio de venta para ver tu ganancia'}</div>
@@ -5496,6 +5539,7 @@ function htmlProyecto(d) {
   res += '</div>';
   // Productos finales
   const pend = r.productos.filter(x => !x.inventario);
+  if (d.cot) return cab + htmlProyectoCot(d) + (() => { const g = d.gastos.filter(x => !x.anulado); return `<div class="sec-t"><h3>Gastos <span class="mut sm">${g.length}</span></h3><span class="sm"><b class="n">${money(r.costo)}</b></span></div><div class="list pj-gastos">${g.map(x => filaGastoProy(x)).join('') || '<div class="empty">Todavía no hay gastos del proyecto.</div>'}</div>`; })();
   const prods = `<div class="sec-t"><h3>${r.nProductos > 1 ? 'Productos finales' : 'Producto final'}</h3>${d.estado !== 'cancelado' ? '<a data-pj="nuevoProd">+ Agregar</a>' : ''}</div>
     <div class="list">${r.productos.map(x => `<div class="li" data-pj="prod" data-id="${x.id}"><div class="av t-pri"><span class="emo">📦</span></div><div class="tx"><b>${esc(x.nombre)}</b>
       <small>${esc(unidadTxt(x.cantidad, x.unidad))} · costo c/u ${money(x.costoUnit)}${r.nProductos > 1 && x.peso !== 1 ? ' · peso ' + cant(x.peso) : ''}</small>
@@ -6267,9 +6311,9 @@ ACC.cbPaqueteExcel = async () => {
 };
 
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
-const API_MIN = '1.9.19'; // versión mínima del Code.gs que necesita esta app
+const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
@@ -6279,7 +6323,8 @@ const MODULOS_INFO = {
   encargos:      { n: 'Encargos con fecha de entrega', d: 'Pedidos por encargo con día, hora y anticipo; en Inicio ves las entregas de hoy.', g: 'panadería, repostería' },
   agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios' },
   suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' },
-  mascotas:      { n: 'Mascotas, recetas y vacunas', d: 'Expediente de cada mascota con su dueño, consultas con receta, carnet de vacunación y recordatorios por WhatsApp.', g: 'veterinaria' }
+  mascotas:      { n: 'Mascotas, recetas y vacunas', d: 'Expediente de cada mascota con su dueño, consultas con receta, carnet de vacunación y recordatorios por WhatsApp.', g: 'veterinaria' },
+  cotizaciones:  { n: 'Cotizaciones y contratos', d: 'Cotizaciones elegantes con plan de pagos; al aceptarlas se vuelven proyecto, los pagos quedan agendados y el cliente firma el contrato y el acta de entrega.', g: 'servicios' }
 };
 const modOn = k => !!S.config && (S.config[k] === 'si' || girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k)));
 const modDelGiro = k => !!S.config && girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k));
@@ -7039,6 +7084,272 @@ ACC.vetConsultaRapida = async () => {
   $('#vq-n', h.el).onclick = () => { h.cerrar(); formMascota(null, x => ir1(x.id).catch(err)); };
 };
 
+/* ===================== COTIZACIONES, CONTRATO Y ACTA (servicios) ===================== */
+// Lo mejor de Eventos VM: cotización elegante con anticipo y condiciones; al aceptarla se vuelve proyecto con sus pagos agendados.
+const EST_COT_T = { borrador: ['Borrador', 'b-mut'], enviada: ['Enviada', 'b-warn'], aceptada: ['Aceptada', 'b-ok'], rechazada: ['Rechazada', 'b-bad'], vencida: ['Vencida', 'b-bad'] };
+const estCot = q => EST_COT_T[q.estadoR || q.estado] || EST_COT_T.borrador;
+const cotOn = () => modOn('cotizaciones');
+const pagosSuma = l => r2(l.reduce((t, p) => t + num(p.m), 0));
+const fechaLargaTxt = f => f ? fFechaL(f) + ' de ' + parseLocal(f).getFullYear() : '';
+const pagosTxt = (q, pagos) => (pagos || q.pagos || []).map(p => money(p.m) + (p.f ? ' el ' + fFechaC(p.f) : '') + (p.n ? ' (' + p.n.toLowerCase() + ')' : '')).join(', ');
+const plantCot = (t, q, extra) => plantilla(t, Object.assign({ negocio: S.config.nombre || '', cliente: q.cliente || '', proyecto: q.proyecto || '', numero: q.numero || '', total: money(q.total), pagos: pagosTxt(q) || money(q.total), entrega: q.entrega ? fechaLargaTxt(q.entrega) : 'por acordar',
+  anticipo: String(q.anticipo || 0), validez: String(q.validez || 0), cobrado: money(q.cobrado || 0), saldo: money(q.saldo || 0), contrato: q.contratoEl ? ' y el contrato de aceptación firmado el ' + fFechaC(String(q.contratoEl).slice(0, 10)) : '' }, extra || {}));
+// Plan de pagos a partir del total: anticipo + saldo, o cuotas
+function planPagos(tipo, total, anticipoPct, entrega, n) {
+  const h = hoy(), fin = entrega || mesesSumarDia(30), mk = (nm, f, m, pct) => ({ id: Math.random().toString(36).slice(2, 10), n: nm, f, m: r2(m), pct, estado: '' });
+  if (tipo === 'uno') return [mk('Pago total', fin, total, 100)];
+  if (tipo === 'cuotas') { n = Math.max(2, Math.min(12, n || 3)); const l = [], d0 = parseLocal(h), d1 = parseLocal(fin), paso = Math.max(1, Math.round((d1 - d0) / 864e5 / (n - 1))); let acum = 0;
+    for (let i = 0; i < n; i++) { const f = i === n - 1 ? fin : mesesSumarDia(i * paso), m = i === n - 1 ? r2(total - acum) : r2(total / n); acum += m; l.push(mk(i === 0 ? 'Anticipo para iniciar' : i === n - 1 ? 'Saldo · contra entrega' : 'Pago ' + (i + 1), f, m, r2(m / total * 100))); } return l; }
+  const a = r2(total * (anticipoPct || 50) / 100);
+  return [mk('Anticipo para iniciar', h, a, anticipoPct || 50), mk('Saldo · contra entrega', fin, total - a, 100 - (anticipoPct || 50))];
+}
+
+/* ---- Lista (pestaña dentro de Proyectos) ---- */
+async function pintarCotizaciones(m) {
+  if (!S.cotL) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const l = S.cotL = await api('cotizaciones', {}, !!S.cotL);
+  if (S.vista !== 'proyectos' || S.f.pjest !== 'cot') return;
+  const f = S.f.cotF || 'abiertas', q = norm(S.f.cotQ || ''), mes = hoy().slice(0, 7);
+  const delMes = l.filter(x => String(x.fecha).slice(0, 7) === mes), acept = delMes.filter(x => x.estado === 'aceptada');
+  const porCobrar = r2(l.filter(x => x.estado === 'aceptada' && !x.actaEl).reduce((t, x) => t + num(x.saldo), 0)), nAb = l.filter(x => x.estado === 'aceptada' && !x.actaEl).length;
+  let lista = f === 'abiertas' ? l.filter(x => ['borrador', 'enviada'].includes(x.estado)) : f === 'todas' ? l : l.filter(x => (x.estadoR || x.estado) === f);
+  if (q) lista = lista.filter(x => norm([x.numero, x.cliente, x.proyecto].join(' ')).includes(q));
+  const chip = (k, t, n) => `<button class="chip ${f === k ? 'on' : ''}" data-a="cotF" data-f="${k}">${t}${n !== undefined ? ` <span class="c">${n}</span>` : ''}</button>`;
+  m.innerHTML = `<div class="kpis"><div class="kpi" style="--k:var(--pri)"><small>Cotizado en ${esc(fMes(mes).split(' ')[0])}</small><b class="n">${money(delMes.reduce((t, x) => t + num(x.total), 0))}</b><i>${delMes.length} ${delMes.length === 1 ? 'cotización' : 'cotizaciones'} · ${acept.length} aceptada${acept.length === 1 ? '' : 's'}</i></div>
+      <div class="kpi" style="--k:var(--ok)"><small>Por cobrar de proyectos</small><b class="n">${money(porCobrar)}</b><i>${nAb} ${nAb === 1 ? 'proyecto en curso' : 'proyectos en curso'}</i></div></div>
+    ${pjChips()}
+    <div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="nuevaCot">${ic('doc', 18)} Nueva cotización</button><div class="srch grow">${ic('search', 18)}<input id="cot-q" placeholder="Número, cliente o proyecto" value="${esc(S.f.cotQ || '')}"></div></div>
+    <div class="chips" style="margin-bottom:10px">${chip('abiertas', 'Abiertas', l.filter(x => ['borrador', 'enviada'].includes(x.estado)).length)}${chip('aceptada', 'Aceptadas')}${chip('rechazada', 'Rechazadas')}${chip('vencida', 'Vencidas')}${chip('todas', 'Todas')}</div>
+    ${lista.length ? `<div class="list">${lista.map(filaCot).join('')}</div>` : `<div class="empty-big">${ic('doc', 40)}<h3>${l.length ? 'Nada por aquí' : 'Tu primera cotización'}</h3><p>${l.length ? 'Prueba con otro filtro.' : 'Arma una cotización elegante con tus servicios y su plan de pagos. Cuando el cliente la acepta, se vuelve un proyecto con los pagos agendados, su contrato y su acta de entrega.'}</p>${l.length ? '' : `<button class="btn pri" data-a="nuevaCot">${ic('doc', 18)} Nueva cotización</button>`}</div>`}`;
+  const qi = $('#cot-q', m); qi.addEventListener('input', () => { S.f.cotQ = qi.value; clearTimeout(S._cqT); S._cqT = setTimeout(() => R.proyectos().then(() => { const x = $('#cot-q'); if (x) { x.focus(); x.setSelectionRange(x.value.length, x.value.length); } }), 250); });
+}
+function filaCot(x) {
+  const e = estCot(x);
+  return `<div class="li" data-a="verCot" data-id="${x.id}"><div class="av ${x.estado === 'aceptada' ? 't-verde' : 't-pri'}">${ic('doc', 20)}</div><div class="tx"><b>${esc(x.numero)} · ${esc(x.proyecto)}</b><small>${esc(x.cliente)} · ${esc(hace(x.fecha + 'T12:00'))}${x.estado === 'aceptada' && x.saldo > 0 ? ' · falta ' + money(x.saldo) : ''}</small></div><div class="am"><b class="n">${money(x.total)}</b><br><span class="badge ${e[1]}">${e[0]}</span></div></div>`;
+}
+ACC.cotF = el => { S.f.cotF = el.dataset.f; R.proyectos(); };
+ACC.nuevaCot = () => formCot(null);
+ACC.verCot = async el => verCot(await api('cotizacion', { id: el.dataset.id }));
+
+/* ---- Formulario ---- */
+function formCot(q) {
+  const nuevo = !q; q = q || { items: [], pagos: [], descuento: 0, conIsv: 'no', anticipo: num(S.config.cotAnticipo) || 50, validez: parseInt(S.config.cotValidez, 10) || 15, condiciones: S.config.cotCond, gracias: S.config.cotGracias, entrega: '' };
+  const st = { items: (q.items || []).map(x => Object.assign({}, x)), pagos: (q.pagos || []).map(x => Object.assign({}, x)), plan: q.pagos && q.pagos.length ? (q.pagos.length === 1 ? 'uno' : q.pagos.length === 2 ? 'ant' : 'cuotas') : 'ant', cuotas: Math.max(3, (q.pagos || []).length) };
+  const cli = q.clienteId ? byId(S.clientes, q.clienteId) : null;
+  const h = hoja({ titulo: nuevo ? 'Nueva cotización' : 'Cotización ' + esc(q.numero), ancho: 1, foco: nuevo ? '#q-cli' : null, html: `
+    ${clienteCampo('q-cli', cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : (q.cliente || ''))}
+    <div class="f2 lado"><label class="fld"><span>Proyecto o servicio *</span><input id="q-pr" maxlength="80" value="${esc(q.proyecto || '')}" placeholder="Ej. Página web y logo"></label><label class="fld"><span>Entrega estimada</span><input id="q-en" type="date" value="${esc(q.entrega || '')}"></label></div>
+    <div class="fld"><span>Servicios y productos</span><div id="q-it"></div><div class="row" style="margin-top:6px"><button type="button" class="btn sm ghost" style="color:var(--pri)" data-x="cat">${ic('plus', 16)} De mi catálogo</button><button type="button" class="btn sm ghost" style="color:var(--pri)" data-x="lib">${ic('edit', 16)} Escribir uno</button></div></div>
+    <div class="f2 lado"><label class="fld"><span>Descuento %</span><input id="q-de" inputmode="decimal" value="${q.descuento || 0}"></label><label class="fld"><span>Anticipo %</span><input id="q-an" inputmode="numeric" value="${q.anticipo}"></label></div>
+    <label class="chk"><input type="checkbox" id="q-isv" ${q.conIsv === 'si' ? 'checked' : ''}> Agregar ISV ${Math.round(num(S.config.isv) * 100)} %</label>
+    <div class="tot-row"><span class="mut">Total</span><b class="n" id="q-tot"></b></div>
+    <div class="fld"><span>Plan de pagos</span><div class="seg full" id="q-plan" style="margin-bottom:8px"><button type="button" data-v="ant">Anticipo + saldo</button><button type="button" data-v="cuotas">Por cuotas</button><button type="button" data-v="uno">Un solo pago</button></div><div id="q-pg"></div><small class="hint">Las fechas salen en la cotización y, al aceptarla, quedan agendadas como pagos por cobrar.</small></div>
+    <div class="f2 lado"><label class="fld"><span>Válida por (días)</span><input id="q-va" inputmode="numeric" value="${q.validez}"></label><label class="fld"><span>Fecha</span><input id="q-fe" type="date" value="${esc(q.fecha || hoy())}"></label></div>
+    <label class="fld"><span>Condiciones</span><textarea id="q-co" rows="4" maxlength="1500">${esc(q.condiciones || '')}</textarea><small class="hint">Puedes usar {anticipo} y {validez}.</small></label>
+    <label class="fld"><span>Mensaje de cierre</span><input id="q-gr" maxlength="200" value="${esc(q.gracias || '')}"></label>
+    <label class="fld"><span>Notas internas</span><input id="q-no" maxlength="500" value="${esc(q.notas || '')}"></label>` });
+  const total = () => { const sub = st.items.reduce((t, x) => t + num(x.cant) * num(x.precio), 0), base = sub * (1 - num($('#q-de', h.el).value) / 100); return r2($('#q-isv', h.el).checked ? base * (1 + num(S.config.isv)) : base); };
+  const pintaItems = () => { $('#q-it', h.el).innerHTML = st.items.length ? `<div class="list vet-l">${st.items.map((x, i) => `<div class="li"><div class="rx-n">${i + 1}</div><div class="tx"><b>${esc(x.n)}</b><small>${x.cat ? esc(x.cat) + ' · ' : ''}${cant(x.cant)} × ${money(x.precio)}${x.nota ? ' · ' + esc(x.nota) : ''}</small></div><div class="am"><b class="n">${money(x.cant * x.precio)}</b><button type="button" class="btn sm icon ghost" data-ed="${i}">${ic('edit', 16)}</button><button type="button" class="btn sm icon ghost" data-qi="${i}">${ic('x', 16)}</button></div></div>`).join('')}</div>` : '<p class="xs mut" style="margin:2px 0 0">Nada todavía. Agrega lo que vas a cotizar.</p>'; $('#q-tot', h.el).textContent = money(total()); };
+  const recalc = () => { const t = total(); if (st.plan !== 'manual') st.pagos = planPagos(st.plan, t, num($('#q-an', h.el).value), $('#q-en', h.el).value, st.cuotas); else { const s = pagosSuma(st.pagos); if (Math.abs(s - t) > 0.05 && st.pagos.length) st.pagos[st.pagos.length - 1].m = r2(st.pagos[st.pagos.length - 1].m + t - s); } pintaPagos(); };
+  const pintaPagos = () => { $$('#q-plan button', h.el).forEach(b => b.classList.toggle('on', b.dataset.v === st.plan)); $('#q-pg', h.el).innerHTML = `<div class="list vet-l">${st.pagos.map((p, i) => `<div class="li"><div class="rx-n">${i + 1}</div><div class="tx"><b>${esc(p.n)}</b><small>${p.f ? esc(fFechaC(p.f)) : 'sin fecha'}${p.pct ? ' · ' + cant(p.pct) + ' %' : ''}</small></div><div class="am"><b class="n">${money(p.m)}</b><button type="button" class="btn sm icon ghost" data-pe="${i}">${ic('edit', 16)}</button></div></div>`).join('')}</div>${st.plan === 'cuotas' ? `<div class="row" style="margin-top:6px;gap:6px"><span class="sm mut">Cuotas:</span>${[2, 3, 4, 6].map(n => `<button type="button" class="chip ${st.cuotas === n ? 'on' : ''}" data-nc="${n}">${n}</button>`).join('')}</div>` : ''}`; };
+  h.b.addEventListener('click', e => {
+    const x = e.target.closest('[data-x]'); if (x && x.dataset.x === 'cat') return elegirCobro(p => { st.items.push({ n: p.nombre, cat: p.categoria || '', cant: 1, precio: p.precio, productoId: p.id, nota: '' }); pintaItems(); recalc(); });
+    if (x && x.dataset.x === 'lib') return formItemCot(null, r => { st.items.push(r); pintaItems(); recalc(); });
+    const ed = e.target.closest('[data-ed]'); if (ed) return formItemCot(st.items[Number(ed.dataset.ed)], r => { st.items[Number(ed.dataset.ed)] = r; pintaItems(); recalc(); });
+    const qi = e.target.closest('[data-qi]'); if (qi) { st.items.splice(Number(qi.dataset.qi), 1); pintaItems(); recalc(); return; }
+    const pl = e.target.closest('#q-plan button'); if (pl) { st.plan = pl.dataset.v; recalc(); return; }
+    const nc = e.target.closest('[data-nc]'); if (nc) { st.cuotas = Number(nc.dataset.nc); st.plan = 'cuotas'; recalc(); return; }
+    const pe = e.target.closest('[data-pe]'); if (pe) return formPagoCot(st.pagos[Number(pe.dataset.pe)], r => { st.pagos[Number(pe.dataset.pe)] = r; st.plan = 'manual'; pintaPagos(); });
+  });
+  ['#q-de', '#q-an', '#q-isv', '#q-en'].forEach(k => $(k, h.el).addEventListener('change', () => { pintaItems(); recalc(); }));
+  pintaItems(); recalc();
+  const guardar = async estado => {
+    const c = clienteLeer($('#q-cli', h.el), q);
+    if (!c.cliente) throw new Error('Escribe el nombre del cliente');
+    if (!st.items.length) throw new Error('Agrega al menos un servicio o producto');
+    const reg = Object.assign({ id: q.id, proyecto: $('#q-pr', h.el).value.trim(), entrega: $('#q-en', h.el).value, items: st.items, pagos: st.pagos, descuento: r2($('#q-de', h.el).value), anticipo: r2($('#q-an', h.el).value), isv: $('#q-isv', h.el).checked ? 'si' : 'no',
+      validez: parseInt($('#q-va', h.el).value, 10) || 0, fecha: $('#q-fe', h.el).value, condiciones: $('#q-co', h.el).value.trim(), gracias: $('#q-gr', h.el).value.trim(), notas: $('#q-no', h.el).value.trim() }, c);
+    if (estado) reg.estado = estado;
+    if (!reg.proyecto) throw new Error('Escribe el nombre del proyecto o servicio');
+    if (!reg.id) delete reg.id;
+    const g = await api('cotizacionGuardar', { registro: reg });
+    S.cotL = null; S.inicio = null; h.cerrar(); if (S.vista === 'proyectos') R.proyectos();
+    return g;
+  };
+  h.botones([{ t: 'Guardar', fn: async () => { await guardar(); toast('Cotización guardada', 'ok'); } }, { t: `${ic('eye', 18)} Vista previa`, cls: 'pri', fn: async () => { const g = await guardar(); verCot(g); } }]);
+}
+function formItemCot(x, cb) {
+  x = Object.assign({ n: '', cat: '', cant: 1, precio: 0, productoId: '', nota: '' }, x || {});
+  const h = hoja({ titulo: x.n ? 'Editar' : 'Servicio o producto', cls: 'chica', foco: '#qi-n', html: `<label class="fld"><span>Descripción *</span><input id="qi-n" maxlength="120" value="${esc(x.n)}" placeholder="Ej. Diseño de logo"></label>
+    <div class="f2 lado"><label class="fld"><span>Categoría</span><input id="qi-c" list="dl-qi-c" maxlength="40" value="${esc(x.cat)}" placeholder="Ej. Diseño" autocomplete="off"><datalist id="dl-qi-c">${catsUsadas().map(c => `<option value="${esc(c)}">`).join('')}</datalist></label><label class="fld"><span>Cantidad</span><input id="qi-q" inputmode="decimal" value="${cant(x.cant)}"></label></div>
+    <label class="fld"><span>Precio c/u</span><input id="qi-p" inputmode="decimal" value="${x.precio || ''}" placeholder="0.00"></label>
+    <label class="fld"><span>Detalle (opcional)</span><input id="qi-d" maxlength="200" value="${esc(x.nota)}" placeholder="Ej. 2 propuestas, 2 rondas de cambios"></label>` });
+  h.botones([{ t: x.n ? 'Guardar' : 'Agregar', cls: 'pri', fn: () => { const r = { n: $('#qi-n', h.el).value.trim(), cat: $('#qi-c', h.el).value.trim(), cant: num($('#qi-q', h.el).value) || 1, precio: r2($('#qi-p', h.el).value), productoId: x.productoId, nota: $('#qi-d', h.el).value.trim() }; if (!r.n) throw new Error('Escribe la descripción'); h.cerrar(); cb(r); } }]);
+}
+function formPagoCot(p, cb) {
+  const h = hoja({ titulo: 'Pago', cls: 'chica', html: `<label class="fld"><span>Nombre</span><input id="qp-n" maxlength="80" value="${esc(p.n)}"></label><div class="f2 lado"><label class="fld"><span>Fecha</span><input id="qp-f" type="date" value="${esc(p.f || '')}"></label><label class="fld"><span>Monto</span><input id="qp-m" inputmode="decimal" value="${p.m}"></label></div>` });
+  h.botones([{ t: 'Guardar', cls: 'pri', fn: () => { const r = Object.assign({}, p, { n: $('#qp-n', h.el).value.trim() || p.n, f: $('#qp-f', h.el).value, m: r2($('#qp-m', h.el).value), pct: 0 }); h.cerrar(); cb(r); } }]);
+}
+
+/* ---- Documento (cotización) ---- */
+function cotDocHTML(q) {
+  const c = S.config, cats = [...new Set(q.items.map(x => x.cat || ''))], sub = q.subtotal, isvPct = Math.round(num(c.isv) * 100);
+  const lg = c.logo ? `<img src="${esc(c.logo)}" alt="">` : esc(iniciales(c.nombre || 'Mi Negocio'));
+  const fila = x => `<div class="qi"><div>${esc(x.n)}${x.nota ? '<small>' + esc(x.nota) + '</small>' : ''}<small>${cant(x.cant)} × ${money(x.precio)}</small></div><b>${money(x.cant * x.precio)}</b></div>`;
+  return `<div class="qdoc"><div class="qh"><div class="lg">${lg}</div><b>${esc(c.nombre || '')}</b><small>${esc(c.eslogan || giroNombre())}</small></div>
+    <div class="qt"><h4>Cotización</h4><span>N.º ${esc(q.numero)} · ${esc(fFechaC(q.fecha))}</span></div>
+    <div class="qp"><div><small>Cliente</small>${esc(q.cliente)}</div><div><small>Contacto</small>${esc(q.telefono || '—')}</div><div><small>Proyecto</small>${esc(q.proyecto)}</div><div><small>Entrega estimada</small>${q.entrega ? esc(fFechaC(q.entrega)) : 'Por acordar'}</div></div>
+    ${cats.map(ct => (ct ? `<div class="qcat">${esc(ct)}</div>` : '<div style="height:8px"></div>') + q.items.filter(x => (x.cat || '') === ct).map(fila).join('')).join('')}
+    <div class="qs" style="margin-top:6px"><span>Subtotal</span><span>${money(sub)}</span></div>${q.descuentoMonto ? `<div class="qs"><span>Descuento ${cant(q.descuento)} %</span><span>−${money(q.descuentoMonto)}</span></div>` : ''}${q.conIsv === 'si' ? `<div class="qs"><span>ISV ${isvPct} %</span><span>${money(q.isvMonto || 0)}</span></div>` : ''}
+    <div class="qtot"><span>Total</span><b>${money(q.total)}</b></div>
+    ${q.pagos && q.pagos.length ? `<div class="qc" style="padding-top:12px"><b>Plan de pagos</b>${q.pagos.map(p => `<div class="qs" style="padding:3px 0"><span>${esc(p.n)}${p.f ? ' · ' + esc(fFechaC(p.f)) : ''}</span><span>${money(p.m)}</span></div>`).join('')}</div>` : q.anticipo ? `<div class="qant"><small>Anticipo para iniciar (${cant(q.anticipo)} %)</small><b>${money(q.total * q.anticipo / 100)}</b></div>` : ''}
+    ${q.condiciones ? `<div class="qc"><b>Condiciones</b>${esc(plantCot(q.condiciones, q)).replace(/\n/g, '<br>')}</div>` : ''}
+    ${q.gracias ? `<div class="qg">${esc(q.gracias)}</div>` : '<div style="height:16px"></div>'}</div>`;
+}
+function verCot(q) {
+  const e = estCot(q), nom = norm(q.numero).replace(/[^a-z0-9]+/g, '-');
+  const h = hoja({ titulo: esc(q.numero), ancho: 1, extra: q.estado !== 'aceptada' ? `<button class="btn icon ghost" data-cot-ed aria-label="Editar">${ic('edit', 18)}</button>` : '', html: `<div class="row sp" style="margin-bottom:10px"><div><span class="badge ${e[1]}">${e[0]}</span> <span class="xs mut">${q.estado === 'enviada' && q.validez ? '· válida hasta el ' + esc(fFechaC(mesesSumarDiaDesde(q.fecha, q.validez))) : q.estado === 'aceptada' && q.aceptadaEl ? '· aceptada el ' + esc(fFechaC(String(q.aceptadaEl).slice(0, 10))) : ''}</span></div>${q.estado !== 'aceptada' ? `<select id="qv-est" style="width:auto;padding:6px 10px">${['borrador', 'enviada', 'rechazada'].map(k => `<option value="${k}" ${q.estado === k ? 'selected' : ''}>${EST_COT_T[k][0]}</option>`).join('')}</select>` : ''}</div>${cotDocHTML(q)}${q.notas ? `<p class="xs mut" style="margin:10px 2px 0">Nota interna: ${esc(q.notas)}</p>` : ''}` });
+  const sel = $('#qv-est', h.el); if (sel) sel.addEventListener('change', async () => { const g = await api('cotizacionEstado', { id: q.id, estado: sel.value }); S.cotL = null; h.cerrar(); verCot(g); if (S.vista === 'proyectos') R.proyectos(); });
+  const ed = h.el.querySelector('[data-cot-ed]'); if (ed) ed.onclick = () => { h.cerrar(); formCot(q); };
+  const bs = [{ t: ic('print', 18), cls: 'icon', fn: () => imprimirDocVet(cotDocHTML(q)) }, { t: `${ic('wa', 18)} Enviar`, cls: 'wa', fn: async () => {
+    const b = await aImagen($('.qdoc', h.el)); await compartirArchivo(b, `cotizacion-${nom}.png`, `Cotización ${q.numero} · ${q.proyecto} · ${S.config.nombre || ''}`);
+    if (q.estado === 'borrador') { try { const g = await api('cotizacionEstado', { id: q.id, estado: 'enviada' }, true); S.cotL = null; Object.assign(q, g); } catch (e) {} }
+  } }];
+  if (q.estado === 'aceptada') bs.push({ t: `${ic('layers', 18)} Ver proyecto`, cls: 'pri', fn: async () => { h.cerrar(); verProyecto(await api('proyecto', { id: q.proyectoId })); } });
+  else bs.push({ t: `${ic('check', 18)} Aceptada → proyecto`, cls: 'pri', fn: () => aceptarCot(q, h) });
+  h.botones(bs);
+}
+const mesesSumarDiaDesde = (f, n) => { const d = parseLocal(f + 'T12:00'); d.setDate(d.getDate() + n); return toLocal(d).slice(0, 10); };
+
+/* ---- Aceptar: confirmar fechas de pago y agendar ---- */
+function aceptarCot(q, hAnt) {
+  const pagos = (q.pagos && q.pagos.length ? q.pagos : planPagos('ant', q.total, q.anticipo, q.entrega)).map(p => Object.assign({}, p));
+  const h = hoja({ titulo: 'Cotización aceptada', cls: 'chica', html: `<div class="aviso ok sm">${ic('check', 18)}<div><b>Se crea el proyecto «${esc(q.proyecto)}»</b> con ${q.items.length} ${q.items.length === 1 ? 'entregable' : 'entregables'}.</div></div>
+    <div class="fld" style="margin-top:12px"><span>Confirma las fechas de pago · quedan agendadas</span><div class="list vet-l" id="ac-l">${pagos.map((p, i) => `<div class="li" style="align-items:center"><div class="rx-n">${i + 1}</div><div class="tx"><b>${esc(p.n)}</b><small><input inputmode="decimal" value="${p.m}" data-m="${i}" style="width:110px;padding:5px 8px;margin-top:3px"></small></div><div class="am"><input type="date" value="${esc(p.f || '')}" data-f="${i}" style="width:150px;padding:7px 9px"></div></div>`).join('')}</div></div>
+    <label class="chk" style="margin-top:4px"><input type="checkbox" id="ac-hoy" ${pagos[0] && (pagos[0].f || hoy()) <= hoy() ? 'checked' : ''}> Recibí el primer pago hoy · <b id="ac-m1">${money(pagos[0] ? pagos[0].m : 0)}</b> <span class="mut">(entra a caja)</span></label>
+    <div class="fld" id="ac-met"><div class="pays three">${[['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer']].map(([m, i], k) => `<button type="button" class="pay ${k === 0 ? 'on' : ''}" data-met="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div></div>
+    <label class="chk"><input type="checkbox" id="ac-con" checked> Preparar el contrato de aceptación para que el cliente lo firme</label>` });
+  let metodo = 'Efectivo';
+  h.b.addEventListener('click', e => { const b = e.target.closest('[data-met]'); if (!b) return; metodo = b.dataset.met; $$('[data-met]', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  h.b.addEventListener('input', e => { const m = e.target.closest('[data-m]'); if (m) { pagos[Number(m.dataset.m)].m = r2(m.value); if (m.dataset.m === '0') $('#ac-m1', h.el).textContent = money(pagos[0].m); } const f = e.target.closest('[data-f]'); if (f) pagos[Number(f.dataset.f)].f = f.value; });
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Confirmar y agendar`, cls: 'pri', fn: async () => {
+    const g = await api('cotizacionAceptar', { id: q.id, pagos, cobrarPrimero: $('#ac-hoy', h.el).checked, metodo });
+    const con = $('#ac-con', h.el).checked;
+    if (g.clienteId && !byId(S.clientes, g.clienteId)) { try { const b = await api('bootstrap', {}, true); S.clientes = b.clientes; guardarCache(); } catch (e) {} }
+    S.cotL = null; S.proyL = null; S.inicio = null; h.cerrar(); if (hAnt) hAnt.cerrar();
+    toast('Proyecto creado · pagos agendados', 'ok'); if (S.vista === 'proyectos') R.proyectos();
+    const d = await api('proyecto', { id: g.proyectoId }); verProyecto(d);
+    if (con) verDocCot(g, 'contrato', d);
+  } }]);
+}
+
+/* ---- Contrato de aceptación y acta de finalización ---- */
+function docCotTexto(q, tipo) { return q[tipo] || plantCot(tipo === 'acta' ? S.config.cotActa : S.config.cotContrato, q); }
+function docCotHTML(q, tipo, texto, d) {
+  const c = S.config, firmado = !!q[tipo + 'El'], num = (tipo === 'acta' ? 'Acta ' : 'Contrato ') + q.numero.replace('COT', tipo === 'acta' ? 'ACT' : 'CON');
+  const entregables = tipo === 'acta' && d ? `<div class="list vet-l" style="margin:8px 0 12px">${(d.r.productos || []).map(x => `<div class="li"><div class="av sm t-verde">${ic('check', 16)}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${x.entregado ? 'Entregado el ' + esc(fFechaC(x.entregado)) : esc(x.estado === 'proceso' ? 'En proceso' : 'Pendiente')}</small></div></div>`).join('')}</div>` : (tipo === 'contrato' ? `<ol style="padding-left:18px;margin:6px 0 10px">${q.items.map(x => `<li>${esc(x.n)}${x.cant !== 1 ? ' (' + cant(x.cant) + ')' : ''}</li>`).join('')}</ol>` : '');
+  return `<div class="cdoc"><div class="cdoc-h"><div><b>${esc(c.nombre || '')}</b><small>${esc([c.eslogan || giroNombre(), c.telefono].filter(Boolean).join(' · '))}</small></div><div style="text-align:right"><b>${esc(num)}</b><small>${esc(fFechaC(firmado ? String(q[tipo + 'El']).slice(0, 10) : hoy()))}</small></div></div>
+    <p style="margin:0 0 8px"><b>${tipo === 'acta' ? 'Aceptación de proyecto finalizado' : 'Aceptación de servicios'}</b> · ${esc(q.proyecto)}</p>
+    ${esc(texto).replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>').replace(/^/, '<p>').replace(/$/, '</p>')}${entregables}
+    <div class="cdoc-firmas"><div class="cdoc-f"><div class="cdoc-img"></div><b>${esc(c.nombre || '')}</b><small>${esc(c.duenoNombre || S.user.nombre)}</small></div><div class="cdoc-f"><div class="cdoc-img">${firmado && q[tipo + 'Firma'] ? `<img src="${esc(q[tipo + 'Firma'])}" alt="Firma">` : ''}</div><b>${esc(firmado ? q[tipo + 'Por'] : q.cliente)}</b><small>${tipo === 'acta' ? 'Recibe conforme' : 'El cliente'}${firmado ? ' · ' + esc(fFechaC(String(q[tipo + 'El']).slice(0, 10))) + ' ' + fHora(String(q[tipo + 'El']).replace(' ', 'T')) : ''}</small></div></div></div>`;
+}
+async function verDocCot(q, tipo, d) {
+  if (!d && q.proyectoId) d = await api('proyecto', { id: q.proyectoId });
+  if (d && d.cot) { q.cobrado = d.cot.cobrado; q.saldo = d.cot.saldo; }
+  const firmado = !!q[tipo + 'El'], titulo = tipo === 'acta' ? 'Acta de proyecto terminado' : 'Contrato de aceptación';
+  let texto = docCotTexto(q, tipo);
+  const h = hoja({ titulo, ancho: 1, html: `<div id="dc"></div>${firmado ? '' : `<details style="margin-top:10px"><summary class="sm" style="color:var(--pri);cursor:pointer">Editar el texto antes de firmar</summary><textarea id="dc-t" rows="8" maxlength="6000" style="margin-top:8px">${esc(texto)}</textarea><small class="hint">El texto base se cambia en Ajustes › Cotizaciones y contratos.</small></details>`}` });
+  const pinta = () => { $('#dc', h.el).innerHTML = docCotHTML(q, tipo, texto, d); };
+  pinta();
+  const ta = $('#dc-t', h.el); if (ta) ta.addEventListener('input', () => { texto = ta.value; pinta(); });
+  const nom = norm(q.numero).replace(/[^a-z0-9]+/g, '-') + '-' + tipo;
+  const bs = [{ t: ic('print', 18), cls: 'icon', fn: () => imprimirDocVet(docCotHTML(q, tipo, texto, d)) }, { t: `${ic('wa', 18)} Enviar`, cls: 'wa', fn: async () => { const b = await aImagen($('.cdoc', h.el)); await compartirArchivo(b, nom + '.png', `${titulo} · ${q.proyecto} · ${S.config.nombre || ''}`); } }];
+  if (!firmado) bs.push({ t: `${ic('edit', 18)} ${tipo === 'acta' ? 'Firmar y cerrar' : 'Firmar aquí'}`, cls: 'pri', fn: async () => {
+    if (tipo === 'acta' && d && (d.r.productos || []).some(x => x.estado !== 'listo')) throw new Error('Marca todos los entregables como listos antes de cerrar el proyecto');
+    const r = await firmarDocCot(q, tipo, texto);
+    if (!r) return;
+    S.cotL = null; S.proyL = null; S.inicio = null; h.cerrar(); toast(tipo === 'acta' ? 'Acta firmada · proyecto terminado' : 'Contrato firmado', 'ok');
+    if (S.hProy && !S.hProy.cerrado && S.hProy.pinta) { try { S.hProy.pinta(await api('proyecto', { id: q.proyectoId })); } catch (e) {} } else if (S.vista === 'proyectos') R.proyectos();
+  } });
+  h.botones(bs);
+}
+function firmarDocCot(q, tipo, texto) {
+  return new Promise(ok => {
+    const h = hoja({ titulo: tipo === 'acta' ? 'Firma del cliente · acta' : 'Firma del cliente · contrato', cls: 'firma', fijo: true, onClose: () => ok(null), html: `<p class="sm" style="margin-top:0"><b>${esc(q.proyecto)}</b><br><span class="mut">Entrégale el teléfono al cliente para que firme dentro del recuadro.</span></p>
+      <div class="firma-pad"><canvas id="fp-c"></canvas><span class="firma-l">Firma aquí</span><button type="button" class="btn sm ghost firma-x" id="fp-x">Borrar</button></div>
+      <label class="fld"><span>Nombre de quien firma</span><input id="fp-n" maxlength="80" value="${esc(q.cliente || '')}"></label>
+      <label class="chk" style="margin:4px 0 2px"><input type="checkbox" id="fp-ok"><span>${tipo === 'acta' ? 'Recibo conforme los entregables del proyecto.' : 'He leído el contrato y acepto los servicios y la forma de pago.'}</span></label>` });
+    const pad = firmaPad(h);
+    h.botones([{ t: `${ic('check', 18)} Firmar`, cls: 'pri', fn: async () => {
+      if (!pad.trazos()) throw new Error('El cliente debe dibujar su firma en el recuadro');
+      if (!$('#fp-ok', h.el).checked) throw new Error('Marca la casilla de aceptación');
+      const firma = pad.exportar(); if (!firma) throw new Error('Dibuja la firma en el recuadro');
+      const r = await api('cotizacionFirmar', { id: q.id, tipo, texto, firma, nombre: $('#fp-n', h.el).value });
+      h.onClose = null; h.cerrar(); ok(r);
+    } }, { t: 'Cancelar', cls: 'ghost', fn: () => h.cerrar() }]);
+  });
+}
+
+/* ---- Dentro del proyecto: pagos agendados, documentos y entregables ---- */
+function htmlProyectoCot(d) {
+  const q = d.cot, pagos = q.pagos || [], h = hoy();
+  const pendP = pagos.filter(p => p.estado !== 'cobrado');
+  const pag = `<div class="kpis k3" style="margin-top:4px"><div class="kpi" style="--k:var(--pri)"><small>Cotizado</small><b class="n">${money(q.total)}</b></div><div class="kpi" style="--k:var(--warn)"><small>Gastado</small><b class="n">${money(d.r.costo)}</b></div><div class="kpi" style="--k:var(--ok)"><small>Cobrado</small><b class="n">${money(q.cobrado)}</b></div></div>
+    ${q.saldo > 0 ? `<div class="aviso info sm">${ic('coin', 18)}<div><b>Saldo por cobrar: ${money(q.saldo)}</b>${pendP.length && pendP[0].f ? ' · próximo pago ' + esc(fFechaC(pendP[0].f)) : ''}</div></div>` : q.actaEl ? '' : `<div class="aviso ok sm">${ic('check', 18)}<div><b>Cobrado completo</b></div></div>`}
+    <div class="sec-t"><h3>Pagos agendados</h3>${q.actaEl ? '' : '<a data-pj="pagosEditar">Editar</a>'}</div><div class="list vet-l">${pagos.map(p => { const atr = p.estado !== 'cobrado' && p.f && p.f < h, hoyP = p.estado !== 'cobrado' && p.f === h;
+      return `<div class="li"><div class="av sm ${p.estado === 'cobrado' ? 't-verde' : atr ? 't-rojo' : 't-naranja'}">${ic('coin', 16)}</div><div class="tx"><b>${esc(p.n)}</b><small>${p.f ? esc(fFechaC(p.f)) : 'sin fecha'}${p.dias !== null && p.estado !== 'cobrado' ? (p.dias === 0 ? ' · hoy' : p.dias > 0 ? ' · en ' + p.dias + (p.dias === 1 ? ' día' : ' días') : ' · hace ' + (-p.dias) + (p.dias === -1 ? ' día' : ' días')) : ''} · ${money(p.m)}${p.avisado ? ' · avisado' : ''}</small></div><div class="am"><span class="badge ${p.estado === 'cobrado' ? 'b-ok' : atr ? 'b-bad' : hoyP ? 'b-warn' : 'b-mut'}">${p.estado === 'cobrado' ? 'Cobrado' : atr ? 'Atrasado' : hoyP ? 'Hoy' : 'Pendiente'}</span>${p.estado !== 'cobrado' && !q.actaEl && puede('admin', 'cajero') ? `<br><button class="btn sm pri" style="margin-top:6px" data-pj="cobrarPago" data-id="${p.id}">Cobrar</button>${q.telefono ? `<a class="btn wa sm icon" style="margin:6px 0 0 4px;width:32px;height:32px" href="${waLink(q.telefono, textoPagoCot(q, p))}" target="_blank" rel="noopener" data-pj="avisarPago" data-id="${p.id}">${ic('wa', 16)}</a>` : ''}` : ''}</div></div>`; }).join('')}</div>`;
+  const docs = `<div class="sec-t"><h3>Documentos</h3></div><div class="list vet-l">
+    <div class="li" data-pj="verCot"><div class="av sm t-pri">${ic('doc', 16)}</div><div class="tx"><b>Cotización ${esc(q.numero)}</b><small>Aceptada</small></div><div class="am"><span class="badge b-ok">Aceptada</span></div></div>
+    <div class="li" data-pj="doc" data-t="contrato"><div class="av sm t-pri">${ic('edit', 16)}</div><div class="tx"><b>Contrato de aceptación</b><small>${q.contratoEl ? 'Firmado por ' + esc(q.contratoPor) + ' · ' + esc(fFechaC(String(q.contratoEl).slice(0, 10))) : 'Listo para que el cliente lo firme'}</small></div><div class="am"><span class="badge ${q.contratoEl ? 'b-ok' : 'b-warn'}">${q.contratoEl ? 'Firmado' : 'Sin firmar'}</span></div></div>
+    <div class="li" data-pj="doc" data-t="acta"><div class="av sm t-pri">${ic('check', 16)}</div><div class="tx"><b>Acta de proyecto terminado</b><small>${q.actaEl ? 'Firmada por ' + esc(q.actaPor) + ' · ' + esc(fFechaC(String(q.actaEl).slice(0, 10))) : 'Se firma al entregar todo'}</small></div><div class="am"><span class="badge ${q.actaEl ? 'b-ok' : 'b-mut'}">${q.actaEl ? 'Firmada' : 'Pendiente'}</span></div></div></div>`;
+  const EP = { pendiente: ['Pendiente', 'b-mut', 'proceso'], proceso: ['En proceso', 'b-warn', 'listo'], listo: ['Listo', 'b-ok', ''] };
+  const ent = `<div class="sec-t"><h3>Entregables</h3><span class="sm mut">${d.r.productos.filter(x => x.estado === 'listo').length} de ${d.r.productos.length} listos</span></div><div class="list vet-l">${d.r.productos.map(x => { const e = EP[x.estado] || EP.pendiente; return `<div class="li"><div class="av sm ${x.estado === 'listo' ? 't-verde' : 't-pri'}">${ic('check', 16)}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${x.entregado ? 'Entregado el ' + esc(fFechaC(x.entregado)) : money(x.precio * x.cantidad)}</small></div><div class="am">${e[2] && !q.actaEl && d.estado === 'curso' ? `<button class="btn sm" data-pj="entregable" data-id="${x.id}" data-e="${e[2]}">${EP[e[2]][0]}</button>` : `<span class="badge ${e[1]}">${e[0]}</span>`}</div></div>`; }).join('')}</div>`;
+  return pag + docs + ent;
+}
+function textoPagoCot(q, p) {
+  const d = p.dias;
+  return `Hola ${(q.cliente || '').split(' ')[0]} 👋 Te escribimos de *${S.config.nombre || ''}*. Te recordamos el pago *${p.n.toLowerCase()}* del proyecto *${q.proyecto}*: ${money(p.m)}${p.f ? (d === 0 ? ' para hoy' : d > 0 ? ' para el ' + fFechaL(p.f) : ', que venció el ' + fFechaC(p.f)) : ''}. ¡Gracias!`;
+}
+async function accionProyCot(d, k, el, pinta) {
+  const q = d.cot;
+  if (k === 'verCot') return verCot(await api('cotizacion', { id: q.id }));
+  if (k === 'doc') return verDocCot(await api('cotizacion', { id: q.id }), el.dataset.t, d);
+  if (k === 'entregable') { const r = await api('entregable', { id: el.dataset.id, estado: el.dataset.e }); const x = d.r.productos.find(y => y.id === el.dataset.id); if (x) Object.assign(x, r); S.proyL = null; pinta(await api('proyecto', { id: d.id })); return; }
+  if (k === 'avisarPago') { api('cotizacionPagos', { id: q.id, pagos: q.pagos, avisado: el.dataset.id }, true).then(() => { const p = q.pagos.find(x => x.id === el.dataset.id); if (p) p.avisado = hoy(); }).catch(() => {}); return; }
+  if (k === 'pagosEditar') return editarPagosCot(q, async () => pinta(await api('proyecto', { id: d.id })));
+  if (k === 'cobrarPago') {
+    const p = q.pagos.find(x => x.id === el.dataset.id); if (!p) return;
+    const pend = q.pagos.filter(x => x.estado !== 'cobrado');
+    // El último pago cierra el proyecto con una venta normal (descuenta lo ya cobrado); los demás entran como anticipo
+    if (pend.length === 1 && d.r.productos.length) {
+      if (S.ticket.items.length && !(await confirmar('Hay un ticket en curso. ¿Lo reemplazo por el cobro del proyecto?', { si: 'Reemplazar' }))) return;
+      // Los precios del ticket deben reproducir el total cotizado (descuento e ISV incluidos): se reparte proporcionalmente
+      const base = d.r.productos.reduce((t, x) => t + x.precio * x.cantidad, 0), k = base > 0 ? q.total / base : 1, conIsv = S.config.preciosConISV !== 'no', tasa = num(S.config.isv);
+      S.ticket = { items: d.r.productos.map(x => ({ productoId: '', descripcion: x.nombre, cantidad: x.cantidad, precio: r2(x.precio * k / (conIsv ? 1 : 1 + tasa)), costo: 0, precioMan: true })), clienteId: q.clienteId || '', pedidoId: '', descuento: 0, anticipo: num(q.cobrado), cotizacionId: q.id, nota: 'Proyecto ' + d.nombre + ' · ' + q.numero };
+      guardarTicket(); cerrarHojas(); ir('vender'); abrirCobro(); return;
+    }
+    return cobrarPagoCot(q, p, async () => pinta(await api('proyecto', { id: d.id })));
+  }
+}
+function cobrarPagoCot(q, p, cb) {
+  let metodo = 'Efectivo';
+  const h = hoja({ titulo: 'Cobrar · ' + esc(p.n), cls: 'chica', foco: '#cp-m', html: `<div class="cambio warn"><span>Proyecto ${esc(q.proyecto)}</span><b class="n">${money(p.m)}</b></div>
+    <label class="fld" style="margin-top:12px"><span>Monto recibido</span><input id="cp-m" inputmode="decimal" value="${p.m}"></label>
+    <div class="fld"><span>Forma de pago</span><div class="pays three" id="cp-p">${[['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer']].map(([m, i]) => `<button class="pay ${m === metodo ? 'on' : ''}" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div></div><p class="xs mut">Entra a caja como anticipo del proyecto; el último pago se cobra con el comprobante final.</p>` });
+  $('#cp-p', h.el).addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; metodo = b.dataset.m; $$('#cp-p .pay', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  h.botones([{ t: 'Registrar pago', cls: 'pri', fn: async () => { const monto = r2($('#cp-m', h.el).value); if (!(monto > 0)) throw new Error('Escribe el monto'); await api('cotizacionPago', { id: q.id, pagoId: p.id, monto, metodo }); S.cotL = null; S.proyL = null; S.inicio = null; h.cerrar(); toast('Pago registrado · entró a caja', 'ok'); cb(); } }]);
+}
+function editarPagosCot(q, cb) {
+  const pagos = q.pagos.map(x => Object.assign({}, x));
+  const h = hoja({ titulo: 'Pagos agendados', cls: 'chica', html: `<div class="list vet-l" id="ep-l"></div><button type="button" class="btn sm ghost" style="margin-top:6px;color:var(--pri)" id="ep-add">${ic('plus', 16)} Agregar pago</button><p class="xs mut">Los pagos ya cobrados no se cambian. La suma debe dar ${money(q.total)}.</p>` });
+  const pinta = () => { $('#ep-l', h.el).innerHTML = pagos.map((p, i) => `<div class="li" style="align-items:center"><div class="rx-n">${i + 1}</div><div class="tx"><b>${esc(p.n)}</b><small>${p.estado === 'cobrado' ? 'Cobrado · ' + money(p.m) : `<input inputmode="decimal" value="${p.m}" data-m="${i}" style="width:110px;padding:5px 8px;margin-top:3px">`}</small></div><div class="am">${p.estado === 'cobrado' ? `<span class="badge b-ok">${esc(fFechaC(p.f))}</span>` : `<input type="date" value="${esc(p.f || '')}" data-f="${i}" style="width:150px;padding:7px 9px"><br><button type="button" class="btn sm icon ghost" data-q="${i}" style="margin-top:4px">${ic('x', 16)}</button>`}</div></div>`).join(''); };
+  h.b.addEventListener('input', e => { const m = e.target.closest('[data-m]'); if (m) pagos[Number(m.dataset.m)].m = r2(m.value); const f = e.target.closest('[data-f]'); if (f) pagos[Number(f.dataset.f)].f = f.value; });
+  h.b.addEventListener('click', e => { const x = e.target.closest('[data-q]'); if (x) { pagos.splice(Number(x.dataset.q), 1); pinta(); } });
+  $('#ep-add', h.el).onclick = () => { pagos.push({ id: Math.random().toString(36).slice(2, 10), n: 'Pago ' + (pagos.length + 1), f: mesesSumarDia(15), m: r2(q.total - pagosSuma(pagos)), pct: 0, estado: '' }); pinta(); };
+  pinta();
+  h.botones([{ t: 'Guardar', cls: 'pri', fn: async () => { if (Math.abs(pagosSuma(pagos) - q.total) > 0.05) throw new Error('Los pagos suman ' + money(pagosSuma(pagos)) + ' y el total es ' + money(q.total)); await api('cotizacionPagos', { id: q.id, pagos }); S.cotL = null; S.inicio = null; h.cerrar(); toast('Pagos guardados', 'ok'); cb(); } }]);
+}
+
 /* ===================== SUSCRIPCIONES: vencimientos, cuentas y perfiles ===================== */
 const PLAT = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
 const susOn = () => modOn('suscripciones');
@@ -7362,6 +7673,11 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.20', fecha: '2026-10-29', items: [
+    { i: 'doc', t: 'Cotizaciones con plan de pagos', d: 'Para negocios de servicios: arma una cotización elegante con tus servicios, descuento, ISV y un plan de pagos con fechas. La envías por WhatsApp o la imprimes. Cuando el cliente la acepta, se vuelve un proyecto y cada pago queda agendado: lo ves en Inicio, lo recuerdas por WhatsApp y lo cobras con un toque.', si: () => cotOn(), ir: 'proyectos' },
+    { i: 'edit', t: 'Contrato y acta firmados con el dedo', d: 'Del proyecto salen el contrato de aceptación de servicios y, al terminar, el acta de proyecto finalizado. El cliente los firma en tu teléfono y quedan guardados con fecha y hora. Los textos base se cambian en Ajustes › Cotizaciones y contratos.', si: () => cotOn() },
+    { i: 'sparkle', t: 'Panel: colaboradores', d: 'Quien te ayuda a mostrar el programa puede entrar con todo activo y sin cobro.', si: () => false }
+  ] },
   { v: '1.9.18', fecha: '2026-10-29', items: [
     { i: 'paw', t: 'Nuevo tipo de negocio: Veterinaria y mascotas', d: 'Para clínicas veterinarias y tiendas de mascotas: expediente de cada mascota con su dueño, consultas que se cobran al guardar, recetas, carnet de vacunación y recordatorios de vacunas por WhatsApp. También se puede agregar como sección extra de tu tienda.' },
     { i: 'doc', t: 'Recetas para el dueño', d: 'En la consulta agregas cada medicamento con su dosis, cada cuántas horas y cuántos días. La receta sale con número, datos de la mascota, indicaciones, próximo control y tu firma; la mandas por WhatsApp o la imprimes. Si el medicamento choca con una alergia anotada, te avisa antes.', si: () => modOn('mascotas'), ir: 'mascotas' },
@@ -7473,6 +7789,9 @@ const NOVEDADES = [
 
 /* ---------- Guías por pantalla ---------- */
 const AYUDA = {
+  proyectos: { d: 'Cotizaciones de servicios y proyectos: cuánto cotizaste, cuánto has gastado y cuánto has cobrado.',
+    p: ['<b>Nueva cotización</b>: cliente, servicios de tu catálogo (o escritos), descuento, ISV y plan de pagos con fechas. Envíala por WhatsApp o imprímela.', '<b>Aceptada → proyecto</b>: confirmas las fechas de pago, marcas si ya recibiste el anticipo y todo queda agendado.', 'En el proyecto: cobras cada pago, recuerdas por WhatsApp, marcas los entregables y registras los gastos.', '<b>Contrato</b> de aceptación y <b>acta</b> de proyecto terminado: el cliente firma con el dedo en tu teléfono.'],
+    t: ['El último pago se cobra con el comprobante final y descuenta lo ya recibido.', 'Los proyectos de producción (pan, uniformes…) siguen igual: en las otras pestañas.'], si: () => cotOn() },
   mascotas: { d: 'Cada mascota con su dueño, su historial clínico, sus vacunas, sus recetas y su peso.',
     p: ['<b>Nueva</b>: nombre, especie, raza, sexo, nacimiento, peso, alergias y su dueño (si es nuevo, queda guardado en Clientes).', 'Toca una mascota para abrir su <b>expediente</b>: ahí están sus consultas, vacunas, recetas y cómo va su peso.', '<b>Consulta</b>: motivo, peso, temperatura, diagnóstico, tratamiento, vacunas de hoy y receta. Lo que se usó se cobra con «Guardar y cobrar».', '<b>Carnet</b>: el carnet de vacunación listo para mandarlo por WhatsApp o imprimirlo.'],
     t: ['Si una mascota ya tenía vacunas de otra clínica, anótalas en Vacunas › «Agregar una anterior» para que salgan en su carnet y en los recordatorios.', 'Las alergias salen en rojo en el expediente y en la consulta, y la receta te avisa si un medicamento choca con ellas.'] },

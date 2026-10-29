@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.19';
+const VERSION = '1.9.20';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g1';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -70,13 +70,15 @@ const SCHEMA = {
   Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado','renueva'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal','cotizacionId'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
   Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado','mascotaId','mascota'],
   // Veterinaria: cada mascota con su dueño (un cliente), su historial clínico (consultas con receta) y sus vacunas y desparasitaciones
   Mascotas:       ['id','clienteId','nombre','especie','raza','sexo','nacimiento','color','esterilizado','chip','alergias','notas','peso','activo','creado','actualizado'],
   Consultas:      ['id','mascotaId','clienteId','fecha','tipo','motivo','peso','temperatura','diagnostico','tratamiento','receta','indicaciones','control','numero','atiende','usuarioId','ventaId','total','agendaId','anulada','creado','actualizado'],
+  // Cotizaciones de servicios (giro Servicios o función «cotizaciones»): items y plan de pagos en JSON; al aceptarse crean un proyecto y sus pagos quedan agendados
+  Cotizaciones:   ['id','numero','fecha','clienteId','cliente','telefono','proyecto','entrega','items','descuento','conIsv','subtotal','total','anticipo','validez','condiciones','gracias','notas','planPagos','estado','proyectoId','aceptadaEl','contrato','contratoFirma','contratoPor','contratoEl','acta','actaFirma','actaPor','actaEl','usuarioId','creado','actualizado'],
   Vacunas:        ['id','mascotaId','consultaId','tipo','nombre','productoId','fecha','proxima','lote','estado','avisado','usuarioId','creado'],
   Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','ref','sucursal'],
   Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion','sucursal'],
@@ -87,20 +89,20 @@ const SCHEMA = {
   Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
-  Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado'],
+  Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
   ProyectoGastos: ['id','proyectoId','dia','categoria','descripcion','cantidad','costoUnit','monto','productoId','caja','usuarioId','anulado','creado','anulacion','sucursal'],
-  ProyectoProductos: ['id','proyectoId','nombre','cantidad','unidad','peso','precio','productoId','inventario','creado'],
+  ProyectoProductos: ['id','proyectoId','nombre','cantidad','unidad','peso','precio','productoId','inventario','creado','estado','entregado'],
   Chats:          ['id','telefono','nombre','clienteId','clave','productoId','producto','ultimo','ultimoTexto','deCliente','sinLeer','creado'],
   Mensajes:       ['id','chatId','de','texto','usuarioId','fecha'],
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y' };
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
-const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado']);
-const TEXTO = new Set(['marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote']);
+const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
+const TEXTO = new Set(['marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -115,6 +117,10 @@ const CONFIG_DEF = {
   tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
+  // Cotizaciones y contratos (servicios)
+  cotizaciones: '', cotCond: '• Para iniciar el trabajo se requiere un anticipo del {anticipo}% del total.\n• Los pagos se realizan en las fechas del plan de pagos.\n• Esta cotización es válida por {validez} días.', cotGracias: 'Gracias por la confianza en nuestro trabajo.', cotValidez: '15', cotAnticipo: '50',
+  cotContrato: 'Entre {negocio} («el prestador») y {cliente} («el cliente») se acuerda la prestación de los servicios del proyecto «{proyecto}», detallados en la cotización {numero}.\n\nMonto total: {total}. Forma de pago: {pagos}.\n\nEntrega estimada: {entrega}. El prestador inicia al recibir el anticipo. Si el cliente cancela, el anticipo cubre el trabajo realizado. El saldo pendiente se paga en las fechas acordadas. Cualquier trabajo adicional se cotiza por separado.',
+  cotActa: 'El cliente {cliente} recibe a conformidad los entregables del proyecto «{proyecto}», según la cotización {numero}{contrato}.\n\nPagos: total {total} · cobrado {cobrado} · saldo {saldo}.\n\nCon la firma de esta acta el proyecto queda cerrado. Cualquier trabajo adicional se cotiza por separado.', seqQ: '0', seqR: '0',
   msjVacuna: 'Hola {cliente} 👋 Te escribimos de *{negocio}*. A *{mascota}* le toca su *{vacuna}* el *{fecha}* 💉 ¿Te reservamos un espacio? Responde con la hora que te queda mejor.',
   msjVacunaVencida: 'Hola {cliente} 👋 Te escribimos de *{negocio}*. A *{mascota}* ya le tocaba su *{vacuna}* desde el {fecha}. Para tenerla protegida, ¿te reservamos un espacio esta semana?',
   // Compras en línea (giro «compras»): cómo se calcula lo que el cliente pide desde un enlace
@@ -304,6 +310,15 @@ function rutaUsuario_(a, u, d, req) {
     case 'consultaGuardar': return lock_(() => consultaGuardar_(u, d));
     case 'vacunas':         return vacunas_(u, d);
     case 'vacunaGuardar':   return lock_(() => vacunaGuardar_(u, d));
+    case 'cotizaciones':    return cotizaciones_(u, d);
+    case 'cotizacion':      return cotizacion_(u, d);
+    case 'cotizacionGuardar': return lock_(() => cotizacionGuardar_(u, d));
+    case 'cotizacionEstado': return lock_(() => cotizacionEstado_(u, d));
+    case 'cotizacionAceptar': return lock_(() => cotizacionAceptar_(u, d));
+    case 'cotizacionPago':  return lock_(() => cotizacionPago_(u, d));
+    case 'cotizacionPagos': return lock_(() => cotizacionPagos_(u, d));
+    case 'cotizacionFirmar': return lock_(() => cotizacionFirmar_(u, d));
+    case 'entregable':      return lock_(() => entregable_(u, d));
     case 'caja':            return caja_(u, d);
     case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
     case 'reporte':         return reporte_(u, d);
@@ -1082,7 +1097,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -1382,6 +1397,205 @@ function vacunaGuardar_(u, d) {
   return upsert_('Vacunas', o);
 }
 
+/* ===================== COTIZACIONES, CONTRATO Y ACTA (servicios) =====================
+ * Una cotización lleva los servicios (items), el plan de pagos (pagos) y las condiciones. Al aceptarla se crea el proyecto
+ * (los items son sus entregables) y cada pago queda agendado; cada pago cobrado entra a caja como anticipo ligado a la
+ * cotización y al final la venta del proyecto los descuenta. El contrato y el acta se firman con el dedo y se guardan aquí. */
+const EST_COT = ['borrador', 'enviada', 'aceptada', 'rechazada', 'vencida'];
+function cotReq_(u) { req_(u, ['admin', 'cajero']); if (!modOn_('cotizaciones')) throw new Error('Activa «Cotizaciones y contratos» en Ajustes › Funciones por tipo de negocio'); }
+function cotItems_(l) {
+  return (Array.isArray(l) ? l : parseJ_(l, [])).slice(0, 40).map(x => ({ n: txt_(x && x.n, 120), cat: txt_(x && x.cat, 40), cant: Math.max(0, Math.min(99999, r3_(x && x.cant))) || 1, precio: Math.max(0, r2_(x && x.precio)), productoId: txt_(x && x.productoId, 24), nota: txt_(x && x.nota, 200) })).filter(x => x.n);
+}
+function cotPagos_(l) {
+  return (Array.isArray(l) ? l : parseJ_(l, [])).slice(0, 24).map(x => ({ id: txt_(x && x.id, 12) || Utilities.getUuid().slice(0, 8), n: txt_(x && x.n, 80), f: FECHA_RE.test(String(x && x.f || '')) ? String(x.f) : '', m: Math.max(0, r2_(x && x.m)), pct: Math.max(0, Math.min(100, r2_(x && x.pct))),
+    estado: ['', 'cobrado'].indexOf(x && x.estado) >= 0 ? (x.estado || '') : '', abonoId: txt_(x && x.abonoId, 24), cobradoEl: txt_(x && x.cobradoEl, 16), avisado: txt_(x && x.avisado, 10) })).filter(x => x.n);
+}
+function cotTotales_(q) {
+  const items = cotItems_(q.items), cfg = config_();
+  const sub = r2_(items.reduce((t, x) => t + x.cant * x.precio, 0)), desc = r2_(sub * (Number(q.descuento) || 0) / 100), base = r2_(sub - desc);
+  const isv = q.conIsv === 'si' ? r2_(base * (Number(cfg.isv) || 0)) : 0;
+  return { subtotal: sub, descuentoMonto: desc, isvMonto: isv, total: r2_(base + isv) };
+}
+// Pagos cobrados según los abonos reales (ligados por ref = id de la cotización)
+function cotCobrado_(q) {
+  const ab = rows_('Abonos').filter(a => a.ref === q.id && !a.anulado).reduce((t, a) => t + (Number(a.monto) || 0), 0);
+  // La venta final del proyecto: lo que se pagó al cobrarla (el anticipo ya está en los abonos) menos lo que quedó al crédito
+  const v = rows_('Ventas').filter(x => x.cotizacionId === q.id && !x.anulada).reduce((t, x) => t + Math.max(0, (Number(x.total) || 0) - (Number(x.anticipo) || 0) - (Number(x.saldo) || 0)), 0);
+  return r2_(ab + v);
+}
+function cotLlena_(q) {
+  q.items = cotItems_(q.items); q.pagos = cotPagos_(q.planPagos); delete q.planPagos;
+  Object.assign(q, cotTotales_(q));
+  q.cobrado = cotCobrado_(q); q.saldo = r2_(q.total - q.cobrado);
+  const h = hoy_();
+  if (q.estado === 'enviada' && q.validez > 0 && q.fecha && addDiasIso_(String(q.fecha).slice(0, 10), Number(q.validez)) < h) q.estadoR = 'vencida'; else q.estadoR = q.estado;
+  q.pagos.forEach(p => { p.dias = p.f ? Math.round((new Date(p.f + 'T12:00:00') - new Date(h + 'T12:00:00')) / 86400000) : null; });
+  return q;
+}
+function cotizaciones_(u, d) {
+  cotReq_(u);
+  const lim = diasAtras_(365);
+  return desc_(rows_('Cotizaciones').filter(q => q.estado !== 'aceptada' || q.fecha >= lim || true), 'fecha').slice(0, 300).map(q => { cotLlena_(q); delete q.condiciones; delete q.contrato; delete q.acta; delete q.contratoFirma; delete q.actaFirma; return q; });
+}
+function cotizacion_(u, d) {
+  cotReq_(u);
+  const q = rows_('Cotizaciones').find(x => x.id === d.id); if (!q) throw new Error('La cotización ya no existe');
+  cotLlena_(q);
+  if (q.proyectoId) { const p = rows_('Proyectos').find(x => x.id === q.proyectoId); if (p) q.proyectoEstado = p.estado; }
+  return q;
+}
+function cotizacionGuardar_(u, d) {
+  cotReq_(u);
+  const r = Object.assign({}, d.registro || {}), cfg = config_();
+  const prev = r.id ? rows_('Cotizaciones').find(x => x.id === r.id) : null;
+  if (r.id && !prev) throw new Error('La cotización ya no existe');
+  if (prev && prev.estado === 'aceptada') { // aceptada: solo se puede cambiar el plan de pagos y las notas desde sus propias acciones
+    const o = { id: prev.id, actualizado: ahora_() };
+    if (r.notas !== undefined) o.notas = txt_(r.notas, 500);
+    if (r.entrega !== undefined) o.entrega = FECHA_RE.test(String(r.entrega || '')) ? String(r.entrega) : '';
+    return cotLlena_(upsert_('Cotizaciones', o));
+  }
+  ['proyecto', 'cliente', 'telefono', 'gracias'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], k === 'gracias' ? 200 : 80); });
+  ['condiciones', 'notas'].forEach(k => { if (r[k] !== undefined) r[k] = String(r[k] || '').trim().slice(0, 1500); });
+  if (r.clienteId !== undefined) { const c = r.clienteId ? rows_('Clientes').find(x => x.id === r.clienteId) : null; if (r.clienteId && !c) throw new Error('El cliente ya no existe'); if (c) { r.cliente = c.nombre; r.telefono = c.telefono; } }
+  if (!prev && !r.cliente && !r.clienteId) throw new Error('Escribe el nombre del cliente');
+  if (!prev && !r.proyecto) throw new Error('Escribe el nombre del proyecto o servicio');
+  if (r.items !== undefined) { r.items = cotItems_(r.items); if (!r.items.length) throw new Error('Agrega al menos un servicio o producto'); r.items = JSON.stringify(r.items); }
+  if (r.pagos !== undefined) { r.planPagos = JSON.stringify(cotPagos_(r.pagos)); delete r.pagos; }
+  if (r.descuento !== undefined) r.descuento = Math.max(0, Math.min(100, r2_(r.descuento)));
+  if (r.isv !== undefined) { r.conIsv = r.isv === 'si' || r.isv === true ? 'si' : 'no'; delete r.isv; }
+  if (r.anticipo !== undefined) r.anticipo = Math.max(0, Math.min(100, r2_(r.anticipo)));
+  if (r.validez !== undefined) r.validez = Math.max(0, Math.min(365, parseInt(r.validez, 10) || 0));
+  if (r.entrega !== undefined && r.entrega && !FECHA_RE.test(String(r.entrega))) r.entrega = '';
+  if (r.fecha !== undefined && !FECHA_RE.test(String(r.fecha || ''))) delete r.fecha;
+  if (r.estado !== undefined && ['borrador', 'enviada', 'rechazada'].indexOf(r.estado) < 0) delete r.estado;
+  delete r.proyectoId; delete r.aceptadaEl; delete r.contrato; delete r.contratoFirma; delete r.contratoPor; delete r.contratoEl; delete r.acta; delete r.actaFirma; delete r.actaPor; delete r.actaEl; delete r.numero; delete r.usuarioId; delete r.creado;
+  if (!prev) {
+    Object.assign(r, { numero: siguiente_('Q').replace('Q-', 'COT-'), fecha: r.fecha || hoy_(), estado: r.estado || 'borrador', usuarioId: u.id, creado: ahora_() });
+    if (r.condiciones === undefined) r.condiciones = cfg.cotCond; if (r.gracias === undefined) r.gracias = cfg.cotGracias;
+    if (r.validez === undefined) r.validez = parseInt(cfg.cotValidez, 10) || 15; if (r.anticipo === undefined) r.anticipo = Number(cfg.cotAnticipo) || 50;
+    if (r.conIsv === undefined) r.conIsv = 'no'; if (r.descuento === undefined) r.descuento = 0; if (r.planPagos === undefined) r.planPagos = '[]';
+  }
+  r.actualizado = ahora_();
+  const q = upsert_('Cotizaciones', r);
+  const tot = cotTotales_(q); upsert_('Cotizaciones', { id: q.id, subtotal: tot.subtotal, total: tot.total });
+  return cotizacion_(u, { id: q.id });
+}
+function cotizacionEstado_(u, d) {
+  cotReq_(u);
+  const q = rows_('Cotizaciones').find(x => x.id === d.id); if (!q) throw new Error('La cotización ya no existe');
+  if (q.estado === 'aceptada') throw new Error('Esta cotización ya se aceptó y tiene su proyecto');
+  if (['borrador', 'enviada', 'rechazada'].indexOf(d.estado) < 0) throw new Error('Estado no válido');
+  upsert_('Cotizaciones', { id: q.id, estado: d.estado, actualizado: ahora_() });
+  return cotizacion_(u, { id: q.id });
+}
+// Aceptada: se crea el proyecto con los items como entregables, los pagos quedan agendados y, si ya se recibió el anticipo, entra a caja
+function cotizacionAceptar_(u, d) {
+  cotReq_(u);
+  const q = rows_('Cotizaciones').find(x => x.id === d.id); if (!q) throw new Error('La cotización ya no existe');
+  if (q.estado === 'aceptada' && q.proyectoId) throw new Error('Esta cotización ya se aceptó');
+  cotLlena_(q);
+  let pagos = cotPagos_(d.pagos !== undefined ? d.pagos : q.pagos);
+  if (!pagos.length) pagos = [{ id: Utilities.getUuid().slice(0, 8), n: 'Pago total', f: hoy_(), m: q.total, pct: 100, estado: '', abonoId: '', cobradoEl: '', avisado: '' }];
+  pagos.forEach(p => { if (!p.f) throw new Error('Ponle fecha al pago «' + p.n + '»'); if (!(p.m > 0)) p.m = r2_(q.total * p.pct / 100); });
+  const suma = r2_(pagos.reduce((t, p) => t + p.m, 0));
+  if (Math.abs(suma - q.total) > 0.05) { // la diferencia por redondeo va al último pago
+    const dif = r2_(q.total - suma); if (Math.abs(dif) > q.total * 0.02 + 1) throw new Error('Los pagos suman ' + money_(suma, config_()) + ' y el total es ' + money_(q.total, config_()) + '. Ajusta el plan de pagos.');
+    pagos[pagos.length - 1].m = r2_(pagos[pagos.length - 1].m + dif);
+  }
+  // Cliente: si no estaba registrado, se registra (para poder agendar sus pagos y cobrarle)
+  let cliId = q.clienteId;
+  if (!cliId) { const ya = q.telefono ? rows_('Clientes').find(c => tel8_(c.telefono) && tel8_(c.telefono) === tel8_(q.telefono)) : null; const c = ya || upsert_('Clientes', { nombre: q.cliente, telefono: q.telefono || '', activo: true, creado: ahora_() }); cliId = c.id; }
+  const p = upsert_('Proyectos', { nombre: q.proyecto, cliente: q.cliente, clienteId: cliId, cotizacionId: q.id, entrega: q.entrega || '', descripcion: ('De la cotización ' + q.numero).slice(0, 300), estado: 'curso', inicio: hoy_(), fin: '',
+    margen: VERDE_PROY, presupuesto: q.total, usuarioId: u.id, nota: '', creado: ahora_(), actualizado: ahora_() });
+  q.items.forEach(it => upsert_('ProyectoProductos', { proyectoId: p.id, nombre: it.n, cantidad: it.cant, unidad: 'unidad', peso: 1, precio: it.precio, productoId: it.productoId || '', inventario: '', creado: ahora_(), estado: 'pendiente', entregado: '' }));
+  upsert_('Cotizaciones', { id: q.id, estado: 'aceptada', proyectoId: p.id, clienteId: cliId, aceptadaEl: ahora_(), planPagos: JSON.stringify(pagos), actualizado: ahora_() });
+  // Anticipo recibido hoy
+  if (d.cobrarPrimero && pagos[0] && pagos[0].m > 0) cotizacionPago_(u, { id: q.id, pagoId: pagos[0].id, metodo: d.metodo, monto: pagos[0].m });
+  return cotizacion_(u, { id: q.id });
+}
+// Cobrar un pago del plan: entra a caja como anticipo ligado a la cotización (se descuenta en la venta final del proyecto)
+function cotizacionPago_(u, d) {
+  cotReq_(u);
+  const q = rows_('Cotizaciones').find(x => x.id === d.id); if (!q) throw new Error('La cotización ya no existe');
+  if (q.estado !== 'aceptada') throw new Error('Primero acepta la cotización');
+  if (q.actaEl) throw new Error('El proyecto ya está cerrado con su acta');
+  const pagos = cotPagos_(q.planPagos), p = pagos.find(x => x.id === d.pagoId); if (!p) throw new Error('Ese pago ya no existe');
+  if (p.estado === 'cobrado') throw new Error('Ese pago ya se cobró');
+  const monto = esNum_(d.monto) && r2_(d.monto) > 0 ? r2_(d.monto) : p.m, cfg = config_();
+  const ya = cotCobrado_(q); if (ya + monto > Number(q.total) + 0.004) throw new Error('Con este pago se cobraría más que el total (' + money_(q.total, cfg) + ')');
+  anticipoRegistrar_(u, monto, q.clienteId, 'Pago ' + q.numero + ' · ' + p.n, q.id, d.metodo, d);
+  const ab = rows_('Abonos').filter(a => a.ref === q.id && !a.anulado).sort((a, b) => a.fecha < b.fecha ? 1 : -1)[0];
+  p.estado = 'cobrado'; p.m = monto; p.abonoId = ab ? ab.id : ''; p.cobradoEl = ahora_();
+  upsert_('Cotizaciones', { id: q.id, planPagos: JSON.stringify(pagos), actualizado: ahora_() });
+  if (q.proyectoId) tocarProyecto_(q.proyectoId);
+  return cotizacion_(u, { id: q.id });
+}
+// Cambiar fechas o montos de los pagos pendientes (después de aceptar)
+function cotizacionPagos_(u, d) {
+  cotReq_(u);
+  const q = rows_('Cotizaciones').find(x => x.id === d.id); if (!q) throw new Error('La cotización ya no existe');
+  const antes = cotPagos_(q.planPagos), nuevos = cotPagos_(d.pagos);
+  const cobrados = antes.filter(p => p.estado === 'cobrado');
+  cobrados.forEach(c => { const n = nuevos.find(x => x.id === c.id); if (!n) throw new Error('El pago «' + c.n + '» ya está cobrado y no se puede quitar'); Object.assign(n, c); });
+  if (d.avisado) { const n = nuevos.find(x => x.id === d.avisado); if (n) n.avisado = hoy_(); }
+  upsert_('Cotizaciones', { id: q.id, planPagos: JSON.stringify(nuevos), actualizado: ahora_() });
+  return cotizacion_(u, { id: q.id });
+}
+// Al cobrar la venta final del proyecto, los pagos pendientes quedan cerrados
+function cotCerrarPagos_(q, venta) {
+  const pagos = cotPagos_(q.planPagos); let cambio = false;
+  pagos.forEach(p => { if (p.estado !== 'cobrado') { p.estado = 'cobrado'; p.cobradoEl = ahora_(); p.abonoId = 'venta:' + venta.id; cambio = true; } });
+  const upd = { id: q.id, actualizado: ahora_() };
+  if (cambio) upd.planPagos = JSON.stringify(pagos);
+  upsert_('Cotizaciones', upd);
+}
+// Contrato de aceptación y acta de finalización: texto final + firma del cliente (con huella)
+function cotizacionFirmar_(u, d) {
+  cotReq_(u);
+  const q = rows_('Cotizaciones').find(x => x.id === d.id); if (!q) throw new Error('La cotización ya no existe');
+  const tipo = d.tipo === 'acta' ? 'acta' : 'contrato';
+  if (q.estado !== 'aceptada') throw new Error('Primero acepta la cotización');
+  const texto = String(d.texto || '').trim().slice(0, 6000);
+  const o = { id: q.id, actualizado: ahora_() };
+  if (d.soloTexto) { o[tipo] = texto; upsert_('Cotizaciones', o); return cotizacion_(u, { id: q.id }); } // guardar el texto sin firmar
+  if (q[tipo + 'El']) throw new Error((tipo === 'acta' ? 'El acta' : 'El contrato') + ' ya está firmado');
+  const firma = String(d.firma || '');
+  if (firma.indexOf('data:image/') !== 0 || firma.length < 200) throw new Error('El cliente debe dibujar su firma en el recuadro');
+  if (firma.length > 48000) throw new Error('La firma quedó muy grande. Bórrala y fírmala de nuevo con trazos más simples.');
+  if (tipo === 'acta') {
+    const pend = rows_('ProyectoProductos').filter(x => x.proyectoId === q.proyectoId && x.estado !== 'listo');
+    if (pend.length) throw new Error('Todavía hay ' + pend.length + (pend.length === 1 ? ' entregable pendiente' : ' entregables pendientes') + '. Márcalos como listos antes de cerrar.');
+  }
+  const el = ahora_().replace('T', ' ');
+  o[tipo] = texto || q[tipo] || ''; o[tipo + 'Firma'] = firma; o[tipo + 'Por'] = txt_(d.nombre, 80) || q.cliente; o[tipo + 'El'] = el;
+  upsert_('Cotizaciones', o);
+  if (tipo === 'acta' && q.proyectoId) upsert_('Proyectos', { id: q.proyectoId, estado: 'terminado', fin: hoy_(), actualizado: ahora_() });
+  return cotizacion_(u, { id: q.id });
+}
+// Entregables del proyecto (pendiente → proceso → listo)
+function entregable_(u, d) {
+  req_(u, ['admin', 'cajero', 'bodega']);
+  const x = rows_('ProyectoProductos').find(y => y.id === d.id); if (!x) throw new Error('El entregable ya no existe');
+  const e = ['pendiente', 'proceso', 'listo'].indexOf(d.estado) >= 0 ? d.estado : 'pendiente';
+  upsert_('ProyectoProductos', { id: x.id, estado: e, entregado: e === 'listo' ? hoy_() : '' });
+  tocarProyecto_(x.proyectoId);
+  return { id: x.id, estado: e, entregado: e === 'listo' ? hoy_() : '' };
+}
+// Resumen para Inicio: pagos agendados que tocan hoy o están atrasados
+function cotResumen_() {
+  const h = hoy_(), lim = diasAtras_(-7), out = { hoy: 0, atrasados: 0, semana: 0, monto: 0, montoAtras: 0, enviadas: 0, lista: [] };
+  rows_('Cotizaciones').forEach(q => {
+    if (q.estado === 'enviada') out.enviadas++;
+    if (q.estado !== 'aceptada' || q.actaEl) return;
+    cotPagos_(q.planPagos).forEach(p => { if (p.estado === 'cobrado' || !p.f) return;
+      if (p.f === h) { out.hoy++; out.monto += p.m; } else if (p.f < h) { out.atrasados++; out.montoAtras += p.m; } else if (p.f <= lim) { out.semana++; out.monto += p.m; }
+      if (p.f <= lim && out.lista.length < 6) out.lista.push({ id: q.id, pagoId: p.id, cliente: q.cliente, proyecto: q.proyecto, n: p.n, f: p.f, m: p.m, telefono: q.telefono }); });
+  });
+  out.monto = r2_(out.monto); out.montoAtras = r2_(out.montoAtras); out.lista.sort((a, b) => a.f < b.f ? -1 : 1);
+  return out;
+}
+
 // El anticipo entra a caja como un abono (sin venta todavía) ligado a la orden o encargo
 function anticipoRegistrar_(u, monto, clienteId, nota, ref, metodo, d) {
   metodo = ['Efectivo','Tarjeta','Transferencia'].indexOf(metodo) >= 0 ? metodo : 'Efectivo';
@@ -1392,8 +1606,8 @@ function anticipoRegistrar_(u, monto, clienteId, nota, ref, metodo, d) {
 // Anticipo pendiente de aplicar de una orden/cita (lo que ya pagó el cliente y aún no se descontó de una venta)
 function anticipoDe_(ref) {
   if (!ref) return 0;
-  const o = rows_('Ordenes').find(x => x.id === ref) || rows_('Agenda').find(x => x.id === ref) || rows_('Pedidos').find(x => x.id === ref);
-  if (!o || o.ventaId) return 0;
+  const o = rows_('Ordenes').find(x => x.id === ref) || rows_('Agenda').find(x => x.id === ref) || rows_('Pedidos').find(x => x.id === ref) || (modOn_('cotizaciones') ? rows_('Cotizaciones').find(x => x.id === ref) : null);
+  if (!o || (o.ventaId && !(o.numero && String(o.numero).indexOf('COT') === 0 && (rows_('Ventas').find(v => v.id === o.ventaId) || { anulada: true }).anulada))) return 0;
   return r2_(rows_('Abonos').filter(a => a.ref === ref && !a.anulado).reduce((t, a) => t + (Number(a.monto) || 0), 0));
 }
 // Al cobrar una venta ligada a una orden, cita o encargo, se cierra solo
@@ -1406,6 +1620,7 @@ function salidoDe_(v) {
 function cerrarLigados_(d, venta) {
   if (d.ordenId) { const o = rows_('Ordenes').find(x => x.id === d.ordenId); if (o && o.estado !== 'entregado') upsert_('Ordenes', { id: o.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
   if (d.agendaId) { const a = rows_('Agenda').find(x => x.id === d.agendaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
+  if (d.cotizacionId && modOn_('cotizaciones')) { const q = rows_('Cotizaciones').find(x => x.id === d.cotizacionId); if (q) { cotCerrarPagos_(q, venta); } }
   if (d.consultaId) { // si la venta anterior de la consulta se anuló, queda ligada a la nueva
     const c = rows_('Consultas').find(x => x.id === d.consultaId);
     if (c && !c.anulada && (!c.ventaId || (rows_('Ventas').find(v => v.id === c.ventaId) || { anulada: true }).anulada)) upsert_('Consultas', { id: c.id, ventaId: venta.id, total: venta.total, actualizado: ahora_() });
@@ -2571,7 +2786,7 @@ function venta_(u, d, interno) {
   let recibido = 0, cambio = 0, saldo = 0;
   const clienteId = d.clienteId && rows_('Clientes').some(c => c.id === d.clienteId) ? d.clienteId : '';
   // Anticipo ya pagado (orden de trabajo, cita o encargo): se descuenta de lo que falta por pagar, no del total de la venta
-  const antTot = anticipoDe_(d.ordenId || d.agendaId || d.pedidoId);
+  const antTot = anticipoDe_(d.ordenId || d.agendaId || d.pedidoId || d.cotizacionId);
   if (antTot > total + 0.004) throw new Error('El anticipo ya pagado (' + money_(antTot, cfg) + ') es mayor que el total (' + money_(total, cfg) + '). Revisa el total: si vas a devolver la diferencia, regístrala como gasto «Devolución de anticipo».');
   const anticipo = r2_(Math.min(antTot, total));
   const porPagar = r2_(total - anticipo);
@@ -2614,7 +2829,7 @@ function venta_(u, d, interno) {
     // se cerró en Contabilidad), queda con la fecha de hoy: una factura no se emite con fecha atrasada.
     id: newId_('Ventas'), numero: ed ? ed.numero : siguiente_('V'), fecha: ed && !factura && !mesCerrado_(ed.fecha) ? ed.fecha : fecha, clienteId: clienteId, usuarioId: ed ? ed.usuarioId : u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
-    recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', anulada: false, nota: txt_(d.nota, 200),
+    recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', cotizacionId: txt_(d.cotizacionId, 24), anulada: false, nota: txt_(d.nota, 200),
     factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo
   };
   // Sección (giro) de cada línea: queda guardada para que los reportes por sección no cambien si después mueves el producto
@@ -3087,6 +3302,7 @@ function avisosDia_() {
   if (modOn_('caducidad')) { const c = caducan_(); a.cadVenc = c.vencidos; a.cadProx = c.n - c.vencidos; }
   if (modOn_('ordenes')) a.ordAtras = rows_('Ordenes').filter(o => ['recibido', 'proceso'].indexOf(o.estado) >= 0 && o.promesa && o.promesa < h).length;
   if (modOn_('mascotas')) a.vacHoy = vetResumen_().hoy;
+  if (modOn_('cotizaciones')) { const c = cotResumen_(); a.cotHoy = c.hoy; a.cotAtras = c.atrasados; }
   return a;
 }
 
@@ -3278,6 +3494,7 @@ function inicio_(u, d) {
     if (modOn_('agenda')) out.agenda = agendaResumen_('cita');
     if (modOn_('encargos')) out.encargos = agendaResumen_('encargo');
     if (modOn_('mascotas') && u.rol !== 'bodega') out.vet = vetResumen_();
+    if (modOn_('cotizaciones') && u.rol !== 'bodega') out.cot = cotResumen_();
   } catch (e) {}
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && deT(v, 'Ventas'));
@@ -3775,7 +3992,7 @@ function datosProyectos_() {
 }
 
 function proyectos_(u, d) {
-  req_(u, ['admin','bodega']);
+  req_(u, modOn_('cotizaciones') ? ['admin','bodega','cajero'] : ['admin','bodega']);
   const cfg = config_(), dt = datosProyectos_();
   const l = desc_(rows_('Proyectos'), 'actualizado').map(p => {
     const c = calcProyecto_(p, dt.G[p.id] || [], dt.P[p.id] || [], cfg);
@@ -3787,7 +4004,7 @@ function proyectos_(u, d) {
 }
 
 function proyecto_(u, d) {
-  req_(u, ['admin','bodega']);
+  req_(u, modOn_('cotizaciones') ? ['admin','bodega','cajero'] : ['admin','bodega']);
   const p = rows_('Proyectos').find(x => x.id === d.id);
   if (!p) throw new Error('El proyecto ya no existe');
   const us = porId_(rows_('Usuarios'));
@@ -3795,6 +4012,7 @@ function proyecto_(u, d) {
   const prods = rows_('ProyectoProductos').filter(x => x.proyectoId === p.id);
   p.r = calcProyecto_(p, gastos, prods, config_());
   p.gastos = desc_(gastos.map(g => { g._k = g.dia + g.creado; g.usuario = us[g.usuarioId] ? us[g.usuarioId].nombre : ''; return g; }), '_k');
+  if (p.cotizacionId && modOn_('cotizaciones')) { const q = rows_('Cotizaciones').find(x => x.id === p.cotizacionId); if (q) { cotLlena_(q); p.cot = { id: q.id, numero: q.numero, total: q.total, cobrado: q.cobrado, saldo: q.saldo, pagos: q.pagos, contratoEl: q.contratoEl, contratoPor: q.contratoPor, actaEl: q.actaEl, actaPor: q.actaPor, telefono: q.telefono, clienteId: q.clienteId }; } }
   return p;
 }
 
