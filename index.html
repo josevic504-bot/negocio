@@ -313,6 +313,25 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .lg-hero:after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;left:-130px;bottom:-210px;background:radial-gradient(closest-side,color-mix(in srgb,var(--a2) 50%,transparent),transparent)}
 .lg-hero>*{position:relative;z-index:1}.lg-hero .mono{width:72px;height:72px}
 .lg-card{position:relative;z-index:2;background:var(--card);border:1px solid var(--line);border-radius:28px;box-shadow:0 18px 44px rgba(0,0,0,.14);padding:22px 20px 16px;margin:-70px auto 16px;width:min(460px,calc(100% - 24px))}
+.in-wrap{overflow:hidden;margin:-4px -20px 0;touch-action:pan-y}
+.in-track{display:flex;transition:transform .35s ease}
+.in-sl{flex:0 0 100%;padding:4px 20px 0;box-sizing:border-box}
+.in-vis{height:170px;border-radius:20px;background:color-mix(in srgb,var(--pri) 8%,var(--card));border:1px solid color-mix(in srgb,var(--pri) 16%,transparent);display:flex;flex-direction:column;justify-content:center;padding:16px;margin-bottom:16px;position:relative;overflow:hidden}
+.in-ico{position:absolute;right:12px;top:12px;width:34px;height:34px;border-radius:12px;display:grid;place-items:center;background:var(--pri);color:#fff}.in-sl:last-child .in-ico{display:none}
+.in-kpi small{color:var(--mut);font-size:12.5px}.in-kpi b{display:block;font-size:28px;font-weight:700;margin:2px 0}.in-kpi span{color:#16a34a;font-size:12.5px;font-weight:600}.in-kpi svg{width:100%;height:34px;margin-top:8px}
+.in-rows{padding-right:34px}.in-rows>div{display:flex;justify-content:space-between;font-size:13.5px;padding:5px 0;border-bottom:1px dashed var(--line)}.in-rows .tot{border:0;font-size:15px}.in-rows .tot b{color:var(--pri)}
+.in-pay{display:flex;gap:6px;border:0!important;padding-top:8px!important}.in-pay i{font-style:normal;font-size:11.5px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px 8px}
+.in-shop{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.in-prod{background:var(--card);border-radius:14px;padding:8px;text-align:center;border:1px solid var(--line)}.in-prod i{font-style:normal;font-size:26px;display:block}.in-prod b{font-size:12px;display:block}.in-prod small{color:var(--pri);font-weight:700;font-size:12px}
+.in-wa{grid-column:1/-1;background:#25d366;color:#fff;border-radius:12px;padding:7px 10px;font-size:12.5px;font-weight:600;display:flex;gap:6px;align-items:center}
+.in-bars{display:flex;align-items:flex-end;gap:8px;height:90px}.in-bars i{flex:1;background:var(--pri);border-radius:8px 8px 3px 3px}
+.in-chips{display:flex;gap:6px;margin-top:12px;flex-wrap:wrap}.in-chips span{font-size:11.5px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:4px 9px;color:var(--mut)}
+.in-giros{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}.in-giros span{font-size:12.5px;background:var(--card);border:1px solid var(--line);border-radius:99px;padding:5px 10px}
+.in-sl h3{font:600 23px/1.15 var(--serif);margin:0 0 6px}.in-sl p{color:var(--mut);font-size:14.5px;line-height:1.5;margin:0;min-height:88px}
+.in-plus{display:inline-block;vertical-align:middle;font:700 11px Inter,system-ui,sans-serif;letter-spacing:.08em;color:#7a5a00;background:linear-gradient(135deg,#f5d77a,#e4b53a);border-radius:99px;padding:3px 8px;margin-left:4px}
+.in-dots{display:flex;gap:6px;justify-content:center;margin:14px 0}.in-dots i{width:8px;height:8px;border-radius:99px;background:var(--line);transition:width .25s}.in-dots i.on{width:22px;background:var(--pri)}
+.in-nav{display:flex;gap:8px}.in-nav .btn{flex:1}
+.in-mini{display:flex;gap:6px;flex-wrap:wrap;margin:-6px 0 14px}.in-mini span{font-size:11.5px;color:var(--pri);background:color-mix(in srgb,var(--pri) 9%,transparent);border-radius:99px;padding:4px 9px;font-weight:600}
+.in-link{display:flex;gap:6px;align-items:center;justify-content:center;font-size:13.5px;color:var(--pri);font-weight:600;margin:10px 0 4px;background:none;border:0;width:100%;cursor:pointer}.in-link svg{flex:none}
 .lg-t{font:600 26px var(--serif);margin:0 0 4px}.lg-p{color:var(--mut);margin:0 0 16px;font-size:14.5px;line-height:1.5}.lg-p.sm{font-size:13px;text-align:center;margin:10px 0}
 .lg-err{color:var(--bad);font-size:13.5px;min-height:20px;margin-top:8px;text-align:center}
 .lg-card .btn.ghost.big{font-size:14.5px;padding:10px;margin-top:4px}
@@ -1379,7 +1398,7 @@ function demoCompilar(src, DEMO) {
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
 const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
-const APP_VER = '1.9.21';
+const APP_VER = '1.9.22';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -2069,6 +2088,8 @@ function pintarLogin() {
   if (!S.lmodo) S.lmodo = LS.get('cuenta', '') || DEMO.on ? 'ing' : 'reg';
   if (DEMO.on && !LS.get('cuenta', '') && !S.lmodoElegido) S.lmodo = 'demo';
   if (!S.multi && S.lmodo === 'reg') S.lmodo = 'ing';
+  if (S.lmodo === 'reg' && !S.introVista && !LS.get('introVisto', '')) { S.lmodo = 'intro'; S.introN = 0; }
+  if (S.lmodo === 'intro') return pintarIntro();
   const reg = S.lmodo === 'reg', demo = S.lmodo === 'demo';
   const nombre = LS.get(mk('nombre'), ''), logo = LS.get(mk('logo'), ''), eslogan = LS.get(mk('eslogan'), '');
   const marca = !reg && !demo && nombre;
@@ -2081,14 +2102,14 @@ function pintarLogin() {
     ${demo ? `<h3 class="lg-t">Conoce el sistema</h3><p class="lg-p">Entra a un <b>negocio de ejemplo</b> con productos, ventas, clientes, pedidos en línea y reportes. Todo queda solo en este navegador.</p>
       <button class="btn pri big" data-a="demoEjemplo">${ic('sparkle')} Entrar al negocio de ejemplo</button>
       <button class="btn big" data-a="lmodo" data-m="reg" style="margin-top:8px">Registrar un negocio propio de prueba</button>`
-    : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo: ventas, inventario, clientes, compras, gastos, caja y reportes.</p>
+    : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo. Sin tarjeta.</p><div class="in-mini"><span>Ventas</span><span>Inventario</span><span>Clientes</span><span>Caja</span><span>Tienda en línea</span><span>Reportes</span></div>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
         <label class="fld"><span>Tipo de negocio</span><select id="r-giro">${giros.map(g => `<option value="${g.id}">${GIRO_EMO[g.id] || '📦'} ${esc(g.n)}${['compras', 'recargas', 'veterinaria'].includes(g.id) ? ' · Nuevo' : ''}</option>`).join('')}</select></label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
-        <button class="btn pri big" type="submit" id="r-btn">Comenzar prueba gratis</button><div class="lg-err" id="r-err"></div></form>`
+        <button class="btn pri big" type="submit" id="r-btn">Comenzar prueba gratis</button><div class="lg-err" id="r-err"></div><button type="button" class="in-link" data-a="introVer">${ic('help', 15)} Ver introducción del programa</button></form>`
     : `<h3 class="lg-t">${nombre ? 'Hola de nuevo' : 'Ingresar'}</h3>
       <form id="f-log" autocomplete="on">
         ${multi ? `<label class="fld"><span>Tu WhatsApp</span><input id="l-user" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
@@ -2108,6 +2129,37 @@ function pintarLogin() {
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
   ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
+
+/* Introducción al programa (antes del registro) */
+const INTRO = [
+  { i: 'store', t: 'Tu negocio completo en el celular', p: 'Ventas, inventario, clientes, compras, gastos y caja en un solo lugar. Funciona en cualquier teléfono o computadora, sin instalar nada.',
+    v: () => `<div class="in-kpi"><small>Ventas de hoy</small><b>L 4,860.00</b><span>11 ventas · ganancia L 2,140</span><svg viewBox="0 0 120 30" preserveAspectRatio="none"><polyline points="0,26 20,18 40,22 60,10 80,14 100,6 120,8" fill="none" stroke="var(--pri)" stroke-width="2.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg></div>` },
+  { i: 'cart', t: 'Vende y cobra en segundos', p: 'Busca o escanea el producto, cobra en efectivo, transferencia, tarjeta o al crédito y manda el comprobante por WhatsApp.',
+    v: () => `<div class="in-rows"><div><span>🥤 Refresco 2 L ×2</span><b>L 110.00</b></div><div><span>🍚 Arroz 1 lb ×3</span><b>L 54.00</b></div><div class="tot"><span>Total</span><b>L 164.00</b></div><div class="in-pay"><i>💵 Efectivo</i><i>🏦 Transferencia</i><i>📝 Crédito</i></div></div>` },
+  { i: 'globe', t: 'Tu tienda en línea', plus: 1, p: 'Comparte tu enlace: tus clientes ven el catálogo con fotos y precios, arman su pedido y te llega a la app y a WhatsApp. Viene en tu prueba; después sigue con la licencia Plus.',
+    v: () => `<div class="in-shop"><div class="in-prod"><i>👕</i><b>Camiseta</b><small>L 250</small></div><div class="in-prod"><i>🧴</i><b>Perfume</b><small>L 480</small></div><div class="in-prod"><i>🎧</i><b>Audífonos</b><small>L 650</small></div><div class="in-wa">${ic('wa', 16)} Nuevo pedido · Ana López · L 730</div></div>` },
+  { i: 'chart', t: 'Sabes cuánto ganas', p: 'Cierre de caja, cuentas por cobrar y por pagar, productos por agotarse y reportes del mes. Cada noche te cuenta cómo te fue.',
+    v: () => `<div class="in-bars">${[38, 52, 44, 66, 58, 80, 72].map((h, k) => `<i style="height:${h}%;opacity:${k === 5 ? 1 : .45}"></i>`).join('')}</div><div class="in-chips"><span>Ganancia del mes <b>L 41,380</b></span><span>Por cobrar <b>L 5,780</b></span></div>` },
+  { i: 'sparkle', t: 'Hecho para tu tipo de negocio', p: 'Elige tu giro y la app se adapta: trae productos de ejemplo y las herramientas que tu negocio necesita.',
+    v: () => `<div class="in-giros">${['🏪 Pulpería', '🍽️ Restaurante', '💊 Farmacia', '🔨 Ferretería', '👗 Boutique', '💄 Belleza', '🔧 Taller', '🥐 Panadería', '🐾 Veterinaria', '✂️ Servicios', '📺 Streaming', '📱 Celulares'].map(x => `<span>${x}</span>`).join('')}</div>` }
+];
+function pintarIntro() {
+  const n = S.introN || 0, last = n === INTRO.length - 1;
+  $('#login').innerHTML = `<div class="lg-hero"><div class="mono">${ic('store', 30)}</div><div class="hero-name">Gestión de Negocio VM</div><div class="hero-tag">Conoce el programa</div></div>
+    <div class="lg-card"><div class="in-wrap"><div class="in-track" style="transform:translateX(-${n * 100}%)">${INTRO.map(s => `<div class="in-sl"><div class="in-vis"><div class="in-ico">${ic(s.i, 18)}</div>${s.v()}</div><h3>${s.t}${s.plus ? ' <span class="in-plus">PLUS</span>' : ''}</h3><p>${s.p}</p></div>`).join('')}</div></div>
+    <div class="in-dots">${INTRO.map((_, k) => `<i class="${k === n ? 'on' : ''}"></i>`).join('')}</div>
+    <div class="in-nav">${last ? `<button class="btn pri big" data-a="introFin">${ic('sparkle')} Crear mi cuenta gratis</button>` : `<button class="btn ghost big" data-a="introFin">Saltar</button><button class="btn pri big" data-a="introSig">Siguiente ${ic('right', 18)}</button>`}</div>
+    ${last ? `<p class="lg-p sm">${DIAS_PRUEBA_REG} días gratis · sin tarjeta · sin compromiso</p>` : ''}
+    <button class="btn ghost big" data-a="lmodo" data-m="ing" style="margin-top:6px">Ya tengo cuenta · Ingresar</button></div>${creditoHTML()}`;
+  const w = $('#login .in-wrap'); let x0 = null;
+  w.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
+  w.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
+    if (Math.abs(dx) < 40) return; const k = Math.max(0, Math.min(INTRO.length - 1, n + (dx < 0 ? 1 : -1))); if (k !== n) { S.introN = k; pintarIntro(); } });
+  aplicarTema(LS.get('tema', TEMA_DEF));
+}
+ACC.introSig = () => { S.introN = Math.min(INTRO.length - 1, (S.introN || 0) + 1); pintarIntro(); };
+ACC.introFin = () => { S.introVista = 1; LS.set('introVisto', '1'); S.lmodo = 'reg'; S.lmodoElegido = 1; pintarLogin(); window.scrollTo(0, 0); };
+ACC.introVer = () => { S.lmodo = 'intro'; S.introN = 0; pintarLogin(); window.scrollTo(0, 0); };
 async function ingresar(ev) {
   ev.preventDefault();
   $('#l-err').textContent = '';
