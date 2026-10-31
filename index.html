@@ -1459,7 +1459,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.27';
+const APP_VER = '1.9.28';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -7997,6 +7997,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.28', fecha: '2026-10-31', items: [
+    { i: 'tag', t: 'Categoría al crear un producto', d: 'Al crear o editar un producto eliges su categoría con un toque, o tocas «+ Nueva» para escribir otra. Así tu tienda en línea y tus reportes quedan ordenados.' }
+  ] },
   { v: '1.9.27', fecha: '2026-10-31', items: [
     { i: 'sparkle', t: 'Nuevo tipo de negocio: Catálogo de maquillaje, ropa y lociones', d: 'Para quien vende por catálogo al detalle y por mayor. Tu tienda en línea abre con secciones grandes (Rostro, Ojos, Labios, Lociones, Ropa…) como las páginas de un catálogo, y cada producto trae subcategoría, frase destacada y beneficios.' },
     { i: 'palette', t: 'Tonos por color', d: 'Tus clientes eligen el tono o el color de la ropa tocando su círculo, y la talla con un toque. El pedido te llega con el tono, color y talla exactos.' },
