@@ -94,6 +94,7 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .srch{position:relative}.srch .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mut)}.srch input{padding-left:40px}
 /* ===== Chips / pestañas ===== */
 .chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 4px;scrollbar-width:none}.chips::-webkit-scrollbar{display:none}
+.pick-l{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 8px}.pick-l .chip{margin:0}.pick-n{border-style:dashed}.pick input{width:100%}
 .chip{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 14px;border-radius:99px;font:500 13.5px var(--font);cursor:pointer;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
 .chip.on{background:var(--pri);border-color:var(--pri);color:var(--onpri)}
 .chip .c{background:var(--pri2);color:var(--pri);border-radius:9px;padding:0 6px;font-size:11.5px;font-weight:600}
@@ -4332,6 +4333,21 @@ ACC.qrTienda = async () => {
 const EMOJIS = ['📦','🛍️','👕','👗','👖','👟','👜','🧢','💄','💅','🧴','🌸','🍚','🫘','🥤','💧','🥛','☕','🍞','🥐','🍰','🍪','🍗','🌮','🍛','🍕','🍔','🥗','🍎','🧃','💊','🩹','👶','🔨','🪛','🔧','💡','🔌','🔋','🎨','🧱','📱','🎧','🔊','💻','📓','✏️','🎒','🧸','🎁','🏠','🛎️','⭐','🧰','🛞','🛢️','🐶','🌿'];
 const UNIDADES = ['unidad', 'par', 'docena', 'caja', 'paquete', 'bolsa', 'libra', 'kilo', 'onza', 'litro', 'galón', 'metro', 'yarda', 'servicio', 'hora', 'plato'];
 const catsUsadas = () => [...new Set(S.productos.filter(enTiendaP).map(p => p.categoria).filter(Boolean))].sort(); // en una tienda, sus categorías
+// Elegir de la lista o escribir una nueva (categoría, subcategoría)
+function elegirHTML(id, valor, lista, ph) {
+  const l = [...new Set(lista.filter(Boolean))], nueva = !!valor && !l.includes(valor);
+  return `<div class="pick"><div class="pick-l">${l.map(c => `<button type="button" class="chip ${c === valor ? 'on' : ''}" data-pv="${esc(c)}">${esc(c)}</button>`).join('')}<button type="button" class="chip pick-n ${nueva || !l.length ? 'on' : ''}" data-pv="" data-nueva="1">${ic('plus', 14)} Nueva</button></div>
+    <input id="${id}" maxlength="40" value="${esc(valor || '')}" placeholder="${esc(ph)}" ${nueva || !l.length ? '' : 'hidden'}></div>`;
+}
+document.addEventListener('click', e => {
+  const b = e.target.closest('.pick [data-pv]'); if (!b) return;
+  const pk = b.closest('.pick'), inp = $('input', pk);
+  $$('[data-pv]', pk).forEach(x => x.classList.toggle('on', x === b));
+  if (b.dataset.nueva) { inp.hidden = false; if (inp.value && $$('[data-pv]', pk).some(x => x.dataset.pv === inp.value)) inp.value = ''; inp.focus(); }
+  else { inp.value = b.dataset.pv; inp.hidden = true; }
+  inp.dispatchEvent(new Event('input', { bubbles: true }));
+});
+const subsDe = cat => cat ? [...new Set(S.productos.filter(x => x.sub && x.categoria === cat).map(x => x.sub))].sort() : [];
 const catsSugeridas = () => { const cats = []; girosOn().forEach(id => { const g = S.giros.find(x => x.id === id); if (g) cats.push(...g.cats); }); return [...new Set(catsUsadas().concat(cats))]; };
 // Varios giros en la misma tienda (los activa Vic desde el Panel): el principal primero
 const girosOn = () => (S.girosActivos && S.girosActivos.length ? S.girosActivos : [S.config.giro || 'otro']);
@@ -4430,8 +4446,9 @@ function formProducto(p, onSave, pre) {
         : `<div class="row"><span class="badge b-mut">${ic('lock', 13)} Fotos con Plus</span><button class="btn sm ghost" data-a="plusInfo">Ver Plus</button></div>`}
       <div class="emojis" id="pf-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${st.icono === e ? 'on' : ''}">${e}</button>`).join('')}<input id="pf-emo-in" maxlength="4" placeholder="Otro" value="${EMOJIS.includes(st.icono) ? '' : esc(st.icono)}"></div></div></div>
     <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. Camiseta básica"></label>
-    <div class="f2"><label class="fld"><span>Código de barras</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div></label>
-      <label class="fld"><span>Categoría</span><input id="pf-cat" list="dl-cat" maxlength="40" value="${esc(p.categoria || '')}" placeholder="General"><datalist id="dl-cat">${catsSugeridas().map(c => `<option value="${esc(c)}">`).join('')}</datalist></label></div>
+    <div class="fld"><span>Categoría *</span>${elegirHTML('pf-cat', p.categoria || '', catsSugeridas(), 'Escribe la categoría nueva')}</div>
+    ${modOn('catalogo') ? `<div class="fld"><span>Subcategoría</span><div id="pf-subw">${elegirHTML('pf-sub', p.sub || '', subsDe(p.categoria), 'Ej. Dama, Base, Gloss')}</div></div>` : ''}
+    <label class="fld"><span>Código de barras</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div></label>
     ${girosOn().length > 1 ? `<span class="op-l" style="margin-top:4px">Sección de la tienda</span><div class="chips" id="pf-giro" style="flex-wrap:wrap;margin-bottom:10px">${girosOn().map(id => `<button type="button" class="chip ${(p.id ? giroDeP(p) : S.tienda || giroDeP(p)) === id ? 'on' : ''}" data-g="${id}">${giroImg(id)} ${esc(giroN(id).replace(/ \(.*\)$/, ''))}</button>`).join('')}</div>` : ''}
     ${susOn() ? susFormProducto(p) : ''}
     ${opcArriba() ? opcForm(p) : ''}
@@ -4451,8 +4468,7 @@ function formProducto(p, onSave, pre) {
       <div class="f2"><label class="fld"><span>Precio especial</span><input id="pf-pe" inputmode="decimal" value="${p.precioEsp ? p.precioEsp : ''}" placeholder="Ej. 200"></label>
       <label class="fld"><span>Desde cuántas piezas</span><input id="pf-me" inputmode="numeric" value="${p.minEsp ? p.minEsp : ''}" placeholder="3"></label></div>
       <small class="hint">Detalle al precio normal y especial cuando llevan esa cantidad o más (sumando todos los tonos, tallas y colores). Se aplica solo en la tienda y en Vender.</small>
-      <div class="f2"><label class="fld"><span>Subcategoría</span><input id="pf-sub" list="dl-sub" maxlength="40" value="${esc(p.sub || '')}" placeholder="Ej. Corrección, Base, Gloss"><datalist id="dl-sub">${[...new Set(S.productos.map(x => x.sub).filter(Boolean))].sort().map(x => `<option value="${esc(x)}">`).join('')}</datalist></label>
-      <label class="fld"><span>Frase destacada</span><input id="pf-lema" maxlength="90" value="${esc(p.lema || '')}" placeholder="Ej. Hidratación que revela tu brillo."></label></div>
+      <label class="fld"><span>Frase destacada</span><input id="pf-lema" maxlength="90" value="${esc(p.lema || '')}" placeholder="Ej. Hidratación que revela tu brillo."></label>
       <label class="fld"><span>Beneficios (uno por línea)</span><textarea id="pf-pun" rows="3" maxlength="500" placeholder="Textura ligera&#10;Larga duración&#10;Para todo tipo de piel">${esc(String(p.puntos || '').split('|').join('\n'))}</textarea></label></div>` : ''}
     <label class="sw-row"><input type="checkbox" id="pf-ctrl" ${p.tipo === 'producto' ? 'checked' : ''}><span class="sw"></span><div><b>Controlar existencias</b><small>Apágalo para servicios o platos que no llevan inventario</small></div></label>
     <div id="pf-stk" class="f2">${nuevo ? `<label class="fld"><span>Existencia inicial</span><input id="pf-stock" inputmode="decimal" placeholder="0"></label>` : `<div class="fld"><span>Existencias</span><div class="stk-now"><b>${cant(p.stock)}</b><button class="btn sm" type="button" data-a="pfAjuste">Ajustar</button><button class="btn sm ghost" type="button" data-a="pfKardex">Movimientos</button></div></div>`}
@@ -4473,6 +4489,8 @@ function formProducto(p, onSave, pre) {
   $('#pf-emo', h.el).addEventListener('click', e => { const b = e.target.closest('[data-e]'); if (!b) return; st.icono = st.icono === b.dataset.e ? '' : b.dataset.e; $$('#pf-emo [data-e]', h.el).forEach(x => x.classList.toggle('on', x.dataset.e === st.icono)); $('#pf-emo-in', h.el).value = ''; img(); });
   $('#pf-emo-in', h.el).addEventListener('input', e => { st.icono = e.target.value.trim(); $$('#pf-emo [data-e]', h.el).forEach(x => x.classList.remove('on')); img(); });
   $('#pf-nom', h.el).addEventListener('input', img);
+  // Al cambiar la categoría: color del dibujo y subcategorías de esa categoría
+  $('#pf-cat', h.el).addEventListener('input', () => { img(); const w = $('#pf-subw', h.el); if (w) { const l = subsDe($('#pf-cat', h.el).value.trim()), v0 = $('#pf-sub', h.el).value; w.innerHTML = elegirHTML('pf-sub', l.includes(v0) ? v0 : '', l, 'Ej. Dama, Base, Gloss'); } });
   const pg = $('#pf-giro', h.el); if (pg) pg.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; $$('.chip', pg).forEach(c => c.classList.toggle('on', c === b)); });
   const file = $('#pf-file', h.el);
   if (file) file.addEventListener('change', async () => { if (!file.files[0]) return; try { st.fotoNueva = await comprimirImagen(file.files[0], DEMO.on ? 360 : 800); img(); } catch (e) { err(e); } });
@@ -4512,6 +4530,7 @@ function formProducto(p, onSave, pre) {
   bs.push({ t: nuevo ? 'Guardar producto' : 'Guardar cambios', cls: 'pri', fn: async () => {
     const nombre = $('#pf-nom', h.el).value.trim();
     if (!nombre) throw new Error('Escribe el nombre del producto');
+    if (!$('#pf-cat', h.el).value.trim()) { const n = $('#pf-cat', h.el); n.hidden = false; n.focus(); throw new Error('Elige la categoría o escribe una nueva'); }
     if (!(num(precio.value) > 0)) throw new Error('Escribe el precio de venta');
     const reg = { id: p.id, nombre, codigo: $('#pf-cod', h.el).value.trim(), categoria: $('#pf-cat', h.el).value.trim() || 'General', precio: r2(precio.value),
       costo: Math.round(num(costo.value) * 10000) / 10000, margen: pct.value ? r2(pct.value) : (p.margen || 0), tasaIsv: isvSel.value, unidad: $('#pf-uni', h.el).value, icono: st.icono,
