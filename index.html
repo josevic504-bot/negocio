@@ -1399,7 +1399,8 @@ function demoCompilar(src, DEMO) {
    ----------------------------------------------------------
    CONFIGURACIÓN: pega aquí la URL /exec de tu App web de Apps Script
    ========================================================== */
-const API_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
+// Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
+const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
 const APP_VER = '1.9.23';
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
@@ -1413,10 +1414,10 @@ const LS = {
   json(k, d) { try { const v = localStorage.getItem(LS_NS + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 };
 const modoSes = () => { try { return sessionStorage.getItem(LS_NS + 'modoSes') || ''; } catch (e) { return ''; } }; // demo solo en esta pestaña
-// Servidor nuevo (Supabase) en prueba: …/?servidor=nuevo lo activa solo en este teléfono; …/?servidor=google regresa al de Google
+// Ya todos usan Supabase: se limpia la marca del enlace de prueba (…/?servidor=nuevo) que quedó en el teléfono de Vic
 const API_SUPABASE = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-(() => { try { const s = new URLSearchParams(location.search).get('servidor'); if (s === 'nuevo') LS.set('api', API_SUPABASE); else if (s === 'google') LS.del('api'); if (s) history.replaceState(null, '', location.pathname); } catch (e) {} })();
-const enSupabase = () => LS.get('api', '') === API_SUPABASE;
+(() => { try { if (LS.get('api', '') === API_SUPABASE) { LS.del('api'); ['token_sb', 'cache_sb', 'ticket_sb'].forEach(k => LS.del(k)); } if (new URLSearchParams(location.search).has('servidor')) history.replaceState(null, '', location.pathname); } catch (e) {} })();
+const enSupabase = () => false;
 const DEMO = { src: null, on: (modoSes() || LS.get('modo', (API_URL_DEFAULT || LS.get('api', '')) ? 'real' : 'demo')) === 'demo', route: null, db: null, cache: null, B: null };
 const mk = k => DEMO.on ? k + '_demo' : enSupabase() ? k + '_sb' : k; // marca y ticket separados entre el modo prueba, el servidor nuevo y el programa real
 const tokenKey = () => DEMO.on ? 'token_demo' : enSupabase() ? 'token_sb' : 'token';

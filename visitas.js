@@ -2,12 +2,12 @@
  * Se usa en todas las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Uso en otra página:
  *   <script>(window.mvq = window.mvq || []).push('catalogo')</script>
  *   <script src="https://josevic504-bot.github.io/negocio/visitas.js?v=1" defer></script>
- * Manda al Apps Script de Negocio VM la página, de dónde vino (?src=tiktok, ?src=wa, …) y si es celular o PC.
+ * Manda al servidor de Negocio VM (Supabase) la página, de dónde vino (?src=tiktok, ?src=wa, …) y si es celular o PC.
  * No guarda nombres, teléfonos ni nada personal: solo un número al azar del navegador para contar personas distintas.
  * No cuenta: el navegador de Vic (marcado al abrir el Panel Molina) ni a quien ya usa un programa (marcado al iniciar sesión).
  * El mismo navegador cuenta una sola vez cada 30 minutos por página. */
 (function () {
-  var API = 'https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec';
+  var API = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
   var L = {}, ss = {};
   try { L = window.localStorage; ss = window.sessionStorage; } catch (e) {}
   var get = function (s, k) { try { return s.getItem(k) || ''; } catch (e) { return ''; } };
