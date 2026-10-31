@@ -255,6 +255,8 @@ body.noscroll{overflow:hidden}
 .toast.error{background:linear-gradient(120deg,#b3122d,#e0243e)}
 .demo-tag{border:0;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font:700 10.5px var(--font);letter-spacing:.08em;padding:5px 10px;border-radius:99px;cursor:pointer;white-space:nowrap}
 .bar .demo-tag{margin-right:2px}
+.sb-tag{background:linear-gradient(135deg,#0e9f6e,#0b7a55)}
+.sb-login{display:inline-flex;align-items:center;gap:6px;margin:10px auto 0;padding:6px 12px;border-radius:99px;background:rgba(14,159,110,.12);color:#0b7a55;font:700 12px var(--font);border:0;cursor:pointer}
 @media(max-width:480px){.bar .demo-tag{display:none}}
 .hg .banner{width:100%;margin:-4px 0 14px}
 .hero-top .demo-tag{position:absolute;left:50%;transform:translateX(-50%)}
@@ -1411,10 +1413,14 @@ const LS = {
   json(k, d) { try { const v = localStorage.getItem(LS_NS + k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } }
 };
 const modoSes = () => { try { return sessionStorage.getItem(LS_NS + 'modoSes') || ''; } catch (e) { return ''; } }; // demo solo en esta pestaña
+// Servidor nuevo (Supabase) en prueba: …/?servidor=nuevo lo activa solo en este teléfono; …/?servidor=google regresa al de Google
+const API_SUPABASE = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
+(() => { try { const s = new URLSearchParams(location.search).get('servidor'); if (s === 'nuevo') LS.set('api', API_SUPABASE); else if (s === 'google') LS.del('api'); if (s) history.replaceState(null, '', location.pathname); } catch (e) {} })();
+const enSupabase = () => LS.get('api', '') === API_SUPABASE;
 const DEMO = { src: null, on: (modoSes() || LS.get('modo', (API_URL_DEFAULT || LS.get('api', '')) ? 'real' : 'demo')) === 'demo', route: null, db: null, cache: null, B: null };
-const mk = k => DEMO.on ? k + '_demo' : k; // marca y ticket separados entre el modo prueba y el programa real
-const tokenKey = () => DEMO.on ? 'token_demo' : 'token';
-const cacheKey = () => 'cache_' + (DEMO.on ? 'demo' : 'real');
+const mk = k => DEMO.on ? k + '_demo' : enSupabase() ? k + '_sb' : k; // marca y ticket separados entre el modo prueba, el servidor nuevo y el programa real
+const tokenKey = () => DEMO.on ? 'token_demo' : enSupabase() ? 'token_sb' : 'token';
+const cacheKey = () => 'cache_' + (DEMO.on ? 'demo' : enSupabase() ? 'sb' : 'real');
 
 const S = {
   token: LS.get(tokenKey(), ''), user: null, config: {}, usuarios: [], productos: [], clientes: [], proveedores: [], gastoCats: [], giros: [],
@@ -1805,7 +1811,7 @@ function monograma() {
 function giroNombre() { const g = S.giros.find(x => x.id === S.config.giro); return g ? g.n : ''; }
 function pintarHeader() {
   const v = VISTAS[S.vista];
-  const demo = DEMO.on ? `<button class="demo-tag" data-a="menuDemo">MODO PRUEBA</button>` : '';
+  const demo = DEMO.on ? `<button class="demo-tag" data-a="menuDemo">MODO PRUEBA</button>` : enSupabase() ? `<button class="demo-tag sb-tag" data-a="menuServidor">⚡ NUEVO</button>` : '';
   const bell = puede('admin', 'cajero') ? `<button class="hbtn" data-a="ir" data-v="pedidos" aria-label="Pedidos">${ic('bell', 20)}${S.pedidosNuevos ? `<span class="dot">${S.pedidosNuevos}</span>` : ''}</button>` : '';
   if (S.vista === 'inicio') {
     $('#hdr').innerHTML = `<div class="hero"><div class="hero-top"><button class="hbtn" data-a="mas" aria-label="Menú">${ic('grid', 20)}</button>${demo}<div class="grp">${bell}<button class="hbtn" data-a="ayuda" aria-label="Ayuda">${ic('help', 20)}${S.soporteNuevos ? `<span class="dot">${S.soporteNuevos}</span>` : ''}</button><button class="hbtn" data-a="ir" data-v="ajustes" aria-label="Ajustes">${ic('gear', 20)}</button></div></div>
@@ -2120,7 +2126,7 @@ function pintarLogin() {
     ${multi && !demo ? `<button class="btn ghost big" data-a="lmodo" data-m="${reg ? 'ing' : 'reg'}">${reg ? 'Ya tengo cuenta · Ingresar' : `Soy nuevo · Probar ${DIAS_PRUEBA_REG} días gratis`}</button>` : ''}
     ${demo ? `<button class="btn ghost big" data-a="lmodo" data-m="ing">Ya registré un negocio de prueba · Ingresar</button>` : ''}
     ${marca ? `<p class="lg-sig">${ic('store', 14)} Gestión de Negocio VM</p>` : ''}
-    <div class="row" style="justify-content:center;margin-top:6px">${!API_URL_DEFAULT || DEMO.on ? `<button class="btn ghost sm" data-a="alternarDemo">${DEMO.on ? 'Salir del modo prueba' : 'Probar en modo prueba'}</button>` : ''}${!API_URL_DEFAULT && !DEMO.on ? `<button class="btn ghost sm" data-a="configServidor">Configurar servidor</button>` : ''}${DEMO.on && !demo ? `<button class="btn ghost sm" data-a="lmodo" data-m="demo">Negocio de ejemplo</button>` : ''}</div>
+    <div class="row" style="justify-content:center;margin-top:6px">${!API_URL_DEFAULT || DEMO.on ? `<button class="btn ghost sm" data-a="alternarDemo">${DEMO.on ? 'Salir del modo prueba' : 'Probar en modo prueba'}</button>` : ''}${!API_URL_DEFAULT && !DEMO.on ? `<button class="btn ghost sm" data-a="configServidor">Configurar servidor</button>` : ''}${DEMO.on && !demo ? `<button class="btn ghost sm" data-a="lmodo" data-m="demo">Negocio de ejemplo</button>` : ''}</div>${enSupabase() && !DEMO.on ? `<div style="text-align:center"><button class="sb-login" data-a="menuServidor">⚡ Conectado al servidor nuevo (prueba)</button></div>` : ''}
     </div>${creditoHTML()}`;
   const fr = $('#f-reg'); if (fr) fr.onsubmit = registrarse;
   const fl = $('#f-log'); if (fl) fl.onsubmit = ingresar;
@@ -2340,6 +2346,13 @@ ACC.menuDemo = () => {
       h.cerrar(); salir(true); S.lmodo = 'demo'; pintarLogin(); toast('Datos de prueba reiniciados', 'ok');
     } },
     { t: 'Cambiar de usuario', fn: () => { h.cerrar(); salir(); S.lmodo = 'ing'; pintarLogin(); } }
+  ]);
+};
+ACC.menuServidor = () => {
+  const h = hoja({ titulo: 'Servidor nuevo (prueba)', cls: 'chica', html: `<p class="conf">Este teléfono está usando el <b>servidor nuevo</b> (Supabase), que es más rápido. Tus clientes siguen en el servidor de Google.</p>
+    <p class="sm mut">Los datos de aquí son de prueba y están separados de los de Google.</p>` });
+  h.botones([
+    { t: 'Volver al servidor de Google', fn: () => { h.cerrar(); LS.del('api'); location.replace(location.pathname); } }
   ]);
 };
 ACC.configServidor = () => {
