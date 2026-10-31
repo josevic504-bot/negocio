@@ -14,7 +14,7 @@ const tok = (await api('registrar', { negocio: 'Norey Beauty & More', nombre: 'N
 await api('cargarEjemplos', {}, tok);
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }] });
-await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tema: 'rosa', eslogan: 'Maquillaje al detalle y por mayor', telefono: '9999-0000', tiendaSecciones: JSON.stringify({ Rostro: { c: '#e8758f' }, Ojos: { c: '#9a83d8' }, Labios: { c: '#f0806a' }, Cejas: { c: '#c98b5e' } }) } }, tok);
+await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tema: 'rosa', eslogan: 'Maquillaje al detalle y por mayor', telefono: '9999-0000', tiendaSecciones: JSON.stringify({ Rostro: { c: '#e8758f' }, Ojos: { c: '#9a83d8' }, Labios: { c: '#f0806a' }, Cejas: { c: '#c98b5e' }, Lociones: { c: '#3fa7b5' }, Ropa: { c: '#d45d9b' } }) } }, tok);
 const br = await chromium.launch();
 async function pagina(init, arg) {
   const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
@@ -40,6 +40,19 @@ await pg.screenshot({ path: OUT + '/c3-ficha.png' });
 await pg.locator('.sheet-f .acc').click(); await pg.waitForTimeout(800);
 await pg.evaluate(() => tCarrito()); await pg.waitForTimeout(700);
 await pg.screenshot({ path: OUT + '/c4-pedido.png' });
+// Ropa y lociones
+pg = await pagina(); await pg.goto('http://localhost:8768/?tienda=' + neg); await pg.waitForTimeout(2500);
+await pg.locator('[data-sec="Lociones"]').scrollIntoViewIfNeeded(); await pg.waitForTimeout(300);
+await pg.screenshot({ path: OUT + '/r0-secciones.png' });
+await pg.locator('[data-sec="Ropa"]').click(); await pg.waitForTimeout(900);
+await pg.screenshot({ path: OUT + '/r1-ropa.png' });
+await pg.locator('.sp-card', { hasText: 'Blusa' }).click(); await pg.waitForTimeout(700);
+await pg.locator('.tono', { hasText: 'Rosa' }).click(); await pg.locator('.sheet .chip', { hasText: /^M$/ }).click(); await pg.waitForTimeout(400);
+await pg.screenshot({ path: OUT + '/r2-blusa.png' });
+await pg.keyboard.press('Escape'); await pg.waitForTimeout(300);
+await pg.evaluate(() => { T.cat = 'Lociones'; T.sub = ''; pintarTienda(); }); await pg.waitForTimeout(700);
+await pg.locator('#t-cat').scrollIntoViewIfNeeded(); await pg.waitForTimeout(300);
+await pg.screenshot({ path: OUT + '/r3-lociones.png' });
 // Formulario del producto en la app
 pg = await pagina(t => { localStorage.setItem('gnvm@/|token', t); localStorage.setItem('gnvm@/|verVisto', '9.9.9'); }, tok);
 await pg.goto('http://localhost:8768/'); await pg.waitForTimeout(3000);
