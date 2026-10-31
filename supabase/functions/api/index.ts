@@ -4,6 +4,8 @@
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 import * as motorLocal from './servidor.js';
+import { htmlAPdf } from './pdf.js';
+import { jsPDF } from 'npm:jspdf@2.5.1';
 
 const URL_SB = Deno.env.get('SUPABASE_URL')!;
 const CLAVE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -36,7 +38,7 @@ const db = {
     if (e.subir) {
       const r = await fetch(`${URL_SB}/storage/v1/object/${BUCKET}/${e.subir.ruta}`, {
         method: 'POST', headers: { apikey: CLAVE, Authorization: 'Bearer ' + CLAVE, 'Content-Type': e.subir.mime || 'image/jpeg', 'x-upsert': 'true' },
-        body: Buffer.from(e.subir.b64, 'base64')
+        body: e.subir.html ? htmlAPdf(jsPDF, e.subir.html) : Buffer.from(e.subir.b64, 'base64')
       });
       if (!r.ok) console.log('No se subió el archivo', e.subir.ruta, r.status, await r.text());
     } else if (e.borrar) {

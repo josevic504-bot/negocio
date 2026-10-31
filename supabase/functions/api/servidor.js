@@ -37,8 +37,13 @@ export function crearServidor(SRC, db, opciones = {}) {
     computeDigest: (alg, txt) => Array.from(opciones.sha256(new TextEncoder().encode(String(txt)))).map(b => b > 127 ? b - 256 : b),
     base64Encode: x => (x && x.__b64 !== undefined) ? x.__b64 : typeof x === 'string' ? b64(new TextEncoder().encode(x)) : b64(x),
     base64Decode: s => ({ __b64: String(s) }),
-    newBlob: (data, mime, name) => ({ data: data && data.__b64 !== undefined ? data.__b64 : b64(new TextEncoder().encode(String(data))), mime, name,
-      getContentType: () => mime, getName: () => name }),
+    newBlob: (data, mime, name) => {
+      const blob = { data: data && data.__b64 !== undefined ? data.__b64 : b64(new TextEncoder().encode(String(data))), mime, name,
+        getContentType: () => blob.mime, getName: () => blob.name, setName: n => { blob.name = n; return blob; },
+        // HTML → PDF (contratos): el PDF se arma después, al subir el archivo
+        getAs: m => { if (m === 'application/pdf' && /html/.test(mime) && typeof data === 'string') return Object.assign({}, blob, { mime: m, html: data, setName: n => { blob.name = n; return Object.assign({}, blob, { mime: m, html: data }); } }); return blob; } };
+      return blob;
+    },
     getUuid: () => crypto.randomUUID(),
     formatDate,
     sleep: () => {}
@@ -156,7 +161,9 @@ export function crearServidor(SRC, db, opciones = {}) {
     get: k => {
       k = String(k); if (sinCache(k)) return null;
       if (k in C.cache) { const x = C.cache[k]; return x && x.e > Date.now() ? x.v : null; }
-      if (!(k in R.c)) falta({ c: k });
+      // Clave no cargada: casi siempre está vacía (contadores de intentos, límites, visitas). Se supone vacía y
+      // se comprueba al guardar, en la misma consulta; si resultó tener valor, la acción se repite con el valor real.
+      if (!(k in R.c)) { C.supuestos[k] = 1; return null; }
       const x = R.c[k]; return x && x.e > Date.now() ? x.v : null;
     },
     getAll: ks => { const o = {}; (ks || []).forEach(k => { const v = cache.get(k); if (v !== null) o[k] = v; }); return o; },
@@ -201,7 +208,7 @@ export function crearServidor(SRC, db, opciones = {}) {
     getName: () => nombre,
     createFile: blob => {
       const ruta = (C.negActual() || 'general') + '/' + crypto.randomUUID() + (/png/.test(blob.mime) ? '.png' : /webp/.test(blob.mime) ? '.webp' : /pdf/.test(blob.mime) ? '.pdf' : '.jpg');
-      C.efectos.push({ subir: { ruta, mime: blob.mime, b64: blob.data } });
+      C.efectos.push({ subir: { ruta, mime: blob.mime, b64: blob.html ? '' : blob.data, html: blob.html || '' } });
       const url = opciones.urlArchivo(ruta);
       return { getId: () => url, getUrl: () => url, setSharing: () => {}, setName: () => {}, moveTo: () => {} };
     },
@@ -319,7 +326,7 @@ export function crearServidor(SRC, db, opciones = {}) {
       // Desde aquí hasta calcular los cambios todo es sincrónico: R y C son de esta petición
       R = Rq;
       const Cq = C = {
-        m: {}, mApp: {}, n: {}, libros: {}, cache: {}, cacheOps: [], props: {}, efectos: [], faltan: [],
+        m: {}, mApp: {}, n: {}, libros: {}, cache: {}, cacheOps: [], props: {}, efectos: [], faltan: [], supuestos: {},
         tocadas: { m: new Set(), n: new Set() },
         negActual: () => { const N = B.NEG_(); return N ? N.id : null; }
       };
@@ -380,10 +387,13 @@ export function crearServidor(SRC, db, opciones = {}) {
       // Las fichas maestras van primero (un negocio nuevo necesita su ficha en Licencias)
       ops.sort((a, b) => (a.n ? 1 : 0) - (b.n ? 1 : 0));
       const props = {}; Object.keys(Cq.props).forEach(k => { props[k] = Cq.props[k]; });
-      if (ops.length || Cq.cacheOps.length || Object.keys(props).length) {
+      const chk = Object.keys(Cq.supuestos);
+      if (ops.length || Cq.cacheOps.length || Object.keys(props).length || chk.length) {
         const tg = Date.now();
-        const res = await db.aplicar({ v: versiones, ops, c: Cq.cacheOps, props });
+        const res = await db.aplicar({ v: versiones, ops, c: Cq.cacheOps, props, chk });
         Rq.tGuardar = (Rq.tGuardar || 0) + (Date.now() - tg);
+        // Alguna clave de caché que se supuso vacía sí tenía valor: no se guardó nada; se repite con el valor real
+        if (res && res.cache) { chk.forEach(k => { Rq.c[k] = res.cache[k] || null; }); log('caché con valor ' + accion + ' ' + Object.keys(res.cache).join(',')); continue; }
         if (res && res.conflicto) {
           // Otro equipo del mismo negocio guardó primero: se vuelve a leer y se repite la acción
           Rq = nuevoR(); await primeraCarga();
@@ -418,12 +428,12 @@ export function crearMapa(src) {
   const cierre = f => { const vis = new Set(), pila = [f]; while (pila.length) { const x = pila.pop(); if (!F[x] || vis.has(x)) continue; vis.add(x); info[x].llama.forEach(y => pila.push(y)); } return vis; };
   const acc = {};
   (F['rutaUsuario_'] || '').split('\n').forEach(l => { const m = /case '(\w+)':.*?([A-Za-z_]\w*_)\(u/.exec(l); if (m) acc[m[1]] = m[2]; });
-  (F['route_'] || '').split('\n').forEach(l => { const m = /a === '(\w+)'\)[^;]*?([A-Za-z_]\w*_)\(d/.exec(l); if (m) acc[m[1]] = m[2]; });
+  (F['route_'] || '').split('\n').forEach(l => { const m = /a === '(\w+)'\)/.exec(l); if (!m) return; const fs = (l.match(/([A-Za-z_]\w*_)\(d\b/g) || []).map(x => x.slice(0, -2)); if (fs.length) acc[m[1]] = fs; });
   acc.login = 'loginMulti_'; acc.panel = 'rutaPanel_';
   const EXTRA = { bootstrap: ['PlanCuentas', 'Asientos'], inicio: ['PlanCuentas', 'Asientos'] };
   const base = cierre('auth_'), out = {};
   Object.keys(acc).forEach(a => {
-    const v = cierre(acc[a]); if (a !== 'login' && a !== 'registrar') base.forEach(x => v.add(x));
+    const v = new Set(); [].concat(acc[a]).forEach(f => cierre(f).forEach(x => v.add(x))); if (a !== 'login' && a !== 'registrar') base.forEach(x => v.add(x));
     const n = new Set(), m = new Set(); v.forEach(f => { info[f].n.forEach(t => n.add(t)); info[f].m.forEach(t => m.add(t)); });
     (EXTRA[a] || []).forEach(t => n.add(t));
     out[a] = { n: [...n], m: [...m] };

@@ -29,6 +29,7 @@ export function dbFalsa(SCHEMA, SCHEMA_M, NUMS, BOOLS) {
     async aplicar(p) {
       await new Promise(r => setTimeout(r, Math.random() * 15));
       p = j(p); this.escrituras++;
+      if (p.chk && p.chk.length) { const x = {}; p.chk.forEach(k => { const c = cache[k]; if (c && c.e > Date.now()) x[k] = { v: c.v, e: c.e }; }); if (Object.keys(x).length) return { cache: x }; }
       for (const neg of Object.keys(p.v || {})) if ((vers[neg] || 0) !== p.v[neg]) return { conflicto: true, negocio: neg };
       for (const op of p.ops || []) {
         const tb = tabla(op.t);

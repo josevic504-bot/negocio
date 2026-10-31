@@ -1,0 +1,7 @@
+-- Negocio VM · Fase 4 (aplicadas en Supabase como «fase4_tareas_programadas» y «fase4_aplicar_comprobar_cache»)
+-- · Propiedad TAREAS_CLAVE (aleatoria) y función api_tarea(nombre) que llama al servidor con esa clave.
+-- · pg_cron: negocio-despertar (cada 4 min, acción «info»), negocio-resumen-diario (13:00 UTC = 7 a. m. Honduras),
+--   negocio-limpiar-fotos (09:00 UTC = 3 a. m.), negocio-limpiar-net (respuestas de pg_net de más de 6 h).
+-- · api_aplicar recibe «chk»: claves de caché que el servidor supuso vacías; si alguna tiene valor no guarda y la devuelve.
+-- · Bucket «archivos» (público): fotos de productos y PDF de contratos.
+-- Texto completo: select pg_get_functiondef('public.api_aplicar(jsonb)'::regprocedure);

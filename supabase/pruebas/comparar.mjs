@@ -46,7 +46,14 @@ const pasos = (tok, x) => [
   ['estadoPedido', () => ({ id: x.ped, estado: 'confirmado' })],
   ['cerrarCaja', { contado: 500, nota: 'cierre' }],
   ['login', { whatsapp: '99887766', pin: '4321' }],
-  ['tiendaInfo', () => ({ negocio: x.neg })], ['logout', {}], ['bootstrap', {}]
+  ['tiendaInfo', () => ({ negocio: x.neg })],
+  ['chatEnviar', () => ({ negocio: x.neg, nombre: 'Carlos', telefono: '98765432', texto: '¿Tienen café?', clave: 'cli-1' })],
+  ['chats', {}],
+  ['chatResponder', () => ({ id: x.chat, texto: 'Sí, a L 95' })],
+  ['chatVer', () => ({ negocio: x.neg, clave: 'cli-1' })],
+  ['soporteCrear', { motivo: 'error', modulo: 'Ventas', texto: 'No imprime', foto: '', version: '1.9.23' }],
+  ['visita', { p: 'negocio', o: 'tiktok', v: 'abc123' }],
+  ['logout', {}], ['bootstrap', {}]
 ];
 async function correr(motor) {
   fijar(); uu = 0; const x = {}, out = []; let tok = '';
@@ -60,6 +67,7 @@ async function correr(motor) {
     if (a === 'venta' && r.ok && !x.vid) x.vid = r.data.venta.id;
     if (a === 'guardar' && r.ok && d.entidad === 'Proveedores') x.prov = (r.data.registro || r.data).id;
     if (a === 'bootstrap' && r.ok && !x.neg) x.neg = r.data.negocioId;
+    if (a === 'chats' && r.ok) { const l = r.data.lista || r.data; x.chat = Array.isArray(l) && l[0] ? l[0].id : ''; }
     if (a === 'pedidos' && r.ok) { const l = r.data.lista || r.data; x.ped = Array.isArray(l) && l[0] ? l[0].id : ''; }
     out.push([a, r]);
   }
