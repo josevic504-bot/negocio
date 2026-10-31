@@ -3,7 +3,7 @@ import { crearServidor } from '../functions/api/servidor.js';
 import { dbFalsa } from './db-falsa.mjs';
 const SRC = fs.readFileSync(new URL('../../Codigo.gs', import.meta.url), 'utf8');
 let db; const logs = [];
-const srv = crearServidor(SRC, { cargar: p => db.cargar(p), aplicar: p => db.aplicar(p), web: u => db.web(u), efecto: e => db.efecto(e) },
+const srv = crearServidor(SRC, { cargar: p => db.cargar(p), aplicar: p => db.aplicar(p), web: u => db.web(u), efecto: e => db.efecto(e), push: q => db.push ? db.push(q) : (q.lista ? [] : true) },
   { sha256: b => createHash('sha256').update(b).digest(), log: m => logs.push(m), urlArchivo: r => 'https://x.supabase.co/storage/v1/object/public/archivos/' + r, rutaDeUrl: u => (u.split('/archivos/')[1] || null) });
 // Esquema desde el propio Codigo.gs
 const grab = n => { const m = SRC.match(new RegExp('^const ' + n + ' = ([\\s\\S]*?);\\s*$', 'm')); return eval('(' + m[1] + ')'); };

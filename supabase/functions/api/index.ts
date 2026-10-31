@@ -20,6 +20,36 @@ async function rpc(fn: string, p: unknown) {
   if (!r.ok) throw new Error('Base de datos: ' + r.status + ' ' + (await r.text()).slice(0, 300));
   return r.json();
 }
+// Tareas que siguen después de responder (avisos al teléfono y aviso de cambios): la respuesta no las espera
+const despues = (p: Promise<unknown>) => { const q = p.catch(e => console.log('Tarea de fondo falló:', String(e))); const er = (globalThis as any).EdgeRuntime; if (er && er.waitUntil) er.waitUntil(q); else return q; };
+const SUBS = `${URL_SB}/rest/v1/PushSubs`;
+async function subsDe(negocio: string, endpoint?: string) {
+  const r = await fetch(SUBS + '?select=*&negocio=eq.' + encodeURIComponent(negocio) + (endpoint ? '&endpoint=eq.' + encodeURIComponent(endpoint) : ''), { headers: cab });
+  if (!r.ok) throw new Error('PushSubs ' + r.status + ' ' + (await r.text()).slice(0, 200));
+  return r.json();
+}
+// Manda un aviso a todos los teléfonos del negocio que lo tienen activado (menos los que apagaron ese tipo)
+async function enviarPush(p: any, vapid: any) {
+  if (!vapid || !vapid.pub || !vapid.priv) { console.log('Aviso sin llaves VAPID'); return; }
+  const subs = (await subsDe(p.negocio, p.endpoint)).filter((s: any) => (',' + s.apagados + ',').indexOf(',' + p.tipo + ',') < 0);
+  if (!subs.length) return;
+  const carga = JSON.stringify({ titulo: p.titulo, cuerpo: p.cuerpo, vista: p.vista || 'inicio', url: p.url || '', tag: 'gnvm-' + (p.tag || p.tipo) });
+  // Se carga solo al mandar un aviso: si fallara, el resto del servidor sigue igual
+  const webpush = (await import('npm:web-push@3.6.7')).default;
+  let ok = 0;
+  await Promise.all(subs.map(async (s: any) => {
+    try {
+      await webpush.sendNotification({ endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } }, carga,
+        { vapidDetails: { subject: 'mailto:molinasolucionesdigitales@gmail.com', publicKey: vapid.pub, privateKey: vapid.priv }, TTL: 86400, urgency: 'high' });
+      ok++;
+    } catch (e: any) {
+      // El teléfono quitó el permiso o desinstaló: se borra
+      if (e && (e.statusCode === 404 || e.statusCode === 410)) await fetch(SUBS + '?endpoint=eq.' + encodeURIComponent(s.endpoint), { method: 'DELETE', headers: cab });
+      else console.log('Aviso no enviado', e && e.statusCode, String(e && e.body || e).slice(0, 200));
+    }
+  }));
+  console.log('Aviso ' + p.tipo + ' · ' + p.negocio + ' · ' + ok + '/' + subs.length);
+}
 const urlArchivo = (ruta: string) => `${URL_SB}/storage/v1/object/public/${BUCKET}/${ruta}`;
 const rutaDeUrl = (u: string) => { const pre = `${URL_SB}/storage/v1/object/public/${BUCKET}/`; return u.indexOf(pre) === 0 ? u.slice(pre.length) : null; };
 
@@ -33,7 +63,23 @@ const db = {
       return { texto: await r.text(), codigo: r.status };
     } catch (_e) { return { texto: '', codigo: 599 }; }
   },
+  async push(q: any) {
+    if (q.lista) { const r = await fetch(SUBS + '?select=negocio,apagados', { headers: cab }); if (!r.ok) throw new Error('PushSubs ' + r.status); return r.json(); }
+    if (q.guardar) {
+      const r = await fetch(SUBS + '?on_conflict=endpoint,negocio', { method: 'POST', headers: { ...cab, Prefer: 'resolution=merge-duplicates,return=minimal' }, body: JSON.stringify({ ...q.guardar, ultimo: new Date().toISOString() }) });
+      if (!r.ok) throw new Error('PushSubs ' + r.status + ' ' + (await r.text()).slice(0, 200));
+      return true;
+    }
+    if (q.quitar) { await fetch(SUBS + '?endpoint=eq.' + encodeURIComponent(q.quitar.endpoint) + '&negocio=eq.' + encodeURIComponent(q.quitar.negocio), { method: 'DELETE', headers: cab }); return true; }
+  },
   async efecto(e: any) {
+    if (e.push) { if (e.push.endpoint) await enviarPush(e.push, e.vapid); else despues(enviarPush(e.push, e.vapid)); return; }
+    if (e.rt) {
+      despues(fetch(`${URL_SB}/realtime/v1/api/broadcast`, { method: 'POST', headers: cab,
+        body: JSON.stringify({ messages: [{ topic: e.rt.canal, event: 'cambio', payload: { t: e.rt.t, dev: e.rt.dev }, private: false }] }) })
+        .then(async r => { if (!r.ok) console.log('Aviso de cambio falló', r.status, (await r.text()).slice(0, 200)); }));
+      return;
+    }
     if (e.subir) {
       const r = await fetch(`${URL_SB}/storage/v1/object/${BUCKET}/${e.subir.ruta}`, {
         method: 'POST', headers: { apikey: CLAVE, Authorization: 'Bearer ' + CLAVE, 'Content-Type': e.subir.mime || 'image/jpeg', 'x-upsert': 'true' },

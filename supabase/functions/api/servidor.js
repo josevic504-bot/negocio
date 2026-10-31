@@ -234,9 +234,44 @@ export function crearServidor(SRC, db, opciones = {}) {
 
   /* ---------- Compilar Codigo.gs una sola vez ---------- */
   const TAREAS = ['resumenPanelDiario', 'limpiarFotosTodos'];
-  const EXP = ['route_', 'SCHEMA', 'SCHEMA_M', 'NUMS', 'BOOLS', 'SOLO_FECHA', 'NEG_', 'LIMPIAR_', 'VERSION', 'ESQUEMA'].concat(TAREAS);
+  const EXP = ['route_', 'SCHEMA', 'SCHEMA_M', 'NUMS', 'BOOLS', 'SOLO_FECHA', 'NEG_', 'LIMPIAR_', 'VERSION', 'ESQUEMA', 'RECORDATORIOS_'].concat(TAREAS);
+  // Resumen de las 7 a. m. de cada negocio: usa las mismas funciones de la app (avisos del día, saldos y existencias)
+  const RECORD_SRC = `
+function RECORDATORIOS_(ids) {
+  var out = [];
+  ids.forEach(function (id) {
+    try {
+      Object.keys(MEMO).forEach(function (k) { if (k.indexOf('_m_') !== 0) delete MEMO[k]; });
+      var l = negocioPorId_(id); if (!l) return;
+      setNegocio_(l);
+      try { bloquearSiVence_(); } catch (e) { if (e && e.message === '__FALTA__') throw e; return; }
+      var cfg = config_(), a = avisosDia_(), p = [];
+      var pl = function (n, uno, varios) { return n === 1 ? uno : n + ' ' + varios; };
+      if (a.susHoy) p.push(pl(a.susHoy, '1 suscripción vence hoy', 'suscripciones vencen hoy'));
+      if (a.susVenc) p.push(pl(a.susVenc, '1 suscripción ya venció', 'suscripciones ya vencieron'));
+      if (a.citasHoy) p.push(pl(a.citasHoy, '1 cita hoy', 'citas hoy'));
+      if (a.encHoy) p.push(pl(a.encHoy, '1 entrega hoy', 'entregas hoy'));
+      if (a.ordAtras) p.push(pl(a.ordAtras, '1 orden atrasada', 'órdenes atrasadas'));
+      if (a.vacHoy) p.push(pl(a.vacHoy, '1 vacuna toca hoy', 'vacunas tocan hoy'));
+      if (a.cotHoy) p.push(pl(a.cotHoy, '1 pago de proyecto hoy', 'pagos de proyectos hoy'));
+      if (a.cotAtras) p.push(pl(a.cotAtras, '1 pago de proyecto atrasado', 'pagos de proyectos atrasados'));
+      if (a.cadVenc) p.push(pl(a.cadVenc, '1 producto vencido', 'productos vencidos'));
+      var sal = saldosClientes_(), ks = Object.keys(sal), tot = 0;
+      ks.forEach(function (k) { tot += sal[k]; });
+      if (ks.length) p.push('te deben ' + money_(tot, cfg) + ' (' + pl(ks.length, '1 cliente', 'clientes') + ')');
+      var ago = rows_('Productos').filter(function (x) { return x.activo && x.tipo === 'producto' && x.stock <= 0; }).length;
+      if (ago) p.push(pl(ago, '1 producto agotado', 'productos agotados'));
+      var ped = rows_('Pedidos').filter(function (x) { return x.estado === 'nuevo'; }).length;
+      if (ped) p.push(pl(ped, '1 pedido sin confirmar', 'pedidos sin confirmar'));
+      if (!p.length) return;
+      var t = p.join(' · ');
+      out.push({ neg: id, titulo: '☀️ Tu día en ' + (cfg.nombre || l.negocio || 'tu negocio'), cuerpo: t.charAt(0).toUpperCase() + t.slice(1) });
+    } catch (e) { if (e && e.message === '__FALTA__') throw e; Logger.log('recordatorio ' + id + ': ' + e); }
+  });
+  return out;
+}`;
   const B = new Function('SpreadsheetApp', 'Utilities', 'CacheService', 'LockService', 'Logger', 'ContentService', 'PropertiesService', 'DriveApp', 'MailApp', 'Session', 'ScriptApp', 'UrlFetchApp',
-    SRC + '\nfunction NEG_(){return NEG;}\nfunction LIMPIAR_(){Object.keys(MEMO).forEach(function(k){delete MEMO[k];});NEG=null;}\nreturn {' + EXP.map(n => n + ':' + n).join(',') + '};')(
+    SRC + RECORD_SRC + '\nfunction NEG_(){return NEG;}\nfunction LIMPIAR_(){Object.keys(MEMO).forEach(function(k){delete MEMO[k];});NEG=null;}\nreturn {' + EXP.map(n => n + ':' + n).join(',') + '};')(
     SpreadsheetApp, Utilities, CacheService, LockService, Logger, ContentService, PropertiesService, DriveApp, MailApp, Session, ScriptApp, UrlFetchApp);
   SCHEMA = B.SCHEMA; SCHEMA_M = B.SCHEMA_M; NUMS = B.NUMS; BOOLS = B.BOOLS; SOLO_FECHA = B.SOLO_FECHA;
 
@@ -298,7 +333,7 @@ export function crearServidor(SRC, db, opciones = {}) {
   }
 
   /* Importación desde Google (fase 5): el script Exportar.gs del Apps Script manda cada hoja; la tabla del negocio se reemplaza completa */
-  const PROPS_INTERNAS = ['IMPORTAR_CLAVE', 'TAREAS_CLAVE', 'EXP_HECHOS', 'EXP_INICIO', 'MIGRADO'];
+  const PROPS_INTERNAS = ['IMPORTAR_CLAVE', 'TAREAS_CLAVE', 'EXP_HECHOS', 'EXP_INICIO', 'MIGRADO', 'VAPID_PUBLICA', 'VAPID_PRIVADA', 'RT_SECRETO'];
   async function importar(im, Rq) {
     if (!Rq.props.IMPORTAR_CLAVE || im.clave !== Rq.props.IMPORTAR_CLAVE) return { ok: false, error: 'Clave de importación no válida' };
     const ops = [], props = {};
@@ -320,6 +355,66 @@ export function crearServidor(SRC, db, opciones = {}) {
     const n = ops.filter(o => o.op === 'ins').length;
     log('importar ' + (t || 'propiedades') + (im.negocio ? ' ' + im.negocio : '') + ' · ' + n + ' filas');
     return { ok: true, data: { tabla: t, filas: n, propiedades: Object.keys(props).length } };
+  }
+
+  /* ---------- Avisos con la app cerrada (Web Push) y cambios al instante (Realtime) ---------- */
+  const hex = b => Array.from(b).map(x => (x & 255).toString(16).padStart(2, '0')).join('');
+  // Canal del negocio: nombre secreto (no se adivina), solo avisa QUÉ tablas cambiaron, nunca los datos
+  const canal = (Rq, neg) => Rq.props.RT_SECRETO && neg ? 'n' + hex(opciones.sha256(new TextEncoder().encode(Rq.props.RT_SECRETO + '|' + neg))).slice(0, 32) : '';
+  const vigente = (Rq, k) => { const x = Rq.c[k]; return x && x.e > Date.now() ? x.v : null; };
+  const objFila = (g, id, col) => {
+    if (!g) return null; const h = g[0], i = h.indexOf(col || 'id'); if (i < 0) return null;
+    const r = g.slice(1).find(r => r && String(Q(r[i])) === String(id)); if (!r) return null;
+    const o = {}; h.forEach((k, j) => { o[k] = r[j] === undefined || r[j] === null ? '' : Q(r[j]); }); return o;
+  };
+  const corto = (t, n) => { t = String(t || '').replace(/\s+/g, ' ').trim(); return t.length > n ? t.slice(0, n - 1) + '…' : t; };
+  async function avisosPush(body, Rq) {
+    if (!db.push) return { ok: false, error: 'Los avisos aún no están listos en el servidor' };
+    const d = body.data || {}, accion = body.action;
+    let neg = '', uid = '';
+    if (body.panel && vigente(Rq, 'P_' + body.panel)) neg = '_panel';
+    else if (body.token) { const v = vigente(Rq, 'S_' + body.token); const p = v ? v.split('|') : []; if (p.length >= 3) { neg = p[0]; uid = p[1]; } }
+    if (!neg) return { ok: false, error: body.panel ? 'PANEL' : 'SESION' };
+    const sub = d.sub || {}, ep = String(sub.endpoint || d.endpoint || '');
+    if (!/^https:\/\/[^\s]{10,900}$/.test(ep)) return { ok: false, error: 'Este equipo no dio un permiso de avisos válido' };
+    if (accion === 'pushQuitar') { await db.push({ quitar: { endpoint: ep, negocio: neg } }); return { ok: true, data: true }; }
+    if (accion === 'pushProbar') {
+      await db.efecto({ push: { endpoint: ep, negocio: neg, tipo: 'prueba', titulo: '¡Listo! Los avisos funcionan', cuerpo: 'Te avisaremos aquí aunque la app esté cerrada.', vista: 'inicio', url: neg === '_panel' ? 'panel' : '' }, vapid: { pub: Rq.props.VAPID_PUBLICA, priv: Rq.props.VAPID_PRIVADA } });
+      return { ok: true, data: true };
+    }
+    const k = sub.keys || {}, ok = x => typeof x === 'string' && /^[A-Za-z0-9_=-]{8,200}$/.test(x);
+    if (!ok(k.p256dh) || !ok(k.auth)) return { ok: false, error: 'Este equipo no dio un permiso de avisos válido' };
+    const apag = (Array.isArray(d.apagados) ? d.apagados : []).map(x => String(x).replace(/[^a-z]/g, '').slice(0, 20)).filter(Boolean).slice(0, 20).join(',');
+    await db.push({ guardar: { endpoint: ep, negocio: neg, usuario: uid, p256dh: k.p256dh, auth: k.auth, apagados: apag } });
+    log('avisos guardados ' + neg);
+    return { ok: true, data: { llave: Rq.props.VAPID_PUBLICA || '' } };
+  }
+  // Qué avisar según lo que se acaba de guardar
+  function avisosDe(ops, Rq, Cq) {
+    const out = [], money = (neg, n) => {
+      const g = Cq.n[neg + '|Config'] || (Rq.n[neg] && Rq.n[neg].t.Config), m = objFila(g, 'moneda', 'clave');
+      return (m && m.valor || 'L') + ' ' + (Number(n) || 0).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    };
+    const tablaN = (neg, t) => Cq.n[neg + '|' + t] || (Rq.n[neg] && Rq.n[neg].t[t]);
+    const tablaM = t => Cq.m[t] || Rq.m[t];
+    ops.forEach(o => {
+      if (o.op !== 'ins' || !o.row) return;
+      const r = o.row;
+      if (o.t === 'Pedidos' && o.n) {
+        let n = 0; try { n = (JSON.parse(r.items || '[]') || []).reduce((s, x) => s + (Number(x.cantidad) || 1), 0); } catch (e) {}
+        out.push({ negocio: o.n, tipo: 'pedidos', titulo: '🛍️ ¡Nuevo pedido en línea!', cuerpo: corto((r.nombre || 'Un cliente') + ' · ' + (n === 1 ? '1 producto' : n + ' productos') + ' · ' + money(o.n, r.total), 140), vista: 'pedidos' });
+      } else if (o.t === 'Mensajes' && o.n && r.de === 'cliente') {
+        const ch = objFila(tablaN(o.n, 'Chats'), r.chatId);
+        out.push({ negocio: o.n, tipo: 'mensajes', titulo: '💬 Mensaje nuevo en tu tienda', cuerpo: corto((ch && ch.nombre ? ch.nombre + ': ' : '') + (r.texto || '📷 Foto'), 140), vista: 'mensajes', tag: 'msg-' + r.chatId });
+      } else if (o.t === 'SoporteMsg' && !o.n) {
+        const ch = objFila(tablaM('Soporte'), r.chatId);
+        if (r.de === 'cli') out.push({ negocio: '_panel', tipo: 'soporte', titulo: '🆘 Soporte · ' + corto(ch && ch.negocio || r.quien || 'Un negocio', 40), cuerpo: corto(r.texto || '📷 Foto', 140), url: 'panel', tag: 'sop-' + r.chatId });
+        else if (r.de === 'adm' && ch && ch.negocioId) out.push({ negocio: ch.negocioId, tipo: 'soporte', titulo: '💬 El administrador te respondió', cuerpo: corto(r.texto || 'Ábrelo en Ayuda › Contactar al administrador', 140), vista: 'inicio' });
+      } else if (o.t === 'Licencias' && !o.n) {
+        out.push({ negocio: '_panel', tipo: 'registros', titulo: '🎉 Nuevo registro: ' + corto(r.negocio || 'Negocio', 50), cuerpo: corto([r.dueno, r.giro, r.origen ? 'llegó por ' + r.origen : ''].filter(Boolean).join(' · '), 140), url: 'panel', tag: 'reg-' + r.id });
+      }
+    });
+    return out;
   }
 
   async function atender(body) {
@@ -346,6 +441,15 @@ export function crearServidor(SRC, db, opciones = {}) {
     };
     await primeraCarga();
     if (body.importar) return importar(body.importar, Rq);
+    if (/^push(Guardar|Quitar|Probar)$/.test(accion)) return avisosPush(body, Rq);
+    let negsRec = null;
+    if (body.tarea === 'recordatoriosDia') {
+      if (!Rq.props.TAREAS_CLAVE || body.clave !== Rq.props.TAREAS_CLAVE || !db.push) return { ok: false, error: 'Tarea no permitida' };
+      const subs = await db.push({ lista: true });
+      negsRec = [...new Set((subs || []).filter(s => s.negocio !== '_panel' && (',' + s.apagados + ',').indexOf(',resumen,') < 0).map(s => s.negocio))];
+      // Todas las tablas de esos negocios de una vez (así no se repite la corrida por cada tabla)
+      if (negsRec.length) { const n = {}; negsRec.forEach(x => { n[x] = Object.keys(SCHEMA); }); await cargar(Rq, { m: ['Soporte'], n }); }
+    }
 
     while (true) {
       if (++intento > 40) throw new Error('El servidor no pudo completar la acción. Intenta de nuevo.');
@@ -361,7 +465,8 @@ export function crearServidor(SRC, db, opciones = {}) {
       try {
         const req = JSON.parse(JSON.stringify(body || {}));
         // Tareas programadas (resumen diario, limpieza de fotos): las llama pg_cron con la clave TAREAS_CLAVE
-        if (body.tarea) {
+        if (negsRec) { B.LIMPIAR_(); out = { ok: true, data: B.RECORDATORIOS_(negsRec) }; }
+        else if (body.tarea) {
           if (!Rq.props.TAREAS_CLAVE || body.clave !== Rq.props.TAREAS_CLAVE || TAREAS.indexOf(body.tarea) < 0) throw new Error('Tarea no permitida');
           B.LIMPIAR_(); B[body.tarea](); out = { ok: true, data: true };
         } else out = { ok: true, data: B.route_(req) };
@@ -426,7 +531,16 @@ export function crearServidor(SRC, db, opciones = {}) {
           continue;
         }
       }
+      if (negsRec && out.ok) { out.data.forEach(r => Cq.efectos.push({ push: { negocio: r.neg, tipo: 'resumen', titulo: r.titulo, cuerpo: r.cuerpo, vista: 'inicio', tag: 'resumen' } })); out = { ok: true, data: out.data.length }; }
+      if (!negsRec && db.push) avisosDe(ops, Rq, Cq).forEach(p => Cq.efectos.push({ push: p }));
+      // Avisar a los otros equipos del negocio que algo cambió (solo los nombres de las tablas)
+      const tocados = {};
+      ops.forEach(o => { if (o.n && o.n[0] !== '@') (tocados[o.n] = tocados[o.n] || new Set()).add(o.t); });
+      // Las lecturas (arranque, inicio, pendientes) a veces ordenan datos internos: eso no es un cambio para los otros equipos
+      if (db.push && ['bootstrap', 'inicio', 'pendientes', 'login'].indexOf(accion) < 0) Object.keys(tocados).forEach(neg => { const cn = canal(Rq, neg); if (cn) Cq.efectos.push({ rt: { canal: cn, t: [...tocados[neg]], dev: String(body.dev || '').slice(0, 16) } }); });
+      if (accion === 'bootstrap' && out && out.ok && out.data && typeof out.data === 'object') { const neg = Cq.negActual(); if (neg && db.push) out.data.rt = canal(Rq, neg); }
       for (const e of Cq.efectos) {
+        if (e.push) e.vapid = { pub: Rq.props.VAPID_PUBLICA || '', priv: Rq.props.VAPID_PRIVADA || '' };
         if (e.correo) e.relay = { url: Rq.props.CORREO_URL || '', clave: Rq.props.CORREO_CLAVE || '' };
         try { await db.efecto(e); } catch (err) { log('Efecto falló: ' + err); }
       }
