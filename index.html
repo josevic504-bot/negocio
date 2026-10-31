@@ -1541,6 +1541,7 @@ const colorDe = s => { const c = ['t-pri', 't-azul', 't-morado', 't-cian', 't-na
 // Ilustraciones de línea por categoría/nombre, para productos sin foto (dibujos propios, 48×48)
 const ILUS = [
   // Maquillaje (catálogo)
+  [/locion|perfum|colonia|fragan|splash/, 'M20 6h8v6h-8zM16 12h16v4H16zM14 16h20a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4z'],
   [/paleta|sombras? de ojos|sombras \d/, 'M8 12h32a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3zM15 19a3 3 0 1 0 .1 0M24 19a3 3 0 1 0 .1 0M33 19a3 3 0 1 0 .1 0M15 29a3 3 0 1 0 .1 0M24 29a3 3 0 1 0 .1 0M33 29a3 3 0 1 0 .1 0'],
   [/polvo|blush|rubor|iluminador|bronce|highlight|compacto/, 'M24 14a14 9 0 1 0 .1 0M10 23v6a14 9 0 0 0 28 0v-6M24 18a8 4.5 0 1 0 .1 0M14 12l-4-6M34 12l4-6M10 6h28'],
   [/primer|base liquida|corrector|concealer|serum|hidratante/, 'M20 5h8v7h-8zM17 12h14l2 6v22a3 3 0 0 1-3 3H18a3 3 0 0 1-3-3V18zM15 24h18'],
@@ -1562,7 +1563,7 @@ const ILUS = [
   [/bolso|mochila|cartera|maleta/, 'M10 18h28l-2 24H12zM18 18v-4a6 6 0 0 1 12 0v4'],
   [/gorra|sombrero/, 'M9 30a15 15 0 0 1 30 0H9zM39 30l6 3-1 4-8-2M24 15v-4'],
   [/camis|blusa|polo|sueter|chaqueta|ropa|dama|caballero|niñ|uniforme|playera/, 'M14 8l-8 5 4 7 4-2v22h20V18l4 2 4-7-8-5c-1 3-3 5-6 5s-5-2-6-5z'],
-  [/perfum|colonia|fragan|locion/, 'M20 6h8v6h-8zM16 12h16v4H16zM14 16h20a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4z'],
+  [/perfum|colonia|fragan|locion|splash/, 'M20 6h8v6h-8zM16 12h16v4H16zM14 16h20a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4z'],
   [/labial|maquill|belleza|esmalte|crema|cosmet|sombra|rimel|mascara/, 'M19 20h10v22H19zM21 20V9l8 4v7M17 30h14'],
   [/audif|auricul|bocina|parlante/, 'M8 30v-6a16 16 0 0 1 32 0v6M8 30h6v10H8zM34 30h6v10h-6z'],
   [/laptop|computad|monitor|tablet/, 'M8 10h32v22H8zM4 36h40v4H4z'],
@@ -2215,7 +2216,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Catálogo de maquillaje'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Catálogo: maquillaje, ropa y lociones'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -4449,7 +4450,7 @@ function formProducto(p, onSave, pre) {
     ${modOn('catalogo') ? `<div class="precio-box"><h4>${ic('sparkle', 18)} Catálogo</h4>
       <div class="f2"><label class="fld"><span>Precio especial</span><input id="pf-pe" inputmode="decimal" value="${p.precioEsp ? p.precioEsp : ''}" placeholder="Ej. 200"></label>
       <label class="fld"><span>Desde cuántas piezas</span><input id="pf-me" inputmode="numeric" value="${p.minEsp ? p.minEsp : ''}" placeholder="3"></label></div>
-      <small class="hint">Detalle al precio normal y especial cuando llevan esa cantidad o más (sumando todos los tonos). Se aplica solo en la tienda y en Vender.</small>
+      <small class="hint">Detalle al precio normal y especial cuando llevan esa cantidad o más (sumando todos los tonos, tallas y colores). Se aplica solo en la tienda y en Vender.</small>
       <div class="f2"><label class="fld"><span>Subcategoría</span><input id="pf-sub" list="dl-sub" maxlength="40" value="${esc(p.sub || '')}" placeholder="Ej. Corrección, Base, Gloss"><datalist id="dl-sub">${[...new Set(S.productos.map(x => x.sub).filter(Boolean))].sort().map(x => `<option value="${esc(x)}">`).join('')}</datalist></label>
       <label class="fld"><span>Frase destacada</span><input id="pf-lema" maxlength="90" value="${esc(p.lema || '')}" placeholder="Ej. Hidratación que revela tu brillo."></label></div>
       <label class="fld"><span>Beneficios (uno por línea)</span><textarea id="pf-pun" rows="3" maxlength="500" placeholder="Textura ligera&#10;Larga duración&#10;Para todo tipo de piel">${esc(String(p.puntos || '').split('|').join('\n'))}</textarea></label></div>` : ''}
@@ -6627,7 +6628,7 @@ const MODULOS_INFO = {
   agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios' },
   suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' },
   mascotas:      { n: 'Mascotas, recetas y vacunas', d: 'Expediente de cada mascota con su dueño, consultas con receta, carnet de vacunación y recordatorios por WhatsApp.', g: 'veterinaria' },
-  catalogo:      { n: 'Tienda estilo catálogo', d: 'Tu tienda abre con secciones grandes (como las páginas de un catálogo), cada producto lleva subcategoría, frase y beneficios, los tonos se eligen por color y hay precio especial desde cierta cantidad de piezas.', g: 'catálogo de maquillaje' },
+  catalogo:      { n: 'Tienda estilo catálogo', d: 'Tu tienda abre con secciones grandes (como las páginas de un catálogo), cada producto lleva subcategoría, frase y beneficios, los tonos se eligen por color y hay precio especial desde cierta cantidad de piezas.', g: 'catálogo de maquillaje, ropa y lociones' },
   cotizaciones:  { n: 'Cotizaciones y contratos', d: 'Cotizaciones elegantes con plan de pagos; al aceptarlas se vuelven proyecto, los pagos quedan agendados y el cliente firma el contrato y el acta de entrega.', g: 'servicios' }
 };
 const modOn = k => !!S.config && (S.config[k] === 'si' || girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k)));
@@ -7978,8 +7979,8 @@ function confirmarGiro(id) {
 
 const NOVEDADES = [
   { v: '1.9.27', fecha: '2026-10-31', items: [
-    { i: 'sparkle', t: 'Nuevo tipo de negocio: Catálogo de maquillaje', d: 'Para quien vende maquillaje al detalle y por mayor. Tu tienda en línea abre con secciones grandes (Rostro, Ojos, Labios…) como las páginas de un catálogo, y cada producto trae subcategoría, frase destacada y beneficios.' },
-    { i: 'palette', t: 'Tonos por color', d: 'Tus clientes eligen el tono tocando su color (Nude 1, Beige 2…) y el pedido te llega con el tono exacto. En el producto tocas el círculo de cada tono para ponerle su color.' },
+    { i: 'sparkle', t: 'Nuevo tipo de negocio: Catálogo de maquillaje, ropa y lociones', d: 'Para quien vende por catálogo al detalle y por mayor. Tu tienda en línea abre con secciones grandes (Rostro, Ojos, Labios, Lociones, Ropa…) como las páginas de un catálogo, y cada producto trae subcategoría, frase destacada y beneficios.' },
+    { i: 'palette', t: 'Tonos por color', d: 'Tus clientes eligen el tono o el color de la ropa tocando su círculo, y la talla con un toque. El pedido te llega con el tono, color y talla exactos.' },
     { i: 'tag', t: 'Precio especial por cantidad', d: 'Detalle a un precio y especial desde cierta cantidad de piezas (por ejemplo L 140 y L 130 desde 3). Se aplica solo en la tienda, en el pedido y al vender.' }
   ] },
   { v: '1.9.26', fecha: '2026-10-31', items: [
@@ -8418,7 +8419,7 @@ const OPC_GIRO = {
   ferreteria: { g: ['Medida', 'Color'], ej: ['1/2", 3/4"', 'Negro, Rojo'] },
   repuestos:  { g: ['Vehículo', 'Marca'], ej: ['Toyota, Nissan', 'Bosch, NGK'] },
   belleza:    { g: ['Tono', 'Tamaño'], ej: ['Claro, Medio, Oscuro', '50 ml, 100 ml'] },
-  catalogo:   { g: ['Tono'], ej: ['Nude 1, Nude 3, Beige 2'] },
+  catalogo:   { g: ['Tono', 'Talla', 'Color'], ej: ['Nude 1, Nude 3, Beige 2', 'S, M, L', 'Negro, Blanco'], filtro: 'Talla' },
   comida:     { g: ['Elige', 'Tamaño'], ej: ['Res, Pollo, Cerdo', 'Normal, Grande'], nota: 'Nota para la cocina', notaEj: 'Sin cebolla, bien cocido…' },
   panaderia:  { g: ['Sabor', 'Tamaño'], ej: ['Chocolate, Vainilla', 'Pequeño, Grande'], nota: 'Dedicatoria o detalle', notaEj: 'Feliz cumpleaños, Ana' },
   servicios:  { g: ['Modalidad'], ej: ['A domicilio, En el local'], cita: true },
@@ -8447,7 +8448,7 @@ const juntarOpc = l => l.filter(x => x.n && x.v.length).map(x => x.n + ': ' + x.
 const T = { info: null, id: '', cat: '', sub: '', q: '', f: '', cart: {}, entrega: '', giro: '', compras: [] };
 // Cómo se ve cada giro como sección (módulo) en la portada de la tienda
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
-  boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Maquillaje', 'Rostro, ojos y labios', '#13a58b'],
+  boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Catálogo', 'Maquillaje, ropa y lociones', '#13a58b'],
   tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
   ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;
@@ -8590,8 +8591,8 @@ function pintarTienda() {
       <div class="shop-h2" id="t-cat"><span>${portada ? '¿Qué deseas comprar hoy?' : 'Nuestro catálogo'}</span><small>${portada ? gs.length + ' secciones' : ps.length + ' ' + (ps.length === 1 ? 'producto' : 'productos')}</small></div>
       ${mods}${modH}${enl}
       <div class="shop-srch" ${portada || (conEnlace && !ps.length) ? 'hidden' : ''}><div class="srch">${ic('search', 18)}<input id="t-q" placeholder="¿Qué estás buscando?" value="${esc(T.q)}"></div>
-      ${cat ? '' : cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${filtroTienda()}</div>
-      ${portada ? '' : secs + banda}${subs.length > 1 ? `<div class="chips" style="margin:0 0 12px" id="t-subs"><button class="chip ${!T.sub ? 'on' : ''}" data-sub="">Todo</button>${subs.map(c => `<button class="chip ${T.sub === c ? 'on' : ''}" data-sub="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}
+      ${cat ? '' : cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${cat ? '' : filtroTienda()}</div>
+      ${portada ? '' : secs + banda}${subs.length > 1 ? `<div class="chips" style="margin:0 0 12px" id="t-subs"><button class="chip ${!T.sub ? 'on' : ''}" data-sub="">Todo</button>${subs.map(c => `<button class="chip ${T.sub === c ? 'on' : ''}" data-sub="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${cat && !portada ? `<div style="margin:-2px 0 12px">${filtroTienda()}</div>` : ''}
       <div class="pgrid shop-grid" id="t-grid" ${portada ? 'hidden' : ''}></div>
       <div class="shop-foot" id="t-contacto"><div class="fcol fbrand"><div class="fl">${logoChico}</div><div class="fn">${esc(n.nombre)}</div>${n.eslogan ? `<div class="fs">${esc(n.eslogan)}</div>` : ''}<div class="fs">Pedidos en línea · Gracias por preferirnos</div></div>
         <div class="fcol fdesk"><div class="ft">Contacto</div>${n.direccion ? `<div>${ic('map', 15)} ${esc(n.direccion)}</div>` : ''}${n.telefono ? `<div>${ic('wa', 15)} <a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}${n.horario ? `<div>${ic('clock', 15)} ${esc(n.horario)}</div>` : ''}</div>
@@ -8622,7 +8623,8 @@ function pintarTienda() {
 function filtroTienda() {
   const fn = T.cfg && T.cfg.filtro; if (!fn) return '';
   const vals = [];
-  T.info.productos.filter(p => !T.giro || p.g === T.giro).forEach(p => p.ops.forEach(o => { if (norm(o.n) === norm(fn)) o.v.forEach(v => { if (!vals.includes(v)) vals.push(v); }); }));
+  if (catT() && (!T.cat || T.cat === '*')) { T.f = ''; return ''; } // catálogo: la talla se filtra dentro de la sección (Ropa), no en todo
+  T.info.productos.filter(p => (!T.giro || p.g === T.giro) && (!catT() || p.categoria === T.cat)).forEach(p => p.ops.forEach(o => { if (norm(o.n) === norm(fn)) o.v.forEach(v => { if (!vals.includes(v)) vals.push(v); }); }));
   if (vals.length < 2) { T.f = ''; return ''; }
   const ORD = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL'], pos = v => { const i = ORD.indexOf(String(v).toUpperCase()); return i >= 0 ? i : isNaN(parseFloat(v)) ? 900 : 100 + parseFloat(v); };
   vals.sort((a, b) => pos(a) - pos(b));
@@ -8705,7 +8707,7 @@ function tProducto(id) {
     const f = falta(), total = enCarrito(p.id) + n, pu = precioT(p, total);
     if (p.precioEsp) {
       $$('#tp-esp [data-t]', h.el).forEach(x => x.classList.toggle('on', (x.dataset.t === 'e') === (total >= p.minEsp)));
-      const fa = p.minEsp - total; $('#tp-falta', h.el).textContent = fa > 0 ? `Lleva ${fa} más (de cualquier tono) y pagas ${money(p.precioEsp)} cada uno` : enCarrito(p.id) ? `✓ Con lo que ya llevas, pagas ${money(p.precioEsp)} cada uno` : `✓ Pagas ${money(p.precioEsp)} cada uno`;
+      const fa = p.minEsp - total; $('#tp-falta', h.el).textContent = fa > 0 ? `Lleva ${fa} más${p.ops.length ? ' (de cualquier ' + p.ops.map(o => o.n.toLowerCase()).join(' o ') + ')' : ''} y pagas ${money(p.precioEsp)} cada uno` : enCarrito(p.id) ? `✓ Con lo que ya llevas, pagas ${money(p.precioEsp)} cada uno` : `✓ Pagas ${money(p.precioEsp)} cada uno`;
     }
     h.botones([...(T.info.negocio.chat ? [{ t: ic('chat', 18), cls: 'icon', fn: () => { h.cerrar(); chatTienda(p.id); } }] : []), { t: f ? `Elige ${esc(f.n.toLowerCase())}` : `${ic('bag', 18)} ${cfg.cita ? 'Solicitar' : 'Agregar'}${n > 1 ? ' ' + n : ''}${Object.keys(sel).length === 1 && p.ops.length === 1 ? ' · ' + esc(sel[p.ops[0].n]) : ''} · ${money(pu * n)}`, cls: 'acc big', fn: () => {
       const x = falta(); if (x) throw new Error('Elige ' + x.n.toLowerCase());
