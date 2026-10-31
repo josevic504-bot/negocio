@@ -24,9 +24,9 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.21';
+const VERSION = '1.9.27';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
-const ESQUEMA = VERSION + '-g1';
+const ESQUEMA = VERSION + '-g2';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -62,7 +62,7 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado','sucursal'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Conciliacion:   ['id','mes','saldoBanco','marcados','nota','actualizado','listo'],
@@ -99,7 +99,7 @@ const SCHEMA = {
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
   Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
 const TEXTO = new Set(['marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta']);
@@ -114,7 +114,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
   // Cotizaciones y contratos (servicios)
@@ -164,6 +164,19 @@ const GIROS = {
     ej: [['Celular gama media','Celulares','📱',4800,3600,5,'Capacidad: 128 GB, 256 GB | Color: Negro, Azul'],['Protector de pantalla','Accesorios','📲',150,40,40],['Funda de silicona','Accesorios','🛡️',180,60,30],['Cargador 20 W','Cargadores','🔌',350,180,15],['Audífonos Bluetooth','Audio','🎧',690,400,10],['Bocina portátil','Audio','🔊',950,580,6],['Memoria USB 64 GB','Accesorios','💾',260,150,20],['Cambio de pantalla','Reparaciones','🧑‍🔧',1200,600,0]] },
   belleza:    { n: 'Belleza / cosméticos', cats: ['Maquillaje','Cuidado de piel','Cabello','Uñas','Perfumes'],
     ej: [['Base líquida','Maquillaje','💄',420,250,10,'Tono: Claro, Medio, Oscuro'],['Labial mate','Maquillaje','💋',180,90,20],['Crema hidratante','Cuidado de piel','🧴',350,200,12],['Shampoo 500 ml','Cabello','🧴',260,150,15],['Esmalte de uñas','Uñas','💅',95,45,30],['Perfume 100 ml','Perfumes','🌸',890,520,6],['Mascarilla facial','Cuidado de piel','🧖',120,60,25],['Delineador','Maquillaje','✏️',150,75,18]] },
+  catalogo:   { n: 'Catálogo de maquillaje', cats: ['Rostro','Ojos','Labios','Cejas','Cuidado de piel','Accesorios'],
+    ej: [['Primer hidratante','Rostro','🧴',220,150,24,'',{ sub: 'Preparación de la piel', lema: 'Hidratación que revela tu mejor brillo.', puntos: 'Textura ligera y nutritiva|Suaviza la textura de la piel|Ideal para piel normal a seca', precioEsp: 200, minEsp: 3 }],
+      ['Corrector líquido','Rostro','💧',140,90,36,'Tono: Nude 1#fbe0cf, Nude 3#f3cfa8, Beige 2#f1c39e, Beige 3#efbd85, Chocolate 1#a86c45, Chocolate 6#8a5434',{ sub: 'Corrección', lema: 'Cobertura que se siente ligera.', puntos: 'Cobertura uniforme y natural|Textura líquida ligera|Acabado natural de larga duración', precioEsp: 130, minEsp: 3 }],
+      ['Base líquida acabado mate','Rostro','🧴',260,170,20,'Tono: Marfil#f6dcc4, Natural#e9c39d, Canela#c99366, Café#8f5d3b',{ sub: 'Base', lema: 'Piel mate todo el día.', puntos: 'Control de brillo|Cobertura media a alta|No reseca', precioEsp: 240, minEsp: 3 }],
+      ['Polvo compacto','Rostro','🪞',180,115,24,'Tono: Claro#f2d6bd, Medio#ddb48c, Oscuro#a8754d',{ sub: 'Finalización', puntos: 'Sella el maquillaje|Acabado suave|Con espejo', precioEsp: 165, minEsp: 3 }],
+      ['Blush en polvo','Rostro','🌸',150,95,24,'Tono: Rosa#f19aa8, Durazno#f4a882, Coral#ee7f6e',{ sub: 'Blush', lema: 'Un rubor que ilumina.', puntos: 'Color modulable|Larga duración', precioEsp: 135, minEsp: 3 }],
+      ['Iluminador shimmer','Rostro','✨',240,160,24,'',{ sub: 'Iluminador', lema: 'Un realce sofisticado que resalta tu luz natural.', puntos: 'Brillo intenso y elegante|Textura suave al tacto|Para rostro y escote', precioEsp: 220, minEsp: 3 }],
+      ['Paleta de sombras 12 tonos','Ojos','🎨',320,210,15,'Paleta: Cálida#c98b5e, Fría#8c8fb8, Nude#d8b49a',{ sub: 'Paletas de sombra', puntos: '12 tonos mate y metálicos|Alta pigmentación|Fácil de difuminar', precioEsp: 295, minEsp: 3 }],
+      ['Delineador líquido','Ojos','🖊️',130,80,30,'',{ sub: 'Delineadores', puntos: 'Punta fina de precisión|Secado rápido|A prueba de agua', precioEsp: 115, minEsp: 3 }],
+      ['Máscara de pestañas','Ojos','👁️',190,120,24,'Efecto: Volumen, Alargamiento, Rizado',{ sub: 'Máscara para pestañas', puntos: 'No se corre|Fácil de retirar', precioEsp: 170, minEsp: 3 }],
+      ['Labial líquido mate','Labios','💄',160,100,30,'Tono: Rojo#b02a4c, Rosa#c4566b, Vino#8e2b3b, Nude#d97a83',{ sub: 'Labial líquido', lema: 'Color intenso que no se transfiere.', puntos: 'Acabado mate|Larga duración|No reseca', precioEsp: 145, minEsp: 3 }],
+      ['Lip gloss','Labios','💋',120,75,30,'Tono: Transparente#f5e1e6, Rosa#f2a7bd, Durazno#f6b496',{ sub: 'Gloss', puntos: 'Brillo espejo|Sin sensación pegajosa', precioEsp: 105, minEsp: 3 }],
+      ['Gel para cejas','Cejas','🪮',140,85,24,'Tono: Transparente#eeeeee, Café#7a5236',{ sub: 'Cejas', puntos: 'Fija todo el día|Peina y define', precioEsp: 125, minEsp: 3 }]] },
   panaderia:  { n: 'Panadería / repostería', cats: ['Pan dulce','Pan salado','Pasteles','Galletas','Bebidas'],
     ej: [['Pan blanco (bolsa)','Pan salado','🍞',35,18,30],['Semita','Pan dulce','🥯',15,6,40],['Cachitos','Pan dulce','🥐',12,5,50],['Rosquillas (bolsa)','Galletas','🍩',45,22,25],['Pastel de cumpleaños','Pasteles','🎂',650,300,3,'Sabor: Chocolate, Vainilla, Tres leches'],['Galletas de mantequilla','Galletas','🍪',60,28,20],['Café con leche','Bebidas','☕',25,8,0],['Pan de coco','Pan dulce','🥥',20,9,30]] },
   servicios:  { n: 'Servicios', cats: ['Servicios','Paquetes','Materiales'],
@@ -583,6 +596,8 @@ function opciones_(t) {
     return n && v.length ? n + ': ' + v.join(', ') : '';
   }).filter(Boolean).slice(0, 3).join(' | ').slice(0, 400);
 }
+// Precio por cantidad (catálogo): desde minEsp piezas del mismo producto vale el precio especial
+function precioCant_(p, n) { return p && Number(p.precioEsp) > 0 && Number(p.minEsp) > 1 && Number(n) >= Number(p.minEsp) ? r2_(p.precioEsp) : 0; }
 function txt_(s, max) { return String(s === undefined || s === null ? '' : s).trim().replace(/\s+/g, ' ').slice(0, max || 200); }
 function tel8_(t) { return String(t || '').replace(/\D/g, '').slice(-8); }
 function porId_(lista) { const m = Object.create(null); lista.forEach(x => { m[x.id] = x; }); return m; }
@@ -1099,7 +1114,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -2367,7 +2382,12 @@ function guardar_(u, d) {
     req_(u, ['admin']);
     const reg = {};
     Object.keys(d.registro || {}).forEach(k => { if (CONFIG_EDITABLE.indexOf(k) >= 0) reg[k] = String(d.registro[k]); });
-    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && k !== 'tiendaPortada' && k !== 'vetFirma' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
+    if (reg.tiendaSecciones !== undefined) { // catálogo: { categoría: { c: color, f: foto } }
+      const o = parseJ_(reg.tiendaSecciones, {}), out = {};
+      Object.keys(o || {}).slice(0, 40).forEach(k => { const x = o[k] || {}, c = /^#[0-9a-f]{6}$/i.test(String(x.c || '')) ? String(x.c) : '', f = x.f && (String(x.f).indexOf('data:image/') === 0 ? String(x.f).length <= 160000 : fotoPropia_(String(x.f))) ? String(x.f) : ''; if (c || f) out[txt_(k, 40)] = { c: c, f: f }; });
+      reg.tiendaSecciones = JSON.stringify(out);
+    }
+    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && k !== 'tiendaPortada' && k !== 'vetFirma' && k !== 'tiendaSecciones' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
     if (reg.vetFirma && (reg.vetFirma.length > 48000 || reg.vetFirma.indexOf('data:image/') !== 0)) throw new Error('La firma no es válida. Súbela de nuevo.');
     if (reg.vacAviso !== undefined) reg.vacAviso = String(Math.max(1, Math.min(30, parseInt(reg.vacAviso, 10) || 7)));
     if (reg.duenoFoto && (reg.duenoFoto.length > 48000 || reg.duenoFoto.indexOf('data:image/') !== 0)) throw new Error('La foto del propietario no es válida. Súbela de nuevo.');
@@ -2424,6 +2444,15 @@ function guardar_(u, d) {
     if (r.incluye !== undefined) r.incluye = incluye_(r.incluye).map(x => x.plataforma + ':' + x.n).join('|');
     if (r.caduca !== undefined && r.caduca && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.caduca))) r.caduca = '';
     if (r.garantia !== undefined) r.garantia = Math.max(0, Math.min(3650, parseInt(r.garantia, 10) || 0));
+    // Catálogo: subcategoría, frase destacada, beneficios y precio especial desde N piezas
+    if (r.sub !== undefined) r.sub = txt_(r.sub, 40);
+    if (r.lema !== undefined) r.lema = txt_(r.lema, 90);
+    if (r.puntos !== undefined) r.puntos = String(r.puntos || '').split('|').map(x => txt_(x, 80)).filter(Boolean).slice(0, 6).join('|');
+    if (r.precioEsp !== undefined) { r.precioEsp = r2_(Number(r.precioEsp) || 0); if (r.precioEsp < 0) throw new Error('Los montos no pueden ser negativos'); }
+    if (r.minEsp !== undefined) r.minEsp = Math.max(0, Math.min(999, parseInt(r.minEsp, 10) || 0));
+    { const pe = r.precioEsp !== undefined ? r.precioEsp : prev ? prev.precioEsp : 0, me = r.minEsp !== undefined ? r.minEsp : prev ? prev.minEsp : 0, pr = r.precio !== undefined ? r.precio : prev ? prev.precio : 0;
+      if (pe > 0 && me < 2) throw new Error('Escribe desde cuántas piezas vale el precio especial (2 o más)');
+      if (pe > 0 && pr > 0 && pe >= pr) throw new Error('El precio especial debe ser menor que el precio normal'); }
     if (r.giro !== undefined) r.giro = own_(GIROS, r.giro) && girosActivos_().indexOf(r.giro) > 0 ? r.giro : ''; // vacío = giro principal
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
     const stockIni = r.stock;
@@ -2488,7 +2517,8 @@ function cargarEjemplos_(u, d) {
     if (existentes.indexOf(x[0].toLowerCase()) >= 0) return;
     const p = upsert_('Productos', { codigo: 'EJ' + String(i + 1).padStart(3, '0'), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
-      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid });
+      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid,
+      sub: x[7] && x[7].sub || '', lema: x[7] && x[7].lema || '', puntos: x[7] && x[7].puntos || '', precioEsp: x[7] && x[7].precioEsp || 0, minEsp: x[7] && x[7].minEsp || 0 });
     if (p.tipo === 'producto' && x[5] > 0) moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
     n++;
   });
@@ -2727,6 +2757,7 @@ function venta_(u, d, interno) {
     const h0 = hoy_();
     d.sus.forEach(sd => { if (sd.vence && sd.vence < h0) throw new Error('Una fecha de vencimiento ya pasó'); (Array.isArray(sd.asig) ? sd.asig : []).forEach(a => { if (a.vence && a.vence < h0) throw new Error('La fecha de vencimiento de ' + (a.plataforma || 'una plataforma') + ' ya pasó'); }); });
   }
+  const sumaP = {}; d.items.forEach(i => { if (i && i.productoId) sumaP[i.productoId] = (sumaP[i.productoId] || 0) + (Number(i.cantidad) || 0); });
   const items = d.items.map(i => {
     if (!i || typeof i !== 'object') throw new Error('Un artículo del ticket no es válido');
     const p = i.productoId ? pm[i.productoId] : null;
@@ -2738,7 +2769,8 @@ function venta_(u, d, interno) {
     let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? p.precio : 0) : r2_(i.precio);
     if (p && u.rol !== 'admin' && !precioLigado(p)) { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
       const delPedido = preciosPedido[p.id];
-      if (Math.abs(precio - p.precio) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005)) precio = delPedido !== undefined ? delPedido : p.precio;
+      const esp = precioCant_(p, sumaP[p.id]);
+      if (Math.abs(precio - p.precio) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005) && !(esp && Math.abs(precio - esp) < 0.005)) precio = delPedido !== undefined ? delPedido : p.precio;
     }
     if (precio < 0) throw new Error('Precio no válido');
     const desc = p ? p.nombre + (i.variante ? ' · ' + txt_(i.variante, 60) : '') : txt_(i.descripcion, 80);
@@ -4250,7 +4282,7 @@ function tiendaNeg_(d) {
 function tiendaInfo_(d) {
   const cfg = tiendaNeg_(d);
   const ver = cfg.tiendaMostrarStock === 'si', sin = cfg.tiendaSinStock === 'si', nuevoDesde = diasAtras_(15);
-  const activos = girosActivos_(cfg);
+  const activos = girosActivos_(cfg), catOn = modOn_('catalogo');
   return {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
@@ -4260,10 +4292,13 @@ function tiendaInfo_(d) {
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
         datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null,
       giros: activos.map(g => ({ id: g, n: GIROS[g].n })),
+      catalogo: catOn, secciones: catOn ? parseJ_(cfg.tiendaSecciones, {}) : {}, ordenCats: catOn ? GIROS.catalogo.cats : [],
       compras: activos.indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0 ? { cambio: Number(cfg.comprasCambio) || 0, recargo: Math.max(0, Number(cfg.comprasRecargo) || 0), envio: Math.max(0, Number(cfg.comprasEnvio) || 0),
         anticipo: Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0)), dias: cfg.comprasDias, tiendas: cfg.comprasTiendas } : null },
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
       const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '', g: giroDeProd_(p, activos) };
+      if (p.sub) o.sub = p.sub; if (p.lema) o.lema = p.lema; if (p.puntos) o.puntos = p.puntos; if (p.codigo && catOn && !/^EJ\d/.test(p.codigo)) o.codigo = p.codigo;
+      if (p.precioEsp > 0 && p.minEsp > 1) { o.precioEsp = p.precioEsp; o.minEsp = p.minEsp; }
       if (String(p.creado).slice(0, 10) >= nuevoDesde) o.nuevo = true;
       if (p.tipo === 'servicio') o.serv = 1;
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
@@ -4326,6 +4361,7 @@ function pedir_(d) {
     else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: p.precio, total: r2_(cant * p.precio) });
   });
   if (!items.length) throw new Error('Tu pedido está vacío');
+  items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.precio = pe; i.total = r2_(i.cantidad * pe); } });
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   const min = Number(cfg.tiendaMinimo) || 0;
   if (min > 0 && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));

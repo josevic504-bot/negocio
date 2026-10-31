@@ -784,6 +784,31 @@ body.en-tienda{padding-bottom:110px}
 .op-l{display:block;margin:14px 0 7px}
 .op-g{display:flex;flex-wrap:wrap;gap:7px}
 .op-g .chip{min-width:44px;justify-content:center}
+/* Catálogo: secciones grandes, colores, precio por cantidad y ficha */
+.t-secs{display:grid;gap:12px;margin:4px 0 14px}@media(min-width:760px){.t-secs{grid-template-columns:1fr 1fr}}
+.t-sec{position:relative;min-height:118px;border:0;border-radius:22px;overflow:hidden;cursor:pointer;text-align:left;font:inherit;padding:18px 20px;display:flex;flex-direction:column;justify-content:center;gap:8px;color:#fff;
+  background:linear-gradient(120deg,color-mix(in srgb,var(--sc) 75%,#fff),var(--sc));box-shadow:0 10px 24px color-mix(in srgb,var(--sc) 28%,transparent);transition:transform .15s}
+.t-sec:active{transform:scale(.98)}.t-sec.fo{background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 70%,transparent),transparent 75%),var(--sf) center/cover}
+.t-sec b{align-self:flex-start;background:rgba(255,255,255,.88);color:#2a2a2a;font-family:var(--serif,Georgia,serif);font-style:italic;font-weight:500;font-size:26px;padding:6px 16px;border-radius:8px}
+.t-sec small{font-weight:600;font-size:12.5px;text-shadow:0 1px 3px rgba(0,0,0,.35);max-width:80%}
+.t-sec .n{position:absolute;right:16px;top:14px;font-size:12px;font-weight:700;background:rgba(0,0,0,.18);padding:3px 9px;border-radius:12px}
+.t-banda{position:relative;border-radius:22px;overflow:hidden;min-height:118px;display:flex;align-items:flex-end;padding:16px 20px;margin:4px 0 10px;color:#fff;background:linear-gradient(120deg,color-mix(in srgb,var(--sc) 75%,#fff),var(--sc))}
+.t-banda.fo{background:linear-gradient(0deg,color-mix(in srgb,var(--sc) 85%,transparent),transparent 80%),var(--sf) center/cover}
+.t-banda h2{margin:0;font-family:var(--serif,Georgia,serif);font-style:italic;font-weight:400;font-size:36px;text-shadow:0 2px 8px rgba(0,0,0,.18)}
+.t-banda button{position:absolute;left:12px;top:12px;border:0;border-radius:18px;background:rgba(255,255,255,.9);color:#333;font:inherit;font-size:13px;font-weight:600;padding:6px 12px;display:flex;align-items:center;gap:4px;cursor:pointer}
+.sp-dots{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}.sp-dots u{width:13px;height:13px;border-radius:50%;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}.sp-dots i{font-style:normal;font-size:11px;color:var(--mut)}
+.sp-esp{font-size:11.5px;font-weight:700;color:var(--pri);margin-top:2px}
+.cat-tag{display:inline-block;background:var(--pri);color:#fff;font-size:12.5px;padding:3px 11px;border-radius:4px;margin:2px 0 6px}
+.cat-lema{font-family:var(--serif,Georgia,serif);font-style:italic;font-size:21px;line-height:1.25;color:var(--pri);margin:8px 0 6px}
+.cat-pun{margin:6px 0 4px;padding-left:20px;line-height:1.75;font-size:14.5px}.cat-cod{font-size:12.5px;color:var(--mut);margin-top:4px}
+.op-g .tono{border:0;background:none;font:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;width:62px;padding:2px 0;color:var(--mut);font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.op-g .tono u{width:38px;height:38px;border-radius:50%;display:block;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);transition:transform .15s}.op-g .tono.on{color:var(--txt);font-weight:700}.op-g .tono.on u{outline:2.5px solid var(--pri);outline-offset:3px;transform:scale(1.04)}
+.esp-box{display:flex;gap:10px;margin:14px 0 4px}.esp-box div{flex:1;border:1.5px solid var(--line);border-radius:14px;padding:9px 12px;font-size:12px;color:var(--mut)}.esp-box b{display:block;font-size:21px;color:var(--txt);margin-top:2px}
+.esp-box .on{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 9%,transparent)}.esp-falta{font-size:12.5px;color:var(--pri);font-weight:600;text-align:center;margin-top:6px}
+.pf-sw{display:flex;flex-wrap:wrap;gap:10px;margin:-2px 0 12px}.pf-sw label{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:var(--mut);cursor:pointer;max-width:70px;text-align:center}
+.pf-sw input[type=color]{width:34px;height:34px;border:0;border-radius:50%;padding:0;background:none;cursor:pointer}.pf-sw input[type=color]::-webkit-color-swatch-wrapper{padding:0}.pf-sw input[type=color]::-webkit-color-swatch{border:1px solid rgba(0,0,0,.12);border-radius:50%}
+.sec-col{width:44px;height:44px;flex:none}.sec-col input{width:44px;height:44px;border:0;padding:0;border-radius:12px;background:none;cursor:pointer}.sec-col input::-webkit-color-swatch-wrapper{padding:0}.sec-col input::-webkit-color-swatch{border:0;border-radius:12px}
+.sec-fo{width:44px;height:44px;border-radius:12px;object-fit:cover;flex:none}
 .tk .tx .op{display:block;color:var(--pri);font-size:12px}
 .opc-row{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,2fr);gap:8px}
 .qty.big button{width:46px;height:46px;font-size:24px}.qty.big span{min-width:44px;font-size:20px}
@@ -1285,7 +1310,7 @@ const ICP = {
 const ICI = { cart: 'vender', inbox: 'pedidos', chat: 'mensajes', store: 'tienda', box: 'productos', tag: 'precios', layers: 'proyectos', users: 'clientes', truck: 'proveedores', bag: 'compras', receipt: 'gastos', wallet: 'caja', doc: 'ventas', chart: 'reportes', user: 'usuarios', gear: 'ajustes', cal: 'agenda', paw: 'mascotas', syringe: 'vacunas', steth: 'mascotas', wrench: 'ordenes', bed: 'hospedaje', gift: 'encargos', clock: 'vencimientos', key: 'cuentas', coin: 'qa_cobrar', help: 'ayuda', sparkle: 'qa_resumen' };
 const ICI_QA = { receipt: 'qa_gasto', truck: 'qa_compra' };
 const icImg = k => `<img class="ici" src="iconos/${k}.webp" alt="" loading="lazy" decoding="async">`;
-const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'tecnologia', 'belleza', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
+const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
 const giroImg = (id, cls) => `<img class="gimg ${cls || ''}" src="iconos/g_${GIROS_IMG.includes(id) ? id : 'otro'}.webp" alt="" decoding="async">`;
 const ic = (n, sz = 22) => `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICP[n] || ''}</svg>`;
 
@@ -1433,7 +1458,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.26';
+const APP_VER = '1.9.27';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1515,6 +1540,14 @@ const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ
 const colorDe = s => { const c = ['t-pri', 't-azul', 't-morado', 't-cian', 't-naranja', 't-rojo', 't-verde', 't-acc']; let h = 0; String(s || '').split('').forEach(ch => { h = (h * 31 + ch.charCodeAt(0)) | 0; }); return c[Math.abs(h) % c.length]; };
 // Ilustraciones de línea por categoría/nombre, para productos sin foto (dibujos propios, 48×48)
 const ILUS = [
+  // Maquillaje (catálogo)
+  [/paleta|sombras? de ojos|sombras \d/, 'M8 12h32a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3zM15 19a3 3 0 1 0 .1 0M24 19a3 3 0 1 0 .1 0M33 19a3 3 0 1 0 .1 0M15 29a3 3 0 1 0 .1 0M24 29a3 3 0 1 0 .1 0M33 29a3 3 0 1 0 .1 0'],
+  [/polvo|blush|rubor|iluminador|bronce|highlight|compacto/, 'M24 14a14 9 0 1 0 .1 0M10 23v6a14 9 0 0 0 28 0v-6M24 18a8 4.5 0 1 0 .1 0M14 12l-4-6M34 12l4-6M10 6h28'],
+  [/primer|base liquida|corrector|concealer|serum|hidratante/, 'M20 5h8v7h-8zM17 12h14l2 6v22a3 3 0 0 1-3 3H18a3 3 0 0 1-3-3V18zM15 24h18'],
+  [/delineador|lapiz|pluma|liner/, 'M34 6l8 8-22 22-10 2 2-10zM30 10l8 8M12 34l2 2'],
+  [/pestan|mascara de|rimel/, 'M14 42l14-30M28 12l4-4M30 6l6 6M27 15l5 2M25 19l5 2M23 23l5 2M10 30h8v12h-8z'],
+  [/ceja/, 'M8 40l20-20M28 20l6-6 6 6-6 6zM30 12l2-6M38 20l6-2M26 26l-2 2'],
+  [/gloss|balsamo|lip oil|tint/, 'M19 18h10l-1 24h-8zM20 18l2-12h4l2 12M18 30h12'],
   // Veterinaria
   [/vacuna|antirrab|triple felina|desparasit|inyecc/, 'M34 6l8 8M38 10l-6 6M29 11l8 8M33 15L16 32h-5v-5l17-17M11 37l-6 6M18 21l3 3M23 16l3 3'],
   [/consulta|chequeo|revision|control o revision|veterin/, 'M12 6h-2v10a9 9 0 0 0 18 0V6h-2M19 25v4a10 10 0 0 0 20 0v-4M35 21a4 4 0 1 0 8 0a4 4 0 1 0-8 0'],
@@ -2182,7 +2215,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Catálogo de maquillaje'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -3538,7 +3571,18 @@ ACC.cuenta = () => abrirCuenta('hoy');
 ACC.cuentaPer = el => abrirCuenta(el.dataset.k);
 
 /* ===================== VENDER ===================== */
-function guardarTicket() { LS.set(mk('ticket'), JSON.stringify(S.ticket)); }
+function guardarTicket() { ajustarEsp(); LS.set(mk('ticket'), JSON.stringify(S.ticket)); }
+// Catálogo: si lleva la cantidad, el producto pasa al precio especial (y regresa al normal si baja). No toca precios cambiados a mano ni los de un pedido.
+function ajustarEsp() {
+  if (!S.ticket || !Array.isArray(S.ticket.items) || !S.productos) return;
+  const suma = {}; S.ticket.items.forEach(i => { if (i.productoId) suma[i.productoId] = (suma[i.productoId] || 0) + num(i.cantidad); });
+  S.ticket.items.forEach(i => {
+    if (!i.productoId || i.precioMan) return;
+    const p = byId(S.productos, i.productoId); if (!p || !(p.precioEsp > 0) || !(p.minEsp > 1)) return;
+    if (Math.abs(i.precio - p.precio) > 0.004 && Math.abs(i.precio - p.precioEsp) > 0.004) return;
+    i.precio = suma[i.productoId] >= p.minEsp ? p.precioEsp : p.precio;
+  });
+}
 // E3: si un precio cambió mientras el producto estaba en el ticket, se cobra el precio de hoy (salvo los puestos a mano,
 // los de un pedido en línea y los de una orden o cita, que tienen su precio acordado). Las suscripciones: precio × meses.
 function refrescarPrecios() {
@@ -4402,6 +4446,13 @@ function formProducto(p, onSave, pre) {
         <label class="chk"><input type="checkbox" id="pf-conisv" ${S.config.preciosConISV !== 'no' ? 'checked' : ''}> Sumar el ISV al precio</label>
         <div class="sug" id="pf-sug"></div></div>
       ${!nuevo ? `<small class="hint">El costo promedio se actualiza solo con cada compra.</small>` : `<small class="hint">¿No sabes el costo? Déjalo vacío y escribe solo el precio.</small>`}</div>
+    ${modOn('catalogo') ? `<div class="precio-box"><h4>${ic('sparkle', 18)} Catálogo</h4>
+      <div class="f2"><label class="fld"><span>Precio especial</span><input id="pf-pe" inputmode="decimal" value="${p.precioEsp ? p.precioEsp : ''}" placeholder="Ej. 200"></label>
+      <label class="fld"><span>Desde cuántas piezas</span><input id="pf-me" inputmode="numeric" value="${p.minEsp ? p.minEsp : ''}" placeholder="3"></label></div>
+      <small class="hint">Detalle al precio normal y especial cuando llevan esa cantidad o más (sumando todos los tonos). Se aplica solo en la tienda y en Vender.</small>
+      <div class="f2"><label class="fld"><span>Subcategoría</span><input id="pf-sub" list="dl-sub" maxlength="40" value="${esc(p.sub || '')}" placeholder="Ej. Corrección, Base, Gloss"><datalist id="dl-sub">${[...new Set(S.productos.map(x => x.sub).filter(Boolean))].sort().map(x => `<option value="${esc(x)}">`).join('')}</datalist></label>
+      <label class="fld"><span>Frase destacada</span><input id="pf-lema" maxlength="90" value="${esc(p.lema || '')}" placeholder="Ej. Hidratación que revela tu brillo."></label></div>
+      <label class="fld"><span>Beneficios (uno por línea)</span><textarea id="pf-pun" rows="3" maxlength="500" placeholder="Textura ligera&#10;Larga duración&#10;Para todo tipo de piel">${esc(String(p.puntos || '').split('|').join('\n'))}</textarea></label></div>` : ''}
     <label class="sw-row"><input type="checkbox" id="pf-ctrl" ${p.tipo === 'producto' ? 'checked' : ''}><span class="sw"></span><div><b>Controlar existencias</b><small>Apágalo para servicios o platos que no llevan inventario</small></div></label>
     <div id="pf-stk" class="f2">${nuevo ? `<label class="fld"><span>Existencia inicial</span><input id="pf-stock" inputmode="decimal" placeholder="0"></label>` : `<div class="fld"><span>Existencias</span><div class="stk-now"><b>${cant(p.stock)}</b><button class="btn sm" type="button" data-a="pfAjuste">Ajustar</button><button class="btn sm ghost" type="button" data-a="pfKardex">Movimientos</button></div></div>`}
       <label class="fld"><span>Avisar cuando queden</span><input id="pf-min" inputmode="decimal" value="${p.stockMin || ''}" placeholder="0"></label></div>
@@ -4467,6 +4518,14 @@ function formProducto(p, onSave, pre) {
     if (nuevo) reg.stock = num(($('#pf-stock', h.el) || {}).value);
     const gSel = $('#pf-giro .chip.on', h.el); if (gSel) reg.giro = gSel.dataset.g === girosOn()[0] ? '' : gSel.dataset.g;
     if ($('#pf-tienda', h.el)) { reg.tienda = $('#pf-tienda', h.el).checked; reg.descripcion = $('#pf-desc', h.el).value.trim(); }
+    if ($('#pf-pe', h.el)) {
+      reg.precioEsp = r2($('#pf-pe', h.el).value) || 0; reg.minEsp = parseInt($('#pf-me', h.el).value, 10) || 0;
+      if (reg.precioEsp > 0 && reg.minEsp < 2) { $('#pf-me', h.el).focus(); throw new Error('Escribe desde cuántas piezas vale el precio especial (2 o más)'); }
+      if (reg.precioEsp > 0 && reg.precioEsp >= reg.precio) { $('#pf-pe', h.el).focus(); throw new Error('El precio especial debe ser menor que el precio normal'); }
+      if (!reg.precioEsp) reg.minEsp = 0;
+      reg.sub = $('#pf-sub', h.el).value.trim(); reg.lema = $('#pf-lema', h.el).value.trim();
+      reg.puntos = $('#pf-pun', h.el).value.split('\n').map(x => x.trim()).filter(Boolean).join('|');
+    }
     if ($('.pf-on', h.el)) reg.opciones = opcLeerForm(h.el);
     if ($('#pf-act', h.el)) reg.activo = $('#pf-act', h.el).checked;
     if ($('#pf-cad', h.el)) reg.caduca = $('#pf-cad', h.el).value;
@@ -4484,15 +4543,28 @@ function formProducto(p, onSave, pre) {
   h.botones(bs);
 }
 // E11: el bloque de opciones va arriba si algún giro activo filtra por talla/color; así nunca se pinta dos veces
-const opcArriba = () => (S.plus || modOn('variantes')) && girosOn().some(id => opcGiro(id).filtro);
+const opcArriba = () => (S.plus || modOn('variantes')) && (girosOn().some(id => opcGiro(id).filtro) || modOn('catalogo'));
 // Opciones que el cliente elige en la tienda (según el tipo de negocio)
 function opcForm(p) {
-  const cfg = opcGiro(S.config.giro), act = leerOpc(p.opciones);
+  const cfg = opcGiro(modOn('catalogo') ? 'catalogo' : S.config.giro), act = leerOpc(p.opciones, true);
   const filas = (act.length ? act : cfg.g.map(n => ({ n, v: [] }))).slice(0, 3); while (filas.length < 3) filas.push({ n: '', v: [] });
-  return `<div class="precio-box"><h4>${ic('layers', 18)} Opciones que elige el cliente</h4><small class="hint">Escribe cada opción separada por comas. Deja en blanco las que no uses.</small>
+  return `<div class="precio-box"><h4>${ic('layers', 18)} ${modOn('catalogo') ? 'Tonos y opciones' : 'Opciones que elige el cliente'}</h4><small class="hint">Escribe cada opción separada por comas. Deja en blanco las que no uses.${modOn('catalogo') ? ' Toca el círculo de cada tono para elegir su color: así lo ve tu cliente.' : ''}</small>
     ${filas.map((f, i) => `<div class="opc-row"><label class="fld"><span>Nombre</span><input class="pf-on" maxlength="30" value="${esc(f.n)}" placeholder="${esc(cfg.g[i] || 'Opción')}"></label>
-      <label class="fld"><span>Opciones</span><input class="pf-ov" maxlength="200" value="${esc(f.v.join(', '))}" placeholder="${esc(cfg.ej[i] || '')}"></label></div>`).join('')}</div>`;
+      <label class="fld"><span>Opciones</span><input class="pf-ov" maxlength="400" value="${esc(f.v.join(', '))}" placeholder="${esc(cfg.ej[i] || '')}"></label></div>${swForm(f.v.join(', '))}`).join('')}</div>`;
 }
+// Ruedas de color para cada tono (catálogo). El color se guarda junto al nombre: «Nude 1#fbe0cf»
+function swForm(t) {
+  if (!modOn('catalogo')) return '';
+  const l = String(t || '').split(',').map(x => x.trim()).filter(Boolean);
+  return `<div class="pf-sw">${l.map((x, i) => { const m = /^(.*?)#([0-9a-f]{6})$/i.exec(x), n = m ? m[1].trim() : x; return `<label title="Color de ${esc(n)}"><input type="color" class="pf-col" data-i="${i}" value="${m ? '#' + m[2].toLowerCase() : '#dddddd'}"><span>${esc(n)}</span></label>`; }).join('')}</div>`;
+}
+document.addEventListener('input', e => {
+  const ov = e.target.closest('.pf-ov');
+  if (ov && modOn('catalogo')) { const sw = ov.closest('.opc-row').nextElementSibling; if (sw && sw.classList.contains('pf-sw')) sw.outerHTML = swForm(ov.value); return; }
+  const c = e.target.closest('.pf-col'); if (!c) return;
+  const inp = c.closest('.pf-sw').previousElementSibling.querySelector('.pf-ov'), l = inp.value.split(',').map(x => x.trim()).filter(Boolean), i = Number(c.dataset.i);
+  if (l[i] !== undefined) { l[i] = l[i].replace(/#[0-9a-f]{6}$/i, '').trim() + c.value; inp.value = l.join(', '); }
+});
 function opcLeerForm(el) {
   const ns = $$('.pf-on', el), vs = $$('.pf-ov', el);
   return juntarOpc(ns.map((n, i) => ({ n: n.value.trim() || n.placeholder, v: vs[i].value.split(',').map(x => x.trim()).filter(Boolean) })).filter(x => x.n));
@@ -5506,6 +5578,16 @@ R.tienda = () => {
       <a class="btn wa sm" style="margin-top:10px" href="${waLink(CONTACTO_WA, 'Hola, quiero activar otra sección (giro) en la tienda de ' + (c.nombre || 'mi negocio'))}" target="_blank" rel="noopener">${ic('wa', 16)} Pedir otra sección</a>
       ${on.length > 1 ? '<small class="hint">Al crear o editar un producto eliges en qué sección aparece.</small>' : ''}`, on.length > 1 ? on.length + ' secciones' : '');
   }
+  if (modOn('catalogo')) { // Catálogo: cada categoría es una sección grande con su color o foto
+    const se = (() => { try { return JSON.parse(c.tiendaSecciones || '{}') || {}; } catch (e) { return {}; } })();
+    const ord = ((S.giros || []).find(g => g.id === 'catalogo') || {}).cats || [], pos = k => { const i = ord.indexOf(k); return i < 0 ? 999 : i; };
+    const cs = [...new Set(S.productos.filter(p => p.activo && p.tienda).map(p => p.categoria))].sort((a, b) => pos(a) - pos(b) || a.localeCompare(b));
+    h += sec('seccat', 'sparkle', 'Secciones del catálogo', `<p class="xs mut" style="margin-top:0">Tu tienda abre con una sección grande por cada categoría (como las páginas de un catálogo). Elige su color o ponle una foto.</p>
+      <div class="list">${cs.map((k, i) => { const x = se[k] || {}, col = /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : CAT_COL[i % CAT_COL.length], n = S.productos.filter(p => p.activo && p.tienda && p.categoria === k).length;
+        return `<div class="li">${x.f ? `<img class="sec-fo" src="${esc(fotoSrc(x.f))}" alt="">` : `<label class="sec-col" title="Color"><input type="color" data-sc="${esc(k)}" value="${col}"></label>`}<div class="tx"><b>${esc(k)}</b><small>${n} ${n === 1 ? 'producto' : 'productos'}${x.f ? ' · con foto' : ''}</small></div>
+          <label class="btn sm">${ic('cam', 15)} ${x.f ? 'Cambiar' : 'Foto'}<input type="file" accept="image/*" data-sf="${esc(k)}" hidden></label>${x.f ? `<button class="btn sm ghost" data-a="secQuitarFoto" data-k="${esc(k)}">Quitar</button>` : ''}</div>`; }).join('') || '<div class="empty">Agrega productos a la tienda para ver sus secciones</div>'}</div>
+      <small class="hint">El orden es el de tus categorías. Las subcategorías (Base, Gloss…) se ponen en cada producto.</small>`, cs.length ? cs.length + ' secciones' : '');
+  }
   if (girosOn().includes('compras')) h += sec('compras', 'globe', 'Compras en línea', `<p class="xs mut" style="margin-top:0">Tus clientes pegan el enlace del artículo y su precio en dólares; la tienda les calcula el precio en lempiras con estos datos.</p>
     <div class="f2"><label class="fld"><span>Tipo de cambio (L por US$1)</span><input data-k="comprasCambio" inputmode="decimal" value="${v('comprasCambio')}"></label><label class="fld"><span>Recargo o ganancia (%)</span><input data-k="comprasRecargo" inputmode="decimal" value="${v('comprasRecargo')}"></label></div>
     <div class="f2"><label class="fld"><span>Envío a Honduras por artículo (L)</span><input data-k="comprasEnvio" inputmode="decimal" value="${v('comprasEnvio')}"></label><label class="fld"><span>Anticipo para pedir (%)</span><input data-k="comprasAnticipo" inputmode="decimal" value="${v('comprasAnticipo')}"></label></div>
@@ -5578,6 +5660,21 @@ ACC.tema = async el => {
   S.config = c; guardarCache(); pintarHeader(); toast('Color aplicado: ' + TEMAS[el.dataset.t].n, 'ok', 1800);
 };
 ACC.modoColor = el => { LS.set('modoColor', el.dataset.m); aplicarTema(S.tema); $$('.modos .pay').forEach(x => x.classList.toggle('on', x === el)); };
+// Secciones del catálogo: color o foto por categoría (se guardan juntas en tiendaSecciones)
+const CAT_COL = ['#e8758f', '#9a83d8', '#f0806a', '#13a58b', '#5b8def', '#c98b5e', '#d45d9b', '#3fa7b5'];
+async function guardarSecciones(k, cambio) {
+  let se = {}; try { se = JSON.parse(S.config.tiendaSecciones || '{}') || {}; } catch (e) {}
+  se[k] = Object.assign({}, se[k] || {}, cambio);
+  const c = await api('guardar', { entidad: 'Config', registro: { tiendaSecciones: JSON.stringify(se) } }, true);
+  S.config = c; guardarCache();
+}
+document.addEventListener('change', async e => {
+  const col = e.target.closest('input[data-sc]'); if (col) { try { await guardarSecciones(col.dataset.sc, { c: col.value }); toast('Color guardado', 'ok', 1400); } catch (x) { err(x); } return; }
+  const f = e.target.closest('input[data-sf]'); if (!f || !f.files[0]) return;
+  try { loader(true); const d = await comprimirImagen(f.files[0], DEMO.on ? 480 : 1200); const r = await api('subirFoto', { data: d }, true); await guardarSecciones(f.dataset.sf, { f: r.foto }); toast('Foto de la sección guardada', 'ok'); S.params.sec = 'seccat'; render(); }
+  catch (x) { err(x); } finally { loader(false); }
+});
+ACC.secQuitarFoto = async el => { await guardarSecciones(el.dataset.k, { f: '' }); S.params.sec = 'seccat'; render(); };
 async function subirPortada(e) {
   const f = e.target.files[0]; if (!f) return;
   try {
@@ -6519,7 +6616,7 @@ ACC.cbPaqueteExcel = async () => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
@@ -6530,6 +6627,7 @@ const MODULOS_INFO = {
   agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios' },
   suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' },
   mascotas:      { n: 'Mascotas, recetas y vacunas', d: 'Expediente de cada mascota con su dueño, consultas con receta, carnet de vacunación y recordatorios por WhatsApp.', g: 'veterinaria' },
+  catalogo:      { n: 'Tienda estilo catálogo', d: 'Tu tienda abre con secciones grandes (como las páginas de un catálogo), cada producto lleva subcategoría, frase y beneficios, los tonos se eligen por color y hay precio especial desde cierta cantidad de piezas.', g: 'catálogo de maquillaje' },
   cotizaciones:  { n: 'Cotizaciones y contratos', d: 'Cotizaciones elegantes con plan de pagos; al aceptarlas se vuelven proyecto, los pagos quedan agendados y el cliente firma el contrato y el acta de entrega.', g: 'servicios' }
 };
 const modOn = k => !!S.config && (S.config[k] === 'si' || girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k)));
@@ -6577,7 +6675,7 @@ function elegirVariante(p) {
   if (!ops.length) return Promise.resolve('');
   return new Promise(res => {
     let r = null; const sel = {};
-    const h = hoja({ titulo: esc(p.nombre), cls: 'chica', html: `${ops.map((o, i) => `<div class="fld"><span>${esc(o.n)}</span><div class="chips" data-g="${i}">${o.v.map(v => `<button type="button" class="chip" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div></div>`).join('')}` });
+    const h = hoja({ titulo: esc(p.nombre), cls: 'chica', html: `${ops.map((o, i) => `<div class="fld"><span>${esc(o.n)}</span><div class="chips" data-g="${i}">${o.v.map(v => `<button type="button" class="chip" data-v="${esc(v)}">${o.hex && o.hex[v] ? `<u style="display:inline-block;width:13px;height:13px;border-radius:50%;background:${o.hex[v]};margin-right:6px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)"></u>` : ''}${esc(v)}</button>`).join('')}</div></div>`).join('')}` });
     h.b.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (!b) return; const g = b.closest('[data-g]'); sel[g.dataset.g] = b.dataset.v; $$('[data-v]', g).forEach(x => x.classList.toggle('on', x === b)); });
     h.onClose = () => res(r);
     h.botones([{ t: `${ic('cart', 18)} Agregar`, cls: 'pri', fn: () => { const falta = ops.findIndex((o, i) => !sel[i]); if (falta >= 0) throw new Error('Elige ' + ops[falta].n.toLowerCase()); r = ops.map((o, i) => sel[i]).join(' · '); h.cerrar(); } }]);
@@ -7879,6 +7977,11 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.27', fecha: '2026-10-31', items: [
+    { i: 'sparkle', t: 'Nuevo tipo de negocio: Catálogo de maquillaje', d: 'Para quien vende maquillaje al detalle y por mayor. Tu tienda en línea abre con secciones grandes (Rostro, Ojos, Labios…) como las páginas de un catálogo, y cada producto trae subcategoría, frase destacada y beneficios.' },
+    { i: 'palette', t: 'Tonos por color', d: 'Tus clientes eligen el tono tocando su color (Nude 1, Beige 2…) y el pedido te llega con el tono exacto. En el producto tocas el círculo de cada tono para ponerle su color.' },
+    { i: 'tag', t: 'Precio especial por cantidad', d: 'Detalle a un precio y especial desde cierta cantidad de piezas (por ejemplo L 140 y L 130 desde 3). Se aplica solo en la tienda, en el pedido y al vender.' }
+  ] },
   { v: '1.9.26', fecha: '2026-10-31', items: [
     { i: 'bell', t: 'Avisos aunque la app esté cerrada', d: 'Los pedidos de tu tienda en línea, los mensajes de tus clientes y las respuestas del administrador ahora te llegan al teléfono al momento, aunque tengas la app cerrada. Actívalos en Ajustes › Avisos (si ya los tenías, no tienes que hacer nada).' },
     { i: 'sparkle', t: 'Resumen de cada mañana', d: 'A las 7 a. m. te llega un aviso con tu día: lo que vence, quién te debe, los pedidos sin confirmar y lo agotado. Si no lo quieres, apágalo en Ajustes › Avisos.' },
@@ -8315,6 +8418,7 @@ const OPC_GIRO = {
   ferreteria: { g: ['Medida', 'Color'], ej: ['1/2", 3/4"', 'Negro, Rojo'] },
   repuestos:  { g: ['Vehículo', 'Marca'], ej: ['Toyota, Nissan', 'Bosch, NGK'] },
   belleza:    { g: ['Tono', 'Tamaño'], ej: ['Claro, Medio, Oscuro', '50 ml, 100 ml'] },
+  catalogo:   { g: ['Tono'], ej: ['Nude 1, Nude 3, Beige 2'] },
   comida:     { g: ['Elige', 'Tamaño'], ej: ['Res, Pollo, Cerdo', 'Normal, Grande'], nota: 'Nota para la cocina', notaEj: 'Sin cebolla, bien cocido…' },
   panaderia:  { g: ['Sabor', 'Tamaño'], ej: ['Chocolate, Vainilla', 'Pequeño, Grande'], nota: 'Dedicatoria o detalle', notaEj: 'Feliz cumpleaños, Ana' },
   servicios:  { g: ['Modalidad'], ej: ['A domicilio, En el local'], cita: true },
@@ -8327,16 +8431,23 @@ const OPC_GIRO = {
 };
 const opcGiro = g => OPC_GIRO[g] || OPC_GIRO.otro;
 // «Talla: S, M | Color: Negro» → [{ n: 'Talla', v: ['S','M'] }, { n: 'Color', v: ['Negro'] }]
-function leerOpc(t) {
-  return String(t || '').split('|').map(x => { const i = x.indexOf(':'); return i < 0 ? null : { n: x.slice(0, i).trim(), v: x.slice(i + 1).split(',').map(y => y.trim()).filter(Boolean) }; }).filter(x => x && x.n && x.v.length);
+// Un valor puede llevar su color (catálogo): «Nude 1#fbe0cf» → nombre «Nude 1» y o.hex['Nude 1'] = '#fbe0cf'. crudo = sin separar (para editar)
+function leerOpc(t, crudo) {
+  return String(t || '').split('|').map(x => {
+    const i = x.indexOf(':'); if (i < 0) return null;
+    const o = { n: x.slice(0, i).trim(), v: [], hex: {} };
+    x.slice(i + 1).split(',').map(y => y.trim()).filter(Boolean).forEach(y => { const m = /^(.*?)#([0-9a-f]{6})$/i.exec(y); if (m && !crudo) { const nm = m[1].trim(); o.v.push(nm); o.hex[nm] = '#' + m[2]; } else o.v.push(y); });
+    return o;
+  }).filter(x => x && x.n && x.v.length);
 }
+const tieneHex = o => o && o.hex && Object.keys(o.hex).length > 0;
 const juntarOpc = l => l.filter(x => x.n && x.v.length).map(x => x.n + ': ' + x.v.join(', ')).join(' | ');
 
 /* ===================== TIENDA EN LÍNEA (lo que ve el cliente) ===================== */
-const T = { info: null, id: '', cat: '', q: '', f: '', cart: {}, entrega: '', giro: '', compras: [] };
+const T = { info: null, id: '', cat: '', sub: '', q: '', f: '', cart: {}, entrega: '', giro: '', compras: [] };
 // Cómo se ve cada giro como sección (módulo) en la portada de la tienda
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
-  boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'],
+  boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Maquillaje', 'Rostro, ojos y labios', '#13a58b'],
   tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
   ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;
@@ -8396,7 +8507,12 @@ function tiendaCerrada(x) {
 }
 const tCant = () => Object.values(T.cart).reduce((a, x) => a + x, 0) + T.compras.reduce((a, x) => a + x.cantidad, 0);
 const tSubCompras = () => comprasOn() ? T.compras.reduce((a, x) => a + precioCompraT(x.usd) * x.cantidad, 0) : 0;
-const tSub = () => Object.keys(T.cart).reduce((a, k) => { const p = T.info.productos.find(x => x.id === kId(k)); return a + (p ? p.precio * T.cart[k] : 0); }, 0) + tSubCompras();
+// Precio por cantidad (catálogo): la suma de todos los tonos del producto decide si vale el especial
+const precioT = (p, n) => p.precioEsp && n >= p.minEsp ? p.precioEsp : p.precio;
+const tSub = () => Object.keys(T.cart).reduce((a, k) => { const p = T.info.productos.find(x => x.id === kId(k)); return a + (p ? precioT(p, enCarrito(p.id)) * T.cart[k] : 0); }, 0) + tSubCompras();
+const catT = () => !!(T.info && T.info.negocio.catalogo) && (tGiros().length <= 1 || T.giro === 'catalogo');
+const secDe = (c, i) => { const x = (T.info.negocio.secciones || {})[c] || {}; return { c: /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : CAT_COL[i % CAT_COL.length], f: x.f || '' }; };
+const secEstilo = (c, i) => { const x = secDe(c, i); return `--sc:${x.c}${x.f ? `;--sf:url('${esc(fotoAncha(x.f))}')` : ''}`; };
 function guardarCarrito() { LS.set(tKey('carrito'), JSON.stringify(T.cart)); }
 // ¿Está abierto ahora? (según horario y días de Ajustes)
 function abiertoAhora(n) {
@@ -8415,8 +8531,18 @@ const redSocial = (v, base) => { v = String(v || '').trim(); if (!v) return ''; 
 function pintarTienda() {
   const n = T.info.negocio, gs = tGiros(), multi = gs.length > 1, portada = multi && !T.giro;
   const ps = T.info.productos.filter(p => !T.giro || p.g === T.giro);
-  const cats = [...new Set(ps.map(p => p.categoria))];
-  if (T.cat && !cats.includes(T.cat)) T.cat = '';
+  const ord = n.ordenCats || [], pos = c => { const i = ord.indexOf(c); return i < 0 ? 999 : i; };
+  const cats = [...new Set(ps.map(p => p.categoria))].sort((a, b) => pos(a) - pos(b) || a.localeCompare(b));
+  if (T.cat && T.cat !== '*' && !cats.includes(T.cat)) T.cat = '';
+  const cat = catT() && cats.length > 1;
+  if (!cat && T.cat === '*') T.cat = '';
+  const subs = cat && T.cat && T.cat !== '*' ? [...new Set(ps.filter(p => p.categoria === T.cat).map(p => p.sub).filter(Boolean))] : [];
+  if (T.sub && !subs.includes(T.sub)) T.sub = '';
+  const secs = cat && !T.cat ? `<div class="t-secs" id="t-secs">${cats.map((c, i) => { const x = secDe(c, i), l = ps.filter(p => p.categoria === c), sb = [...new Set(l.map(p => p.sub).filter(Boolean))];
+      return `<button class="t-sec ${x.f ? 'fo' : ''}" data-sec="${esc(c)}" style="${secEstilo(c, i)}"><span class="n">${l.length}</span><b>${esc(c)}</b><small>${esc(sb.slice(0, 4).join(' · ') || (l.length === 1 ? '1 producto' : l.length + ' productos'))}</small></button>`; }).join('')}
+      <button class="chip" data-sec="*" style="justify-self:center">${ic('grid', 15)} Ver todos los productos</button></div>` : '';
+  const banda = cat && T.cat ? (() => { const i = Math.max(0, cats.indexOf(T.cat)), x = T.cat === '*' ? { c: 'var(--pri)', f: '' } : secDe(T.cat, i);
+      return `<div class="t-banda ${x.f ? 'fo' : ''}" style="${T.cat === '*' ? '--sc:var(--pri)' : secEstilo(T.cat, i)}"><button data-sec="">${ic('left', 15)} Secciones</button><h2>${T.cat === '*' ? 'Todo el catálogo' : esc(T.cat)}</h2></div>`; })() : '';
   const giroAct = T.giro || (gs[0] && gs[0].id) || n.gid;
   const conEnlace = comprasOn() && (T.giro === 'compras' || (!multi && giroAct === 'compras'));
   const mods = portada ? `<div class="t-mods" id="t-mods">${gs.map(g => { const m = modT(g.id), c = T.info.productos.filter(p => p.g === g.id).length;
@@ -8464,7 +8590,8 @@ function pintarTienda() {
       <div class="shop-h2" id="t-cat"><span>${portada ? '¿Qué deseas comprar hoy?' : 'Nuestro catálogo'}</span><small>${portada ? gs.length + ' secciones' : ps.length + ' ' + (ps.length === 1 ? 'producto' : 'productos')}</small></div>
       ${mods}${modH}${enl}
       <div class="shop-srch" ${portada || (conEnlace && !ps.length) ? 'hidden' : ''}><div class="srch">${ic('search', 18)}<input id="t-q" placeholder="¿Qué estás buscando?" value="${esc(T.q)}"></div>
-      ${cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${filtroTienda()}</div>
+      ${cat ? '' : cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${filtroTienda()}</div>
+      ${portada ? '' : secs + banda}${subs.length > 1 ? `<div class="chips" style="margin:0 0 12px" id="t-subs"><button class="chip ${!T.sub ? 'on' : ''}" data-sub="">Todo</button>${subs.map(c => `<button class="chip ${T.sub === c ? 'on' : ''}" data-sub="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}
       <div class="pgrid shop-grid" id="t-grid" ${portada ? 'hidden' : ''}></div>
       <div class="shop-foot" id="t-contacto"><div class="fcol fbrand"><div class="fl">${logoChico}</div><div class="fn">${esc(n.nombre)}</div>${n.eslogan ? `<div class="fs">${esc(n.eslogan)}</div>` : ''}<div class="fs">Pedidos en línea · Gracias por preferirnos</div></div>
         <div class="fcol fdesk"><div class="ft">Contacto</div>${n.direccion ? `<div>${ic('map', 15)} ${esc(n.direccion)}</div>` : ''}${n.telefono ? `<div>${ic('wa', 15)} <a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}${n.horario ? `<div>${ic('clock', 15)} ${esc(n.horario)}</div>` : ''}</div>
@@ -8479,6 +8606,8 @@ function pintarTienda() {
     const c = e.target.closest('[data-p]'); if (c) tProducto(c.dataset.p);
   });
   $('#tienda').onclick = e => {
+    const sc = e.target.closest('[data-sec]'); if (sc) { T.cat = sc.dataset.sec; T.sub = ''; pintarTienda(); const c = $('#t-cat'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+    const sb = e.target.closest('[data-sub]'); if (sb) { T.sub = sb.dataset.sub; $$('#t-subs .chip').forEach(x => x.classList.toggle('on', x === sb)); gridTienda(); return; }
     const md = e.target.closest('[data-mod]'); if (md) { T.giro = md.dataset.mod; T.cat = ''; T.f = ''; T.q = ''; T.cfg = opcGiro(T.giro || n.gid); pintarTienda(); const c = $('#t-cat'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (e.target.closest('[data-compra]')) return tCompra();
     if (e.target.closest('[data-chat]')) return chatTienda('');
@@ -8503,9 +8632,13 @@ function filtroTienda() {
 const tieneValor = (p, n, v) => p.ops.some(o => norm(o.n) === norm(n) && o.v.includes(v));
 function gridTienda() {
   const q = norm(T.q);
-  const l = T.info.productos.filter(p => (!T.giro || p.g === T.giro) && (!T.cat || p.categoria === T.cat) && (!T.f || tieneValor(p, T.cfg.filtro, T.f)) && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q) || norm(p.descripcion).includes(q) || norm(p.opciones).includes(q)));
-  $('#t-grid').innerHTML = l.map(p => `<div class="pc sp-card ${p.agotado ? 'dis' : ''}" data-p="${p.id}">${prodFoto(p, (p.nuevo && !p.agotado ? '<span class="nw">Nuevo</span>' : '') + (enCarrito(p.id) ? `<span class="qn">${enCarrito(p.id)}</span>` : '') + (p.agotado ? '<span class="st out">Agotado</span>' : p.stock !== undefined ? `<span class="st">${cant(p.stock)} disp.</span>` : ''))}
-    <div class="bd">${p.categoria ? `<div class="cat">${esc(p.categoria)}</div>` : ''}<div class="nm">${esc(p.nombre)}</div>${p.ops.length ? `<div class="sp-op">${esc(p.ops[0].v.join(' · '))}</div>` : ''}<div class="row"><div class="pr n">${money(p.precio)}</div>${p.agotado ? '' : `<button class="sp-add" data-add="${p.id}" aria-label="Agregar">${ic('plus', 16)}</button>`}</div></div></div>`).join('') || '<div class="empty" style="grid-column:1/-1">No encontramos productos con esa búsqueda</div>';
+  const enCat = catT() && T.cat === '*' ? '' : T.cat;
+  const l = T.info.productos.filter(p => (!T.giro || p.g === T.giro) && (!enCat || p.categoria === enCat) && (!T.sub || p.sub === T.sub) && (!T.f || tieneValor(p, T.cfg.filtro, T.f)) && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q) || norm(p.sub || '').includes(q) || norm(p.descripcion).includes(q) || norm(p.opciones).includes(q)));
+  // Catálogo: con las secciones a la vista, los productos salen al elegir una (o al buscar)
+  const g = $('#t-grid'), oculto = !!$('#t-secs') && !q; g.hidden = oculto || (tGiros().length > 1 && !T.giro);
+  const tonos = p => { const o = p.ops.find(tieneHex); if (!o) return ''; return `<div class="sp-dots">${o.v.slice(0, 7).map(v => `<u style="background:${o.hex[v] || '#ddd'}" title="${esc(v)}"></u>`).join('')}${o.v.length > 7 ? `<i>+${o.v.length - 7}</i>` : ''}</div>`; };
+  g.innerHTML = l.map(p => `<div class="pc sp-card ${p.agotado ? 'dis' : ''}" data-p="${p.id}">${prodFoto(p, (p.nuevo && !p.agotado ? '<span class="nw">Nuevo</span>' : '') + (enCarrito(p.id) ? `<span class="qn">${enCarrito(p.id)}</span>` : '') + (p.agotado ? '<span class="st out">Agotado</span>' : p.stock !== undefined ? `<span class="st">${cant(p.stock)} disp.</span>` : ''))}
+    <div class="bd">${p.sub || p.categoria ? `<div class="cat">${esc(p.sub || p.categoria)}</div>` : ''}<div class="nm">${esc(p.nombre)}</div>${p.ops.find(tieneHex) ? tonos(p) : p.ops.length ? `<div class="sp-op">${esc(p.ops[0].v.join(' · '))}</div>` : ''}<div class="row"><div class="pr n">${money(p.precio)}</div>${p.agotado ? '' : `<button class="sp-add" data-add="${p.id}" aria-label="Agregar">${ic('plus', 16)}</button>`}</div>${p.precioEsp ? `<div class="sp-esp">${money(p.precioEsp)} desde ${p.minEsp} piezas</div>` : ''}</div></div>`).join('') || (oculto ? '' : '<div class="empty" style="grid-column:1/-1">No encontramos productos con esa búsqueda</div>');
   barTienda();
 }
 function maxDe(p) { return p.agotado ? 0 : p.max !== undefined ? p.max : p.stock !== undefined ? Math.floor(p.stock) : 999; }
@@ -8548,12 +8681,15 @@ function tProducto(id) {
   p.ops.forEach(o => { if (o.v.length === 1) sel[o.n] = o.v[0]; });
   if (T.f && cfg.filtro) { const o = p.ops.find(x => norm(x.n) === norm(cfg.filtro)); if (o && o.v.includes(T.f)) sel[o.n] = T.f; }
   let n = 1, turno = '';
-  const opsHTML = p.ops.map((o, i) => `<span class="op-l">${esc(o.n)}</span><div class="op-g" data-g="${i}">${o.v.map(v => `<button type="button" class="chip ${sel[o.n] === v ? 'on' : ''}" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div>`).join('');
+  const opsHTML = p.ops.map((o, i) => `<span class="op-l">${esc(o.n)}${tieneHex(o) ? ` · ${o.v.length} colores` : ''}</span><div class="op-g" data-g="${i}">${o.v.map(v => tieneHex(o) ? `<button type="button" class="tono ${sel[o.n] === v ? 'on' : ''}" data-v="${esc(v)}"><u style="background:${o.hex[v] || '#ddd'}"></u>${esc(v)}</button>` : `<button type="button" class="chip ${sel[o.n] === v ? 'on' : ''}" data-v="${esc(v)}">${esc(v)}</button>`).join('')}</div>`).join('');
+  const puntos = String(p.puntos || '').split('|').filter(Boolean);
+  const catHTML = `${p.sub ? `<span class="cat-tag">${esc(p.sub)}</span>` : ''}${p.lema ? `<div class="cat-lema">${esc(p.lema)}</div>` : ''}${puntos.length ? `<ul class="cat-pun">${puntos.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}`;
+  const espHTML = p.precioEsp ? `<div class="esp-box" id="tp-esp"><div data-t="d">Detalle${p.minEsp > 2 ? ` (1–${p.minEsp - 1})` : ' (1)'}<b class="n">${money(p.precio)}</b></div><div data-t="e">Especial (desde ${p.minEsp})<b class="n">${money(p.precioEsp)}</b></div></div><div class="esp-falta" id="tp-falta"></div>` : '';
   const citaHTML = cfg.cita ? `<label class="fld" style="margin-top:14px"><span>Fecha que prefieres</span><input type="date" id="tp-fe" min="${hoy()}"></label>
     <span class="op-l">Hora</span><div class="op-g" id="tp-tu">${['Mañana', 'Tarde'].map(v => `<button type="button" class="chip" data-t="${v}">${v}</button>`).join('')}</div>` : '';
   const notaHTML = cfg.nota ? `<label class="fld" style="margin-top:14px"><span>${esc(cfg.nota)}${cfg.notaReq ? '' : ' (opcional)'}</span><input id="tp-no" maxlength="80" placeholder="${esc(cfg.notaEj || '')}" ${cfg.notaReq ? 'inputmode="text" autocomplete="off"' : ''}></label>` : '';
-  const h = hoja({ titulo: '', cls: 'prod-h', html: `<div class="prod-big">${prodFoto(p)}</div><h2 class="prod-n">${esc(p.nombre)}</h2><div class="prod-p n">${money(p.precio)}${p.unidad && p.unidad !== 'unidad' ? ` <small>por ${esc(p.unidad)}</small>` : ''}</div>
-    ${p.descripcion ? `<p class="prod-d">${esc(p.descripcion)}</p>` : ''}${p.agotado ? '<p class="neg"><b>Agotado por ahora</b></p>' : p.stock !== undefined ? `<p class="sm mut">${cant(p.stock)} disponibles</p>` : ''}
+  const h = hoja({ titulo: '', cls: 'prod-h', html: `<div class="prod-big">${prodFoto(p)}</div><h2 class="prod-n">${esc(p.nombre)}</h2>${catHTML}${p.precioEsp ? '' : `<div class="prod-p n">${money(p.precio)}${p.unidad && p.unidad !== 'unidad' ? ` <small>por ${esc(p.unidad)}</small>` : ''}</div>`}
+    ${p.descripcion ? `<p class="prod-d">${esc(p.descripcion)}</p>` : ''}${p.codigo ? `<div class="cat-cod">Cód.: ${esc(p.codigo)}</div>` : ''}${espHTML}${p.agotado ? '<p class="neg"><b>Agotado por ahora</b></p>' : p.stock !== undefined ? `<p class="sm mut">${cant(p.stock)} disponibles</p>` : ''}
     ${p.agotado ? '' : `${opsHTML}${citaHTML}${notaHTML}<div class="row" style="justify-content:center;margin:16px 0 4px"><div class="qty big"><button data-d="-1">−</button><span id="tp-n">1</span><button data-d="1">+</button></div></div>`}` });
   if (p.agotado) return;
   const falta = () => p.ops.find(o => !sel[o.n]);
@@ -8566,8 +8702,12 @@ function tProducto(id) {
   };
   const pinta = () => {
     $('#tp-n', h.el).textContent = n;
-    const f = falta();
-    h.botones([...(T.info.negocio.chat ? [{ t: ic('chat', 18), cls: 'icon', fn: () => { h.cerrar(); chatTienda(p.id); } }] : []), { t: f ? `Elige ${esc(f.n.toLowerCase())}` : `${ic('bag', 18)} ${cfg.cita ? 'Solicitar' : 'Agregar'} · ${money(p.precio * n)}`, cls: 'acc big', fn: () => {
+    const f = falta(), total = enCarrito(p.id) + n, pu = precioT(p, total);
+    if (p.precioEsp) {
+      $$('#tp-esp [data-t]', h.el).forEach(x => x.classList.toggle('on', (x.dataset.t === 'e') === (total >= p.minEsp)));
+      const fa = p.minEsp - total; $('#tp-falta', h.el).textContent = fa > 0 ? `Lleva ${fa} más (de cualquier tono) y pagas ${money(p.precioEsp)} cada uno` : enCarrito(p.id) ? `✓ Con lo que ya llevas, pagas ${money(p.precioEsp)} cada uno` : `✓ Pagas ${money(p.precioEsp)} cada uno`;
+    }
+    h.botones([...(T.info.negocio.chat ? [{ t: ic('chat', 18), cls: 'icon', fn: () => { h.cerrar(); chatTienda(p.id); } }] : []), { t: f ? `Elige ${esc(f.n.toLowerCase())}` : `${ic('bag', 18)} ${cfg.cita ? 'Solicitar' : 'Agregar'}${n > 1 ? ' ' + n : ''}${Object.keys(sel).length === 1 && p.ops.length === 1 ? ' · ' + esc(sel[p.ops[0].n]) : ''} · ${money(pu * n)}`, cls: 'acc big', fn: () => {
       const x = falta(); if (x) throw new Error('Elige ' + x.n.toLowerCase());
       if (cfg.cita && !($('#tp-fe', h.el) || {}).value) throw new Error('Elige la fecha que prefieres');
       if (cfg.notaReq && !(($('#tp-no', h.el) || {}).value || '').trim()) { const i = $('#tp-no', h.el); if (i) i.focus(); throw new Error('Escribe tu ' + cfg.nota.toLowerCase()); }
@@ -8576,7 +8716,7 @@ function tProducto(id) {
     } }]);
   };
   h.el.addEventListener('click', e => {
-    const v = e.target.closest('[data-v]'); if (v) { const o = p.ops[Number(v.parentNode.dataset.g)]; sel[o.n] = v.dataset.v; $$('.chip', v.parentNode).forEach(c => c.classList.toggle('on', c === v)); pinta(); return; }
+    const v = e.target.closest('[data-v]'); if (v) { const o = p.ops[Number(v.parentNode.dataset.g)]; sel[o.n] = v.dataset.v; $$('[data-v]', v.parentNode).forEach(c => c.classList.toggle('on', c === v)); pinta(); return; }
     const t = e.target.closest('[data-t]'); if (t) { turno = turno === t.dataset.t ? '' : t.dataset.t; $$('#tp-tu .chip', h.el).forEach(c => c.classList.toggle('on', c.dataset.t === turno)); return; }
     const b = e.target.closest('.qty [data-d]'); if (b) { n = Math.max(1, Math.min(maxDe(p) - enCarrito(p.id) || 1, n + Number(b.dataset.d))); pinta(); }
   });
@@ -8612,7 +8752,7 @@ function tCarrito() {
     const anticipo = comprasOn() && n.compras.anticipo ? Math.ceil(tSubCompras() * n.compras.anticipo / 100) : 0;
     const comprasHTML = T.compras.map((c, i) => `<div class="tk"><div class="tx"><b>🔗 Compra en línea</b><small class="op">${esc([c.talla && 'Talla: ' + c.talla, c.color && 'Color: ' + c.color].filter(Boolean).join(', ') || c.enlace.slice(0, 40))}</small><small>US$${c.usd.toFixed(2)} → ${money(precioCompraT(c.usd))} c/u · ${c.cantidad} ${c.cantidad === 1 ? 'artículo' : 'artículos'}</small></div><button class="btn icon sm ghost" data-qc="${i}" aria-label="Quitar">${ic('trash', 16)}</button></div>`).join('');
     const valores = { nom: ($('#tc-n', h.el) || {}).value, tel: ($('#tc-t', h.el) || {}).value, dir: ($('#tc-d', h.el) || {}).value, pago: ($('#tc-p', h.el) || {}).value, nota: ($('#tc-o', h.el) || {}).value };
-    $('#tc', h.el).innerHTML = `${comprasHTML}${items.map(x => `<div class="tk"><div class="tx"><b>${esc(x.p.nombre)}</b>${x.op ? `<small class="op">${esc(x.op)}</small>` : ''}<small>${money(x.p.precio)} c/u</small></div><div class="qty"><button data-id="${esc(x.k)}" data-d="-1">−</button><span>${x.q}</span><button data-id="${esc(x.k)}" data-d="1">+</button></div><b class="n tkt">${money(x.p.precio * x.q)}</b></div>`).join('')}
+    $('#tc', h.el).innerHTML = `${comprasHTML}${items.map(x => { const pu = precioT(x.p, enCarrito(x.p.id)), esp = x.p.precioEsp && pu === x.p.precioEsp; return `<div class="tk"><div class="tx"><b>${esc(x.p.nombre)}</b>${x.op ? `<small class="op">${esc(x.op)}</small>` : ''}<small>${money(pu)} c/u${esp ? ' · <b style="color:var(--pri)">precio especial</b>' : x.p.precioEsp ? ` · especial desde ${x.p.minEsp}` : ''}</small></div><div class="qty"><button data-id="${esc(x.k)}" data-d="-1">−</button><span>${x.q}</span><button data-id="${esc(x.k)}" data-d="1">+</button></div><b class="n tkt">${money(pu * x.q)}</b></div>`; }).join('')}
       <div class="tots"><div class="tot"><span>Productos</span><b class="n">${money(sub)}</b></div>${T.entrega === 'domicilio' ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${env ? money(env) : 'Gratis'}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(sub + env)}</b></div>${anticipo ? `<div class="tot"><span>Anticipo para pedir tus compras en línea</span><b class="n" style="color:var(--pri)">${money(anticipo)}</b></div>` : ''}</div>
       ${anticipo && n.compras.dias ? `<p class="xs mut" style="margin:-4px 2px 10px">Las compras en línea llegan en ${esc(n.compras.dias)}. El precio final te lo confirmamos por mensaje.</p>` : ''}
       ${n.minimo && sub < n.minimo ? `<div class="aviso warn sm">${ic('alert', 18)}<div>El pedido mínimo es de ${money(n.minimo)}</div></div>` : ''}
