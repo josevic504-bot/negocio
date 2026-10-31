@@ -215,6 +215,8 @@ function route_(req) {
   Object.keys(MEMO).forEach(k => { delete MEMO[k]; });
   NEG = null;
   const a = req.action, d = req.data || {};
+  // Servidor de Google cerrado: los datos ya viven en Supabase (propiedad MIGRADO = si, la pone cambioFinal() de Exportar.gs)
+  if (a !== 'info' && String(PropertiesService.getScriptProperties().getProperty('MIGRADO') || '') === 'si') throw new Error('El programa se actualizó. Cierra la app y vuelve a abrirla.');
   if (!MULTI_NEGOCIO && ['tiendaInfo', 'pedir', 'misPedidos', 'chatEnviar', 'chatVer'].indexOf(a) < 0) {
     const lic = licencia_();
     if (lic.estado === 'vencida') throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: config_().nombre }));
