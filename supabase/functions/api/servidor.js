@@ -298,7 +298,7 @@ export function crearServidor(SRC, db, opciones = {}) {
   }
 
   /* Importación desde Google (fase 5): el script Exportar.gs del Apps Script manda cada hoja; la tabla del negocio se reemplaza completa */
-  const PROPS_INTERNAS = ['IMPORTAR_CLAVE', 'TAREAS_CLAVE', 'EXP_HECHOS', 'EXP_INICIO'];
+  const PROPS_INTERNAS = ['IMPORTAR_CLAVE', 'TAREAS_CLAVE', 'EXP_HECHOS', 'EXP_INICIO', 'MIGRADO'];
   async function importar(im, Rq) {
     if (!Rq.props.IMPORTAR_CLAVE || im.clave !== Rq.props.IMPORTAR_CLAVE) return { ok: false, error: 'Clave de importación no válida' };
     const ops = [], props = {};

@@ -5,8 +5,8 @@
  *
  * 1) Ejecuta exportarASupabase(). Si se acaba el tiempo (6 minutos), ejecútala otra vez:
  *    sigue donde se quedó.
- * 2) Para empezar de cero (por ejemplo, la noche del cambio final), ejecuta reiniciarExportacion()
- *    y luego exportarASupabase().
+ * 2) La noche del cambio final: ejecuta cambioFinal(). Cierra el servidor de Google
+ *    (la app pide volver a abrirla) y copia todo desde cero. Si dice «Faltan…», sigue con exportarASupabase().
  * No cambia nada en tus hojas de Google: solo lee y envía.
  *****************************************************************/
 const SUPA_URL = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
@@ -59,6 +59,23 @@ function exportarASupabase() {
   }
   Logger.log(resumen.join('\n'));
   Logger.log(pendientes ? 'Faltan ' + pendientes + ' negocios: vuelve a ejecutar exportarASupabase().' : 'LISTO: todos los negocios se copiaron a Supabase.');
+}
+
+// CAMBIO FINAL: cierra el servidor de Google (nadie más puede guardar aquí) y copia todo desde cero a Supabase.
+// Si el registro dice «Faltan X negocios», ejecuta exportarASupabase() hasta que diga LISTO.
+function cambioFinal() {
+  const P = PropertiesService.getScriptProperties();
+  P.setProperty('MIGRADO', 'si');
+  Utilities.sleep(20000); // espera a que terminen las ventas que estaban en camino
+  P.deleteProperty('EXP_HECHOS');
+  Logger.log('Servidor de Google cerrado. Copiando todo a Supabase…');
+  exportarASupabase();
+}
+
+// Solo por si hay que volver atrás: Google vuelve a aceptar cambios
+function reabrirServidorGoogle() {
+  PropertiesService.getScriptProperties().deleteProperty('MIGRADO');
+  Logger.log('El servidor de Google vuelve a aceptar cambios.');
 }
 
 function reiniciarExportacion() {
