@@ -1,0 +1,36 @@
+// Capturas: elegir categoría (existente o nueva) y subcategoría al crear un producto
+import { createRequire } from 'node:module'; const { chromium } = createRequire(import.meta.url)('playwright');
+import fs from 'node:fs'; import path from 'node:path'; import http from 'node:http'; import { createHash } from 'node:crypto';
+import { crearServidor } from '../functions/api/servidor.js';
+import { dbFalsa } from './db-falsa.mjs';
+const RAIZ = process.argv[3], OUT = process.argv[2];
+const SRC = fs.readFileSync(RAIZ + '/Codigo.gs', 'utf8');
+const grab = n => { const m = SRC.match(new RegExp('^const ' + n + ' = ([\\s\\S]*?);\\s*$', 'm')); return eval('(' + m[1] + ')'); };
+const db = dbFalsa(grab('SCHEMA'), grab('SCHEMA_M'), grab('NUMS'), grab('BOOLS'));
+const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b).digest(), log: () => {}, urlArchivo: r => 'https://x/' + r, rutaDeUrl: () => null });
+const api = (action, data, token, extra) => srv.atender(Object.assign({ action, token, data: data || {} }, extra || {}));
+const web = http.createServer((q, r) => { let f = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.webp') ? 'image/webp' : f.endsWith('.png') ? 'image/png' : 'application/octet-stream' }); r.end(d); }); }).listen(8769);
+const tok = (await api('registrar', { negocio: 'Norey Beauty & More', nombre: 'Noemí Reyes', giro: 'catalogo', whatsapp: '33130265', pin: '1234' })).data.token;
+await api('cargarEjemplos', {}, tok);
+const neg = (await api('bootstrap', {}, tok)).data.negocioId;
+await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }] });
+await api('guardar', { entidad: 'Config', registro: { tema: 'rosa' } }, tok);
+const br = await chromium.launch();
+const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 });
+const pg = await ctx.newPage();
+await pg.route(/^https?:\/\/(?!localhost).*/, async rt => { if (rt.request().url().indexOf('/functions/v1/api') < 0) return rt.abort(); const b = JSON.parse(rt.request().postData() || '{}'); const r = await api(b.action, b.data, b.token); rt.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(r) }); });
+await pg.addInitScript(t => { localStorage.setItem('gnvm@/|token', t); localStorage.setItem('gnvm@/|verVisto', '9.9.9'); }, tok);
+await pg.goto('http://localhost:8769/'); await pg.waitForTimeout(3000);
+await pg.evaluate(() => { ir('productos'); S.f.pcat = ''; formProducto(null); }); await pg.waitForTimeout(800);
+await pg.fill('#pf-nom', 'Conjunto deportivo');
+await pg.locator('.pick [data-pv="Ropa"]').first().click(); await pg.waitForTimeout(300);
+await pg.locator('#pf-subw [data-pv="Dama"]').click(); await pg.waitForTimeout(300);
+await pg.locator('#pf-nom').scrollIntoViewIfNeeded(); await pg.waitForTimeout(300);
+await pg.screenshot({ path: OUT + '/k1-elegir.png' });
+await pg.locator('.pick [data-nueva]').first().click(); await pg.fill('#pf-cat', 'Bolsos'); await pg.waitForTimeout(300);
+await pg.screenshot({ path: OUT + '/k2-nueva.png' });
+// Guardar sin categoría: avisa
+await pg.fill('#pf-cat', ''); await pg.fill('#pf-precio', '350'); await pg.locator('.sheet-f .pri').click(); await pg.waitForTimeout(600);
+await pg.locator('#pf-nom').scrollIntoViewIfNeeded();
+await pg.screenshot({ path: OUT + '/k3-falta.png' });
+await br.close(); web.close(); console.log('listo');
