@@ -8,7 +8,7 @@ export function dbFalsa(SCHEMA, SCHEMA_M, NUMS, BOOLS) {
   };
   const vacio = (t) => { const o = {}; (SCHEMA_M[t] || SCHEMA[t]).forEach(k => { o[k] = tipo(t, k, maestra(t) && k !== 'activo' ? '' : undefined); }); return o; };
   const tabla = t => T[t] || (T[t] = []);
-  const coincide = (r, op) => Object.keys(op.k).every(k => String(r[k]) === op.k[k]) && (!op.n || r.negocio_id === op.n);
+  const coincide = (r, op) => Object.keys(op.k || {}).every(k => String(r[k]) === op.k[k]) && (!op.n || r.negocio_id === op.n);
   const j = x => JSON.parse(JSON.stringify(x));
   return {
     T, cache, props, lecturas: 0, escrituras: 0,
@@ -33,7 +33,7 @@ export function dbFalsa(SCHEMA, SCHEMA_M, NUMS, BOOLS) {
       for (const neg of Object.keys(p.v || {})) if ((vers[neg] || 0) !== p.v[neg]) return { conflicto: true, negocio: neg };
       for (const op of p.ops || []) {
         const tb = tabla(op.t);
-        if (op.op === 'del') { const i = tb.findIndex(r => coincide(r, op)); if (i >= 0) tb.splice(i, 1); }
+        if (op.op === 'del') { if (!Object.keys(op.k || {}).length) { for (let i = tb.length - 1; i >= 0; i--) if (!op.n || tb[i].negocio_id === op.n) tb.splice(i, 1); } else { const i = tb.findIndex(r => coincide(r, op)); if (i >= 0) tb.splice(i, 1); } }
         else if (op.op === 'ins') { if (!tb.some(r => coincide(r, op))) { const o = vacio(op.t); Object.keys(op.row).forEach(k => { o[k] = tipo(op.t, k, op.row[k]); }); if (op.n) o.negocio_id = op.n; o._fila = ++fila; tb.push(o); } }
         else { const r = tb.find(x => coincide(x, op)); if (r) Object.keys(op.row).forEach(k => { r[k] = tipo(op.t, k, op.row[k]); }); }
       }

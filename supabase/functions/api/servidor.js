@@ -297,6 +297,31 @@ export function crearServidor(SRC, db, opciones = {}) {
     R.viajes++;
   }
 
+  /* Importación desde Google (fase 5): el script Exportar.gs del Apps Script manda cada hoja; la tabla del negocio se reemplaza completa */
+  const PROPS_INTERNAS = ['IMPORTAR_CLAVE', 'TAREAS_CLAVE', 'EXP_HECHOS', 'EXP_INICIO'];
+  async function importar(im, Rq) {
+    if (!Rq.props.IMPORTAR_CLAVE || im.clave !== Rq.props.IMPORTAR_CLAVE) return { ok: false, error: 'Clave de importación no válida' };
+    const ops = [], props = {};
+    Object.keys(im.props || {}).forEach(k => { if (PROPS_INTERNAS.indexOf(k) < 0) props[k] = String(im.props[k]); });
+    const t = String(im.tabla || ''), maestra = !!(t && SCHEMA_M[t]);
+    if (t) {
+      if (!maestra && !SCHEMA[t]) return { ok: false, error: 'Tabla desconocida: ' + t };
+      if (!maestra && !/^N[0-9A-Z]{4,20}$/.test(String(im.negocio || ''))) return { ok: false, error: 'Falta el negocio' };
+      const h = maestra ? SCHEMA_M[t] : SCHEMA[t], ks = claves(t, maestra), base = maestra ? {} : { n: String(im.negocio) };
+      if (im.limpiar) ops.push(Object.assign({ t, op: 'del', k: {} }, base));
+      (im.filas || []).forEach(o => {
+        const fila = filaObj(h, h.map(k => o[k]), maestra);
+        if (ks.some(k => fila[k] === '')) return;
+        const k = {}; ks.forEach(x => { k[x] = String(fila[x]); });
+        ops.push(Object.assign({ t, op: 'ins', k, row: fila }, base));
+      });
+    }
+    await db.aplicar({ ops, props });
+    const n = ops.filter(o => o.op === 'ins').length;
+    log('importar ' + (t || 'propiedades') + (im.negocio ? ' ' + im.negocio : '') + ' · ' + n + ' filas');
+    return { ok: true, data: { tabla: t, filas: n, propiedades: Object.keys(props).length } };
+  }
+
   async function atender(body) {
     const t0 = Date.now();
     const accion = String(body && body.action || '');
@@ -320,6 +345,7 @@ export function crearServidor(SRC, db, opciones = {}) {
         nWa: accion === 'login' && wa2 ? { wa: wa2, t: BASE_N.concat([...ap.n]) } : undefined });
     };
     await primeraCarga();
+    if (body.importar) return importar(body.importar, Rq);
 
     while (true) {
       if (++intento > 40) throw new Error('El servidor no pudo completar la acción. Intenta de nuevo.');
