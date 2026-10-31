@@ -1433,7 +1433,9 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.25';
+const APP_VER = '1.9.26';
+// Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
+const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
 
@@ -1585,6 +1587,9 @@ function toast(msg, tipo, ms) {
   setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 300); }, ms || 3600);
 }
 function err(e) { console.error(e); if (S.vencidaVista) return; toast(e && e.message ? e.message : String(e), 'error', 5000); }
+// Identifica este equipo: los avisos de «algo cambió» no se le mandan al mismo equipo que hizo el cambio
+const DEV_ID = (() => { let v = ''; try { v = LS.get('dev', ''); if (!v) { v = Math.random().toString(36).slice(2, 12); LS.set('dev', v); } } catch (e) {} return v; })();
+const srvSB = () => !DEMO.on && /supabase\.co/.test(apiUrl());
 function apiUrl() { return LS.get('api', '') || API_URL_DEFAULT; }
 
 /* ===================== SERVIDOR ===================== */
@@ -1597,7 +1602,7 @@ async function api(action, data, silent) {
   try {
     let r;
     try {
-      r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, panel: S.enPanel ? P.tok : undefined, data: data || {} }), redirect: 'follow' });
+      r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, panel: S.enPanel ? P.tok : undefined, dev: DEV_ID, data: data || {} }), redirect: 'follow' });
     } catch (e) { throw new Error('Sin conexión con el servidor. Revisa tu internet.'); }
     let j;
     try { j = await r.json(); } catch (e) { throw new Error('Respuesta inválida del servidor. Verifica que la App web esté implementada con acceso «Cualquier usuario».'); }
@@ -2044,6 +2049,8 @@ function aplicarDatos(d) {
   if (d.version) S.version = d.version;
   if (S.user) prepararTienda();
   if (d.sar) S.sar = d.sar;
+  if (d.rt) { S.rt = d.rt; setTimeout(() => rtConectar(S.rt), 0); }
+  if (S.user && avisosOn() && puede('admin', 'cajero') && LS.get('pushF_' + (S.negocioId || ''), '') !== hoy()) setTimeout(() => pushSuscribir(false).then(x => { if (x) LS.set('pushF_' + (S.negocioId || ''), hoy()); }), 1500);
   aplicarTema(S.config.tema || LS.get('tema', TEMA_DEF));
   document.title = (S.config.nombre || 'Mi Negocio') + ' · Gestión de Negocio VM';
   LS.set(mk('nombre'), S.config.nombre || '');
@@ -2087,7 +2094,8 @@ function mostrarApp() {
   setTimeout(() => buscarActualizacion(true), 4000);
 }
 function salir(expirada) {
-  if (!expirada && S.token) api('logout', {}, true).catch(() => {});
+  rtCerrar();
+  if (!expirada && S.token) { const ng = S.negocioId || ''; pushQuitar().catch(() => {}).then(() => api('logout', {}, true)).catch(() => {}); LS.del('push_' + ng); }
   S.token = ''; S.user = null; S.inicio = null; LS.del(tokenKey()); LS.del(cacheKey());
   limpiarSesion();
   cerrarHojas();
@@ -2411,7 +2419,7 @@ async function detectarModo() {
 }
 
 /* Revisa si llegaron pedidos en línea nuevos (cada minuto) */
-let vigilando = null;
+let vigilando = null, revisarPend = null;
 function vigilarPedidos() {
   if (vigilando || !puede('admin', 'cajero')) return;
   let ultOculto = 0;
@@ -2430,6 +2438,7 @@ function vigilarPedidos() {
       if (S.pedidosNuevos !== antes || S.chatsNuevos !== antesM || S.soporteNuevos !== antesS) { pintarHeader(); pintarNav(); }
     } catch (e) {}
   };
+  revisarPend = revisar;
   revisar();
   vigilando = setInterval(revisar, 30000);
 }
@@ -2444,12 +2453,14 @@ async function activarAvisos() {
   if (p === 'default') { try { p = await Notification.requestPermission(); } catch (e) { p = 'denied'; } }
   if (p !== 'granted') { toast('El teléfono no dio permiso. Actívalo en los ajustes del navegador para este sitio.', 'error', 7000); return false; }
   LS.set('avisos', 'si');
+  if (await pushSuscribir(false)) { LS.set('pushF_' + (S.negocioId || ''), hoy()); api('pushProbar', { endpoint: LS.get('pushEp', '') }, true).catch(() => {}); return true; }
   notificar('prueba', 'Avisos activados', 'Así te avisará ' + (S.config.nombre || 'la app') + ' cuando pase algo importante.', 'inicio', true);
   return true;
 }
 async function notificar(tipo, titulo, cuerpo, vista, forzar) {
   if (!forzar && (!avisosOn() || !avisoTipoOn(tipo))) return;
   if (!forzar && !document.hidden && S.vista === vista) return; // ya lo está viendo
+  if (!forzar && PUSH_TIPOS.includes(tipo) && LS.get('push_' + (S.negocioId || ''), '') === 'si') return; // ya le llegó por el servidor (aunque la app esté cerrada)
   const o = { body: cuerpo, icon: 'icon-192.png', badge: 'icon-192.png', tag: 'gnvm-' + tipo, renotify: true, data: { vista: vista || 'inicio' }, vibrate: [100, 50, 100] };
   try {
     const reg = navigator.serviceWorker && await navigator.serviceWorker.getRegistration();
@@ -2475,8 +2486,81 @@ function avisosDelDia(a) {
   if (a.ordAtras) una('ordenes:atras', a.ordAtras === 1 ? '1 orden de trabajo atrasada' : a.ordAtras + ' órdenes de trabajo atrasadas', 'Pasó la fecha de entrega prometida.', 'ordenes');
 }
 ACC.avisosActivar = async el => { if (await activarAvisos()) { toast('Avisos activados', 'ok'); render(); } };
-ACC.avisosApagar = () => { LS.set('avisos', 'no'); toast('Avisos apagados en este equipo', 'ok'); render(); };
-document.addEventListener('change', e => { const i = e.target.closest('input[data-av]'); if (i) LS.set('av_' + i.dataset.av, i.checked ? 'si' : 'no'); });
+ACC.avisosApagar = () => { LS.set('avisos', 'no'); pushQuitar().catch(() => {}); toast('Avisos apagados en este equipo', 'ok'); render(); };
+document.addEventListener('change', e => { const i = e.target.closest('input[data-av]'); if (!i) return; LS.set('av_' + i.dataset.av, i.checked ? 'si' : 'no'); clearTimeout(pushT); pushT = setTimeout(() => pushSuscribir(false), 800); });
+let pushT = null;
+/* Avisos con la app cerrada: el teléfono se registra en el servidor (Web Push) y el servidor avisa al momento */
+const PUSH_TIPOS = ['pedidos', 'mensajes', 'soporte'];
+const b64u = t => { const b = atob((t + '='.repeat((4 - t.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); };
+async function pushSuscribir(panel) {
+  if (!srvSB() || !('PushManager' in window) || !navigator.serviceWorker || !('Notification' in window) || Notification.permission !== 'granted') return false;
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(SB.vapid) });
+    const j = sub.toJSON();
+    await api('pushGuardar', { sub: { endpoint: j.endpoint, keys: j.keys }, apagados: panel ? [] : AVISOS_TIPOS.map(t => t[0]).filter(k => !avisoTipoOn(k)) }, true);
+    LS.set('pushEp', j.endpoint); LS.set(panel ? 'panelAvisos' : 'push_' + (S.negocioId || ''), 'si');
+    return true;
+  } catch (e) { return false; }
+}
+async function pushQuitar() {
+  const ep = LS.get('pushEp', ''); LS.del('push_' + (S.negocioId || ''));
+  if (ep && srvSB()) await api('pushQuitar', { endpoint: ep }, true);
+}
+ACC.panelAvisosActivar = async () => {
+  if (!('Notification' in window) || !('PushManager' in window)) { toast('Este navegador no permite avisos. Abre el Panel en Chrome e instálalo.', 'error', 7000); return; }
+  let p = Notification.permission;
+  if (p === 'default') { try { p = await Notification.requestPermission(); } catch (e) { p = 'denied'; } }
+  if (p !== 'granted') { toast('El teléfono no dio permiso. Actívalo en los ajustes del navegador para este sitio.', 'error', 7000); return; }
+  if (!(await pushSuscribir(true))) { toast('No se pudieron activar los avisos en este equipo', 'error'); return; }
+  api('pushProbar', { endpoint: LS.get('pushEp', '') }, true).catch(() => {});
+  toast('Avisos del Panel activados', 'ok'); panelResumen();
+};
+
+/* Cambios al instante: cuando otro equipo del mismo negocio guarda algo, este se entera en segundos (Supabase Realtime).
+   El canal solo dice QUÉ cambió (nombres de tablas); los datos se piden al servidor como siempre. */
+const RT = { ws: null, canal: '', ref: 0, hb: null, timer: null, intentos: 0, tRec: null, tablas: new Set() };
+function rtConectar(canal) {
+  if (!srvSB() || !canal || !('WebSocket' in window) || S.enTienda) return;
+  if (RT.canal === canal && RT.ws && RT.ws.readyState <= 1) return;
+  rtCerrar(); RT.canal = canal;
+  let ws;
+  try { ws = RT.ws = new WebSocket(SB.url.replace('https', 'wss') + '/realtime/v1/websocket?apikey=' + SB.key + '&vsn=1.0.0'); } catch (e) { return; }
+  const env = (topic, event, payload) => { try { ws.send(JSON.stringify({ topic, event, payload, ref: String(++RT.ref) })); } catch (e) {} };
+  ws.onopen = () => { RT.intentos = 0; env('realtime:' + canal, 'phx_join', { config: { broadcast: { self: false, ack: false }, presence: { key: '' }, private: false } }); RT.hb = setInterval(() => env('phoenix', 'heartbeat', {}), 25000); };
+  ws.onmessage = m => { let j; try { j = JSON.parse(m.data); } catch (e) { return; } if (j.event === 'broadcast' && j.payload && j.payload.event === 'cambio') rtCambio(j.payload.payload || {}); };
+  ws.onclose = () => {
+    clearInterval(RT.hb); if (RT.ws !== ws) return; RT.ws = null;
+    const t = Math.min(60000, 2000 * Math.pow(2, RT.intentos++));
+    RT.timer = setTimeout(() => { if (RT.canal === canal && S.user) { RT.canal = ''; rtConectar(canal); } }, t);
+  };
+}
+function rtCerrar() { clearTimeout(RT.timer); clearInterval(RT.hb); const w = RT.ws; RT.ws = null; RT.canal = ''; if (w) { try { w.close(); } catch (e) {} } }
+function rtCambio(p) {
+  if (!S.user || p.dev === DEV_ID) return;
+  const t = Array.isArray(p.t) ? p.t : [];
+  if (t.some(x => ['Pedidos', 'Chats', 'Mensajes'].includes(x)) && revisarPend) revisarPend();
+  if (!t.some(x => !['Chats', 'Mensajes'].includes(x))) return;
+  t.forEach(x => RT.tablas.add(x));
+  // Se juntan los cambios de un par de segundos y se actualiza una sola vez
+  clearTimeout(RT.tRec);
+  RT.tRec = setTimeout(async () => {
+    const tb = RT.tablas; RT.tablas = new Set();
+    S.inicioT = 0;
+    if (tb.has('Ventas')) S.ventasL = null;
+    if (tb.has('Gastos')) S.gastosL = null;
+    if (tb.has('Compras')) S.comprasL = null;
+    if (tb.has('Pedidos')) S.pedidosL = null;
+    try { await recargar(true); } catch (e) { return; }
+    // Solo se vuelve a pintar si no está escribiendo ni tiene una ventana abierta
+    const a = document.activeElement, escribiendo = a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName);
+    if (PILA.length || escribiendo || document.hidden) return;
+    if (['productos', 'clientes', 'proveedores'].includes(S.vista)) render();
+    else if (S.vista === 'inicio') R.inicio();
+    else if (S.vista === 'pedidos' && tb.has('Pedidos') && R.pedidos) R.pedidos();
+  }, 1500);
+}
 ACC.avisosCerrar = () => { LS.set('avisosOferta', 'no'); R.inicio(); };
 function avisosAjustesHTML() {
   const on = avisosOn(), soporta = 'Notification' in window, denegado = soporta && Notification.permission === 'denied';
@@ -7795,6 +7879,11 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.26', fecha: '2026-10-31', items: [
+    { i: 'bell', t: 'Avisos aunque la app esté cerrada', d: 'Los pedidos de tu tienda en línea, los mensajes de tus clientes y las respuestas del administrador ahora te llegan al teléfono al momento, aunque tengas la app cerrada. Actívalos en Ajustes › Avisos (si ya los tenías, no tienes que hacer nada).' },
+    { i: 'sparkle', t: 'Resumen de cada mañana', d: 'A las 7 a. m. te llega un aviso con tu día: lo que vence, quién te debe, los pedidos sin confirmar y lo agotado. Si no lo quieres, apágalo en Ajustes › Avisos.' },
+    { i: 'trend', t: 'Todos tus equipos al día', d: 'Si venden desde dos teléfonos o una computadora, las existencias, clientes y el Inicio se actualizan solos en segundos en todos.' }
+  ] },
   { v: '1.9.25', fecha: '2026-10-31', items: [
     { i: 'palette', t: 'Íconos nuevos', d: 'Renovamos todos los íconos del programa: el menú, el Inicio y la lista de tipos de negocio ahora tienen íconos de colores más claros y fáciles de reconocer.' }
   ] },

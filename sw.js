@@ -1,6 +1,6 @@
 /* Gestión de Negocio VM · guarda la app en el teléfono para que abra rápido.
    Los datos SIEMPRE se piden al servidor; aquí solo se guardan la página, íconos y librerías. */
-const VERSION = 'gnvm-1.9.25';
+const VERSION = 'gnvm-1.9.26';
 const BASE = ['./', './index.html', './manifest.json', './panel.webmanifest', './panel/', './icon-192.png', './icon-512.png',
   './iconos/agenda.webp', './iconos/ajustes.webp', './iconos/ayuda.webp', './iconos/caja.webp', './iconos/clientes.webp', './iconos/compras.webp', './iconos/cotizaciones.webp', './iconos/cuentas.webp', './iconos/encargos.webp', './iconos/g_belleza.webp', './iconos/g_boutique.webp', './iconos/g_comida.webp', './iconos/g_compras.webp', './iconos/g_farmacia.webp', './iconos/g_ferreteria.webp', './iconos/g_otro.webp', './iconos/g_panaderia.webp', './iconos/g_recargas.webp', './iconos/g_repuestos.webp', './iconos/g_servicios.webp', './iconos/g_streaming.webp', './iconos/g_tecnologia.webp', './iconos/g_tienda.webp', './iconos/g_variedades.webp', './iconos/g_veterinaria.webp', './iconos/gastos.webp', './iconos/hospedaje.webp', './iconos/mascotas.webp', './iconos/mensajes.webp', './iconos/ordenes.webp', './iconos/pedidos.webp', './iconos/precios.webp', './iconos/productos.webp', './iconos/proveedores.webp', './iconos/proyectos.webp', './iconos/qa_cobrar.webp', './iconos/qa_compra.webp', './iconos/qa_gasto.webp', './iconos/qa_resumen.webp', './iconos/reportes.webp', './iconos/tienda.webp', './iconos/usuarios.webp', './iconos/vacunas.webp', './iconos/vencimientos.webp', './iconos/vender.webp', './iconos/ventas.webp'];
 self.addEventListener('install', e => {
@@ -24,13 +24,23 @@ self.addEventListener('fetch', e => {
   }
 });
 
-// Al tocar una notificación: abre la app (o la trae al frente) en la pantalla indicada
+// Aviso que manda el servidor (pedido nuevo, mensaje, soporte, resumen de la mañana): llega aunque la app esté cerrada
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch (x) { d = { cuerpo: e.data ? e.data.text() : '' }; }
+  e.waitUntil(self.registration.showNotification(d.titulo || 'Gestión de Negocio VM', {
+    body: d.cuerpo || '', icon: 'icon-192.png', badge: 'icon-192.png', tag: d.tag || 'gnvm', renotify: true,
+    data: { vista: d.vista || 'inicio', url: d.url || '' }, vibrate: [120, 60, 120]
+  }));
+});
+
+// Al tocar una notificación: abre la app (o la trae al frente) en la pantalla indicada; los avisos del Panel abren el Panel
 self.addEventListener('notificationclick', e => {
   e.notification.close();
-  const vista = (e.notification.data && e.notification.data.vista) || 'inicio';
+  const d = e.notification.data || {}, vista = d.vista || 'inicio', panel = d.url === 'panel';
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(cs => {
-    const c = cs.find(x => 'focus' in x);
-    if (c) { c.focus(); c.postMessage({ tipo: 'ir', vista }); return; }
-    return self.clients.openWindow('./#' + vista);
+    const c = cs.find(x => 'focus' in x && /[?&]panel|\/panel\//.test(x.url) === panel);
+    if (c) { c.focus(); if (!panel) c.postMessage({ tipo: 'ir', vista }); return; }
+    return self.clients.openWindow(panel ? './panel/?panel' : './#' + vista);
   }));
 });
