@@ -1,7 +1,6 @@
 import fs from 'node:fs'; import { createHash } from 'node:crypto';
 import { crearServidor } from '../functions/api/servidor.js';
 import { dbFalsa } from './db-falsa.mjs';
-import mapa from '../functions/api/mapa.js';
 const SRC = fs.readFileSync(new URL('../../Codigo.gs', import.meta.url), 'utf8');
 let db; const logs = [];
 const srv = crearServidor(SRC, { cargar: p => db.cargar(p), aplicar: p => db.aplicar(p), web: u => db.web(u), efecto: e => db.efecto(e) },

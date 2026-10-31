@@ -221,9 +221,10 @@ export function crearServidor(SRC, db, opciones = {}) {
   };
 
   /* ---------- Compilar Codigo.gs una sola vez ---------- */
-  const EXP = ['route_', 'SCHEMA', 'SCHEMA_M', 'NUMS', 'BOOLS', 'SOLO_FECHA', 'NEG_', 'VERSION', 'ESQUEMA'];
+  const TAREAS = ['resumenPanelDiario', 'limpiarFotosTodos'];
+  const EXP = ['route_', 'SCHEMA', 'SCHEMA_M', 'NUMS', 'BOOLS', 'SOLO_FECHA', 'NEG_', 'LIMPIAR_', 'VERSION', 'ESQUEMA'].concat(TAREAS);
   const B = new Function('SpreadsheetApp', 'Utilities', 'CacheService', 'LockService', 'Logger', 'ContentService', 'PropertiesService', 'DriveApp', 'MailApp', 'Session', 'ScriptApp', 'UrlFetchApp',
-    SRC + '\nfunction NEG_(){return NEG;}\nreturn {' + EXP.map(n => n + ':' + n).join(',') + '};')(
+    SRC + '\nfunction NEG_(){return NEG;}\nfunction LIMPIAR_(){Object.keys(MEMO).forEach(function(k){delete MEMO[k];});NEG=null;}\nreturn {' + EXP.map(n => n + ':' + n).join(',') + '};')(
     SpreadsheetApp, Utilities, CacheService, LockService, Logger, ContentService, PropertiesService, DriveApp, MailApp, Session, ScriptApp, UrlFetchApp);
   SCHEMA = B.SCHEMA; SCHEMA_M = B.SCHEMA_M; NUMS = B.NUMS; BOOLS = B.BOOLS; SOLO_FECHA = B.SOLO_FECHA;
 
@@ -270,7 +271,9 @@ export function crearServidor(SRC, db, opciones = {}) {
 
   // Cada petición lleva sus propios datos (Rq): varias peticiones pueden estar esperando a la base de datos a la vez
   async function cargar(R, p) {
+    const t = Date.now();
     const r = await db.cargar(p);
+    R.tLeer = (R.tLeer || 0) + (Date.now() - t);
     Object.keys(r.m || {}).forEach(t => { R.m[t] = aCuadricula(t, r.m[t], true); R.mFilas[t] = r.m[t]; });
     Object.keys(r.n || {}).forEach(neg => {
       const N = R.n[neg] || (R.n[neg] = { v: r.n[neg]._v, t: {} });
@@ -316,12 +319,18 @@ export function crearServidor(SRC, db, opciones = {}) {
         negActual: () => { const N = B.NEG_(); return N ? N.id : null; }
       };
       let out;
+      const tc = Date.now();
       try {
         const req = JSON.parse(JSON.stringify(body || {}));
-        out = { ok: true, data: B.route_(req) };
+        // Tareas programadas (resumen diario, limpieza de fotos): las llama pg_cron con la clave TAREAS_CLAVE
+        if (body.tarea) {
+          if (!Rq.props.TAREAS_CLAVE || body.clave !== Rq.props.TAREAS_CLAVE || TAREAS.indexOf(body.tarea) < 0) throw new Error('Tarea no permitida');
+          B.LIMPIAR_(); B[body.tarea](); out = { ok: true, data: true };
+        } else out = { ok: true, data: B.route_(req) };
       } catch (err) {
         if (!(err instanceof Falta)) out = { ok: false, error: String(err && err.message ? err.message : err) };
       }
+      Rq.tCorrer = (Rq.tCorrer || 0) + (Date.now() - tc);
       if (Cq.faltan.length) {
         log('carga extra ' + accion + ' ' + JSON.stringify(Cq.faltan));
         // Cargar lo que faltó (y, si el negocio ya pidió varias tablas, todas las suyas de una vez)
@@ -367,16 +376,21 @@ export function crearServidor(SRC, db, opciones = {}) {
       ops.sort((a, b) => (a.n ? 1 : 0) - (b.n ? 1 : 0));
       const props = {}; Object.keys(Cq.props).forEach(k => { props[k] = Cq.props[k]; });
       if (ops.length || Cq.cacheOps.length || Object.keys(props).length) {
+        const tg = Date.now();
         const res = await db.aplicar({ v: versiones, ops, c: Cq.cacheOps, props });
+        Rq.tGuardar = (Rq.tGuardar || 0) + (Date.now() - tg);
         if (res && res.conflicto) {
           // Otro equipo del mismo negocio guardó primero: se vuelve a leer y se repite la acción
           Rq = nuevoR(); await primeraCarga();
           continue;
         }
       }
-      for (const e of Cq.efectos) { try { await db.efecto(e); } catch (err) { log('Efecto falló: ' + err); } }
+      for (const e of Cq.efectos) {
+        if (e.correo) e.relay = { url: Rq.props.CORREO_URL || '', clave: Rq.props.CORREO_CLAVE || '' };
+        try { await db.efecto(e); } catch (err) { log('Efecto falló: ' + err); }
+      }
       APRENDIDO[accion] = ap;
-      log(accion + ' · ' + (Date.now() - t0) + ' ms · ' + Rq.viajes + ' lecturas · ' + intento + ' corridas · ' + ops.length + ' cambios');
+      log((body.tarea ? 'tarea ' + body.tarea : accion) + ' · ' + (Date.now() - t0) + ' ms (leer ' + (Rq.tLeer || 0) + ', correr ' + (Rq.tCorrer || 0) + ', guardar ' + (Rq.tGuardar || 0) + ') · ' + Rq.viajes + ' lecturas · ' + intento + ' corridas · ' + ops.length + ' cambios');
       return out;
     }
   }

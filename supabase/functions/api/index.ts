@@ -3,11 +3,13 @@
 // El Codigo.gs se descarga del repositorio al arrancar: publicar en GitHub actualiza el servidor (ya no se pega en Apps Script).
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
-import { crearServidor } from './servidor.js';
+import * as motorLocal from './servidor.js';
 
 const URL_SB = Deno.env.get('SUPABASE_URL')!;
 const CLAVE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const CODIGO_URL = Deno.env.get('CODIGO_URL') || 'https://raw.githubusercontent.com/josevic504-bot/negocio/main/Codigo.gs';
+// El motor (servidor.js) también se toma de GitHub (rama supabase); si no se puede descargar, se usa la copia que viene con la función
+const MOTOR_URL = Deno.env.get('MOTOR_URL') || 'https://raw.githubusercontent.com/josevic504-bot/negocio/supabase/supabase/functions/api/servidor.js';
 const BUCKET = 'archivos';
 const WEB_PERMITIDA = ['https://open.er-api.com/'];
 
@@ -40,23 +42,43 @@ const db = {
     } else if (e.borrar) {
       await fetch(`${URL_SB}/storage/v1/object/${BUCKET}/${e.borrar}`, { method: 'DELETE', headers: { apikey: CLAVE, Authorization: 'Bearer ' + CLAVE } });
     } else if (e.correo) {
-      console.log('Correo pendiente (sin servicio de correo configurado):', e.correo.to, e.correo.subject);
+      // El correo sale por un Apps Script pequeño de la cuenta de Gmail del negocio (CORREO_URL y CORREO_CLAVE en la tabla Propiedades)
+      if (!e.relay || !e.relay.url) { console.log('Correo sin enviar (falta CORREO_URL):', e.correo.to, e.correo.subject); return; }
+      const r = await fetch(e.relay.url, { method: 'POST', headers: { 'Content-Type': 'text/plain' }, redirect: 'follow', signal: AbortSignal.timeout(15000),
+        body: JSON.stringify({ clave: e.relay.clave, to: e.correo.to, subject: e.correo.subject, htmlBody: e.correo.htmlBody || '', body: e.correo.body || '' }) });
+      console.log('Correo enviado:', e.correo.subject, r.status);
     }
   }
 };
 
 let servidor: any = null, cargando: Promise<any> | null = null, cargadoEn = 0;
+let motor: any = motorLocal, motorSrc = '';
+async function bajarMotor() {
+  try {
+    const r = await fetch(MOTOR_URL + '?t=' + Math.floor(Date.now() / 60000), { signal: AbortSignal.timeout(6000) });
+    if (!r.ok) throw new Error(String(r.status));
+    const t = await r.text();
+    if (t !== motorSrc) {
+      const m = new Function(t.replace(/^export function /gm, 'function ') + '\nreturn { crearServidor, crearMapa };')();
+      motor = m; motorSrc = t;
+      console.log('Motor descargado de GitHub');
+    }
+  } catch (e) { console.log('Motor de GitHub no disponible, se usa la copia local:', String(e)); }
+}
 async function obtenerServidor() {
   // Se vuelve a descargar el Codigo.gs cada 5 minutos por si se publicó una versión nueva
   if (servidor && Date.now() - cargadoEn < 300000) return servidor;
   if (!cargando) cargando = (async () => {
     try {
-      const r = await fetch(CODIGO_URL + '?t=' + Math.floor(Date.now() / 60000), { signal: AbortSignal.timeout(8000) });
+      const motorAntes = motor;
+      const [r] = await Promise.all([fetch(CODIGO_URL + '?t=' + Math.floor(Date.now() / 60000), { signal: AbortSignal.timeout(8000) }), bajarMotor()]);
       if (!r.ok) throw new Error('No se pudo descargar Codigo.gs: ' + r.status);
       const src = await r.text();
-      if (!servidor || src !== servidor.src) {
-        const s = crearServidor(src, db, { sha256: (b: Uint8Array) => createHash('sha256').update(b).digest(), log: (m: string) => console.log(m), urlArchivo, rutaDeUrl, correo: 'molinasolucionesdigitales@gmail.com' });
+      if (!servidor || src !== servidor.src || motor !== motorAntes) {
+        const t0 = Date.now();
+        const s = motor.crearServidor(src, db, { sha256: (b: Uint8Array) => createHash('sha256').update(b).digest(), log: (m: string) => console.log(m), urlArchivo, rutaDeUrl, correo: 'molinasolucionesdigitales@gmail.com' });
         s.src = src; servidor = s;
+        console.log('Servidor listo · versión ' + s.version + ' · preparar ' + (Date.now() - t0) + ' ms');
       }
       cargadoEn = Date.now();
     } catch (e) { if (!servidor) throw e; console.log('Sigue la versión anterior:', String(e)); cargadoEn = Date.now(); }

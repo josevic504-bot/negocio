@@ -2,7 +2,6 @@
 import fs from 'node:fs'; import { createHash } from 'node:crypto';
 import { crearServidor } from '../functions/api/servidor.js';
 import { dbFalsa } from './db-falsa.mjs';
-import mapa from '../functions/api/mapa.js';
 const SRC = fs.readFileSync(new URL('../../Codigo.gs', import.meta.url), 'utf8');
 const HTML = fs.readFileSync(new URL('../../index.html', import.meta.url), 'utf8');
 const corta = (ini, fin) => { const a = HTML.indexOf(ini); return HTML.slice(a, HTML.indexOf(fin, a)); };
