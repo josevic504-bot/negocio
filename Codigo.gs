@@ -2172,7 +2172,7 @@ function escH_(s) { return String(s === undefined || s === null ? '' : s).replac
 function waBonito_(w) { const d = String(w || '').replace(/\D/g, ''); return d.length === 11 && d.indexOf('504') === 0 ? '+504 ' + d.slice(3, 7) + '-' + d.slice(7) : d ? '+' + d : ''; }
 function contratosDe_(id) { return mRows_('Contratos').filter(c => c.negocioId === id).sort((a, b) => a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0); }
 function contratoPublico_(c) {
-  return { id: c.id, fecha: String(c.fecha).slice(0, 10), titulo: c.titulo, monto: Number(c.monto) || 0, desde: c.desde, hasta: c.hasta, estado: c.estado, firmadoEl: c.firmadoEl, firmadoPor: c.firmadoPor, huella: c.huella ? String(c.huella).slice(0, 12) : '', pdf: c.pdfId ? 'https://drive.google.com/file/d/' + c.pdfId + '/view' : '' };
+  return { id: c.id, fecha: String(c.fecha).slice(0, 10), titulo: c.titulo, monto: Number(c.monto) || 0, desde: c.desde, hasta: c.hasta, estado: c.estado, firmadoEl: c.firmadoEl, firmadoPor: c.firmadoPor, huella: c.huella ? String(c.huella).slice(0, 12) : '', pdf: c.pdfId ? (/^https?:\/\//.test(String(c.pdfId)) ? String(c.pdfId) : 'https://drive.google.com/file/d/' + c.pdfId + '/view') : '' };
 }
 // Lo que ve el administrador del negocio al abrir la app: el contrato pendiente de firma (si hay) y cuántos tiene firmados
 function contratosResumen_(negocioId) {
