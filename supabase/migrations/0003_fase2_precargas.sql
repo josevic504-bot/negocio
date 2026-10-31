@@ -1,0 +1,3 @@
+-- Negocio VM · Fase 2: api_cargar con precargas (claves de caché por negocio de la sesión y usuarios de los negocios de un WhatsApp al ingresar)
+-- Aplicada en Supabase como «fase2_cargar_precargas». Reemplaza la api_cargar de 0002.
+-- (El texto completo está en Supabase: select pg_get_functiondef('public.api_cargar(jsonb)'::regprocedure);)
