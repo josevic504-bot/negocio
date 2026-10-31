@@ -1,0 +1,34 @@
+// Rubro «Catálogo de maquillaje»: ejemplos, tienda, precio especial por cantidad (pedido y caja)
+import fs from 'node:fs'; import { createHash } from 'node:crypto';
+import { crearServidor } from '../functions/api/servidor.js';
+import { dbFalsa } from './db-falsa.mjs';
+const SRC = fs.readFileSync(process.argv[2], 'utf8');
+const grab = n => { const m = SRC.match(new RegExp('^const ' + n + ' = ([\\s\\S]*?);\\s*$', 'm')); return eval('(' + m[1] + ')'); };
+const db = dbFalsa(grab('SCHEMA'), grab('SCHEMA_M'), grab('NUMS'), grab('BOOLS'));
+const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b).digest(), log: () => {}, urlArchivo: r => 'https://x/' + r, rutaDeUrl: () => null });
+const api = (action, data, token) => srv.atender({ action, token, data: data || {} });
+const ok = (n, r) => { console.log((r.ok ? '✓ ' : '✗ ') + n + (r.ok ? '' : ': ' + r.error)); return r.data; };
+const reg = ok('registrar con giro catálogo', await api('registrar', { negocio: 'Norey Beauty', nombre: 'Vic', giro: 'catalogo', whatsapp: '33130265', pin: '1234' }));
+const tok = reg.token;
+const ej = ok('productos de ejemplo', await api('cargarEjemplos', {}, tok)); console.log('   ', ej.agregados, 'productos');
+await api('guardar', { entidad: 'Config', registro: { tienda: 'si' } }, tok);
+const b = (await api('bootstrap', {}, tok)).data; const neg = b.negocioId;
+await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }] });
+ok('tienda activada', await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tiendaSecciones: JSON.stringify({ Rostro: { c: '#e8758f' }, Ojos: { c: 'malo' }, x: {} }) } }, tok));
+const ti = ok('tiendaInfo', await api('tiendaInfo', { negocio: neg }));
+const co = ti.productos.find(p => p.nombre === 'Corrector líquido');
+console.log('   catálogo:', ti.negocio.catalogo, '· secciones:', JSON.stringify(ti.negocio.secciones), '· corrector:', JSON.stringify({ sub: co.sub, precio: co.precio, precioEsp: co.precioEsp, minEsp: co.minEsp, op: co.opciones.slice(0, 40) }));
+const pd = ok('pedido 2 Nude 1 + 1 Beige 2', await api('pedir', { negocio: neg, nombre: 'Carla Ruiz', telefono: '98765432', entrega: 'recoger', items: [{ id: co.id, cantidad: 2, opcion: 'Tono: Nude 1' }, { id: co.id, cantidad: 1, opcion: 'Tono: Beige 2' }] }));
+console.log('   total', pd.total, '(esperado 390 = 3 × 130) ·', pd.items.map(i => i.nombre + ' ' + i.cantidad + '×' + i.precio).join(' | '));
+const pd2 = ok('pedido 2 piezas', await api('pedir', { negocio: neg, nombre: 'Ana López', telefono: '98765433', entrega: 'recoger', items: [{ id: co.id, cantidad: 2, opcion: 'Tono: Nude 3' }] }));
+console.log('   total', pd2.total, '(esperado 280 = 2 × 140)');
+// Cajero cobra con precio especial
+await api('guardarUsuario', { registro: { usuario: '99990000', nombre: 'Cajera', rol: 'cajero', activo: true }, clave: '5555' }, tok);
+const lc = await api('login', { whatsapp: '99990000', pin: '5555', negocio: neg }); const tc = lc.data && lc.data.token;
+console.log(tc ? '✓ cajera entra' : '✗ cajera: ' + lc.error);
+const v = ok('venta de la cajera a precio especial (3)', await api('venta', { items: [{ productoId: co.id, cantidad: 3, precio: 130, variante: 'Tono: Nude 1' }], metodo: 'Efectivo', recibido: 400, clave: 'v1' }, tc));
+console.log('   venta:', JSON.stringify(v).slice(0,160));
+const v2 = ok('venta de la cajera con precio especial pero 1 pieza', await api('venta', { items: [{ productoId: co.id, cantidad: 1, precio: 130 }], metodo: 'Efectivo', recibido: 200, clave: 'v2' }, tc));
+console.log('   venta 2:', JSON.stringify(v2).slice(0,160));
+const mal = await api('guardar', { entidad: 'Productos', registro: { id: co.id, precioEsp: 150 } }, tok); console.log(mal.ok ? '✗ aceptó especial mayor' : '✓ rechaza especial mayor: ' + mal.error);
+const mal2 = await api('guardar', { entidad: 'Productos', registro: { id: co.id, precioEsp: 120, minEsp: 1 } }, tok); console.log(mal2.ok ? '✗ aceptó 1 pieza' : '✓ rechaza mínimo 1: ' + mal2.error);
