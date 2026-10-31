@@ -160,7 +160,12 @@ export function crearServidor(SRC, db, opciones = {}) {
       const x = R.c[k]; return x && x.e > Date.now() ? x.v : null;
     },
     getAll: ks => { const o = {}; (ks || []).forEach(k => { const v = cache.get(k); if (v !== null) o[k] = v; }); return o; },
-    put: (k, v, s) => { k = String(k); if (sinCache(k)) return; s = Math.min(Number(s) || 600, 21600); C.cache[k] = { v: String(v), e: Date.now() + s * 1000 }; C.cacheOps.push({ op: 'put', k, v: String(v), s }); },
+    put: (k, v, s) => {
+      k = String(k); if (sinCache(k)) return; s = Math.min(Number(s) || 600, 21600);
+      // La sesión se renueva en cada acción: si el valor es el mismo y le queda casi todo el tiempo, no se vuelve a guardar (ahorra una escritura por clic)
+      const prev = (k in C.cache) ? C.cache[k] : R.c[k];
+      if (prev && prev.v === String(v) && s >= 3600 && prev.e - Date.now() > (s - 3600) * 1000) return;
+      C.cache[k] = { v: String(v), e: Date.now() + s * 1000 }; C.cacheOps.push({ op: 'put', k, v: String(v), s }); },
     putAll: (o, s) => Object.keys(o || {}).forEach(k => cache.put(k, o[k], s)),
     remove: k => { k = String(k); if (sinCache(k)) return; C.cache[k] = null; C.cacheOps.push({ op: 'del', k }); },
     removeAll: ks => (ks || []).forEach(k => cache.remove(k))
