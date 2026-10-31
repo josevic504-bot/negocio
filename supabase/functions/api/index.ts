@@ -3,14 +3,13 @@
 // El Codigo.gs se descarga del repositorio al arrancar: publicar en GitHub actualiza el servidor (ya no se pega en Apps Script).
 import { createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
-import * as motorLocal from './servidor.js';
 import { htmlAPdf } from './pdf.js';
 import { jsPDF } from 'npm:jspdf@2.5.1';
 
 const URL_SB = Deno.env.get('SUPABASE_URL')!;
 const CLAVE = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const CODIGO_URL = Deno.env.get('CODIGO_URL') || 'https://raw.githubusercontent.com/josevic504-bot/negocio/main/Codigo.gs';
-// El motor (servidor.js) también se toma de GitHub (rama supabase); si no se puede descargar, se usa la copia que viene con la función
+// El motor (servidor.js) también se toma de GitHub (rama supabase), igual que el Codigo.gs
 const MOTOR_URL = Deno.env.get('MOTOR_URL') || 'https://raw.githubusercontent.com/josevic504-bot/negocio/supabase/supabase/functions/api/servidor.js';
 const BUCKET = 'archivos';
 const WEB_PERMITIDA = ['https://open.er-api.com/'];
@@ -54,7 +53,7 @@ const db = {
 };
 
 let servidor: any = null, cargando: Promise<any> | null = null, cargadoEn = 0;
-let motor: any = motorLocal, motorSrc = '';
+let motor: any = null, motorSrc = '';
 async function bajarMotor() {
   try {
     const r = await fetch(MOTOR_URL + '?t=' + Math.floor(Date.now() / 60000), { signal: AbortSignal.timeout(6000) });
@@ -65,7 +64,7 @@ async function bajarMotor() {
       motor = m; motorSrc = t;
       console.log('Motor descargado de GitHub');
     }
-  } catch (e) { console.log('Motor de GitHub no disponible, se usa la copia local:', String(e)); }
+  } catch (e) { if (!motor) throw new Error('No se pudo descargar el motor: ' + String(e)); console.log('Sigue el motor anterior:', String(e)); }
 }
 async function obtenerServidor() {
   // Se vuelve a descargar el Codigo.gs cada 5 minutos por si se publicó una versión nueva
