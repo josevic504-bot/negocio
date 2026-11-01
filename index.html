@@ -2217,7 +2217,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Catálogo: maquillaje, ropa y lociones'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Beauty & Moda'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -6647,7 +6647,7 @@ const MODULOS_INFO = {
   agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios' },
   suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' },
   mascotas:      { n: 'Mascotas, recetas y vacunas', d: 'Expediente de cada mascota con su dueño, consultas con receta, carnet de vacunación y recordatorios por WhatsApp.', g: 'veterinaria' },
-  catalogo:      { n: 'Tienda estilo catálogo', d: 'Tu tienda abre con secciones grandes (como las páginas de un catálogo), cada producto lleva subcategoría, frase y beneficios, los tonos se eligen por color y hay precio especial desde cierta cantidad de piezas.', g: 'catálogo de maquillaje, ropa y lociones' },
+  catalogo:      { n: 'Tienda estilo catálogo', d: 'Tu tienda abre con secciones grandes (como las páginas de un catálogo), cada producto lleva subcategoría, frase y beneficios, los tonos se eligen por color y hay precio especial desde cierta cantidad de piezas.', g: 'Beauty & Moda' },
   cotizaciones:  { n: 'Cotizaciones y contratos', d: 'Cotizaciones elegantes con plan de pagos; al aceptarlas se vuelven proyecto, los pagos quedan agendados y el cliente firma el contrato y el acta de entrega.', g: 'servicios' }
 };
 const modOn = k => !!S.config && (S.config[k] === 'si' || girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k)));
@@ -8001,7 +8001,7 @@ const NOVEDADES = [
     { i: 'tag', t: 'Categoría al crear un producto', d: 'Al crear o editar un producto eliges su categoría con un toque, o tocas «+ Nueva» para escribir otra. Así tu tienda en línea y tus reportes quedan ordenados.' }
   ] },
   { v: '1.9.27', fecha: '2026-10-31', items: [
-    { i: 'sparkle', t: 'Nuevo tipo de negocio: Catálogo de maquillaje, ropa y lociones', d: 'Para quien vende por catálogo al detalle y por mayor. Tu tienda en línea abre con secciones grandes (Rostro, Ojos, Labios, Lociones, Ropa…) como las páginas de un catálogo, y cada producto trae subcategoría, frase destacada y beneficios.' },
+    { i: 'sparkle', t: 'Nuevo tipo de negocio: Beauty & Moda', d: 'Para quien vende por catálogo al detalle y por mayor. Tu tienda en línea abre con secciones grandes (Rostro, Ojos, Labios, Lociones, Ropa…) como las páginas de un catálogo, y cada producto trae subcategoría, frase destacada y beneficios.' },
     { i: 'palette', t: 'Tonos por color', d: 'Tus clientes eligen el tono o el color de la ropa tocando su círculo, y la talla con un toque. El pedido te llega con el tono, color y talla exactos.' },
     { i: 'tag', t: 'Precio especial por cantidad', d: 'Detalle a un precio y especial desde cierta cantidad de piezas (por ejemplo L 140 y L 130 desde 3). Se aplica solo en la tienda, en el pedido y al vender.' }
   ] },
@@ -8470,7 +8470,7 @@ const juntarOpc = l => l.filter(x => x.n && x.v.length).map(x => x.n + ': ' + x.
 const T = { info: null, id: '', cat: '', sub: '', q: '', f: '', cart: {}, entrega: '', giro: '', compras: [] };
 // Cómo se ve cada giro como sección (módulo) en la portada de la tienda
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
-  boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Catálogo', 'Maquillaje, ropa y lociones', '#13a58b'],
+  boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Beauty & Moda', 'Maquillaje, ropa y lociones', '#13a58b'],
   tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
   ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;
