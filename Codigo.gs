@@ -24,9 +24,9 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.27';
+const VERSION = '1.9.29';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
-const ESQUEMA = VERSION + '-g2';
+const ESQUEMA = VERSION + '-g3';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -62,7 +62,7 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado','sucursal'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Conciliacion:   ['id','mes','saldoBanco','marcados','nota','actualizado','listo'],
@@ -85,7 +85,7 @@ const SCHEMA = {
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
-  Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo'],
+  Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo','variante'],
   Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
@@ -102,7 +102,7 @@ const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','li
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
-const TEXTO = new Set(['marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta']);
+const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -1635,11 +1635,7 @@ function anticipoDe_(ref) {
 }
 // Al cobrar una venta ligada a una orden, cita o encargo, se cierra solo
 // Lo que salió del inventario con una venta (si un artículo era servicio al venderse, no se devuelve nada)
-function salidoDe_(v) {
-  const o = {};
-  rowsDesde_('Inventario', (idMs_(v.id) || 0) - 60000).forEach(m => { if (m.refId === v.id && m.tipo === 'venta') o[m.productoId] = r3_((o[m.productoId] || 0) - Number(m.cantidad)); });
-  return o;
-}
+function salidoDe_(v) { return movDe_(v.id, 'venta', (idMs_(v.id) || 0) - 60000); }
 function cerrarLigados_(d, venta) {
   if (d.ordenId) { const o = rows_('Ordenes').find(x => x.id === d.ordenId); if (o && o.estado !== 'entregado') upsert_('Ordenes', { id: o.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
   if (d.agendaId) { const a = rows_('Agenda').find(x => x.id === d.agendaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
@@ -1824,6 +1820,7 @@ function rutaPanel_(a, d) {
   switch (a) {
     case 'panelResumen':           return panelResumen_();
     case 'panelNegocio':           return panelNegocio_(d);
+    case 'panelImportar':          return panelImportar_(d);
     case 'panelAccion':            return panelAccion_(d);
     case 'panelLimpiarDuplicados': return panelLimpiarDuplicados_();
     case 'panelContacto':          return panelContacto_(d);
@@ -1954,6 +1951,78 @@ function panelResumen_() {
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics.concat(colabs), duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
     soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
+}
+/* ---- Panel: cargar los productos de un negocio desde una hoja de Excel ----
+   d.filas: [{ _fila, nombre, categoria, sub, precio, costo, existencia, codigo, op1, val1, op2, val2, op3, val3, precioEsp, minEsp,
+              descripcion, lema, puntos, preciosOp, existOp, tienda }] · d.revisar = true solo revisa (no guarda nada) */
+function panelImportar_(d) {
+  const l = licDe_(d.negocio);
+  if (esEliminada_(l) || !l.hojaId) throw new Error('Ese negocio no está activo');
+  setNegocio_(l);
+  const filas = Array.isArray(d.filas) ? d.filas.slice(0, 1000) : [];
+  if (!filas.length) throw new Error('La hoja no tiene productos');
+  const prods = rows_('Productos'), porCod = {}, porNom = {};
+  prods.forEach(p => { if (p.codigo) porCod[String(p.codigo).toLowerCase()] = p; porNom[String(p.nombre).trim().toLowerCase()] = p; });
+  const n_ = x => { const v = Number(String(x === undefined || x === null ? '' : x).replace(/[^\d.\-]/g, '')); return isFinite(v) ? v : NaN; };
+  const vacio = x => x === undefined || x === null || String(x).trim() === '';
+  const res = { nuevos: 0, actualizados: 0, errores: [], lista: [] }, plan = [], vistos = {};
+  filas.forEach((f, i) => {
+    const fila = Number(f._fila) || i + 2, nombre = txt_(f.nombre, 80);
+    try {
+      if (!nombre) throw new Error('falta el nombre');
+      const clave = nombre.toLowerCase(); if (vistos[clave]) throw new Error('está repetido (fila ' + vistos[clave] + ')'); vistos[clave] = fila;
+      const categoria = txt_(f.categoria, 40); if (!categoria) throw new Error('falta la categoría');
+      const precio = n_(f.precio); if (!(precio > 0)) throw new Error('falta el precio');
+      const costo = vacio(f.costo) ? null : n_(f.costo); if (costo !== null && !(costo >= 0)) throw new Error('el costo no es válido');
+      const exist = vacio(f.existencia) ? null : n_(f.existencia); if (exist !== null && !(exist >= 0)) throw new Error('la existencia no es válida');
+      const codigo = txt_(f.codigo, 40);
+      const opciones = opciones_([[f.op1, f.val1], [f.op2, f.val2], [f.op3, f.val3]].filter(x => !vacio(x[0]) && !vacio(x[1])).map(x => txt_(x[0], 30) + ': ' + String(x[1])).join('|'));
+      const ex = (codigo && porCod[codigo.toLowerCase()]) || porNom[clave] || null;
+      const reg = { nombre: nombre, categoria: categoria, precio: r2_(precio), tienda: !/^no$/i.test(String(f.tienda || '').trim()) };
+      if (ex) reg.id = ex.id;
+      if (codigo) reg.codigo = codigo;
+      if (costo !== null) reg.costo = r4_(costo);
+      if (opciones) reg.opciones = opciones;
+      ['sub', 'lema', 'descripcion'].forEach(k => { if (!vacio(f[k])) reg[k] = txt_(f[k], k === 'descripcion' ? 300 : 90); });
+      if (!vacio(f.puntos)) reg.puntos = String(f.puntos).split(/\||\n/).map(x => txt_(x, 80)).filter(Boolean).slice(0, 6).join('|');
+      if (!vacio(f.precioEsp)) { reg.precioEsp = r2_(n_(f.precioEsp) || 0); reg.minEsp = Math.floor(n_(f.minEsp) || 0); if (reg.precioEsp > 0 && reg.minEsp < 2) throw new Error('falta desde cuántas piezas vale el precio especial'); if (reg.precioEsp >= reg.precio) throw new Error('el precio especial debe ser menor que el normal'); }
+      // Precio y existencia por opción: «50 ml = 450; 100 ml = 650» · con dos opciones «M / Negro = 3»
+      const base = { nombre: nombre, opciones: opciones || (ex ? ex.opciones : '') }, por = {};
+      [['preciosOp', 'p'], ['existOp', 's']].forEach(([col, campo]) => {
+        if (vacio(f[col])) return;
+        if (!opsDe_(base).length) throw new Error('para poner ' + (campo === 'p' ? 'precios' : 'existencias') + ' por opción, primero escribe las opciones');
+        String(f[col]).split(/;|\n/).map(x => x.trim()).filter(Boolean).forEach(par => {
+          const j = par.lastIndexOf('='); if (j < 0) throw new Error('«' + par + '» debe ser como «Nude 1 = 10»');
+          const k = varKey_(base, par.slice(0, j).replace(/\//g, ',')), v = n_(par.slice(j + 1));
+          if (!k) throw new Error('la opción «' + par.slice(0, j).trim() + '» no está en las opciones del producto');
+          if (!(v >= 0)) throw new Error('el número de «' + par + '» no es válido');
+          (por[k] = por[k] || {})[campo] = v;
+        });
+      });
+      if (Object.keys(por).length) { const V = {}; combosDe_(base).forEach(k => { V[k] = { p: por[k] && por[k].p || 0, s: por[k] && por[k].s !== undefined ? por[k].s : 0 }; }); reg.variantes = V; }
+      plan.push({ fila: fila, ex: ex, reg: reg, exist: reg.variantes ? null : exist });
+    } catch (e) { res.errores.push({ fila: fila, nombre: nombre, error: e.message }); }
+  });
+  res.nuevos = plan.filter(x => !x.ex).length; res.actualizados = plan.length - res.nuevos;
+  res.lista = plan.slice(0, 400).map(x => { const r = x.reg, V = r.variantes, ops = opsDe_(r.opciones ? r : (x.ex || {}));
+    let ex = x.exist; if (V) ex = Object.keys(V).reduce((a, k) => a + Number(V[k].s || 0), 0);
+    return { fila: x.fila, nombre: r.nombre, categoria: r.categoria, precio: r.precio, existencia: ex, nuevo: !x.ex,
+      det: [ops.map(o => o.v.length + ' ' + o.n.toLowerCase()).join(' · '), r.precioEsp ? 'esp. ' + r.precioEsp + ' desde ' + r.minEsp : '', V && Object.keys(V).some(k => V[k].p > 0) ? 'precio por opción' : ''].filter(Boolean).join(' · ') }; });
+  if (d.revisar) return res;
+  const adm = rows_('Usuarios').find(x => x.rol === 'admin' && x.activo) || rows_('Usuarios').find(x => x.rol === 'admin');
+  if (!adm) throw new Error('El negocio no tiene administrador');
+  let hechos = 0;
+  plan.forEach(x => {
+    try {
+      const reg = Object.assign({}, x.reg); if (reg.variantes) reg.variantes = JSON.stringify(reg.variantes);
+      if (!x.ex && x.exist !== null) reg.stock = x.exist;
+      const g = guardar_(adm, { entidad: 'Productos', registro: reg });
+      if (x.ex && x.exist !== null && !varsDe_(g) && g.tipo === 'producto' && Math.abs(Number(g.stock) - x.exist) > 0.0005) ajusteStock_(adm, { id: g.id, modo: 'conteo', cantidad: x.exist, motivo: 'Carga desde Excel' });
+      hechos++;
+    } catch (e) { res.errores.push({ fila: x.fila, nombre: x.reg.nombre, error: e.message }); }
+  });
+  res.cargados = hechos;
+  return res;
 }
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
@@ -2459,6 +2528,21 @@ function guardar_(u, d) {
     { const pe = r.precioEsp !== undefined ? r.precioEsp : prev ? prev.precioEsp : 0, me = r.minEsp !== undefined ? r.minEsp : prev ? prev.minEsp : 0, pr = r.precio !== undefined ? r.precio : prev ? prev.precio : 0;
       if (pe > 0 && me < 2) throw new Error('Escribe desde cuántas piezas vale el precio especial (2 o más)');
       if (pe > 0 && pr > 0 && pe >= pr) throw new Error('El precio especial debe ser menor que el precio normal'); }
+    // Existencia y precio por opción: { «Tono: Nude 1»: { s: existencia, p: precio (0 = el normal) } }
+    let varQuiere = null;
+    if (r.variantes !== undefined) {
+      if (!r.variantes) r.variantes = '';
+      else {
+        const o = typeof r.variantes === 'object' ? r.variantes : parseJ_(r.variantes, null);
+        if (!o || typeof o !== 'object') throw new Error('Las existencias por opción no son válidas');
+        const base = { nombre: r.nombre || (prev && prev.nombre) || '', opciones: r.opciones !== undefined ? r.opciones : prev ? prev.opciones : '' };
+        const combos = combosDe_(base), Vp = prev ? varsDe_(prev) || {} : {}, V = {};
+        if (!combos.length) throw new Error('Para llevar existencias por opción, primero escribe las opciones (tono, talla…)');
+        combos.forEach(k => { const x = o[k] || {}, pr = r2_(Number(x.p) || 0); if (pr < 0) throw new Error('Los montos no pueden ser negativos'); V[k] = { s: Vp[k] ? Number(Vp[k].s) || 0 : 0, p: pr }; });
+        varQuiere = {}; combos.forEach(k => { const n = Number((o[k] || {}).s); varQuiere[k] = isFinite(n) && n >= 0 ? r3_(n) : V[k].s; });
+        r.variantes = JSON.stringify(V);
+      }
+    }
     if (r.giro !== undefined) r.giro = own_(GIROS, r.giro) && girosActivos_().indexOf(r.giro) > 0 ? r.giro : ''; // vacío = giro principal
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
     const stockIni = r.stock;
@@ -2469,6 +2553,14 @@ function guardar_(u, d) {
     if (r.categoria) { const ex = rows_('Productos').find(p => p.categoria.toLowerCase() === r.categoria.toLowerCase()); if (ex) r.categoria = ex.categoria; }
     if (prev && prev.foto && r.foto !== undefined && r.foto !== prev.foto) borrarFoto_(prev.foto);
     const g = upsert_('Productos', r);
+    // Las existencias por opción se dejan como las escribió, y el total del producto queda igual a la suma (con su movimiento de inventario)
+    if (varQuiere && g.tipo === 'producto') {
+      const V = varsDe_(g) || {}, mov = {}; let suma = 0, dv = 0;
+      Object.keys(varQuiere).forEach(k => { const d0 = r3_(varQuiere[k] - (V[k] ? Number(V[k].s) || 0 : 0)); suma = r3_(suma + varQuiere[k]); if (d0) { mov[g.id + SEPV + k] = d0; dv = r3_(dv + d0); } });
+      const resto = r3_(suma - (Number(g.stock) || 0) - dv); if (resto) mov[g.id] = resto;
+      if (Object.keys(mov).length) moverStock_(mov, prev ? 'ajuste' : 'inicial', '', u, prev ? 'Existencias por opción' : 'Existencia inicial');
+      return rows_('Productos').find(p => p.id === g.id);
+    }
     if (!prev && g.tipo === 'producto' && Number(stockIni) > 0) {
       moverStock_({ [g.id]: r3_(stockIni) }, 'inicial', '', u, 'Existencia inicial');
       return rows_('Productos').find(p => p.id === g.id);
@@ -2679,19 +2771,56 @@ function instalarLimpiezaDiaria() {
 /* ===================== INVENTARIO ===================== */
 
 // Cambia existencias y deja registro en la hoja Inventario. cambios = { productoId: +/-cantidad }
+// cambios: { idProducto: cantidad } o { idProducto␁«Tono: Nude 1»: cantidad } (existencia por opción). El total del producto siempre se mueve.
 function moverStock_(cambios, tipo, refId, u, nota, fecha, costos) {
-  const ids = Object.keys(cambios);
-  if (!ids.length) return;
-  const pm = porId_(rows_('Productos')), mov = [], f = fecha || ahora_();
-  ids.forEach(id => {
-    const p = pm[id];
-    if (!p || p.tipo !== 'producto') return;
-    const nuevo = r3_(p.stock + cambios[id]);
-    upsert_('Productos', { id: id, stock: nuevo });
-    mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: r3_(cambios[id]), stock: nuevo, refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '', costo: r4_(costos && costos[id] !== undefined ? costos[id] : p.costo) }); // costo unitario del momento
+  const ks = Object.keys(cambios);
+  if (!ks.length) return;
+  const pm = porId_(rows_('Productos')), mov = [], f = fecha || ahora_(), cur = {}, vars = {};
+  ks.forEach(k => {
+    const id = k.split(SEPV)[0], vk = k.split(SEPV)[1] || '', p = pm[id], n = r3_(Number(cambios[k]) || 0);
+    if (!p || p.tipo !== 'producto' || !n) return;
+    if (cur[id] === undefined) cur[id] = Number(p.stock) || 0;
+    cur[id] = r3_(cur[id] + n);
+    if (vk) { const V = vars[id] || (vars[id] = varsDe_(p)); if (V && V[vk]) V[vk].s = r3_((Number(V[vk].s) || 0) + n); }
+    mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: n, stock: cur[id], refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '', variante: vk,
+      costo: r4_(costos && costos[id] !== undefined ? costos[id] : p.costo) }); // costo unitario del momento
   });
+  Object.keys(cur).forEach(id => { const upd = { id: id, stock: cur[id] }; if (vars[id]) upd.variantes = JSON.stringify(vars[id]); upsert_('Productos', upd); });
   appendRows_('Inventario', mov);
 }
+
+/* ---- Existencia y precio por opción (tono, talla, presentación) ---- */
+const SEPV = '\u0001';
+// Opciones del producto sin el color: [{ n: 'Tono', v: ['Nude 1', …] }]
+function opsDe_(p) {
+  return String(p && p.opciones || '').split('|').map(g => { const i = g.indexOf(':'); if (i < 0) return null;
+    return { n: g.slice(0, i).trim(), v: g.slice(i + 1).split(',').map(x => x.trim().replace(/#[0-9a-f]{6}$/i, '').trim()).filter(Boolean) }; }).filter(o => o && o.n && o.v.length);
+}
+function varsDe_(p) { const o = parseJ_(p && p.variantes, null); return o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).length ? o : null; }
+// Todas las combinaciones: «Talla: M, Color: Negro»
+function combosDe_(p) {
+  let l = [''];
+  opsDe_(p).forEach(o => { const nl = []; l.forEach(a => o.v.forEach(v => nl.push((a ? a + ', ' : '') + o.n + ': ' + v))); l = nl; });
+  return l[0] === '' ? [] : l.slice(0, 120);
+}
+// Texto de la opción como venga («Tono: Nude 1», «M · Negro», «Corrector (Talla: M, Color: Negro)») → llave «Talla: M, Color: Negro»
+function varKey_(p, texto) {
+  const ops = opsDe_(p); if (!ops.length || !texto) return '';
+  let t = String(texto);
+  const m = /\(([^()]*)\)\s*$/.exec(t); if (m) t = m[1]; else if (t.indexOf(p.nombre + ' · ') === 0) t = t.slice(p.nombre.length + 3);
+  const toks = t.split(/,|·/).map(x => { const z = x.trim(), j = z.indexOf(':'); return (j >= 0 ? z.slice(j + 1) : z).trim().toLowerCase(); }).filter(Boolean);
+  const sel = ops.map(o => { const k = toks.findIndex(x => o.v.some(v => v.toLowerCase() === x)); if (k < 0) return null; const v = o.v.find(y => y.toLowerCase() === toks[k]); toks.splice(k, 1); return v; });
+  return sel.some(x => x === null) ? '' : ops.map((o, i) => o.n + ': ' + sel[i]).join(', ');
+}
+function precioVar_(p, vk) { const V = varsDe_(p), x = V && vk ? V[vk] : null; return x && Number(x.p) > 0 ? r2_(x.p) : Number(p.precio) || 0; }
+const tienePrecioVar_ = (p, vk) => { const V = varsDe_(p), x = V && vk ? V[vk] : null; return !!(x && Number(x.p) > 0); };
+// Lo que salió con una venta o entró con una compra, por producto y opción (para devolverlo al anular)
+function movDe_(refId, tipo, desdeMs) {
+  const o = {};
+  rowsDesde_('Inventario', desdeMs).forEach(m => { if (m.refId === refId && m.tipo === tipo) { const k = m.productoId + (m.variante ? SEPV + m.variante : ''); o[k] = r3_((o[k] || 0) - Number(m.cantidad)); } });
+  return o;
+}
+const totPorId_ = o => { const t = {}; Object.keys(o || {}).forEach(k => { const id = k.split(SEPV)[0]; t[id] = r3_((t[id] || 0) + o[k]); }); return t; };
 
 function ajusteStock_(u, d) {
   req_(u, ['admin','bodega']);
@@ -2704,15 +2833,18 @@ function ajusteStock_(u, d) {
   if (!esNum_(d.cantidad)) throw new Error('Escribe la cantidad');
   const n = r3_(d.cantidad);
   if (!(n >= 0)) throw new Error('Cantidad no válida');
+  const V = varsDe_(p), vk = V ? varKey_(p, d.variante) : '';
+  if (V && !vk) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' que ajustas');
+  const base = vk && V[vk] ? Number(V[vk].s) || 0 : p.stock;
   let delta;
-  if (modo === 'conteo') delta = r3_(n - p.stock);
+  if (modo === 'conteo') delta = r3_(n - base);
   else if (modo === 'entrada') delta = n;
   else if (modo === 'salida') delta = -n;
   else throw new Error('Tipo de ajuste no válido');
   if (!delta) return rows_('Productos').find(x => x.id === p.id);
   if (modo !== 'conteo' && !(n > 0)) throw new Error('La cantidad debe ser mayor a cero');
   const motivo = txt_(d.motivo, 120) || (modo === 'conteo' ? 'Conteo físico' : modo === 'entrada' ? 'Entrada' : 'Salida');
-  moverStock_({ [p.id]: delta }, 'ajuste', '', u, motivo, undefined, { [p.id]: p.costo });
+  moverStock_({ [p.id + (vk ? SEPV + vk : '')]: delta }, 'ajuste', '', u, motivo, undefined, { [p.id]: p.costo });
   return rows_('Productos').find(x => x.id === p.id);
 }
 
@@ -2737,7 +2869,7 @@ function venta_(u, d, interno) {
   const incl = cfg.preciosConISV !== 'no';
   // Si la misma venta llega dos veces (se cortó la conexión y se volvió a tocar Cobrar), se devuelve la primera
   // ed: datos de la venta que se está corrigiendo (editarVenta_). Lo devuelto por la original cuenta como existencia.
-  const ed = interno.ed || null, dev = ed ? ed.devuelto : {};
+  const ed = interno.ed || null, dev = ed ? ed.devuelto : {}, devTot = totPorId_(dev);
   const clave = ed ? '' : txt_(d.clave, 60), kc = clave ? 'VK_' + (NEG ? NEG.id : '') + '_' + clave : '';
   if (kc) {
     let vid = null; try { vid = CacheService.getScriptCache().get(kc); } catch (e) {}
@@ -2771,26 +2903,31 @@ function venta_(u, d, interno) {
     if (!esNum_(i.cantidad)) throw new Error('Cantidad no válida');
     const cant = r3_(i.cantidad);
     if (!(cant > 0)) throw new Error('Cantidad no válida');
+    // Existencia por opción: la línea dice qué tono / talla / presentación es
+    const vk = p && varsDe_(p) ? varKey_(p, i.variante || i.descripcion) : '';
+    if (p && varsDe_(p) && !vk && p.tipo === 'producto') throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
     if (!(i.precio === undefined || i.precio === '' || i.precio === null) && !esNum_(i.precio)) throw new Error('Precio no válido');
-    let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? p.precio : 0) : r2_(i.precio);
+    let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? precioVar_(p, vk) : 0) : r2_(i.precio);
     if (p && u.rol !== 'admin' && !precioLigado(p)) { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
       const delPedido = preciosPedido[p.id];
-      const esp = precioCant_(p, sumaP[p.id]);
-      if (Math.abs(precio - p.precio) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005) && !(esp && Math.abs(precio - esp) < 0.005)) precio = delPedido !== undefined ? delPedido : p.precio;
+      const esp = tienePrecioVar_(p, vk) ? 0 : precioCant_(p, sumaP[p.id]), pv = precioVar_(p, vk);
+      if (Math.abs(precio - pv) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005) && !(esp && Math.abs(precio - esp) < 0.005)) precio = delPedido !== undefined ? delPedido : pv;
     }
     if (precio < 0) throw new Error('Precio no válido');
     const desc = p ? p.nombre + (i.variante ? ' · ' + txt_(i.variante, 60) : '') : txt_(i.descripcion, 80);
     if (!desc) throw new Error('Escribe la descripción del artículo');
     if (!p && !(i.costo === undefined || i.costo === '' || i.costo === null) && !(Number(i.costo) >= 0)) throw new Error('El costo de «' + desc + '» no es válido');
     const costoP = p ? (ed && ed.costos && ed.costos[p.id] !== undefined ? ed.costos[p.id] : p.costo) : 0; // al editar, lo ya vendido conserva su costo
-    return { p: p, productoId: p ? p.id : '', descripcion: desc, cantidad: cant, precio: precio, costo: p ? costoP : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
+    return { p: p, vk: vk, productoId: p ? p.id : '', descripcion: vk && i.variante === undefined && p ? p.nombre + ' · ' + vk.split(', ').map(x => x.split(': ')[1]).join(' · ') : desc, cantidad: cant, precio: precio, costo: p ? costoP : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
   });
   if (!items.length) throw new Error('El ticket está vacío');
   // Existencias
-  const pedido = {};
-  items.forEach(i => { if (i.p && i.p.tipo === 'producto') pedido[i.productoId] = r3_((pedido[i.productoId] || 0) + i.cantidad); });
+  const pedido = {}, pedidoK = {};
+  items.forEach(i => { if (i.p && i.p.tipo === 'producto') { pedido[i.productoId] = r3_((pedido[i.productoId] || 0) + i.cantidad); const k = i.productoId + (i.vk ? SEPV + i.vk : ''); pedidoK[k] = r3_((pedidoK[k] || 0) + i.cantidad); } });
   if (cfg.venderSinStock !== 'si') {
-    Object.keys(pedido).forEach(id => { const p = pm[id], hay = r3_(p.stock + (ed && !ed.listo ? dev[id] || 0 : 0)); if (hay < pedido[id]) throw new Error('No hay suficiente «' + p.nombre + '» (quedan ' + hay + ')'); });
+    Object.keys(pedido).forEach(id => { const p = pm[id], hay = r3_(p.stock + (ed && !ed.listo ? devTot[id] || 0 : 0)); if (hay < pedido[id]) throw new Error('No hay suficiente «' + p.nombre + '» (quedan ' + hay + ')'); });
+    Object.keys(pedidoK).forEach(k => { const [id, vk] = k.split(SEPV); if (!vk) return; const p = pm[id], V = varsDe_(p), x = V && V[vk]; if (!x) return;
+      const hay = r3_((Number(x.s) || 0) + (ed && !ed.listo ? dev[k] || 0 : 0)); if (hay < pedidoK[k]) throw new Error('No hay suficiente «' + p.nombre + ' (' + vk + ')» (quedan ' + hay + ')'); });
   }
   const metodo = METODOS.indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
   // Facturación SAR (solo si el negocio la activó en Ajustes)
@@ -2884,7 +3021,7 @@ function venta_(u, d, interno) {
   appendRows_('Ventas', [venta]);
   appendRows_('VentaDetalle', detalle);
   const cambios = {};
-  Object.keys(pedido).forEach(id => { cambios[id] = -pedido[id]; });
+  Object.keys(pedidoK).forEach(k => { cambios[k] = -pedidoK[k]; });
   moverStock_(cambios, 'venta', venta.id, u, ed ? 'Edición ' + venta.numero : venta.numero, fecha);
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   const nuevasSus = susRegistrar_(u, planSus, venta);
@@ -3092,7 +3229,9 @@ function compra_(u, d) {
     if (!esNum_(i.costo) || Number(i.costo) < 0) throw new Error('Costo no válido en «' + p.nombre + '»');
     if (!vacio(i.precio) && (!esNum_(i.precio) || precio < 0)) throw new Error('Precio no válido en «' + p.nombre + '»');
     const cant = r3_(i.cantidad), costo = r4_(i.costo);
-    return { p: p, cantidad: cant, costo: costo, precio: precio, margen: margen };
+    const vk = !p._nuevo && varsDe_(p) ? varKey_(p, i.variante) : '';
+    if (!p._nuevo && varsDe_(p) && !vk) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '» en la compra');
+    return { p: p, vk: vk, cantidad: cant, costo: costo, precio: precio, margen: margen };
   });
   if (!items.length) throw new Error('Agrega al menos un producto');
   const prov = d.proveedorId ? rows_('Proveedores').find(x => x.id === d.proveedorId) : null;
@@ -3119,7 +3258,7 @@ function compra_(u, d) {
   };
   if (girosActivos_().length > 1) c.sucursal = tiendaReq_(u, d) || girosActivos_()[0];
   appendRows_('Compras', [c]);
-  appendRows_('CompraDetalle', items.map((i, k) => ({ id: newId_('CompraDetalle') + k, compraId: c.id, productoId: i.p.id, descripcion: i.p.nombre,
+  appendRows_('CompraDetalle', items.map((i, k) => ({ id: newId_('CompraDetalle') + k, compraId: c.id, productoId: i.p.id, descripcion: i.p.nombre + (i.vk ? ' (' + i.vk + ')' : ''),
     cantidad: i.cantidad, costo: i.costo, total: r2_(i.cantidad * i.costo),
     precioAnt: i.precio !== null && i.precio > 0 && Math.abs(i.precio - (i.p.precio || 0)) > 0.004 ? (nuevos.indexOf(i.p.id) >= 0 ? 0 : i.p.precio) : '',
     precio: i.precio !== null && i.precio > 0 && Math.abs(i.precio - (i.p.precio || 0)) > 0.004 ? i.precio : '' })));
@@ -3134,8 +3273,8 @@ function compra_(u, d) {
     if (x.precio !== null && x.precio > 0) upd.precio = x.precio;
     if (x.margen !== null) upd.margen = x.margen;
     upsert_('Productos', upd);
-    cambios[id] = r3_(x.cant);
   });
+  items.forEach(i => { const k = i.p.id + (i.vk ? SEPV + i.vk : ''); cambios[k] = r3_((cambios[k] || 0) + i.cantidad); });
   moverStock_(cambios, 'compra', c.id, u, c.numero + (c.factura ? ' · Fact. ' + c.factura : ''), fecha);
   return { compra: c, productos: rows_('Productos'), proveedores: proveedoresConSaldo_(), nuevos: nuevos };
 }
@@ -3165,12 +3304,16 @@ function anularCompra_(u, d) {
   if (rows_('Pagos').some(p => !p.anulado && parseJ_(p.aplicado, []).some(x => x.id === c.id))) throw new Error('Esta compra tiene pagos. Anula primero los pagos al proveedor.');
   const det = rows_('CompraDetalle').filter(x => x.compraId === c.id), pm = porId_(rows_('Productos')), cambios = {}, agr = {};
   det.forEach(i => {
-    cambios[i.productoId] = r3_((cambios[i.productoId] || 0) - i.cantidad);
     const x = agr[i.productoId] || (agr[i.productoId] = { cant: 0, valor: 0, precioAnt: null, precio: null });
     x.cant += i.cantidad; x.valor += i.cantidad * i.costo;
     if (i.precio > 0) { x.precio = i.precio; if (x.precioAnt === null) x.precioAnt = i.precioAnt; }
   });
-  const falta = Object.keys(cambios).filter(id => pm[id] && pm[id].stock + cambios[id] < -0.0005);
+  // Se devuelve lo que entró con la compra (por producto y opción); las compras viejas, por su detalle
+  const entro = movDe_(c.id, 'compra', (idMs_(c.id) || 0) - 60000);
+  if (Object.keys(entro).length) Object.keys(entro).forEach(k => { cambios[k] = entro[k]; });
+  else det.forEach(i => { cambios[i.productoId] = r3_((cambios[i.productoId] || 0) - i.cantidad); });
+  const tot = totPorId_(cambios);
+  const falta = Object.keys(tot).filter(id => pm[id] && pm[id].stock + tot[id] < -0.0005);
   if (falta.length) throw new Error('No se puede anular: ya se vendió parte de «' + pm[falta[0]].nombre + '». Haz un ajuste de inventario si es necesario.');
   Object.keys(agr).forEach(id => {
     const p = pm[id], x = agr[id]; if (!p) return;
@@ -4305,6 +4448,8 @@ function tiendaInfo_(d) {
       const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '', g: giroDeProd_(p, activos) };
       if (p.sub) o.sub = p.sub; if (p.lema) o.lema = p.lema; if (p.puntos) o.puntos = p.puntos; if (p.codigo && catOn && !/^EJ\d/.test(p.codigo)) o.codigo = p.codigo;
       if (p.precioEsp > 0 && p.minEsp > 1) { o.precioEsp = p.precioEsp; o.minEsp = p.minEsp; }
+      const V = varsDe_(p);
+      if (V) { o.vars = {}; Object.keys(V).forEach(k => { const x = {}; if (Number(V[k].p) > 0) x.p = r2_(V[k].p); if (p.tipo === 'producto' && !sin) x.n = Math.max(0, Math.floor(Number(V[k].s) || 0)); o.vars[k] = x; }); }
       if (String(p.creado).slice(0, 10) >= nuevoDesde) o.nuevo = true;
       if (p.tipo === 'servicio') o.serv = 1;
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
@@ -4338,7 +4483,7 @@ function pedir_(d) {
   const pm = porId_(rows_('Productos'));
   const sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
   const lista = Array.isArray(d.items) ? d.items.slice(0, 40) : [];
-  const items = [], suma = {};
+  const items = [], suma = {}, sumaV = {};
   const conCompras = girosActivos_(cfg).indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0;
   let anticipo = 0;
   lista.forEach(i => {
@@ -4361,13 +4506,18 @@ function pedir_(d) {
     suma[p.id] = (suma[p.id] || 0) + cant;
     if (p.tipo === 'producto' && !sin && p.stock < suma[p.id]) throw new Error(p.stock > 0 ? 'Solo quedan ' + Math.floor(p.stock) + ' de «' + p.nombre + '»' : '«' + p.nombre + '» se agotó');
     const op = txt_(i.opcion, 160), nom = op ? txt_(p.nombre + ' (' + op + ')', 240) : p.nombre;
+    const V = varsDe_(p), vk = V ? varKey_(p, op) : '';
+    if (V && !vk) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
+    if (vk) { const kk = p.id + SEPV + vk; sumaV[kk] = (sumaV[kk] || 0) + cant; const hay = Math.floor(Number(V[vk] && V[vk].s) || 0);
+      if (p.tipo === 'producto' && !sin && hay < sumaV[kk]) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + p.nombre + ' (' + vk + ')»' : '«' + p.nombre + ' (' + vk + ')» se agotó'); }
+    const pu = precioVar_(p, vk);
     if (giroDeProd_(p, girosActivos_(cfg)) === 'recargas' && !/ID de jugador:\s*\S/i.test(op)) throw new Error('Escribe tu ID de jugador para «' + p.nombre + '»');
     const ya = items.find(x => x.productoId === p.id && x.nombre === nom);
-    if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * p.precio); }
-    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: p.precio, total: r2_(cant * p.precio) });
+    if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * ya.precio); }
+    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk) });
   });
   if (!items.length) throw new Error('Tu pedido está vacío');
-  items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.precio = pe; i.total = r2_(i.cantidad * pe); } });
+  items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p && !i._propio ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   const min = Number(cfg.tiendaMinimo) || 0;
   if (min > 0 && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
