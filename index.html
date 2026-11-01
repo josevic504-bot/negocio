@@ -1467,7 +1467,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.28';
+const APP_VER = '1.9.29';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -8118,6 +8118,10 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.29', fecha: '2026-11-01', items: [
+    { i: 'layers', t: 'Existencia por tono, talla o presentación', d: 'Cada opción de un producto puede llevar su propia existencia (Nude 1: 10, Nude 3: 0). Al vender, comprar o ajustar se descuenta de la opción exacta, y en tu tienda en línea la que se acabó sale como agotada. Actívalo en el producto › Existencia y precio por opción.' },
+    { i: 'tag', t: 'Precio por presentación', d: 'Una opción puede tener su propio precio: la loción de 50 ml a L 450 y la de 100 ml a L 650, en un solo producto.' }
+  ] },
   { v: '1.9.28', fecha: '2026-10-31', items: [
     { i: 'tag', t: 'Categoría al crear un producto', d: 'Al crear o editar un producto eliges su categoría con un toque, o tocas «+ Nueva» para escribir otra. Así tu tienda en línea y tus reportes quedan ordenados.' }
   ] },
@@ -8861,7 +8865,7 @@ function tProducto(id) {
   const citaHTML = cfg.cita ? `<label class="fld" style="margin-top:14px"><span>Fecha que prefieres</span><input type="date" id="tp-fe" min="${hoy()}"></label>
     <span class="op-l">Hora</span><div class="op-g" id="tp-tu">${['Mañana', 'Tarde'].map(v => `<button type="button" class="chip" data-t="${v}">${v}</button>`).join('')}</div>` : '';
   const notaHTML = cfg.nota ? `<label class="fld" style="margin-top:14px"><span>${esc(cfg.nota)}${cfg.notaReq ? '' : ' (opcional)'}</span><input id="tp-no" maxlength="80" placeholder="${esc(cfg.notaEj || '')}" ${cfg.notaReq ? 'inputmode="text" autocomplete="off"' : ''}></label>` : '';
-  const h = hoja({ titulo: '', cls: 'prod-h', html: `<div class="prod-big">${prodFoto(p)}</div><h2 class="prod-n">${esc(p.nombre)}</h2>${catHTML}${p.precioEsp ? '' : `<div class="prod-p n">${money(p.precio)}${p.unidad && p.unidad !== 'unidad' ? ` <small>por ${esc(p.unidad)}</small>` : ''}</div>`}
+  const h = hoja({ titulo: '', cls: 'prod-h', html: `<div class="prod-big">${prodFoto(p)}</div><h2 class="prod-n">${esc(p.nombre)}</h2>${catHTML}${p.precioEsp ? '' : `<div class="prod-p n">${p.vars && desdeT(p) < Math.max(...Object.values(p.vars).map(x => x.p || p.precio), p.precio) ? '<small>desde </small>' : ''}${money(p.vars ? desdeT(p) : p.precio)}${p.unidad && p.unidad !== 'unidad' ? ` <small>por ${esc(p.unidad)}</small>` : ''}</div>`}
     ${p.descripcion ? `<p class="prod-d">${esc(p.descripcion)}</p>` : ''}${p.codigo ? `<div class="cat-cod">Cód.: ${esc(p.codigo)}</div>` : ''}${espHTML}${p.agotado ? '<p class="neg"><b>Agotado por ahora</b></p>' : p.stock !== undefined ? `<p class="sm mut">${cant(p.stock)} disponibles</p>` : ''}
     ${p.agotado ? '' : `${opsHTML}${citaHTML}${notaHTML}<div class="row" style="justify-content:center;margin:16px 0 4px"><div class="qty big"><button data-d="-1">−</button><span id="tp-n">1</span><button data-d="1">+</button></div></div>`}` });
   if (p.agotado) return;
