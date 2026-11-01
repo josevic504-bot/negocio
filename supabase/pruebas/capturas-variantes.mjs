@@ -45,10 +45,10 @@ const p1 = (await api('bootstrap', {}, tok)).data.productos.find(p => p.id === c
 console.log('guardar desde el formulario → total', p1.stock, '(esperado 27) · Beige 3', JSON.parse(p1.variantes)['Tono: Beige 3'].s);
 // 2) Vender: elegir presentación (precio propio) y tono agotado
 await pg.evaluate(() => { ir('vender'); }); await pg.waitForTimeout(800);
-await pg.evaluate(id => ACC.vadd({ dataset: { id } }), lo.id); await pg.waitForTimeout(600);
+await pg.evaluate(id => { ACC.vadd({ dataset: { id } }); }, lo.id); await pg.waitForTimeout(600);
 await pg.screenshot({ path: OUT + '/v2-vender-pres.png' });
 await pg.locator('.sheet [data-v="100 ml"]').click(); await pg.locator('.sheet-f .pri').click(); await pg.waitForTimeout(500);
-await pg.evaluate(id => ACC.vadd({ dataset: { id } }), co.id); await pg.waitForTimeout(600);
+await pg.evaluate(id => { ACC.vadd({ dataset: { id } }); }, co.id); await pg.waitForTimeout(600);
 await pg.screenshot({ path: OUT + '/v3-vender-tono.png' });
 await pg.locator('.sheet [data-v="Beige 2"]').click(); await pg.locator('.sheet-f .pri').click(); await pg.waitForTimeout(500);
 console.log('ticket:', JSON.stringify(await pg.evaluate(() => S.ticket.items.map(i => i.descripcion + ' ' + i.precio))));
@@ -71,7 +71,7 @@ const pe = (await api('pedidos', {}, tok)).data; console.log('pedido de la tiend
 // 4) Panel: plantilla y carga
 pg = await pagina(); await pg.goto('http://localhost:8770/?panel'); await pg.waitForTimeout(1500);
 const inp = pg.locator('input[type=password]').first(); await inp.fill('clave123'); await inp.press('Enter'); await pg.waitForTimeout(2500);
-await pg.evaluate(id => panelImportar(id, 'Norey Beauty & More'), neg); await pg.waitForTimeout(600);
+await pg.evaluate(id => { panelImportar(id, "Norey"); }, neg); await pg.waitForTimeout(600);
 const [dl] = await Promise.all([pg.waitForEvent('download'), pg.locator('[data-a="impPlantilla"]').click()]);
 const plant = OUT + '/plantilla-productos.xlsx'; await dl.saveAs(plant);
 // hoja del cliente: usa la plantilla y agrega una fila con error
