@@ -396,15 +396,17 @@ function RECORDATORIOS_(ids) {
   /* ---------- Respaldos de cada negocio y copiar productos entre negocios (Panel) ----------
    * Respaldos (lista) y RespaldoDatos (la copia completa en JSON) son tablas por negocio que el Codigo.gs no usa.
    * Copia diaria automática (tarea respaldosDia, 2 a. m.): se guardan 7 diarias, 4 semanales y 4 manuales/«antes de restaurar». */
-  const HERR = ['panelRespaldos', 'panelRespaldoHacer', 'panelRespaldoRestaurar', 'panelRespaldoDatos', 'panelCopiarInfo', 'panelCopiarProductos'];
+  const HERR = ['panelRespaldos', 'panelRespaldoHacer', 'panelRespaldoRestaurar', 'panelRespaldoDatos', 'panelCopiarInfo', 'panelCopiarProductos', 'panelRespaldosResumen', 'panelRespaldarTodos', 'panelRespaldoConfig'];
   const GUARDA = { diario: 7, semanal: 4, manual: 4, antes: 4 };
+  const guardaDe = Rq => { let g = {}; try { g = JSON.parse((Rq && Rq.props.RESP_GUARDA) || '{}') || {}; } catch (e) {} const o = {}; Object.keys(GUARDA).forEach(k => { const n = Number(g[k]); o[k] = n >= 1 && n <= 60 ? Math.floor(n) : GUARDA[k]; }); return o; };
+  const jsonProp = (Rq, k, def) => { try { return JSON.parse(Rq.props[k] || '') || def; } catch (e) { return def; } };
   const ahoraHN = () => new Date(Date.now() - 6 * 3600000).toISOString().slice(0, 16).replace('T', ' ');
   const rid = p => p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 46656).toString(36).toUpperCase().padStart(3, '0');
   const sinFila = o => { const y = Object.assign({}, o); delete y._fila; return y; };
   const negValido = x => /^N[0-9A-Z]{4,20}$/.test(String(x || ''));
   const cuentaN = (l, f) => (l || []).filter(f || (() => true)).length;
   const activoP = p => !(p.activo === false || p.activo === 'false');
-  async function hacerRespaldo(neg, tipo, lic) {
+  async function hacerRespaldo(neg, tipo, lic, Rq) {
     const tabs = Object.keys(SCHEMA);
     const r = await db.cargar({ n: { [neg]: tabs.concat(['Respaldos']) } }), x = r.n[neg] || {};
     const datos = {}; let filas = 0;
@@ -415,7 +417,7 @@ function RECORDATORIOS_(ids) {
       { t: 'Respaldos', op: 'ins', k: { id }, n: neg, row: { id, fecha, tipo, kb: Math.round(txt.length / 102.4) / 10, filas, resumen: JSON.stringify(res) } },
       { t: 'RespaldoDatos', op: 'ins', k: { id }, n: neg, row: { id, datos: txt } }];
     // Se guardan solo los más recientes de cada tipo
-    (x.Respaldos || []).filter(o => o.tipo === tipo).sort((a, b) => a.fecha < b.fecha ? 1 : -1).slice(GUARDA[tipo] - 1).forEach(o => {
+    (x.Respaldos || []).filter(o => o.tipo === tipo).sort((a, b) => a.fecha < b.fecha ? 1 : -1).slice(guardaDe(Rq)[tipo] - 1).forEach(o => {
       ops.push({ t: 'Respaldos', op: 'del', k: { id: o.id }, n: neg }, { t: 'RespaldoDatos', op: 'del', k: { id: o.id }, n: neg });
     });
     // Números para la salud del negocio en el Panel
@@ -435,7 +437,7 @@ function RECORDATORIOS_(ids) {
   const ALCANCE = { productos: ['Productos'], clientes: ['Clientes'] };
   async function restaurar(neg, id, alcance, Rq) {
     const datos = await datosR(neg, id);
-    const antes = await hacerRespaldo(neg, 'antes');
+    const antes = await hacerRespaldo(neg, 'antes', true, Rq);
     const tabs = ALCANCE[alcance] || Object.keys(SCHEMA);
     for (let i = 0; i < 4; i++) {
       const v = ((await db.cargar({ n: { [neg]: [] } })).n[neg] || {})._v || 0, ops = [];
@@ -448,6 +450,11 @@ function RECORDATORIOS_(ids) {
       if (r && r.conflicto) continue;
       const cn = canal(Rq, neg); if (cn) await db.efecto({ rt: { canal: cn, t: tabs, dev: '' } });
       log('restaurado ' + neg + ' ' + id + ' ' + (alcance || 'todo'));
+      try { // se anotan las últimas restauraciones para el módulo de Respaldos
+        const lr = await db.cargar({ n: { [neg]: ['Respaldos'] } }), rr = (((lr.n[neg] || {}).Respaldos) || []).find(x => x.id === id) || {};
+        const l = jsonProp(Rq, 'RESP_RESTAURA', []); l.unshift({ f: ahoraHN(), neg, alc: alcance || 'todo', de: rr.fecha || '' });
+        await db.aplicar({ props: { RESP_RESTAURA: JSON.stringify(l.slice(0, 10)) } });
+      } catch (e) {}
       return { tablas: tabs.length, filas: ops.filter(o => o.op === 'ins').length, antes: antes.id };
     }
     throw new Error('El negocio está guardando cambios en este momento. Intenta de nuevo en un minuto.');
@@ -501,9 +508,33 @@ function RECORDATORIOS_(ids) {
     const dias = f => { const t = Date.parse(String(f || '').slice(0, 10) + 'T12:00:00Z'); return isFinite(t) ? (Date.parse(hoy + 'T12:00:00Z') - t) / 86400000 : 999; };
     const pend = lics.filter(l => l.respaldo !== hoy && (!l.respaldo || dias(l.ultimaConexion) <= 10)).slice(0, Number(Rq.props.RESPALDOS_LOTE) || 12);
     let n = 0;
-    for (const l of pend) { try { await hacerRespaldo(l.id, dom ? 'semanal' : 'diario'); n++; } catch (e) { log('respaldo ' + l.id + ': ' + e); } }
+    const err = [];
+    for (const l of pend) { try { await hacerRespaldo(l.id, dom ? 'semanal' : 'diario', true, Rq); n++; } catch (e) { err.push(l.negocio || l.id); log('respaldo ' + l.id + ': ' + e); } }
     log('respaldos del día: ' + n + ' de ' + pend.length);
+    if (pend.length) { // resumen de la noche para el Panel (se suma entre vueltas del mismo día)
+      const u = jsonProp(Rq, 'RESP_ULTIMA', {}), mismo = u.fecha === hoy, hora = ahoraHN().slice(11, 16);
+      const o = { fecha: hoy, hechos: (mismo ? u.hechos : 0) + n, errores: (mismo ? u.errores || [] : []).concat(err).slice(-20), desde: mismo ? u.desde : hora, hasta: hora };
+      await db.aplicar({ props: { RESP_ULTIMA: JSON.stringify(o) } });
+    }
     return { ok: true, data: { hechos: n, pendientes: pend.length } };
+  }
+  const licsVivas = async () => ((await db.cargar({ m: ['Licencias'] })).m.Licencias || []).filter(l => negValido(l.id) && ['eliminada', 'duplicada'].indexOf(String(l.estado).toLowerCase()) < 0);
+  // Módulo de Respaldos del Panel: cómo salió la noche, cuánto ocupa y el último respaldo de cada negocio
+  async function resumenRespaldos(Rq) {
+    const lics = await licsVivas(), hoy = ahoraHN().slice(0, 10);
+    const r = lics.length ? await db.cargar({ n: Object.fromEntries(lics.map(l => [l.id, ['Respaldos']])) }) : { n: {} };
+    const dias = f => { const t = Date.parse(String(f || '').slice(0, 10) + 'T12:00:00Z'); return isFinite(t) ? Math.round((Date.parse(hoy + 'T12:00:00Z') - t) / 86400000) : 999; };
+    let copias = 0, kb = 0;
+    const negs = lics.map(l => {
+      const rs = ((r.n[l.id] || {}).Respaldos || []).sort((a, b) => a.fecha < b.fecha ? 1 : -1), u = rs[0];
+      copias += rs.length; const k = rs.reduce((a, x) => a + (Number(x.kb) || 0), 0); kb += k;
+      const sinEntrar = dias(l.ultimaConexion), ud = u ? dias(u.fecha) : 999;
+      const est = !u ? 'nuevo' : ud <= 1 ? 'aldia' : sinEntrar > 10 ? 'pausado' : 'atrasado';
+      return { id: l.id, negocio: l.negocio, giro: l.giro, ultimo: u ? u.fecha : '', copias: rs.length, kb: u ? Number(u.kb) || 0 : 0, kbTotal: Math.round(k * 10) / 10, est, sinEntrar };
+    }).sort((a, b) => a.negocio.localeCompare(b.negocio));
+    const nombre = {}; lics.forEach(l => { nombre[l.id] = l.negocio; });
+    return { ultima: jsonProp(Rq, 'RESP_ULTIMA', null), hoy, negocios: negs, copias, kb: Math.round(kb * 10) / 10, guarda: guardaDe(Rq),
+      restauraciones: jsonProp(Rq, 'RESP_RESTAURA', []).map(x => Object.assign({ negocio: nombre[x.neg] || x.neg }, x)) };
   }
   async function herramientas(body, Rq) {
     if (body.tarea === 'respaldosDia') {
@@ -520,10 +551,23 @@ function RECORDATORIOS_(ids) {
         ps.forEach(p => { const k = String(p.categoria || ''); c[k] = (c[k] || 0) + 1; });
         return { ok: true, data: { total: ps.length, fotos: ps.filter(p => p.foto).length, cats: Object.keys(c).sort().map(k => ({ cat: k, n: c[k] })) } };
       }
+      if (a === 'panelRespaldosResumen') return { ok: true, data: await resumenRespaldos(Rq) };
+      if (a === 'panelRespaldoConfig') {
+        const g = {}; Object.keys(GUARDA).forEach(k => { const n = Math.floor(Number(d[k])); if (!(n >= 1 && n <= 60)) throw new Error('Escribe de 1 a 60 copias'); g[k] = n; });
+        await db.aplicar({ props: { RESP_GUARDA: JSON.stringify(g) } }); return { ok: true, data: g };
+      }
+      if (a === 'panelRespaldarTodos') {
+        // De a 15 por vuelta (la app repite hasta terminar): se saltan los que ya tienen uno de hace menos de 10 minutos
+        const lics = await licsVivas(), hace = ahoraHN(), lim = new Date(Date.now() - 6 * 3600000 - 600000).toISOString().slice(0, 16).replace('T', ' ');
+        const r = await db.cargar({ n: Object.fromEntries(lics.map(l => [l.id, ['Respaldos']])) });
+        const pend = lics.filter(l => !((r.n[l.id] || {}).Respaldos || []).some(x => x.fecha >= lim));
+        let n = 0; for (const l of pend.slice(0, 15)) { try { await hacerRespaldo(l.id, 'manual', true, Rq); n++; } catch (e) { log('respaldo ' + l.id + ': ' + e); } }
+        return { ok: true, data: { hechos: n, faltan: Math.max(0, pend.length - 15), total: lics.length, hora: hace } };
+      }
       const neg = String(d.id || '');
       if (!negValido(neg)) throw new Error('Negocio no válido');
       if (a === 'panelRespaldos') return { ok: true, data: verLista(await listaR(neg)) };
-      if (a === 'panelRespaldoHacer') return { ok: true, data: await hacerRespaldo(neg, 'manual') };
+      if (a === 'panelRespaldoHacer') return { ok: true, data: await hacerRespaldo(neg, 'manual', true, Rq) };
       if (a === 'panelRespaldoDatos') return { ok: true, data: await datosR(neg, String(d.rid || '')) };
       if (a === 'panelRespaldoRestaurar') return { ok: true, data: await restaurar(neg, String(d.rid || ''), String(d.alcance || 'todo'), Rq) };
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
