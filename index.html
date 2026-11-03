@@ -814,6 +814,10 @@ body.en-tienda{padding-bottom:110px}
 .comp-t{display:flex;gap:12px;align-items:center;border:2px dashed color-mix(in srgb,var(--pri) 35%,transparent);border-radius:14px;padding:10px 12px;margin:10px 0;cursor:pointer;background:color-mix(in srgb,var(--pri) 5%,transparent)}
 .comp-t.on{border-style:solid}.comp-t img{width:46px;height:60px;object-fit:cover;border-radius:6px;flex:none}.comp-t .ci{font-size:24px}.comp-t .tx{display:flex;flex-direction:column;gap:2px;font-size:13.5px}.comp-t small{color:var(--mut);font-size:12px}
 .mis-c{font-size:12.5px;margin:-2px 0 8px 2px;color:var(--mut)}.mis-c.ok{color:#0e8f5a;font-weight:600}.mis-c.bt{display:block;cursor:pointer;color:var(--txt)}.mis-c.bt b{color:var(--pri)}
+.anuncio-b{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:18px;margin-bottom:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--pri) 12%,var(--card,#fff)),var(--card,#fff));border:1px solid color-mix(in srgb,var(--pri) 25%,transparent)}
+.anuncio-b .ai{font-size:24px}.anuncio-b .tx{flex:1;min-width:0}.anuncio-b p{margin:3px 0 4px;font-size:14px;line-height:1.4}.anuncio-b small{color:var(--mut);font-size:11.5px}
+.sop-b{background:#3a2a10!important;color:#ffd98a!important}.sop-b b{color:#fff}.cobro-b.prox{background:color-mix(in srgb,var(--pri) 10%,transparent)}
+.comp-mini{width:52px;height:68px;object-fit:cover;border-radius:8px;cursor:pointer;flex:none;box-shadow:0 0 0 1px var(--line)}
 .vtot{display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font-size:13.5px}
 .op-g .chip.pres{flex-direction:column;align-items:flex-start;gap:1px;padding:8px 14px}.op-g .chip small{font-size:12.5px;font-weight:700;color:var(--pri)}.op-g .chip.on small{color:inherit}
 .op-g .chip.ag{opacity:.45;text-decoration:line-through}.op-g .tono.ag{opacity:.45;cursor:not-allowed}.op-g .tono.ag u{background-image:linear-gradient(45deg,transparent 46%,#c62828 47% 53%,transparent 54%)!important}
@@ -1472,7 +1476,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.30';
+const APP_VER = '1.9.31';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1491,13 +1495,15 @@ const modoSes = () => { try { return sessionStorage.getItem(LS_NS + 'modoSes') |
 const API_SUPABASE = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
 (() => { try { if (LS.get('api', '') === API_SUPABASE) { LS.del('api'); ['token_sb', 'cache_sb', 'ticket_sb'].forEach(k => LS.del(k)); } if (new URLSearchParams(location.search).has('servidor')) history.replaceState(null, '', location.pathname); } catch (e) {} })();
 const enSupabase = () => false;
-const DEMO = { src: null, on: (modoSes() || LS.get('modo', (API_URL_DEFAULT || LS.get('api', '')) ? 'real' : 'demo')) === 'demo', route: null, db: null, cache: null, B: null };
+// Modo soporte: Vic abre la app de un negocio desde el Panel (?soporte=…) para ver lo mismo que el cliente, sin poder guardar
+const SOPORTE = (() => { try { return new URLSearchParams(location.search).get('soporte') || ''; } catch (e) { return ''; } })();
+const DEMO = { src: null, on: !SOPORTE && (modoSes() || LS.get('modo', (API_URL_DEFAULT || LS.get('api', '')) ? 'real' : 'demo')) === 'demo', route: null, db: null, cache: null, B: null };
 const mk = k => DEMO.on ? k + '_demo' : enSupabase() ? k + '_sb' : k; // marca y ticket separados entre el modo prueba, el servidor nuevo y el programa real
-const tokenKey = () => DEMO.on ? 'token_demo' : enSupabase() ? 'token_sb' : 'token';
-const cacheKey = () => 'cache_' + (DEMO.on ? 'demo' : enSupabase() ? 'sb' : 'real');
+const tokenKey = () => SOPORTE ? 'token_soporte' : DEMO.on ? 'token_demo' : enSupabase() ? 'token_sb' : 'token';
+const cacheKey = () => 'cache_' + (SOPORTE ? 'soporte' : DEMO.on ? 'demo' : enSupabase() ? 'sb' : 'real');
 
 const S = {
-  token: LS.get(tokenKey(), ''), user: null, config: {}, usuarios: [], productos: [], clientes: [], proveedores: [], gastoCats: [], giros: [],
+  token: SOPORTE || LS.get(tokenKey(), ''), user: null, config: {}, usuarios: [], productos: [], clientes: [], proveedores: [], gastoCats: [], giros: [],
   licencia: null, plus: false, negocioId: '', multi: LS.get('multi', '1') === '1', vista: 'inicio', params: {}, inicio: null,
   ticket: LS.json(mk('ticket'), { items: [], clienteId: '', pedidoId: '', descuento: 0 }), pedidosNuevos: 0, chatsNuevos: 0, charts: {}, f: {}
 };
@@ -1937,7 +1943,7 @@ function bannerPrueba() {
 }
 function pintarBanner() {
   const L = S.licencia;
-  let h = '';
+  let h = SOPORTE ? `<div class="banner sop-b">${ic('eye', 18)}<span><b>Modo soporte</b> · ${esc(S.config.nombre || '')} · solo ver</span><button class="btn sm acc" data-a="soporteSalir">Salir</button></div>` : '';
   if (L && L.estado === 'prueba' && puede('admin') && S.vista === 'ajustes') {
     h = `<div class="banner">${ic('sparkle', 18)}<span>Prueba gratis · ${L.diasRestantes === 1 ? 'te queda <b>1 día</b>' : `te quedan <b>${L.diasRestantes} días</b>`}</span><a class="btn sm acc" href="${waLink(CONTACTO_WA, 'Hola, quiero activar Gestión de Negocio VM para ' + (S.config.nombre || 'mi negocio'))}" target="_blank" rel="noopener">Activar</a></div>`;
   }
@@ -1947,8 +1953,16 @@ function pintarBanner() {
   $('#banner').innerHTML = h;
 }
 // En Inicio, debajo de las ventas de hoy: el pago pendiente con Vic
+// Mensaje de Molina Soluciones Digitales (se envía desde el Panel); se quita con «Entendido»
+function anuncioHTML() {
+  const a = S.anuncio; if (!a || LS.get('anv_' + a.id, '') === '1') return '';
+  return `<div class="anuncio-b"><span class="ai">📣</span><div class="tx"><b>${esc(a.titulo)}</b><p>${esc(a.texto)}</p><small>Molina Soluciones Digitales · ${esc(fFechaC(a.fecha))}</small></div><button class="btn sm" data-a="anuncioOk">Entendido</button></div>`;
+}
+ACC.anuncioOk = () => { const a = S.anuncio; if (!a) return; LS.set('anv_' + a.id, '1'); if (!SOPORTE) api('anuncioVisto', { id: a.id }, true).catch(() => {}); S.anuncio = null; R.inicio(); };
 function bannerCobro() {
   const c = S.cobroVM;
+  if (c && (!c.vencidas || !c.vencidas.length) && c.proxima && puede('admin')) { const r = c.proxima.r;
+    return `<div class="banner cobro-b prox">${ic('coin', 18)}<span>${r === 'revisar' ? `Comprobante enviado · <b>${money(c.proxima.m)}</b> · lo estamos revisando` : `Tu pago de <b>${money(c.proxima.m)}</b> vence el ${esc(fFechaC(c.proxima.f).replace(/ (de )?\d{4}$/, ''))}${r === 'no' ? ' · <b>revisa tu comprobante</b>' : ''}`}</span>${r === 'revisar' ? '' : `<button class="btn sm acc" data-a="verCobro">Pagar</button>`}</div>`; }
   if (!(c && c.vencidas && c.vencidas.length && puede('admin'))) return '';
   return `<div class="banner cobro-b">${ic('coin', 18)}<span>Pago pendiente <b>${money(c.total)}</b> · ${c.atraso === 0 ? 'vence hoy' : 'atrasado ' + c.atraso + (c.atraso === 1 ? ' día' : ' días')} · se pausa el ${esc(fFechaC(c.pausaEl).replace(/ (de )?\d{4}$/, ''))}</span><button class="btn sm acc" data-a="verCobro">Ver</button></div>`;
 }
@@ -1960,16 +1974,24 @@ ACC.verCobro = () => avisoCobro();
 // Cuando hay otra hoja abierta (elegir tienda, novedades), el recordatorio espera a que se cierre
 function avisoCobroLuego() { let n = 0; const p = () => { if (!debeAvisarCobro()) return; if (PILA.length) { if (++n < 60) setTimeout(p, 1500); return; } avisoCobro(); }; p(); }
 function avisoCobro(luego) {
-  const c = S.cobroVM; if (!S.user || S.vencidaVista || !c || !c.vencidas || !c.vencidas.length) { if (luego && S.user) luego(); return; }
+  const c0 = S.cobroVM; if (!S.user || S.vencidaVista || !c0 || ((!c0.vencidas || !c0.vencidas.length) && !c0.proxima)) { if (luego && S.user) luego(); return; }
+  // Antes de la fecha: el próximo pago; desde la fecha: los vencidos
+  const c = c0.vencidas && c0.vencidas.length ? c0 : Object.assign({}, c0, { vencidas: [c0.proxima], total: c0.proxima.m, pausaEl: '', antes: true });
   S.cobroVisto = true;
   const negocio = S.config.nombre || 'mi negocio', conceptos = c.vencidas.map(x => x.c).join(', ');
   const msj = `Hola, soy ${S.user.nombre} de ${negocio}. Ya pagué ${conceptos} (${money(c.total)}). Te envío el comprobante.`;
   const h = hoja({ titulo: 'Recordatorio de pago', cls: 'chica', onClose: () => { if (luego) luego(); }, html: `<div class="cobro-h"><div class="cobro-ic">${ic('coin', 30)}</div><small>${c.vencidas.length === 1 ? 'Tienes un pago pendiente' : 'Tienes ' + c.vencidas.length + ' pagos pendientes'}</small><b class="n">${money(c.total)}</b></div>
     <div class="list">${c.vencidas.map(x => { const d = Math.round((parseLocal(hoy()) - parseLocal(x.f)) / 86400000); return `<div class="li"><div class="av ${d ? 't-naranja' : 't-azul'}">${ic('cal', 18)}</div><div class="tx"><b>${esc(x.c)}</b><small>${esc(fFechaC(x.f))} · ${d === 0 ? 'vence hoy' : 'venció hace ' + d + (d === 1 ? ' día' : ' días')}</small></div><div class="am n">${money(x.m)}</div></div>`; }).join('')}</div>
-    <div class="aviso warn sm" style="margin-top:12px">${ic('alert', 18)}<div>Si el pago no se registra, el programa se pausa el <b>${esc(fFechaL(c.pausaEl))}</b>. Tus datos no se pierden.</div></div>
-    <p class="xs mut" style="margin:10px 2px 0">¿Ya pagaste? Avísanos por WhatsApp con el comprobante y lo marcamos como recibido.</p>` });
-  h.f.innerHTML = `<a class="btn wa big" href="${waLink(CONTACTO_WA, msj)}" target="_blank" rel="noopener">${ic('wa')} Ya pagué · enviar comprobante</a><button class="btn ghost" data-cerrar="1">Recordar más tarde</button>`; h.f.hidden = false;
+    ${c.antes ? '' : `<div class="aviso warn sm" style="margin-top:12px">${ic('alert', 18)}<div>Si el pago no se registra, el programa se pausa el <b>${esc(fFechaL(c.pausaEl))}</b>. Tus datos no se pierden.</div></div>`}
+    ${c.vencidas.some(x => x.r === 'revisar') ? `<div class="aviso info sm" style="margin-top:12px">${ic('check', 18)}<div><b>Ya recibimos tu comprobante.</b> Lo estamos revisando; te avisamos cuando quede confirmado.</div></div>`
+      : c.vencidas.some(x => x.r === 'no') ? `<div class="aviso warn sm" style="margin-top:12px">${ic('alert', 18)}<div>No pudimos confirmar el comprobante que enviaste. Revísalo y manda otro, o escríbenos por WhatsApp.</div></div>` : ''}
+    ${c0.datosPago ? `<div class="aviso info sm" style="margin-top:10px">${ic('bank', 18)}<div><b>Datos para pagar</b><br>${esc(c0.datosPago)}</div></div>` : ''}
+    <label class="comp-t" id="cb-comp"><span class="ci">📎</span><span class="tx"><b>Enviar comprobante de pago</b><small>La foto o captura de tu transferencia. Te confirmamos el pago aquí mismo.</small></span><input type="file" accept="image/*" id="cb-cf" hidden></label>` });
+  h.f.innerHTML = `<a class="btn wa" href="${waLink(CONTACTO_WA, msj)}" target="_blank" rel="noopener">${ic('wa')} Escribir por WhatsApp</a><button class="btn ghost" data-cerrar="1">Recordar más tarde</button>`; h.f.hidden = false;
   h.f.querySelector('[data-cerrar]').onclick = () => h.cerrar();
+  $('#cb-cf', h.el).addEventListener('change', async e => { const f = e.target.files[0]; if (!f) return;
+    try { if (SOPORTE) throw new Error('Modo soporte: aquí solo puedes ver'); loader(true); const foto = await comprimirImagen(f, 1400); S.cobroVM = await api('cobroComprobante', { foto, cuotas: c.vencidas.map(x => x.id) }, true); h.cerrar(); toast('¡Gracias! Recibimos tu comprobante. Te avisamos cuando quede confirmado.', 'ok', 5000); if (S.vista === 'inicio') R.inicio(); }
+    catch (x) { err(x); } finally { loader(false); } });
 }
 /* ---------- Contrato de licencia (lo crea Vic desde el Panel; el administrador del negocio lo firma desde aquí) ----------
  * No es obligatorio: si hay un contrato pendiente, al abrir la app se ofrece firmarlo y se puede dejar para después.
@@ -2063,6 +2085,7 @@ ACC.mas = () => {
     <div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.config.nombre || '')}</small></div><button class="btn sm bad" data-a="logout">${ic('logout', 16)} Salir</button></div>` });
   return h;
 };
+ACC.soporteSalir = () => { LS.del('token_soporte'); try { window.close(); } catch (e) {} setTimeout(() => { location.href = './?panel'; }, 200); };
 ACC.logout = async () => { if (await confirmar('¿Cerrar sesión en este equipo?', { si: 'Cerrar sesión' })) salir(); };
 
 /* ===================== SESIÓN ===================== */
@@ -2093,7 +2116,7 @@ function aplicarDatos(d) {
   if (d.negocios) S.negocios = d.negocios;
   if (d.negocioId !== undefined) S.negocioId = d.negocioId;
   if (d.multi !== undefined) { S.multi = !!d.multi; LS.set('multi', S.multi ? '1' : '0'); }
-  if (d.usuario) { S.user = d.usuario; S.cobroVM = d.cobroVM || null; S.contratoVM = d.contratoVM || null; }
+  if (d.usuario) { S.user = d.usuario; S.cobroVM = d.cobroVM || null; S.contratoVM = d.contratoVM || null; S.anuncio = d.anuncio || null; }
   if (d.version) S.version = d.version;
   if (S.user) prepararTienda();
   if (d.sar) S.sar = d.sar;
@@ -2541,6 +2564,7 @@ let pushT = null;
 const PUSH_TIPOS = ['pedidos', 'mensajes', 'soporte'];
 const b64u = t => { const b = atob((t + '='.repeat((4 - t.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, c => c.charCodeAt(0)); };
 async function pushSuscribir(panel) {
+  if (SOPORTE) return false;
   if (!srvSB() || !('PushManager' in window) || !navigator.serviceWorker || !('Notification' in window) || Notification.permission !== 'granted') return false;
   try {
     const reg = await navigator.serviceWorker.ready;
@@ -2748,6 +2772,42 @@ function panelAvisosHTML() {
   if (Notification.permission === 'granted' && LS.get('panelAvisos', '') === 'si') return '';
   return `<div class="aviso info" style="margin-top:10px">${ic('bell', 20)}<div><b>Avisos del Panel en este teléfono</b><small>Te avisa cuando alguien se registra o te escribe a soporte, aunque el Panel esté cerrado.</small></div><button class="btn sm pri" data-a="panelAvisosActivar">Activar</button></div>`;
 }
+/* ---- Panel: comprobantes de pago de licencias por revisar ---- */
+function panelComprobantesHTML(l) {
+  if (!l.length) return '';
+  return `<div class="sec-t"><h3>Comprobantes por revisar</h3><a>${l.length}</a></div><div class="list">${l.map(c => `<div class="li" style="align-items:flex-start"><img class="comp-mini" src="${esc(fotoSrc(c.comprobante))}" alt="" data-a="panelCompVer" data-u="${esc(c.comprobante)}">
+    <div class="tx"><b>${esc(c.negocio)}</b><small>${esc(c.concepto)} · ${money(c.monto)} · vence ${esc(fFechaC(c.fecha))}</small><small>Enviado ${esc(String(c.compFecha).slice(5, 16))}</small>
+    <div class="row" style="margin-top:6px"><button class="btn sm ok-b" data-a="panelCompOk" data-n="${esc(c.negocioId)}" data-id="${esc(c.id)}">${ic('check', 15)} Pago recibido</button><button class="btn sm ghost" data-a="panelCompNo" data-n="${esc(c.negocioId)}" data-id="${esc(c.id)}">${ic('x', 15)} Rechazar</button></div></div></div>`).join('')}</div>`;
+}
+ACC.panelDatosPago = async () => { const t = await pedirTexto('Datos para que te paguen', { label: 'Banco, cuenta y a nombre de quién', valor: (P.d && P.d.datosPagoLic) || '', ph: 'BAC · Cuenta 7300-0000-1 · José Vicdonio Molina' }); if (t === null) return; await api('panelDatosPago', { texto: t }); toast('Datos guardados', 'ok'); panelResumen(); };
+ACC.panelCompVer = el => hoja({ titulo: 'Comprobante', html: `<img src="${esc(fotoAncha(el.dataset.u))}" alt="" style="width:100%;border-radius:12px">` });
+ACC.panelCompOk = async el => { if (!(await confirmar('¿Marcas este pago como recibido? Se anota el pago y el cliente ve que quedó confirmado.', { si: 'Pago recibido' }))) return; await api('panelCuotas', { id: el.dataset.n, accion: 'pagar', cuotaId: el.dataset.id }); toast('Pago anotado', 'ok'); panelResumen(); };
+ACC.panelCompNo = async el => { const nota = await pedirTexto('Rechazar comprobante', { label: 'Motivo (opcional, queda en el historial)', ph: 'Ej. el monto no coincide' }); if (nota === null) return; await api('panelCuotas', { id: el.dataset.n, accion: 'rechazar', cuotaId: el.dataset.id, nota }); toast('Rechazado: el cliente verá que debe mandar otro', 'ok'); panelResumen(); };
+/* ---- Panel: mensajes a los negocios ---- */
+ACC.panelMensajes = async () => {
+  const st = { filtro: 'todos', push: true, banner: true, giro: '' };
+  const giros = GIROS_LOCAL.filter(g => g[0] !== 'otro');
+  const h = hoja({ titulo: 'Enviar mensaje', ancho: 1, html: `<span class="op-l" style="margin-top:0">¿A quiénes?</span><div class="chips" style="flex-wrap:wrap" id="an-f">${[['todos', 'Todos'], ['activos', 'Activos'], ['prueba', 'En prueba'], ['giro', 'Un tipo de negocio']].map(([k, t]) => `<button type="button" class="chip ${k === st.filtro ? 'on' : ''}" data-f="${k}">${t}</button>`).join('')}</div>
+    <select id="an-g" hidden style="margin-top:8px">${giros.map(g => `<option value="${g[0]}">${esc(g[1])}</option>`).join('')}</select>
+    <span class="op-l">¿Cómo?</span><div class="chips" style="flex-wrap:wrap" id="an-c"><button type="button" class="chip on" data-c="push">${ic('bell', 14)} Aviso al teléfono</button><button type="button" class="chip on" data-c="banner">📣 Banner en la app</button></div>
+    <label class="fld" style="margin-top:12px"><span>Título</span><input id="an-t" maxlength="60" placeholder="Ej. Novedad, Mantenimiento"></label>
+    <label class="fld"><span>Mensaje</span><textarea id="an-x" rows="3" maxlength="400" placeholder="Ej. Nueva función: tus clientes ya pueden mandarte el comprobante de pago con su pedido."></textarea></label>
+    <label class="fld"><span>El banner se ve durante</span><select id="an-d"><option value="3">3 días</option><option value="7" selected>7 días</option><option value="15">15 días</option><option value="30">30 días</option></select></label>
+    <div class="sec-t"><h3>Enviados</h3></div><div class="list" id="an-l"><div class="empty">Cargando…</div></div>` });
+  const lista = l => { $('#an-l', h.el).innerHTML = l.map(a => `<div class="li"><div class="tx"><b>${esc(a.titulo)}</b><small>${esc(a.texto.slice(0, 90))}</small><small>${esc(String(a.fecha).slice(0, 16))} · ${a.enviados} negocio${a.enviados === 1 ? '' : 's'}${String(a.canales).indexOf('banner') >= 0 ? ` · ${a.vistos} lo vi${a.vistos === 1 ? 'o' : 'eron'}` : ''}${a.activo ? '' : ' · terminado'}</small></div>${a.activo && String(a.canales).indexOf('banner') >= 0 ? `<button class="btn sm ghost" data-q="${esc(a.id)}">Quitar</button>` : ''}</div>`).join('') || '<div class="empty">Todavía no has enviado mensajes</div>'; };
+  api('panelAnuncios', {}, true).then(lista).catch(() => {});
+  h.el.addEventListener('click', async e => {
+    const fb = e.target.closest('[data-f]'); if (fb) { st.filtro = fb.dataset.f; $$('#an-f .chip', h.el).forEach(x => x.classList.toggle('on', x === fb)); $('#an-g', h.el).hidden = st.filtro !== 'giro'; return; }
+    const cb = e.target.closest('[data-c]'); if (cb) { st[cb.dataset.c] = !st[cb.dataset.c]; cb.classList.toggle('on', st[cb.dataset.c]); return; }
+    const q = e.target.closest('[data-q]'); if (q) { lista(await api('panelAnuncioQuitar', { id: q.dataset.q })); toast('El banner ya no se muestra', 'ok'); }
+  });
+  h.botones([{ t: `${ic('send', 18)} Enviar`, cls: 'pri big', fn: async () => {
+    const filtro = st.filtro === 'giro' ? 'giro:' + $('#an-g', h.el).value : st.filtro;
+    const texto = $('#an-x', h.el).value.trim(); if (texto.length < 3) throw new Error('Escribe el mensaje');
+    const l = await api('panelAnunciar', { filtro, push: st.push, banner: st.banner, titulo: $('#an-t', h.el).value.trim(), texto, dias: $('#an-d', h.el).value });
+    lista(l); $('#an-x', h.el).value = ''; $('#an-t', h.el).value = ''; toast('Mensaje enviado a ' + l[0].enviados + ' negocio' + (l[0].enviados === 1 ? '' : 's'), 'ok', 4000);
+  } }]);
+};
 async function panelResumen() {
   panelCab('Panel Molina');
   $('#main').innerHTML = '<div class="empty">Cargando…</div>';
@@ -2757,6 +2817,9 @@ async function panelResumen() {
     <div class="kpis k4" style="margin-top:8px"><div class="kpi" style="--k:var(--pri)"><small>Conversión</small><b>${k.terminadas ? k.conversion + '%' : '—'}</b><i>${k.terminadas ? `${k.compraron} de ${k.terminadas} pruebas terminadas compraron` : 'ninguna prueba ha terminado'}</i></div><div class="kpi" style="--k:var(--warn)"><small>Sin vender 7 días</small><b>${k.sinVender7 || 0}</b><i>abren la app pero no cobran</i></div>${d.colaboradores ? `<div class="kpi" style="--k:#6a3df0"><small>Colaboradores</small><b>${d.colaboradores}</b><i>muestran el programa · fuera de los números</i></div>` : ''}</div>
     <div class="kpis k4" style="margin-top:8px"><button class="kpi" style="--k:var(--bad);text-align:left;font:inherit;color:inherit" data-a="panelGastosLista"><small>Gastos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.gastosMes || 0)}</b><i>${k.gastosMesN || 0} gasto${k.gastosMesN === 1 ? '' : 's'} · ver y registrar</i></button><div class="kpi" style="--k:${(k.resultadoMes || 0) < 0 ? 'var(--bad)' : '#00b56e'}"><small>Resultado del mes</small><b class="n">${money(k.resultadoMes || 0)}</b><i>ingresos − gastos</i></div></div>
     ${panelAvisosHTML()}
+    ${panelComprobantesHTML(d.comprobantes || [])}
+    <button class="aviso ${d.datosPagoLic ? 'info' : 'warn'}" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelDatosPago">${ic('bank', 20)}<div><b>Tus datos para que te paguen la licencia</b><small>${d.datosPagoLic ? esc(d.datosPagoLic) : 'Escríbelos: los clientes los ven cuando les toca pagar'}</small></div></button>
+    <button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelMensajes">${ic('bell', 20)}<div><b>Enviar mensaje a los negocios</b><small>Aviso al teléfono o banner en su app: novedades, mantenimiento, promociones.</small></div></button>
     <button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelVisitas">${ic('eye', 20)}<div><b>Visitas: ${(d.visitas || {}).hoy || 0} hoy · ${(d.visitas || {}).semana || 0} en 7 días</b><small>${(d.visitas || {}).unicos || 0} personas distintas · toca para ver de dónde vienen y tus enlaces</small></div></button>
     ${k.invertidoPub ? `<button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelGastosLista">${ic('sparkle', 20)}<div><b>Publicidad: recuperado ${money(k.recuperadoPub)} de ${money(k.invertidoPub)} invertidos</b><small>${Math.round(k.recuperadoPub * 100 / k.invertidoPub)} % · toca para ver cada publicidad</small></div></button>` : ''}
     ${(d.porMes || []).length > 1 ? `<div class="chips" style="margin:8px 0 0;flex-wrap:wrap">${d.porMes.map(m => `<span class="chip" style="pointer-events:none">${esc(fMes(m.mes).split(' ')[0].slice(0, 3))} · ${m.activos}/${m.registros}</span>`).join('')}</div>` : ''}
@@ -3265,6 +3328,9 @@ async function panelFicha(id) {
       ${n.colab ? `<div class="aviso colab">${ic('star', 20)}<div><b>Colaborador · todo activo sin cobro</b><small>Licencia, Plus y Contabilidad sin vencimiento; cambia de tipo de negocio cuando quiera y los giros extra se le activan sin cobro. No cuenta en conversión ni ingresos del panel.</small></div></div>` : ''}
       <div class="acciones">${n.colab ? `<button class="btn bad" data-x="quitarColab">${ic('x', 16)} Quitar colaborador</button>` : `${n.estado === 'bloqueada' ? `<button class="btn pri" data-x="reanudar">▶ Reanudar acceso</button>` : n.estado === 'activa' ? '' : `<button class="btn pri" data-x="activar">✓ Activar licencia</button>`}${n.plus ? `<button class="btn ghost" data-x="quitarPlus">Quitar Plus</button>` : `<button class="btn acc" data-x="plus">Activar Plus</button>`}${n.contab ? `<button class="btn ghost" data-x="quitarContab">Quitar Contabilidad</button>` : `<button class="btn" data-x="contab">${ic('chart', 16)} Activar Contabilidad</button>`}${n.estado === 'activa' ? '' : `<button class="btn" data-x="extender">+7 días de prueba</button>`}${n.estado === 'bloqueada' ? '' : `<button class="btn ghost" data-x="pausar">⏸ Pausar</button>`}<button class="btn ghost" data-x="colaborador" style="color:#6a3df0">${ic('star', 16)} Marcar colaborador</button>`}</div>
       ${panelSecGiros(n)}${panelSecGrupo(n)}
+      <div class="sec-t"><h3>Soporte</h3></div>
+      <div class="row"><button class="btn" data-x="verApp">${ic('eye', 16)} Ver su app (solo ver)</button></div>
+      <small class="hint">Ves lo mismo que el cliente para ayudarlo, sin su PIN. No se puede guardar nada; vence en 2 horas y queda anotado.</small>
       <div class="sec-t"><h3>Productos</h3></div>
       <div class="row"><button class="btn pri" data-x="importar">${ic('doc', 16)} Cargar productos desde Excel</button></div>
       <small class="hint">Llena la plantilla con la lista del cliente y se la cargas de un solo; los que ya tiene se actualizan.</small>
@@ -3290,6 +3356,7 @@ async function panelFicha(id) {
       const b = e.target.closest('[data-x]'); if (!b) return; const x = b.dataset.x;
       try {
         if (x === 'importar') { panelImportar(id, n.negocio); return; }
+        if (x === 'verApp') { const r = await api('panelVerApp', { id }); window.open(new URL('./?soporte=' + r.token, document.baseURI).href, '_blank'); toast('Se abrió su app en modo soporte (solo ver, 2 horas)', 'ok', 4000); return; }
         if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
         else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }
         else if (x === 'cuotaNueva') { if (!(await panelProgramarPagos(n))) return; }
@@ -3473,7 +3540,7 @@ R.inicio = () => {
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
   const ofAvisos = puede('admin', 'cajero') && 'Notification' in window && Notification.permission !== 'denied' && !avisosOn() && LS.get('avisosOferta', '') !== 'no' && !DEMO.on ? `<div class="aviso info">${ic('bell', 20)}<div><b>Recibe avisos en este teléfono.</b><small>Pedidos nuevos, mensajes, vencimientos y un resumen cada mañana, aunque la app esté cerrada.</small></div><div class="row"><button class="btn sm pri" data-a="avisosActivar">Activar</button><button class="btn sm ghost icon" data-a="avisosCerrar" aria-label="Cerrar">${ic('x', 16)}</button></div></div>` : '';
   const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${today}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${avisoVacunas(d)}${avisoPagosCot(d)}${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${anuncioHTML()}${today}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${avisoVacunas(d)}${avisoPagosCot(d)}${vacio}${aviso}${listas}</div>`;
 };
 function avisoPagosCot(d) {
   const c = d.cot; if (!c || !cotOn() || !c.lista.length) return '';
@@ -8141,6 +8208,10 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.31', fecha: '2026-11-03', items: [
+    { i: 'coin', t: 'Paga tu licencia con comprobante', d: 'Unos días antes de tu pago te avisamos al teléfono. Desde Inicio mandas la foto del comprobante de tu transferencia y te confirmamos el pago, sin salir de la app.' },
+    { i: 'bell', t: 'Mensajes importantes en Inicio', d: 'Los avisos de Molina Soluciones Digitales (novedades, mantenimiento) te aparecen arriba en Inicio y, si tienes los avisos activados, en tu teléfono.' }
+  ] },
   { v: '1.9.30', fecha: '2026-11-03', items: [
     { i: 'receipt', t: 'Comprobante de pago en los pedidos', d: 'Tus clientes pueden adjuntar la foto del comprobante al pedir por transferencia, o mandarlo después desde «Mis pedidos». Te llega un aviso al teléfono y en el pedido tocas «Pago recibido» (queda como anticipo) o «No coincide».' }
   ] },

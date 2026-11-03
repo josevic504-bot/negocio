@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.30';
+const VERSION = '1.9.31';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -43,7 +43,9 @@ const SCHEMA_M = {
   Seguimiento: ['id','negocioId','tipo','fecha','nota'],
   PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota'],
   // Pagos programados por Vic para cada cliente (cuotas del programa, Plus, giros extra…)
-  CuotasLic:   ['id','negocioId','fecha','monto','concepto','gracia','estado','pagoId','pagadaEl','nota','creado'],
+  CuotasLic:   ['id','negocioId','fecha','monto','concepto','gracia','estado','pagoId','pagadaEl','nota','creado','comprobante','compFecha','compEstado'],
+  // Mensajes de Vic a los negocios (aviso al teléfono y/o banner en la app). destinos y vistos: ids de negocio separados por coma
+  Anuncios:    ['id','fecha','titulo','texto','filtro','destinos','canales','vence','vistos','creado'],
   // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
   GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado'],
   // Contratos de licencia: Vic los crea desde el Panel y el dueño los firma desde su celular (la firma es una imagen pequeña)
@@ -56,6 +58,7 @@ const GRACIA_DEF = 5; // días después de la fecha de pago antes de pausar el p
 // Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
 const MOTIVOS = { error: 'Error del programa', duda: 'No sé cómo hacer algo', prueba: 'Prueba y activación', idea: 'Sugerencia', app: 'App Android / instalación', otro: 'Otro' };
 let NEG = null; // negocio de la solicitud actual (modo multi)
+let SOLO_VER = false; // modo soporte desde el Panel: se puede ver todo, pero nada se guarda
 
 const TZ = 'America/Tegucigalpa';
 const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
@@ -232,7 +235,7 @@ function json_(o) {
 
 function route_(req) {
   Object.keys(MEMO).forEach(k => { delete MEMO[k]; });
-  NEG = null;
+  NEG = null; SOLO_VER = false;
   const a = req.action, d = req.data || {};
   // Servidor de Google cerrado: los datos ya viven en Supabase (propiedad MIGRADO = si, la pone cambioFinal() de Exportar.gs)
   if (a !== 'info' && String(PropertiesService.getScriptProperties().getProperty('MIGRADO') || '') === 'si') throw new Error('El programa se actualizó. Cierra la app y vuelve a abrirla.');
@@ -307,6 +310,8 @@ function rutaUsuario_(a, u, d, req) {
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
     case 'editarPedido':    return lock_(() => editarPedido_(u, d));
     case 'anticipoPedido':  return lock_(() => anticipoPedido_(u, d));
+    case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
+    case 'cobroComprobante': return lock_(() => cobroComprobante_(u, d));
     case 'pedidoPago':      return lock_(() => pedidoPago_(u, d));
     case 'chats':           return chats_(u);
     case 'chat':            return lock_(() => chat_(u, d));
@@ -376,7 +381,10 @@ function rutaUsuario_(a, u, d, req) {
 }
 
 let EN_LOCK = 0; // profundidad del candado: dentro de él siempre se lee la hoja (nunca la caché)
+const MSJ_SOLO_VER = 'Modo soporte: aquí solo puedes ver. Los cambios los hace el cliente (o tú desde el Panel).';
+const noVer_ = () => { if (SOLO_VER) throw new Error(MSJ_SOLO_VER); };
 function lock_(fn) {
+  noVer_();
   const l = LockService.getScriptLock();
   l.waitLock(25000);
   if (!EN_LOCK) Object.keys(MEMO).forEach(k => { if (k !== '_ss' && k.indexOf('_m_') !== 0) delete MEMO[k]; }); // lo leído antes del candado puede estar viejo
@@ -553,6 +561,7 @@ function newId_(name) {
 }
 
 function upsert_(name, rec) {
+  noVer_();
   const s = sh_(name), h = SCHEMA[name];
   const r = rec.id ? findRow_(s, rec.id) : 0;
   let full = rec;
@@ -571,6 +580,7 @@ function upsert_(name, rec) {
 
 function appendRows_(name, objs) {
   if (!objs.length) return;
+  noVer_();
   const s = sh_(name), h = SCHEMA[name];
   const vals = objs.map(o => h.map(k => cell_(o[k], k)));
   s.getRange(filasLibres_(s, name, vals.length), 1, vals.length, h.length).setValues(vals);
@@ -652,13 +662,13 @@ function auth_(token) {
   if (MULTI_NEGOCIO) {
     const lic = negocioPorId_(p[0]);
     if (!lic) throw new Error('SESION');
-    setNegocio_(lic); uid = p[1]; firma = p[2];
+    setNegocio_(lic); uid = p[1]; firma = p[2]; SOLO_VER = p[3] === 'ver';
     bloquearSiVence_();
   }
   const u = rows_('Usuarios').find(x => x.id === uid);
   if (!u || !u.activo) throw new Error('SESION');
   if (firma && String(u.salt).slice(0, 8) !== firma) throw new Error('SESION'); // le cambiaron el PIN: se cierran las sesiones abiertas
-  c.put('S_' + token, val, SESION_SEG); // sesión deslizante
+  if (!SOLO_VER) c.put('S_' + token, val, SESION_SEG); // sesión deslizante (la de soporte vence sola en 2 horas)
   return u;
 }
 
@@ -736,6 +746,7 @@ function config_() {
 }
 
 function guardarConfig_(reg) {
+  noVer_();
   if (reg && reg.logo && String(reg.logo).length > 48000) throw new Error('El logo es muy pesado. Usa una imagen más sencilla o más pequeña.');
   const s = sh_('Config');
   invalidar_('Config');
@@ -803,7 +814,10 @@ function bootstrap_(u, d) {
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); if (d && d.vid && !NEG.lic.vid && u.rol === 'admin') upd.vid = String(d.vid).replace(/[^A-Za-z0-9]/g, '').slice(0, 24); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u, d);
-  if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && cb.vencidas.length) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && (cb.vencidas.length || (cb.proxima && cb.proxima.f <= addDiasIso_(hoy_(), 5)))) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
+  if (r.cobroVM) r.cobroVM.datosPago = PropertiesService.getScriptProperties().getProperty('DATOS_PAGO_LIC') || '';
+  if (MULTI_NEGOCIO && NEG && ['admin', 'cajero'].indexOf(u.rol) >= 0) { const an = anuncioPara_(); if (an) r.anuncio = an; }
+  if (SOLO_VER) r.soporte = { negocio: NEG ? NEG.lic.negocio : '' };
   return r;
 }
 
@@ -913,6 +927,7 @@ function mFila_(name, rec) {
   return x ? x._fila : 0;
 }
 function mSet_(name, rec, campos) {
+  noVer_();
   const fila = mFila_(name, rec);
   if (!fila) return;
   const s = masterSheet_(name), h = SCHEMA_M[name];
@@ -921,6 +936,7 @@ function mSet_(name, rec, campos) {
 }
 
 function mAppend_(name, o) {
+  noVer_();
   masterSheet_(name).appendRow(SCHEMA_M[name].map(k => mCell_(o[k], k)));
   delete MEMO['_m_' + name];
 }
@@ -1823,6 +1839,12 @@ function rutaPanel_(a, d) {
     case 'panelResumen':           return panelResumen_();
     case 'panelNegocio':           return panelNegocio_(d);
     case 'panelImportar':          return panelImportar_(d);
+    case 'panelVerApp':            return panelVerApp_(d);
+    case 'panelAnunciar':          return panelAnunciar_(d);
+    case 'panelAnuncios':          return panelAnuncios_();
+    case 'panelAnuncioQuitar':     return panelAnuncioQuitar_(d);
+    case 'panelComprobantes':      return panelComprobantes_();
+    case 'panelDatosPago':         { PropertiesService.getScriptProperties().setProperty('DATOS_PAGO_LIC', txt_(d.texto, 300)); return { datosPago: txt_(d.texto, 300) }; }
     case 'panelAccion':            return panelAccion_(d);
     case 'panelLimpiarDuplicados': return panelLimpiarDuplicados_();
     case 'panelContacto':          return panelContacto_(d);
@@ -1952,8 +1974,81 @@ function panelResumen_() {
     visitas: visitasMini_(),
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics.concat(colabs), duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
-    soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
+    comprobantes: panelComprobantes_(), datosPagoLic: PropertiesService.getScriptProperties().getProperty('DATOS_PAGO_LIC') || '', soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
 }
+/* ---- Panel: entrar a ver la app de un negocio (modo soporte, solo ver, 2 horas) ---- */
+function panelVerApp_(d) {
+  const l = licDe_(d.id);
+  if (!l.hojaId || esEliminada_(l)) throw new Error('Ese negocio no está activo');
+  setNegocio_(l);
+  const us = rows_('Usuarios'), adm = us.find(x => x.rol === 'admin' && x.activo) || us.find(x => x.rol === 'admin');
+  if (!adm) throw new Error('El negocio no tiene administrador');
+  const tok = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  CacheService.getScriptCache().put('S_' + tok, l.id + '|' + adm.id + '|' + String(adm.salt).slice(0, 8) + '|ver', 7200);
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Vic entró a ver la app (modo soporte)' });
+  return { token: tok, negocio: l.negocio };
+}
+
+/* ---- Panel: mensajes a los negocios (aviso al teléfono y/o banner en la app) ---- */
+function destinosAnuncio_(filtro, ids) {
+  const vivas = mRows_('Licencias').filter(l => l.hojaId && !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada');
+  const f = String(filtro || 'todos');
+  if (f === 'ids') { const set = (Array.isArray(ids) ? ids : []).map(String); return vivas.filter(l => set.indexOf(l.id) >= 0); }
+  if (f === 'prueba') return vivas.filter(l => licNegocio_(l).estado === 'prueba');
+  if (f === 'activos') return vivas.filter(l => licNegocio_(l).estado === 'completa');
+  if (f.indexOf('giro:') === 0) { const g = f.slice(5); return vivas.filter(l => String(l.giros || '').split(',').concat([giroIdDeLic_(l)]).indexOf(g) >= 0); }
+  return vivas;
+}
+function giroIdDeLic_(l) { const n = String(l.giro || ''); return Object.keys(GIROS).find(k => GIROS[k].n === n) || ''; }
+function panelAnunciar_(d) {
+  const texto = txt_(d.texto, 400), titulo = txt_(d.titulo, 60) || 'Gestión de Negocio VM';
+  if (texto.length < 3) throw new Error('Escribe el mensaje');
+  const push = !!d.push, banner = !!d.banner; if (!push && !banner) throw new Error('Elige cómo enviarlo: aviso al teléfono, banner o los dos');
+  const ls = destinosAnuncio_(d.filtro, d.ids); if (!ls.length) throw new Error('No hay negocios con ese filtro');
+  const dias = Math.max(1, Math.min(30, parseInt(d.dias, 10) || 7));
+  mAppend_('Anuncios', { id: mId_('AN'), fecha: ahora_().replace('T', ' '), titulo: titulo, texto: texto, filtro: String(d.filtro || 'todos').slice(0, 40), destinos: ls.map(l => l.id).join(','),
+    canales: [push ? 'push' : '', banner ? 'banner' : ''].filter(Boolean).join(','), vence: addDiasIso_(hoy_(), dias), vistos: '', creado: ahora_() });
+  return panelAnuncios_();
+}
+function panelAnuncios_() {
+  return mRows_('Anuncios').slice().reverse().slice(0, 30).map(a => { const ds = String(a.destinos || '').split(',').filter(Boolean), vs = String(a.vistos || '').split(',').filter(Boolean);
+    return { id: a.id, fecha: a.fecha, titulo: a.titulo, texto: a.texto, filtro: a.filtro, canales: a.canales, vence: a.vence, enviados: ds.length, vistos: vs.length, activo: String(a.vence) >= hoy_() }; });
+}
+function panelAnuncioQuitar_(d) { const a = mRows_('Anuncios').find(x => x.id === d.id); if (!a) throw new Error('Ese mensaje ya no existe'); mSet_('Anuncios', a, { vence: addDiasIso_(hoy_(), -1) }); return panelAnuncios_(); }
+// Banner para este negocio: el mensaje vigente más reciente que no ha marcado como visto
+function anuncioPara_() {
+  if (!MULTI_NEGOCIO || !NEG) return null;
+  try {
+    const h = hoy_(), a = mRows_('Anuncios').slice().reverse().find(x => String(x.vence) >= h && String(x.canales).indexOf('banner') >= 0 && (',' + x.destinos + ',').indexOf(',' + NEG.id + ',') >= 0 && (',' + x.vistos + ',').indexOf(',' + NEG.id + ',') < 0);
+    return a ? { id: a.id, titulo: a.titulo, texto: a.texto, fecha: String(a.fecha).slice(0, 10) } : null;
+  } catch (e) { return null; }
+}
+function anuncioVisto_(u, d) {
+  const a = mRows_('Anuncios').find(x => x.id === d.id);
+  if (!a || !NEG || (',' + a.vistos + ',').indexOf(',' + NEG.id + ',') >= 0) return true;
+  mSet_('Anuncios', a, { vistos: (a.vistos ? a.vistos + ',' : '') + NEG.id });
+  return true;
+}
+
+/* ---- Cobro de la licencia con comprobante: el administrador del negocio lo manda desde la app y Vic lo aprueba en el Panel ---- */
+function cobroComprobante_(u, d) {
+  req_(u, ['admin']);
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('No disponible');
+  const h = hoy_(), lim = addDiasIso_(h, 7);
+  const cs = cuotasDe_(NEG.id).filter(c => c.estado === 'pendiente' && String(c.fecha).slice(0, 10) <= lim && (!Array.isArray(d.cuotas) || !d.cuotas.length || d.cuotas.indexOf(c.id) >= 0));
+  if (!cs.length) throw new Error('No tienes pagos pendientes por ahora');
+  const url = guardarComprobante_(d.foto, 'licencia');
+  cs.forEach(c => { if (c.comprobante && c.comprobante !== url && !cs.some(x => x !== c && x.comprobante === c.comprobante)) borrarFoto_(c.comprobante); mSet_('CuotasLic', c, { comprobante: url, compFecha: ahora_().replace('T', ' '), compEstado: 'revisar' }); });
+  cobroResumen_(NEG.id);
+  return cobroDe_(licDe_(NEG.id));
+}
+// Panel: comprobantes de licencia por revisar (de todos los negocios)
+function panelComprobantes_() {
+  const ls = porId_(mRows_('Licencias'));
+  return mRows_('CuotasLic').filter(c => c.estado === 'pendiente' && c.compEstado === 'revisar').map(c => ({ id: c.id, negocioId: c.negocioId, negocio: (ls[c.negocioId] || {}).negocio || '', fecha: String(c.fecha).slice(0, 10),
+    monto: Number(c.monto) || 0, concepto: c.concepto, comprobante: c.comprobante, compFecha: c.compFecha })).sort((a, b) => a.compFecha < b.compFecha ? 1 : -1);
+}
+
 /* ---- Panel: cargar los productos de un negocio desde una hoja de Excel ----
    d.filas: [{ _fila, nombre, categoria, sub, precio, costo, existencia, codigo, op1, val1, op2, val2, op3, val3, precioEsp, minEsp,
               descripcion, lema, puntos, preciosOp, existOp, tienda }] · d.revisar = true solo revisa (no guarda nada) */
@@ -2210,7 +2305,7 @@ function panelPago_(d) {
 function cuotasDe_(id) { return mRows_('CuotasLic').filter(c => c.negocioId === id && c.estado !== 'anulada').sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0); }
 function cobroResumen_(id) {
   const l = licDe_(id), pend = cuotasDe_(id).filter(c => c.estado === 'pendiente')
-    .map(c => ({ id: c.id, f: String(c.fecha).slice(0, 10), m: Number(c.monto) || 0, c: c.concepto, g: esNum_(c.gracia) ? Number(c.gracia) : GRACIA_DEF }));
+    .map(c => ({ id: c.id, f: String(c.fecha).slice(0, 10), m: Number(c.monto) || 0, c: c.concepto, g: esNum_(c.gracia) ? Number(c.gracia) : GRACIA_DEF, r: c.compEstado === 'revisar' || c.compEstado === 'no' ? c.compEstado : '' }));
   mSet_('Licencias', l, { cobro: pend.length ? JSON.stringify(pend) : '' });
   try { CacheService.getScriptCache().remove('L_' + l.id); } catch (e) {}
 }
@@ -2242,7 +2337,11 @@ function panelCuotas_(d) {
       if (c.estado === 'pagada') throw new Error('Ese pago ya está marcado como recibido');
       const monto = r2_(Number(d.monto) || Number(c.monto) || 0), pid = mId_('G');
       mAppend_('PagosLic', { id: pid, negocioId: l.id, fecha: ahora_().replace('T', ' '), monto: monto, concepto: c.concepto, metodo: txt_(d.metodo, 20) || 'Transferencia', nota: txt_(d.nota, 120) });
-      mSet_('CuotasLic', c, { estado: 'pagada', pagoId: pid, pagadaEl: ahora_().replace('T', ' ') });
+      mSet_('CuotasLic', c, { estado: 'pagada', pagoId: pid, pagadaEl: ahora_().replace('T', ' '), compEstado: c.comprobante ? 'ok' : c.compEstado });
+    } else if (acc === 'rechazar') {
+      if (c.estado === 'pagada') throw new Error('Ese pago ya está marcado como recibido');
+      mSet_('CuotasLic', c, { compEstado: 'no' });
+      mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Comprobante rechazado: ' + c.concepto + (d.nota ? ' · ' + txt_(d.nota, 120) : '') });
     } else if (acc === 'quitar') {
       if (c.estado === 'pagada') throw new Error('Ese pago ya se recibió; para quitarlo, borra el pago anotado');
       mSet_('CuotasLic', c, { estado: 'anulada' });
