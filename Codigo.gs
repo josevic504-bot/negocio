@@ -24,9 +24,9 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.29';
+const VERSION = '1.9.30';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
-const ESQUEMA = VERSION + '-g3';
+const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -86,7 +86,7 @@ const SCHEMA = {
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo','variante'],
-  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
+  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
@@ -249,6 +249,7 @@ function route_(req) {
   if (a === 'tiendaInfo') return tiendaInfo_(d);
   if (a === 'pedir') { pedirLimites_(d); return lock_(() => pedir_(d)); }
   if (a === 'misPedidos') return misPedidos_(d);
+  if (a === 'pedidoComprobante') { tiendaNeg_(d); return lock_(() => pedidoComprobante_(d)); }
   if (a === 'chatEnviar') { chatLimites_(d); return lock_(() => chatEnviar_(d)); }
   if (a === 'chatVer') return chatVer_(d);
   // Panel Molina (súper admin)
@@ -306,6 +307,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
     case 'editarPedido':    return lock_(() => editarPedido_(u, d));
     case 'anticipoPedido':  return lock_(() => anticipoPedido_(u, d));
+    case 'pedidoPago':      return lock_(() => pedidoPago_(u, d));
     case 'chats':           return chats_(u);
     case 'chat':            return lock_(() => chat_(u, d));
     case 'chatResponder':   return lock_(() => chatResponder_(u, d));
@@ -4460,6 +4462,46 @@ function tiendaInfo_(d) {
 }
 
 // Antes de esperar el candado: el negocio existe, la tienda está abierta y no hay una avalancha de pedidos
+/* ---- Comprobante de pago de un pedido en línea ---- */
+// Guarda la foto del comprobante (la manda el cliente desde la tienda) y devuelve su dirección
+function guardarComprobante_(data, numero) {
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(data || ''));
+  if (!m) throw new Error('El comprobante debe ser una foto o captura');
+  if (m[2].length > 900000) throw new Error('La foto del comprobante es muy pesada. Prueba con una captura.');
+  const f = carpetaFotos_().createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], 'comprobante-' + String(numero || '') + '-' + Date.now() + '.jpg'));
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  return f.getId();
+}
+// El cliente manda (o vuelve a mandar) el comprobante de un pedido suyo: se comprueba con su WhatsApp
+function pedidoComprobante_(d) {
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p || !tel8_(d.telefono) || tel8_(p.telefono) !== tel8_(d.telefono)) throw new Error('No encontramos ese pedido');
+  if (p.estado === 'cancelado' || p.ventaId) throw new Error('Este pedido ya está ' + (p.estado === 'cancelado' ? 'cancelado' : 'cobrado'));
+  if (p.pagoEstado === 'ok') throw new Error('El negocio ya confirmó tu pago');
+  const c = CacheService.getScriptCache(), k = 'PC_' + (NEG ? NEG.id : '') + p.id, n = Number(c.get(k) || 0);
+  if (n >= 5) throw new Error('Ya mandaste varios comprobantes. Escríbele al negocio por WhatsApp.');
+  const url = guardarComprobante_(d.foto, p.numero);
+  if (p.comprobante && p.comprobante !== url) borrarFoto_(p.comprobante);
+  c.put(k, String(n + 1), 21600);
+  upsert_('Pedidos', { id: p.id, comprobante: url, pagoEstado: 'revisar', actualizado: ahora_() });
+  return { id: p.id, pagoEstado: 'revisar' };
+}
+// El negocio revisa el comprobante: «ok» anota lo que falta como anticipo (el pedido sale pagado al cobrarlo); «no» le pide otro al cliente
+function pedidoPago_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('El pedido no existe');
+  if (p.pagoEstado === 'ok' && d.ok) throw new Error('Este pago ya está confirmado');
+  if (d.ok) {
+    if (p.ventaId || ['nuevo', 'confirmado', 'listo'].indexOf(p.estado) < 0) throw new Error('Este pedido ya está ' + p.estado);
+    const falta = r2_(Number(p.total) - anticipoDe_(p.id));
+    if (falta > 0.004) anticipoPedido_(u, { id: p.id, monto: falta, metodo: 'Transferencia', tienda: d.tienda });
+  }
+  const g = upsert_('Pedidos', { id: p.id, pagoEstado: d.ok ? 'ok' : 'no', actualizado: ahora_() });
+  g.items = parseJ_(g.items, []); g.anticipoPagado = anticipoDe_(p.id);
+  return g;
+}
+
 function pedirLimites_(d) {
   tiendaNeg_(d);
   if (!Array.isArray(d.items) || !d.items.length) throw new Error('Tu pedido está vacío');
@@ -4532,7 +4574,8 @@ function pedir_(d) {
   } else if (entrega === 'domicilio' && direccion && !cli.direccion) {
     upsert_('Clientes', { id: cli.id, direccion: direccion });
   }
-  const p = upsert_('Pedidos', { numero: siguiente_('P'), fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
+  const numP = siguiente_('P'), comp = d.comprobante ? guardarComprobante_(d.comprobante, numP) : '';
+  const p = upsert_('Pedidos', { comprobante: comp, pagoEstado: comp ? 'revisar' : '', numero: numP, fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
     pago: pago, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: r2_(subtotal + envio), estado: 'nuevo', ventaId: '', nota: txt_(d.nota, 300), actualizado: ahora_(), anticipo: Math.ceil(anticipo) });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
@@ -4649,7 +4692,7 @@ function misPedidos_(d) {
   const ids = Array.isArray(d.ids) ? d.ids.slice(0, 20) : [];
   if (!t8 || !ids.length) return [];
   return rows_('Pedidos').filter(p => ids.indexOf(p.id) >= 0 && tel8_(p.telefono) === t8)
-    .map(p => ({ id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega }))
+    .map(p => ({ id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega, pago: p.pago, pagoEstado: p.pagoEstado || '', items: parseJ_(p.items, []).length }))
     .sort((a, b) => a.fecha < b.fecha ? 1 : -1);
 }
 

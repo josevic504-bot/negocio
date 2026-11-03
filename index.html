@@ -809,6 +809,11 @@ body.en-tienda{padding-bottom:110px}
 .vgr{display:grid;grid-template-columns:1.5fr .9fr .9fr;gap:6px 8px;align-items:center;margin-top:12px}.vgr .h{font-size:11px;color:var(--mut);font-weight:600}
 .vgr .n{display:flex;align-items:center;gap:7px;font-size:13.5px;min-width:0}.vgr .n u{width:17px;height:17px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)}.vgr input{padding:8px 9px;text-align:right;min-width:0}.vgr input.cero{color:var(--bad);border-color:color-mix(in srgb,var(--bad) 40%,transparent)}
 .tbl-w{overflow-x:auto}.tbl{width:100%;border-collapse:collapse;font-size:13px}.tbl th{text-align:left;font-size:11.5px;color:var(--mut);font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}.tbl td{padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}.tbl .n{text-align:right;white-space:nowrap}
+.comp-p{display:flex;gap:12px;align-items:flex-start;margin-top:10px;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--pri) 6%,transparent)}.comp-p img{width:64px;height:84px;object-fit:cover;border-radius:8px;cursor:pointer;flex:none;box-shadow:0 0 0 1px var(--line)}
+.comp-p .tx{display:flex;flex-direction:column;align-items:flex-start;gap:5px;font-size:13.5px}.ok-b{background:#e3f6ec;color:#0e8f5a;border-color:transparent}
+.comp-t{display:flex;gap:12px;align-items:center;border:2px dashed color-mix(in srgb,var(--pri) 35%,transparent);border-radius:14px;padding:10px 12px;margin:10px 0;cursor:pointer;background:color-mix(in srgb,var(--pri) 5%,transparent)}
+.comp-t.on{border-style:solid}.comp-t img{width:46px;height:60px;object-fit:cover;border-radius:6px;flex:none}.comp-t .ci{font-size:24px}.comp-t .tx{display:flex;flex-direction:column;gap:2px;font-size:13.5px}.comp-t small{color:var(--mut);font-size:12px}
+.mis-c{font-size:12.5px;margin:-2px 0 8px 2px;color:var(--mut)}.mis-c.ok{color:#0e8f5a;font-weight:600}.mis-c.bt{display:block;cursor:pointer;color:var(--txt)}.mis-c.bt b{color:var(--pri)}
 .vtot{display:flex;justify-content:space-between;margin-top:10px;padding-top:8px;border-top:1px dashed var(--line);font-size:13.5px}
 .op-g .chip.pres{flex-direction:column;align-items:flex-start;gap:1px;padding:8px 14px}.op-g .chip small{font-size:12.5px;font-weight:700;color:var(--pri)}.op-g .chip.on small{color:inherit}
 .op-g .chip.ag{opacity:.45;text-decoration:line-through}.op-g .tono.ag{opacity:.45;cursor:not-allowed}.op-g .tono.ag u{background-image:linear-gradient(45deg,transparent 46%,#c62828 47% 53%,transparent 54%)!important}
@@ -1467,7 +1472,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.29';
+const APP_VER = '1.9.30';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -4208,9 +4213,27 @@ function cardPedido(p) {
     <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${money(i.total)}</span></div>`).join('')}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir${num(p.anticipoPagado) >= num(p.anticipo) ? ' · pagado ✓' : num(p.anticipoPagado) > 0 ? ' · pagó ' + money(p.anticipoPagado) : ''}</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
     <div class="ord-f"><span class="t n">${money(p.total)}</span><span class="badge b-mut">${ic(p.entrega === 'domicilio' ? 'truck' : 'store', 14)} ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge b-mut">${esc(p.pago)}</span></div>
     ${p.entrega === 'domicilio' && p.direccion ? `<p class="xs mut" style="margin:8px 0 0">${ic('pin', 13)} ${esc(p.direccion)}</p>` : ''}${p.nota ? `<p class="xs mut" style="margin:6px 0 0">📝 ${esc(p.nota)}</p>` : ''}
+    ${compPedidoHTML(p)}
     <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a><button class="btn sm" data-a="verPedido" data-id="${p.id}">${ic('eye', 16)} Ver</button>
     ${accion ? `<button class="btn pri sm" style="margin-left:auto" data-a="pedAccion" data-id="${p.id}" data-e="${accion[1]}">${accion[0]} ${ic('arrow', 16)}</button>` : ''}</div></div>`;
 }
+// Comprobante de pago que mandó el cliente desde la tienda
+const EST_COMP = { revisar: ['b-warn', 'Por revisar'], ok: ['b-ok', 'Pago recibido'], no: ['b-bad', 'No coincide'] };
+function compPedidoHTML(p) {
+  if (!p.comprobante) return '';
+  const e = EST_COMP[p.pagoEstado] || EST_COMP.revisar, abierto = !p.ventaId && ['nuevo', 'confirmado', 'listo'].includes(p.estado);
+  return `<div class="comp-p"><img src="${esc(fotoSrc(p.comprobante))}" alt="Comprobante" data-a="verComp" data-id="${p.id}" loading="lazy"><div class="tx"><b>💳 Comprobante de pago</b><span class="badge ${e[0]}">${e[1]}</span>
+    ${p.pagoEstado === 'revisar' && abierto && puede('admin', 'cajero') ? `<div class="row" style="margin-top:8px"><button class="btn sm ok-b" data-a="pedPago" data-id="${p.id}" data-ok="1">${ic('check', 15)} Pago recibido</button><button class="btn sm ghost" data-a="pedPago" data-id="${p.id}" data-ok="">${ic('x', 15)} No coincide</button></div>` : ''}</div></div>`;
+}
+ACC.verComp = el => { const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return; hoja({ titulo: 'Comprobante · ' + esc(p.numero), html: `<img src="${esc(fotoAncha(p.comprobante))}" alt="" style="width:100%;border-radius:12px"><p class="sm mut">${esc(p.nombre)} · ${money(p.total)} · ${esc(p.pago)}</p>` }); };
+ACC.pedPago = async el => {
+  const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
+  const ok = !!el.dataset.ok, falta = r2(num(p.total) - num(p.anticipoPagado));
+  if (!(await confirmar(ok ? `¿Confirmas que recibiste el pago de <b>${esc(p.nombre)}</b>?${falta > 0 ? ` Se anota <b>${money(falta)}</b> como anticipo por transferencia; al cobrar el pedido ya sale pagado.` : ''}` : `¿El comprobante de <b>${esc(p.nombre)}</b> no coincide? Le aparecerá en la tienda que debe mandar otro.`, { si: ok ? 'Pago recibido' : 'No coincide', peligro: !ok }))) return;
+  const g = await api('pedidoPago', { id: p.id, ok });
+  Object.assign(p, g); toast(ok ? 'Pago confirmado' : 'Le avisamos que mande otro comprobante', 'ok'); R.pedidos();
+  if (!ok) { const h = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le escribes a <b>${esc(p.nombre)}</b>?</p>` }); const t = `Hola ${p.nombre.split(' ')[0]}, revisamos el comprobante de tu pedido ${p.numero} y no coincide con el pago. ¿Nos ayudas enviando otro? Gracias. — ${S.config.nombre || ''}`; h.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Escribir por WhatsApp</a>`; h.f.hidden = false; }
+};
 function msjPedido(p) {
   const o = { cliente: p.nombre.split(' ')[0], numero: p.numero, total: money(p.total), negocio: S.config.nombre || '' };
   if (p.estado === 'listo') return plantilla(S.config.msjListo, o) + (p.entrega === 'domicilio' ? ' Va en camino 🛵' : ' Puedes pasar a recogerlo.');
@@ -8118,6 +8141,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.30', fecha: '2026-11-03', items: [
+    { i: 'receipt', t: 'Comprobante de pago en los pedidos', d: 'Tus clientes pueden adjuntar la foto del comprobante al pedir por transferencia, o mandarlo después desde «Mis pedidos». Te llega un aviso al teléfono y en el pedido tocas «Pago recibido» (queda como anticipo) o «No coincide».' }
+  ] },
   { v: '1.9.29', fecha: '2026-11-01', items: [
     { i: 'layers', t: 'Existencia por tono, talla o presentación', d: 'Cada opción de un producto puede llevar su propia existencia (Nude 1: 10, Nude 3: 0). Al vender, comprar o ajustar se descuenta de la opción exacta, y en tu tienda en línea la que se acabó sale como agotada. Actívalo en el producto › Existencia y precio por opción.' },
     { i: 'tag', t: 'Precio por presentación', d: 'Una opción puede tener su propio precio: la loción de 50 ml a L 450 y la de 100 ml a L 650, en un solo producto.' }
@@ -8941,8 +8967,11 @@ function tCarrito() {
       <label class="fld"><span>¿Cómo vas a pagar?</span><select id="tc-p">${n.pagos.map(x => `<option value="${esc(x)}" ${valores.pago === x ? 'selected' : ''}>${esc(x === 'Efectivo' && T.entrega === 'domicilio' ? 'Efectivo al recibir' : x)}</option>`).join('')}</select></label>
       <div id="tc-dp"></div>
       <label class="fld"><span>Nota (opcional)</span><input id="tc-o" placeholder="Algo más que debamos saber" value="${esc(valores.nota || '')}"></label>`;
-    const dp = () => { $('#tc-dp', h.el).innerHTML = $('#tc-p', h.el).value === 'Transferencia' && n.datosPago ? `<div class="aviso info sm">${ic('bank', 18)}<div>${esc(n.datosPago)}</div></div>` : ''; };
+    const dp = () => { const pg = $('#tc-p', h.el).value;
+      $('#tc-dp', h.el).innerHTML = (pg === 'Transferencia' && n.datosPago ? `<div class="aviso info sm">${ic('bank', 18)}<div>${esc(n.datosPago)}</div></div>` : '')
+        + (pg !== 'Efectivo' ? `<label class="comp-t ${T.comp ? 'on' : ''}">${T.comp ? `<img src="${T.comp}" alt="">` : '<span class="ci">📎</span>'}<span class="tx"><b>${T.comp ? 'Comprobante adjunto ✓' : 'Adjuntar comprobante de pago'}</b><small>${T.comp ? 'Toca para cambiarlo' : 'Opcional: la foto o captura de tu transferencia. También lo puedes mandar después.'}</small></span><input type="file" accept="image/*" id="tc-cf" hidden></label>` : ''); };
     $('#tc-p', h.el).addEventListener('change', dp); dp();
+    $('#tc-dp', h.el).addEventListener('change', async e => { const f = e.target.closest('#tc-cf'); if (!f || !f.files[0]) return; try { T.comp = await comprimirImagen(f.files[0], 1200); dp(); } catch (x) { err(x); } });
     h.botones([{ t: `${ic('send', 18)} Enviar pedido · ${money(sub + env)}`, cls: 'wa big', fn: enviar }]);
   };
   $('#tc', h.el).addEventListener('click', e => {
@@ -8956,9 +8985,9 @@ function tCarrito() {
     if (tel.replace(/\D/g, '').length < 8) throw new Error('Escribe tu número de WhatsApp');
     if (T.entrega === 'domicilio' && dir.trim().length < 5) throw new Error('Escribe la dirección de entrega');
     LS.set('cliente_tienda', JSON.stringify({ nombre, telefono: tel, direccion: dir || cli.direccion || '' }));
-    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => ({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }))) });
+    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: $('#tc-p', h.el).value !== 'Efectivo' && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => ({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }))) });
     const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 10)));
-    T.cart = {}; guardarCarrito(); T.compras = []; guardarCompras(); h.cerrar(); gridTienda(); pedidoEnviado(r, nombre, tel); misPedidosTienda();
+    T.cart = {}; guardarCarrito(); T.compras = []; guardarCompras(); T.comp = ''; h.cerrar(); gridTienda(); pedidoEnviado(r, nombre, tel); misPedidosTienda();
   };
   pinta();
 }
@@ -9047,7 +9076,13 @@ async function misPedidosTienda() {
     const l = await api('misPedidos', { negocio: T.id, telefono: cli.telefono, ids }, true);
     const est = { nuevo: ['Recibido', 'b-warn', '📨'], confirmado: ['Confirmado', 'b-info', '👍'], listo: ['¡Listo!', 'b-ok', '✅'], entregado: ['Entregado', 'b-mut', '🎉'], cancelado: ['Cancelado', 'b-bad', '✖️'] };
     const vis = l.filter(p => p.estado !== 'entregado' && p.estado !== 'cancelado' || (Date.now() - parseLocal(p.fecha).getTime()) < 86400000 * 2).slice(0, 3);
-    box.innerHTML = vis.length ? `<div class="mis"><b>Tus pedidos</b>${vis.map(p => `<div class="mis-r"><span>${est[p.estado][2]} ${esc(p.numero)} · ${money(p.total)}</span><span class="badge ${est[p.estado][1]}">${est[p.estado][0]}</span></div>`).join('')}</div>` : '';
+    const comp = p => { if (!p.pago || p.pago === 'Efectivo' || ['cancelado', 'entregado'].includes(p.estado)) return p.pagoEstado === 'ok' ? '<div class="mis-c ok">✓ Pago verificado</div>' : '';
+      if (p.pagoEstado === 'ok') return '<div class="mis-c ok">✓ El negocio confirmó tu pago</div>';
+      if (p.pagoEstado === 'revisar') return '<div class="mis-c">📎 Comprobante enviado · el negocio lo está revisando</div>';
+      return `<label class="mis-c bt">${p.pagoEstado === 'no' ? '<span class="neg">El negocio no pudo confirmar tu pago.</span> ' : '¿Ya pagaste? '}<b>📎 ${p.pagoEstado === 'no' ? 'Enviar otro comprobante' : 'Enviar comprobante'}</b><input type="file" accept="image/*" data-comp="${p.id}" hidden></label>`; };
+    box.innerHTML = vis.length ? `<div class="mis"><b>Tus pedidos</b>${vis.map(p => `<div class="mis-r"><span>${est[p.estado][2]} ${esc(p.numero)} · ${money(p.total)}</span><span class="badge ${est[p.estado][1]}">${est[p.estado][0]}</span></div>${comp(p)}`).join('')}</div>` : '';
+    box.onchange = async e => { const f = e.target.closest('[data-comp]'); if (!f || !f.files[0]) return;
+      try { const foto = await comprimirImagen(f.files[0], 1200); await api('pedidoComprobante', { negocio: T.id, id: f.dataset.comp, telefono: cli.telefono, foto }); toast('Comprobante enviado. El negocio lo va a revisar.', 'ok', 4000); misPedidosTienda(); } catch (x) { err(x); } };
   } catch (e) {}
 }
 
