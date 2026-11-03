@@ -6,7 +6,7 @@ export function dbFalsa(SCHEMA, SCHEMA_M, NUMS, BOOLS) {
     if (maestra(t)) return k === 'activo' ? !!v : (v === null || v === undefined ? '' : String(v));
     if (NUMS.has(k)) return Number(v) || 0; if (BOOLS.has(k)) return !!v; return v === null || v === undefined ? '' : String(v);
   };
-  const vacio = (t) => { const o = {}; (SCHEMA_M[t] || SCHEMA[t]).forEach(k => { o[k] = tipo(t, k, maestra(t) && k !== 'activo' ? '' : undefined); }); return o; };
+  const vacio = (t) => { const o = {}; (SCHEMA_M[t] || SCHEMA[t] || []).forEach(k => { o[k] = tipo(t, k, maestra(t) && k !== 'activo' ? '' : undefined); }); return o; };
   const tabla = t => T[t] || (T[t] = []);
   const coincide = (r, op) => Object.keys(op.k || {}).every(k => String(r[k]) === op.k[k]) && (!op.n || r.negocio_id === op.n);
   const j = x => JSON.parse(JSON.stringify(x));

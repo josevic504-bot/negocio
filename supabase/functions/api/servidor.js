@@ -393,6 +393,142 @@ function RECORDATORIOS_(ids) {
     log('avisos guardados ' + neg);
     return { ok: true, data: { llave: Rq.props.VAPID_PUBLICA || '' } };
   }
+  /* ---------- Respaldos de cada negocio y copiar productos entre negocios (Panel) ----------
+   * Respaldos (lista) y RespaldoDatos (la copia completa en JSON) son tablas por negocio que el Codigo.gs no usa.
+   * Copia diaria automática (tarea respaldosDia, 2 a. m.): se guardan 7 diarias, 4 semanales y 4 manuales/«antes de restaurar». */
+  const HERR = ['panelRespaldos', 'panelRespaldoHacer', 'panelRespaldoRestaurar', 'panelRespaldoDatos', 'panelCopiarInfo', 'panelCopiarProductos'];
+  const GUARDA = { diario: 7, semanal: 4, manual: 4, antes: 4 };
+  const ahoraHN = () => new Date(Date.now() - 6 * 3600000).toISOString().slice(0, 16).replace('T', ' ');
+  const rid = p => p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 46656).toString(36).toUpperCase().padStart(3, '0');
+  const sinFila = o => { const y = Object.assign({}, o); delete y._fila; return y; };
+  const negValido = x => /^N[0-9A-Z]{4,20}$/.test(String(x || ''));
+  const cuentaN = (l, f) => (l || []).filter(f || (() => true)).length;
+  const activoP = p => !(p.activo === false || p.activo === 'false');
+  async function hacerRespaldo(neg, tipo, lic) {
+    const tabs = Object.keys(SCHEMA);
+    const r = await db.cargar({ n: { [neg]: tabs.concat(['Respaldos']) } }), x = r.n[neg] || {};
+    const datos = {}; let filas = 0;
+    tabs.forEach(t => { const f = (x[t] || []).map(sinFila); if (f.length) { datos[t] = f; filas += f.length; } });
+    const txt = JSON.stringify(datos), id = rid('R'), fecha = ahoraHN();
+    const res = { productos: cuentaN(x.Productos, activoP), clientes: cuentaN(x.Clientes), ventas: cuentaN(x.Ventas, v => !v.anulada) };
+    const ops = [
+      { t: 'Respaldos', op: 'ins', k: { id }, n: neg, row: { id, fecha, tipo, kb: Math.round(txt.length / 102.4) / 10, filas, resumen: JSON.stringify(res) } },
+      { t: 'RespaldoDatos', op: 'ins', k: { id }, n: neg, row: { id, datos: txt } }];
+    // Se guardan solo los más recientes de cada tipo
+    (x.Respaldos || []).filter(o => o.tipo === tipo).sort((a, b) => a.fecha < b.fecha ? 1 : -1).slice(GUARDA[tipo] - 1).forEach(o => {
+      ops.push({ t: 'Respaldos', op: 'del', k: { id: o.id }, n: neg }, { t: 'RespaldoDatos', op: 'del', k: { id: o.id }, n: neg });
+    });
+    // Números para la salud del negocio en el Panel
+    const st = { nProductos: String(res.productos), nClientes: String(res.clientes) };
+    if (tipo === 'diario' || tipo === 'semanal') st.respaldo = fecha.slice(0, 10);
+    if (lic !== false) ops.push({ t: 'Licencias', op: 'upd', k: { id: neg }, row: st });
+    await db.aplicar({ ops });
+    return { id, fecha, tipo, kb: ops[0].row.kb, filas, resumen: res };
+  }
+  const listaR = async neg => ((await db.cargar({ n: { [neg]: ['Respaldos'] } })).n[neg] || {}).Respaldos || [];
+  const verLista = l => l.map(o => { let r = {}; try { r = JSON.parse(o.resumen || '{}'); } catch (e) {} return { id: o.id, fecha: o.fecha, tipo: o.tipo, kb: Number(o.kb) || 0, filas: Number(o.filas) || 0, resumen: r }; }).sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+  async function datosR(neg, id) {
+    const g = ((await db.cargar({ n: { [neg]: ['RespaldoDatos'] } })).n[neg] || {}).RespaldoDatos || [];
+    const o = g.find(x => x.id === id); if (!o) throw new Error('Ese respaldo ya no existe');
+    return JSON.parse(o.datos || '{}');
+  }
+  const ALCANCE = { productos: ['Productos'], clientes: ['Clientes'] };
+  async function restaurar(neg, id, alcance, Rq) {
+    const datos = await datosR(neg, id);
+    const antes = await hacerRespaldo(neg, 'antes');
+    const tabs = ALCANCE[alcance] || Object.keys(SCHEMA);
+    for (let i = 0; i < 4; i++) {
+      const v = ((await db.cargar({ n: { [neg]: [] } })).n[neg] || {})._v || 0, ops = [];
+      tabs.forEach(t => {
+        ops.push({ t, op: 'del', k: {}, n: neg });
+        const ks = claves(t, false);
+        (datos[t] || []).forEach(row => { const k = {}; ks.forEach(c => { k[c] = String(row[c] === undefined || row[c] === null ? '' : row[c]); }); ops.push({ t, op: 'ins', k, n: neg, row }); });
+      });
+      const r = await db.aplicar({ ops, v: { [neg]: v } });
+      if (r && r.conflicto) continue;
+      const cn = canal(Rq, neg); if (cn) await db.efecto({ rt: { canal: cn, t: tabs, dev: '' } });
+      log('restaurado ' + neg + ' ' + id + ' ' + (alcance || 'todo'));
+      return { tablas: tabs.length, filas: ops.filter(o => o.op === 'ins').length, antes: antes.id };
+    }
+    throw new Error('El negocio está guardando cambios en este momento. Intenta de nuevo en un minuto.');
+  }
+  const b64de = buf => { let s = ''; const u = new Uint8Array(buf); for (let i = 0; i < u.length; i += 32768) s += String.fromCharCode.apply(null, u.subarray(i, i + 32768)); return btoa(s); };
+  async function copiarFoto(url, neg) {
+    const ruta = opciones.rutaDeUrl ? opciones.rutaDeUrl(String(url)) : null;
+    if (!ruta) return String(url).indexOf('data:') === 0 ? url : '';
+    try {
+      const r = await fetch(url, { signal: AbortSignal.timeout(10000) }); if (!r.ok) return '';
+      const mime = r.headers.get('content-type') || 'image/jpeg', nueva = neg + '/' + crypto.randomUUID() + (/png/.test(mime) ? '.png' : /webp/.test(mime) ? '.webp' : '.jpg');
+      await db.efecto({ subir: { ruta: nueva, mime, b64: b64de(await r.arrayBuffer()) } });
+      return opciones.urlArchivo(nueva);
+    } catch (e) { log('foto no copiada ' + e); return ''; }
+  }
+  async function copiarProductos(d, Rq) {
+    const de = String(d.de || ''), a = String(d.a || '');
+    if (!negValido(de) || !negValido(a) || de === a) throw new Error('Elige un negocio de origen y otro de destino');
+    const r = await db.cargar({ n: { [de]: ['Productos'], [a]: ['Productos'] } });
+    const cats = Array.isArray(d.cats) ? d.cats.map(String) : null;
+    const src = ((r.n[de] || {}).Productos || []).filter(p => activoP(p) && (!cats || cats.indexOf(String(p.categoria || '')) >= 0));
+    const ya = {}; ((r.n[a] || {}).Productos || []).forEach(p => { ya[String(p.nombre).trim().toLowerCase()] = 1; });
+    const nuevos = src.filter(p => !ya[String(p.nombre).trim().toLowerCase()]).slice(0, 1500), hoy = ahoraHN().replace(' ', 'T');
+    const filas = [];
+    for (let i = 0; i < nuevos.length; i += 6) {
+      await Promise.all(nuevos.slice(i, i + 6).map(async p => {
+        const o = sinFila(p); o.id = rid('P'); o.creado = hoy; o.codigo = p.codigo || '';
+        if (!d.costos) { o.costo = 0; o.margen = 0; }
+        if (!d.existencias) {
+          o.stock = 0;
+          let V = p.variantes; try { if (typeof V === 'string') V = V ? JSON.parse(V) : null; } catch (e) { V = null; }
+          if (V && typeof V === 'object') { Object.keys(V).forEach(k => { if (V[k] && typeof V[k] === 'object') V[k].s = 0; }); o.variantes = typeof p.variantes === 'string' ? JSON.stringify(V) : V; }
+        }
+        if (d.fotos && p.foto) { o.foto = await copiarFoto(p.foto, a); o.fotoFecha = o.foto ? hoy : ''; } else { o.foto = ''; o.fotoFecha = ''; }
+        filas.push(o);
+      }));
+    }
+    for (let i = 0; i < 4; i++) {
+      const v = ((await db.cargar({ n: { [a]: [] } })).n[a] || {})._v || 0;
+      const res = await db.aplicar({ ops: filas.map(o => ({ t: 'Productos', op: 'ins', k: { id: o.id }, n: a, row: o })), v: { [a]: v } });
+      if (res && res.conflicto) continue;
+      const cn = canal(Rq, a); if (cn && filas.length) await db.efecto({ rt: { canal: cn, t: ['Productos'], dev: '' } });
+      log('copiados ' + filas.length + ' productos ' + de + ' → ' + a);
+      return { copiados: filas.length, omitidos: src.length - nuevos.length, fotos: filas.filter(o => o.foto).length };
+    }
+    throw new Error('El negocio está guardando cambios en este momento. Intenta de nuevo en un minuto.');
+  }
+  async function respaldosDia(Rq) {
+    const hoy = ahoraHN().slice(0, 10), dom = new Date(hoy + 'T12:00:00Z').getUTCDay() === 0;
+    const lics = ((await db.cargar({ m: ['Licencias'] })).m.Licencias || []).filter(l => negValido(l.id) && ['eliminada', 'duplicada'].indexOf(String(l.estado).toLowerCase()) < 0);
+    const dias = f => { const t = Date.parse(String(f || '').slice(0, 10) + 'T12:00:00Z'); return isFinite(t) ? (Date.parse(hoy + 'T12:00:00Z') - t) / 86400000 : 999; };
+    const pend = lics.filter(l => l.respaldo !== hoy && (!l.respaldo || dias(l.ultimaConexion) <= 10)).slice(0, Number(Rq.props.RESPALDOS_LOTE) || 12);
+    let n = 0;
+    for (const l of pend) { try { await hacerRespaldo(l.id, dom ? 'semanal' : 'diario'); n++; } catch (e) { log('respaldo ' + l.id + ': ' + e); } }
+    log('respaldos del día: ' + n + ' de ' + pend.length);
+    return { ok: true, data: { hechos: n, pendientes: pend.length } };
+  }
+  async function herramientas(body, Rq) {
+    if (body.tarea === 'respaldosDia') {
+      if (!Rq.props.TAREAS_CLAVE || body.clave !== Rq.props.TAREAS_CLAVE) return { ok: false, error: 'Tarea no permitida' };
+      return respaldosDia(Rq);
+    }
+    if (!body.panel || !vigente(Rq, 'P_' + body.panel)) return { ok: false, error: 'PANEL' };
+    const d = body.data || {}, a = body.action;
+    try {
+      if (a === 'panelCopiarProductos') return { ok: true, data: await copiarProductos(d, Rq) };
+      if (a === 'panelCopiarInfo') {
+        if (!negValido(d.de)) throw new Error('Elige el negocio de origen');
+        const ps = (((await db.cargar({ n: { [d.de]: ['Productos'] } })).n[d.de] || {}).Productos || []).filter(activoP), c = {};
+        ps.forEach(p => { const k = String(p.categoria || ''); c[k] = (c[k] || 0) + 1; });
+        return { ok: true, data: { total: ps.length, fotos: ps.filter(p => p.foto).length, cats: Object.keys(c).sort().map(k => ({ cat: k, n: c[k] })) } };
+      }
+      const neg = String(d.id || '');
+      if (!negValido(neg)) throw new Error('Negocio no válido');
+      if (a === 'panelRespaldos') return { ok: true, data: verLista(await listaR(neg)) };
+      if (a === 'panelRespaldoHacer') return { ok: true, data: await hacerRespaldo(neg, 'manual') };
+      if (a === 'panelRespaldoDatos') return { ok: true, data: await datosR(neg, String(d.rid || '')) };
+      if (a === 'panelRespaldoRestaurar') return { ok: true, data: await restaurar(neg, String(d.rid || ''), String(d.alcance || 'todo'), Rq) };
+    } catch (e) { return { ok: false, error: String(e && e.message || e) }; }
+    return { ok: false, error: 'Acción desconocida' };
+  }
   // Qué avisar según lo que se acaba de guardar
   function avisosDe(ops, Rq, Cq) {
     const out = [], money = (neg, n) => {
@@ -460,6 +596,7 @@ function RECORDATORIOS_(ids) {
     await primeraCarga();
     if (body.importar) return importar(body.importar, Rq);
     if (/^push(Guardar|Quitar|Probar)$/.test(accion)) return avisosPush(body, Rq);
+    if (HERR.indexOf(accion) >= 0 || body.tarea === 'respaldosDia') return herramientas(body, Rq);
     let negsRec = null;
     if (body.tarea === 'recordatoriosDia') {
       if (!Rq.props.TAREAS_CLAVE || body.clave !== Rq.props.TAREAS_CLAVE || !db.push) return { ok: false, error: 'Tarea no permitida' };
