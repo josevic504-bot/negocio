@@ -50,10 +50,16 @@ body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{paddin
 .resp-li,#rs-a .li,#cp-o .li,#cp-c .li{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}#rs-a .li .tx,#cp-o .li .tx,#cp-c .li .tx{flex:1;text-align:left}
 .ck{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;color:transparent;flex:none}.ck.on{background:var(--pri);border-color:var(--pri);color:#fff}
 .sel-f{border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;background:var(--bg)}
+.pn-st{display:flex;gap:12px;align-items:center;border-radius:16px;padding:13px 14px;margin-top:4px}.pn-st b{display:block;font-size:14.5px}.pn-st small{font-size:12.5px;opacity:.85}
+.pn-st.ok{background:color-mix(in srgb,var(--ok, #00a865) 14%,var(--card));color:var(--ink)}.pn-st.ok>.ic{color:var(--ok, #00a865)}.pn-st.warn{background:var(--warnb)}.pn-st.warn>.ic{color:var(--warn)}.pn-st.info{background:var(--pri2)}
+.pn-vend{padding:12px 13px;margin-bottom:9px;cursor:pointer}.pn-vend .t{display:flex;gap:10px;align-items:center}.pn-vend .t>div:nth-child(2){flex:1}.pn-vend .t b{display:block;font-size:14.5px}.pn-vend .t small{color:var(--mut);font-size:12px}
+.pn-vend .nums{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:10px;text-align:center}.pn-vend .nums b{display:block;font-size:19px;font-weight:700}.pn-vend .nums small{font-size:11px;color:var(--mut)}
+.pn-cg{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:9px}.pn-cg .btn{justify-content:flex-start}
+.url-b{font:12px ui-monospace,Menlo,monospace;background:var(--pri2);border-radius:10px;padding:9px 11px;word-break:break-all}
 .pn-tabs{display:flex;max-width:1100px;margin:-4px auto 0;padding:0 8px}
-.pn-tabs button{flex:1;border:0;background:none;color:rgba(255,255,255,.72);font:600 14.5px var(--font);padding:9px 4px 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.pn-tabs button{flex:1;border:0;background:none;color:rgba(255,255,255,.72);font:600 13.5px var(--font);padding:9px 2px 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
 .pn-tabs button.on{color:#fff;border-bottom-color:#fff}
-.pn-tabs i{display:inline-block;font-style:normal;background:#fff;color:var(--pri);font-size:11px;font-weight:700;border-radius:9px;padding:0 6px;margin-left:6px;line-height:17px;vertical-align:1px}
+.pn-tabs i{display:inline-block;font-style:normal;background:#fff;color:var(--pri);font-size:10.5px;font-weight:700;border-radius:9px;padding:0 5px;margin-left:4px;line-height:17px;vertical-align:1px}
 .pn{max-width:760px;margin:0 auto}
 .pn-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:20px 2px 9px}
 .pn-h a{color:var(--pri);text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;cursor:pointer}
@@ -67,7 +73,7 @@ body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{paddin
 .pn-card{display:block;width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);overflow:hidden;text-align:left;font:inherit;color:inherit}
 .pn-it{display:flex;width:100%;align-items:center;gap:11px;padding:11px 13px;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}.pn-it:first-child{border-top:0}
 .pn-it>div{flex:1;min-width:0}.pn-it b{display:block;font-size:14px;font-weight:600}.pn-it small{display:block;color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.pn-it>.ic{color:var(--mut)}
+.pn-it>.ic{color:var(--mut)}.pn-it>.av{flex:none}
 .pn-ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;color:var(--ink)}
 .pn-n{background:var(--pri);color:#fff;border-radius:10px;font-size:12px;font-weight:700;padding:2px 8px}
 .pn-vacio{display:flex;align-items:center;gap:8px;padding:14px;color:var(--mut);font-size:13.5px;cursor:default}button.pn-vacio{cursor:pointer}
@@ -1519,7 +1525,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.33';
+const APP_VER = '1.9.34';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1682,6 +1688,7 @@ function toast(msg, tipo, ms) {
   const t = document.createElement('div'); t.className = 'toast ' + (tipo || ''); t.innerHTML = esc(msg);
   $('#toasts').appendChild(t); requestAnimationFrame(() => t.classList.add('in'));
   setTimeout(() => { t.classList.remove('in'); setTimeout(() => t.remove(), 300); }, ms || 3600);
+  return t;
 }
 function err(e) { console.error(e); if (S.vencidaVista) return; toast(e && e.message ? e.message : String(e), 'error', 5000); }
 // Identifica este equipo: los avisos de «algo cambió» no se le mandan al mismo equipo que hizo el cambio
@@ -1876,11 +1883,12 @@ const LIBS = {
   chart: ['https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js'],
   canvas: ['https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'],
   qr: ['https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.js'],
+  zip: ['https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'],
   zxing: ['https://cdn.jsdelivr.net/npm/@zxing/library@0.21.3/umd/index.min.js'] // lector de códigos para equipos sin lector nativo (iPhone, Firefox, APK)
 };
 const LIBS_OK = {};
 function cargarLib(k) {
-  const listo = { chart: () => window.Chart, canvas: () => window.html2canvas, qr: () => window.qrcode, zxing: () => window.ZXing }[k];
+  const listo = { zip: () => window.JSZip, chart: () => window.Chart, canvas: () => window.html2canvas, qr: () => window.qrcode, zxing: () => window.ZXing }[k];
   if (listo && listo()) return Promise.resolve();
   if (!LIBS_OK[k]) LIBS_OK[k] = LIBS[k].reduce((p, src) => p.then(() => new Promise((ok, mal) => {
     const s = document.createElement('script'); s.src = src; s.onload = ok;
@@ -2852,7 +2860,7 @@ ACC.panelMensajes = async () => {
   } }]);
 };
 /* ---- Panel por módulos: Dashboard (números y pendientes), Clientes (lista) y Marketing (visitas, publicidad, mensajes) ---- */
-const PN_TABS = [['dash', 'Dashboard'], ['cli', 'Clientes'], ['mkt', 'Marketing']];
+const PN_TABS = [['dash', 'Dashboard'], ['cli', 'Clientes'], ['mkt', 'Marketing'], ['resp', 'Respaldos']];
 const pnPendN = d => (d.comprobantes || []).length + (d.soporteSin || 0) + (d.sinPago || []).length;
 function pnTabsHTML() {
   const t = P.tab || 'dash', n = P.d ? pnPendN(P.d) : 0;
@@ -2869,8 +2877,9 @@ function panelPinta() {
   const d = P.d; if (!d) return;
   panelCab('Panel Molina', false, true);
   const t = P.tab || 'dash';
-  $('#main').innerHTML = avisoServidor(d.appVer) + `<div class="pn">${t === 'cli' ? pnClientes(d) : t === 'mkt' ? pnMarketing(d) : pnDashboard(d)}</div>`;
+  $('#main').innerHTML = avisoServidor(d.appVer) + `<div class="pn">${t === 'cli' ? pnClientes(d) : t === 'mkt' ? pnMarketing(d) : t === 'resp' ? pnRespaldos() : pnDashboard(d)}</div>`;
   if (t === 'cli') pnClientesListo(d);
+  if (t === 'resp') pnRespLista();
   window.scrollTo(0, 0);
 }
 ACC.panelTab = el => { P.tab = el.dataset.k; LS.set('panelTab', P.tab); if (el.dataset.f !== undefined) P.f.est = el.dataset.f; panelPinta(); };
@@ -2930,7 +2939,7 @@ function pnMarketing(d) {
     <div class="pn-h">Ajustes de cobro y contacto</div>
     <div class="pn-card">
       ${pnFila('panelDatosPago', 'bank', 'var(--pri2)', 'Tus datos para que te paguen', d.datosPagoLic ? esc(d.datosPagoLic) : '<span style="color:var(--warn)">Escríbelos: los clientes los ven al pagar</span>')}
-      ${pnFila('panelVisitas', 'link', 'var(--pri2)', 'Tus enlaces para compartir', 'Enlace de prueba por canal (Facebook, WhatsApp…)')}
+      ${pnFila('panelEnlaces', 'link', 'var(--pri2)', 'Tus enlaces para compartir', (d.vendedores || []).length ? `Por canal y de ${d.vendedores.length} vendedor${d.vendedores.length === 1 ? '' : 'es'}` : 'Por canal y enlaces de vendedores')}
       ${pnFila('panelPlantillas', 'edit', 'var(--pri2)', 'Plantillas de WhatsApp', 'Mensajes listos para cada cliente')}
     </div>`;
 }
@@ -2945,6 +2954,138 @@ function cobroTarjeta(n) {
   const c = n.cobro; if (!c || !c.vencidas || !c.vencidas.length) return '';
   return `<div class="cc-a ${c.pausado ? 'b' : 'w'}"><span style="color:${c.pausado ? 'var(--bad)' : 'var(--warn)'}">${ic(c.pausado ? 'lock' : 'coin', 20)}</span><div class="tx"><b>${c.pausado ? 'En pausa por pago pendiente' : 'Pago pendiente · ' + atrasoTxt(c)}</b><small>${money(c.total)} · ${esc(c.vencidas.map(x => x.c).join(', '))}${c.pausado ? '' : ' · se pausa el ' + esc(fCorta(c.pausaEl))}</small></div><div class="bt"><button class="btn sm pri" data-a="panelVer" data-id="${n.id}">Ver pagos</button></div></div>`;
 }
+/* ---- Panel · módulo Respaldos: cómo salió la noche, espacio, respaldar todos, cuántas copias guardar y cada negocio ---- */
+const RESP_EST = { aldia: ['Al día', 'b-ok'], atrasado: ['Atrasado', 'b-bad'], pausado: ['Pausado', 'b-warn'], nuevo: ['Esta noche', 'b-mut'] };
+const tamTxt = kb => kb < 1024 ? (Math.round(kb * 10) / 10) + ' KB' : (kb / 1024).toFixed(1) + ' MB';
+const cuandoResp = (f, hoy) => { if (!f) return 'Nunca'; const d = f.slice(0, 10), h = h12(f.slice(11, 16)); if (d === hoy) return 'Hoy ' + h; const ay = new Date(Date.parse(hoy + 'T12:00:00Z') - 86400000).toISOString().slice(0, 10); return (d === ay ? 'Ayer ' : fCorta(d) + ' · ') + h; };
+function pnRespaldos() {
+  setTimeout(pnRespCargar, 0);
+  return P.resp ? pnRespHTML(P.resp) : '<div class="empty">Cargando respaldos…</div>';
+}
+async function pnRespCargar() {
+  try { P.resp = await api('panelRespaldosResumen', {}, true); } catch (e) { const b = $('#pn-resp'); if (b) b.innerHTML = `<div class="empty">${esc(e.message)}</div>`; return; }
+  const el = $('.pn'); if (el && P.tab === 'resp') { el.innerHTML = pnRespHTML(P.resp); pnRespLista(); }
+}
+function pnRespHTML(r) {
+  const u = r.ultima, negs = r.negocios, con = negs.filter(n => n.copias).length, sinRec = negs.filter(n => n.est === 'atrasado' || n.est === 'pausado').length;
+  const fallo = u && (u.errores || []).length, deHoy = u && u.fecha === r.hoy;
+  const est = !u ? ['info', 'Todavía no hay respaldo automático', 'El primero se hace esta noche a las 2 a. m.']
+    : fallo ? ['warn', `${u.errores.length} negocio${u.errores.length > 1 ? 's' : ''} no se respald${u.errores.length > 1 ? 'aron' : 'ó'}`, esc(u.errores.slice(0, 4).join(' · ')) + ' · se intenta de nuevo esta noche']
+    : [deHoy ? 'ok' : 'warn', deHoy ? 'Respaldo de anoche completo' : 'El respaldo automático no corrió anoche', `${u.hechos} negocio${u.hechos === 1 ? '' : 's'} · ${deHoy ? '' : fCorta(u.fecha) + ' · '}${h12(u.desde)} a ${h12(u.hasta)}`];
+  const f = P.rf || '';
+  return `<div class="pn-st ${est[0]}">${ic(est[0] === 'ok' ? 'check' : est[0] === 'warn' ? 'alert' : 'info', 22)}<div><b>${est[1]}</b><small>${est[2]}</small></div></div>
+    <div class="pn-h">Resumen</div>
+    <div class="pn-g2"><div class="pn-k"><small>Negocios con respaldo</small><b>${con}</b><i>de ${negs.length}</i></div><div class="pn-k"><small>Copias guardadas</small><b>${r.copias}</b><i>en todos los negocios</i></div>
+      <div class="pn-k"><small>Espacio usado</small><b>${tamTxt(r.kb / 3)}</b><i>de 1 GB gratis · comprimido</i></div><button class="pn-k" data-a="panelRespFiltro" data-k="sin"><small>Sin respaldo reciente</small><b style="color:${sinRec ? 'var(--warn)' : 'inherit'}">${sinRec}</b><i>no entran hace +10 días</i></button></div>
+    <div class="pn-h">Acciones</div>
+    <div class="pn-card">${pnFila('panelRespTodos', 'save', 'var(--pri2)', 'Respaldar todos ahora', 'Útil antes de publicar una versión nueva')}${pnFila('panelRespGuarda', 'gear', 'var(--pri2)', 'Cuántas copias guardar', `${r.guarda.diario} diarias · ${r.guarda.semanal} semanales · ${r.guarda.manual} manuales`)}${pnFila('panelRespZip', 'down', 'var(--pri2)', 'Descargar todo en Excel', 'Un archivo por negocio, en un .zip')}</div>
+    ${(r.restauraciones || []).length ? `<div class="pn-h">Últimas restauraciones</div><div class="pn-card">${r.restauraciones.slice(0, 5).map(x => `<div class="pn-it" style="cursor:default"><span class="pn-ico" style="background:var(--warnb)">${ic('undo', 18)}</span><div><b>${esc(x.negocio)} · ${{ todo: 'todo el negocio', productos: 'solo productos', clientes: 'solo clientes' }[x.alc] || esc(x.alc)}</b><small>${esc(cuandoResp(x.f, r.hoy))}${x.de ? ' · copia del ' + esc(fCorta(x.de.slice(0, 10))) + ' ' + esc(h12(x.de.slice(11, 16))) : ''}</small></div></div>`).join('')}</div>` : ''}
+    <div class="pn-h">Cada negocio</div>
+    <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="rp-q" placeholder="Buscar negocio…" value="${esc(P.rq || '')}"></div>
+    <div class="chips pn-chips">${[['', 'Todos · ' + negs.length], ['sin', '⚠ Sin respaldo reciente · ' + sinRec], ['peso', 'Más pesados']].map(x => `<button class="chip ${f === x[0] ? 'on' : ''}" data-a="panelRespFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+    <div class="pn-card" id="rp-l"></div>`;
+}
+function pnRespLista() {
+  const r = P.resp, el = $('#rp-l'); if (!r || !el) return;
+  const q = norm(P.rq || ''), f = P.rf || '';
+  let l = r.negocios.filter(n => (!q || norm(n.negocio).includes(q)) && (f !== 'sin' || n.est === 'atrasado' || n.est === 'pausado'));
+  if (f === 'peso') l = l.slice().sort((a, b) => b.kbTotal - a.kbTotal);
+  el.innerHTML = l.map(n => { const e = RESP_EST[n.est]; return `<button class="pn-it" data-a="panelRespNeg" data-id="${n.id}"><div class="av ${colorDe(n.negocio)}" style="width:36px;height:36px;font-size:13px">${esc(iniciales(n.negocio))}</div><div><b>${esc(n.negocio)}</b><small>${esc(cuandoResp(n.ultimo, r.hoy))}${n.copias ? ` · ${n.copias} copia${n.copias === 1 ? '' : 's'} · ${tamTxt(n.kb)}` : n.est === 'pausado' ? ' · no entra a la app' : ''}${n.est === 'pausado' && n.copias ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><span class="badge ${e[1]}">${e[0]}</span></button>`; }).join('') || '<div class="pn-vacio">Sin resultados</div>';
+  const i = $('#rp-q'); if (i && !i.dataset.ok) { i.dataset.ok = 1; i.addEventListener('input', debounce(e => { P.rq = e.target.value; pnRespLista(); }, 150)); }
+}
+ACC.panelRespFiltro = el => { P.rf = P.rf === el.dataset.k && el.dataset.k ? '' : el.dataset.k; $$('.pn-chips .chip').forEach(c => c.classList.toggle('on', c.dataset.k === P.rf)); pnRespLista(); if (el.classList.contains('pn-k')) $('#rp-l').scrollIntoView({ behavior: 'smooth', block: 'center' }); };
+ACC.panelRespNeg = el => {
+  const n = P.resp.negocios.find(x => x.id === el.dataset.id); if (!n) return;
+  const h = hoja({ titulo: esc(n.negocio), extra: '', html: `<div class="row sp" style="margin-bottom:8px"><small class="h">${n.copias} copia${n.copias === 1 ? '' : 's'}${n.copias ? ' · ' + tamTxt(n.kbTotal) + ' en total' : ''}</small><button class="btn sm" data-x="respHacer">${ic('save', 15)} Hacer uno ahora</button></div><div class="list" id="pf-resp"><div class="empty">Cargando…</div></div><small class="hint">Toca una copia para restaurarla o descargarla en Excel.</small>`, onClose: () => { if (P.tab === 'resp') pnRespCargar(); } });
+  const fx = { negocio: n.negocio };
+  panelRespCargar(n.id, h);
+  h.b.addEventListener('click', async e => {
+    const b = e.target.closest('[data-x]'); if (!b) return;
+    try {
+      if (b.dataset.x === 'respHacer') { b.disabled = true; try { await api('panelRespaldoHacer', { id: n.id }); toast('Respaldo hecho', 'ok'); await panelRespCargar(n.id, h); } finally { b.disabled = false; } }
+      if (b.dataset.x === 'resp') { const r = (h.resp || []).find(k => k.id === b.dataset.r); if (r) panelRespAbrir(n.id, fx, r, h); }
+    } catch (x) { err(x); }
+  });
+};
+ACC.panelRespTodos = async el => {
+  if (!(await confirmar('¿Hacer ahora un respaldo de todos los negocios? Tarda unos segundos por negocio.', { si: 'Respaldar todos' }))) return;
+  const t = toast('Respaldando…', 'ok', 60000); let hechos = 0, r;
+  try { do { r = await api('panelRespaldarTodos', {}); hechos += r.hechos; if (t && t.textContent !== undefined) t.textContent = `Respaldando… ${hechos} de ${r.total}`; } while (r.faltan > 0 && r.hechos > 0); }
+  finally { if (t && t.remove) t.remove(); }
+  toast(`Listo: ${hechos} negocio${hechos === 1 ? '' : 's'} respaldado${hechos === 1 ? '' : 's'}`, 'ok', 4000); pnRespCargar();
+};
+ACC.panelRespGuarda = async () => {
+  const g = (P.resp && P.resp.guarda) || { diario: 7, semanal: 4, manual: 4, antes: 4 };
+  const h = hoja({ titulo: 'Cuántas copias guardar', html: `<p class="h" style="margin:0 0 12px">De cada negocio. Cuando hay más, se borra la más vieja de ese tipo.</p>${[['diario', 'Diarias (2 a. m.)'], ['semanal', 'Semanales (domingo)'], ['manual', 'Hechas por ti'], ['antes', 'Antes de restaurar']].map(([k, t]) => `<label class="fld"><span>${t}</span><input type="number" min="1" max="60" inputmode="numeric" data-k="${k}" value="${g[k]}"></label>`).join('')}` });
+  h.botones([{ t: 'Guardar', cls: 'pri', fn: async () => { const d = {}; $$('[data-k]', h.el).forEach(i => { d[i.dataset.k] = Number(i.value); }); await api('panelRespaldoConfig', d); toast('Guardado: se aplica en el próximo respaldo', 'ok'); h.cerrar(); pnRespCargar(); } }]);
+};
+ACC.panelRespZip = async () => {
+  const negs = ((P.resp && P.resp.negocios) || []).filter(n => n.copias); if (!negs.length) throw new Error('Todavía no hay respaldos');
+  const t = toast('Preparando… 0 de ' + negs.length, 'ok', 120000);
+  try {
+    await Promise.all([cargarLib('xlsx'), cargarLib('zip')]);
+    const zip = new JSZip(); let i = 0;
+    for (const n of negs) {
+      const l = await api('panelRespaldos', { id: n.id }, true), r = l[0]; if (!r) continue;
+      const d = await api('panelRespaldoDatos', { id: n.id, rid: r.id }, true), wb = XLSX.utils.book_new();
+      Object.keys(d).forEach(k => { if ((d[k] || []).length) XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(d[k].map(o => { const y = {}; Object.keys(o).forEach(c => { const v = o[c]; y[c] = v && typeof v === 'object' ? JSON.stringify(v) : v; }); return y; })), k.slice(0, 31)); });
+      if (wb.SheetNames.length) zip.file(n.negocio.replace(/[\\/:*?"<>|]/g, '').slice(0, 60) + ' ' + r.fecha.slice(0, 10) + '.xlsx', XLSX.write(wb, { bookType: 'xlsx', type: 'array' }));
+      if (t && t.textContent !== undefined) t.textContent = `Preparando… ${++i} de ${negs.length}`;
+    }
+    descargar(await zip.generateAsync({ type: 'blob' }), 'Respaldos ' + P.resp.hoy + '.zip');
+  } finally { if (t && t.remove) t.remove(); }
+};
+
+/* ---- Panel · Tus enlaces: por canal y de cada vendedor (apoyo en ventas), con lo que trajo cada uno ---- */
+const waCorto = w => { const d = String(w || '').replace(/\D/g, ''); return d.length === 8 ? d.slice(0, 4) + '-' + d.slice(4) : fmtWA(d); };
+const nombreVend = k => { const v = ((P.d && P.d.vendedores) || []).find(x => x.codigo === k); return v ? v.nombre : k.slice(2); };
+const VEND_URL = c => visLink(VIS_LINKS[0][1], c);
+ACC.panelEnlaces = async () => {
+  panelCab('Tus enlaces', true);
+  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
+  const r = await api('panelVendedores', {}); P.vend = r.vendedores;
+  P.enlProg = P.enlProg || VIS_LINKS[0][0];
+  const u = (VIS_LINKS.find(x => x[0] === P.enlProg) || VIS_LINKS[0])[1];
+  $('#main').innerHTML = `<div class="pn">
+    <div class="pn-h" style="margin-top:4px">Enlaces de vendedores <a data-a="panelVendNuevo">+ Nuevo</a></div>
+    ${P.vend.map(v => `<button class="pn-card pn-vend" data-a="panelVendVer" data-k="${esc(v.codigo)}"><div class="t"><div class="av ${colorDe(v.nombre)}">${esc(iniciales(v.nombre))}</div><div><b>${esc(v.nombre)}</b><small>Apoyo en ventas${v.whatsapp ? ' · ' + esc(waCorto(v.whatsapp)) : ''}</small></div>${ic('right', 16)}</div>
+      <div class="nums"><div><b>${v.visitas}</b><small>visitas</small></div><div><b>${v.personas}</b><small>personas</small></div><div><b>${v.registros}</b><small>registros</small></div><div><b style="color:var(--ok, #00a865)">${v.compraron}</b><small>compraron</small></div></div></button>`).join('')
+      || `<button class="pn-card pn-vacio" data-a="panelVendNuevo" style="width:100%">${ic('userplus', 18)} Crea un enlace para cada persona que te ayude a vender y mira cuántos llegan por él</button>`}
+    <div class="pn-h">Enlaces por canal</div>
+    <div class="pn-card" style="padding:12px"><select id="en-p">${VIS_LINKS.map(([k]) => `<option value="${k}" ${k === P.enlProg ? 'selected' : ''}>${esc(visPag(k))}</option>`).join('')}</select>
+      <div class="pn-cg">${[['tiktok', 'TikTok'], ['facebook', 'Facebook'], ['wa', 'WhatsApp'], ['estado', 'Estado WA'], ['instagram', 'Instagram'], ['google', 'Google']].map(([k, t]) => `<button class="btn" data-a="panelCopiarLink" data-u="${esc(visLink(u, k))}">${ic(VIS_ORI[k][1], 16)} ${t}<span style="margin-left:auto">${ic('copy', 15)}</span></button>`).join('')}</div>
+      <button class="btn ghost" style="width:100%;margin-top:8px" data-a="panelCopiarLink" data-u="${esc(u)}">${ic('link', 16)} Sin etiqueta (directo)</button></div>
+    <p class="h" style="margin:8px 2px;font-size:12.5px">Toca un canal para copiar su enlace. Usa uno distinto en cada lugar donde lo publiques; en Visitas ves cuál trae más gente.</p></div>`;
+  $('#en-p').addEventListener('change', e => { P.enlProg = e.target.value; ACC.panelEnlaces(); });
+};
+ACC.panelVendNuevo = () => panelVendForm(null);
+function panelVendForm(v) {
+  const h = hoja({ titulo: v ? 'Editar vendedor' : 'Nuevo enlace de vendedor', html: `<label class="fld"><span>Nombre</span><input id="vd-n" maxlength="60" value="${esc(v ? v.nombre : '')}" placeholder="Ej. María Reyes"></label>
+    <label class="fld"><span>WhatsApp (opcional)</span><input id="vd-w" inputmode="tel" maxlength="20" value="${esc(v ? v.whatsapp : '')}" placeholder="9988-7766"></label>
+    ${v ? `<span class="op-l">Su enlace</span><div class="url-b">${esc(VEND_URL(v.codigo).replace(/^https:\/\//, ''))}</div>` : ''}
+    <p class="h" style="margin-top:8px">Todo el que entre por su enlace queda marcado 30 días: si se registra después, igual cuenta para tu vendedor.</p>` });
+  const guardar = async manda => {
+    const r = await api('panelVendedorGuardar', { codigo: v ? v.codigo : '', nombre: $('#vd-n', h.el).value, whatsapp: $('#vd-w', h.el).value });
+    const url = VEND_URL(r.codigo);
+    if (manda) window.open(waLink(r.whatsapp, `¡Hola ${r.nombre.split(' ')[0]}! Este es tu enlace para recomendar Gestión de Negocio VM. Todo el que se registre desde aquí queda a tu nombre:\n${url}`), '_blank', 'noopener');
+    else { try { await navigator.clipboard.writeText(url); toast('Enlace copiado', 'ok'); } catch (e) { pedirTexto('Enlace', { valor: url }); } }
+    if (P.d) { P.d.vendedores = (P.d.vendedores || []).filter(x => x.codigo !== r.codigo).concat([{ codigo: r.codigo, nombre: r.nombre }]); }
+    h.cerrar(); ACC.panelEnlaces();
+  };
+  h.botones([{ t: 'Solo guardar y copiar', fn: () => guardar(false) }, { t: ic('wa', 16) + ' Enviárselo por WhatsApp', cls: 'wa', fn: () => { if (!$('#vd-w', h.el).value.replace(/\D/g, '')) throw new Error('Escribe su WhatsApp para enviárselo'); return guardar(true); } }]);
+}
+ACC.panelVendVer = el => {
+  const v = (P.vend || []).find(x => x.codigo === el.dataset.k); if (!v) return;
+  const url = VEND_URL(v.codigo), pct = v.registros ? Math.round(v.compraron * 100 / v.registros) : 0;
+  const h = hoja({ titulo: esc(v.nombre), html: `<div class="url-b">${esc(url.replace(/^https:\/\//, ''))}</div>
+    <div class="row" style="margin-top:8px"><button class="btn" data-a="panelCopiarLink" data-u="${esc(url)}">${ic('copy', 15)} Copiar</button>${v.whatsapp ? `<a class="btn wa" href="${waLink(v.whatsapp, 'Tu enlace: ' + url)}" target="_blank" rel="noopener">${ic('wa', 15)} Enviar por WhatsApp</a>` : ''}</div>
+    <div class="pn-g2" style="margin-top:14px"><div class="pn-k"><small>Visitas</small><b>${v.visitas}</b><i>${v.personas} persona${v.personas === 1 ? '' : 's'}</i></div><div class="pn-k"><small>Se registraron</small><b>${v.registros}</b><i>${v.personas ? Math.round(v.registros * 100 / v.personas) + ' % de las personas' : 'todavía nadie'}</i></div>
+      <div class="pn-k"><small>Compraron</small><b style="color:var(--ok, #00a865)">${v.compraron}</b><i>${v.registros ? pct + ' % de los registros' : '—'}</i></div><div class="pn-k"><small>Te pagaron</small><b>${money(v.pagado)}</b><i>para calcular su comisión</i></div></div>
+    <div class="sec-t"><h3>Negocios que trajo</h3></div>
+    <div class="list">${v.negocios.map(n => { const e = EST_L[n.estado] || ['b-mut', n.estado]; return `<button class="li" style="width:100%;text-align:left;font:inherit;color:inherit" data-a="panelVer" data-id="${n.id}"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}</b><small>${esc(n.giro)} · se registró ${esc(fCorta(n.registro))}${n.pagado ? ' · pagó ' + money(n.pagado) : n.estado === 'prueba' ? ' · día ' + n.dia : ''}</small></div><span class="badge ${e[0]}">${e[1]}</span></button>`; }).join('') || '<div class="empty">Todavía nadie se registró por su enlace</div>'}</div>
+    <p class="credit" style="margin-top:12px">Las visitas son de los últimos 180 días. Cuenta como registro si su último enlace antes de registrarse fue el de ${esc(v.nombre.split(' ')[0])}.</p>` });
+  h.botones([{ t: 'Quitar', cls: 'ghost', fn: async () => { if (!(await confirmar(`¿Quitar a ${esc(v.nombre)}? Su enlace sigue funcionando, pero ya no aparece aquí.`, { si: 'Quitar', peligro: true }))) return; await api('panelVendedorQuitar', { codigo: v.codigo }); h.cerrar(); ACC.panelEnlaces(); } }, { t: 'Editar', fn: () => { h.cerrar(); panelVendForm(v); } }]);
+};
 /* ---- Panel: salud del negocio, respaldos y copiar productos ---- */
 const salCls = n => n >= 70 ? 'v' : n >= 40 ? 'a' : 'r';
 const salTxt = n => n >= 85 ? 'Muy bien' : n >= 70 ? 'Bien' : n >= 40 ? 'Regular' : 'En riesgo';
@@ -3057,7 +3198,7 @@ const VIS_PAG = { negocio: 'Negocio VM', demo: 'Demo Negocio VM', catalogo: 'Cat
 const VIS_ORI = { tiktok: ['TikTok', 'tv'], wa: ['WhatsApp', 'wa'], whatsapp: ['WhatsApp', 'wa'], facebook: ['Facebook', 'fb'], fb: ['Facebook', 'fb'], instagram: ['Instagram', 'insta'], ig: ['Instagram', 'insta'], google: ['Google', 'search'], youtube: ['YouTube', 'tv'], estado: ['Estado de WhatsApp', 'wa'], 'mis-paginas': ['Desde tus páginas', 'layers'], 'otro-sitio': ['Otro sitio web', 'globe'], directo: ['Directo (sin etiqueta)', 'right'] };
 const VIS_LINKS = [['negocio', 'https://josevic504-bot.github.io/negocio/'], ['demo', 'https://josevic504-bot.github.io/negocio/?demo'], ['salon', 'https://josevic504-bot.github.io/salonlicencias/'], ['eventos', 'https://josevic504-bot.github.io/eventos/']];
 const tiene = (o, k) => Object.prototype.hasOwnProperty.call(o, k); // la clave viene de afuera: «constructor» no es un canal
-const visOri = k => tiene(VIS_ORI, k) ? VIS_ORI[k] : [String(k || '').charAt(0).toUpperCase() + String(k || '').slice(1), 'tag'];
+const visOri = k => /^v-/.test(String(k || '')) ? ['Vendedor: ' + nombreVend(String(k)), 'user'] : tiene(VIS_ORI, k) ? VIS_ORI[k] : [String(k || '').charAt(0).toUpperCase() + String(k || '').slice(1), 'tag'];
 const visPag = k => tiene(VIS_PAG, k) ? VIS_PAG[k] : k;
 const visLink = (u, src) => u + (src ? (u.includes('?') ? '&' : '?') + 'src=' + src : '');
 const h12 = hhmm => { const h = Number(String(hhmm).slice(0, 2)), m = String(hhmm).slice(3, 5); return (h % 12 || 12) + (m ? ':' + m : '') + (h < 12 ? ' a. m.' : ' p. m.'); };
@@ -3094,9 +3235,7 @@ ACC.panelVisitas = async el => {
       ${porDia ? `<p class="h" style="margin:8px 0 0;font-size:12px">${ic('info', 14)} Toca una barra para ver ese día: de dónde vinieron y cada visita.</p>` : ''}</div>
     <div class="sec-t"><h3>De dónde vienen</h3></div>${visLista(v.origen, v.total, x => visOri(x.k))}
     <div class="sec-t"><h3>Qué página vieron</h3></div>${visLista(v.paginas, v.total, x => [visPag(x.k), 'doc'])}
-    <div class="sec-t"><h3>Tus enlaces para anuncios</h3></div>
-    <p class="h" style="margin:-4px 0 10px">Usa un enlace distinto en cada lugar donde lo publiques. Así sabes qué anuncio trae más gente. Sin etiqueta aparece como «Directo».</p>
-    <div class="list">${VIS_LINKS.map(([k, u]) => `<div class="li" style="flex-wrap:wrap"><div class="av ${colorDe(visPag(k))}">${ic('globe', 18)}</div><div class="tx"><b>${esc(visPag(k))}</b><small style="word-break:break-all">${esc(u)}</small></div><div class="row" style="width:100%;margin-top:8px;flex-wrap:wrap;gap:6px">${[['tiktok', 'TikTok'], ['wa', 'WhatsApp'], ['estado', 'Estado WA'], ['facebook', 'Facebook']].map(([s2, t]) => `<button class="btn sm" data-a="panelCopiarLink" data-u="${esc(visLink(u, s2))}">${ic(VIS_ORI[s2][1], 15)} ${t}</button>`).join('')}</div></div>`).join('')}</div>
+    <button class="btn" style="width:100%;margin-top:14px" data-a="panelEnlaces">${ic('link', 16)} Tus enlaces para compartir</button>
     <p class="credit" style="margin-top:14px">No se cuentan tus propias visitas (este teléfono queda marcado al abrir el Panel) ni las de clientes que ya iniciaron sesión. El mismo teléfono cuenta una vez cada 30 minutos. No se guarda ningún dato personal.</p>`;
   visChipsEventos();
 };

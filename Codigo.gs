@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.33';
+const VERSION = '1.9.34';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -264,7 +264,7 @@ function route_(req) {
 }
 
 // Acciones del Panel que solo leen: no esperan ni frenan el candado que usan las ventas de todos los negocios
-const PANEL_LECTURA = ['panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelSalir'];
+const PANEL_LECTURA = ['panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelVendedores', 'panelSalir'];
 function sinCostos_(x) {
   if (Array.isArray(x)) return x.map(sinCostos_);
   if (!x || typeof x !== 'object') return x;
@@ -1864,6 +1864,9 @@ function rutaPanel_(a, d) {
     case 'panelTasa':              return { tasa: tasaDolar_(d && d.forzar) };
     case 'panelLlego':             return panelLlego_(d);
     case 'panelVisitas':           return panelVisitas_(d);
+    case 'panelVendedores':        return panelVendedores_();
+    case 'panelVendedorGuardar':   return panelVendedorGuardar_(d);
+    case 'panelVendedorQuitar':    return panelVendedorQuitar_(d);
     case 'panelSalir':             { try { if (d && d._tok) CacheService.getScriptCache().remove('P_' + d._tok); } catch (e) {} return true; }
   }
   throw new Error('Acción no válida: ' + a);
@@ -1985,7 +1988,7 @@ function panelResumen_() {
       invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION, colaboradores: colabs.length,
-    visitas: visitasMini_(),
+    visitas: visitasMini_(), vendedores: vendedores_().map(v => ({ codigo: v.codigo, nombre: v.nombre })),
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics.concat(colabs), duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
     comprobantes: panelComprobantes_(), datosPagoLic: PropertiesService.getScriptProperties().getProperty('DATOS_PAGO_LIC') || '', soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
@@ -5517,6 +5520,39 @@ function campanas_() {
 const CANAL_PLAT = { facebook: /facebook|instagram|meta/i, fb: /facebook|instagram|meta/i, meta: /facebook|instagram|meta/i, messenger: /facebook|instagram|meta|messenger/i, msg: /facebook|instagram|meta|messenger/i,
   instagram: /instagram|facebook|meta/i, ig: /instagram|facebook|meta/i, tiktok: /tiktok/i, tt: /tiktok/i, wa: /whatsapp/i, whatsapp: /whatsapp/i, estado: /whatsapp/i, google: /google/i, youtube: /youtube|google/i, yt: /youtube|google/i };
 const SIN_CANAL = ['', 'directo', 'mis-paginas', 'otro-sitio'];
+/* ---- Vendedores (apoyo en ventas): cada uno tiene su enlace …/?src=v-nombre y se cuenta lo que trajo ---- */
+function vendedores_() { const l = parseJ_(PropertiesService.getScriptProperties().getProperty('VENDEDORES'), []); return Array.isArray(l) ? l : []; }
+function guardarVendedores_(l) { noVer_(); PropertiesService.getScriptProperties().setProperty('VENDEDORES', JSON.stringify(l)); }
+function panelVendedores_() {
+  const vs = vendedores_(); if (!vs.length) return { vendedores: [] };
+  let filas = []; try { filas = visitasFilas_(60000); } catch (e) {}
+  const dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)), org = origenesLic_(lics), pagos = mRows_('PagosLic');
+  const pagoDe = {}; pagos.forEach(p => { pagoDe[p.negocioId] = r2_((pagoDe[p.negocioId] || 0) + (Number(p.monto) || 0)); });
+  return { vendedores: vs.map(v => {
+    const f = filas.filter(x => x.origen === v.codigo), u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
+    const negs = lics.filter(l => (org[l.id] || {}).canal === v.codigo).map(l => {
+      const ln = licNegocio_(l), e = esColab_(l) ? 'colaborador' : ln.estado === 'completa' ? 'activa' : ln.estado;
+      return { id: l.id, negocio: l.negocio, giro: l.giro, estado: e, dia: diaPrueba_(l), registro: String(l.registro).slice(0, 10), pagado: pagoDe[l.id] || 0 };
+    }).sort((a, b) => a.registro < b.registro ? 1 : -1);
+    return { codigo: v.codigo, nombre: v.nombre, whatsapp: v.whatsapp || '', creado: v.creado || '', visitas: f.length, personas: Object.keys(u).length, registros: negs.length,
+      compraron: negs.filter(n => n.pagado > 0 || n.estado === 'activa').length, pagado: r2_(negs.reduce((a, n) => a + n.pagado, 0)), negocios: negs };
+  }) };
+}
+function panelVendedorGuardar_(d) {
+  const l = vendedores_(), nombre = txt_(d.nombre, 60), wa = String(d.whatsapp || '').replace(/\D/g, '').slice(0, 15);
+  if (!nombre) throw new Error('Escribe el nombre');
+  let v = d.codigo ? l.find(x => x.codigo === d.codigo) : null;
+  if (v) { v.nombre = nombre; v.whatsapp = wa; }
+  else {
+    const p = norm_(nombre).split(' '), base = 'v-' + (slug_(p[0], 10) || 'vendedor'), usados = l.map(x => x.codigo);
+    let c = base; if (usados.indexOf(c) >= 0 && p[1]) c = base + '-' + slug_(p[1], 6); // máximo 20 letras: así lo guarda el contador de visitas
+    for (let i = 2; usados.indexOf(c) >= 0; i++) c = base + i;
+    v = { codigo: c, nombre: nombre, whatsapp: wa, creado: hoy_() }; l.push(v);
+  }
+  guardarVendedores_(l);
+  return v;
+}
+function panelVendedorQuitar_(d) { guardarVendedores_(vendedores_().filter(x => x.codigo !== d.codigo)); return true; }
 function origenesLic_(lics) {
   if (!MEMO._orig) { // todas las visitas por vid (una sola lectura por solicitud, sirve para cualquier lista)
     const porVid = {};
