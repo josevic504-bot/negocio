@@ -118,6 +118,7 @@ export function crearServidor(SRC, db, opciones = {}) {
       const rs = g(); rs.length = ultima(); rs.push(row.map(Q)); return this; };
     this.insertRowsAfter = () => this;
     this.deleteRow = r => { g().splice(r - 1, 1); };
+    this.deleteRows = (r, n) => { g().splice(r - 1, n); };
     this.getSheetId = () => nombre;
   }
   function Libro(libro) {
@@ -528,6 +529,15 @@ function RECORDATORIOS_(ids) {
     const err = []; let sinC = 0;
     for (const l of pend) { try { const x = await hacerRespaldo(l.id, dom ? 'semanal' : 'diario', true, Rq, true); if (x.omitido) sinC++; else n++; } catch (e) { err.push(l.negocio || l.id); log('respaldo ' + l.id + ': ' + e); } }
     log('respaldos del día: ' + n + ' de ' + pend.length + ' · sin cambios ' + sinC);
+    // Cuentas que el cliente eliminó hace más de 30 días: se borran definitivamente (datos, respaldos y accesos)
+    const todas = (await db.cargar({ m: ['Licencias'] })).m.Licencias || [];
+    for (const l of todas.filter(x => String(x.estado).toLowerCase() === 'eliminada' && x.eliminadoEl && x.purgado !== 'si' && dias(String(x.eliminadoEl).split('|')[0]) >= 30)) {
+      try {
+        const ops = Object.keys(SCHEMA).concat(['Respaldos', 'RespaldoDatos']).map(t => ({ t, op: 'del', k: {}, n: l.id }));
+        ops.push({ t: 'Accesos', op: 'del', k: { negocioId: l.id } }, { t: 'Licencias', op: 'upd', k: { id: l.id }, row: { purgado: 'si', hojaId: '' } });
+        await db.aplicar({ ops }); log('cuenta borrada definitivamente ' + l.id);
+      } catch (e) { log('purga ' + l.id + ': ' + e); }
+    }
     if (pend.length) { // resumen de la noche para el Panel (se suma entre vueltas del mismo día)
       const u = jsonProp(Rq, 'RESP_ULTIMA', {}), mismo = u.fecha === hoy, hora = ahoraHN().slice(11, 16);
       const o = { fecha: hoy, hechos: (mismo ? u.hechos : 0) + n, sinCambio: (mismo ? u.sinCambio || 0 : 0) + sinC, errores: (mismo ? u.errores || [] : []).concat(err).slice(-20), desde: mismo ? u.desde : hora, hasta: hora };
@@ -623,6 +633,9 @@ function RECORDATORIOS_(ids) {
         else if (r.de === 'adm' && ch && ch.negocioId) out.push({ negocio: ch.negocioId, tipo: 'soporte', titulo: '💬 El administrador te respondió', cuerpo: corto(r.texto || 'Ábrelo en Ayuda › Contactar al administrador', 140), vista: 'inicio' });
       } else if (o.t === 'Anuncios' && !o.n && String(r.canales).indexOf('push') >= 0) {
         String(r.destinos || '').split(',').filter(Boolean).forEach(neg => out.push({ negocio: neg, tipo: 'anuncio', titulo: '📣 ' + corto(r.titulo || 'Gestión de Negocio VM', 50), cuerpo: corto(r.texto, 160), vista: 'inicio', tag: 'an-' + r.id }));
+      } else if (o.t === 'Seguimiento' && !o.n && r.tipo === 'cliente') {
+        const li = objFila(tablaM('Licencias'), r.negocioId) || {};
+        out.push({ negocio: '_panel', tipo: 'cuentas', titulo: (/eliminó/.test(r.nota) ? '🗑️ ' : '🧹 ') + corto(li.negocio || 'Un negocio', 40), cuerpo: corto(r.nota, 140), vista: 'panel' });
       } else if (o.t === 'Licencias' && !o.n) {
         out.push({ negocio: '_panel', tipo: 'registros', titulo: '🎉 Nuevo registro: ' + corto(r.negocio || 'Negocio', 50), cuerpo: corto([r.dueno, r.giro, r.origen ? 'llegó por ' + r.origen : ''].filter(Boolean).join(' · '), 140), url: 'panel', tag: 'reg-' + r.id });
       }
@@ -656,6 +669,8 @@ function RECORDATORIOS_(ids) {
     if (body.importar) return importar(body.importar, Rq);
     if (/^push(Guardar|Quitar|Probar)$/.test(accion)) return avisosPush(body, Rq);
     if (HERR.indexOf(accion) >= 0 || body.tarea === 'respaldosDia') return herramientas(body, Rq);
+    // El cliente va a borrar sus datos o eliminar su cuenta: antes se guarda una copia (Vic la puede restaurar 30 días)
+    if ((accion === 'borrarDatos' || accion === 'eliminarCuenta') && Rq.sesionNeg) { try { await hacerRespaldo(Rq.sesionNeg, 'antes', true, Rq, true); } catch (e) { log('copia previa ' + Rq.sesionNeg + ': ' + e); } }
     let negsRec = null;
     if (body.tarea === 'recordatoriosDia') {
       if (!Rq.props.TAREAS_CLAVE || body.clave !== Rq.props.TAREAS_CLAVE || !db.push) return { ok: false, error: 'Tarea no permitida' };
