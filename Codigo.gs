@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.31';
+const VERSION = '1.9.32';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -5654,8 +5654,10 @@ function visitasMini_() {
   try {
     const hoy = hoy_(), d7 = diaMenos_(6), f = visitasFilas_(8000).filter(x => x.fecha.slice(0, 10) >= d7);
     const u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
-    return { hoy: f.filter(x => x.fecha.slice(0, 10) === hoy).length, semana: f.length, unicos: Object.keys(u).length };
-  } catch (e) { return { hoy: 0, semana: 0, unicos: 0 }; }
+    const o = {}; f.forEach(x => { const k = x.origen || 'directo'; o[k] = (o[k] || 0) + 1; }); // de dónde vienen (para Marketing en el Panel)
+    const origen = Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n).slice(0, 4);
+    return { hoy: f.filter(x => x.fecha.slice(0, 10) === hoy).length, semana: f.length, unicos: Object.keys(u).length, origen: origen };
+  } catch (e) { return { hoy: 0, semana: 0, unicos: 0, origen: [] }; }
 }
 function borrarVisitasViejas_() {
   const s = masterSheet_('Visitas'), n = s.getLastRow();

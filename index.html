@@ -38,6 +38,37 @@ a{color:var(--pri)}
 .hero-top .grp{display:flex;gap:8px}
 .hbtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;cursor:pointer;position:relative}
 body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{padding-bottom:40px}
+.pn-tabs{display:flex;max-width:1100px;margin:-4px auto 0;padding:0 8px}
+.pn-tabs button{flex:1;border:0;background:none;color:rgba(255,255,255,.72);font:600 14.5px var(--font);padding:9px 4px 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
+.pn-tabs button.on{color:#fff;border-bottom-color:#fff}
+.pn-tabs i{display:inline-block;font-style:normal;background:#fff;color:var(--pri);font-size:11px;font-weight:700;border-radius:9px;padding:0 6px;margin-left:6px;line-height:17px;vertical-align:1px}
+.pn{max-width:760px;margin:0 auto}
+.pn-h{display:flex;justify-content:space-between;align-items:baseline;font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:20px 2px 9px}
+.pn-h a{color:var(--pri);text-transform:none;letter-spacing:0;font-size:13px;font-weight:600;cursor:pointer}
+.pn-hero{display:flex;justify-content:space-between;align-items:flex-end;gap:10px;background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;border-radius:20px;padding:16px;margin-top:4px;box-shadow:var(--sh)}
+.pn-hero small{display:block;opacity:.85;font-size:12.5px}.pn-hero b{display:block;font-size:28px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}.pn-hero i{font-style:normal;font-size:12px;opacity:.85}
+.pn-hero-r{background:rgba(255,255,255,.14);border:0;color:#fff;border-radius:14px;padding:8px 12px;text-align:right;font:inherit;cursor:pointer}.pn-hero-r b{font-size:18px}
+.pn-g2{display:grid;grid-template-columns:1fr 1fr;gap:9px}@media(min-width:760px){.pn-g2{grid-template-columns:repeat(4,1fr)}}
+.pn-k{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 13px;text-align:left;font:inherit;color:inherit;box-shadow:var(--sh)}button.pn-k{cursor:pointer}
+.pn-k small{display:flex;align-items:center;color:var(--mut);font-size:12.5px}.pn-k b{display:block;font-size:24px;font-weight:700;margin:2px 0;font-variant-numeric:tabular-nums}.pn-k i{font-style:normal;font-size:12px;color:var(--mut)}
+.pn-dot{width:8px;height:8px;border-radius:50%;margin-right:6px;flex:none}
+.pn-card{display:block;width:100%;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh);overflow:hidden;text-align:left;font:inherit;color:inherit}
+.pn-it{display:flex;width:100%;align-items:center;gap:11px;padding:11px 13px;border:0;border-top:1px solid var(--line);background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}.pn-it:first-child{border-top:0}
+.pn-it>div{flex:1;min-width:0}.pn-it b{display:block;font-size:14px;font-weight:600}.pn-it small{display:block;color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pn-it>.ic{color:var(--mut)}
+.pn-ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;color:var(--ink)}
+.pn-n{background:var(--pri);color:#fff;border-radius:10px;font-size:12px;font-weight:700;padding:2px 8px}
+.pn-vacio{display:flex;align-items:center;gap:8px;padding:14px;color:var(--mut);font-size:13.5px;cursor:default}button.pn-vacio{cursor:pointer}
+.pn-bars{display:flex;align-items:flex-end;gap:8px;padding:12px 14px 10px}
+.pn-bars>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--mut)}.pn-bars em{font-style:normal;font-size:11px}
+.pn-bars span{width:100%;border-radius:6px 6px 0 0;background:var(--pri2);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}.pn-bars s{display:block;background:color-mix(in srgb,var(--pri) 55%,transparent)}
+.pn-bars .on s{background:var(--pri)}.pn-bars .on{color:var(--ink);font-weight:600}
+.pn-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-bottom:9px}.pn-chips .chip{flex:0 0 auto}
+.pn-cta{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:18px;padding:14px 16px;background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;text-align:left;font:inherit;cursor:pointer;box-shadow:var(--sh);margin-top:4px}
+.pn-cta b{display:block;font-size:15px}.pn-cta small{display:block;opacity:.88;font-size:12px}
+.pn-ori{margin-top:9px;padding:6px 0;cursor:pointer}.pn-ori>div{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:13.5px}.pn-ori em{flex:1;font-style:normal}.pn-ori span{height:8px;border-radius:4px;background:var(--pri)}.pn-ori b{min-width:28px;text-align:right}
+.pn-pub{padding:13px 14px;cursor:pointer}.pn-pub small{display:block;color:var(--mut);font-size:12px;margin-top:7px}
+.pn-prog{height:9px;background:var(--pri2);border-radius:5px;overflow:hidden;margin-top:8px}.pn-prog span{display:block;height:100%;border-radius:5px}
 .hbtn .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:linear-gradient(135deg,var(--a1),var(--a2));color:#fff;font-size:11px;font-weight:600;line-height:18px;padding:0 5px;box-shadow:0 0 0 2px var(--h1)}
 .hero-c{position:relative;z-index:1}
 .mono{width:64px;height:64px;border-radius:50%;margin:2px auto 6px;display:grid;place-items:center;border:1.5px solid color-mix(in srgb,var(--tag) 80%,transparent);color:var(--tag);font:600 28px var(--serif);background:rgba(255,255,255,.08)}
@@ -1476,7 +1507,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.31';
+const APP_VER = '1.9.32';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2742,8 +2773,8 @@ function iniciarPanel() {
   if (P.tok) panelResumen().catch(e => { if (!P.tok) return; err(e); $('#main').innerHTML = `<div class="empty-big">${ic('alert', 40)}<h3>No se pudo cargar el Panel</h3><p>${esc(e.message || 'Revisa tu internet.')}</p><button class="btn pri" data-a="panelInicio">${ic('refresh', 18)} Intentar de nuevo</button></div>`; });
   else panelLogin(); // solo se pide la clave otra vez si la sesión del panel venció (eso lo resuelve manejarError)
 }
-function panelCab(t, atras) {
-  $('#hdr').innerHTML = `<div class="bar"><div class="bar-in">${atras ? `<button class="hbtn" data-a="panelInicio" aria-label="Volver">${ic('left', 22)}</button>` : `<span class="hbtn" style="pointer-events:none">${ic('store', 20)}</span>`}<div class="bar-t">${esc(t)}</div>${P.tok ? `<button class="hbtn" data-a="panelSoporteLista" aria-label="Soporte">${ic('chat', 20)}${P.d && P.d.soporteSin ? `<span class="dot">${P.d.soporteSin}</span>` : ''}</button><button class="hbtn" data-a="panelPlantillas" aria-label="Plantillas">${ic('edit', 20)}</button><button class="hbtn" data-a="panelSalir" aria-label="Salir">${ic('logout', 20)}</button>` : ''}</div></div>`;
+function panelCab(t, atras, tabs) {
+  $('#hdr').innerHTML = `<div class="bar"><div class="bar-in">${atras ? `<button class="hbtn" data-a="panelInicio" aria-label="Volver">${ic('left', 22)}</button>` : `<span class="hbtn" style="pointer-events:none">${ic('store', 20)}</span>`}<div class="bar-t">${esc(t)}</div>${P.tok ? `<button class="hbtn" data-a="panelSoporteLista" aria-label="Soporte">${ic('chat', 20)}${P.d && P.d.soporteSin ? `<span class="dot">${P.d.soporteSin}</span>` : ''}</button><button class="hbtn" data-a="panelPlantillas" aria-label="Plantillas">${ic('edit', 20)}</button><button class="hbtn" data-a="panelSalir" aria-label="Salir">${ic('logout', 20)}</button>` : ''}</div>${tabs && P.tok ? pnTabsHTML() : ''}</div>`;
 }
 function panelLogin() {
   P.tok = ''; LS.del('panelTok'); panelCab('Panel Molina');
@@ -2808,33 +2839,90 @@ ACC.panelMensajes = async () => {
     lista(l); $('#an-x', h.el).value = ''; $('#an-t', h.el).value = ''; toast('Mensaje enviado a ' + l[0].enviados + ' negocio' + (l[0].enviados === 1 ? '' : 's'), 'ok', 4000);
   } }]);
 };
+/* ---- Panel por módulos: Dashboard (números y pendientes), Clientes (lista) y Marketing (visitas, publicidad, mensajes) ---- */
+const PN_TABS = [['dash', 'Dashboard'], ['cli', 'Clientes'], ['mkt', 'Marketing']];
+const pnPendN = d => (d.comprobantes || []).length + (d.soporteSin || 0) + (d.sinPago || []).length;
+function pnTabsHTML() {
+  const t = P.tab || 'dash', n = P.d ? pnPendN(P.d) : 0;
+  return `<div class="pn-tabs" id="pn-tabs">${PN_TABS.map(([k, x]) => `<button class="${k === t ? 'on' : ''}" data-a="panelTab" data-k="${k}">${x}${k === 'dash' && n ? `<i>${n}</i>` : ''}</button>`).join('')}</div>`;
+}
 async function panelResumen() {
-  panelCab('Panel Molina');
-  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
-  const d = await api('panelResumen', {}); P.d = d; P.pl = d.plantillas || P.pl; panelCab('Panel Molina');
-  const k = d.kpis, f = P.f;
-  $('#main').innerHTML = avisoServidor(d.appVer) + `<div class="kpis k4"><div class="kpi"><small>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></div><div class="kpi" style="--k:var(--warn)"><small>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b></div><div class="kpi" style="--k:#00b56e"><small>Ingresos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'} · total ${money(k.ingresosTotal || 0)}</i></div></div>
-    <div class="kpis k4" style="margin-top:8px"><div class="kpi" style="--k:var(--pri)"><small>Conversión</small><b>${k.terminadas ? k.conversion + '%' : '—'}</b><i>${k.terminadas ? `${k.compraron} de ${k.terminadas} pruebas terminadas compraron` : 'ninguna prueba ha terminado'}</i></div><div class="kpi" style="--k:var(--warn)"><small>Sin vender 7 días</small><b>${k.sinVender7 || 0}</b><i>abren la app pero no cobran</i></div>${d.colaboradores ? `<div class="kpi" style="--k:#6a3df0"><small>Colaboradores</small><b>${d.colaboradores}</b><i>muestran el programa · fuera de los números</i></div>` : ''}</div>
-    <div class="kpis k4" style="margin-top:8px"><button class="kpi" style="--k:var(--bad);text-align:left;font:inherit;color:inherit" data-a="panelGastosLista"><small>Gastos de ${esc(fMes(d.hoy.slice(0, 7)).split(' ')[0])}</small><b class="n">${money(k.gastosMes || 0)}</b><i>${k.gastosMesN || 0} gasto${k.gastosMesN === 1 ? '' : 's'} · ver y registrar</i></button><div class="kpi" style="--k:${(k.resultadoMes || 0) < 0 ? 'var(--bad)' : '#00b56e'}"><small>Resultado del mes</small><b class="n">${money(k.resultadoMes || 0)}</b><i>ingresos − gastos</i></div></div>
+  P.tab = P.tab || LS.get('panelTab', 'dash');
+  panelCab('Panel Molina', false, true);
+  if (!P.d) $('#main').innerHTML = '<div class="empty">Cargando…</div>';
+  const d = await api('panelResumen', {}); P.d = d; P.pl = d.plantillas || P.pl;
+  panelPinta();
+}
+function panelPinta() {
+  const d = P.d; if (!d) return;
+  panelCab('Panel Molina', false, true);
+  const t = P.tab || 'dash';
+  $('#main').innerHTML = avisoServidor(d.appVer) + `<div class="pn">${t === 'cli' ? pnClientes(d) : t === 'mkt' ? pnMarketing(d) : pnDashboard(d)}</div>`;
+  if (t === 'cli') pnClientesListo(d);
+  window.scrollTo(0, 0);
+}
+ACC.panelTab = el => { P.tab = el.dataset.k; LS.set('panelTab', P.tab); if (el.dataset.f !== undefined) P.f.est = el.dataset.f; panelPinta(); };
+const pnMes = d => esc(fMes(d.hoy.slice(0, 7)).split(' ')[0]);
+const pnFila = (a, ico, fondo, t, s, n, extra) => `<button class="pn-it" data-a="${a}"${extra || ''}><span class="pn-ico" style="background:${fondo}">${ic(ico, 18)}</span><div><b>${t}</b>${s ? `<small>${s}</small>` : ''}</div>${n ? `<span class="pn-n">${n}</span>` : ic('right', 16)}</button>`;
+function pnDashboard(d) {
+  const k = d.kpis, res = k.resultadoMes || 0;
+  const pend = [];
+  if ((d.comprobantes || []).length) pend.push(pnFila('panelIrComp', 'coin', 'var(--okb, #e6f7ef)', 'Comprobantes por revisar', d.comprobantes.slice(0, 2).map(c => esc(c.negocio) + ' · ' + money(c.monto)).join(' · '), d.comprobantes.length));
+  if (d.soporteSin) pend.push(pnFila('panelSoporteLista', 'chat', 'var(--pri2)', 'Soporte sin leer', 'Mensajes de los negocios', d.soporteSin));
+  if ((d.sinPago || []).length) pend.push(pnFila('panelVer', 'bank', 'var(--warnb)', `Activación${d.sinPago.length > 1 ? 'es' : ''} sin pago anotado`, d.sinPago.map(x => esc(x.negocio) + ' (' + x.que + ')').join(' · '), d.sinPago.length, ` data-id="${esc(d.sinPago[0].id)}"`));
+  const atender = d.negocios.filter(n => n.contactar || n.sop).length;
+  if (atender) pend.push(pnFila('panelTab', 'phone', 'var(--pri2)', 'Clientes por atender', 'A quién escribirle hoy', atender, ' data-k="cli" data-f="atender"'));
+  if (k.sinVender7) pend.push(pnFila('panelTab', 'alert', 'var(--warnb)', 'Sin vender 7 días', 'Abren la app pero no cobran', k.sinVender7, ' data-k="cli" data-f="sin"'));
+  const pm = d.porMes || [], mx = Math.max(1, ...pm.map(m => m.registros));
+  return `<div class="pn-hero"><div><small>Ingresos de ${pnMes(d)}</small><b>${money(k.ingresosMes)}</b><i>${k.pagosMes} pago${k.pagosMes === 1 ? '' : 's'} · resultado ${res < 0 ? '−' : '+'}${money(Math.abs(res))}</i></div><button class="pn-hero-r" data-a="panelGastosLista"><small>Gastos</small><b>${money(k.gastosMes || 0)}</b><i>ver ›</i></button></div>
+    <div class="pn-h">Negocios</div>
+    <div class="pn-g2">
+      <button class="pn-k" data-a="panelTab" data-k="cli" data-f="activa"><small><span class="pn-dot" style="background:var(--ok)"></span>Activos</small><b>${k.activos}</b><i>con Plus ${k.plus}</i></button>
+      <button class="pn-k" data-a="panelTab" data-k="cli" data-f="prueba"><small><span class="pn-dot" style="background:var(--warn)"></span>En prueba</small><b>${k.prueba}</b><i>${k.venceManana ? k.venceManana + ' vence' + (k.venceManana > 1 ? 'n' : '') + ' mañana' : k.registrosSemana + ' nuevos esta semana'}</i></button>
+      <button class="pn-k" data-a="panelTab" data-k="cli" data-f="vencida"><small><span class="pn-dot" style="background:var(--bad)"></span>Vencidos / pausados</small><b>${k.vencidos + k.bloqueados}</b><i>para recuperar</i></button>
+      <div class="pn-k"><small><span class="pn-dot" style="background:var(--pri)"></span>Conversión</small><b>${k.terminadas ? k.conversion + '%' : '—'}</b><i>${k.terminadas ? `${k.compraron} de ${k.terminadas} compraron` : 'ninguna prueba ha terminado'}</i></div>
+    </div>
     ${panelAvisosHTML()}
-    ${panelComprobantesHTML(d.comprobantes || [])}
-    <button class="aviso ${d.datosPagoLic ? 'info' : 'warn'}" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelDatosPago">${ic('bank', 20)}<div><b>Tus datos para que te paguen la licencia</b><small>${d.datosPagoLic ? esc(d.datosPagoLic) : 'Escríbelos: los clientes los ven cuando les toca pagar'}</small></div></button>
-    <button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelMensajes">${ic('bell', 20)}<div><b>Enviar mensaje a los negocios</b><small>Aviso al teléfono o banner en su app: novedades, mantenimiento, promociones.</small></div></button>
-    <button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelVisitas">${ic('eye', 20)}<div><b>Visitas: ${(d.visitas || {}).hoy || 0} hoy · ${(d.visitas || {}).semana || 0} en 7 días</b><small>${(d.visitas || {}).unicos || 0} personas distintas · toca para ver de dónde vienen y tus enlaces</small></div></button>
-    ${k.invertidoPub ? `<button class="aviso info" style="margin-top:10px;width:100%;text-align:left;font:inherit;color:inherit;border:0;cursor:pointer" data-a="panelGastosLista">${ic('sparkle', 20)}<div><b>Publicidad: recuperado ${money(k.recuperadoPub)} de ${money(k.invertidoPub)} invertidos</b><small>${Math.round(k.recuperadoPub * 100 / k.invertidoPub)} % · toca para ver cada publicidad</small></div></button>` : ''}
-    ${(d.porMes || []).length > 1 ? `<div class="chips" style="margin:8px 0 0;flex-wrap:wrap">${d.porMes.map(m => `<span class="chip" style="pointer-events:none">${esc(fMes(m.mes).split(' ')[0].slice(0, 3))} · ${m.activos}/${m.registros}</span>`).join('')}</div>` : ''}
-    ${(d.sinPago || []).length ? `<div class="aviso warn" style="margin-top:10px">${ic('coin', 20)}<div><b>${d.sinPago.length} activación${d.sinPago.length > 1 ? 'es' : ''} sin pago anotado</b><small>${d.sinPago.map(x => esc(x.negocio) + ' (' + x.que + ')').join(' · ')}</small></div><button class="btn sm" data-a="panelVer" data-id="${d.sinPago[0].id}">Ver</button></div>` : ''}
-    <div class="sec-t"><h3>Clientes</h3><a>${d.negocios.length} negocio${d.negocios.length === 1 ? '' : 's'}</a></div>
-    <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="pn-q" placeholder="Buscar negocio, dueño o WhatsApp…" value="${esc(f.q || '')}"></div>
-    <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['atender', 'Por atender · ' + d.negocios.filter(n => n.contactar || n.sop).length], ['prueba', 'En prueba'], ['activa', 'Activos'], ['vencida', 'Vencidos'], ['bloqueada', 'Pausados'], ['sin', 'Sin vender 7 días']].concat(d.colaboradores ? [['colaborador', 'Colaboradores · ' + d.colaboradores]] : []).map(x => `<button class="chip ${(f.est || '') === x[0] ? 'on' : ''}" data-a="panelFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
-    <div class="chips" style="margin-bottom:10px">${[['', 'Toda etiqueta']].concat((d.etiquetas || []).map(e => [e, e])).map(x => `<button class="chip ${(f.etq || '') === x[0] ? 'on' : ''}" data-a="panelFiltroEtq" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
+    <div class="pn-h">Pendientes ${pend.length ? `<a>${pnPendN(d) + atender + (k.sinVender7 || 0)}</a>` : ''}</div>
+    ${pend.length ? `<div class="pn-card">${pend.join('')}</div>` : `<div class="pn-card pn-vacio">${ic('check', 18)} Todo al día: nada pendiente</div>`}
+    ${(d.comprobantes || []).length ? `<div id="pn-comp">${panelComprobantesHTML(d.comprobantes)}</div>` : ''}
+    ${pm.length > 1 ? `<div class="pn-h">Registros por mes <a style="color:var(--mut)">en color: activos</a></div><div class="pn-card pn-bars">${pm.map((m, i) => `<div class="${i === pm.length - 1 ? 'on' : ''}" title="${m.activos} activos de ${m.registros} registros"><em>${m.registros}</em><span style="height:${Math.round(m.registros * 64 / mx) + 4}px"><s style="height:${m.registros ? Math.round(m.activos * 100 / m.registros) : 0}%"></s></span>${esc(fMes(m.mes).split(' ')[0].slice(0, 3))}</div>`).join('')}</div>` : ''}`;
+}
+ACC.panelIrComp = () => { const el = $('#pn-comp'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+const PN_FILTROS = d => [['', 'Todos', d.negocios.length], ['atender', 'Por atender', d.negocios.filter(n => n.contactar || n.sop).length], ['prueba', 'En prueba', d.kpis.prueba], ['activa', 'Activos', d.kpis.activos], ['vencida', 'Vencidos', d.kpis.vencidos], ['bloqueada', 'Pausados', d.kpis.bloqueados], ['sin', 'Sin vender 7 días', d.kpis.sinVender7 || 0]].concat(d.colaboradores ? [['colaborador', 'Colaboradores', d.colaboradores]] : []);
+function pnClientes(d) {
+  const f = P.f;
+  return `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="pn-q" placeholder="Buscar negocio, dueño o WhatsApp…" value="${esc(f.q || '')}"></div>
+    <div class="chips pn-chips">${PN_FILTROS(d).map(x => `<button class="chip ${(f.est || '') === x[0] ? 'on' : ''}" data-a="panelFiltro" data-k="${x[0]}">${x[1]}${x[2] ? ' · ' + x[2] : ''}</button>`).join('')}</div>
+    ${(d.etiquetas || []).length ? `<div class="chips pn-chips">${[['', 'Toda etiqueta']].concat(d.etiquetas.map(e => [e, e])).map(x => `<button class="chip ${(f.etq || '') === x[0] ? 'on' : ''}" data-a="panelFiltroEtq" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>` : ''}
+    <div class="pn-h"><span id="pn-cuenta"></span>${(d.duplicados || []).length ? `<a data-a="panelDuplicados">Repetidos (${d.duplicados.length})</a>` : ''}</div>
     <div class="list" id="pn-list"></div>
-    ${(d.duplicados || []).length ? `<div class="row sp" style="margin-top:14px"><small class="h">${d.duplicados.length} registro${d.duplicados.length > 1 ? 's' : ''} repetido${d.duplicados.length > 1 ? 's' : ''} (sin acceso)${d.duplicados.some(x => !x.limpiada) ? '' : ' · ya limpiados'}</small><div class="row"><button class="btn sm ghost" data-a="panelDuplicados">Ver</button>${d.duplicados.some(x => !x.limpiada) ? '<button class="btn sm" data-a="panelLimpiarDup">Limpiar</button>' : ''}</div></div>` : ''}`;
-  const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'atender' ? !!(n.contactar || n.sop) : f.est === 'sin' ? (n.sinVender >= 7 && n.estado !== 'vencida' && n.estado !== 'bloqueada') : n.estado === f.est)) && (!f.etq || n.etiqueta === f.etq) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); l = l.map((n, i) => [n, i]).sort((a, b) => (pendCli(b[0]) - pendCli(a[0])) || (a[1] - b[1])).map(x => x[0]); $('#pn-list').innerHTML = l.map(tarjetaCli).join('') || '<div class="empty">Sin resultados</div>'; };
+    ${(d.duplicados || []).length && d.duplicados.some(x => !x.limpiada) ? `<div class="row sp" style="margin-top:14px"><small class="h">${d.duplicados.length} registro${d.duplicados.length > 1 ? 's' : ''} repetido${d.duplicados.length > 1 ? 's' : ''} sin acceso</small><button class="btn sm" data-a="panelLimpiarDup">Limpiar</button></div>` : ''}`;
+}
+function pnClientesListo(d) {
+  const f = P.f;
+  const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'atender' ? !!(n.contactar || n.sop) : f.est === 'sin' ? (n.sinVender >= 7 && n.estado !== 'vencida' && n.estado !== 'bloqueada') : n.estado === f.est)) && (!f.etq || n.etiqueta === f.etq) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); l = l.map((n, i) => [n, i]).sort((a, b) => (pendCli(b[0]) - pendCli(a[0])) || (a[1] - b[1])).map(x => x[0]); $('#pn-list').innerHTML = l.map(tarjetaCli).join('') || '<div class="empty">Sin resultados</div>'; $('#pn-cuenta').textContent = l.length + ' negocio' + (l.length === 1 ? '' : 's'); };
   $('#pn-q').addEventListener('input', debounce(e => { f.q = e.target.value; pinta(); }, 150)); P.pinta = pinta; pinta();
 }
-ACC.panelFiltro = el => { P.f.est = el.dataset.k; return panelResumen(); };
-ACC.panelFiltroEtq = el => { P.f.etq = el.dataset.k; return panelResumen(); };
+function pnMarketing(d) {
+  const k = d.kpis, v = d.visitas || {}, ori = v.origen || [], mo = Math.max(1, ...ori.map(o => o.n));
+  const pct = k.invertidoPub ? Math.round(k.recuperadoPub * 100 / k.invertidoPub) : 0;
+  return `<button class="pn-cta" data-a="panelMensajes">${ic('bell', 22)}<div><b>Enviar mensaje a los negocios</b><small>Aviso al teléfono o banner en su app: novedades, mantenimiento, promociones</small></div></button>
+    <div class="pn-h">Visitas <a data-a="panelVisitas">Ver detalle</a></div>
+    <div class="pn-g2"><button class="pn-k" data-a="panelVisitas"><small>Hoy</small><b>${v.hoy || 0}</b><i>7 días: ${v.semana || 0}</i></button><button class="pn-k" data-a="panelVisitas"><small>Personas distintas</small><b>${v.unicos || 0}</b><i>en 7 días</i></button></div>
+    ${ori.length ? `<button class="pn-card pn-ori" data-a="panelVisitas">${ori.map((o, i) => `<div><em>${esc(visOri(o.k)[0])}</em><span style="width:${Math.max(8, Math.round(o.n * 110 / mo))}px;opacity:${1 - i * .2}"></span><b>${o.n}</b></div>`).join('')}</button>` : ''}
+    <div class="pn-h">Publicidad <a data-a="panelGastosLista">+ Registrar</a></div>
+    ${k.invertidoPub ? `<button class="pn-card pn-pub" data-a="panelGastosLista"><div class="row sp"><b>Recuperado ${money(k.recuperadoPub)} de ${money(k.invertidoPub)}</b><b style="color:${pct >= 100 ? 'var(--ok)' : 'var(--warn)'}">${pct}%</b></div><div class="pn-prog"><span style="width:${Math.min(100, pct)}%;background:${pct >= 100 ? 'var(--ok)' : 'var(--warn)'}"></span></div><small>Toca para ver cada publicidad y lo que dejó</small></button>`
+      : `<button class="pn-card pn-vacio" data-a="panelGastosLista" style="width:100%">${ic('sparkle', 18)} Registra lo que inviertes en publicidad y mira cuánto recuperas</button>`}
+    <div class="pn-h">Ajustes de cobro y contacto</div>
+    <div class="pn-card">
+      ${pnFila('panelDatosPago', 'bank', 'var(--pri2)', 'Tus datos para que te paguen', d.datosPagoLic ? esc(d.datosPagoLic) : '<span style="color:var(--warn)">Escríbelos: los clientes los ven al pagar</span>')}
+      ${pnFila('panelVisitas', 'link', 'var(--pri2)', 'Tus enlaces para compartir', 'Enlace de prueba por canal (Facebook, WhatsApp…)')}
+      ${pnFila('panelPlantillas', 'edit', 'var(--pri2)', 'Plantillas de WhatsApp', 'Mensajes listos para cada cliente')}
+    </div>`;
+}
+ACC.panelFiltro = el => { P.f.est = el.dataset.k; panelPinta(); };
+ACC.panelFiltroEtq = el => { P.f.etq = el.dataset.k; panelPinta(); };
 // Una sola tarjeta por cliente: datos, estado y lo pendiente (mensajes de soporte y a quién escribirle hoy)
 const pendCli = n => (n.sop ? 2 : 0) + (n.contactar === 'vence' ? 2 : n.contactar ? 1 : 0) + (n.cobro && n.cobro.vencidas && n.cobro.vencidas.length ? 2 : 0);
 /* ---- Pagos programados: en la tarjeta del cliente, lo que debe hoy o si ya está en pausa ---- */
@@ -3400,7 +3488,7 @@ ACC.panelSoporteVer = el => panelChat(el.dataset.id);
 async function panelChat(id) {
   let d = null, timer = null, enviando = false;
   const RAP = ['Lo reviso y te aviso por aquí', 'Te mando un video corto de cómo se hace', '¿Me pasás una captura?', 'Ya quedó corregido, actualiza la app', '¿Te activo la licencia?'];
-  const h = hoja({ titulo: '', cls: 'chat-h2', html: '<div class="empty">Cargando…</div>', onClose: () => { clearInterval(timer); if (S.enPanel && !PILA.length) { if ($('#pn-list')) panelResumen(); else ACC.panelSoporteLista(); } } });
+  const h = hoja({ titulo: '', cls: 'chat-h2', html: '<div class="empty">Cargando…</div>', onClose: () => { clearInterval(timer); if (S.enPanel && !PILA.length) { if ($('#pn-tabs')) panelResumen(); else ACC.panelSoporteLista(); } } });
   const pintaMsgs = () => { const box = $('#pc-m', h.el); if (!box) return; let dia = '';
     box.innerHTML = d.mensajes.map(x => { const f = String(x.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
       return sep + `<div class="msg ${x.de === 'adm' ? 'yo' : 'el'}"><div class="bt">${x.foto ? `<a href="${esc(x.foto)}" target="_blank"><img src="${esc(x.foto)}" alt="" style="max-width:100%;border-radius:12px;display:block;margin-bottom:6px"></a>` : ''}${esc(x.texto)}</div><small>${fHora(String(x.fecha).replace(' ', 'T'))}${x.quien && x.de === 'cli' ? ' · ' + esc(x.quien) : ''}</small></div>`; }).join('');
