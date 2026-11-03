@@ -406,20 +406,37 @@ function RECORDATORIOS_(ids) {
   const negValido = x => /^N[0-9A-Z]{4,20}$/.test(String(x || ''));
   const cuentaN = (l, f) => (l || []).filter(f || (() => true)).length;
   const activoP = p => !(p.activo === false || p.activo === 'false');
-  async function hacerRespaldo(neg, tipo, lic, Rq) {
-    const tabs = Object.keys(SCHEMA);
+  const MAX_DIAS = 30; // ninguna copia se guarda más de un mes (menos la más reciente de cada negocio, que se conserva siempre)
+  const fechaMenos = d => new Date(Date.now() - 6 * 3600000 - d * 86400000).toISOString().slice(0, 16).replace('T', ' ');
+  // Copias que sobran: más de las que se guardan de ese tipo, o con más de 30 días
+  function sobrantes(lista, tipo, Rq, guardar) {
+    const ord = lista.slice().sort((a, b) => a.fecha < b.fecha ? 1 : -1), lim = fechaMenos(MAX_DIAS), fuera = new Set();
+    if (tipo) ord.filter(o => o.tipo === tipo).slice(guardaDe(Rq)[tipo] - (guardar ? 1 : 0)).forEach(o => fuera.add(o.id));
+    ord.forEach((o, i) => { if (o.fecha < lim && (guardar || i > 0)) fuera.add(o.id); });
+    return [...fuera];
+  }
+  const delOps = (ids, neg) => ids.flatMap(id => [{ t: 'Respaldos', op: 'del', k: { id }, n: neg }, { t: 'RespaldoDatos', op: 'del', k: { id }, n: neg }]);
+  // siCambio: si nada cambió desde la última copia (misma versión de datos), no se hace otra
+  async function hacerRespaldo(neg, tipo, lic, Rq, siCambio) {
+    const tabs = Object.keys(SCHEMA), fecha = ahoraHN();
+    if (siCambio) {
+      const q = (await db.cargar({ n: { [neg]: ['Respaldos'] } })).n[neg] || {}, l = q.Respaldos || [];
+      const ult = l.slice().sort((a, b) => a.fecha < b.fecha ? 1 : -1)[0];
+      if (ult && ult.v !== '' && ult.v !== undefined && String(ult.v) === String(q._v || 0)) {
+        const ops = delOps(sobrantes(l, '', Rq, false), neg);
+        if (lic !== false && (tipo === 'diario' || tipo === 'semanal')) ops.push({ t: 'Licencias', op: 'upd', k: { id: neg }, row: { respaldo: fecha.slice(0, 10) } });
+        if (ops.length) await db.aplicar({ ops });
+        return { omitido: true, ultimo: ult.fecha, borrados: ops.filter(o => o.t === 'Respaldos').length };
+      }
+    }
     const r = await db.cargar({ n: { [neg]: tabs.concat(['Respaldos']) } }), x = r.n[neg] || {};
     const datos = {}; let filas = 0;
     tabs.forEach(t => { const f = (x[t] || []).map(sinFila); if (f.length) { datos[t] = f; filas += f.length; } });
-    const txt = JSON.stringify(datos), id = rid('R'), fecha = ahoraHN();
+    const txt = JSON.stringify(datos), id = rid('R');
     const res = { productos: cuentaN(x.Productos, activoP), clientes: cuentaN(x.Clientes), ventas: cuentaN(x.Ventas, v => !v.anulada) };
     const ops = [
-      { t: 'Respaldos', op: 'ins', k: { id }, n: neg, row: { id, fecha, tipo, kb: Math.round(txt.length / 102.4) / 10, filas, resumen: JSON.stringify(res) } },
-      { t: 'RespaldoDatos', op: 'ins', k: { id }, n: neg, row: { id, datos: txt } }];
-    // Se guardan solo los más recientes de cada tipo
-    (x.Respaldos || []).filter(o => o.tipo === tipo).sort((a, b) => a.fecha < b.fecha ? 1 : -1).slice(guardaDe(Rq)[tipo] - 1).forEach(o => {
-      ops.push({ t: 'Respaldos', op: 'del', k: { id: o.id }, n: neg }, { t: 'RespaldoDatos', op: 'del', k: { id: o.id }, n: neg });
-    });
+      { t: 'Respaldos', op: 'ins', k: { id }, n: neg, row: { id, fecha, tipo, kb: Math.round(txt.length / 102.4) / 10, filas, resumen: JSON.stringify(res), v: String(x._v || 0) } },
+      { t: 'RespaldoDatos', op: 'ins', k: { id }, n: neg, row: { id, datos: txt } }].concat(delOps(sobrantes(x.Respaldos || [], tipo, Rq, true), neg));
     // Números para la salud del negocio en el Panel
     const st = { nProductos: String(res.productos), nClientes: String(res.clientes) };
     if (tipo === 'diario' || tipo === 'semanal') st.respaldo = fecha.slice(0, 10);
@@ -508,15 +525,15 @@ function RECORDATORIOS_(ids) {
     const dias = f => { const t = Date.parse(String(f || '').slice(0, 10) + 'T12:00:00Z'); return isFinite(t) ? (Date.parse(hoy + 'T12:00:00Z') - t) / 86400000 : 999; };
     const pend = lics.filter(l => l.respaldo !== hoy && (!l.respaldo || dias(l.ultimaConexion) <= 10)).slice(0, Number(Rq.props.RESPALDOS_LOTE) || 12);
     let n = 0;
-    const err = [];
-    for (const l of pend) { try { await hacerRespaldo(l.id, dom ? 'semanal' : 'diario', true, Rq); n++; } catch (e) { err.push(l.negocio || l.id); log('respaldo ' + l.id + ': ' + e); } }
-    log('respaldos del día: ' + n + ' de ' + pend.length);
+    const err = []; let sinC = 0;
+    for (const l of pend) { try { const x = await hacerRespaldo(l.id, dom ? 'semanal' : 'diario', true, Rq, true); if (x.omitido) sinC++; else n++; } catch (e) { err.push(l.negocio || l.id); log('respaldo ' + l.id + ': ' + e); } }
+    log('respaldos del día: ' + n + ' de ' + pend.length + ' · sin cambios ' + sinC);
     if (pend.length) { // resumen de la noche para el Panel (se suma entre vueltas del mismo día)
       const u = jsonProp(Rq, 'RESP_ULTIMA', {}), mismo = u.fecha === hoy, hora = ahoraHN().slice(11, 16);
-      const o = { fecha: hoy, hechos: (mismo ? u.hechos : 0) + n, errores: (mismo ? u.errores || [] : []).concat(err).slice(-20), desde: mismo ? u.desde : hora, hasta: hora };
+      const o = { fecha: hoy, hechos: (mismo ? u.hechos : 0) + n, sinCambio: (mismo ? u.sinCambio || 0 : 0) + sinC, errores: (mismo ? u.errores || [] : []).concat(err).slice(-20), desde: mismo ? u.desde : hora, hasta: hora };
       await db.aplicar({ props: { RESP_ULTIMA: JSON.stringify(o) } });
     }
-    return { ok: true, data: { hechos: n, pendientes: pend.length } };
+    return { ok: true, data: { hechos: n, sinCambio: sinC, pendientes: pend.length } };
   }
   const licsVivas = async () => ((await db.cargar({ m: ['Licencias'] })).m.Licencias || []).filter(l => negValido(l.id) && ['eliminada', 'duplicada'].indexOf(String(l.estado).toLowerCase()) < 0);
   // Módulo de Respaldos del Panel: cómo salió la noche, cuánto ocupa y el último respaldo de cada negocio
@@ -529,8 +546,8 @@ function RECORDATORIOS_(ids) {
       const rs = ((r.n[l.id] || {}).Respaldos || []).sort((a, b) => a.fecha < b.fecha ? 1 : -1), u = rs[0];
       copias += rs.length; const k = rs.reduce((a, x) => a + (Number(x.kb) || 0), 0); kb += k;
       const sinEntrar = dias(l.ultimaConexion), ud = u ? dias(u.fecha) : 999;
-      const est = !u ? 'nuevo' : ud <= 1 ? 'aldia' : sinEntrar > 10 ? 'pausado' : 'atrasado';
-      return { id: l.id, negocio: l.negocio, giro: l.giro, ultimo: u ? u.fecha : '', copias: rs.length, kb: u ? Number(u.kb) || 0 : 0, kbTotal: Math.round(k * 10) / 10, est, sinEntrar };
+      const revisado = dias(l.respaldo) <= 1, est = !u ? 'nuevo' : ud <= 1 || revisado ? 'aldia' : sinEntrar > 10 ? 'pausado' : 'atrasado';
+      return { id: l.id, negocio: l.negocio, giro: l.giro, ultimo: u ? u.fecha : '', sinCambio: !!(u && ud > 1 && revisado), copias: rs.length, kb: u ? Number(u.kb) || 0 : 0, kbTotal: Math.round(k * 10) / 10, est, sinEntrar };
     }).sort((a, b) => a.negocio.localeCompare(b.negocio));
     const nombre = {}; lics.forEach(l => { nombre[l.id] = l.negocio; });
     return { ultima: jsonProp(Rq, 'RESP_ULTIMA', null), hoy, negocios: negs, copias, kb: Math.round(kb * 10) / 10, guarda: guardaDe(Rq),
@@ -557,17 +574,15 @@ function RECORDATORIOS_(ids) {
         await db.aplicar({ props: { RESP_GUARDA: JSON.stringify(g) } }); return { ok: true, data: g };
       }
       if (a === 'panelRespaldarTodos') {
-        // De a 15 por vuelta (la app repite hasta terminar): se saltan los que ya tienen uno de hace menos de 10 minutos
-        const lics = await licsVivas(), hace = ahoraHN(), lim = new Date(Date.now() - 6 * 3600000 - 600000).toISOString().slice(0, 16).replace('T', ' ');
-        const r = await db.cargar({ n: Object.fromEntries(lics.map(l => [l.id, ['Respaldos']])) });
-        const pend = lics.filter(l => !((r.n[l.id] || {}).Respaldos || []).some(x => x.fecha >= lim));
-        let n = 0; for (const l of pend.slice(0, 15)) { try { await hacerRespaldo(l.id, 'manual', true, Rq); n++; } catch (e) { log('respaldo ' + l.id + ': ' + e); } }
-        return { ok: true, data: { hechos: n, faltan: Math.max(0, pend.length - 15), total: lics.length, hora: hace } };
+        // De a 15 por vuelta, en orden; la app repite con «tras» hasta terminar. Se saltan los que no cambiaron desde su última copia
+        const tras = String(d.tras || ''), lics = (await licsVivas()).sort((a, b) => a.id < b.id ? -1 : 1), resto = lics.filter(l => l.id > tras), lote = resto.slice(0, 15);
+        let n = 0, sc = 0; for (const l of lote) { try { const x = await hacerRespaldo(l.id, 'manual', true, Rq, true); if (x.omitido) sc++; else n++; } catch (e) { log('respaldo ' + l.id + ': ' + e); } }
+        return { ok: true, data: { hechos: n, sinCambio: sc, faltan: resto.length - lote.length, tras: lote.length ? lote[lote.length - 1].id : tras, total: lics.length } };
       }
       const neg = String(d.id || '');
       if (!negValido(neg)) throw new Error('Negocio no válido');
       if (a === 'panelRespaldos') return { ok: true, data: verLista(await listaR(neg)) };
-      if (a === 'panelRespaldoHacer') return { ok: true, data: await hacerRespaldo(neg, 'manual', true, Rq) };
+      if (a === 'panelRespaldoHacer') return { ok: true, data: await hacerRespaldo(neg, 'manual', true, Rq, !d.forzar) };
       if (a === 'panelRespaldoDatos') return { ok: true, data: await datosR(neg, String(d.rid || '')) };
       if (a === 'panelRespaldoRestaurar') return { ok: true, data: await restaurar(neg, String(d.rid || ''), String(d.alcance || 'todo'), Rq) };
     } catch (e) { return { ok: false, error: String(e && e.message || e) }; }

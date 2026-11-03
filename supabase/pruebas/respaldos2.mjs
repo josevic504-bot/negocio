@@ -38,13 +38,27 @@ await srv.atender({ tarea: 'respaldosDia', clave: 'tk' });
 r = (await P('panelRespaldosResumen')).data;
 ok(r.ultima && r.ultima.hechos === 3 && r.negocios.every(n => n.est === 'aldia'), 'después de la noche: ' + JSON.stringify(r.ultima));
 ok(r.copias === 3 && r.kb > 0, `copias ${r.copias} · ${r.kb} KB`);
-const t1 = await P('panelRespaldarTodos'); ok(t1.ok && t1.data.hechos === 0, 'respaldar todos se salta los recientes (' + t1.data.hechos + ')');
+const t1 = await P('panelRespaldarTodos'); ok(t1.ok && t1.data.hechos === 0 && t1.data.sinCambio === 3, 'respaldar todos se salta los que no cambiaron: ' + JSON.stringify(t1.data));
 ok((await P('panelRespaldoConfig', { diario: 0, semanal: 4, manual: 2, antes: 4 })).ok === false, 'no deja 0 copias');
 const cf = await P('panelRespaldoConfig', { diario: 7, semanal: 4, manual: 2, antes: 4 }); ok(cf.ok, 'cuántas copias guardar');
-for (let i = 0; i < 4; i++) await P('panelRespaldoHacer', { id: negs[0] });
+for (let i = 0; i < 4; i++) await P('panelRespaldoHacer', { id: negs[0], forzar: true });
 const l = (await P('panelRespaldos', { id: negs[0] })).data; ok(l.filter(x => x.tipo === 'manual').length === 2, 'respeta 2 manuales: ' + l.filter(x => x.tipo === 'manual').length);
 const rs = await P('panelRespaldoRestaurar', { id: negs[0], rid: l.find(x => x.tipo === 'diario').id, alcance: 'productos' }); ok(rs.ok, 'restaurar');
 r = (await P('panelRespaldosResumen')).data; ok(r.restauraciones.length === 1 && r.restauraciones[0].negocio === 'Tienda Luna' && r.restauraciones[0].alc === 'productos', 'última restauración anotada: ' + JSON.stringify(r.restauraciones[0]));
 ok(r.guarda.manual === 2, 'el resumen trae la configuración');
 ok((await srv.atender({ action: 'panelRespaldosResumen', panel: 'x', data: {} })).error === 'PANEL', 'pide sesión del panel');
+// Sin cambios: no se hace otra copia · con cambios sí · más de 30 días se borran (menos la más reciente)
+{
+  const neg = negs[1], cuenta = () => db.T.Respaldos.filter(x => x.negocio_id === neg).length;
+  const c0 = cuenta();
+  const a = await P('panelRespaldoHacer', { id: neg }); ok(a.ok && a.data.omitido && cuenta() === c0, 'sin cambios no se hace otra copia');
+  const tk = (await api('login', { whatsapp: '97776655', pin: '1234' })).data;
+  const tok = tk && (tk.token || (tk.negocios && tk.negocios[0] && tk.negocios[0].token));
+  db.T.Respaldos.filter(x => x.negocio_id === neg).forEach(x => { x.fecha = '2026-09-01 02:00'; });
+  const b0 = await P('panelRespaldoHacer', { id: neg }); ok(b0.data.omitido && cuenta() === 1, 'sin cambios y viejas: se borran pero queda la más reciente (' + cuenta() + ')');
+  await db.aplicar({ ops: [], v: { [neg]: (await db.cargar({ n: { [neg]: [] } })).n[neg]._v } }); // simula un cambio en sus datos
+  const b = await P('panelRespaldoHacer', { id: neg }); ok(b.ok && !b.data.omitido, 'con cambios sí se hace');
+  ok(cuenta() === 1 && db.T.Respaldos.find(x => x.negocio_id === neg).fecha > '2026-10', 'la copia de más de 30 días se borró al hacer la nueva');
+  const n = await srv.atender({ tarea: 'respaldosDia', clave: 'tk' }); ok(n.ok, 'la noche siguiente: ' + JSON.stringify(n.data));
+}
 console.log(fallas ? '\n✗ ' + fallas + ' fallas' : '\n✓ todo bien');

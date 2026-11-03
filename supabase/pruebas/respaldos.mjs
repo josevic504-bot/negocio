@@ -33,13 +33,13 @@ l = (await P('panelRespaldos', { id: n1 })).data; ok(l.some(x => x.tipo === 'ant
 ok((db.efectos || []).some(e => e.rt), 'avisa a su app que cambió');
 const bootP = (await api('bootstrap', {}, t1)).data; ok((bootP.productos || []).length === p0, 'su app ve los ' + p0 + ' productos');
 // Solo se guardan los más recientes
-for (let i = 0; i < 5; i++) await P('panelRespaldoHacer', { id: n1 });
+for (let i = 0; i < 5; i++) await P('panelRespaldoHacer', { id: n1, forzar: true });
 l = (await P('panelRespaldos', { id: n1 })).data; ok(l.filter(x => x.tipo === 'manual').length === 4, 'manuales guardados: ' + l.filter(x => x.tipo === 'manual').length + ' (máximo 4)');
 ok(db.T.RespaldoDatos.filter(x => x.negocio_id === n1).length === l.length, 'los datos viejos también se borran');
 const dt = await P('panelRespaldoDatos', { id: n1, rid: l[0].id }); ok(dt.ok && dt.data.Productos.length === p0, 'datos para Excel: ' + Object.keys(dt.data || {}).join(', '));
 // Tarea de la noche
 ok((await srv.atender({ tarea: 'respaldosDia', clave: 'mala' })).ok === false, 'la tarea pide la clave');
-const td = await srv.atender({ tarea: 'respaldosDia', clave: 'tk' }); ok(td.ok && td.data.hechos === 2, 'tarea de la noche: ' + JSON.stringify(td.data));
+const td = await srv.atender({ tarea: 'respaldosDia', clave: 'tk' }); ok(td.ok && td.data.hechos + td.data.sinCambio === 2, 'tarea de la noche (se salta el que no cambió): ' + JSON.stringify(td.data));
 const td2 = await srv.atender({ tarea: 'respaldosDia', clave: 'tk' }); ok(td2.ok && td2.data.pendientes === 0, 'no se repite el mismo día');
 const lic = db.T.Licencias.find(x => x.id === n1); ok(lic.nProductos === String(p0) && lic.respaldo, 'la licencia guarda productos ' + lic.nProductos + ', clientes ' + lic.nClientes + ', respaldo ' + lic.respaldo);
 // Salud en el Panel
