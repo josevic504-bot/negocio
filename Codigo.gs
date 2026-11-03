@@ -53,7 +53,7 @@ const SCHEMA_M = {
   // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
   Visitas:     ['id','fecha','pagina','origen','disp','vid','ref']
 };
-const PANEL_SEG = 21600;
+const PANEL_SEG = 7776000; // 90 días sin usarlo (se renueva al entrar); en Supabase ya no aplica el límite de 6 horas de Google
 const GRACIA_DEF = 5; // días después de la fecha de pago antes de pausar el programa
 // Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
 const MOTIVOS = { error: 'Error del programa', duda: 'No sé cómo hacer algo', prueba: 'Prueba y activación', idea: 'Sugerencia', app: 'App Android / instalación', otro: 'Otro' };
