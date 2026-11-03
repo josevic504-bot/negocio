@@ -1,0 +1,48 @@
+// Comprobante de pago en los pedidos en línea (servidor simulado)
+import fs from 'node:fs'; import { createHash } from 'node:crypto';
+import { crearServidor } from '../functions/api/servidor.js';
+import { dbFalsa } from './db-falsa.mjs';
+const SRC = fs.readFileSync(process.argv[2], 'utf8');
+const grab = n => { const m = SRC.match(new RegExp('^const ' + n + ' = ([\\s\\S]*?);\\s*$', 'm')); return eval('(' + m[1] + ')'); };
+const db = dbFalsa(grab('SCHEMA'), grab('SCHEMA_M'), grab('NUMS'), grab('BOOLS'));
+db.push = async q => q.lista ? [] : true;
+const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b).digest(), log: () => {}, urlArchivo: r => 'https://x.supabase.co/storage/v1/object/public/archivos/' + r, rutaDeUrl: u => (u.split('/archivos/')[1] || null) });
+const api = (action, data, token) => srv.atender({ action, token, data: data || {} });
+let f = 0; const ok = (n, r) => { if (!r.ok) f++; console.log((r.ok ? '✓ ' : '✗ ') + n + (r.ok ? '' : ': ' + r.error)); return r.data; };
+const no = (n, r) => { if (r.ok) f++; console.log((r.ok ? '✗ (debió fallar) ' : '✓ ') + n + (r.ok ? '' : ' → ' + r.error)); };
+const igual = (n, a, b) => { const x = JSON.stringify(a) === JSON.stringify(b); if (!x) f++; console.log((x ? '✓ ' : '✗ ') + n + ': ' + JSON.stringify(a) + (x ? '' : ' (esperado ' + JSON.stringify(b) + ')')); };
+const efectos = () => { const e = db.efectos || []; db.efectos = []; return e; };
+const FOTO = 'data:image/jpeg;base64,' + Buffer.from('foto-del-comprobante').toString('base64');
+const tok = (await api('registrar', { negocio: 'Norey', nombre: 'Vic', giro: 'catalogo', whatsapp: '33130265', pin: '1234' })).data.token;
+const neg = (await api('bootstrap', {}, tok)).data.negocioId;
+await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }], props: { RT_SECRETO: 's', VAPID_PUBLICA: 'a', VAPID_PRIVADA: 'b' } });
+await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tiendaPagos: 'Efectivo,Transferencia' } }, tok);
+const pr = (await api('guardar', { entidad: 'Productos', registro: { nombre: 'Loción', categoria: 'Lociones', precio: 450, tipo: 'producto', stock: 10 } }, tok)).data;
+efectos();
+const p1 = ok('pedido con comprobante', await api('pedir', { negocio: neg, nombre: 'Carla Ruiz', telefono: '98765432', entrega: 'recoger', pago: 'Transferencia', items: [{ id: pr.id, cantidad: 2 }], comprobante: FOTO }));
+const e1 = efectos(); igual('se subió la foto', e1.filter(e => e.subir).length, 1);
+console.log('   aviso:', JSON.stringify(e1.filter(e => e.push).map(e => e.push.cuerpo)));
+const p2 = ok('pedido sin comprobante', await api('pedir', { negocio: neg, nombre: 'Ana López', telefono: '98765433', entrega: 'recoger', pago: 'Transferencia', items: [{ id: pr.id, cantidad: 1 }] }));
+efectos();
+let mp = ok('mis pedidos', await api('misPedidos', { negocio: neg, telefono: '98765433', ids: [p2.id] }));
+igual('sin comprobante todavía', mp[0].pagoEstado, '');
+no('otro teléfono no puede mandar comprobante', await api('pedidoComprobante', { negocio: neg, id: p2.id, telefono: '91111111', foto: FOTO }));
+no('un archivo que no es foto', await api('pedidoComprobante', { negocio: neg, id: p2.id, telefono: '98765433', foto: 'data:text/plain;base64,aG9sYQ==' }));
+ok('manda el comprobante después', await api('pedidoComprobante', { negocio: neg, id: p2.id, telefono: '98765433', foto: FOTO }));
+console.log('   aviso:', JSON.stringify(efectos().filter(e => e.push).map(e => e.push.titulo + ' | ' + e.push.cuerpo)));
+mp = (await api('misPedidos', { negocio: neg, telefono: '98765433', ids: [p2.id] })).data; igual('queda por revisar', mp[0].pagoEstado, 'revisar');
+// El negocio revisa
+const lista = (await api('pedidos', {}, tok)).data; const L = lista.lista || lista;
+igual('el negocio ve el comprobante', !!L.find(p => p.id === p1.id).comprobante, true);
+const g = ok('pago recibido', await api('pedidoPago', { id: p1.id, ok: true }, tok));
+igual('anticipo = total', [g.pagoEstado, g.anticipoPagado], ['ok', 900]);
+no('no se confirma dos veces', await api('pedidoPago', { id: p1.id, ok: true }, tok));
+no('el cliente ya no puede cambiarlo', await api('pedidoComprobante', { negocio: neg, id: p1.id, telefono: '98765432', foto: FOTO }));
+const g2 = ok('no coincide', await api('pedidoPago', { id: p2.id, ok: false }, tok)); igual('estado no', g2.pagoEstado, 'no');
+mp = (await api('misPedidos', { negocio: neg, telefono: '98765433', ids: [p2.id] })).data; igual('el cliente ve que no coincide', mp[0].pagoEstado, 'no');
+ok('manda otro', await api('pedidoComprobante', { negocio: neg, id: p2.id, telefono: '98765433', foto: FOTO }));
+igual('se borra el comprobante anterior', efectos().filter(e => e.borrar).length, 1);
+// Cobrar el pedido pagado: el anticipo se descuenta
+const v = ok('cobrar el pedido pagado', await api('venta', { pedidoId: p1.id, items: [{ productoId: pr.id, cantidad: 2, precio: 450 }], metodo: 'Efectivo', recibido: 0, anticipo: 900, clave: 'z' }, tok));
+igual('venta sin saldo', [v.venta.total, v.venta.saldo], [900, 0]);
+console.log(f ? '\n✗ ' + f + ' fallas' : '\n✓ todo bien');

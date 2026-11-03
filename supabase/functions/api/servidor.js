@@ -398,11 +398,17 @@ function RECORDATORIOS_(ids) {
     const tablaN = (neg, t) => Cq.n[neg + '|' + t] || (Rq.n[neg] && Rq.n[neg].t[t]);
     const tablaM = t => Cq.m[t] || Rq.m[t];
     ops.forEach(o => {
+      // El cliente mandó el comprobante de pago de un pedido que ya existía
+      if (o.op === 'upd' && o.t === 'Pedidos' && o.n && o.row && o.row.comprobante && o.row.pagoEstado === 'revisar') {
+        const pe = objFila(tablaN(o.n, 'Pedidos'), o.k && o.k.id) || {};
+        out.push({ negocio: o.n, tipo: 'pedidos', titulo: '💳 Comprobante de pago' + (pe.numero ? ' · ' + pe.numero : ''), cuerpo: corto((pe.nombre || 'Un cliente') + ' envió su comprobante' + (pe.total ? ' · ' + money(o.n, pe.total) : ''), 140), vista: 'pedidos', tag: 'comp-' + (o.k && o.k.id) });
+        return;
+      }
       if (o.op !== 'ins' || !o.row) return;
       const r = o.row;
       if (o.t === 'Pedidos' && o.n) {
         let n = 0; try { n = (JSON.parse(r.items || '[]') || []).reduce((s, x) => s + (Number(x.cantidad) || 1), 0); } catch (e) {}
-        out.push({ negocio: o.n, tipo: 'pedidos', titulo: '🛍️ ¡Nuevo pedido en línea!', cuerpo: corto((r.nombre || 'Un cliente') + ' · ' + (n === 1 ? '1 producto' : n + ' productos') + ' · ' + money(o.n, r.total), 140), vista: 'pedidos' });
+        out.push({ negocio: o.n, tipo: 'pedidos', titulo: '🛍️ ¡Nuevo pedido en línea!', cuerpo: corto((r.nombre || 'Un cliente') + ' · ' + (n === 1 ? '1 producto' : n + ' productos') + ' · ' + money(o.n, r.total) + (r.comprobante ? ' · con comprobante de pago' : ''), 140), vista: 'pedidos' });
       } else if (o.t === 'Mensajes' && o.n && r.de === 'cliente') {
         const ch = objFila(tablaN(o.n, 'Chats'), r.chatId);
         out.push({ negocio: o.n, tipo: 'mensajes', titulo: '💬 Mensaje nuevo en tu tienda', cuerpo: corto((ch && ch.nombre ? ch.nombre + ': ' : '') + (r.texto || '📷 Foto'), 140), vista: 'mensajes', tag: 'msg-' + r.chatId });
