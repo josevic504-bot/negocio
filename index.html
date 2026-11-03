@@ -38,6 +38,18 @@ a{color:var(--pri)}
 .hero-top .grp{display:flex;gap:8px}
 .hbtn{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.2);color:#fff;width:40px;height:40px;border-radius:13px;display:grid;place-items:center;cursor:pointer;position:relative}
 body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{padding-bottom:40px}
+.cc2{cursor:pointer}.cc2 .cc-h{align-items:center}.cc2 .cc-h .tx small{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.cc-r{display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex:none}
+.sal{font-size:11px;font-weight:700;border-radius:8px;padding:2px 7px;white-space:nowrap}.sal.v{background:#e6f7ef;color:#00865a}.sal.a{background:#fff4df;color:#a86b00}.sal.r{background:#fde8eb;color:#c01a32}
+.cc-x{margin-top:10px;border-top:1px solid var(--line);padding-top:8px}.cc-x .cc-l{margin-top:0}
+.cc-bt{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}
+.sal-c{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px}
+.sal-h{display:flex;align-items:center;gap:12px;margin-bottom:6px}.sal-h b{display:block;font-size:15px}.sal-h small{color:var(--mut);font-size:12.5px}
+.sal-r{width:46px;height:46px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;flex:none}.sal-r span{width:36px;height:36px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;font-size:14px}
+.sal-f{display:flex;align-items:center;gap:10px;font-size:13px;padding:5px 0}.sal-f em{flex:1;font-style:normal}.sal-f i{width:110px;height:7px;border-radius:4px;background:var(--line);overflow:hidden}.sal-f s{display:block;height:100%}.sal-f b{min-width:52px;text-align:right;font-weight:600}
+.resp-li,#rs-a .li,#cp-o .li,#cp-c .li{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}#rs-a .li .tx,#cp-o .li .tx,#cp-c .li .tx{flex:1;text-align:left}
+.ck{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;color:transparent;flex:none}.ck.on{background:var(--pri);border-color:var(--pri);color:#fff}
+.sel-f{border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;background:var(--bg)}
 .pn-tabs{display:flex;max-width:1100px;margin:-4px auto 0;padding:0 8px}
 .pn-tabs button{flex:1;border:0;background:none;color:rgba(255,255,255,.72);font:600 14.5px var(--font);padding:9px 4px 12px;border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap}
 .pn-tabs button.on{color:#fff;border-bottom-color:#fff}
@@ -1507,7 +1519,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.32';
+const APP_VER = '1.9.33';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2888,20 +2900,21 @@ function pnDashboard(d) {
     ${(d.comprobantes || []).length ? `<div id="pn-comp">${panelComprobantesHTML(d.comprobantes)}</div>` : ''}
     ${pm.length > 1 ? `<div class="pn-h">Registros por mes <a style="color:var(--mut)">en color: activos</a></div><div class="pn-card pn-bars">${pm.map((m, i) => `<div class="${i === pm.length - 1 ? 'on' : ''}" title="${m.activos} activos de ${m.registros} registros"><em>${m.registros}</em><span style="height:${Math.round(m.registros * 64 / mx) + 4}px"><s style="height:${m.registros ? Math.round(m.activos * 100 / m.registros) : 0}%"></s></span>${esc(fMes(m.mes).split(' ')[0].slice(0, 3))}</div>`).join('')}</div>` : ''}`;
 }
+ACC.panelOrden = () => { P.orden = P.orden === 'salud' ? '' : 'salud'; panelPinta(); };
 ACC.panelIrComp = () => { const el = $('#pn-comp'); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-const PN_FILTROS = d => [['', 'Todos', d.negocios.length], ['atender', 'Por atender', d.negocios.filter(n => n.contactar || n.sop).length], ['prueba', 'En prueba', d.kpis.prueba], ['activa', 'Activos', d.kpis.activos], ['vencida', 'Vencidos', d.kpis.vencidos], ['bloqueada', 'Pausados', d.kpis.bloqueados], ['sin', 'Sin vender 7 días', d.kpis.sinVender7 || 0]].concat(d.colaboradores ? [['colaborador', 'Colaboradores', d.colaboradores]] : []);
+const PN_FILTROS = d => [['', 'Todos', d.negocios.length], ['riesgo', '🔴 En riesgo', d.negocios.filter(enRiesgo).length], ['atender', 'Por atender', d.negocios.filter(n => n.contactar || n.sop).length], ['prueba', 'En prueba', d.kpis.prueba], ['activa', 'Activos', d.kpis.activos], ['vencida', 'Vencidos', d.kpis.vencidos], ['bloqueada', 'Pausados', d.kpis.bloqueados], ['sin', 'Sin vender 7 días', d.kpis.sinVender7 || 0]].concat(d.colaboradores ? [['colaborador', 'Colaboradores', d.colaboradores]] : []);
 function pnClientes(d) {
   const f = P.f;
   return `<div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="pn-q" placeholder="Buscar negocio, dueño o WhatsApp…" value="${esc(f.q || '')}"></div>
     <div class="chips pn-chips">${PN_FILTROS(d).map(x => `<button class="chip ${(f.est || '') === x[0] ? 'on' : ''}" data-a="panelFiltro" data-k="${x[0]}">${x[1]}${x[2] ? ' · ' + x[2] : ''}</button>`).join('')}</div>
     ${(d.etiquetas || []).length ? `<div class="chips pn-chips">${[['', 'Toda etiqueta']].concat(d.etiquetas.map(e => [e, e])).map(x => `<button class="chip ${(f.etq || '') === x[0] ? 'on' : ''}" data-a="panelFiltroEtq" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>` : ''}
-    <div class="pn-h"><span id="pn-cuenta"></span>${(d.duplicados || []).length ? `<a data-a="panelDuplicados">Repetidos (${d.duplicados.length})</a>` : ''}</div>
+    <div class="pn-h"><span id="pn-cuenta"></span><span style="display:flex;gap:14px">${(d.duplicados || []).length ? `<a data-a="panelDuplicados">Repetidos (${d.duplicados.length})</a>` : ''}<a data-a="panelOrden">Ordenar: ${P.orden === 'salud' ? 'salud' : 'pendientes'} ▾</a></span></div>
     <div class="list" id="pn-list"></div>
     ${(d.duplicados || []).length && d.duplicados.some(x => !x.limpiada) ? `<div class="row sp" style="margin-top:14px"><small class="h">${d.duplicados.length} registro${d.duplicados.length > 1 ? 's' : ''} repetido${d.duplicados.length > 1 ? 's' : ''} sin acceso</small><button class="btn sm" data-a="panelLimpiarDup">Limpiar</button></div>` : ''}`;
 }
 function pnClientesListo(d) {
   const f = P.f;
-  const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'atender' ? !!(n.contactar || n.sop) : f.est === 'sin' ? (n.sinVender >= 7 && n.estado !== 'vencida' && n.estado !== 'bloqueada') : n.estado === f.est)) && (!f.etq || n.etiqueta === f.etq) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); l = l.map((n, i) => [n, i]).sort((a, b) => (pendCli(b[0]) - pendCli(a[0])) || (a[1] - b[1])).map(x => x[0]); $('#pn-list').innerHTML = l.map(tarjetaCli).join('') || '<div class="empty">Sin resultados</div>'; $('#pn-cuenta').textContent = l.length + ' negocio' + (l.length === 1 ? '' : 's'); };
+  const pinta = () => { const q = norm(f.q || ''); let l = d.negocios.filter(n => (!f.est || (f.est === 'atender' ? !!(n.contactar || n.sop) : f.est === 'riesgo' ? enRiesgo(n) : f.est === 'sin' ? (n.sinVender >= 7 && n.estado !== 'vencida' && n.estado !== 'bloqueada') : n.estado === f.est)) && (!f.etq || n.etiqueta === f.etq) && (!q || norm(n.negocio + ' ' + n.dueno + ' ' + n.whatsapp).includes(q))); l = l.map((n, i) => [n, i]).sort((a, b) => P.orden === 'salud' ? ((a[0].salud || {}).n - (b[0].salud || {}).n) || (a[1] - b[1]) : (pendCli(b[0]) - pendCli(a[0])) || (a[1] - b[1])).map(x => x[0]); $('#pn-list').innerHTML = l.map(tarjetaCli).join('') || '<div class="empty">Sin resultados</div>'; $('#pn-cuenta').textContent = l.length + ' negocio' + (l.length === 1 ? '' : 's'); };
   $('#pn-q').addEventListener('input', debounce(e => { f.q = e.target.value; pinta(); }, 150)); P.pinta = pinta; pinta();
 }
 function pnMarketing(d) {
@@ -2932,16 +2945,94 @@ function cobroTarjeta(n) {
   const c = n.cobro; if (!c || !c.vencidas || !c.vencidas.length) return '';
   return `<div class="cc-a ${c.pausado ? 'b' : 'w'}"><span style="color:${c.pausado ? 'var(--bad)' : 'var(--warn)'}">${ic(c.pausado ? 'lock' : 'coin', 20)}</span><div class="tx"><b>${c.pausado ? 'En pausa por pago pendiente' : 'Pago pendiente · ' + atrasoTxt(c)}</b><small>${money(c.total)} · ${esc(c.vencidas.map(x => x.c).join(', '))}${c.pausado ? '' : ' · se pausa el ' + esc(fCorta(c.pausaEl))}</small></div><div class="bt"><button class="btn sm pri" data-a="panelVer" data-id="${n.id}">Ver pagos</button></div></div>`;
 }
+/* ---- Panel: salud del negocio, respaldos y copiar productos ---- */
+const salCls = n => n >= 70 ? 'v' : n >= 40 ? 'a' : 'r';
+const salTxt = n => n >= 85 ? 'Muy bien' : n >= 70 ? 'Bien' : n >= 40 ? 'Regular' : 'En riesgo';
+const enRiesgo = n => (n.estado === 'prueba' || n.estado === 'activa') && n.salud && n.salud.n < 40;
+function panelSecSalud(n) {
+  const s = n.salud; if (!s) return '';
+  const c = { v: 'var(--ok, #00a865)', a: 'var(--warn)', r: 'var(--bad)' }[salCls(s.n)];
+  const fila = (t, p, max, v) => p === null ? '' : `<div class="sal-f"><em>${t}</em><i><s style="width:${Math.round(p * 100 / max)}%;background:${p >= max * .66 ? 'var(--ok, #00a865)' : p > 0 ? 'var(--warn)' : 'var(--bad)'}"></s></i><b>${v}</b></div>`;
+  return `<div class="sec-t"><h3>Salud del negocio</h3></div><div class="sal-c"><div class="sal-h"><span class="sal-r" style="--p:${s.n};--c:${c}"><span>${s.n}</span></span><div><b>${salTxt(s.n)}</b><small>${s.n >= 70 ? 'Usa el programa seguido' : s.n >= 40 ? 'Lo usa poco: vale la pena escribirle' : 'Casi no lo usa: puede que no renueve'}</small></div></div>
+    ${fila('Entra a la app', s.entra, 35, n.sinEntrar === 0 ? 'hoy' : n.ultimaConexion ? 'hace ' + n.sinEntrar + ' d' : 'nunca')}${fila('Vende', s.vende, 35, n.ventas7 + '/sem')}${fila('Productos cargados', s.prod, 15, s.np)}${fila('Registra clientes', s.cli, 15, s.nc)}</div>`;
+}
+function respHTML(l) {
+  const T = { diario: 'Automático', semanal: 'Semanal', manual: 'Hecho por ti', antes: 'Antes de restaurar' };
+  return l.map(r => `<button class="li resp-li" data-x="resp" data-r="${esc(r.id)}"><div class="av ${r.tipo === 'antes' ? 't-naranja' : r.tipo === 'manual' ? 't-pri' : 't-verde'}">${ic('save', 18)}</div><div class="tx"><b>${esc(fFechaC(r.fecha.slice(0, 10)))} · ${esc(r.fecha.slice(11, 16))}</b><small>${T[r.tipo] || esc(r.tipo)} · ${r.kb < 1024 ? r.kb + ' KB' : (r.kb / 1024).toFixed(1) + ' MB'} · ${r.resumen.productos || 0} productos, ${r.resumen.ventas || 0} ventas, ${r.resumen.clientes || 0} clientes</small></div>${ic('right', 16)}</button>`).join('')
+    || '<div class="empty">Todavía no tiene respaldos: el primero se hace esta noche a las 2 a. m.</div>';
+}
+async function panelRespCargar(id, h) {
+  const el = $('#pf-resp', h.el); if (!el) return;
+  try { const l = await api('panelRespaldos', { id }, true); h.resp = l; el.innerHTML = respHTML(l); } catch (e) { el.innerHTML = `<div class="empty">${esc(e.message || 'No se pudieron cargar los respaldos')}</div>`; }
+}
+async function panelRespAbrir(id, n, r, hf) {
+  const st = { alc: 'todo' };
+  const h = hoja({ titulo: 'Respaldo · ' + esc(fCorta(r.fecha.slice(0, 10))) + ' · ' + esc(r.fecha.slice(11, 16)), html: `<p class="h" style="margin:0 0 10px">${r.resumen.productos || 0} productos · ${r.resumen.ventas || 0} ventas · ${r.resumen.clientes || 0} clientes · ${r.filas} registros en total</p>
+    <span class="op-l" style="margin-top:0">¿Qué quieres devolver a como estaba?</span>
+    <div class="list" id="rs-a">${[['todo', 'Todo el negocio', 'Productos, ventas, clientes, caja y ajustes'], ['productos', 'Solo productos', 'Por ejemplo, si borró productos por error'], ['clientes', 'Solo clientes', 'Sin tocar ventas ni caja']].map(([k, t, s]) => `<button class="li" data-k="${k}"><span class="ck ${k === st.alc ? 'on' : ''}">${ic('check', 14)}</span><div class="tx"><b>${t}</b><small>${s}</small></div></button>`).join('')}</div>
+    <div class="aviso warn" style="margin-top:12px">${ic('alert', 20)}<div><b>Lo que hizo después de esa hora se reemplaza</b><small>Antes de restaurar se guarda solo una copia de cómo está hoy, por si acaso.</small></div></div>` });
+  h.b.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; st.alc = b.dataset.k; $$('#rs-a .ck', h.el).forEach(x => x.classList.toggle('on', x.closest('[data-k]') === b)); });
+  h.botones([{ t: ic('down', 16) + ' Descargar en Excel', fn: async () => { await panelRespExcel(id, n, r); } },
+    { t: 'Restaurar', cls: 'pri', fn: async () => {
+      const q = { todo: 'todo el negocio', productos: 'los productos', clientes: 'los clientes' }[st.alc];
+      if (!(await confirmar(`¿Devolver ${q} de ${esc(n.negocio)} a como estaba el ${esc(fFechaC(r.fecha.slice(0, 10)))} a las ${esc(r.fecha.slice(11, 16))}?`, { si: 'Restaurar', peligro: true }))) return;
+      const x = await api('panelRespaldoRestaurar', { id, rid: r.id, alcance: st.alc });
+      toast(`Listo: ${x.filas} registros restaurados. Su app se actualiza sola.`, 'ok', 5000); h.cerrar(); panelRespCargar(id, hf);
+    } }]);
+}
+async function panelRespExcel(id, n, r) {
+  const [d] = await Promise.all([api('panelRespaldoDatos', { id, rid: r.id }), cargarLib('xlsx')]);
+  const wb = XLSX.utils.book_new();
+  Object.keys(d).forEach(t => { if (!(d[t] || []).length) return; XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(d[t].map(o => { const y = {}; Object.keys(o).forEach(k => { const v = o[k]; y[k] = v && typeof v === 'object' ? JSON.stringify(v) : v; }); return y; })), t.slice(0, 31)); });
+  if (!wb.SheetNames.length) throw new Error('Este respaldo está vacío');
+  descargar(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'Respaldo ' + n.negocio.replace(/[\\/:*?"<>|]/g, '') + ' ' + r.fecha.slice(0, 10) + '.xlsx');
+}
+// Copiar productos de otro negocio (o de una lista base) a este
+async function panelCopiar(id, n) {
+  const negs = ((P.d && P.d.negocios) || []).filter(x => x.id !== id).sort((a, b) => (b.salud ? 0 : 0) || a.negocio.localeCompare(b.negocio));
+  if (!negs.length) throw new Error('No hay otros negocios de donde copiar');
+  const st = { de: '', cats: null, info: null, fotos: true, costos: false, existencias: false };
+  const h = hoja({ titulo: 'Copiar productos', html: `<span class="op-l" style="margin-top:0">De</span><select id="cp-de"><option value="">Elige el negocio…</option>${negs.map(x => `<option value="${x.id}">${esc(x.negocio)} · ${esc(x.giro)}</option>`).join('')}</select>
+    <span class="op-l">Para</span><div class="sel-f">${esc(n.negocio)}</div>
+    <div id="cp-c"></div>
+    <span class="op-l">Qué copiar</span><div class="list" id="cp-o">${[['fotos', 'Fotos', 'Se copian aparte: si el otro negocio la borra, esta sigue'], ['costos', 'Costos', 'Si no, quedan en 0 para que ponga los suyos'], ['existencias', 'Existencias', 'Si no, quedan en 0']].map(([k, t, s]) => `<button class="li" data-o="${k}"><span class="ck ${st[k] ? 'on' : ''}">${ic('check', 14)}</span><div class="tx"><b>${t}</b><small>${s}</small></div></button>`).join('')}</div>
+    <p class="h" style="margin-top:10px">Los precios, presentaciones y categorías siempre se copian. Si ya tiene un producto con el mismo nombre, no se repite.</p>` });
+  const total = () => st.info ? st.info.cats.filter(c => !st.cats || st.cats.indexOf(c.cat) >= 0).reduce((a, c) => a + c.n, 0) : 0;
+  const pintaC = () => {
+    const el = $('#cp-c', h.el); if (!st.info) { el.innerHTML = ''; return; }
+    el.innerHTML = `<div class="sec-t" style="margin:14px 2px 6px"><h3 style="font-size:15px">Categorías</h3><a data-t="1">${st.cats ? 'Todas' : 'Ninguna'}</a></div><div class="list">${st.info.cats.map(c => `<button class="li" data-c="${esc(c.cat)}"><span class="ck ${!st.cats || st.cats.indexOf(c.cat) >= 0 ? 'on' : ''}">${ic('check', 14)}</span><div class="tx"><b>${esc(c.cat || 'Sin categoría')}</b><small>${c.n} producto${c.n === 1 ? '' : 's'}</small></div></button>`).join('') || '<div class="empty">Ese negocio no tiene productos</div>'}</div>`;
+    const bt = $('.sheet-f .pri', h.el); if (bt) bt.textContent = `Copiar ${total()} producto${total() === 1 ? '' : 's'}`;
+  };
+  $('#cp-de', h.el).addEventListener('change', async e => { st.de = e.target.value; st.cats = null; st.info = null; pintaC(); if (!st.de) return; $('#cp-c', h.el).innerHTML = '<div class="empty">Cargando…</div>'; try { st.info = await api('panelCopiarInfo', { de: st.de }); } catch (x) { err(x); } pintaC(); });
+  h.b.addEventListener('click', e => {
+    const o = e.target.closest('[data-o]'); if (o) { st[o.dataset.o] = !st[o.dataset.o]; $('.ck', o).classList.toggle('on', st[o.dataset.o]); return; }
+    if (e.target.closest('[data-t]')) { st.cats = st.cats ? null : []; pintaC(); return; }
+    const c = e.target.closest('[data-c]'); if (c && st.info) { const k = c.dataset.c; const l = st.cats || st.info.cats.map(x => x.cat); const i = l.indexOf(k); if (i >= 0) l.splice(i, 1); else l.push(k); st.cats = l.length === st.info.cats.length ? null : l; pintaC(); }
+  });
+  h.botones([{ t: 'Copiar productos', cls: 'pri', fn: async () => {
+    if (!st.de) throw new Error('Elige de qué negocio copiar'); if (!total()) throw new Error('Elige al menos una categoría con productos');
+    const r = await api('panelCopiarProductos', { de: st.de, a: id, cats: st.cats, fotos: st.fotos, costos: st.costos, existencias: st.existencias });
+    toast(`${r.copiados} producto${r.copiados === 1 ? '' : 's'} copiado${r.copiados === 1 ? '' : 's'}${r.omitidos ? ` · ${r.omitidos} ya los tenía` : ''}`, 'ok', 5000); h.cerrar();
+  } }]);
+}
 function tarjetaCli(n) {
+  const e = EST_L[n.estado] || ['', n.estado], t = n.contactar && CONTACTAR_T[n.contactar], s = n.salud || { n: 0 }, ab = P.abierta === n.id;
+  const cls = n.colab ? 'colab' : n.sop || n.contactar === 'vence' ? 'ur' : t ? 'at' : '';
+  const venc = n.cobro && n.cobro.vencidas && n.cobro.vencidas.length;
+  const res = n.sop ? `<span style="color:var(--info)">💬 ${n.sop.sin} mensaje${n.sop.sin === 1 ? '' : 's'} sin responder</span>` : venc ? '<span style="color:var(--bad)">Pago de licencia vencido</span>' : t ? `<span style="color:${n.contactar === 'vence' ? 'var(--bad)' : 'var(--warn)'}">${t[0]}</span>` : esc(ventasTxt(n));
+  return `<div class="cc cc2 ${cls} ${ab ? 'ab' : ''}" data-a="panelCliAbrir" data-id="${n.id}"><div class="cc-h"><div class="av ${n.colab ? 't-morado' : colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}${n.colab ? ' <span class="colab-b">COLAB</span>' : n.plus ? ' <span class="plus-b" style="font-size:9px;padding:2px 6px">PLUS</span>' : ''}</b><small>${esc(n.giro)} · ${res}</small></div><div class="cc-r"><span class="badge ${e[0] || 'b-mut'}">${esc(e[1])}${n.estado === 'prueba' ? ' ' + n.diasRestantes + 'd' : ''}</span>${n.colab ? '' : `<span class="sal ${salCls(s.n)}">● ${s.n}</span>`}</div></div>
+    ${ab ? `<div class="cc-x">${tarjetaCliDetalle(n)}<div class="cc-bt"><a class="btn sm wa" href="${waLink(n.whatsapp, '')}" target="_blank" rel="noopener" data-a="panelWA">${ic('wa', 15)} WhatsApp</a><button class="btn sm pri" data-a="panelVer" data-id="${n.id}">${ic('doc', 15)} Ficha</button></div></div>` : ''}</div>`;
+}
+ACC.panelCliAbrir = el => { P.abierta = P.abierta === el.dataset.id ? '' : el.dataset.id; if (P.pinta) P.pinta(); };
+function tarjetaCliDetalle(n) {
   const e = EST_L[n.estado] || ['', n.estado], t = n.contactar && CONTACTAR_T[n.contactar];
   const sub = n.estado === 'prueba' ? [n.diasRestantes <= 1 ? 'var(--bad)' : 'var(--warn)', `Día ${n.dia} · ${n.diasRestantes <= 1 ? 'vence mañana' : 'vence en ' + n.diasRestantes + ' días'}`]
     : n.estado === 'activa' ? ['var(--ok, #00b56e)', n.plus ? 'Licencia + Plus' : 'Licencia activa'] : n.estado === 'colaborador' ? ['#6a3df0', 'Todo activo · sin cobro'] : n.estado === 'vencida' ? ['var(--bad)', 'Prueba vencida'] : ['var(--mut)', 'Acceso pausado'];
   const cls = n.colab ? 'colab' : n.sop || n.contactar === 'vence' ? 'ur' : t ? 'at' : '';
-  return `<div class="cc ${cls}" data-a="panelVer" data-id="${n.id}"><div class="cc-h"><div class="av ${n.colab ? 't-morado' : colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}${n.colab ? ' <span class="colab-b">COLABORADOR</span>' : n.plus ? ' <span class="plus-b" style="font-size:9px;padding:2px 6px">PLUS</span>' : ''}${n.etiqueta ? ` <span class="badge ${ETQ_B[n.etiqueta] || 'b-mut'}" style="font-size:10px">${esc(n.etiqueta)}</span>` : ''}</b><small>${esc(n.giro)}${extrasTxt(n)} · ${esc(n.dueno)} · entró ${cuandoP(n.ultimaConexion)}</small></div><span class="badge ${e[0] || 'b-mut'}">${esc(e[1])}</span></div>
-    <div class="cc-l"><span style="color:${n.ventas7 ? 'var(--ok, #00b56e)' : 'var(--mut)'}">${ventasTxt(n)}</span><span style="color:${sub[0]}">${sub[1]}</span>${n.canal && n.canal !== 'directo' ? `<span class="cc-canal">${ic(visOri(n.canal)[1], 13)} vía ${esc(visOri(n.canal)[0])}</span>` : ''}${n.version && P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? `<span style="color:var(--bad)">app ${esc(n.version)}</span>` : ''}</div>
+  return `<div class="cc-l"><span style="color:${n.ventas7 ? 'var(--ok, #00b56e)' : 'var(--mut)'}">${ventasTxt(n)}</span><span style="color:${sub[0]}">${sub[1]}</span>${n.canal && n.canal !== 'directo' ? `<span class="cc-canal">${ic(visOri(n.canal)[1], 13)} vía ${esc(visOri(n.canal)[0])}</span>` : ''}${n.version && P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? `<span style="color:var(--bad)">app ${esc(n.version)}</span>` : ''}</div>
     ${cobroTarjeta(n)}
     ${n.sop ? `<div class="cc-a i"><span style="color:var(--info)">${ic('chat', 20)}</span><div class="tx"><b>${n.sop.sin} mensaje${n.sop.sin === 1 ? '' : 's'} sin responder</b><small>“${esc(n.sop.texto)}”</small></div><div class="bt"><button class="btn sm pri" data-a="panelSoporteVer" data-id="${n.sop.id}">${ic('chat', 15)} Responder</button></div></div>` : ''}
-    ${t ? `<div class="cc-a ${n.contactar === 'vence' ? 'b' : 'w'}"><span style="color:${n.contactar === 'vence' ? 'var(--bad)' : 'var(--warn)'}">${ic('alert', 20)}</span><div class="tx"><b>${t[0]}</b><small>${t[2]}${n.sinEntrar >= 2 ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><div class="bt">${n.contactar === 'vence' || n.contactar === 'vencida' ? `<button class="btn sm" data-a="panelAccion" data-id="${n.id}" data-x="extender">+7 días</button>` : ''}<button class="btn sm" data-a="panelContactado" data-id="${n.id}" data-t="${n.contactar}">Ya le escribí</button><a class="btn wa sm" data-a="panelWA" href="${waPlantilla(n, n.contactar)}" target="_blank" rel="noopener">${ic('wa', 15)} Escribir</a></div></div>` : ''}</div>`;
+    ${t ? `<div class="cc-a ${n.contactar === 'vence' ? 'b' : 'w'}"><span style="color:${n.contactar === 'vence' ? 'var(--bad)' : 'var(--warn)'}">${ic('alert', 20)}</span><div class="tx"><b>${t[0]}</b><small>${t[2]}${n.sinEntrar >= 2 ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><div class="bt">${n.contactar === 'vence' || n.contactar === 'vencida' ? `<button class="btn sm" data-a="panelAccion" data-id="${n.id}" data-x="extender">+7 días</button>` : ''}<button class="btn sm" data-a="panelContactado" data-id="${n.id}" data-t="${n.contactar}">Ya le escribí</button><a class="btn wa sm" data-a="panelWA" href="${waPlantilla(n, n.contactar)}" target="_blank" rel="noopener">${ic('wa', 15)} Escribir</a></div></div>` : ''}`;
 }
 ACC.panelWA = el => { window.open(el.href, '_blank', 'noopener'); };
 const ventasTxt = n => n.ventas7 ? `${n.ventas7} venta${n.ventas7 === 1 ? '' : 's'} esta semana` : n.ultimaVenta ? 'última venta ' + cuandoP(n.ultimaVenta) : 'sin ventas';
@@ -3413,15 +3504,18 @@ async function panelFicha(id) {
       <div class="kpis"><div class="kpi" style="--k:${n.estado === 'activa' ? '#00b56e' : n.estado === 'prueba' ? 'var(--warn)' : 'var(--bad)'}"><small>Estado</small><b>${e[1]}</b><i>${n.estado === 'prueba' ? `día ${n.dia} · vence ${esc(fFechaC(n.vencePrueba))}` : n.estado === 'vencida' ? 'venció el ' + esc(fFechaC(n.vencePrueba)) : n.plus ? 'con Plus' : 'sin Plus'}</i></div><div class="kpi"><small>Última conexión</small><b>${n.sinEntrar === 0 ? 'Hoy' : n.sinEntrar === 1 ? 'Ayer' : 'Hace ' + n.sinEntrar + ' días'}</b><i>${esc(String(n.ultimaConexion).slice(11))}${n.version ? ' · app ' + esc(n.version) + (P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? ' <span style="color:var(--bad)">(desactualizada)</span>' : '') : ''}</i></div>
       <div class="kpi" style="--k:${n.ventas7 ? '#00b56e' : 'var(--mut)'}"><small>Última venta</small><b>${n.ultimaVenta ? (n.sinVender === 0 ? 'Hoy' : n.sinVender === 1 ? 'Ayer' : 'Hace ' + n.sinVender + ' días') : 'Ninguna'}</b><i>${n.ventas7} venta${n.ventas7 === 1 ? '' : 's'} en 7 días</i></div>
       ${u ? `<div class="kpi"><small>Uso en 30 días</small><b>${u.ventas30} venta${u.ventas30 === 1 ? '' : 's'}</b><i>${u.productos} productos · ${u.clientes} clientes · ${u.pedidos} pedidos</i></div>` : `<div class="kpi"><small>Uso</small><b>—</b><i>${esc(n.usoError || 'sin datos')}</i></div>`}<div class="kpi"><small>Plus · tienda</small><b>${n.plus ? 'Activo' : n.estado === 'prueba' ? 'Incluido' : 'No'}</b><i>${u && u.tienda ? 'tienda abierta' : 'tienda apagada'}</i></div></div>
-      ${n.colab ? `<div class="aviso colab">${ic('star', 20)}<div><b>Colaborador · todo activo sin cobro</b><small>Licencia, Plus y Contabilidad sin vencimiento; cambia de tipo de negocio cuando quiera y los giros extra se le activan sin cobro. No cuenta en conversión ni ingresos del panel.</small></div></div>` : ''}
+      ${panelSecSalud(n)}${n.colab ? `<div class="aviso colab">${ic('star', 20)}<div><b>Colaborador · todo activo sin cobro</b><small>Licencia, Plus y Contabilidad sin vencimiento; cambia de tipo de negocio cuando quiera y los giros extra se le activan sin cobro. No cuenta en conversión ni ingresos del panel.</small></div></div>` : ''}
       <div class="acciones">${n.colab ? `<button class="btn bad" data-x="quitarColab">${ic('x', 16)} Quitar colaborador</button>` : `${n.estado === 'bloqueada' ? `<button class="btn pri" data-x="reanudar">▶ Reanudar acceso</button>` : n.estado === 'activa' ? '' : `<button class="btn pri" data-x="activar">✓ Activar licencia</button>`}${n.plus ? `<button class="btn ghost" data-x="quitarPlus">Quitar Plus</button>` : `<button class="btn acc" data-x="plus">Activar Plus</button>`}${n.contab ? `<button class="btn ghost" data-x="quitarContab">Quitar Contabilidad</button>` : `<button class="btn" data-x="contab">${ic('chart', 16)} Activar Contabilidad</button>`}${n.estado === 'activa' ? '' : `<button class="btn" data-x="extender">+7 días de prueba</button>`}${n.estado === 'bloqueada' ? '' : `<button class="btn ghost" data-x="pausar">⏸ Pausar</button>`}<button class="btn ghost" data-x="colaborador" style="color:#6a3df0">${ic('star', 16)} Marcar colaborador</button>`}</div>
       ${panelSecGiros(n)}${panelSecGrupo(n)}
       <div class="sec-t"><h3>Soporte</h3></div>
       <div class="row"><button class="btn" data-x="verApp">${ic('eye', 16)} Ver su app (solo ver)</button></div>
       <small class="hint">Ves lo mismo que el cliente para ayudarlo, sin su PIN. No se puede guardar nada; vence en 2 horas y queda anotado.</small>
       <div class="sec-t"><h3>Productos</h3></div>
-      <div class="row"><button class="btn pri" data-x="importar">${ic('doc', 16)} Cargar productos desde Excel</button></div>
+      <div class="row"><button class="btn pri" data-x="importar">${ic('doc', 16)} Cargar productos desde Excel</button><button class="btn" data-x="copiar">${ic('copy', 16)} Copiar de otro negocio</button></div>
       <small class="hint">Llena la plantilla con la lista del cliente y se la cargas de un solo; los que ya tiene se actualizan.</small>
+      <div class="sec-t"><h3>Respaldos</h3><a data-x="respHacer">Hacer uno ahora</a></div>
+      <div class="list" id="pf-resp"><div class="empty">Cargando…</div></div>
+      <small class="hint">Se hace solo cada noche a las 2 a. m. Se guardan los últimos 7 días y 4 semanas. Toca uno para restaurarlo o descargarlo en Excel.</small>
       <div class="sec-t"><h3>Etiqueta</h3></div>
       <div class="chips" style="flex-wrap:wrap">${(P.d && P.d.etiquetas || ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido']).map(e => `<button class="chip ${n.etiqueta === e ? 'on' : ''}" data-x="etiqueta" data-e="${esc(e)}">${esc(e)}</button>`).join('')}${n.etiqueta ? `<button class="chip" data-x="etiqueta" data-e="">Quitar</button>` : ''}</div>
       <div class="sec-t"><h3>Escribirle por WhatsApp</h3></div>
@@ -3439,11 +3533,15 @@ async function panelFicha(id) {
       <div style="border:1.5px solid var(--bad);background:var(--badb);padding:14px 16px;border-radius:16px"><b style="display:block;margin-bottom:4px">Eliminar este cliente</b>
       <small style="display:block;color:var(--mut);line-height:1.5;margin-bottom:10px">Se quita del panel, nadie de este negocio podrá entrar y su WhatsApp queda libre para registrarse de nuevo. Su hoja de datos va a la papelera de Google Drive (se puede recuperar 30 días). Los pagos anotados se conservan en tus ingresos.</small>
       <button class="btn bad" data-x="eliminar">${ic('trash', 18)} Eliminar cliente</button></div>`;
+    panelRespCargar(id, h);
     h.b.onclick = async e => {
       const gm = e.target.closest('[data-gm]'); if (gm) { gm.classList.toggle('on'); return; }
       const b = e.target.closest('[data-x]'); if (!b) return; const x = b.dataset.x;
       try {
         if (x === 'importar') { panelImportar(id, n.negocio); return; }
+        if (x === 'copiar') { await panelCopiar(id, n); return; }
+        if (x === 'respHacer') { b.disabled = true; try { await api('panelRespaldoHacer', { id }); toast('Respaldo hecho', 'ok'); await panelRespCargar(id, h); } finally { b.disabled = false; } return; }
+        if (x === 'resp') { const r = (h.resp || []).find(k => k.id === b.dataset.r); if (r) panelRespAbrir(id, n, r, h); return; }
         if (x === 'verApp') { const r = await api('panelVerApp', { id }); window.open(new URL('./?soporte=' + r.token, document.baseURI).href, '_blank'); toast('Se abrió su app en modo soporte (solo ver, 2 horas)', 'ok', 4000); return; }
         if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
         else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }

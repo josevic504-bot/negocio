@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.32';
+const VERSION = '1.9.33';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -35,7 +35,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -1915,12 +1915,26 @@ function panelFicha_(l, segs) {
     ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '',
     giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l), colab: esColab_(l) };
   if (o.colab) { o.plus = true; o.contab = true; }
+  o.salud = saludDe_(o, l.nProductos, l.nClientes); o.respaldo = l.respaldo || '';
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
   else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
   else if (est === 'vencida' && diasDesde_(hecho('vencida')) > 14) o.contactar = 'vencida';
   else if ((est === 'prueba' || est === 'activa') && sin >= 5 && diasDesde_(hecho('inactivo')) > 7) o.contactar = 'inactivo';
   return o;
+}
+/* Salud del negocio (0-100) para el Panel: entra a la app, vende, productos cargados y clientes registrados.
+ * Productos y clientes se cuentan en el respaldo de cada noche; mientras no haya, la nota sale solo de entrar y vender. */
+function saludDe_(o, np, nc) {
+  const num = x => (x === '' || x === null || x === undefined || !isFinite(Number(x))) ? null : Number(x);
+  np = num(np); nc = num(nc);
+  const sin = Number(o.sinEntrar), v7 = Number(o.ventas7) || 0, sv = Number(o.sinVender);
+  const entra = !o.ultimaConexion ? 0 : sin <= 1 ? 35 : sin <= 3 ? 25 : sin <= 7 ? 12 : 0;
+  const vende = v7 >= 10 ? 35 : v7 >= 3 ? 25 : v7 >= 1 ? 15 : (o.ultimaVenta && sv <= 14) ? 5 : 0;
+  const prod = np === null ? null : np >= 20 ? 15 : np >= 5 ? 10 : np >= 1 ? 5 : 0;
+  const cli = nc === null ? null : nc >= 10 ? 15 : nc >= 3 ? 10 : nc >= 1 ? 5 : 0;
+  const max = 70 + (prod === null ? 0 : 15) + (cli === null ? 0 : 15);
+  return { n: Math.round((entra + vende + (prod || 0) + (cli || 0)) * 100 / max), entra: entra, vende: vende, prod: prod, cli: cli, np: np, nc: nc };
 }
 // Filas de Licencias a las que nadie entra: sin acceso en la hoja Accesos (registros repetidos) o ya marcadas como Duplicada
 function licsDuplicadas_() {
@@ -2151,6 +2165,7 @@ function panelNegocio_(d) {
     f.datos = { rtn: cfg.sarRtn || cfg.rtn || '', direccion: cfg.sarDireccion || cfg.direccion || '', razon: cfg.sarRazon || '', telefono: cfg.telefono || '', correo: cfg.correo || '' }; // para rellenar el contrato
     f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
       pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+    f.salud = saludDe_(f, f.uso.productos, f.uso.clientes); // en la ficha, con los conteos de hoy
     // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
     const dsf = licDesfase_(cfg);
     if (Object.keys(dsf).length) { mSet_('Licencias', l, dsf); Object.assign(f, dsf); CacheService.getScriptCache().remove('L_' + l.id); }
