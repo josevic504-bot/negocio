@@ -135,6 +135,11 @@ async function obtenerServidor() {
   return cargando;
 }
 
+// Huella de la conexión: 16 letras del SHA-256 de la dirección; sirve para contar intentos fallidos sin guardar la dirección
+function huellaIp(req: Request) {
+  const h = req.headers, ip = (h.get('cf-connecting-ip') || (h.get('x-forwarded-for') || '').split(',')[0] || h.get('x-real-ip') || '').trim();
+  return ip ? createHash('sha256').update('gnvm|' + ip).digest('hex').slice(0, 16) : '';
+}
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET, POST, OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' };
 const json = (o: unknown) => new Response(JSON.stringify(o), { headers: { ...CORS, 'Content-Type': 'application/json; charset=utf-8' } });
 
@@ -145,6 +150,7 @@ Deno.serve(async (req) => {
     if (req.method === 'GET') return json({ ok: true, app: 'Gestión de Negocio VM', version: s.version, multi: true, servidor: 'supabase' });
     let body: any;
     try { body = JSON.parse(await req.text() || '{}'); } catch (_e) { return json({ ok: false, error: 'Solicitud inválida' }); }
+    if (body && typeof body === 'object') body.ip = huellaIp(req); // huella de la conexión (para frenar intentos de PIN); nunca se guarda la dirección
     return json(await s.atender(body));
   } catch (e) {
     console.log('Error del servidor:', String(e && (e as Error).stack || e));

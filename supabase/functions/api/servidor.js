@@ -633,6 +633,10 @@ function RECORDATORIOS_(ids) {
         else if (r.de === 'adm' && ch && ch.negocioId) out.push({ negocio: ch.negocioId, tipo: 'soporte', titulo: '💬 El administrador te respondió', cuerpo: corto(r.texto || 'Ábrelo en Ayuda › Contactar al administrador', 140), vista: 'inicio' });
       } else if (o.t === 'Anuncios' && !o.n && String(r.canales).indexOf('push') >= 0) {
         String(r.destinos || '').split(',').filter(Boolean).forEach(neg => out.push({ negocio: neg, tipo: 'anuncio', titulo: '📣 ' + corto(r.titulo || 'Gestión de Negocio VM', 50), cuerpo: corto(r.texto, 160), vista: 'inicio', tag: 'an-' + r.id }));
+      } else if (o.t === 'Seguimiento' && !o.n && r.tipo === 'seguridad' && r.negocioId) {
+        out.push({ negocio: r.negocioId, tipo: 'seguridad', titulo: '🔒 Intentos de entrada bloqueados', cuerpo: corto(r.nota, 160), vista: 'ajustes', tag: 'seg' });
+      } else if (o.t === 'Seguimiento' && !o.n && r.tipo === 'seguridad-panel') {
+        out.push({ negocio: '_panel', tipo: 'seguridad', titulo: '🔒 Alguien intentó entrar al Panel', cuerpo: corto(r.nota, 160), url: 'panel', tag: 'seg-panel' });
       } else if (o.t === 'Seguimiento' && !o.n && r.tipo === 'cliente') {
         const li = objFila(tablaM('Licencias'), r.negocioId) || {};
         out.push({ negocio: '_panel', tipo: 'cuentas', titulo: (/eliminó/.test(r.nota) ? '🗑️ ' : '🧹 ') + corto(li.negocio || 'Un negocio', 40), cuerpo: corto(r.nota, 140), vista: 'panel' });
@@ -656,7 +660,9 @@ function RECORDATORIOS_(ids) {
       if (body.token) c.push('S_' + body.token);
       if (body.panel) c.push('P_' + body.panel);
       const d = (body && body.data) || {}, wa = String(d.whatsapp || '').replace(/\D/g, ''), wa2 = wa.length === 8 ? '504' + wa : wa;
-      if (accion === 'login') c.push('F_' + wa2);
+      const ip = String(body.ip || '').replace(/[^a-f0-9]/g, '').slice(0, 16);
+      if (accion === 'login') { c.push('F_' + wa2, 'BL_' + wa2, 'BS_' + wa2); if (ip) c.push('F_i' + ip, 'BL_i' + ip, 'BS_i' + ip); }
+      if (accion === 'panelLogin') { const kp = ip ? 'p' + ip : 'PANEL'; c.push('F_' + kp, 'BL_' + kp, 'BS_' + kp); }
       if (accion === 'registrar') c.push('REG_H', 'REG_' + wa2);
       const cSesion = accion === 'venta' && d.clave ? ['VK_{neg}_' + String(d.clave).trim().replace(/\s+/g, ' ').slice(0, 60)] : [];
       // Tienda en línea y chat del cliente: llegan sin sesión pero dicen de qué negocio son
