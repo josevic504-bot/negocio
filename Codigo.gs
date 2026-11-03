@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.37';
+const VERSION = '1.9.38';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -243,7 +243,7 @@ function route_(req) {
     const lic = licencia_();
     if (lic.estado === 'vencida') throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: config_().nombre }));
   }
-  if (a === 'login') return lock_(() => MULTI_NEGOCIO ? loginMulti_(d) : login_(d));
+  if (a === 'login') return lock_(() => MULTI_NEGOCIO ? loginMulti_(d, ipDe_(req)) : login_(d));
   if (a === 'registrar') return registrar_(d);
   if (a === 'info') return { multi: MULTI_NEGOCIO, version: VERSION };
   // Contador de visitas (público, sin usuario)
@@ -256,7 +256,7 @@ function route_(req) {
   if (a === 'chatEnviar') { chatLimites_(d); return lock_(() => chatEnviar_(d)); }
   if (a === 'chatVer') return chatVer_(d);
   // Panel Molina (súper admin)
-  if (a === 'panelLogin') return panelLogin_(d);
+  if (a === 'panelLogin') return panelLogin_(d, ipDe_(req));
   if (a.indexOf('panel') === 0) { panelAuth_(req); if (a === 'panelSalir') d._tok = String(req.panel || ''); return PANEL_LECTURA.indexOf(a) >= 0 ? rutaPanel_(a, d) : lock_(() => rutaPanel_(a, d)); }
   const u = auth_(req.token);
   const res = rutaUsuario_(a, u, d, req);
@@ -636,6 +636,30 @@ function hash_(clave, salt) {
 
 function publico_(u) { const o = Object.assign({}, u); delete o.hash; delete o.salt; return o; }
 
+/* ---- Intentos fallidos con bloqueo progresivo ----
+ * k identifica a quién se cuenta (WhatsApp, usuario, conexión «i…», Panel «p…»). Al llegar al máximo de fallos seguidos se bloquea
+ * 10 minutos; si vuelve a pasar el mismo día, 1 hora; la tercera vez, 24 horas. El bloqueo es solo para ese k: a nadie más le afecta. */
+const BLOQ_ESC = [600, 3600, 86400];
+const bloqTexto_ = seg => seg >= 86400 ? 'hasta mañana' : seg >= 3600 ? '1 hora' : '10 minutos';
+function bloqueado_(k, msg) { const b = CacheService.getScriptCache().get('BL_' + k); if (b) throw new Error((msg || 'Demasiados intentos fallidos.') + ' Espera ' + b + '.'); }
+// Anota un fallo; devuelve los segundos de bloqueo si con este fallo quedó bloqueado (0 si todavía no)
+function fallo_(k, max) {
+  const c = CacheService.getScriptCache(), n = Number(c.get('F_' + k) || 0) + 1;
+  if (n < (max || 5)) { c.put('F_' + k, String(n), 600); return 0; }
+  const s = Number(c.get('BS_' + k) || 0), seg = BLOQ_ESC[Math.min(s, 2)];
+  c.put('BS_' + k, String(s + 1), 86400); c.put('BL_' + k, bloqTexto_(seg), seg); c.remove('F_' + k);
+  return seg;
+}
+const acierto_ = k => CacheService.getScriptCache().remove('F_' + k);
+// Huella de la conexión (la calcula el servidor en la nube; en Apps Script no existe)
+const ipDe_ = req => String(req && req.ip || '').replace(/[^a-f0-9]/g, '').slice(0, 16);
+// Aviso al dueño: alguien falló el PIN con su WhatsApp hasta quedar bloqueado (llega al teléfono y queda en el historial del Panel)
+function avisarBloqueo_(negocios, seg) {
+  const vistos = {};
+  (negocios || []).forEach(id => { if (!id || vistos[id]) return; vistos[id] = 1;
+    mAppend_('Seguimiento', { id: mId_('SG'), negocioId: id, tipo: 'seguridad', fecha: ahora_().replace('T', ' '), nota: 'Alguien falló el PIN 5 veces con el WhatsApp del negocio; la entrada quedó bloqueada ' + bloqTexto_(seg) + '. Si no fuiste tú, cambia tu PIN en Ajustes.' }); });
+}
+
 function req_(u, roles) {
   if (roles.indexOf(u.rol) < 0) throw new Error('No tienes permiso para esta acción');
 }
@@ -643,15 +667,13 @@ function req_(u, roles) {
 function login_(d) {
   const c = CacheService.getScriptCache();
   const usuario = String(d.usuario || '').trim().toLowerCase();
-  const kf = 'F_' + usuario;
-  const fallos = Number(c.get(kf) || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
+  bloqueado_(usuario);
   const u = rows_('Usuarios').find(x => String(x.usuario).toLowerCase() === usuario);
   if (!u || !u.activo || hash_(String(d.clave || ''), u.salt) !== u.hash) {
-    c.put(kf, String(fallos + 1), 600);
+    fallo_(usuario, 5);
     throw new Error('Usuario o contraseña incorrectos');
   }
-  c.remove(kf);
+  acierto_(usuario);
   return { token: nuevoToken_(u.id + '|' + String(u.salt).slice(0, 8)), usuario: publico_(u) };
 }
 
@@ -687,10 +709,10 @@ function nuevoToken_(valor) {
 
 // Verifica el PIN del usuario (máximo 5 intentos fallidos cada 10 minutos)
 function pinOk_(u, pin) {
-  const c = CacheService.getScriptCache(), kf = 'FC_' + (NEG ? NEG.id : '') + u.id, fallos = Number(c.get(kf) || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
-  if (hash_(String(pin || ''), u.salt) !== u.hash) { c.put(kf, String(fallos + 1), 600); throw new Error(MULTI_NEGOCIO ? 'El PIN no es correcto' : 'La contraseña no es correcta'); }
-  c.remove(kf);
+  const k = 'c' + (NEG ? NEG.id : '') + u.id;
+  bloqueado_(k);
+  if (hash_(String(pin || ''), u.salt) !== u.hash) { const seg = fallo_(k, 5); throw new Error((MULTI_NEGOCIO ? 'El PIN no es correcto' : 'La contraseña no es correcta') + (seg ? '. Espera ' + bloqTexto_(seg) + '.' : '')); }
+  acierto_(k);
 }
 /* ---- El cliente borra sus datos o elimina su cuenta (Ajustes › Mi cuenta, solo el administrador) ----
  * Antes de las dos cosas, el servidor en la nube guarda una copia «antes de restaurar»: Vic puede recuperarla durante 30 días. */
@@ -732,10 +754,10 @@ function eliminarCuenta_(u, d) {
   return { hasta: addDiasIso_(hoy, 30) };
 }
 function cambiarClave_(u, d) {
-  const c = CacheService.getScriptCache(), kf = 'FC_' + (NEG ? NEG.id : '') + u.id, fallos = Number(c.get(kf) || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
-  if (hash_(String(d.actual || ''), u.salt) !== u.hash) { c.put(kf, String(fallos + 1), 600); throw new Error(MULTI_NEGOCIO ? 'El PIN actual no es correcto' : 'La contraseña actual no es correcta'); }
-  c.remove(kf);
+  const c = CacheService.getScriptCache(), k = 'c' + (NEG ? NEG.id : '') + u.id;
+  bloqueado_(k);
+  if (hash_(String(d.actual || ''), u.salt) !== u.hash) { const seg = fallo_(k, 5); throw new Error((MULTI_NEGOCIO ? 'El PIN actual no es correcto' : 'La contraseña actual no es correcta') + (seg ? '. Espera ' + bloqTexto_(seg) + '.' : '')); }
+  acierto_(k);
   if (MULTI_NEGOCIO ? !/^\d{4,6}$/.test(String(d.nueva || '')) : String(d.nueva || '').length < 6) throw new Error(MULTI_NEGOCIO ? 'El PIN debe tener de 4 a 6 números' : 'La nueva contraseña debe tener al menos 6 caracteres');
   const salt = Utilities.getUuid();
   const hashN = hash_(d.nueva, salt);
@@ -1065,13 +1087,18 @@ function bloquearSiVence_() {
   if (cb && cb.pausado) throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: NEG.lic.negocio, tipo: 'pago', total: cb.total, conceptos: cb.vencidas.map(c => c.c), desde: cb.desde }));
 }
 
-function loginMulti_(d) {
-  const c = CacheService.getScriptCache(), wa = waNorm_(d.whatsapp), kf = 'F_' + wa;
-  const fallos = Number(c.get(kf) || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
-  const falla = () => { c.put(kf, String(fallos + 1), 600); return new Error('WhatsApp o PIN incorrectos'); };
+function loginMulti_(d, ip) {
+  const wa = waNorm_(d.whatsapp);
+  // Bloqueo progresivo por WhatsApp (5 fallos) y por conexión (20 fallos con cualquier número): 10 min → 1 h → 24 h
+  bloqueado_(wa, 'Demasiados intentos fallidos.');
+  if (ip) bloqueado_('i' + ip, 'Demasiados intentos fallidos desde esta conexión.');
   // Una persona puede tener varios negocios con el mismo WhatsApp y PIN (los vincula Vic desde el Panel)
   const accs = mRows_('Accesos').filter(x => String(x.whatsapp) === wa && x.activo);
+  const falla = () => {
+    const seg = fallo_(wa, 5); if (ip) fallo_('i' + ip, 20);
+    if (seg) avisarBloqueo_(accs.map(a => a.negocioId), seg);
+    return new Error('WhatsApp o PIN incorrectos' + (seg ? '. Espera ' + bloqTexto_(seg) + '.' : ''));
+  };
   if (!accs.length) throw falla();
   const validos = []; let errHoja = null;
   accs.forEach(acc => {
@@ -1085,7 +1112,7 @@ function loginMulti_(d) {
   });
   if (!validos.length && errHoja) throw errHoja; // la hoja no abrió: no es un PIN malo
   if (!validos.length) throw falla();
-  c.remove(kf);
+  acierto_(wa);
   let v = validos[0];
   const lista = () => validos.map(x => ({ id: x.lic.id, negocio: x.lic.negocio, giro: x.lic.giro, estado: licNegocio_(x.lic).estado }));
   if (validos.length > 1) {
@@ -1870,14 +1897,19 @@ function cambiarGiro_(u, d) {
 /* El panel se abre en …/?panel con la clave guardada en Propiedades del script → PANEL_CLAVE.
  * Desde ahí se administran todos los negocios: licencias, Plus, prueba, pagos, seguimiento y el chat de soporte. */
 function panelClave_() { return String(PropertiesService.getScriptProperties().getProperty('PANEL_CLAVE') || ''); }
-function panelLogin_(d) {
+function panelLogin_(d, ip) {
   if (!MULTI_NEGOCIO) throw new Error('El panel solo funciona en modo multi-negocio');
-  const c = CacheService.getScriptCache(), fallos = Number(c.get('FPANEL') || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos. Espera 10 minutos.');
+  // El bloqueo es solo para la conexión que falla (nadie puede dejar fuera a Vic); sin huella de conexión, se cuenta en general
+  const k = ip ? 'p' + ip : 'PANEL', c = CacheService.getScriptCache();
+  bloqueado_(k, 'Demasiados intentos.');
   const clave = panelClave_();
   if (!clave) throw new Error('Falta la clave del panel: en el Apps Script, Configuración del proyecto → Propiedades del script, crea PANEL_CLAVE.');
-  if (String(d.clave || '') !== clave) { c.put('FPANEL', String(fallos + 1), 600); throw new Error('Clave incorrecta'); }
-  c.remove('FPANEL');
+  if (String(d.clave || '') !== clave) {
+    const seg = fallo_(k, 5);
+    if (seg) mAppend_('Seguimiento', { id: mId_('SG'), negocioId: '', tipo: 'seguridad-panel', fecha: ahora_().replace('T', ' '), nota: 'Alguien intentó la clave del Panel 5 veces y quedó bloqueado ' + bloqTexto_(seg) + '.' });
+    throw new Error('Clave incorrecta' + (seg ? '. Espera ' + bloqTexto_(seg) + '.' : ''));
+  }
+  acierto_(k);
   const tok = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
   c.put('P_' + tok, '1', PANEL_SEG);
   return { token: tok, plantillas: plantillas_() };
