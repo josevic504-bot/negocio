@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.36';
+const VERSION = '1.9.37';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -35,7 +35,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo','eliminadoEl','purgado'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -284,6 +284,9 @@ function rutaUsuario_(a, u, d, req) {
     case 'eliminar':        return lock_(() => eliminar_(u, d));
     case 'guardarUsuario':  d._token = req.token; return lock_(() => guardarUsuario_(u, d));
     case 'cambiarClave':    d._token = req.token; return lock_(() => cambiarClave_(u, d));
+    case 'misDatos':        return misDatos_(u);
+    case 'borrarDatos':     return lock_(() => borrarDatos_(u, d));
+    case 'eliminarCuenta':  return lock_(() => eliminarCuenta_(u, d));
     case 'subirFoto':       return subirFoto_(u, d);
     case 'cargarEjemplos':  return lock_(() => cargarEjemplos_(u, d));
     case 'precios':         return lock_(() => precios_(u, d));
@@ -661,7 +664,11 @@ function auth_(token) {
   let uid = p[0], firma = p[1];
   if (MULTI_NEGOCIO) {
     const lic = negocioPorId_(p[0]);
-    if (!lic) throw new Error('SESION');
+    if (!lic) { // el administrador eliminó la cuenta desde la app: sus usuarios ven el aviso (30 días), no «sesión vencida»
+      const le = mRows_('Licencias').find(x => x.id === p[0]);
+      if (le && esEliminada_(le) && le.eliminadoEl && le.purgado !== 'si') throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: le.negocio, tipo: 'eliminada' }));
+      throw new Error('SESION');
+    }
     setNegocio_(lic); uid = p[1]; firma = p[2]; SOLO_VER = p[3] === 'ver';
     bloquearSiVence_();
   }
@@ -678,6 +685,52 @@ function nuevoToken_(valor) {
   return token;
 }
 
+// Verifica el PIN del usuario (máximo 5 intentos fallidos cada 10 minutos)
+function pinOk_(u, pin) {
+  const c = CacheService.getScriptCache(), kf = 'FC_' + (NEG ? NEG.id : '') + u.id, fallos = Number(c.get(kf) || 0);
+  if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
+  if (hash_(String(pin || ''), u.salt) !== u.hash) { c.put(kf, String(fallos + 1), 600); throw new Error(MULTI_NEGOCIO ? 'El PIN no es correcto' : 'La contraseña no es correcta'); }
+  c.remove(kf);
+}
+/* ---- El cliente borra sus datos o elimina su cuenta (Ajustes › Mi cuenta, solo el administrador) ----
+ * Antes de las dos cosas, el servidor en la nube guarda una copia «antes de restaurar»: Vic puede recuperarla durante 30 días. */
+const TABLAS_BASE = ['Usuarios', 'Config', 'PlanCuentas', 'Cuentas'];          // nunca se borran desde la app
+const TABLAS_CATALOGO = ['Productos', 'Clientes', 'Proveedores', 'Mascotas'];   // se conservan al borrar «solo movimientos»
+function vaciarHoja_(t) { const sh = sh_(t), n = sh.getLastRow(); if (n > 1) sh.deleteRows(2, n - 1); invalidar_(t); }
+function misDatos_(u) {
+  req_(u, ['admin']);
+  const o = {};
+  Object.keys(SCHEMA).forEach(t => { if (t === 'Usuarios') return; const r = rows_(t); if (r.length) o[t] = r; });
+  return o;
+}
+function borrarDatos_(u, d) {
+  req_(u, ['admin']); noVer_();
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('Esta opción no está disponible aquí');
+  if (norm_(d.confirmar) !== norm_(NEG.lic.negocio)) throw new Error('El nombre no coincide. Escríbelo tal como aparece en Ajustes.');
+  pinOk_(u, d.pin);
+  const todo = d.alcance === 'todo';
+  if (todo) rows_('Productos').forEach(p => { if (p.foto) borrarFoto_(p.foto); });
+  const tablas = Object.keys(SCHEMA).filter(t => TABLAS_BASE.indexOf(t) < 0 && (todo || TABLAS_CATALOGO.indexOf(t) < 0));
+  tablas.forEach(vaciarHoja_);
+  mSet_('Licencias', NEG.lic, { ultimaVenta: '', ventas7: '0' }); CacheService.getScriptCache().remove('L_' + NEG.id);
+  mAppend_('Seguimiento', { id: mId_('SG'), negocioId: NEG.id, tipo: 'cliente', fecha: ahora_().replace('T', ' '), nota: 'El cliente borró ' + (todo ? 'todos sus datos y empezó de cero' : 'sus movimientos (ventas, compras, gastos, caja y pedidos)') + ' · ' + txt_(u.nombre, 40) });
+  return { tablas: tablas.length, todo: todo };
+}
+function eliminarCuenta_(u, d) {
+  req_(u, ['admin']); noVer_();
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('Esta opción no está disponible aquí');
+  if (String(d.confirmar || '').trim().toUpperCase() !== 'ELIMINAR') throw new Error('Escribe ELIMINAR para confirmar');
+  pinOk_(u, d.pin);
+  const l = NEG.lic, hoy = hoy_(), motivo = txt_(d.motivo, 120);
+  // Su WhatsApp queda libre para registrarse de nuevo: los accesos se marcan (si Vic recupera la cuenta, se destapan)
+  const sa = masterSheet_('Accesos'), h = SCHEMA_M.Accesos;
+  mRows_('Accesos').filter(a => a.negocioId === l.id && a._fila && String(a.whatsapp).indexOf('x') !== 0).forEach(a => sa.getRange(a._fila, h.indexOf('whatsapp') + 1).setValue('x' + a.whatsapp));
+  delete MEMO._m_Accesos;
+  mSet_('Licencias', l, { estado: 'Eliminada', eliminadoEl: hoy + '|' + String(l.estado || '') + '|' + motivo, notas: ('Eliminada por el cliente ' + hoy + (motivo ? ' · ' + motivo : '') + (l.notas ? ' · ' + l.notas : '')).slice(0, 500) });
+  CacheService.getScriptCache().remove('L_' + l.id);
+  mAppend_('Seguimiento', { id: mId_('SG'), negocioId: l.id, tipo: 'cliente', fecha: ahora_().replace('T', ' '), nota: 'El cliente eliminó su cuenta' + (motivo ? ' · «' + motivo + '»' : '') + ' · ' + txt_(u.nombre, 40) });
+  return { hasta: addDiasIso_(hoy, 30) };
+}
 function cambiarClave_(u, d) {
   const c = CacheService.getScriptCache(), kf = 'FC_' + (NEG ? NEG.id : '') + u.id, fallos = Number(c.get(kf) || 0);
   if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
@@ -989,7 +1042,7 @@ function esColab_(l) { return String(l && l.estado || '').trim().toLowerCase() =
 function licNegocio_(l) {
   const est = String(l.estado || '').trim().toLowerCase();
   if (est === 'activa' || est === 'colaborador') return { estado: 'completa' };
-  if (est === 'bloqueada' || est === 'eliminada') return { estado: 'bloqueada', contacto: CONTACTO_WA };
+  if (est === 'bloqueada' || est === 'eliminada') return { estado: 'bloqueada', contacto: CONTACTO_WA, eliminada: est === 'eliminada' && !!l.eliminadoEl };
   const vence = String(l.vencePrueba || '').slice(0, 10);
   const fin = /^\d{4}-\d{2}-\d{2}$/.test(vence) ? new Date(vence + 'T00:00:00').getTime() : 0;
   const resta = Math.ceil((fin - Date.now()) / 86400000);
@@ -1005,7 +1058,7 @@ function licNegocio_(l) {
 function bloquearSiVence_() {
   const lic = licencia_();
   if (lic.estado === 'vencida' || lic.estado === 'bloqueada') {
-    throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: NEG ? NEG.lic.negocio : '', tipo: lic.estado }));
+    throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: NEG ? NEG.lic.negocio : '', tipo: lic.eliminada ? 'eliminada' : lic.estado }));
   }
   // Pago programado vencido y sin registrar después de los días de gracia: el programa se pausa hasta que Vic lo marque
   const cb = MULTI_NEGOCIO && NEG && NEG.lic ? cobroDe_(NEG.lic) : null;
@@ -1993,6 +2046,8 @@ function panelResumen_() {
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION, colaboradores: colabs.length,
     visitas: visitasMini_(), vendedores: vendedores_().map(v => ({ codigo: v.codigo, nombre: v.nombre })),
+    eliminadas: mRows_('Licencias').filter(l => esEliminada_(l) && l.eliminadoEl && l.purgado !== 'si').map(l => { const p = String(l.eliminadoEl).split('|'); return { id: l.id, negocio: l.negocio, dueno: l.dueno, giro: l.giro, whatsapp: l.whatsapp, estado: 'eliminada', fecha: p[0], antes: p[1] || '', motivo: p[2] || '', borraEl: addDiasIso_(p[0], 30), ultimaConexion: l.ultimaConexion, plus: false, giros: [], cobro: null }; }),
+    avisosCli: segs.filter(x => x.tipo === 'cliente' && diasDesde_(x.fecha) <= 7).sort((a, b) => a.fecha < b.fecha ? 1 : -1).slice(0, 10).map(x => { const l = vivas.concat(mRows_('Licencias').filter(esEliminada_)).find(k => k.id === x.negocioId) || {}; return { id: x.negocioId, negocio: l.negocio || '', fecha: x.fecha, nota: x.nota }; }),
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics.concat(colabs), duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
     comprobantes: panelComprobantes_(), datosPagoLic: PropertiesService.getScriptProperties().getProperty('DATOS_PAGO_LIC') || '', soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
@@ -2145,6 +2200,7 @@ function panelImportar_(d) {
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
   const l = licDe_(d.id), f = panelFicha_(l, mRows_('Seguimiento'));
+  if (esEliminada_(l) && l.eliminadoEl) { const p = String(l.eliminadoEl).split('|'); f.estado = 'eliminada'; f.eliminada = { fecha: p[0], antes: p[1] || '', motivo: p[2] || '', borraEl: addDiasIso_(p[0], 30), purgado: l.purgado === 'si' }; }
   const camps = campanas_(), og = origenesLic_([l])[l.id] || {}, c = campanaDe_(l, camps, og.canal);
   f.origen = og;
   f.llego = c ? { id: c.id, nombre: c.plataforma + ' · «' + c.nombre + '»', desde: c.desde, hasta: c.hasta, auto: !l.llegoPor } : { id: '', nombre: '', directo: l.llegoPor === 'directo' };
@@ -2263,6 +2319,15 @@ function panelAccion_(d) {
   const pago = (concepto, idNeg) => { if (Number(d.monto) > 0) mAppend_('PagosLic', { id: mId_('G'), negocioId: idNeg || l.id, fecha: f, monto: r2_(Number(d.monto)), concepto: txt_(d.concepto, 60) || concepto, metodo: txt_(d.metodo, 20) || 'Efectivo', nota: '' }); };
   switch (d.accion) {
     case 'activar':    upd.estado = 'Activa'; nota = 'Licencia activada'; pago('Licencia'); break;
+    case 'recuperar': { // cuenta que el cliente eliminó: vuelve al estado que tenía y sus usuarios entran de nuevo
+      if (!esEliminada_(l) || !l.eliminadoEl) throw new Error('Esta cuenta no la eliminó el cliente');
+      if (l.purgado === 'si') throw new Error('Sus datos ya se borraron definitivamente');
+      const antes = String(l.eliminadoEl).split('|')[1] || 'Prueba';
+      const sa = masterSheet_('Accesos'), ha = SCHEMA_M.Accesos;
+      mRows_('Accesos').filter(a => a.negocioId === l.id && a._fila && String(a.whatsapp).indexOf('x') === 0).forEach(a => sa.getRange(a._fila, ha.indexOf('whatsapp') + 1).setValue(String(a.whatsapp).slice(1)));
+      delete MEMO._m_Accesos;
+      upd.estado = antes === 'Eliminada' ? 'Prueba' : antes; upd.eliminadoEl = ''; nota = 'Cuenta recuperada (el cliente la había eliminado)'; break;
+    }
     case 'colaborador': upd.estado = 'Colaborador'; upd.cobro = ''; nota = 'Marcado como colaborador · todo activo sin cobro' + (d.nota ? ' · ' + txt_(d.nota, 120) : ''); break;
     case 'quitarColab': upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Vencida'; nota = 'Ya no es colaborador'; break;
     case 'plus':       upd.plus = 'Sí'; nota = 'Plus activado'; pago('Plus'); break;
