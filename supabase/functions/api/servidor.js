@@ -244,6 +244,10 @@ function RECORDATORIOS_(ids) {
       Object.keys(MEMO).forEach(function (k) { if (k.indexOf('_m_') !== 0) delete MEMO[k]; });
       var l = negocioPorId_(id); if (!l) return;
       setNegocio_(l);
+      // Recordatorio del pago de la licencia (unos días antes y mientras esté pendiente)
+      try { var cb = cobroDe_(l); if (cb && (cb.vencidas.length || (cb.proxima && cb.proxima.f <= addDiasIso_(hoy_(), 3)))) {
+        var ml = function (n) { return money_(n, { moneda: 'L' }); };
+        out.push({ neg: id, tipo: 'licencia', titulo: '💳 Pago de tu licencia', cuerpo: (cb.vencidas.length ? 'Tienes un pago pendiente de ' + ml(cb.total) : 'Tu pago de ' + ml(cb.proxima.m) + ' vence el ' + cb.proxima.f.slice(8, 10) + '/' + cb.proxima.f.slice(5, 7)) + ' · Toca para enviar tu comprobante' }); } } catch (e) { if (e && e.message === '__FALTA__') throw e; }
       try { bloquearSiVence_(); } catch (e) { if (e && e.message === '__FALTA__') throw e; return; }
       var cfg = config_(), a = avisosDia_(), p = [];
       var pl = function (n, uno, varios) { return n === 1 ? uno : n + ' ' + varios; };
@@ -373,7 +377,7 @@ function RECORDATORIOS_(ids) {
     const d = body.data || {}, accion = body.action;
     let neg = '', uid = '';
     if (body.panel && vigente(Rq, 'P_' + body.panel)) neg = '_panel';
-    else if (body.token) { const v = vigente(Rq, 'S_' + body.token); const p = v ? v.split('|') : []; if (p.length >= 3) { neg = p[0]; uid = p[1]; } }
+    else if (body.token) { const v = vigente(Rq, 'S_' + body.token); const p = v ? v.split('|') : []; if (p[3] === 'ver') return { ok: false, error: 'Modo soporte: los avisos no se activan aquí' }; if (p.length >= 3) { neg = p[0]; uid = p[1]; } }
     if (!neg) return { ok: false, error: body.panel ? 'PANEL' : 'SESION' };
     const sub = d.sub || {}, ep = String(sub.endpoint || d.endpoint || '');
     if (!/^https:\/\/[^\s]{10,900}$/.test(ep)) return { ok: false, error: 'Este equipo no dio un permiso de avisos válido' };
@@ -404,6 +408,12 @@ function RECORDATORIOS_(ids) {
         out.push({ negocio: o.n, tipo: 'pedidos', titulo: '💳 Comprobante de pago' + (pe.numero ? ' · ' + pe.numero : ''), cuerpo: corto((pe.nombre || 'Un cliente') + ' envió su comprobante' + (pe.total ? ' · ' + money(o.n, pe.total) : ''), 140), vista: 'pedidos', tag: 'comp-' + (o.k && o.k.id) });
         return;
       }
+      // Vic: el negocio mandó el comprobante del pago de su licencia
+      if (o.op === 'upd' && o.t === 'CuotasLic' && !o.n && o.row && o.row.compEstado === 'revisar') {
+        const cu = objFila(tablaM('CuotasLic'), o.k && o.k.id) || {}, li = objFila(tablaM('Licencias'), cu.negocioId) || {};
+        out.push({ negocio: '_panel', tipo: 'pagos', titulo: '💳 Pago de licencia · ' + corto(li.negocio || 'Un negocio', 40), cuerpo: corto((cu.concepto || 'Pago') + ' · L ' + (Number(cu.monto) || 0).toFixed(2) + ' · envió su comprobante', 140), url: 'panel', tag: 'lic-' + (cu.negocioId || '') });
+        return;
+      }
       if (o.op !== 'ins' || !o.row) return;
       const r = o.row;
       if (o.t === 'Pedidos' && o.n) {
@@ -416,6 +426,8 @@ function RECORDATORIOS_(ids) {
         const ch = objFila(tablaM('Soporte'), r.chatId);
         if (r.de === 'cli') out.push({ negocio: '_panel', tipo: 'soporte', titulo: '🆘 Soporte · ' + corto(ch && ch.negocio || r.quien || 'Un negocio', 40), cuerpo: corto(r.texto || '📷 Foto', 140), url: 'panel', tag: 'sop-' + r.chatId });
         else if (r.de === 'adm' && ch && ch.negocioId) out.push({ negocio: ch.negocioId, tipo: 'soporte', titulo: '💬 El administrador te respondió', cuerpo: corto(r.texto || 'Ábrelo en Ayuda › Contactar al administrador', 140), vista: 'inicio' });
+      } else if (o.t === 'Anuncios' && !o.n && String(r.canales).indexOf('push') >= 0) {
+        String(r.destinos || '').split(',').filter(Boolean).forEach(neg => out.push({ negocio: neg, tipo: 'anuncio', titulo: '📣 ' + corto(r.titulo || 'Gestión de Negocio VM', 50), cuerpo: corto(r.texto, 160), vista: 'inicio', tag: 'an-' + r.id }));
       } else if (o.t === 'Licencias' && !o.n) {
         out.push({ negocio: '_panel', tipo: 'registros', titulo: '🎉 Nuevo registro: ' + corto(r.negocio || 'Negocio', 50), cuerpo: corto([r.dueno, r.giro, r.origen ? 'llegó por ' + r.origen : ''].filter(Boolean).join(' · '), 140), url: 'panel', tag: 'reg-' + r.id });
       }
@@ -537,7 +549,7 @@ function RECORDATORIOS_(ids) {
           continue;
         }
       }
-      if (negsRec && out.ok) { out.data.forEach(r => Cq.efectos.push({ push: { negocio: r.neg, tipo: 'resumen', titulo: r.titulo, cuerpo: r.cuerpo, vista: 'inicio', tag: 'resumen' } })); out = { ok: true, data: out.data.length }; }
+      if (negsRec && out.ok) { out.data.forEach(r => Cq.efectos.push({ push: { negocio: r.neg, tipo: r.tipo || 'resumen', titulo: r.titulo, cuerpo: r.cuerpo, vista: 'inicio', tag: r.tipo || 'resumen' } })); out = { ok: true, data: out.data.length }; }
       if (!negsRec && db.push) avisosDe(ops, Rq, Cq).forEach(p => Cq.efectos.push({ push: p }));
       // Avisar a los otros equipos del negocio que algo cambió (solo los nombres de las tablas)
       const tocados = {};
