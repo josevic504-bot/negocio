@@ -843,6 +843,11 @@ body.en-tienda{padding-bottom:110px}
 .t-sec:active{transform:scale(.98)}.t-sec.fo{background:linear-gradient(90deg,color-mix(in srgb,var(--sc) 70%,transparent),transparent 75%),var(--sf) center/cover}
 .t-sec b{align-self:flex-start;background:rgba(255,255,255,.88);color:#2a2a2a;font-family:var(--serif,Georgia,serif);font-style:italic;font-weight:500;font-size:26px;padding:6px 16px;border-radius:8px}
 .t-sec small{font-weight:600;font-size:12.5px;text-shadow:0 1px 3px rgba(0,0,0,.35);max-width:80%}
+/* Secciones con foto en giros que no son catálogo (recargas, streaming…): foto completa con sombra y nombre en mayúsculas */
+.t-secs.foto .t-sec{min-height:126px;color:#fff}.t-secs.foto .t-sec.fo{background:linear-gradient(90deg,rgba(0,0,0,.72),rgba(0,0,0,.25) 60%,rgba(0,0,0,.05)),var(--sf) center/cover}
+.t-secs.foto .t-sec b{background:none;color:#fff;font-family:var(--font,Inter,system-ui,sans-serif);font-style:normal;font-weight:800;letter-spacing:.5px;text-transform:uppercase;font-size:21px;padding:0;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.t-secs.foto .t-sec small{font-size:13px;text-shadow:0 1px 4px rgba(0,0,0,.7)}.t-secs.foto .t-sec .n{background:rgba(255,255,255,.25);backdrop-filter:blur(4px)}
+.sec-t{font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--card,transparent);color:inherit;width:100%}
 .t-sec .n{position:absolute;right:16px;top:14px;font-size:12px;font-weight:700;background:rgba(0,0,0,.18);padding:3px 9px;border-radius:12px}
 .t-banda{position:relative;border-radius:22px;overflow:hidden;min-height:118px;display:flex;align-items:flex-end;padding:16px 20px;margin:4px 0 10px;color:#fff;background:linear-gradient(120deg,color-mix(in srgb,var(--sc) 75%,#fff),var(--sc))}
 .t-banda.fo{background:linear-gradient(0deg,color-mix(in srgb,var(--sc) 85%,transparent),transparent 80%),var(--sf) center/cover}
@@ -1527,7 +1532,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.43';
+const APP_VER = '1.9.44';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1676,7 +1681,7 @@ const ILUS = [
   [/cuidado|higiene|shampoo|champu|desodor|pasta|cepillo/, 'M18 12h12v30H18zM20 12V8h8v4M22 20h4M22 26h4'],
   [/.*/, 'M8 10h14l18 18-12 12L8 22zM15 17a1.5 1.5 0 1 0 .1 0'] ];
 const iluProd = p => { const t = norm((p.categoria || '') + ' ' + (p.nombre || '')); const d = (ILUS.find(x => x[0].test(t)) || ILUS[ILUS.length - 1])[1]; return `<span class="ilu"><svg viewBox="0 0 48 48"><path d="${d}"/></svg></span>`; };
-const fotoSrc = f => !f ? '' : String(f).indexOf('data:') === 0 || String(f).indexOf('http') === 0 ? f : 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(f) + '&sz=w600';
+const fotoSrc = f => !f ? '' : String(f).indexOf('data:') === 0 || String(f).indexOf('http') === 0 || String(f).indexOf('iconos/') === 0 ? f : 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(f) + '&sz=w600';
 const fotoAncha = f => fotoSrc(f).replace('sz=w600', 'sz=w1400');
 function avatarProd(p, cls) {
   const src = fotoSrc(p.foto);
@@ -6258,15 +6263,18 @@ R.tienda = () => {
       <a class="btn wa sm" style="margin-top:10px" href="${waLink(CONTACTO_WA, 'Hola, quiero activar otra sección (giro) en la tienda de ' + (c.nombre || 'mi negocio'))}" target="_blank" rel="noopener">${ic('wa', 16)} Pedir otra sección</a>
       ${on.length > 1 ? '<small class="hint">Al crear o editar un producto eliges en qué sección aparece.</small>' : ''}`, on.length > 1 ? on.length + ' secciones' : '');
   }
-  if (modOn('catalogo')) { // Catálogo: cada categoría es una sección grande con su color o foto
+  if (modOn('catalogo') || modOn('secciones')) { // Secciones: cada categoría es un bloque grande con su foto (o color) y una frase
     const se = (() => { try { return JSON.parse(c.tiendaSecciones || '{}') || {}; } catch (e) { return {}; } })();
-    const ord = ((S.giros || []).find(g => g.id === 'catalogo') || {}).cats || [], pos = k => { const i = ord.indexOf(k); return i < 0 ? 999 : i; };
+    const ord = [].concat.apply([], girosOn().map(g => ((S.giros || []).find(x => x.id === g) || {}).cats || [])), pos = k => { const i = ord.indexOf(k); return i < 0 ? 999 : i; };
+    const fabDe = k => { const f = SEC_FAB[norm(k)]; return f ? { f: 'iconos/sec_' + f[0] + '.webp', t: f[1] } : null; };
     const cs = [...new Set(S.productos.filter(p => p.activo && p.tienda).map(p => p.categoria))].sort((a, b) => pos(a) - pos(b) || a.localeCompare(b));
     h += sec('seccat', 'sparkle', 'Secciones del catálogo', `<p class="xs mut" style="margin-top:0">Tu tienda abre con una sección grande por cada categoría (como las páginas de un catálogo). Elige su color o ponle una foto.</p>
       <div class="list">${cs.map((k, i) => { const x = se[k] || {}, col = /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : CAT_COL[i % CAT_COL.length], n = S.productos.filter(p => p.activo && p.tienda && p.categoria === k).length;
-        return `<div class="li">${x.f ? `<img class="sec-fo" src="${esc(fotoSrc(x.f))}" alt="">` : `<label class="sec-col" title="Color"><input type="color" data-sc="${esc(k)}" value="${col}"></label>`}<div class="tx"><b>${esc(k)}</b><small>${n} ${n === 1 ? 'producto' : 'productos'}${x.f ? ' · con foto' : ''}</small></div>
-          <label class="btn sm">${ic('cam', 15)} ${x.f ? 'Cambiar' : 'Foto'}<input type="file" accept="image/*" data-sf="${esc(k)}" hidden></label>${x.f ? `<button class="btn sm ghost" data-a="secQuitarFoto" data-k="${esc(k)}">Quitar</button>` : ''}</div>`; }).join('') || '<div class="empty">Agrega productos a la tienda para ver sus secciones</div>'}</div>
-      <small class="hint">El orden es el de tus categorías. Las subcategorías (Base, Gloss…) se ponen en cada producto.</small>`, cs.length ? cs.length + ' secciones' : '');
+        const fab = !x.f && !x.c ? fabDe(k) : null;
+        return `<div class="li" style="flex-wrap:wrap">${x.f ? `<img class="sec-fo" src="${esc(fotoSrc(x.f))}" alt="">` : fab ? `<img class="sec-fo" src="${fab.f}" alt="">` : `<label class="sec-col" title="Color"><input type="color" data-sc="${esc(k)}" value="${col}"></label>`}<div class="tx"><b>${esc(k)}</b><small>${n} ${n === 1 ? 'producto' : 'productos'}${x.f ? ' · tu foto' : fab ? ' · foto de fábrica' : ''}</small></div>
+          <label class="btn sm">${ic('cam', 15)} ${x.f || fab ? 'Cambiar' : 'Foto'}<input type="file" accept="image/*" data-sf="${esc(k)}" hidden></label>${x.f ? `<button class="btn sm ghost" data-a="secQuitarFoto" data-k="${esc(k)}">Quitar</button>` : fab ? `<button class="btn sm ghost" data-a="secColorEnVez" data-k="${esc(k)}" title="Usar un color en vez de la foto">Color</button>` : ''}</div>
+          <input class="sec-t" data-st="${esc(k)}" value="${esc(x.t || (fab ? fab.t : ''))}" placeholder="Frase corta de la sección (opcional)" maxlength="60" style="flex-basis:100%;margin-top:6px"></div>`; }).join('') || '<div class="empty">Agrega productos a la tienda para ver sus secciones</div>'}</div>
+      <small class="hint">El orden es el de tus categorías. Toca «Cambiar» para subir tu propia foto (horizontal) de cada sección; la frase se guarda al salir del cuadro.${modOn('catalogo') ? ' Las subcategorías (Base, Gloss…) se ponen en cada producto.' : ''}</small>`, cs.length ? cs.length + ' secciones' : '');
   }
   if (girosOn().includes('compras')) h += sec('compras', 'globe', 'Compras en línea', `<p class="xs mut" style="margin-top:0">Tus clientes pegan el enlace del artículo y su precio en dólares; la tienda les calcula el precio en lempiras con estos datos.</p>
     <div class="f2"><label class="fld"><span>Tipo de cambio (L por US$1)</span><input data-k="comprasCambio" inputmode="decimal" value="${v('comprasCambio')}"></label><label class="fld"><span>Recargo o ganancia (%)</span><input data-k="comprasRecargo" inputmode="decimal" value="${v('comprasRecargo')}"></label></div>
@@ -6342,6 +6350,9 @@ ACC.tema = async el => {
 ACC.modoColor = el => { LS.set('modoColor', el.dataset.m); aplicarTema(S.tema); $$('.modos .pay').forEach(x => x.classList.toggle('on', x === el)); };
 // Secciones del catálogo: color o foto por categoría (se guardan juntas en tiendaSecciones)
 const CAT_COL = ['#e8758f', '#9a83d8', '#f0806a', '#13a58b', '#5b8def', '#c98b5e', '#d45d9b', '#3fa7b5'];
+// Fotos y frases de fábrica de las secciones (fotos libres de derechos, sin logos): el negocio puede cambiarlas en «Mi tienda en línea»
+const SEC_FAB = { 'free fire': ['freefire', 'Diamantes · entrega inmediata'], 'pubg mobile': ['pubg', 'UC · Royale Pass'], 'roblox': ['roblox', 'Robux · packs'], 'call of duty mobile': ['cod', 'CP · pase de batalla'], 'fortnite': ['fortnite', 'V-Bucks · skins'], 'tarjetas de regalo': ['regalo', 'Google Play · PlayStation · Steam'],
+  'netflix': ['netflix', 'Perfiles y cuentas · por mes'], 'disney+': ['disney', 'Perfiles · por mes'], 'hbo max': ['hbo', 'Series y películas · por mes'], 'prime video': ['prime', 'Perfiles · por mes'], 'spotify': ['spotify', 'Premium · por mes'], 'youtube premium': ['youtube', 'Sin anuncios · por mes'], 'iptv': ['iptv', 'Canales en vivo · por dispositivo'], 'combos': ['combos', 'Varias plataformas · ahorra'] };
 async function guardarSecciones(k, cambio) {
   let se = {}; try { se = JSON.parse(S.config.tiendaSecciones || '{}') || {}; } catch (e) {}
   se[k] = Object.assign({}, se[k] || {}, cambio);
@@ -6350,11 +6361,13 @@ async function guardarSecciones(k, cambio) {
 }
 document.addEventListener('change', async e => {
   const col = e.target.closest('input[data-sc]'); if (col) { try { await guardarSecciones(col.dataset.sc, { c: col.value }); toast('Color guardado', 'ok', 1400); } catch (x) { err(x); } return; }
+  const st = e.target.closest('input[data-st]'); if (st) { try { await guardarSecciones(st.dataset.st, { t: st.value.trim().slice(0, 60) }); toast('Frase guardada', 'ok', 1400); } catch (x) { err(x); } return; }
   const f = e.target.closest('input[data-sf]'); if (!f || !f.files[0]) return;
   try { loader(true); const d = await comprimirImagen(f.files[0], DEMO.on ? 480 : 1200); const r = await api('subirFoto', { data: d }, true); await guardarSecciones(f.dataset.sf, { f: r.foto }); toast('Foto de la sección guardada', 'ok'); S.params.sec = 'seccat'; render(); }
   catch (x) { err(x); } finally { loader(false); }
 });
 ACC.secQuitarFoto = async el => { await guardarSecciones(el.dataset.k, { f: '' }); S.params.sec = 'seccat'; render(); };
+ACC.secColorEnVez = async el => { const i = Object.keys(SEC_FAB).indexOf(norm(el.dataset.k)); await guardarSecciones(el.dataset.k, { c: CAT_COL[Math.max(0, i) % CAT_COL.length], f: '' }); S.params.sec = 'seccat'; render(); };
 async function subirPortada(e) {
   const f = e.target.files[0]; if (!f) return;
   try {
@@ -7296,7 +7309,7 @@ ACC.cbPaqueteExcel = async () => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
@@ -7307,6 +7320,7 @@ const MODULOS_INFO = {
   agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios' },
   suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' },
   mascotas:      { n: 'Mascotas, recetas y vacunas', d: 'Expediente de cada mascota con su dueño, consultas con receta, carnet de vacunación y recordatorios por WhatsApp.', g: 'veterinaria' },
+  secciones:     { n: 'Tienda por secciones', d: 'Tu tienda en línea abre con un bloque grande por cada categoría, con su foto o color (Free Fire, Netflix, Roblox…). En Recargas y Streaming viene con fotos de fábrica; la foto y la frase de cada sección se cambian en «Mi tienda en línea».', g: 'recargas, streaming' },
   catalogo:      { n: 'Tienda estilo catálogo', d: 'Tu tienda abre con secciones grandes (como las páginas de un catálogo), cada producto lleva subcategoría, frase y beneficios, los tonos se eligen por color y hay precio especial desde cierta cantidad de piezas.', g: 'Beauty & Moda' },
   cotizaciones:  { n: 'Cotizaciones y contratos', d: 'Cotizaciones elegantes con plan de pagos; al aceptarlas se vuelven proyecto, los pagos quedan agendados y el cliente firma el contrato y el acta de entrega.', g: 'servicios' }
 };
@@ -8661,6 +8675,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.44', fecha: '2026-11-04', items: [
+    { i: 'store', t: 'Tienda por secciones para Recargas y Streaming', d: 'Tu tienda en línea abre con un bloque grande por cada juego o plataforma, con foto y una frase corta. Vienen fotos de fábrica; en «Mi tienda en línea › Secciones» cambias la foto, pones un color o escribes tu propia frase. Cualquier otro giro puede encenderlo en Ajustes › Funciones.' }
+  ] },
   { v: '1.9.43', fecha: '2026-11-04', items: [
     { i: 'check', t: 'Revisión completa del programa', d: 'Probamos cada función una por una y corregimos 11 detalles: el menú «Más» con Contabilidad, el cierre de sesión, la existencia por talla o tono al editar un pedido, el cambio de tipo de negocio con varias tiendas y otros ajustes menores.' }
   ] },
@@ -9235,7 +9252,10 @@ const enCarritoV = (p, vk) => Object.keys(T.cart).reduce((a, k) => a + (kId(k) =
 const desdeT = p => { const ps = p.vars ? Object.values(p.vars).map(x => x.p || p.precio) : [p.precio]; return Math.min(...ps, p.precio); };
 const tSub = () => Object.keys(T.cart).reduce((a, k) => { const p = T.info.productos.find(x => x.id === kId(k)); return a + (p ? precioLinea(p, kOp(k)) * T.cart[k] : 0); }, 0) + tSubCompras();
 const catT = () => !!(T.info && T.info.negocio.catalogo) && (tGiros().length <= 1 || T.giro === 'catalogo');
-const secDe = (c, i) => { const x = (T.info.negocio.secciones || {})[c] || {}; return { c: /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : CAT_COL[i % CAT_COL.length], f: x.f || '' }; };
+// Tienda por secciones (bloques por categoría): catálogo, Recargas, Streaming o cualquier giro con el módulo encendido
+const secT = () => !!(T.info && T.info.negocio.porSecciones) && (tGiros().length <= 1 || (T.info.negocio.girosSec || []).includes(T.giro));
+const secFab = c => { const k = SEC_FAB[norm(c)]; return k ? { f: 'iconos/sec_' + k[0] + '.webp', t: k[1] } : null; };
+const secDe = (c, i) => { const x = (T.info.negocio.secciones || {})[c] || {}, fab = secFab(c); return { c: /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : CAT_COL[i % CAT_COL.length], f: x.f || (!x.c && fab ? fab.f : ''), t: x.t || (fab ? fab.t : '') }; };
 const secEstilo = (c, i) => { const x = secDe(c, i); return `--sc:${x.c}${x.f ? `;--sf:url('${esc(fotoAncha(x.f))}')` : ''}`; };
 function guardarCarrito() { LS.set(tKey('carrito'), JSON.stringify(T.cart)); }
 // ¿Está abierto ahora? (según horario y días de Ajustes)
@@ -9258,12 +9278,12 @@ function pintarTienda() {
   const ord = n.ordenCats || [], pos = c => { const i = ord.indexOf(c); return i < 0 ? 999 : i; };
   const cats = [...new Set(ps.map(p => p.categoria))].sort((a, b) => pos(a) - pos(b) || a.localeCompare(b));
   if (T.cat && T.cat !== '*' && !cats.includes(T.cat)) T.cat = '';
-  const cat = catT() && cats.length > 1;
+  const cat = secT() && cats.length > 1;
   if (!cat && T.cat === '*') T.cat = '';
   const subs = cat && T.cat && T.cat !== '*' ? [...new Set(ps.filter(p => p.categoria === T.cat).map(p => p.sub).filter(Boolean))] : [];
   if (T.sub && !subs.includes(T.sub)) T.sub = '';
-  const secs = cat && !T.cat ? `<div class="t-secs" id="t-secs">${cats.map((c, i) => { const x = secDe(c, i), l = ps.filter(p => p.categoria === c), sb = [...new Set(l.map(p => p.sub).filter(Boolean))];
-      return `<button class="t-sec ${x.f ? 'fo' : ''}" data-sec="${esc(c)}" style="${secEstilo(c, i)}"><span class="n">${l.length}</span><b>${esc(c)}</b><small>${esc(sb.slice(0, 4).join(' · ') || (l.length === 1 ? '1 producto' : l.length + ' productos'))}</small></button>`; }).join('')}
+  const secs = cat && !T.cat ? `<div class="t-secs ${catT() ? '' : 'foto'}" id="t-secs">${cats.map((c, i) => { const x = secDe(c, i), l = ps.filter(p => p.categoria === c), sb = [...new Set(l.map(p => p.sub).filter(Boolean))];
+      return `<button class="t-sec ${x.f ? 'fo' : ''}" data-sec="${esc(c)}" style="${secEstilo(c, i)}"><span class="n">${l.length}</span><b>${esc(c)}</b><small>${esc(x.t || sb.slice(0, 4).join(' · ') || (l.length === 1 ? '1 producto' : l.length + ' productos'))}</small></button>`; }).join('')}
       <button class="chip" data-sec="*" style="justify-self:center">${ic('grid', 15)} Ver todos los productos</button></div>` : '';
   const banda = cat && T.cat ? (() => { const i = Math.max(0, cats.indexOf(T.cat)), x = T.cat === '*' ? { c: 'var(--pri)', f: '' } : secDe(T.cat, i);
       return `<div class="t-banda ${x.f ? 'fo' : ''}" style="${T.cat === '*' ? '--sc:var(--pri)' : secEstilo(T.cat, i)}"><button data-sec="">${ic('left', 15)} Secciones</button><h2>${T.cat === '*' ? 'Todo el catálogo' : esc(T.cat)}</h2></div>`; })() : '';
@@ -9346,8 +9366,8 @@ function pintarTienda() {
 function filtroTienda() {
   const fn = T.cfg && T.cfg.filtro; if (!fn) return '';
   const vals = [];
-  if (catT() && (!T.cat || T.cat === '*')) { T.f = ''; return ''; } // catálogo: la talla se filtra dentro de la sección (Ropa), no en todo
-  T.info.productos.filter(p => (!T.giro || p.g === T.giro) && (!catT() || p.categoria === T.cat)).forEach(p => p.ops.forEach(o => { if (norm(o.n) === norm(fn)) o.v.forEach(v => { if (!vals.includes(v)) vals.push(v); }); }));
+  if (secT() && (!T.cat || T.cat === '*')) { T.f = ''; return ''; } // catálogo: la talla se filtra dentro de la sección (Ropa), no en todo
+  T.info.productos.filter(p => (!T.giro || p.g === T.giro) && (!secT() || p.categoria === T.cat)).forEach(p => p.ops.forEach(o => { if (norm(o.n) === norm(fn)) o.v.forEach(v => { if (!vals.includes(v)) vals.push(v); }); }));
   if (vals.length < 2) { T.f = ''; return ''; }
   const ORD = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', '3XL', '4XL'], pos = v => { const i = ORD.indexOf(String(v).toUpperCase()); return i >= 0 ? i : isNaN(parseFloat(v)) ? 900 : 100 + parseFloat(v); };
   vals.sort((a, b) => pos(a) - pos(b));
@@ -9357,7 +9377,7 @@ function filtroTienda() {
 const tieneValor = (p, n, v) => p.ops.some(o => norm(o.n) === norm(n) && o.v.includes(v));
 function gridTienda() {
   const q = norm(T.q);
-  const enCat = catT() && T.cat === '*' ? '' : T.cat;
+  const enCat = secT() && T.cat === '*' ? '' : T.cat;
   const l = T.info.productos.filter(p => (!T.giro || p.g === T.giro) && (!enCat || p.categoria === enCat) && (!T.sub || p.sub === T.sub) && (!T.f || tieneValor(p, T.cfg.filtro, T.f)) && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q) || norm(p.sub || '').includes(q) || norm(p.descripcion).includes(q) || norm(p.opciones).includes(q)));
   // Catálogo: con las secciones a la vista, los productos salen al elegir una (o al buscar)
   const g = $('#t-grid'), oculto = !!$('#t-secs') && !q; g.hidden = oculto || (tGiros().length > 1 && !T.giro);
