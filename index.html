@@ -87,6 +87,7 @@ body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{paddin
 .pn-cta b{display:block;font-size:15px}.pn-cta small{display:block;opacity:.88;font-size:12px}
 .pn-ori{margin-top:9px;padding:6px 0;cursor:pointer}.pn-ori>div{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:13.5px}.pn-ori em{flex:1;font-style:normal}.pn-ori span{height:8px;border-radius:4px;background:var(--pri)}.pn-ori b{min-width:28px;text-align:right}
 .pn-pub{padding:13px 14px;cursor:pointer}.pn-pub small{display:block;color:var(--mut);font-size:12px;margin-top:7px}
+.pn-esp{padding:13px 14px}.pn-esp-f{margin-top:12px}.pn-esp-f:first-child{margin-top:0}.pn-esp-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14px}.pn-esp-t b{font-weight:600}.pn-esp-t span{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}.pn-esp small{display:block;margin-top:4px;font-size:12px;color:var(--mut)}.pn-esp .pn-prog span{min-width:4px}
 .pn-prog{height:9px;background:var(--pri2);border-radius:5px;overflow:hidden;margin-top:8px}.pn-prog span{display:block;height:100%;border-radius:5px}
 .hbtn .dot{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;background:linear-gradient(135deg,var(--a1),var(--a2));color:var(--ona);font-size:11px;font-weight:600;line-height:18px;padding:0 5px;box-shadow:0 0 0 2px var(--h1)}
 .hero-c{position:relative;z-index:1}
@@ -1532,7 +1533,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.44';
+const APP_VER = '1.9.45';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2939,6 +2940,11 @@ async function panelResumen() {
   if (!P.d) $('#main').innerHTML = '<div class="empty">Cargando…</div>';
   const d = await api('panelResumen', {}); P.d = d; P.pl = d.plantillas || P.pl;
   panelPinta();
+  panelEspacio();
+}
+// Espacio usado en Supabase: se pide aparte para no atrasar el Panel; si falla, la tarjeta simplemente no sale
+async function panelEspacio() {
+  try { P.esp = await api('panelEspacio', {}, true); const el = $('#pn-esp'); if (el) el.innerHTML = pnEspacioHTML(P.esp); } catch (e) { console.log('Espacio no disponible', e); }
 }
 function panelPinta() {
   const d = P.d; if (!d) return;
@@ -2952,6 +2958,14 @@ function panelPinta() {
 ACC.panelTab = el => { P.tab = el.dataset.k; LS.set('panelTab', P.tab); if (el.dataset.f !== undefined) P.f.est = el.dataset.f; panelPinta(); };
 const pnMes = d => esc(fMes(d.hoy.slice(0, 7)).split(' ')[0]);
 const pnFila = (a, ico, fondo, t, s, n, extra) => `<button class="pn-it" data-a="${a}"${extra || ''}><span class="pn-ico" style="background:${fondo}">${ic(ico, 18)}</span><div><b>${t}</b>${s ? `<small>${s}</small>` : ''}</div>${n ? `<span class="pn-n">${n}</span>` : ic('right', 16)}</button>`;
+const ESP_MAX = { db: 500 * 1048576, arch: 1073741824 }; // límites del plan gratis de Supabase
+const pnBytes = b => (b >= 1e9 ? (b / 1073741824).toFixed(2) + ' GB' : (b / 1048576).toFixed(1) + ' MB').replace(/\.0+ /, ' ');
+function pnEspacioHTML(e) {
+  if (!e) return '';
+  const fila = (t, u, m, nota) => { const pct = Math.round(u * 1000 / m) / 10, c = pct >= 90 ? 'var(--bad)' : pct >= 70 ? 'var(--warn)' : 'var(--ok)'; return `<div class="pn-esp-f"><div class="pn-esp-t"><b>${t}</b><span>${pnBytes(u)} de ${pnBytes(m)}</span></div><div class="pn-prog"><span style="width:${Math.min(100, pct)}%;background:${c}"></span></div><small>${pct}% usado · ${nota}</small></div>`; };
+  const db = Number(e.db) || 0, arch = Number(e.arch) || 0, n = Number(e.archN) || 0;
+  return `<div class="pn-h">Espacio en Supabase <a style="color:var(--mut)">plan gratis</a></div><div class="pn-card pn-esp">${fila('Base de datos', db, ESP_MAX.db, db < ESP_MAX.db ? 'quedan ' + pnBytes(ESP_MAX.db - db) : 'límite alcanzado')}${fila('Archivos y fotos', arch, ESP_MAX.arch, n + ' archivo' + (n === 1 ? '' : 's'))}</div>`;
+}
 function pnDashboard(d) {
   const k = d.kpis, res = k.resultadoMes || 0;
   const pend = [];
@@ -2976,6 +2990,7 @@ function pnDashboard(d) {
     <div class="pn-h">Pendientes ${pend.length ? `<a>${pnPendN(d) + atender + (k.sinVender7 || 0)}</a>` : ''}</div>
     ${pend.length ? `<div class="pn-card">${pend.join('')}</div>` : `<div class="pn-card pn-vacio">${ic('check', 18)} Todo al día: nada pendiente</div>`}
     ${(d.comprobantes || []).length ? `<div id="pn-comp">${panelComprobantesHTML(d.comprobantes)}</div>` : ''}
+    <div id="pn-esp">${pnEspacioHTML(P.esp)}</div>
     ${pm.length > 1 ? `<div class="pn-h">Registros por mes <a style="color:var(--mut)">en color: activos</a></div><div class="pn-card pn-bars">${pm.map((m, i) => `<div class="${i === pm.length - 1 ? 'on' : ''}" title="${m.activos} activos de ${m.registros} registros"><em>${m.registros}</em><span style="height:${Math.round(m.registros * 64 / mx) + 4}px"><s style="height:${m.registros ? Math.round(m.activos * 100 / m.registros) : 0}%"></s></span>${esc(fMes(m.mes).split(' ')[0].slice(0, 3))}</div>`).join('')}</div>` : ''}`;
 }
 // Orden de la lista de clientes: recientes (fecha de registro, por defecto) → pendientes → salud
