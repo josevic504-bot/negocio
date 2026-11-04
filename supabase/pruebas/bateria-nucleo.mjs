@@ -1,0 +1,486 @@
+// Batería de pruebas del núcleo: cuenta, sesión, catálogo, usuarios, inventario, soporte, contratos y bloqueo de PIN
+// Ejecutar: cd supabase/pruebas && node bateria-nucleo.mjs
+import { api, db, logs } from './prueba.mjs';
+db.push = q => (q.lista ? [] : true);
+let pasadas = 0, fallidas = 0; const fallos = [];
+const ok = (nombre, cond, detalle) => { if (cond) { pasadas++; console.log('✓', nombre); } else { fallidas++; fallos.push(nombre + (detalle ? ' — ' + detalle : '')); console.log('✗', nombre, detalle || ''); } return !!cond; };
+const err = r => (r && r.error) || JSON.stringify(r && r.data).slice(0, 160);
+const sec = t => console.log('\n── ' + t + ' ──');
+const IP = 'abcdef0123456789', IP2 = '1111111111111111', IP3 = '2222222222222222';
+const vencer = pref => Object.keys(db.cache).forEach(k => { if (k.indexOf(pref) === 0) db.cache[k].e = Date.now() - 1; });
+const PNG = 'data:image/png;base64,' + 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='.repeat(6);
+db.props.PANEL_CLAVE = 'secreta'; db.props.PLUS_PASSWORD = 'plus123';
+const panelTok = async () => (await api('panelLogin', { clave: 'secreta' }, undefined, { ip: IP3 })).data.token;
+let PT = await panelTok();
+const panel = (a, d) => api(a, d, undefined, { panel: PT });
+
+/* ===================== REGISTRAR ===================== */
+sec('registrar');
+let r = await api('registrar', { negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '3313-0265', pin: '1234' });
+ok('registrar válido', r.ok && r.data.token && r.data.usuario.rol === 'admin', err(r));
+let TOK = r.data.token; const NEG1 = db.T.Licencias[0].id;
+ok('whatsapp se guarda con 504', db.T.Accesos[0].whatsapp === '50433130265', db.T.Accesos[0].whatsapp);
+r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130265', pin: '9999' });
+ok('registrar whatsapp repetido → rechazado', !r.ok && /ya tiene una cuenta/.test(r.error), err(r));
+r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '123' });
+ok('registrar pin corto (3) → rechazado', !r.ok && /4 a 6/.test(r.error), err(r));
+r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '1234567' });
+ok('registrar pin largo (7) → rechazado', !r.ok && /4 a 6/.test(r.error), err(r));
+r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: 'abcd' });
+ok('registrar pin con letras → rechazado', !r.ok && /4 a 6/.test(r.error), err(r));
+r = await api('registrar', { negocio: '', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '1234' });
+ok('registrar sin nombre de negocio → rechazado', !r.ok && /nombre de tu negocio/.test(r.error), err(r));
+r = await api('registrar', { negocio: 'Otra', nombre: '', giro: 'tienda', whatsapp: '33130266', pin: '1234' });
+ok('registrar sin nombre propio → rechazado', !r.ok && /tu nombre/.test(r.error), err(r));
+r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '3313', pin: '1234' });
+ok('registrar whatsapp corto → rechazado', !r.ok && /WhatsApp/.test(r.error), err(r));
+r = await api('registrar', { negocio: 'Giro raro', nombre: 'Ana', giro: 'inexistente', whatsapp: '99990001', pin: '5555' });
+ok('registrar giro inválido → se acepta como «otro»', r.ok && db.T.Licencias.find(l => l.negocio === 'Giro raro').giro === 'Otro tipo de negocio', err(r));
+const TOK_ANA = r.data.token;
+r = await api('registrar', { negocio: 'Cinco', nombre: 'C', giro: 'otro', whatsapp: '99990005', pin: '12345' }); ok('registrar pin de 5 dígitos → ok', r.ok, err(r));
+db.cache['REG_H'] = { v: '30', e: Date.now() + 3600000 };
+r = await api('registrar', { negocio: 'Treinta', nombre: 'T', giro: 'otro', whatsapp: '99990030', pin: '1234' }); ok('registrar con 30 registros en la hora → rechazado', !r.ok && /muchos registros/.test(r.error), err(r));
+delete db.cache['REG_H'];
+r = await api('registrar', { negocio: 'Boutique Luna', nombre: 'Beto', giro: 'boutique', whatsapp: '99990002', pin: '2222' });
+ok('registrar boutique', r.ok, err(r)); const TOK_B = r.data.token; const NEG_B = db.T.Licencias.find(l => l.negocio === 'Boutique Luna').id;
+
+/* ===================== INFO / LOGIN ===================== */
+sec('info / login');
+r = await api('info', {}); ok('info pública', r.ok && r.data.multi === true && /^\d+\.\d+\.\d+$/.test(r.data.version), err(r));
+r = await api('login', { whatsapp: '33130265', pin: '1234' }); ok('login pin correcto', r.ok && r.data.token && r.data.usuario.nombre === 'Vic', err(r));
+TOK = r.data.token;
+r = await api('login', { whatsapp: '+504 3313 0265', pin: '1234' }); ok('login con número formateado', r.ok, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '4321' }); ok('login pin incorrecto', !r.ok && /incorrectos/.test(r.error), err(r));
+r = await api('login', { whatsapp: '30000000', pin: '1234' }); ok('login whatsapp inexistente', !r.ok && /incorrectos/.test(r.error), err(r));
+r = await api('login', { whatsapp: '', pin: '' }); ok('login vacío', !r.ok, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '1234', negocioId: 'NOEXISTE' }); ok('login con negocioId ajeno y un solo negocio → entra igual al suyo', r.ok, err(r));
+r = await api('bootstrap', {}, 'tokenfalso'); ok('bootstrap con token falso → SESION', !r.ok && r.error === 'SESION', err(r));
+r = await api('bootstrap', {}); ok('bootstrap sin token → SESION', !r.ok && r.error === 'SESION', err(r));
+r = await api('accionInventada', {}, TOK); ok('acción inexistente → error', !r.ok && /no válida/.test(r.error), err(r));
+
+/* ===================== BOOTSTRAP / INICIO / TIENDAS / PENDIENTES ===================== */
+sec('bootstrap / inicio / tiendas / pendientes');
+r = await api('bootstrap', { app: '1.9.38', inicio: true }, TOK);
+ok('bootstrap admin', r.ok && r.data.config.nombre === 'Pulpería La Bendición' && r.data.usuario.rol === 'admin' && r.data.licencia.estado === 'prueba' && r.data.plus === true, err(r));
+ok('bootstrap trae inicio cuando se pide', r.ok && r.data.inicio && r.data.inicio.rol === 'admin', err(r));
+ok('bootstrap no expone hash/salt', r.ok && r.data.usuarios.every(u => !u.hash && !u.salt), err(r));
+ok('bootstrap no expone seq/sys de config', r.ok && !Object.keys(r.data.config).some(k => /^(seq|sys)/.test(k)), err(r));
+ok('bootstrap anota versión de la app en Licencias', db.T.Licencias.find(l => l.id === NEG1).version === '1.9.38');
+r = await api('inicio', {}, TOK); ok('inicio', r.ok && r.data.rol === 'admin', err(r));
+r = await api('tiendas', {}, TOK); ok('tiendas con un solo giro → lista vacía', r.ok && Array.isArray(r.data.tiendas) && r.data.tiendas.length === 0, err(r));
+r = await api('pendientes', {}, TOK); ok('pendientes', r.ok && r.data.nuevos === 0 && r.data.mensajes === 0 && r.data.soporte === 0, err(r));
+
+/* ===================== GUARDAR / ELIMINAR PRODUCTOS ===================== */
+sec('guardar Productos');
+const G = (ent, registro, tok) => api('guardar', { entidad: ent, registro }, tok || TOK);
+r = await G('Productos', { nombre: 'Café molido 400 g', categoria: 'Abarrotes', precio: 95, costo: 70, stock: 12, codigo: 'CAF1' });
+ok('crear producto con stock inicial', r.ok && r.data.id && r.data.stock === 12 && r.data.tipo === 'producto' && r.data.activo === true, err(r));
+const PCAFE = r.data.id;
+ok('stock inicial deja movimiento en Inventario', db.T.Inventario.some(m => m.productoId === PCAFE && m.tipo === 'inicial' && m.cantidad === 12));
+r = await G('Productos', { nombre: '', precio: 10 }); ok('producto sin nombre → rechazado', !r.ok && /nombre es obligatorio/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Malo', precio: -5 }); ok('precio negativo → rechazado', !r.ok && /negativos/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Malo', precio: 5, costo: -1 }); ok('costo negativo → rechazado', !r.ok && /negativos/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Sin categoría', precio: 5 }); ok('sin categoría → queda «General» (no es obligatoria)', r.ok && r.data.categoria === 'General', err(r));
+const PSIN = r.data.id;
+r = await G('Productos', { nombre: 'Otro café', precio: 5, codigo: 'caf1' }); ok('código repetido (sin importar mayúsculas) → rechazado', !r.ok && /ese código/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Azúcar', categoria: 'abarrotes', precio: 20 }); ok('categoría se unifica con la existente («Abarrotes»)', r.ok && r.data.categoria === 'Abarrotes', err(r));
+const PAZU = r.data.id;
+r = await G('Productos', { id: PCAFE, precio: 99, stock: 500 }); ok('editar producto: precio cambia, stock NO cambia por guardar', r.ok && r.data.precio === 99 && r.data.stock === 12, err(r));
+r = await G('Productos', { id: 'PNOEXISTE', precio: 1 }); ok('editar id inexistente → rechazado', !r.ok && /ya no existe/.test(r.error), err(r));
+r = await G('Productos', { id: PCAFE, tipo: 'servicio' }); ok('cambiar a servicio con existencias → rechazado', !r.ok && /existencias/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Corte', precio: 100, tipo: 'servicio', stock: 10 }); ok('servicio: ignora stock', r.ok && r.data.tipo === 'servicio' && r.data.stock === 0, err(r));
+r = await G('Productos', { nombre: 'Tipo raro', precio: 1, tipo: 'cosa' }); ok('tipo inválido → «producto»', r.ok && r.data.tipo === 'producto', err(r));
+r = await G('Productos', { nombre: 'Combo', precio: 100, precioEsp: 120, minEsp: 3 }); ok('precio especial mayor al normal → rechazado', !r.ok && /menor que el precio normal/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Combo', precio: 100, precioEsp: 80, minEsp: 1 }); ok('precio especial sin mínimo ≥2 → rechazado', !r.ok && /2 o más/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Combo', precio: 100, precioEsp: 80, minEsp: 3 }); ok('precio especial válido', r.ok && r.data.precioEsp === 80 && r.data.minEsp === 3, err(r));
+r = await G('Productos', { nombre: 'Foto pesada', precio: 1, foto: 'data:image/png;base64,' + 'A'.repeat(61000) }); ok('foto > 60000 → rechazada', !r.ok && /pesada/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Con foto data', precio: 1, foto: PNG }); ok('foto data pequeña en prueba (Plus incluido) → ok', r.ok && r.data.foto === PNG && r.data.fotoFecha, err(r));
+r = await G('Productos', { nombre: 'Caduca mal', precio: 1, caduca: '31/12/2026' }); ok('fecha de caducidad mal formada → se limpia', r.ok && r.data.caduca === '', err(r));
+r = await G('Productos', { nombre: 'Caduca bien', precio: 1, caduca: '2026-12-31', tasaIsv: '15' }); ok('caducidad y tasa ISV válidas', r.ok && r.data.caduca === '2026-12-31' && String(r.data.tasaIsv) === '15', err(r));
+r = await G('Productos', { nombre: 'ISV raro', precio: 1, tasaIsv: '12' }); ok('tasa ISV no permitida → vacía', r.ok && String(r.data.tasaIsv) === '', err(r));
+
+sec('variantes (existencia por talla/color y precio por presentación)');
+r = await G('Productos', { nombre: 'Blusa', categoria: 'Ropa', precio: 300, costo: 150, opciones: 'Talla: S, M | Color: Negro, Blanco',
+  variantes: { 'Talla: S, Color: Negro': { s: 3, p: 0 }, 'Talla: M, Color: Negro': { s: 2, p: 350 }, 'Talla: S, Color: Blanco': { s: 0 }, 'Talla: M, Color: Blanco': { s: 5, p: 350 } } });
+ok('crear producto con variantes', r.ok && r.data.stock === 10, err(r)); const PBLU = r.ok ? r.data.id : '';
+const V = r.ok ? JSON.parse(r.data.variantes) : {};
+ok('variantes guardan existencia y precio por combinación', V['Talla: M, Color: Negro'] && V['Talla: M, Color: Negro'].s === 2 && V['Talla: M, Color: Negro'].p === 350 && V['Talla: S, Color: Negro'].p === 0, JSON.stringify(V).slice(0, 200));
+ok('movimientos de inventario por variante', db.T.Inventario.filter(m => m.productoId === PBLU && m.variante).length === 3);
+r = await G('Productos', { nombre: 'Sin opciones', precio: 10, variantes: { 'Talla: S': { s: 1 } } }); ok('variantes sin opciones → rechazado', !r.ok && /primero escribe las opciones/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Var mala', precio: 10, opciones: 'Talla: S', variantes: 'no-json' }); ok('variantes inválidas → rechazado', !r.ok && /no son válidas/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Var neg', precio: 10, opciones: 'Talla: S', variantes: { 'Talla: S': { s: 1, p: -5 } } }); ok('precio de variante negativo → rechazado', !r.ok && /negativos/.test(r.error), err(r));
+r = await G('Productos', { id: PBLU, variantes: { 'Talla: S, Color: Negro': { s: 5, p: 0 }, 'Talla: M, Color: Negro': { s: 2, p: 350 }, 'Talla: S, Color: Blanco': { s: 0 }, 'Talla: M, Color: Blanco': { s: 5, p: 350 } } });
+ok('editar existencia de una variante ajusta el total (10→12)', r.ok && r.data.stock === 12 && JSON.parse(r.data.variantes)['Talla: S, Color: Negro'].s === 5, err(r));
+r = await G('Productos', { id: PBLU, opciones: 'Talla: S, M, L | Color: Negro, Blanco', variantes: { 'Talla: L, Color: Negro': { s: 1, p: 400 } } });
+ok('agregar talla nueva conserva existencias previas', r.ok && JSON.parse(r.data.variantes)['Talla: S, Color: Negro'].s === 5 && JSON.parse(r.data.variantes)['Talla: L, Color: Negro'].s === 1 && r.data.stock === 13, err(r));
+
+sec('guardar Clientes / Proveedores / Cuentas / Config');
+r = await G('Clientes', { nombre: 'Doña Marta', telefono: '9999-0000', limite: 2000 }); ok('crear cliente', r.ok && r.data.id && r.data.limite === 2000 && r.data.saldo === 0, err(r)); const CMAR = r.data.id;
+r = await G('Clientes', { nombre: '' }); ok('cliente sin nombre → rechazado', !r.ok && /nombre es obligatorio/.test(r.error), err(r));
+r = await G('Clientes', { nombre: 'Otra Marta', telefono: '99990000' }); ok('cliente teléfono repetido → rechazado', !r.ok && /ese teléfono/.test(r.error), err(r));
+r = await G('Clientes', { id: CMAR, limite: -50 }); ok('límite negativo → queda 0', r.ok && r.data.limite === 0, err(r));
+r = await G('Clientes', { id: CMAR, nombre: 'Doña Marta López', limite: 1500 }); ok('editar cliente', r.ok && r.data.nombre === 'Doña Marta López' && r.data.limite === 1500, err(r));
+r = await G('Proveedores', { nombre: 'Distribuidora Sula', telefono: '2550-0000' }); ok('crear proveedor', r.ok && r.data.id && r.data.saldo === 0, err(r)); const PROV = r.data.id;
+r = await G('Proveedores', { nombre: '' }); ok('proveedor sin nombre → rechazado', !r.ok, err(r));
+r = await G('Proveedores', { id: PROV, nombre: 'Distribuidora Sula S.A.' }); ok('editar proveedor', r.ok && r.data.nombre === 'Distribuidora Sula S.A.', err(r));
+r = await G('Cuentas', { nombre: 'Netflix 1', plataforma: 'Netflix', perfiles: 5, costo: 250 }); ok('crear cuenta streaming', r.ok && Number(r.data.perfiles) === 5, err(r));
+ok('OBS: perfiles se devuelve como texto («5»), no como número (no está en NUMS)', typeof r.data.perfiles === 'number', 'typeof=' + typeof r.data.perfiles); const CTA = r.data.id;
+r = await G('Cuentas', { nombre: 'Sin plataforma' }); ok('cuenta sin plataforma → rechazado', !r.ok && /plataforma/.test(r.error), err(r));
+r = await G('Cuentas', { nombre: 'Perfiles', plataforma: 'X', perfiles: 99 }); ok('perfiles se limitan a 20', r.ok && Number(r.data.perfiles) === 20, err(r));
+r = await G('Inventario', { nombre: 'x' }); ok('entidad no permitida → rechazado', !r.ok && /Entidad no válida/.test(r.error), err(r));
+r = await G('Usuarios', { nombre: 'x' }); ok('guardar Usuarios por «guardar» → rechazado', !r.ok && /Entidad no válida/.test(r.error), err(r));
+r = await G('Config', { nombre: 'Pulpería La Bendición 2', isv: '0.15', seqV: '999', tiendaAbre: '8:00' }); ok('config: hora mal formada → rechazado', !r.ok && /08:00/.test(r.error), err(r));
+r = await G('Config', { nombre: 'Pulpería La Bendición 2', isv: '0.15', seqV: '999' }); ok('config: guarda nombre e ISV, ignora seqV', r.ok && r.data.nombre === 'Pulpería La Bendición 2' && r.data.isv === '0.15' && r.data.seqV === undefined && db.T.Config.find(c => c.clave === 'seqV' && c.valor === '999') === undefined, err(r));
+ok('config: el nombre nuevo se refleja en Licencias', db.T.Licencias.find(l => l.id === NEG1).negocio === 'Pulpería La Bendición 2');
+r = await G('Config', { isv: '1.5' }); ok('config: ISV ≥ 1 → rechazado', !r.ok && /ISV/.test(r.error), err(r));
+r = await G('Config', { nombre: '   ' }); ok('config: nombre vacío → rechazado', !r.ok && /nombre del negocio/.test(r.error), err(r));
+r = await G('Config', { tiendaMapa: 'javascript:alert(1)' }); ok('config: enlace de mapa no https → rechazado', !r.ok && /https/.test(r.error), err(r));
+
+sec('eliminar');
+r = await api('eliminar', { entidad: 'Productos', id: PAZU }, TOK); ok('eliminar producto sin movimientos → eliminado', r.ok && r.data.eliminado === true && !db.T.Productos.some(p => p.id === PAZU), err(r));
+r = await api('eliminar', { entidad: 'Productos', id: PCAFE }, TOK); ok('eliminar producto con existencias → solo se desactiva', r.ok && r.data.desactivado === true && db.T.Productos.find(p => p.id === PCAFE).activo === false, err(r));
+await G('Productos', { id: PCAFE, activo: true });
+r = await api('eliminar', { entidad: 'Productos', id: 'PNOEXISTE' }, TOK); ok('eliminar id inexistente → rechazado', !r.ok && /ya no existe/.test(r.error), err(r));
+r = await api('eliminar', { entidad: 'Ventas', id: 'x' }, TOK); ok('eliminar entidad no permitida → rechazado', !r.ok && /No se puede eliminar/.test(r.error), err(r));
+r = await api('eliminar', { entidad: 'Clientes', id: CMAR }, TOK); ok('eliminar cliente sin movimientos → eliminado', r.ok && r.data.eliminado, err(r));
+r = await G('Clientes', { nombre: 'Cliente Crédito', telefono: '8888-1111', limite: 5000 }); const CCRE = r.data.id;
+r = await api('venta', { clienteId: CCRE, items: [{ productoId: PCAFE, cantidad: 1, precio: 99 }], metodo: 'Crédito', recibido: 0, clave: 'v1' }, TOK); ok('(venta a crédito para marcar cliente usado)', r.ok, err(r));
+r = await api('eliminar', { entidad: 'Clientes', id: CCRE }, TOK); ok('eliminar cliente con ventas → solo se desactiva', r.ok && r.data.desactivado, err(r));
+r = await api('eliminar', { entidad: 'Proveedores', id: PROV }, TOK); ok('eliminar proveedor sin movimientos → eliminado', r.ok && r.data.eliminado, err(r));
+r = await api('eliminar', { entidad: 'Cuentas', id: CTA }, TOK); ok('eliminar cuenta sin suscripciones → eliminada', r.ok && r.data.eliminado, err(r));
+
+/* ===================== USUARIOS ===================== */
+sec('guardarUsuario');
+const GU = (registro, clave, tok) => api('guardarUsuario', { registro, clave }, tok || TOK);
+r = await GU({ nombre: 'Caja Uno', usuario: '9911-2233', rol: 'cajero' }, '1111'); ok('crear cajero', r.ok && r.data.rol === 'cajero' && r.data.usuario === '50499112233' && !r.data.hash, err(r)); const UCAJ = r.data.id;
+ok('cajero queda en Accesos', db.T.Accesos.some(a => a.whatsapp === '50499112233' && a.negocioId === NEG1 && a.usuarioId === UCAJ));
+ok('Licencias.usuarios se actualiza a 2', Number(db.T.Licencias.find(l => l.id === NEG1).usuarios) === 2);
+r = await GU({ nombre: 'Bodega Uno', usuario: '99114455', rol: 'bodega' }, '2222'); ok('crear bodega', r.ok && r.data.rol === 'bodega', err(r)); const UBOD = r.data.id;
+r = await GU({ nombre: 'Sin PIN', usuario: '99117777', rol: 'cajero' }); ok('nuevo usuario sin PIN → rechazado', !r.ok && /Asigna un PIN/.test(r.error), err(r));
+r = await GU({ nombre: 'PIN corto', usuario: '99117777', rol: 'cajero' }, '12'); ok('PIN corto → rechazado', !r.ok && /4 a 6/.test(r.error), err(r));
+r = await GU({ nombre: 'Rol raro', usuario: '99117777', rol: 'gerente' }, '1234'); ok('rol inválido → rechazado', !r.ok && /Rol no válido/.test(r.error), err(r));
+r = await GU({ nombre: '', usuario: '99117777', rol: 'cajero' }, '1234'); ok('sin nombre → rechazado', !r.ok && /obligatorios/.test(r.error), err(r));
+r = await GU({ nombre: 'Corto', usuario: '9911', rol: 'cajero' }, '1234'); ok('whatsapp corto → rechazado', !r.ok && /WhatsApp válido/.test(r.error), err(r));
+r = await GU({ nombre: 'Repetido', usuario: '99112233', rol: 'cajero' }, '1234'); ok('whatsapp ya usado en este negocio → rechazado', !r.ok && /ya existe|ya está registrado/.test(r.error), err(r));
+r = await GU({ nombre: 'Ajeno', usuario: '99990002', rol: 'cajero' }, '1234'); ok('whatsapp de otra cuenta → rechazado', !r.ok && /otra cuenta/.test(r.error), err(r));
+const yo = db.T.Usuarios.find(u => u.negocio_id === NEG1 && u.rol === 'admin');
+r = await GU({ id: yo.id, nombre: 'Vic', usuario: '33130265', rol: 'cajero' }); ok('quitarse el rol admin → rechazado', !r.ok && /quitarte el rol/.test(r.error), err(r));
+r = await GU({ id: yo.id, nombre: 'Vic', usuario: '33130265', rol: 'admin', activo: false }); ok('desactivarse → rechazado', !r.ok && /desactivarte/.test(r.error), err(r));
+r = await GU({ id: UCAJ, nombre: 'Caja Uno', usuario: '99112233', rol: 'cajero', tienda: 'farmacia' }, undefined); ok('tienda asignada no activa → se ignora (sucursal vacía)', r.ok && r.data.sucursal === '', err(r));
+r = await GU({ id: UCAJ, nombre: 'Caja Uno', usuario: '99112233', rol: 'cajero' }, '1212'); ok('cambiar PIN de cajero', r.ok, err(r));
+r = await api('login', { whatsapp: '99112233', pin: '1212' }); ok('cajero entra con su PIN nuevo', r.ok && r.data.usuario.rol === 'cajero', err(r)); let TCAJ = r.data.token;
+r = await api('login', { whatsapp: '99114455', pin: '2222' }); ok('bodega entra', r.ok && r.data.usuario.rol === 'bodega', err(r)); let TBOD = r.data.token;
+r = await GU({ id: UBOD, nombre: 'Bodega Uno', usuario: '99114455', rol: 'bodega', activo: false }); ok('desactivar bodega', r.ok && r.data.activo === false, err(r));
+r = await api('bootstrap', {}, TBOD); ok('bodega desactivado pierde la sesión', !r.ok && r.error === 'SESION', err(r));
+r = await api('login', { whatsapp: '99114455', pin: '2222' }); ok('bodega desactivado no entra', !r.ok, err(r));
+r = await GU({ id: UBOD, nombre: 'Bodega Uno', usuario: '99114455', rol: 'bodega', activo: true }); TBOD = (await api('login', { whatsapp: '99114455', pin: '2222' })).data.token;
+ok('bodega reactivado entra', !!TBOD);
+
+/* ===================== PERMISOS POR ROL / sinCostos ===================== */
+sec('permisos por rol y sinCostos_');
+r = await api('bootstrap', {}, TCAJ);
+ok('cajero: bootstrap sin «costo» en productos', r.ok && r.data.productos.length > 0 && r.data.productos.every(p => !('costo' in p) && !('margen' in p)), err(r));
+ok('cajero: sin proveedores, con clientes', r.ok && r.data.proveedores.length === 0 && Array.isArray(r.data.clientes), err(r));
+r = await api('bootstrap', {}, TBOD); ok('bodega: sí ve costos, no ve clientes', r.ok && r.data.productos.some(p => 'costo' in p) && r.data.clientes.length === 0, err(r));
+r = await G('Productos', { nombre: 'Producto de cajero', precio: 1 }, TCAJ); ok('cajero no puede guardar Productos', !r.ok && /permiso/.test(r.error), err(r));
+r = await G('Clientes', { nombre: 'Cliente de cajero', telefono: '7777-0001', limite: 9999 }, TCAJ); ok('cajero crea cliente pero sin límite de crédito', r.ok && r.data.limite === 0, err(r));
+r = await G('Clientes', { nombre: 'Cliente de bodega' }, TBOD); ok('bodega no puede guardar Clientes', !r.ok && /permiso/.test(r.error), err(r));
+r = await G('Proveedores', { nombre: 'Prov de cajero' }, TCAJ); ok('cajero no puede guardar Proveedores', !r.ok && /permiso/.test(r.error), err(r));
+r = await G('Config', { nombre: 'Hackeo' }, TCAJ); ok('cajero no puede guardar Config', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('eliminar', { entidad: 'Productos', id: PSIN }, TCAJ); ok('cajero no puede eliminar', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('eliminar', { entidad: 'Productos', id: PSIN }, TBOD); ok('bodega no puede eliminar', !r.ok && /permiso/.test(r.error), err(r));
+r = await GU({ nombre: 'Colado', usuario: '99118888', rol: 'admin' }, '1234', TCAJ); ok('cajero no puede crear usuarios', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('misDatos', {}, TCAJ); ok('cajero no puede misDatos', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('historial', {}, TCAJ); ok('cajero no puede historial', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('precios', { cambios: [{ id: PCAFE, precio: 1 }] }, TCAJ); ok('cajero no puede cambiar precios', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('ajusteStock', { id: PCAFE, modo: 'entrada', cantidad: 1 }, TCAJ); ok('cajero no puede ajustar stock', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('kardex', { id: PCAFE }, TCAJ); ok('cajero no puede ver kardex', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('inventario', {}, TCAJ); ok('cajero no puede ver inventario', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('cargarEjemplos', {}, TCAJ); ok('cajero no puede cargar ejemplos', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('cambiarGiro', { giro: 'farmacia' }, TCAJ); ok('cajero no puede cambiar giro', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('activarPlus', { clave: 'plus123' }, TCAJ); ok('cajero no puede activar Plus', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('subirFoto', { data: PNG }, TCAJ); ok('cajero no puede subir foto', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('borrarDatos', { confirmar: 'x', pin: '1212', alcance: 'todo' }, TCAJ); ok('cajero no puede borrar datos', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('eliminarCuenta', { confirmar: 'ELIMINAR', pin: '1212' }, TCAJ); ok('cajero no puede eliminar la cuenta', !r.ok && /permiso/.test(r.error), err(r));
+r = await api('contratoVer', { id: 'x' }, TCAJ); ok('cajero no puede ver contratos', !r.ok && /administrador/.test(r.error), err(r));
+r = await api('contratoFirmar', { id: 'x' }, TCAJ); ok('cajero no puede firmar contratos', !r.ok && /administrador/.test(r.error), err(r));
+r = await api('inventario', {}, TBOD); ok('bodega sí ve inventario (con costo)', r.ok && r.data.productos.some(p => 'costo' in p), err(r));
+r = await api('kardex', { id: PCAFE }, TBOD); ok('bodega sí ve kardex', r.ok && Array.isArray(r.data) && r.data.length > 0, err(r));
+r = await api('pendientes', {}, TBOD); ok('bodega: pendientes en cero', r.ok && r.data.nuevos === 0 && r.data.mensajes === 0, err(r));
+r = await api('precios', { cambios: [{ id: PSIN, precio: 7 }] }, TBOD); ok('bodega sí cambia precios', r.ok && r.data.productos.find(p => p.id === PSIN).precio === 7, err(r));
+r = await api('venta', { items: [{ productoId: PCAFE, cantidad: 1, precio: 99 }], metodo: 'Efectivo', recibido: 100, clave: 'vc1' }, TCAJ); ok('cajero vende', r.ok, err(r));
+ok('cajero: respuesta de venta sin costos', r.ok && JSON.stringify(r.data).indexOf('"costo"') < 0 && JSON.stringify(r.data).indexOf('"ganancia"') < 0, JSON.stringify(r.data).slice(0, 200));
+r = await api('inicio', {}, TCAJ); ok('cajero: inicio sin «ganancia»/«costo»', r.ok && JSON.stringify(r.data).indexOf('"ganancia"') < 0 && JSON.stringify(r.data).indexOf('"costo"') < 0, err(r));
+
+/* ===================== cambiarClave / misDatos ===================== */
+sec('cambiarClave / misDatos');
+r = await api('cambiarClave', { actual: '0000', nueva: '5678' }, TOK); ok('cambiarClave con PIN actual malo → rechazado', !r.ok && /no es correcto/.test(r.error), err(r));
+r = await api('cambiarClave', { actual: '1234', nueva: '12' }, TOK); ok('cambiarClave nueva corta → rechazado', !r.ok && /4 a 6/.test(r.error), err(r));
+r = await api('cambiarClave', { actual: '1234', nueva: '5678' }, TOK); ok('cambiarClave ok', r.ok, err(r));
+r = await api('bootstrap', {}, TOK); ok('la sesión que cambió el PIN sigue viva', r.ok, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '1234' }); ok('PIN viejo ya no entra', !r.ok, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '5678' }); ok('PIN nuevo entra', r.ok, err(r)); const TOK_OTRA = r.data.token;
+await api('cambiarClave', { actual: '5678', nueva: '1234' }, TOK);
+r = await api('bootstrap', {}, TOK_OTRA); ok('al cambiar el PIN se cierran las demás sesiones', !r.ok && r.error === 'SESION', err(r));
+r = await api('misDatos', {}, TOK); ok('misDatos admin: trae Productos y Config, sin Usuarios', r.ok && r.data.Productos && r.data.Config && !r.data.Usuarios, err(r));
+
+/* ===================== precios / ajusteStock / kardex / inventario ===================== */
+sec('precios / ajusteStock / kardex / inventario');
+r = await api('precios', { cambios: [{ id: PCAFE, precio: 110, margen: 40, costo: 75 }, { id: PSIN, precio: 8 }] }, TOK);
+ok('precios masivos', r.ok && r.data.cambiados === 2 && r.data.productos.find(p => p.id === PCAFE).precio === 110 && r.data.productos.find(p => p.id === PCAFE).margen === 40 && r.data.productos.find(p => p.id === PCAFE).costo === 75, err(r));
+r = await api('precios', { cambios: [] }, TOK); ok('precios lista vacía → rechazado', !r.ok && /No hay precios/.test(r.error), err(r));
+r = await api('precios', { cambios: [{ id: PCAFE, precio: 0 }] }, TOK); ok('precio 0 → rechazado', !r.ok && /Precio no válido/.test(r.error), err(r));
+r = await api('precios', { cambios: [{ id: PCAFE, precio: -1 }] }, TOK); ok('precio negativo → rechazado', !r.ok && /Precio no válido/.test(r.error), err(r));
+r = await api('precios', { cambios: [{ id: 'PX', precio: 5 }] }, TOK); ok('producto inexistente → rechazado', !r.ok && /ya no existe/.test(r.error), err(r));
+r = await api('precios', { cambios: [{ id: PCAFE, precio: 5, margen: 20000 }] }, TOK); ok('margen > 10000 → rechazado', !r.ok && /ganancia no válido/.test(r.error), err(r));
+r = await api('precios', { cambios: [{ id: PCAFE, precio: 110, costo: -3 }] }, TOK); ok('costo negativo en precios → se ignora, precio sí cambia', r.ok && r.data.productos.find(p => p.id === PCAFE).costo === 75, err(r));
+const stock0 = db.T.Productos.find(p => p.id === PCAFE).stock;
+r = await api('ajusteStock', { id: PCAFE, modo: 'entrada', cantidad: 5, motivo: 'Compra sin factura' }, TOK); ok('ajuste entrada +5', r.ok && r.data.stock === stock0 + 5, err(r));
+ok('motivo queda en el kardex', db.T.Inventario.some(m => m.productoId === PCAFE && m.nota === 'Compra sin factura' && m.tipo === 'ajuste' && m.cantidad === 5));
+r = await api('ajusteStock', { id: PCAFE, modo: 'salida', cantidad: 2 }, TOK); ok('ajuste salida -2 (motivo por defecto «Salida»)', r.ok && r.data.stock === stock0 + 3 && db.T.Inventario.some(m => m.productoId === PCAFE && m.nota === 'Salida' && m.cantidad === -2), err(r));
+r = await api('ajusteStock', { id: PCAFE, modo: 'conteo', cantidad: 20 }, TOK); ok('ajuste conteo → queda en 20', r.ok && r.data.stock === 20, err(r));
+r = await api('ajusteStock', { id: PCAFE, modo: 'conteo', cantidad: 20 }, TOK); ok('conteo igual al stock → sin movimiento', r.ok && r.data.stock === 20, err(r));
+r = await api('ajusteStock', { id: PCAFE, modo: 'entrada', cantidad: 0 }, TOK); ok('entrada de 0 → sin cambio', r.ok && r.data.stock === 20, err(r));
+r = await api('ajusteStock', { id: PCAFE, modo: 'entrada', cantidad: -3 }, TOK); ok('cantidad negativa → rechazado', !r.ok && /no válida/.test(r.error), err(r));
+r = await api('ajusteStock', { id: PCAFE, modo: 'entrada', cantidad: 'abc' }, TOK); ok('cantidad no numérica → rechazado', !r.ok && /Escribe la cantidad/.test(r.error), err(r));
+r = await api('ajusteStock', { id: PCAFE, modo: 'raro', cantidad: 1 }, TOK); ok('modo inválido → rechazado', !r.ok && /Tipo de ajuste/.test(r.error), err(r));
+r = await api('ajusteStock', { id: 'PX', modo: 'entrada', cantidad: 1 }, TOK); ok('producto inexistente → rechazado', !r.ok && /no existe/.test(r.error), err(r));
+const PSERV = db.T.Productos.find(p => p.nombre === 'Corte').id;
+r = await api('ajusteStock', { id: PSERV, modo: 'entrada', cantidad: 1 }, TOK); ok('ajuste a servicio → rechazado', !r.ok && /no controla existencias/.test(r.error), err(r));
+r = await api('ajusteStock', { id: PBLU, modo: 'entrada', cantidad: 1 }, TOK); ok('ajuste a producto con variantes sin indicar cuál → rechazado', !r.ok && /Elige talla y color/.test(r.error), err(r));
+r = await api('ajusteStock', { id: PBLU, modo: 'entrada', cantidad: 2, variante: 'Talla: S, Color: Negro' }, TOK); ok('ajuste entrada a variante (5→7, total 13→15)', r.ok && JSON.parse(r.data.variantes)['Talla: S, Color: Negro'].s === 7 && r.data.stock === 15, err(r));
+r = await api('ajusteStock', { id: PBLU, modo: 'conteo', cantidad: 1, variante: 'M · Blanco' }, TOK); ok('conteo de variante con texto «M · Blanco» (5→1, total 15→11)', r.ok && JSON.parse(r.data.variantes)['Talla: M, Color: Blanco'].s === 1 && r.data.stock === 11, err(r));
+r = await api('ajusteStock', { id: PBLU, modo: 'entrada', cantidad: 1, variante: 'Talla: XL, Color: Rojo' }, TOK); ok('variante inexistente → rechazado', !r.ok && /Elige/.test(r.error), err(r));
+r = await api('kardex', { id: PBLU }, TOK); ok('kardex trae variante, usuario y costo', r.ok && r.data.length >= 5 && r.data.some(m => m.variante === 'Talla: S, Color: Negro') && r.data[0].usuario === 'Vic' && typeof r.data[0].costo === 'number', err(r));
+ok('kardex ordenado del más reciente al más viejo', r.ok && r.data.every((m, i) => i === 0 || r.data[i - 1].fecha >= m.fecha));
+r = await api('kardex', { id: 'PX' }, TOK); ok('kardex de producto inexistente → lista vacía', r.ok && r.data.length === 0, err(r));
+r = await api('inventario', {}, TOK);
+ok('inventario: productos con valor a costo y venta', r.ok && r.data.productos.every(p => typeof p.valorCosto === 'number' && typeof p.valorVenta === 'number') && !r.data.productos.some(p => p.id === PSERV), err(r));
+const invCafe = r.ok && r.data.productos.find(p => p.id === PCAFE);
+ok('inventario: valorCosto = stock × costo', invCafe && invCafe.valorCosto === 20 * 75 && invCafe.vendidos30 === 2, JSON.stringify(invCafe));
+ok('inventario: movimientos con nombre y usuario', r.ok && r.data.movimientos.length > 0 && r.data.movimientos[0].nombre && r.data.movimientos[0].usuario, err(r));
+
+/* ===================== cargarEjemplos / cambiarGiro ===================== */
+sec('cargarEjemplos / cambiarGiro');
+const nAntes = db.T.Productos.filter(p => p.negocio_id === NEG1).length;
+r = await api('cargarEjemplos', {}, TOK); ok('cargarEjemplos del giro actual (tienda)', r.ok && r.data.agregados > 0 && r.data.productos.length === nAntes + r.data.agregados, err(r));
+const nEj = r.data.agregados;
+r = await api('cargarEjemplos', {}, TOK); ok('cargarEjemplos repetido → 0 agregados', r.ok && r.data.agregados === 0, err(r));
+ok('ejemplos con existencias dejan movimiento «inicial»', db.T.Inventario.filter(m => m.negocio_id === NEG1 && /ejemplo/.test(m.nota)).length > 0);
+r = await api('cargarEjemplos', { giro: 'farmacia' }, TOK); ok('cargarEjemplos de giro no activo → rechazado', !r.ok && /no está activo/.test(r.error), err(r));
+r = await api('cambiarGiro', { giro: 'inexistente' }, TOK); ok('cambiarGiro inválido → rechazado', !r.ok && /no válido/.test(r.error), err(r));
+r = await api('cambiarGiro', { giro: 'tienda' }, TOK); ok('cambiarGiro al mismo giro → sin cambios', r.ok && r.data.config.giro === 'tienda' && r.data.agregados === undefined, err(r));
+r = await api('cambiarGiro', { giro: 'farmacia', desactivar: true, ejemplos: true }, TOK);
+ok('cambiarGiro a farmacia con desactivar y ejemplos', r.ok && r.data.config.giro === 'farmacia' && r.data.agregados > 0 && r.data.desactivados > 0 && r.data.girosActivos[0] === 'farmacia', err(r));
+ok('productos de categorías del giro viejo quedaron inactivos', db.T.Productos.filter(p => p.negocio_id === NEG1 && p.categoria === 'Abarrotes').every(p => p.activo === false));
+ok('productos de otras categorías siguen activos', db.T.Productos.find(p => p.id === PBLU).activo === true);
+ok('el giro nuevo se refleja en Licencias', /Farmacia/i.test(db.T.Licencias.find(l => l.id === NEG1).giro), db.T.Licencias.find(l => l.id === NEG1).giro);
+r = await api('cambiarGiro', { giro: 'tienda' }, TOK); ok('volver a tienda sin desactivar ni ejemplos', r.ok && r.data.desactivados === 0 && r.data.agregados === 0, err(r));
+
+/* ===================== Panel: licencia, giros extra, tienda asignada ===================== */
+sec('giros extra (Panel) y tienda asignada');
+r = await panel('panelAccion', { id: NEG1, accion: 'giros', giros: ['farmacia'] }); ok('activar giro extra en prueba → rechazado', !r.ok && /prueba gratis/.test(r.error), err(r));
+r = await panel('panelAccion', { id: NEG1, accion: 'activar', monto: 500 }); ok('Panel: activar licencia', r.ok, err(r));
+r = await api('bootstrap', {}, TOK); ok('licencia completa; Plus ya no incluido', r.ok && r.data.licencia.estado === 'completa' && r.data.plus === false, err(r));
+r = await panel('panelAccion', { id: NEG1, accion: 'giros', giros: ['farmacia', 'comida'] }); ok('Panel: activar 2 giros extra', r.ok, err(r));
+r = await api('bootstrap', {}, TOK); ok('girosActivos = tienda, farmacia, comida', r.ok && r.data.girosActivos.join() === 'tienda,farmacia,comida', err(r));
+r = await api('tiendas', {}, TOK); ok('tiendas: 3 para el admin', r.ok && r.data.tiendas.length === 3 && r.data.tiendas[0].id === 'tienda', err(r));
+r = await api('cargarEjemplos', { giro: 'farmacia' }, TOK); ok('cargarEjemplos de farmacia: ya se cargaron al cambiar de giro → 0', r.ok && r.data.agregados === 0, err(r));
+r = await api('cargarEjemplos', { giro: 'comida' }, TOK); ok('cargarEjemplos de giro extra activo (comida)', r.ok && r.data.agregados > 0, err(r));
+ok('ejemplos del giro extra quedan marcados con giro=comida', db.T.Productos.some(p => p.negocio_id === NEG1 && p.giro === 'comida'));
+r = await GU({ id: UCAJ, nombre: 'Caja Uno', usuario: '99112233', rol: 'cajero', tienda: 'farmacia' }); ok('asignar tienda farmacia al cajero', r.ok && r.data.sucursal === 'farmacia', err(r));
+r = await GU({ id: yo.id, nombre: 'Vic', usuario: '33130265', rol: 'admin', tienda: 'farmacia' }); ok('admin nunca queda con tienda fija', r.ok && r.data.sucursal === '', err(r));
+r = await api('tiendas', {}, TCAJ); ok('cajero con tienda fija solo ve la suya', r.ok && r.data.tiendas.length === 1 && r.data.tiendas[0].id === 'farmacia', err(r));
+r = await api('inicio', { tienda: 'tienda' }, TCAJ); ok('cajero con tienda fija: inicio siempre de farmacia aunque pida otra', r.ok && r.data.tienda === 'farmacia', err(r));
+r = await GU({ id: UBOD, nombre: 'Bodega Uno', usuario: '99114455', rol: 'bodega', tienda: 'comida' }); ok('asignar tienda comida a bodega', r.ok && r.data.sucursal === 'comida', err(r));
+r = await api('ajusteStock', { id: PCAFE, modo: 'entrada', cantidad: 1 }, TBOD); ok('bodega de «comida» no ajusta un producto de «tienda»', !r.ok && /otra tienda/.test(r.error), err(r));
+r = await api('precios', { cambios: [{ id: PCAFE, precio: 50 }] }, TBOD); ok('bodega de «comida» no cambia precios de «tienda»', !r.ok && /otra tienda/.test(r.error), err(r));
+r = await G('Productos', { id: PCAFE, precio: 123 }, TBOD); ok('OBS: bodega de «comida» SÍ puede editar un producto de «tienda» por «guardar» (precios/ajusteStock lo impiden, guardar no)', !r.ok, 'guardar aceptó: precio=' + (r.data && r.data.precio));
+if (r.ok) await G('Productos', { id: PCAFE, precio: 110 });
+r = await G('Productos', { nombre: 'Jarabe colado', precio: 10, giro: 'farmacia' }, TBOD); ok('OBS: bodega de «comida» puede crear producto marcado giro=farmacia', !r.ok, 'giro=' + (r.data && r.data.giro));
+r = await GU({ id: UBOD, nombre: 'Bodega Uno', usuario: '99114455', rol: 'bodega', tienda: '' }); ok('quitar tienda a bodega', r.ok && r.data.sucursal === '', err(r));
+r = await panel('panelAccion', { id: NEG1, accion: 'giros', giros: [] }); ok('Panel: quitar giros extra', r.ok, err(r));
+r = await api('bootstrap', {}, TCAJ); ok('cajero sigue entrando con su tienda apagada', r.ok && r.data.girosActivos.length === 1, err(r));
+
+/* ===================== activarPlus / subirFoto ===================== */
+sec('activarPlus / subirFoto');
+r = await api('subirFoto', { data: PNG }, TOK); ok('subirFoto sin Plus (licencia activa) → rechazado', !r.ok && /plan Plus/.test(r.error), err(r));
+r = await G('Productos', { id: PSIN, foto: PNG }); ok('foto en producto sin Plus → rechazado', !r.ok && /plan Plus/.test(r.error), err(r));
+r = await api('activarPlus', { clave: 'mala' }, TOK); ok('activarPlus clave mala → rechazado', !r.ok && /incorrecta/.test(r.error), err(r));
+for (let i = 0; i < 4; i++) await api('activarPlus', { clave: 'mala' }, TOK);
+r = await api('activarPlus', { clave: 'plus123' }, TOK); ok('activarPlus: tras 5 fallos se bloquea aunque la clave sea buena', !r.ok && /Demasiados intentos/.test(r.error), err(r));
+delete db.cache['FP_' + NEG1];
+r = await api('activarPlus', { clave: 'plus123' }, TOK); ok('activarPlus con clave correcta', r.ok && r.data.plus === true && /s[íi]/i.test(db.T.Licencias.find(l => l.id === NEG1).plus), err(r));
+r = await api('activarPlus', { clave: 'cualquiera' }, TOK); ok('activarPlus ya activo → plus:true sin pedir clave', r.ok && r.data.plus === true, err(r));
+r = await api('subirFoto', { data: PNG }, TOK); ok('subirFoto admin con Plus', r.ok && /archivos\//.test(r.data.foto), err(r)); const FOTO = r.ok ? r.data.foto : '';
+ok('subirFoto genera efecto de subida al Storage', (db.efectos || []).some(e => e.subir && /\.png$/.test(e.subir.ruta)));
+r = await api('subirFoto', { data: PNG }, TBOD); ok('subirFoto bodega', r.ok, err(r));
+r = await api('subirFoto', { data: 'data:text/plain;base64,QUJD' }, TOK); ok('subirFoto tipo no imagen → rechazado', !r.ok && /no es válida/.test(r.error), err(r));
+r = await api('subirFoto', { data: 'hola' }, TOK); ok('subirFoto basura → rechazado', !r.ok && /no es válida/.test(r.error), err(r));
+r = await api('subirFoto', { data: 'data:image/jpeg;base64,' + 'A'.repeat(900001) }, TOK); ok('subirFoto > 900000 → rechazado', !r.ok && /pesada/.test(r.error), err(r));
+r = await G('Productos', { id: PSIN, foto: FOTO }); ok('asignar foto subida al producto', r.ok && r.data.foto === FOTO && r.data.fotoFecha, err(r));
+r = await G('Productos', { id: PSIN, foto: 'https://x.supabase.co/storage/v1/object/public/archivos/' + NEG_B + '/ajena.jpg' }); ok('foto de otro negocio → rechazada', !r.ok && /no es válida/.test(r.error), err(r));
+r = await G('Productos', { id: PSIN, foto: '' }); ok('quitar foto → borra en Storage', r.ok && r.data.foto === '' && r.data.fotoFecha === '' && (db.efectos || []).some(e => e.borrar), err(r));
+
+/* ===================== Anuncios ===================== */
+sec('anuncioVisto');
+r = await panel('panelAnunciar', { titulo: 'Novedad', texto: 'Hay versión nueva', banner: true, filtro: 'todos', dias: 3 }); ok('Panel: anunciar banner', r.ok && r.data.length === 1, err(r));
+const ANID = db.T.Anuncios[0].id;
+r = await api('bootstrap', {}, TOK); ok('admin ve el anuncio en bootstrap', r.ok && r.data.anuncio && r.data.anuncio.id === ANID, err(r));
+r = await api('bootstrap', {}, TBOD); ok('bodega no recibe el anuncio', r.ok && !r.data.anuncio, err(r));
+r = await api('anuncioVisto', { id: ANID }, TOK); ok('anuncioVisto', r.ok && r.data === true, err(r));
+r = await api('bootstrap', {}, TOK); ok('tras marcarlo visto ya no aparece', r.ok && !r.data.anuncio, err(r));
+r = await api('anuncioVisto', { id: ANID }, TOK); ok('anuncioVisto repetido → true sin duplicar', r.ok && db.T.Anuncios[0].vistos === NEG1, db.T.Anuncios[0].vistos);
+r = await api('anuncioVisto', { id: 'ANX' }, TOK); ok('anuncioVisto id inexistente → true (sin error)', r.ok, err(r));
+r = await api('bootstrap', {}, TOK_B); ok('otro negocio sí sigue viendo el anuncio', r.ok && r.data.anuncio && r.data.anuncio.id === ANID, err(r));
+
+/* ===================== Soporte ===================== */
+sec('soporte');
+r = await api('soporteCrear', { motivo: 'error', texto: 'No', modulo: 'ventas', version: '1.9.38' }, TOK); ok('soporteCrear texto < 3 → rechazado', !r.ok && /qué pasó/.test(r.error), err(r));
+r = await api('soporteCrear', { motivo: 'error', texto: 'La venta no guarda', modulo: 'ventas', version: '1.9.38' }, TOK);
+ok('soporteCrear', r.ok && r.data.chat.estado === 'abierto' && r.data.chat.motivoT === 'Error del programa' && r.data.mensajes.length === 1 && r.data.mensajes[0].de === 'cli', err(r)); const SOP = r.ok ? r.data.chat.id : '';
+r = await api('soporteCrear', { motivo: 'inventado', texto: 'Hola hola', foto: 'data:image/png;base64,' + 'A'.repeat(49000) }, TOK); ok('soporteCrear captura muy grande → rechazado y no crea chat', !r.ok && /Captura/i.test(r.error) && db.T.Soporte.length === 1, err(r));
+r = await api('soporteCrear', { motivo: 'inventado', texto: 'Motivo raro', foto: PNG }, TOK); ok('soporteCrear motivo inválido → «otro», con foto', r.ok && r.data.chat.motivo === 'otro' && r.data.mensajes[0].foto === PNG, err(r));
+r = await api('soporteCrear', { motivo: 'duda', texto: 'Pregunta del cajero' }, TCAJ); ok('cajero también puede abrir soporte', r.ok && r.data.chat.dueno === 'Caja Uno', err(r));
+for (let i = 0; i < 2; i++) await api('soporteCrear', { motivo: 'duda', texto: 'Relleno ' + i }, TOK);
+r = await api('soporteCrear', { motivo: 'duda', texto: 'La sexta' }, TOK); ok('6.ª conversación abierta → rechazada', !r.ok && /5 conversaciones/.test(r.error), err(r));
+r = await api('soporteLista', {}, TOK); ok('soporteLista: 5 del negocio', r.ok && r.data.length === 5 && r.data.every(c => c.negocioId === NEG1), err(r));
+r = await api('soporteLista', {}, TOK_B); ok('soporteLista otro negocio: vacía', r.ok && r.data.length === 0, err(r));
+r = await api('soporteEnviar', { id: SOP, texto: 'Más detalles: pasa al cobrar' }, TOK); ok('soporteEnviar', r.ok && r.data.mensajes.length === 2 && r.data.chat.ultimoTexto === 'Más detalles: pasa al cobrar', err(r));
+r = await api('soporteEnviar', { id: SOP, texto: '' }, TOK); ok('soporteEnviar vacío → rechazado', !r.ok && /Escribe tu mensaje/.test(r.error), err(r));
+r = await api('soporteEnviar', { id: SOP, foto: PNG }, TOK); ok('soporteEnviar solo foto → ok', r.ok && r.data.chat.ultimoTexto === '📷 Captura', err(r));
+r = await api('soporteEnviar', { id: SOP, texto: 'Me colé' }, TOK_B); ok('otro negocio no puede escribir en el chat ajeno', !r.ok && /ya no existe/.test(r.error), err(r));
+r = await api('soporteVer', { id: SOP }, TOK_B); ok('otro negocio no puede ver el chat ajeno', !r.ok, err(r));
+r = await panel('panelSoporteResponder', { id: SOP, texto: 'Ya lo revisamos' }); ok('Panel responde', r.ok, err(r));
+r = await api('pendientes', {}, TOK); ok('pendientes: soporte sin leer = 1', r.ok && r.data.soporte === 1, err(r));
+r = await api('soporteVer', { id: SOP }, TOK); ok('soporteVer: trae respuesta y limpia sin leer', r.ok && r.data.mensajes.some(m => m.de === 'adm') && r.data.chat.sinLeer === 0, err(r));
+r = await api('pendientes', {}, TOK); ok('pendientes: soporte vuelve a 0', r.ok && r.data.soporte === 0, err(r));
+r = await api('soporteVer', { id: 'TX' }, TOK); ok('soporteVer id inexistente → rechazado', !r.ok && /ya no existe/.test(r.error), err(r));
+
+/* ===================== Contratos ===================== */
+sec('contratoVer / contratoFirmar');
+const FIRMA = 'data:image/png;base64,' + 'A'.repeat(400);
+r = await api('contratoVer', { id: 'KX' }, TOK); ok('contratoVer sin contratos → no existe', !r.ok && /no existe/.test(r.error), err(r));
+r = await panel('panelContrato', { id: NEG1, accion: 'crear', texto: 'Contrato de licencia entre {negocio} y Molina Soluciones Digitales. '.repeat(3), monto: 1200 }); ok('Panel: crear contrato', r.ok, err(r));
+const KID = db.T.Contratos[0].id;
+r = await api('bootstrap', {}, TOK); ok('bootstrap admin trae contrato pendiente', r.ok && r.data.contratoVM && r.data.contratoVM.pendiente && r.data.contratoVM.pendiente.id === KID, err(r));
+r = await api('bootstrap', {}, TCAJ); ok('bootstrap cajero no trae contratoVM', r.ok && !r.data.contratoVM, err(r));
+r = await api('contratoVer', { id: KID }, TOK); ok('contratoVer', r.ok && r.data.contrato.estado === 'pendiente' && /<.+>/.test(r.data.html) && r.data.html.indexOf('Molina Soluciones Digitales') > 0 && r.data.contrato.monto === 1200, err(r));
+r = await api('contratoVer', { id: KID }, TOK_B); ok('otro negocio no ve el contrato', !r.ok && /no existe/.test(r.error), err(r));
+r = await api('contratoFirmar', { id: KID, firma: FIRMA }, TOK); ok('firmar sin aceptar → rechazado', !r.ok && /aceptas/.test(r.error), err(r));
+r = await api('contratoFirmar', { id: KID, acepto: true, firma: 'data:image/png;base64,AAAA' }, TOK); ok('firma muy corta → rechazado', !r.ok && /Dibuja tu firma/.test(r.error), err(r));
+r = await api('contratoFirmar', { id: KID, acepto: true, firma: 'data:image/png;base64,' + 'A'.repeat(49000) }, TOK); ok('firma muy grande → rechazado', !r.ok && /muy grande/.test(r.error), err(r));
+r = await api('contratoFirmar', { id: KID, acepto: true, firma: FIRMA, nombre: 'José Vicdonio Molina' }, TOK);
+ok('contratoFirmar', r.ok && r.data.contrato.estado === 'firmado' && r.data.contrato.firmadoPor === 'José Vicdonio Molina' && /^[0-9a-f]{64}$/.test(db.T.Contratos[0].huella) && r.data.resumen.firmados.length === 1, err(r));
+ok('firma genera PDF en Storage', !!db.T.Contratos[0].pdfId && (db.efectos || []).some(e => e.subir && /\.pdf$/.test(e.subir.ruta)), db.T.Contratos[0].pdfId);
+r = await api('contratoFirmar', { id: KID, acepto: true, firma: FIRMA }, TOK); ok('firmar dos veces → rechazado', !r.ok && /ya está firmado/.test(r.error), err(r));
+r = await panel('panelContrato', { id: NEG1, accion: 'anular', contratoId: KID, confirmar: true }); ok('Panel: anular contrato firmado', r.ok, err(r));
+r = await api('contratoVer', { id: KID }, TOK); ok('contrato anulado no se ve', !r.ok && /anulado/.test(r.error), err(r));
+
+/* ===================== historial ===================== */
+sec('historial');
+r = await api('historial', {}, TOK); ok('historial admin', r.ok && Array.isArray(r.data.meses) && Array.isArray(r.data.distribuciones) && r.data.destinos && Array.isArray(r.data.cuentas), err(r));
+
+/* ===================== cambiarNegocio ===================== */
+sec('cambiarNegocio (una persona con 2 negocios)');
+r = await api('registrar', { negocio: 'Segundo de Vic', nombre: 'Vic', giro: 'comida', whatsapp: '33130265', pin: '1234' }); ok('registrar 2.º negocio con el mismo whatsapp → rechazado (se agrega desde el Panel)', !r.ok && /ya tiene una cuenta/.test(r.error), err(r));
+r = await api('cambiarNegocio', { negocioId: NEG_B }, TOK); ok('cambiarNegocio a uno ajeno → rechazado', !r.ok && /No tienes acceso/.test(r.error), err(r));
+r = await api('bootstrap', {}, TOK); ok('con un solo negocio: negocios = []', r.ok && r.data.negocios.length === 0, err(r));
+r = await panel('panelAccion', { id: NEG1, accion: 'agregarNegocio', negocio: 'Comedor de Vic', giro: 'comida', copiar: { usuarios: true, clientes: true } }); ok('Panel: agregar 2.º negocio a Vic', r.ok, err(r));
+const NEG2 = db.T.Licencias.find(l => l.negocio === 'Comedor de Vic').id;
+ok('el 2.º negocio queda vinculado a la persona', db.T.Licencias.find(l => l.id === NEG2).persona === NEG1 && db.T.Accesos.some(a => a.whatsapp === '50433130265' && a.negocioId === NEG2));
+ok('se copiaron usuarios y clientes', db.T.Usuarios.filter(u => u.negocio_id === NEG2).length === 3 && db.T.Clientes.filter(c => c.negocio_id === NEG2).length >= 1);
+r = await api('login', { whatsapp: '33130265', pin: '1234' }); ok('login con 2 negocios → pide elegir', r.ok && r.data.elegir && r.data.elegir.length === 2 && !r.data.token, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '1234', negocioId: NEG2 }); ok('login con negocioId → entra al 2.º', r.ok && r.data.token, err(r)); const TOK2 = r.data.token;
+r = await api('bootstrap', {}, TOK2); ok('bootstrap del 2.º negocio', r.ok && r.data.config.nombre === 'Comedor de Vic' && r.data.negocioId === NEG2 && r.data.negocios.length === 2 && r.data.negocios.find(n => n.id === NEG2).actual === true, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '1234', negocioId: 'NOEXISTE' }); ok('login con negocioId inválido → vuelve a pedir elegir', r.ok && r.data.elegir, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '1234', negocioId: NEG2, pref: true }); ok('login con pref (negocio recordado) entra directo', r.ok && r.data.token, err(r));
+r = await api('cambiarNegocio', { negocioId: NEG1 }, TOK2); ok('cambiarNegocio al 1.º desde el 2.º', r.ok && r.data.token && r.data.usuario.rol === 'admin', err(r)); const TOK1b = r.data.token;
+r = await api('bootstrap', {}, TOK1b); ok('el token nuevo es del 1.º negocio', r.ok && r.data.negocioId === NEG1, err(r));
+r = await api('cambiarNegocio', { negocioId: NEG2 }, TOK1b); ok('cambiarNegocio ida y vuelta', r.ok && r.data.token, err(r));
+r = await api('cambiarNegocio', { negocioId: '' }, TOK); ok('cambiarNegocio sin id → rechazado', !r.ok, err(r));
+r = await api('login', { whatsapp: '99112233', pin: '1212' }); ok('el cajero copiado también tiene 2 negocios', r.ok && r.data.elegir && r.data.elegir.length === 2, err(r));
+r = await api('cambiarClave', { actual: '1234', nueva: '4444' }, TOK); ok('cambiar PIN en el 1.º…', r.ok, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '4444', negocioId: NEG2 }); ok('…sincroniza el PIN en el 2.º negocio', r.ok && r.data.token, err(r));
+await api('cambiarClave', { actual: '4444', nueva: '1234' }, TOK);
+r = await panel('panelAccion', { id: NEG2, accion: 'pausar' }); ok('Panel: pausar el 2.º', r.ok, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '1234', negocioId: NEG2, pref: true }); ok('negocio recordado en pausa → lista con prefNo, no queda fuera', r.ok && r.data.elegir && r.data.prefNo === true, err(r));
+r = await api('login', { whatsapp: '33130265', pin: '1234', negocioId: NEG2 }); ok('elegir a propósito el pausado → PRUEBA_VENCIDA', !r.ok && /PRUEBA_VENCIDA/.test(r.error), err(r));
+r = await api('cambiarNegocio', { negocioId: NEG2 }, TOK); ok('cambiarNegocio al pausado → PRUEBA_VENCIDA', !r.ok && /PRUEBA_VENCIDA/.test(r.error), err(r));
+await panel('panelAccion', { id: NEG2, accion: 'reanudar' });
+
+/* ===================== Bloqueo progresivo de PIN ===================== */
+sec('bloqueo progresivo de PIN');
+const login = (wa, pin, ip) => api('login', { whatsapp: wa, pin }, undefined, { ip });
+for (let i = 0; i < 4; i++) r = await login('99990001', '0000', IP);
+ok('4 fallos: solo «incorrectos»', !r.ok && /incorrectos$/.test(r.error), err(r));
+r = await login('99990001', '0000', IP); ok('5.º fallo → «Espera 10 minutos»', !r.ok && /10 minutos/.test(r.error), err(r));
+r = await login('99990001', '5555', IP); ok('PIN correcto durante el bloqueo → no entra', !r.ok && /Demasiados intentos fallidos. Espera 10 minutos/.test(r.error), err(r));
+r = await login('99990001', '5555', IP2); ok('bloqueo por WhatsApp aplica también desde otra conexión', !r.ok && /10 minutos/.test(r.error), err(r));
+r = await login('99990001', '5555'); ok('…y sin huella de conexión', !r.ok && /10 minutos/.test(r.error), err(r));
+r = await login('99990002', '2222', IP); ok('otro WhatsApp desde la misma conexión entra normal', r.ok, err(r));
+const segAna = db.T.Seguimiento.filter(s => s.tipo === 'seguridad' && s.negocioId === db.T.Licencias.find(l => l.negocio === 'Giro raro').id);
+ok('queda aviso de seguridad en Seguimiento del negocio', segAna.length === 1 && /cambia tu PIN/.test(segAna[0].nota));
+vencer('BL_'); for (let i = 0; i < 5; i++) r = await login('99990001', '0000', IP);
+ok('2.ª tanda el mismo día → 1 hora', !r.ok && /1 hora/.test(r.error), err(r));
+vencer('BL_'); for (let i = 0; i < 5; i++) r = await login('99990001', '0000', IP);
+ok('3.ª tanda → hasta mañana', !r.ok && /hasta mañana/.test(r.error), err(r));
+vencer('BL_'); r = await login('99990001', '5555', IP); ok('vencido el bloqueo, con PIN correcto entra', r.ok, err(r));
+ok('contador de fallos se limpia al acertar', !db.cache['F_50499990001'] || db.cache['F_50499990001'].e < Date.now());
+const IP4 = '4444444444444444';
+for (let i = 0; i < 3; i++) await login('99990001', '0000', IP4);
+r = await login('99990001', '5555', IP4); ok('3 fallos y acierto → entra y reinicia', r.ok, err(r));
+for (let i = 0; i < 3; i++) await login('99990001', '0000', IP4);
+r = await login('99990001', '0000', IP4); ok('4.º fallo tras reinicio: aún no bloquea', !r.ok && /incorrectos$/.test(r.error), err(r));
+await login('99990001', '5555', IP4);
+ok('OBS: el contador por conexión (F_i…) NO se reinicia al acertar (lleva ' + ((db.cache['F_i' + IP4] || {}).v || 0) + ' tras 2 entradas correctas)', !db.cache['F_i' + IP4], 'F_i=' + ((db.cache['F_i' + IP4] || {}).v || 0));
+// Bloqueo por conexión: 20 fallos con números distintos
+for (let i = 0; i < 20; i++) r = await login('9800' + String(1000 + i), '1111', IP2);
+r = await login('99990002', '2222', IP2); ok('20 fallos desde una conexión → conexión bloqueada aunque el PIN sea correcto', !r.ok && /desde esta conexión/.test(r.error), err(r));
+r = await login('99990002', '2222', IP4); ok('desde otra conexión entra', r.ok, err(r));
+r = await login('99990002', '2222'); ok('sin huella de conexión entra', r.ok, err(r));
+r = await api('login', { whatsapp: '99990002', pin: '2222' }, undefined, { ip: 'ZZZZ-no-hex' }); ok('ip no hexadecimal se ignora (entra)', r.ok, err(r));
+// PIN dentro de acciones (cambiarClave / borrarDatos usan el mismo contador por usuario)
+for (let i = 0; i < 4; i++) await api('cambiarClave', { actual: '9999', nueva: '4321' }, TOK_B);
+r = await api('borrarDatos', { confirmar: 'Boutique Luna', pin: '9999', alcance: 'movimientos' }, TOK_B); ok('5.º fallo de PIN (cambiarClave+borrarDatos comparten contador) → bloqueo 10 min', !r.ok && /10 minutos/.test(r.error), err(r));
+r = await api('cambiarClave', { actual: '2222', nueva: '4321' }, TOK_B); ok('cambiarClave bloqueado aunque el PIN sea correcto', !r.ok && /Espera 10 minutos/.test(r.error), err(r));
+r = await api('login', { whatsapp: '99990002', pin: '2222' }); ok('el bloqueo de PIN en acciones no afecta el login', r.ok, err(r));
+vencer('BL_');
+
+/* ===================== borrarDatos / eliminarCuenta / logout ===================== */
+sec('borrarDatos / eliminarCuenta / logout');
+await G('Productos', { nombre: 'Vestido', categoria: 'Ropa', precio: 500, costo: 300, stock: 4 }, TOK_B);
+await G('Clientes', { nombre: 'Clienta B', telefono: '7000-0001' }, TOK_B);
+const pB = db.T.Productos.find(p => p.negocio_id === NEG_B && p.nombre === 'Vestido').id;
+await api('venta', { items: [{ productoId: pB, cantidad: 1, precio: 500 }], metodo: 'Efectivo', recibido: 500, clave: 'b1' }, TOK_B);
+r = await api('borrarDatos', { confirmar: 'otro nombre', pin: '2222', alcance: 'movimientos' }, TOK_B); ok('borrarDatos nombre no coincide → rechazado', !r.ok && /no coincide/.test(r.error), err(r));
+r = await api('borrarDatos', { confirmar: 'Boutique Luna', pin: '0000', alcance: 'movimientos' }, TOK_B); ok('borrarDatos PIN malo → rechazado', !r.ok && /PIN no es correcto/.test(r.error), err(r));
+r = await api('borrarDatos', { confirmar: 'boutique  LUNA', pin: '2222', alcance: 'movimientos' }, TOK_B); ok('borrarDatos solo movimientos (nombre sin importar mayúsculas)', r.ok && r.data.todo === false, err(r));
+ok('movimientos borrados, catálogo conservado', db.T.Ventas.filter(v => v.negocio_id === NEG_B).length === 0 && db.T.Inventario.filter(m => m.negocio_id === NEG_B).length === 0 && db.T.Productos.filter(p => p.negocio_id === NEG_B).length === 1 && db.T.Clientes.filter(c => c.negocio_id === NEG_B).length === 1);
+ok('queda nota en Seguimiento', db.T.Seguimiento.some(s => s.negocioId === NEG_B && /movimientos/.test(s.nota)));
+r = await api('borrarDatos', { confirmar: 'Boutique Luna', pin: '2222', alcance: 'todo' }, TOK_B); ok('borrarDatos todo', r.ok && r.data.todo === true, err(r));
+ok('catálogo borrado, usuarios y config conservados', db.T.Productos.filter(p => p.negocio_id === NEG_B).length === 0 && db.T.Clientes.filter(c => c.negocio_id === NEG_B).length === 0 && db.T.Usuarios.filter(u => u.negocio_id === NEG_B).length === 1 && db.T.Config.filter(c => c.negocio_id === NEG_B).length > 0);
+r = await api('bootstrap', {}, TOK_B); ok('tras borrar todo la sesión sigue', r.ok && r.data.productos.length === 0, err(r));
+r = await api('eliminarCuenta', { confirmar: 'borrar', pin: '2222' }, TOK_B); ok('eliminarCuenta sin ELIMINAR → rechazado', !r.ok && /ELIMINAR/.test(r.error), err(r));
+r = await api('eliminarCuenta', { confirmar: 'eliminar', pin: '0000' }, TOK_B); ok('eliminarCuenta PIN malo → rechazado', !r.ok && /PIN no es correcto/.test(r.error), err(r));
+r = await api('eliminarCuenta', { confirmar: ' eliminar ', pin: '2222', motivo: 'Cierro el negocio' }, TOK_B); ok('eliminarCuenta', r.ok && /^\d{4}-\d{2}-\d{2}$/.test(r.data.hasta), err(r));
+const licB = db.T.Licencias.find(l => l.id === NEG_B);
+ok('licencia marcada Eliminada con motivo', licB.estado === 'Eliminada' && /Cierro el negocio/.test(licB.eliminadoEl));
+ok('acceso tapado con x', db.T.Accesos.find(a => a.negocioId === NEG_B).whatsapp === 'x50499990002');
+r = await api('bootstrap', {}, TOK_B); ok('sesión de cuenta eliminada → aviso «eliminada»', !r.ok && /PRUEBA_VENCIDA/.test(r.error) && /"tipo":"eliminada"/.test(r.error), err(r));
+r = await api('login', { whatsapp: '99990002', pin: '2222' }); ok('login de cuenta eliminada → incorrectos', !r.ok && /incorrectos/.test(r.error), err(r));
+r = await api('registrar', { negocio: 'Boutique Luna Nueva', nombre: 'Beto', giro: 'boutique', whatsapp: '99990002', pin: '3333' }); ok('el whatsapp queda libre para registrarse de nuevo', r.ok && r.data.token, err(r));
+r = await panel('panelAccion', { id: NEG_B, accion: 'recuperar' }); ok('Panel: recuperar cuenta eliminada', r.ok, err(r));
+ok('al recuperar se destapa el acceso', db.T.Accesos.find(a => a.negocioId === NEG_B).whatsapp === '50499990002');
+r = await api('login', { whatsapp: '99990002', pin: '2222' }); ok('recuperada + registro nuevo con el mismo whatsapp: login pide elegir o entra', r.ok, err(r));
+r = await api('logout', {}, TOK); ok('logout', r.ok && r.data === true, err(r));
+r = await api('bootstrap', {}, TOK); ok('tras logout la sesión no sirve', !r.ok && r.error === 'SESION', err(r));
+r = await api('logout', {}, TOK); ok('logout con sesión cerrada → SESION', !r.ok && r.error === 'SESION', err(r));
+
+/* ===================== RESUMEN ===================== */
+console.log('\n' + '═'.repeat(60));
+console.log('Pasadas: ' + pasadas + ' · Fallidas: ' + fallidas);
+if (fallos.length) { console.log('\nFALLOS:'); fallos.forEach(f => console.log(' - ' + f)); }
+const errLog = logs.filter(l => /error|Error|falló/.test(l) && !/^\w+ · \d+ ms/.test(l));
+if (errLog.length) console.log('\nLog del servidor con errores:\n' + errLog.join('\n'));
+process.exitCode = fallidas ? 1 : 0;
