@@ -397,7 +397,7 @@ function RECORDATORIOS_(ids) {
   /* ---------- Respaldos de cada negocio y copiar productos entre negocios (Panel) ----------
    * Respaldos (lista) y RespaldoDatos (la copia completa en JSON) son tablas por negocio que el Codigo.gs no usa.
    * Copia diaria automática (tarea respaldosDia, 2 a. m.): se guardan 7 diarias, 4 semanales y 4 manuales/«antes de restaurar». */
-  const HERR = ['panelRespaldos', 'panelRespaldoHacer', 'panelRespaldoRestaurar', 'panelRespaldoDatos', 'panelCopiarInfo', 'panelCopiarProductos', 'panelRespaldosResumen', 'panelRespaldarTodos', 'panelRespaldoConfig'];
+  const HERR = ['panelRespaldos', 'panelRespaldoHacer', 'panelRespaldoRestaurar', 'panelRespaldoDatos', 'panelCopiarInfo', 'panelCopiarProductos', 'panelRespaldosResumen', 'panelRespaldarTodos', 'panelRespaldoConfig', 'panelEspacio'];
   const GUARDA = { diario: 7, semanal: 4, manual: 4, antes: 4 };
   const guardaDe = Rq => { let g = {}; try { g = JSON.parse((Rq && Rq.props.RESP_GUARDA) || '{}') || {}; } catch (e) {} const o = {}; Object.keys(GUARDA).forEach(k => { const n = Number(g[k]); o[k] = n >= 1 && n <= 60 ? Math.floor(n) : GUARDA[k]; }); return o; };
   const jsonProp = (Rq, k, def) => { try { return JSON.parse(Rq.props[k] || '') || def; } catch (e) { return def; } };
@@ -579,6 +579,7 @@ function RECORDATORIOS_(ids) {
         return { ok: true, data: { total: ps.length, fotos: ps.filter(p => p.foto).length, cats: Object.keys(c).sort().map(k => ({ cat: k, n: c[k] })) } };
       }
       if (a === 'panelRespaldosResumen') return { ok: true, data: await resumenRespaldos(Rq) };
+      if (a === 'panelEspacio') return { ok: true, data: (await db.cargar({ espacio: true })).espacio || null };
       if (a === 'panelRespaldoConfig') {
         const g = {}; Object.keys(GUARDA).forEach(k => { const n = Math.floor(Number(d[k])); if (!(n >= 1 && n <= 60)) throw new Error('Escribe de 1 a 60 copias'); g[k] = n; });
         await db.aplicar({ props: { RESP_GUARDA: JSON.stringify(g) } }); return { ok: true, data: g };
