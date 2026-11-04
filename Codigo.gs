@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.42';
+const VERSION = '1.9.43';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -1112,7 +1112,7 @@ function loginMulti_(d, ip) {
   });
   if (!validos.length && errHoja) throw errHoja; // la hoja no abrió: no es un PIN malo
   if (!validos.length) throw falla();
-  acierto_(wa);
+  acierto_(wa); if (ip) acierto_('i' + ip); // un ingreso correcto también limpia el contador de la conexión (si no, una conexión compartida se bloqueaba con fallos sueltos acumulados)
   let v = validos[0];
   const lista = () => validos.map(x => ({ id: x.lic.id, negocio: x.lic.negocio, giro: x.lic.giro, estado: licNegocio_(x.lic).estado }));
   if (validos.length > 1) {
@@ -1787,7 +1787,7 @@ function suscripciones_(u) {
   return rows_('Suscripciones').map(s => {
     const c = cu[s.cuentaId], cli = cl[s.clienteId];
     return Object.assign({}, s, { perfil: perfilN_(s.perfil), estadoR: susEstadoDe_(s, h), dias: Math.ceil((msDeLocal_(s.vence + 'T00:00') - msDeLocal_(h + 'T00:00')) / 86400000),
-      cuentaNombre: c ? c.nombre : '', correo: c ? c.correo : '', clave: c ? (u.rol === 'admin' || true ? c.clave : '') : '', telefono: cli ? cli.telefono : s.telefono, cliente: cli ? cli.nombre : s.cliente });
+      cuentaNombre: c ? c.nombre : '', correo: c ? c.correo : '', clave: c && u.rol === 'admin' ? c.clave : '', telefono: cli ? cli.telefono : s.telefono, cliente: cli ? cli.nombre : s.cliente });
   }).sort((a, b) => a.vence < b.vence ? -1 : a.vence > b.vence ? 1 : 0);
 }
 function susEstado_(u, d) {
@@ -1886,10 +1886,18 @@ function cambiarGiro_(u, d) {
     const cats = GIROS[ant].cats.map(c => c.toLowerCase());
     rows_('Productos').forEach(p => { if (p.activo && cats.indexOf(String(p.categoria).toLowerCase()) >= 0) { upsert_('Productos', { id: p.id, activo: false }); desactivados++; } });
   }
+  // Con varias tiendas (giros extra), cambiar el principal es un intercambio: el giro anterior queda como sección extra
+  // y sus productos sin giro se marcan, para que ninguna sección desaparezca de la tienda en línea, los reportes ni las cajas.
+  let girosExtra = null;
+  if (MULTI_NEGOCIO && NEG && girosExtra_().length) {
+    const activos = girosActivos_(cfg);
+    rows_('Productos').forEach(p => { if (!p.giro && giroDeProd_(p, activos) === ant) upsert_('Productos', { id: p.id, giro: ant }); });
+    girosExtra = girosExtra_().filter(g => g !== d.giro); if (girosExtra.indexOf(ant) < 0 && own_(GIROS, ant)) girosExtra.push(ant);
+  }
   guardarConfig_({ giro: d.giro });
   let agregados = 0;
   if (d.ejemplos) agregados = cargarEjemplos_(u, { giro: d.giro }).agregados;
-  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, { giro: GIROS[d.giro].n }); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { const upd = { giro: GIROS[d.giro].n }; if (girosExtra) { upd.giros = girosExtra.join(','); NEG.lic.giros = upd.giros; } mSet_('Licencias', NEG.lic, upd); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   return { config: sinInternos_(config_()), productos: rows_('Productos'), agregados: agregados, desactivados: desactivados, girosActivos: girosActivos_() };
 }
 
@@ -2340,8 +2348,10 @@ function estadoAntesPausa_(l) {
   const ev = seg.find(x => /^(Acceso pausado · estaba (Activa|Prueba|Vencida)|Licencia activada|Prueba extendida)/.test(String(x.nota)));
   const vencida = !((msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now());
   let e = ev ? (/estaba Activa|^Licencia activada/.test(ev.nota) ? 'Activa' : 'Prueba') : (vencida ? 'Activa' : 'Prueba'); // sin historial: la regla de antes
-  // Una prueba ya vencida con pagos anotados es de alguien que pagó (por ejemplo, activado a mano en la hoja)
-  if (e === 'Prueba' && vencida && mRows_('PagosLic').some(x => x.negocioId === l.id && Number(x.monto) > 0)) e = 'Activa';
+  // Una prueba ya vencida con pagos anotados es de alguien que pagó (por ejemplo, activado a mano en la hoja).
+  // Pero si la pausa dejó escrito «estaba Vencida», vuelve exactamente a Vencida: un anticipo o un pago de giro no activan la licencia.
+  if (ev && /estaba Vencida/.test(ev.nota)) e = 'Prueba';
+  else if (e === 'Prueba' && vencida && mRows_('PagosLic').some(x => x.negocioId === l.id && Number(x.monto) > 0)) e = 'Activa';
   return e; // una prueba con la fecha pasada queda «Vencida» sola
 }
 const ETIQUETAS_LIC = ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido'];
@@ -2720,6 +2730,13 @@ function guardar_(u, d) {
     return upsert_('Cuentas', r);
   }
   if (ent === 'Productos') {
+    // Bodega con tienda asignada: solo sus productos y solo en su tienda (igual que precios_ y ajusteStock_)
+    const actP = girosActivos_(), fija = tiendaAsignada_(u, actP);
+    if (fija) {
+      if (prev && giroDeProd_(prev, actP) !== fija) throw new Error('«' + prev.nombre + '» es de otra tienda');
+      if (r.giro !== undefined && r.giro && r.giro !== fija) throw new Error('Solo puedes crear productos en tu tienda (' + GIROS[fija].n + ')');
+      if (!prev && !r.giro) r.giro = fija;
+    }
     if (r.codigo !== undefined) r.codigo = txt_(r.codigo, 40);
     if (r.codigo && rows_('Productos').some(p => p.codigo && String(p.codigo).toLowerCase() === r.codigo.toLowerCase() && p.id !== r.id)) throw new Error('Ya existe un producto con ese código');
     if (r.categoria !== undefined) r.categoria = txt_(r.categoria, 40) || 'General';
@@ -3747,7 +3764,7 @@ function editarPedido_(u, d) {
   const antes = parseJ_(p.items, []), cambios = Array.isArray(d.cantidades) ? d.cantidades : [];
   if (cambios.length !== antes.length) throw new Error('El pedido cambió mientras lo editabas. Ábrelo de nuevo.');
   const cfg = config_(), pm = porId_(rows_('Productos')), sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
-  const items = [], lineas = [], suma = {};
+  const items = [], lineas = [], suma = {}, sumaV = {};
   antes.forEach((it, i) => {
     const n = Math.floor(Number(cambios[i]) || 0);
     if (n < 0 || n > 999) throw new Error('Cantidad no válida en «' + it.nombre + '»');
@@ -3757,6 +3774,10 @@ function editarPedido_(u, d) {
     if (pr) {
       suma[pr.id] = (suma[pr.id] || 0) + n;
       if (n > it.cantidad && pr.tipo === 'producto' && !sin && pr.stock < suma[pr.id]) throw new Error(pr.stock > 0 ? 'Solo quedan ' + Math.floor(pr.stock) + ' de «' + pr.nombre + '»' : '«' + pr.nombre + '» está agotado');
+      // Existencia por opción (tono, talla…), igual que al pedir: la opción viene en el nombre «Producto (Talla: L, Color: Blanco)»
+      const V = varsDe_(pr), vk = V ? varKey_(pr, it.nombre) : '';
+      if (vk) { const kk = pr.id + SEPV + vk; sumaV[kk] = (sumaV[kk] || 0) + n; const hay = Math.floor(Number(V[vk] && V[vk].s) || 0);
+        if (n > it.cantidad && pr.tipo === 'producto' && !sin && hay < sumaV[kk]) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + pr.nombre + ' (' + vk + ')»' : '«' + pr.nombre + ' (' + vk + ')» está agotado'); }
     }
     items.push(Object.assign({}, it, { cantidad: n, total: r2_(n * it.precio) }));
   });
@@ -4442,11 +4463,12 @@ function guardarProyecto_(u, d) {
   if (!(rec.margen >= 0 && rec.margen <= 1000)) throw new Error('El % de ganancia deseado no es válido');
   if (prev) rec.id = prev.id;
   else Object.assign(rec, { estado: 'curso', fin: '', usuarioId: u.id, creado: ahora_() });
+  // Al crear, se puede indicar de una vez el producto final (se valida antes de escribir: si no, quedaba un proyecto sin producto)
+  const conProd = !prev && r.producto && txt_(r.producto.nombre, 80);
+  if (conProd && !(r3_(r.producto.cantidad) > 0)) throw new Error('Escribe la cantidad que vas a producir');
   const p = upsert_('Proyectos', rec);
-  // Al crear, se puede indicar de una vez el producto final
-  if (!prev && r.producto && txt_(r.producto.nombre, 80)) {
+  if (conProd) {
     const cant = r3_(r.producto.cantidad);
-    if (!(cant > 0)) throw new Error('Escribe la cantidad que vas a producir');
     upsert_('ProyectoProductos', { proyectoId: p.id, nombre: txt_(r.producto.nombre, 80), cantidad: cant, unidad: txt_(r.producto.unidad, 20) || 'unidad',
       peso: 1, precio: r2_(r.producto.precio) > 0 ? r2_(r.producto.precio) : 0, productoId: '', inventario: '', creado: ahora_() });
   }

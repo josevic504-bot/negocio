@@ -1527,7 +1527,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.42';
+const APP_VER = '1.9.43';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2131,7 +2131,7 @@ function firmarContrato(c) {
 ACC.ir = el => { cerrarHojas(); ir(el.dataset.v, el.dataset.p ? JSON.parse(el.dataset.p) : {}); };
 ACC.mas = () => {
   const items = Object.keys(VISTAS).filter(k => k !== 'inicio' && puedeVer(k));
-  const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}">${(k => k ? `<i class="ci-img">${icImg(k)}</i>` : `<i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i>`)(k === 'proyectos' && modOn('cotizaciones') ? 'cotizaciones' : k === 'ordenes' && VISTAS.ordenes.i === 'bed' ? 'hospedaje' : ICI[VISTAS[k].i] === k || ['pedidos', 'mensajes', 'tienda', 'productos', 'precios', 'proyectos', 'clientes', 'proveedores', 'compras', 'gastos', 'caja', 'ventas', 'reportes', 'usuarios', 'ajustes', 'agenda', 'mascotas', 'vacunas', 'ordenes', 'encargos', 'vencimientos', 'cuentas', 'vender'].includes(k) ? k : '')}<span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : k === 'mensajes' && S.chatsNuevos ? `<b class="cnt">${S.chatsNuevos}</b>` : ''}</button>`).join('')}</div>
+  const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}">${(img => img ? `<i class="ci-img">${icImg(img)}</i>` : `<i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i>`)(k === 'proyectos' && modOn('cotizaciones') ? 'cotizaciones' : k === 'ordenes' && VISTAS.ordenes.i === 'bed' ? 'hospedaje' : ICI[VISTAS[k].i] === k || ['pedidos', 'mensajes', 'tienda', 'productos', 'precios', 'proyectos', 'clientes', 'proveedores', 'compras', 'gastos', 'caja', 'ventas', 'reportes', 'usuarios', 'ajustes', 'agenda', 'mascotas', 'vacunas', 'ordenes', 'encargos', 'vencimientos', 'cuentas', 'vender'].includes(k) ? k : '')}<span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : k === 'mensajes' && S.chatsNuevos ? `<b class="cnt">${S.chatsNuevos}</b>` : ''}</button>`).join('')}</div>
     ${modoTienda() && !tiendaFija() ? `<button class="me-ay" data-a="cambiarTienda">${ic('store', 20)}<span><b>Cambiar de tienda</b><small>Estás en ${S.tienda ? esc(secNom(S.tienda)) : 'todas las tiendas'}</small></span>${ic('right', 18)}</button>` : ''}
     ${(S.negocios || []).length > 1 ? `<button class="me-ay" data-a="cambiarNegocio">${ic('refresh', 20)}<span><b>Cambiar de negocio</b><small>Estás en ${esc(S.config.nombre || '')} · tienes ${S.negocios.length} negocios</small></span>${ic('right', 18)}</button>` : ''}
     <button class="me-ay" data-a="ayuda">${ic('help', 20)}<span><b>Ayuda y novedades</b><small>Cómo se usa cada pantalla · versión ${APP_VER}</small></span>${ic('right', 18)}</button>
@@ -2219,8 +2219,13 @@ function mostrarApp() {
 }
 function salir(expirada) {
   rtCerrar();
-  if (!expirada && S.token) { const ng = S.negocioId || ''; pushQuitar().catch(() => {}).then(() => api('logout', {}, true)).catch(() => {}); LS.del('push_' + ng); }
+  if (!expirada && S.token) { // el token se borra abajo, así que el logout va con el token guardado aparte (si no, el servidor recibía uno vacío y la sesión seguía viva)
+    const ng = S.negocioId || '', tok = S.token;
+    const adios = () => DEMO.on ? api('logout', {}, true) : fetch(apiUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'logout', token: tok, dev: DEV_ID, data: {} }) });
+    pushQuitar().catch(() => {}).then(adios).catch(() => {}); LS.del('push_' + ng);
+  }
   S.token = ''; S.user = null; S.inicio = null; LS.del(tokenKey()); LS.del(cacheKey());
+  S.lmodo = null; S.lmodoElegido = 0; // la pantalla de ingreso se decide de nuevo (antes, tras registrarse, «Salir» volvía a «Crea tu cuenta»)
   limpiarSesion();
   cerrarHojas();
   $('#app').hidden = true; document.body.classList.remove('app');
@@ -6950,7 +6955,7 @@ function cbInicio() {
   $('#cb').innerHTML = `
     <div class="kpis"><div class="kpi" style="--k:var(--ok)"><small>Utilidad del mes</small><b class="n ${u.utilidad < 0 ? 'neg' : ''}">${money(u.utilidad)}</b></div><div class="kpi"><small>Asientos</small><b class="n">${n}</b><small>${manuales} manuales</small></div></div>
     ${S.cb.aperturaHecha ? `<p class="mut" style="font-size:12px;margin:4px 0 8px">Contabilidad desde el ${fFecha(S.cb.inicio)} (fecha de la apertura). Lo anterior a esa fecha está resumido en los saldos iniciales.</p>` : ''}
-    ${!S.cb.aperturaHecha ? `<div class="aviso info">${ic('info', 18)} Aún no hay <b>saldos de apertura</b> (caja, banco, inventario, deudas, capital). Sin ellos el balance general no cuadra. <button class="btn sm" data-a="cbApertura">Registrar apertura</button></div>` : ''}
+    ${!S.cb.aperturaHecha ? `<div class="aviso info">${ic('info', 18)}<div>Aún no hay <b>saldos de apertura</b> (caja, banco, inventario, deudas, capital). Sin ellos el balance general no cuadra.</div><button class="btn sm" data-a="cbApertura">Registrar apertura</button></div>` : ''}
     ${sinCuenta ? `<div class="aviso bad">${ic('alert', 18)} ${sinCuenta} asiento(s) usan una cuenta que no existe en el plan. Revisa el mapeo.</div>` : ''}
     <div class="sec-t">Libros</div><div class="list">
       ${link('Libro diario', 'Cada venta, compra, gasto, cobro y pago con su partida', 'diario')}${link('Libro mayor', 'Movimientos y saldo por cuenta', 'mayor')}${link('Balanza de comprobación', 'Saldos iniciales, movimientos y finales', 'balanza')}${link('Catálogo y mapeo de cuentas', 'Plan de cuentas y a dónde va cada movimiento', 'plan')}
@@ -8656,6 +8661,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.43', fecha: '2026-11-04', items: [
+    { i: 'check', t: 'Revisión completa del programa', d: 'Probamos cada función una por una y corregimos 11 detalles: el menú «Más» con Contabilidad, el cierre de sesión, la existencia por talla o tono al editar un pedido, el cambio de tipo de negocio con varias tiendas y otros ajustes menores.' }
+  ] },
   { v: '1.9.38', fecha: '2026-11-03', items: [
     { i: 'lock', t: 'Tu PIN, más protegido', d: 'Si alguien falla tu PIN varias veces seguidas, la entrada se bloquea cada vez por más tiempo y te avisamos al teléfono. Si no fuiste tú, cambia tu PIN en Ajustes.' },
     { i: 'bell', t: 'Sonido con la app abierta', d: 'Un «ding» corto cuando entra un pedido, un mensaje o una respuesta del administrador. Se apaga en Ajustes › Avisos.' }
