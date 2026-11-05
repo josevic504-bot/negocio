@@ -499,6 +499,9 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .emojis input{width:64px;padding:6px 8px;font-size:14px}
 .precio-box{background:var(--bg);border:1px solid var(--line);border-radius:18px;padding:12px 14px 10px;margin-bottom:12px}
 .precio-box h4{margin:0 0 10px;display:flex;align-items:center;gap:7px;font-size:15px;color:var(--pri)}
+.cta-v{margin:4px 0 12px}.cta-b{background:var(--bg);border:1px solid var(--line);border-radius:16px;padding:11px 13px;margin-bottom:8px}.cta-b.falta{border-color:var(--warn);background:var(--warnb)}
+.cta-h{display:flex;align-items:center;gap:7px;margin-bottom:8px;color:var(--pri)}.cta-h b{font-size:14.5px;flex:1}.cta-b .kv{margin-bottom:8px}.cta-b .row{gap:8px}
+.sus-sinc{display:flex;align-items:center;gap:7px;margin-top:9px;padding:7px 8px 7px 11px;border-radius:12px;background:var(--warnb);color:var(--warn);font-size:13px}.sus-sinc span{flex:1;font-weight:500}.sus-sinc .btn{color:var(--ink)}
 .precio-box input{background:var(--card)}
 .calc-t{border:0;background:none;color:var(--pri);font:600 13.5px var(--font);display:flex;align-items:center;gap:6px;padding:8px 0 2px;cursor:pointer}
 .calc{background:var(--card);border-radius:14px;padding:12px;margin-top:8px;border:1px dashed var(--line)}
@@ -1538,7 +1541,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.46';
+const APP_VER = '1.9.47';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -4601,6 +4604,7 @@ function detalleVenta(v) {
     ${edi && !v.anulada ? `<div class="aviso info sm ed-av">${ic('edit', 18)}<div><b>Editada${edi.veces > 1 ? ' ' + edi.veces + ' veces' : ''} · antes ${money(edi.antes.total)}${edi.antes.metodo !== v.metodo ? ' en ' + esc(edi.antes.metodo) : ''}</b><small>${esc(fFechaC(edi.fecha))} ${fHora(edi.fecha)} · ${esc(edi.por)} · ${esc(edi.motivo)}${edi.antes.factura && edi.antes.factura !== v.factura ? ' · reemplaza la factura ' + esc(edi.antes.factura) : ''}</small>${v.anterior ? `<button class="lnk" data-a="verVentaAnt">Ver cómo era antes ${ic('arrow', 14)}</button>` : ''}</div></div>` : ''}
     <div class="kv"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(fz ? fz.nombre : cli ? cli.nombre : 'Consumidor final')}</div>${fz ? `<div><small>RTN del cliente</small>${esc(fmtRtn(fz.rtn)) || '—'}</div><div><small>Venta interna</small>${esc(v.numero)}</div>` : ''}<div><small>Atendió</small>${esc(nomUsuario(v.usuarioId))}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
     <div class="tks">${v.detalle.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}${i.serie ? ' · serie ' + esc(i.serie) : ''}${i.garantia ? ' · garantía hasta ' + fFechaC(garantiaHasta(v.fecha, i.garantia)) : ''}</small></div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
+    ${bloqueCuentaVenta(v)}
     ${v.servicio ? `<p class="sm mut">${v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio'}${v.cocina ? ' · cocina: ' + esc(v.cocina) : ''}</p>` : ''}
     <div class="tots"><div class="tot"><span>Subtotal</span><b class="n">${money(v.subtotal)}</b></div>${v.descuento ? `<div class="tot"><span>Descuento</span><b class="n">− ${money(v.descuento)}</b></div>` : ''}<div class="tot"><span>ISV</span><b class="n">${money(v.isv)}</b></div><div class="tot g"><span>Total</span><b class="n">${money(v.total)}</b></div>
     ${v.anticipo > 0 ? `<div class="tot"><span>Anticipo ya pagado</span><b class="n">− ${money(v.anticipo)}</b></div>` : ''}${v.metodo === 'Efectivo' ? `<div class="tot"><span>Recibido · cambio</span><b class="n">${money(v.recibido)} · ${money(v.cambio)}</b></div>` : ''}${v.metodo === 'Crédito' && !v.anulada ? `<div class="tot"><span>Anticipo · saldo pendiente</span><b class="n">${money(v.recibido)} · ${money(v.saldo)}</b></div>` : ''}
@@ -4608,6 +4612,7 @@ function detalleVenta(v) {
     ${v.nota && !v.anulada ? `<p class="sm mut">Nota: ${esc(v.nota)}</p>` : ''}
     <div class="acciones"><button class="btn" data-a="recVenta">${ic('image', 18)} ${v.factura ? 'Factura' : 'Comprobante'}</button><button class="btn" data-a="impVenta">${ic('print', 18)} Imprimir</button>${modOn('comanda') && v.servicio ? `<button class="btn" data-a="comanda">${ic('receipt', 18)} Comanda</button>` : ''}${cli && cli.telefono ? `<a class="btn wa" href="${waLink(cli.telefono, textoVenta(v, v.detalle))}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>` });
   S.ventaAnt = v.anterior || null;
+  h._cuentaV = v; pintarCuentaVenta(h, v);
   const bs = [];
   if (puede('admin') && !v.anulada) bs.push({ t: `${ic('edit', 18)} Editar`, cls: 'pri', fn: () => { if (Number(v.anticipo) > 0) return toast('Esta venta viene de una orden o cita con anticipo: anúlala y vuelve a cobrarla desde ahí', 'error', 5000); h.cerrar(); editarVenta(v); } });
   if (puede('admin') && !v.anulada) bs.unshift({ t: 'Anular venta', cls: 'bad', fn: async () => {
@@ -4638,6 +4643,7 @@ function editarVenta(v) {
   const pagos = [['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer'], ['Crédito', 'cal']];
   const efectivo = (met, total, rec) => met === 'Efectivo' ? total : met === 'Crédito' ? Math.min(num(rec), total) : 0;
   const h = hoja({ titulo: 'Editar ' + (v.factura ? 'factura' : 'venta') + ' ' + esc(v.numero), html: '<div id="ev"></div>' });
+  h._cuentaV = v;
   const pinta = () => {
     const vivos = E.items.filter(i => i.cantidad > 0), t = calcTotales({ items: vivos, descuento: E.descuento }, exoE()), cli = E.clienteId ? byId(S.clientes, E.clienteId) : null;
     const dif = r2(t.total - v.total), cajaDif = r2(efectivo(E.metodo, t.total, E.abono) - efectivo(v.metodo, v.total, v.recibido));
@@ -4659,6 +4665,7 @@ function editarVenta(v) {
           <div class="qty"><button data-k="${k}" data-d="-1">−</button><span data-eq="${k}">${cant(i.cantidad)}</span><button data-k="${k}" data-d="1">+</button></div><button class="btn icon sm ghost" data-x="${k}" aria-label="Quitar" style="color:var(--bad)">${ic('trash', 16)}</button></div>`
         : `<div class="tk ev-q"><div class="tx"><b>${esc(i.descripcion)}</b><small>Se quita de la venta</small></div><button class="btn sm ghost" data-u="${k}">Deshacer</button></div>`).join('')}</div>
       <button class="btn sm ghost ev-add" data-agregar="1">${ic('plus', 16)} Agregar producto</button>
+      ${bloqueCuentaVenta(v)}
       <div class="fld"><span>Cliente</span><input id="ev-cli" list="dl-evc" placeholder="Consumidor final" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '')}" autocomplete="off"><datalist id="dl-evc">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist></div>
       <div class="fld"><span>Forma de pago</span><div class="pays">${pagos.map(([m, i]) => `<button class="pay ${E.metodo === m ? 'on' : ''}" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div></div>
       ${E.metodo === 'Crédito' ? `<label class="fld"><span>Abono inicial</span><input id="ev-ab" inputmode="decimal" value="${esc(E.abono)}" placeholder="0.00"></label>${!cli ? `<div class="aviso warn sm">${ic('alert', 18)}<div>Para dejarla al crédito elige un cliente registrado.</div></div>` : ''}` : ''}
@@ -4667,6 +4674,7 @@ function editarVenta(v) {
       ${cambio ? `<div class="ev-pasa"><span class="op-l">Al guardar</span>${efe.map(([i, x, c]) => `<div class="ev-f ${c || ''}">${ic(i, 17)}<span>${x}</span></div>`).join('')}</div>
       <span class="op-l" style="margin-top:12px">¿Por qué cambia?</span><div class="chips" id="ev-m" style="flex-wrap:wrap">${MOTIVOS_VENTA.map(m => `<button type="button" class="chip ${E.motivo === m ? 'on' : ''}" data-mo="${esc(m)}">${esc(m)}</button>`).join('')}</div>
       ${E.motivo === 'Otro' ? `<label class="fld" style="margin-top:8px"><span>Motivo</span><input id="ev-o" maxlength="100" value="${esc(E.otro)}" placeholder="Ej. el cliente cambió de plan"></label>` : ''}` : `<p class="xs mut" style="margin:10px 2px 0">Cambia cantidades, precios, productos, el cliente o la forma de pago. Abajo verás qué pasa con la caja y el inventario.</p>`}`;
+    if (!S.susL) pintarCuentaVenta(h, v);
     const ab = $('#ev-ab', h.el); if (ab) ab.onchange = () => { E.abono = ab.value; pinta(); };
     const o = $('#ev-o', h.el); if (o) o.oninput = () => { E.otro = o.value; };
     const ci = $('#ev-cli', h.el);
@@ -8454,20 +8462,22 @@ R.vencimientos = async () => {
   const venc = l.filter(s => s.estadoR === 'vencida'), hoyL = l.filter(viva).filter(s => s.dias === 0), sem = l.filter(viva).filter(s => s.dias > 0 && s.dias <= DA), act = l.filter(s => s.estadoR === 'activa');
   const suma = a => a.reduce((t, s) => t + num(s.precio), 0);
   const plats = [...new Set(l.filter(viva).map(s => s.plataforma))].sort();
-  let lista = f === 'por' ? l.filter(viva).filter(s => s.dias <= DA && s.dias >= -30) : f === 'venc' ? venc : f === 'act' ? act : l;
+  const sinC = l.filter(viva).filter(s => !s.cuentaId);
+  let lista = f === 'por' ? l.filter(viva).filter(s => s.dias <= DA && s.dias >= -30) : f === 'venc' ? venc : f === 'act' ? act : f === 'sinc' ? sinC : l;
   if (pl) lista = lista.filter(s => s.plataforma === pl);
   if (q) lista = lista.filter(s => norm(s.cliente + ' ' + s.plataforma + ' ' + s.producto + ' ' + (s.telefono || '')).includes(q));
   const chip = (k, t) => `<button class="chip ${f === k ? 'on' : ''}" data-a="susF" data-f="${k}">${t}</button>`;
   m.innerHTML = `<div class="kpis k4"><div class="kpi" style="--k:var(--bad)"><small>Vencidas</small><b>${venc.length}</b><i>${money(suma(venc))}</i></div><div class="kpi" style="--k:var(--warn)"><small>Vencen hoy</small><b>${hoyL.length}</b><i>${money(suma(hoyL))}</i></div><div class="kpi"><small>${DA === 7 ? 'Esta semana' : 'En ' + DA + ' días'}</small><b>${sem.length}</b><i>${money(suma(sem))}</i></div><div class="kpi" style="--k:#00b56e"><small>Activas</small><b>${act.length}</b><i>suscripciones</i></div></div>
     <div class="row" style="margin-bottom:10px"><div class="srch grow">${ic('search', 18)}<input id="sus-q" placeholder="Buscar cliente o plataforma…" value="${esc(S.f.susQ || '')}"></div>${puede('admin') ? `<button class="btn" data-a="susAlertas">${ic('bell', 18)} Alertas</button>` : ''}</div>
-    <div class="chips" style="margin-bottom:10px">${chip('por', 'Por vencer')}${chip('venc', 'Vencidas')}${chip('act', 'Activas')}${chip('todas', 'Todas')}${plats.map(p => `<button class="chip ${pl === p ? 'on' : ''}" data-a="susP" data-p="${esc(p)}">${esc(p)}</button>`).join('')}</div>
-    ${lista.length ? lista.map(s => tarjetaSus(s)).join('') : `<div class="empty-big">${ic('clock', 40)}<h3>${l.length ? 'Nada por aquí' : 'Todavía no hay suscripciones'}</h3><p>${l.length ? 'Prueba con otro filtro.' : 'Al vender un producto de tipo suscripción (Netflix, Disney+, IPTV…) aparece aquí con su fecha de vencimiento.'}</p>${l.length ? '' : `<button class="btn pri" data-a="ir" data-v="vender">${ic('cart', 18)} Vender</button>`}</div>`}`;
+    <div class="chips" style="margin-bottom:10px">${chip('por', 'Por vencer')}${sinC.length || f === 'sinc' ? chip('sinc', 'Sin cuenta · ' + sinC.length) : ''}${chip('venc', 'Vencidas')}${chip('act', 'Activas')}${chip('todas', 'Todas')}${plats.map(p => `<button class="chip ${pl === p ? 'on' : ''}" data-a="susP" data-p="${esc(p)}">${esc(p)}</button>`).join('')}</div>
+    ${lista.length ? lista.map(s => tarjetaSus(s)).join('') : `<div class="empty-big">${ic('clock', 40)}<h3>${f === 'sinc' && l.length ? 'Todas tienen cuenta' : l.length ? 'Nada por aquí' : 'Todavía no hay suscripciones'}</h3><p>${l.length ? 'Prueba con otro filtro.' : 'Al vender un producto de tipo suscripción (Netflix, Disney+, IPTV…) aparece aquí con su fecha de vencimiento.'}</p>${l.length ? '' : `<button class="btn pri" data-a="ir" data-v="vender">${ic('cart', 18)} Vender</button>`}</div>`}`;
   const qi = $('#sus-q', m); if (qi) qi.addEventListener('input', () => { S.f.susQ = qi.value; clearTimeout(S._susT); S._susT = setTimeout(() => R.vencimientos(), 250); });
 };
 function tarjetaSus(s) {
   const b = s.estadoR === 'vencida' ? '<span class="badge b-bad">Vencida</span>' : s.estadoR === 'cancelada' ? '<span class="badge b-mut">Cancelada</span>' : s.estadoR === 'renovada' ? '<span class="badge b-mut">Renovada</span>' : s.dias === 0 ? '<span class="badge b-warn">Hoy</span>' : s.dias <= 3 ? `<span class="badge b-warn">${s.dias} ${s.dias === 1 ? 'día' : 'días'}</span>` : `<span class="badge b-mut">${s.dias} días</span>`;
   const viva = s.estadoR === 'activa' || s.estadoR === 'vencida';
   return `<div class="ord ${s.estadoR === 'vencida' ? 'new' : ''}" data-a="susVer" data-id="${s.id}"><div class="ord-h">${platAv(s.plataforma, 'oav')}<div class="tx"><b>${esc(s.cliente || 'Sin cliente')}</b><small>${esc(susEtiqueta(s))} · ${viva ? venceTxt(s) : 'venció ' + fFechaC(s.vence)}</small></div>${b}</div>
+    ${viva && !s.cuentaId ? `<div class="sus-sinc">${ic('key', 15)}<span>Sin cuenta asignada</span><button class="btn sm" data-a="susCuenta" data-id="${s.id}">${ic('plus', 15)} Agregar cuenta</button></div>` : ''}
     ${viva ? `<div class="row" style="margin-top:10px">${s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoRecordar(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Recordar</a>` : ''}<button class="btn sm pri" style="margin-left:auto" data-a="susRenovar" data-id="${s.id}">${ic('refresh', 16)} Renovar 1 mes · ${money(precioMes(s))}</button></div>` : ''}</div>`;
 }
 function precioMes(s) { const p = byId(S.productos, s.productoId); return p && p.precio ? p.precio : r2(num(s.precio) / Math.max(1, Number(s.meses) || 1)); }
@@ -8504,7 +8514,7 @@ ACC.susVer = el => {
   const viva = s.estadoR === 'activa' || s.estadoR === 'vencida';
   const h = hoja({ titulo: esc(s.plataforma), html: `<div class="cli-h">${platAv(s.plataforma, 'av lg')}<div class="tx"><b>${esc(s.cliente || 'Sin cliente')}</b><small>${esc(s.producto)} · ${esc(s.telefono || '')}</small></div></div>
     <div class="kv"><div><small>Inicio</small>${esc(fFechaC(s.inicio))}</div><div><small>Vence</small><b>${esc(fFechaC(s.vence))}</b> · ${viva ? venceTxt(s) : s.estadoR}</div><div><small>Plan</small>${s.meses} ${s.meses === 1 ? 'mes' : 'meses'} · ${money(s.precio)}</div><div><small>Estado</small>${esc(cap(s.estadoR))}</div></div>
-    ${s.cuentaId ? `<div class="precio-box"><h4>${ic('key', 18)} Acceso entregado</h4><div class="kv"><div><small>Cuenta</small>${esc(s.cuentaNombre || '')}</div><div><small>${s.perfil ? 'Perfil' : 'Entrega'}</small>${s.perfil ? 'Perfil ' + s.perfil : 'Cuenta completa'}</div><div><small>Correo</small>${esc(s.correo || '—')}</div><div><small>Clave</small>${claveOculta(s.clave)}</div>${s.pin ? `<div><small>PIN</small>${esc(s.pin)}</div>` : ''}</div>${s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoAcceso(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Reenviar acceso</a>` : ''}</div>` : '<p class="sm mut">Sin cuenta asignada.</p>'}
+    ${s.cuentaId ? `<div class="precio-box"><h4>${ic('key', 18)} Acceso entregado</h4><div class="kv"><div><small>Cuenta</small>${esc(s.cuentaNombre || '')}</div><div><small>${s.perfil ? 'Perfil' : 'Entrega'}</small>${s.perfil ? 'Perfil ' + s.perfil : 'Cuenta completa'}</div><div><small>Correo</small>${esc(s.correo || '—')}</div><div><small>Clave</small>${claveOculta(s.clave)}</div>${s.pin ? `<div><small>PIN</small>${esc(s.pin)}</div>` : ''}</div>${s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoAcceso(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Reenviar acceso</a>` : ''}${viva ? `<button class="btn sm" data-a="susCuentaF" data-id="${s.id}">${ic('edit', 16)} Cambiar cuenta</button>` : ''}</div>` : viva ? `<div class="sus-sinc">${ic('key', 15)}<span>Sin cuenta asignada</span><button class="btn sm pri" data-a="susCuentaF" data-id="${s.id}">${ic('plus', 15)} Agregar cuenta</button></div>` : '<p class="sm mut">Sin cuenta asignada.</p>'}
     ${s.nota ? `<p class="sm mut">Nota: ${esc(s.nota)}</p>` : ''}` });
   const bs = [];
   if (viva) {
@@ -8527,6 +8537,78 @@ function editarSus(s) {
     const v = $('#es-v', h.el).value; if (!v) throw new Error('Elige la fecha');
     S.susL = await api('susEstado', { id: s.id, vence: v, pin: $('#es-p', h.el).value.trim(), nota: $('#es-n', h.el).value.trim() });
     S.inicio = null; S.cuentasL = null; h.cerrar(); toast('Suscripción actualizada', 'ok'); if (S.vista === 'vencimientos') R.vencimientos();
+  } }]);
+}
+/* ---- Cuenta entregada: asignar o cambiar la cuenta de una suscripción ya vendida ----
+ * Se usa desde la venta (detalle y «Editar venta») y desde Vencimientos. No cambia la venta, la caja ni el inventario. */
+function entregaSus(s) { const e = susDeProducto(byId(S.productos, s.productoId)).find(x => x.plataforma.toLowerCase() === String(s.plataforma || '').toLowerCase()); return e && e.entrega === 'cuenta' ? 'cuenta' : 'perfil'; }
+function bloqueCuentaVenta(v) {
+  if (!modOn('suscripciones') || v.anulada) return '';
+  const l = (S.susL || []).filter(s => s.ventaId === v.id && s.estadoR !== 'cancelada' && s.estadoR !== 'renovada');
+  if (!S.susL) return v.detalle.some(i => esSus(byId(S.productos, i.productoId))) ? '<div class="cta-v" data-cta-v="1"><small class="hint">Cargando la cuenta entregada…</small></div>' : '';
+  if (!l.length) return '';
+  return `<div class="cta-v" data-cta-v="1">${l.map(s => `<div class="cta-b ${s.cuentaId ? '' : 'falta'}"><div class="cta-h">${ic('key', 18)}<b>Cuenta entregada${l.length > 1 ? ' · ' + esc(s.plataforma) : ''}</b>${s.cuentaId ? '' : '<span class="badge b-warn">Sin cuenta</span>'}</div>
+    ${s.cuentaId ? `<div class="kv"><div><small>Correo</small>${esc(s.correo || '—')}</div><div><small>Contraseña</small>${claveOculta(s.clave)}</div><div><small>${s.perfil ? 'Perfil' : 'Entrega'}</small>${s.perfil ? 'Perfil ' + s.perfil + (s.pin ? ' · PIN ' + esc(s.pin) : '') : 'Cuenta completa'}</div><div><small>Vence</small>${esc(fFechaC(s.vence))}</div></div>` : `<p class="xs mut" style="margin:2px 0 8px">Agrega el correo y la contraseña que le diste a ${esc((s.cliente || 'tu cliente').split(' ')[0])}. No cambia la venta.</p>`}
+    <div class="row">${s.cuentaId && s.telefono ? `<a class="btn wa sm" href="${waLink(s.telefono, textoAcceso(s))}" target="_blank" rel="noopener">${ic('wa', 16)} Enviar acceso</a>` : ''}<button class="btn sm ${s.cuentaId ? '' : 'pri'}" style="margin-left:auto" data-a="susCuenta" data-id="${s.id}">${ic(s.cuentaId ? 'edit' : 'plus', 16)} ${s.cuentaId ? 'Cambiar' : 'Agregar cuenta'}</button></div></div>`).join('')}</div>`;
+}
+// Pinta (o carga y repinta) el bloque dentro de una hoja ya abierta
+function pintarCuentaVenta(h, v) {
+  const el = $('[data-cta-v]', h.el); if (!el) return;
+  const pon = () => { const x = $('[data-cta-v]', h.el); if (x) x.outerHTML = bloqueCuentaVenta(v) || '<div data-cta-v="1"></div>'; };
+  if (S.susL) return pon();
+  api('suscripciones', {}, true).then(l => { S.susL = l; pon(); }).catch(() => { const x = $('[data-cta-v]', h.el); if (x) x.innerHTML = ''; });
+}
+ACC.susCuentaF = el => { const s = (S.susL || []).find(x => x.id === el.dataset.id); if (!s) return; const hj = PILA[PILA.length - 1]; if (hj) hj.cerrar(); asignarCuentaSus(s, ns => ACC.susVer({ dataset: { id: ns.id } })); };
+ACC.susCuenta = el => { const s = (S.susL || []).find(x => x.id === el.dataset.id); if (!s) return; const hj = PILA.length ? PILA[PILA.length - 1] : null; asignarCuentaSus(s, () => { if (hj && hj.el && hj._cuentaV) pintarCuentaVenta(hj, hj._cuentaV); }); };
+async function asignarCuentaSus(s, alListo) {
+  if (!S.cuentasL) { try { await cargarCuentas(true); } catch (e) { return toast('No se pudieron cargar las cuentas', 'error'); } }
+  const ent = entregaSus(s), admin = puede('admin');
+  const deLaPlat = () => (S.cuentasL || []).filter(c => c.activo && String(c.plataforma).toLowerCase() === String(s.plataforma || '').toLowerCase());
+  // Opciones libres (o la que ya tiene esta suscripción)
+  const opciones = () => { let o = ''; deLaPlat().forEach(c => {
+    if (ent === 'cuenta') { const mia = s.cuentaId === c.id, libre = !c.completa && !c.ocupados; if (libre || mia) o += `<option value="${c.id}:0" ${mia ? 'selected' : ''}>${esc(c.nombre)} · cuenta completa</option>`; return; }
+    if (c.completa && !(c.completa.susId === s.id)) return;
+    c.perfilesL.forEach(pf => { const mia = s.cuentaId === c.id && Number(s.perfil) === pf.n; if (!pf.susId || mia) o += `<option value="${c.id}:${pf.n}" ${mia ? 'selected' : ''}>${esc(c.nombre)} · perfil ${pf.n}${mia ? ' (actual)' : ' (libre)'}</option>`; });
+  }); return o; };
+  const hay = !!opciones();
+  const st = { modo: hay || !admin ? 'guardada' : 'nueva' };
+  const h = hoja({ titulo: s.cuentaId ? 'Cambiar cuenta' : 'Agregar cuenta', cls: 'chica', html: `<p class="conf">${platAv(s.plataforma, 'av sm')} <b>${esc(s.cliente || 'Sin cliente')}</b> · ${esc(s.producto || s.plataforma)}</p><div id="ac-b"></div>` });
+  const pinta = () => {
+    const o = opciones();
+    $('#ac-b', h.el).innerHTML = `${admin ? `<div class="seg full" id="ac-m" style="margin-bottom:12px"><button type="button" class="${st.modo === 'guardada' ? 'on' : ''}" data-m="guardada">Cuenta guardada</button><button type="button" class="${st.modo === 'nueva' ? 'on' : ''}" data-m="nueva">Nueva cuenta</button></div>` : ''}
+      ${st.modo === 'guardada' ? (o ? `<label class="fld"><span>Cuenta${ent === 'perfil' ? ' y perfil' : ''}</span><select id="ac-c">${o}</select></label>` : `<div class="aviso info sm">${ic('info', 18)}<div>No hay ${ent === 'cuenta' ? 'cuentas' : 'perfiles'} libres de ${esc(s.plataforma)}.${admin ? ' Usa «Nueva cuenta» para escribir el correo y la contraseña.' : ' Pídele al administrador que agregue la cuenta.'}</div></div>`)
+        : `<label class="fld"><span>Correo de la cuenta *</span><input id="ac-cor" type="email" maxlength="80" autocomplete="off" placeholder="correo@ejemplo.com" value="${esc(st.cor || '')}"></label>
+        <label class="fld"><span>Contraseña *</span>${pw(`id="ac-cla" maxlength="80" autocomplete="off" value="${esc(st.cla || '')}"`)}</label>
+        ${ent === 'perfil' ? `<div class="f2"><label class="fld"><span>Perfiles que tiene la cuenta</span><input id="ac-per" inputmode="numeric" value="${esc(st.per || 5)}"></label><label class="fld"><span>Perfil que le toca</span><input id="ac-pf" inputmode="numeric" value="${esc(st.pf || 1)}"></label></div>` : ''}
+        <small class="hint">Queda guardada en Cuentas para usarla con otros clientes. Si ya tienes una cuenta con ese correo, se usa esa.</small>`}
+      <div class="f2" style="margin-top:8px">${ent === 'perfil' ? `<label class="fld"><span>PIN del perfil</span><input id="ac-pin" maxlength="12" value="${esc(st.pin !== undefined ? st.pin : s.pin || '')}" placeholder="Opcional"></label>` : ''}<label class="fld"><span>Vence el</span><input id="ac-v" type="date" value="${esc(st.v || s.vence)}"></label></div>`;
+  };
+  const leer = () => { ['cor', 'cla', 'per', 'pf', 'pin', 'v'].forEach(k => { const x = $('#ac-' + k, h.el); if (x) st[k] = x.value.trim(); }); };
+  h.el.addEventListener('click', e => { const b = e.target.closest('#ac-m [data-m]'); if (!b) return; leer(); st.modo = b.dataset.m; pinta(); });
+  pinta();
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Guardar cuenta`, cls: 'pri', fn: async () => {
+    leer();
+    const d = { id: s.id, entrega: ent, pin: st.pin || '', vence: st.v || s.vence };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(d.vence)) throw new Error('Elige la fecha de vencimiento');
+    if (st.modo === 'guardada') { const c = $('#ac-c', h.el); if (!c || !c.value) throw new Error(admin ? 'Elige una cuenta o usa «Nueva cuenta»' : 'No hay cuentas libres'); const [ci, pf] = c.value.split(':'); d.cuentaId = ci; d.perfil = Number(pf); }
+    else {
+      if (!st.cor) throw new Error('Escribe el correo de la cuenta');
+      if (!st.cla) throw new Error('Escribe la contraseña');
+      const per = Math.max(1, Math.min(20, parseInt(st.per, 10) || 5)), pf = Math.max(1, parseInt(st.pf, 10) || 1);
+      if (ent === 'perfil' && pf > per) throw new Error('El perfil no puede ser mayor que los perfiles de la cuenta');
+      d.perfil = pf; d.nueva = { correo: st.cor, clave: st.cla, perfiles: per };
+    }
+    S.susL = await api('susAsignar', d);
+    S.cuentasL = null; S.inicio = null; guardarCache();
+    h.cerrar();
+    const ns = S.susL.find(x => x.id === s.id) || s;
+    toast('Cuenta guardada', 'ok');
+    if (S.vista === 'vencimientos') R.vencimientos();
+    if (alListo) alListo(ns);
+    if (ns.telefono && ns.cuentaId) {
+      const hw = hoja({ titulo: '', cls: 'exito chica', html: `<div class="ok-big"><i>${ic('key', 36)}</i><h2>Cuenta guardada</h2><p class="mut">${esc(ns.cliente || '')} · ${esc(susEtiqueta(ns))}</p></div><div class="acciones"><a class="btn wa" href="${waLink(ns.telefono, textoAcceso(ns))}" target="_blank" rel="noopener">${ic('wa', 18)} Enviar acceso por WhatsApp</a></div>` });
+      hw.botones([{ t: 'Listo', cls: 'pri', fn: () => hw.cerrar() }]);
+    }
   } }]);
 }
 ACC.susRenovar = el => { const s = (S.susL || []).find(x => x.id === el.dataset.id); if (s) renovarSus(s); };
@@ -8717,6 +8799,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.47', fecha: '2026-11-05', items: [
+    { i: 'key', t: 'Agrega la cuenta a una venta de streaming', d: 'Si vendiste una suscripción sin apuntar la cuenta, ábrela desde Ventas o desde Vencimientos y toca «Agregar cuenta»: eliges una cuenta guardada o escribes el correo y la contraseña. No cambia la venta ni la caja, y puedes mandarle el acceso a tu cliente por WhatsApp. En Vencimientos, el filtro «Sin cuenta» te muestra las que faltan.' }
+  ] },
   { v: '1.9.46', fecha: '2026-11-05', items: [
     { i: 'store', t: 'Nuevo tipo de negocio: Carwash', d: 'Si lavas vehículos, el programa se adapta: una pantalla de Patio con los carros que están adentro (placa, servicio, quién lo lava y cuánto lleva), servicios de ejemplo con precio por tamaño de vehículo, y la tienda en línea donde tu cliente aparta día y hora. Al confirmar el pedido, la cita entra sola a tu Agenda. Lo activas en Ajustes › Tipo de negocio, o pídeme que te lo agregue como giro extra.' }
   ] },

@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.46';
+const VERSION = '1.9.47';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -338,6 +338,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'susCuentas':      return susCuentas_(u);
     case 'suscripciones':   return suscripciones_(u);
     case 'susEstado':       return lock_(() => susEstado_(u, d));
+    case 'susAsignar':      return lock_(() => susAsignar_(u, d));
     case 'cambiarGiro':     return lock_(() => cambiarGiro_(u, d));
     case 'cambiarNegocio':  return lock_(() => cambiarNegocio_(u, d));
     case 'ordenes':         return ordenes_(u, d);
@@ -1807,6 +1808,37 @@ function susEstado_(u, d) {
   if (d.nota !== undefined) r.nota = txt_(d.nota, 120);
   if (d.pin !== undefined) r.pin = txt_(d.pin, 12);
   if (d.vence !== undefined) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.vence))) throw new Error('Fecha no válida'); r.vence = String(d.vence); }
+  upsert_('Suscripciones', r);
+  return suscripciones_(u);
+}
+// Asignar (o cambiar) la cuenta de una suscripción ya vendida: cuenta guardada + perfil, o cuenta nueva (correo y clave).
+// No toca la venta, la caja ni el inventario.
+function susAsignar_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const s = rows_('Suscripciones').find(x => x.id === d.id); if (!s) throw new Error('La suscripción no existe');
+  if (s.estado === 'cancelada' || s.estado === 'renovada') throw new Error('Esta suscripción ya no está activa');
+  const completa = d.entrega === 'cuenta';
+  let cuentaId = String(d.cuentaId || ''), perfil = completa ? 0 : Math.max(1, parseInt(d.perfil, 10) || 1);
+  if (d.nueva) {
+    req_(u, ['admin']);
+    const n = d.nueva, correo = txt_(n.correo, 80), clave = txt_(n.clave, 80);
+    if (!correo) throw new Error('Escribe el correo de la cuenta');
+    if (!clave) throw new Error('Escribe la contraseña de la cuenta');
+    const plat = txt_(s.plataforma, 40) || 'Cuenta', mismas = rows_('Cuentas').filter(c => String(c.plataforma).toLowerCase() === plat.toLowerCase());
+    const ya = mismas.find(c => String(c.correo).toLowerCase() === correo.toLowerCase());
+    if (ya) cuentaId = ya.id; // el mismo correo ya está guardado: se usa esa cuenta
+    else {
+      const perfiles = completa ? 1 : Math.max(perfil, Math.min(20, parseInt(n.perfiles, 10) || 5));
+      cuentaId = upsert_('Cuentas', { plataforma: plat, nombre: txt_(n.nombre, 80) || plat + ' ' + (mismas.length + 1), correo: correo, clave: clave, perfiles: perfiles, costo: 0, vence: '', nota: '', activo: true, creado: ahora_() }).id;
+    }
+  }
+  const c = rows_('Cuentas').find(x => x.id === cuentaId); if (!c) throw new Error('Elige una cuenta');
+  if (!completa && perfil > Math.max(1, Number(c.perfiles) || 1)) throw new Error('«' + c.nombre + '» solo tiene ' + c.perfiles + ' perfiles');
+  const oc = ocupados_()[c.id] || {}, otra = completa ? Object.keys(oc).map(k => oc[k]).find(x => x.id !== s.id) : (oc[String(perfil)] && oc[String(perfil)].id !== s.id ? oc[String(perfil)] : (oc['0'] && oc['0'].id !== s.id ? oc['0'] : null));
+  if (otra) throw new Error(completa ? '«' + c.nombre + '» ya tiene perfiles vendidos' : 'El perfil ' + perfil + ' de «' + c.nombre + '» ya es de ' + (otra.cliente || 'otro cliente'));
+  const r = { id: s.id, cuentaId: c.id, perfil: perfil };
+  if (d.pin !== undefined) r.pin = txt_(d.pin, 12);
+  if (d.vence) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.vence))) throw new Error('Fecha no válida'); r.vence = String(d.vence); }
   upsert_('Suscripciones', r);
   return suscripciones_(u);
 }
