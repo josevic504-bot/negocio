@@ -258,6 +258,11 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .ord.new:before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(var(--a1),var(--a2))}
 .ord-h{display:flex;align-items:center;gap:10px}
 .ord-h .tx{flex:1;min-width:0}.ord-h b{font-weight:600}.ord-h small{display:block;color:var(--mut);font-size:12.5px}
+.ord-cw{display:flex;align-items:center;gap:9px;margin-top:9px;flex-wrap:wrap}
+.ord-cw .placa{display:inline-flex;align-items:center;border:1.5px solid var(--ink);border-radius:6px;background:var(--card);padding:3px 8px;font:700 12.5px/1 var(--font);letter-spacing:.06em}
+.ord-cw .crono{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;font-size:12.5px;color:var(--mut)}
+.ord-cw .crono.tarde{color:var(--warn)}
+.pay.lleno{opacity:.45;text-decoration:line-through;cursor:not-allowed}
 .ord-i{margin:10px 0;font-size:13.5px;color:var(--ink);background:var(--bg);border-radius:14px;padding:9px 12px}
 .ord-i div{display:flex;justify-content:space-between;padding:2px 0}
 .ord-f{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
@@ -1385,7 +1390,7 @@ const ICP = {
 const ICI = { cart: 'vender', inbox: 'pedidos', chat: 'mensajes', store: 'tienda', box: 'productos', tag: 'precios', layers: 'proyectos', users: 'clientes', truck: 'proveedores', bag: 'compras', receipt: 'gastos', wallet: 'caja', doc: 'ventas', chart: 'reportes', user: 'usuarios', gear: 'ajustes', cal: 'agenda', paw: 'mascotas', syringe: 'vacunas', steth: 'mascotas', wrench: 'ordenes', bed: 'hospedaje', gift: 'encargos', clock: 'vencimientos', key: 'cuentas', coin: 'qa_cobrar', help: 'ayuda', sparkle: 'qa_resumen' };
 const ICI_QA = { receipt: 'qa_gasto', truck: 'qa_compra' };
 const icImg = k => `<img class="ici" src="iconos/${k}.webp" alt="" loading="lazy" decoding="async">`;
-const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
+const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'carwash', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
 const giroImg = (id, cls) => `<img class="gimg ${cls || ''}" src="iconos/g_${GIROS_IMG.includes(id) ? id : 'otro'}.webp" alt="" decoding="async">`;
 const ic = (n, sz = 22) => `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICP[n] || ''}</svg>`;
 
@@ -1533,7 +1538,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.45';
+const APP_VER = '1.9.46';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1918,7 +1923,7 @@ const VISTAS = {
   precios:     { t: 'Precios', i: 'tag', roles: ['admin', 'bodega'] },
   proyectos:   { get t() { return modOn('cotizaciones') ? 'Cotizaciones y proyectos' : 'Proyectos'; }, c: 'Proyectos', i: 'layers', get roles() { return modOn('cotizaciones') ? TODOS : ['admin', 'bodega']; } },
   clientes:    { t: 'Clientes', i: 'users', roles: ['admin', 'cajero'] },
-  ordenes:     { get t() { return vetOrd() ? 'Hospedaje y estética' : 'Órdenes de trabajo'; }, get c() { return vetOrd() ? 'Hospedaje' : 'Órdenes'; }, get i() { return vetOrd() ? 'bed' : 'wrench'; }, roles: TODOS, si: () => modOn('ordenes') },
+  ordenes:     { get t() { return vetOrd() ? 'Hospedaje y estética' : cwOrd() ? 'Patio' : 'Órdenes de trabajo'; }, get c() { return vetOrd() ? 'Hospedaje' : cwOrd() ? 'Patio' : 'Órdenes'; }, get i() { return vetOrd() ? 'bed' : 'wrench'; }, roles: TODOS, si: () => modOn('ordenes') },
   agenda:      { t: 'Agenda de citas', c: 'Agenda', i: 'cal', roles: TODOS, si: () => modOn('agenda') },
   mascotas:    { t: 'Mascotas', i: 'paw', roles: ['admin', 'cajero'], si: () => modOn('mascotas') },
   vacunas:     { t: 'Vacunas', c: 'Vacunas', i: 'syringe', roles: ['admin', 'cajero'], si: () => modOn('mascotas') },
@@ -2302,7 +2307,7 @@ function pintarLogin() {
     : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo. Sin tarjeta.</p><div class="in-mini"><span>Ventas</span><span>Inventario</span><span>Clientes</span><span>Caja</span><span>Tienda en línea</span><span>Reportes</span></div>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
-        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['compras', 'recargas', 'veterinaria'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
+        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['compras', 'recargas', 'veterinaria', 'carwash'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
@@ -2324,7 +2329,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Beauty & Moda'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['carwash', 'Carwash / lavado de autos'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Beauty & Moda'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -2338,7 +2343,7 @@ const INTRO = [
   { i: 'chart', t: 'Sabes cuánto ganas', p: 'Cierre de caja, cuentas por cobrar y por pagar, productos por agotarse y reportes del mes. Cada noche te cuenta cómo te fue.',
     v: () => `<div class="in-bars">${[38, 52, 44, 66, 58, 80, 72].map((h, k) => `<i style="height:${h}%;opacity:${k === 5 ? 1 : .45}"></i>`).join('')}</div><div class="in-chips"><span>Ganancia del mes <b>L 41,380</b></span><span>Por cobrar <b>L 5,780</b></span></div>` },
   { i: 'sparkle', t: 'Hecho para tu tipo de negocio', p: 'Elige tu giro y la app se adapta: trae productos de ejemplo y las herramientas que tu negocio necesita.',
-    v: () => `<div class="in-giros">${[['tienda', 'Pulpería'], ['comida', 'Restaurante'], ['farmacia', 'Farmacia'], ['ferreteria', 'Ferretería'], ['boutique', 'Boutique'], ['belleza', 'Belleza'], ['repuestos', 'Taller'], ['panaderia', 'Panadería'], ['veterinaria', 'Veterinaria'], ['servicios', 'Servicios'], ['streaming', 'Streaming'], ['tecnologia', 'Celulares']].map(x => `<span>${giroImg(x[0])} ${x[1]}</span>`).join('')}</div>` }
+    v: () => `<div class="in-giros">${[['tienda', 'Pulpería'], ['comida', 'Restaurante'], ['farmacia', 'Farmacia'], ['ferreteria', 'Ferretería'], ['boutique', 'Boutique'], ['belleza', 'Belleza'], ['repuestos', 'Taller'], ['carwash', 'Carwash'], ['veterinaria', 'Veterinaria'], ['servicios', 'Servicios'], ['streaming', 'Streaming'], ['tecnologia', 'Celulares']].map(x => `<span>${giroImg(x[0])} ${x[1]}</span>`).join('')}</div>` }
 ];
 function pintarIntro() {
   const n = S.introN || 0, last = n === INTRO.length - 1;
@@ -3969,7 +3974,9 @@ R.inicio = () => {
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
-    if (d.ordenes && modOn('ordenes') && !vetT) tiles += tile('t-azul', 'wrench', 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : (d.ordenes.recibido + d.ordenes.proceso) + ' abiertas', d.ordenes.atrasadas ? d.ordenes.atrasadas + ' atrasadas' : d.ordenes.proceso + ' en proceso · ' + d.ordenes.recibido + ' recibidas', ['ir', 'ordenes']);
+    if (d.ordenes && modOn('ordenes') && !vetT && cwOrd()) { const dentro = d.ordenes.recibido + d.ordenes.proceso + d.ordenes.listo;
+      tiles += tile('t-azul', 'wrench', 'En el patio', dentro + (dentro === 1 ? ' vehículo' : ' vehículos'), d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' listo para entregar' : ' listos para entregar') : d.ordenes.proceso + ' en lavado · ' + d.ordenes.recibido + ' en espera', ['ir', 'ordenes']); }
+    else if (d.ordenes && modOn('ordenes') && !vetT) tiles += tile('t-azul', 'wrench', 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : (d.ordenes.recibido + d.ordenes.proceso) + ' abiertas', d.ordenes.atrasadas ? d.ordenes.atrasadas + ' atrasadas' : d.ordenes.proceso + ' en proceso · ' + d.ordenes.recibido + ' recibidas', ['ir', 'ordenes']);
     if (d.agenda && modOn('agenda') && !vetT) tiles += tile('t-cian', 'cal', 'Citas de hoy', String(d.agenda.hoy), d.agenda.atrasados ? d.agenda.atrasados + ' sin cerrar' : d.agenda.manana + ' mañana', ['ir', 'agenda']);
     if (d.encargos && modOn('encargos')) tiles += tile('t-naranja', 'gift', 'Entregas de hoy', String(d.encargos.hoy), d.encargos.atrasados ? d.encargos.atrasados + ' sin entregar' : d.encargos.manana + ' mañana', ['ir', 'encargos']);
     if (d.caducan && modOn('caducidad') && (rol === 'admin')) tiles += tile('t-rojo', 'alert', 'Por caducar', d.caducan.n === 1 ? '1 producto' : d.caducan.n + ' productos', d.caducan.vencidos ? d.caducan.vencidos + ' ya vencidos' : 'En los próximos 30 días', ['ir', 'productos', { filtro: 'caducan' }]);
@@ -4752,6 +4759,7 @@ function cardPedido(p) {
     ${e.s >= 0 ? `<div class="steps">${[0, 1, 2, 3].map(i => `<i class="${i <= e.s ? 'on' : ''}"></i>`).join('')}</div>` : ''}
     <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${money(i.total)}</span></div>`).join('')}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir${num(p.anticipoPagado) >= num(p.anticipo) ? ' · pagado ✓' : num(p.anticipoPagado) > 0 ? ' · pagó ' + money(p.anticipoPagado) : ''}</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
     <div class="ord-f"><span class="t n">${money(p.total)}</span><span class="badge b-mut">${ic(p.entrega === 'domicilio' ? 'truck' : 'store', 14)} ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge b-mut">${esc(p.pago)}</span></div>
+    ${p.cita ? `<div class="ord-cw" style="margin-top:9px">${p.placa ? `<span class="placa">${esc(p.placa)}</span>` : ''}<span class="sm">${esc(p.vehiculo || '')}</span><span class="crono">${esc(diaTxt(p.cita))} · ${esc(fHoraC(p.hora))}</span></div>` : ''}
     ${p.entrega === 'domicilio' && p.direccion ? `<p class="xs mut" style="margin:8px 0 0">${ic('pin', 13)} ${esc(p.direccion)}</p>` : ''}${p.nota ? `<p class="xs mut" style="margin:6px 0 0">📝 ${esc(p.nota)}</p>` : ''}
     ${compPedidoHTML(p)}
     <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a><button class="btn sm" data-a="verPedido" data-id="${p.id}">${ic('eye', 16)} Ver</button>
@@ -6303,7 +6311,7 @@ R.tienda = () => {
   h += sec('letra', 'palette', 'Letra y modo de tu tienda', `<p class="xs mut">Toca un estilo para verlo. Los colores se cambian en Ajustes › Apariencia.</p>
     <div class="fuentes" id="td-fuentes">${Object.keys(FUENTES).map(k => { const f = FUENTES[k]; return `<button type="button" class="fuente ${k === fu ? 'on' : ''}" data-f="${k}"><span class="ft" style="font-family:${f.serif}">${esc(c.nombre || 'Mi negocio')}</span><span class="fn" style="font-family:${f.sans}">${f.n}</span><span class="fd" style="font-family:${f.sans}">${f.d}</span></button>`; }).join('')}</div>
     <div class="fld" style="margin-top:14px"><span>Fondo de la tienda</span><div class="modos" id="td-modos">${[['auto', 'auto', 'Como el teléfono del cliente'], ['claro', 'sun', 'Siempre claro'], ['oscuro', 'moon', 'Siempre oscuro']].map(([k, i, t]) => `<button type="button" class="pay ${(c.tiendaModo || 'auto') === k ? 'on' : ''}" data-m="${k}">${ic(i)}${t}</button>`).join('')}</div><small class="hint">El modo oscuro queda muy bien para marcas de ropa, tecnología o negocios nocturnos.</small></div>`);
-  h += sec('info', 'clock', 'Información que ven tus clientes', `<div class="f3"><label class="fld"><span>Abres a las</span><input data-k="tiendaAbre" type="time" value="${v('tiendaAbre')}"></label><label class="fld"><span>Cierras a las</span><input data-k="tiendaCierra" type="time" value="${v('tiendaCierra')}"></label><label class="fld"><span>Días</span><select data-k="tiendaDias">${[['1,2,3,4,5,6', 'Lunes a sábado'], ['1,2,3,4,5', 'Lunes a viernes'], ['0,1,2,3,4,5,6', 'Todos los días'], ['1,2,3,4,5,6,0', 'Lunes a domingo'], ['2,3,4,5,6,0', 'Martes a domingo']].map(([val, t]) => `<option value="${val}" ${String(c.tiendaDias || '1,2,3,4,5,6') === val ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
+  h += sec('info', 'clock', 'Información que ven tus clientes', `${cwOrd() ? `<label class="fld"><span>¿Cuántos vehículos puedes atender a la misma hora?</span><input data-k="citaCupo" inputmode="numeric" value="${v('citaCupo') || 3}" placeholder="3"><small class="mut xs">Según cuántos lavadores tengas. Cuando una hora llega a ese número, en tu tienda sale «lleno» y tus clientes eligen otra.</small></label>` : ''}<div class="f3"><label class="fld"><span>Abres a las</span><input data-k="tiendaAbre" type="time" value="${v('tiendaAbre')}"></label><label class="fld"><span>Cierras a las</span><input data-k="tiendaCierra" type="time" value="${v('tiendaCierra')}"></label><label class="fld"><span>Días</span><select data-k="tiendaDias">${[['1,2,3,4,5,6', 'Lunes a sábado'], ['1,2,3,4,5', 'Lunes a viernes'], ['0,1,2,3,4,5,6', 'Todos los días'], ['1,2,3,4,5,6,0', 'Lunes a domingo'], ['2,3,4,5,6,0', 'Martes a domingo']].map(([val, t]) => `<option value="${val}" ${String(c.tiendaDias || '1,2,3,4,5,6') === val ? 'selected' : ''}>${t}</option>`).join('')}</select></label></div>
     <small class="hint" style="margin:-6px 0 10px">Con las horas, tu tienda muestra «Abierto ahora» o «Cerrado» sola.</small>
     <label class="fld"><span>Horario (texto que se muestra)</span><input data-k="tiendaHorario" value="${v('tiendaHorario')}" placeholder="Lunes a sábado · 8 a. m. a 6 p. m."></label>
     <label class="fld"><span>Sobre nosotros (una o dos frases)</span><textarea data-k="tiendaSobre" rows="2" maxlength="300" placeholder="Negocio familiar desde 2015…">${v('tiendaSobre')}</textarea></label>
@@ -7324,15 +7332,15 @@ ACC.cbPaqueteExcel = async () => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
-  ordenes:       { n: 'Órdenes de trabajo', d: 'Recibes el equipo o vehículo, anotas la falla y lo pasas por recibido → en proceso → listo → entregado. Avisas por WhatsApp y cobras desde la orden.', g: 'taller, repuestos, servicios' },
+  ordenes:       { n: 'Órdenes de trabajo', d: 'Recibes el equipo o vehículo, anotas la falla y lo pasas por recibido → en proceso → listo → entregado. Avisas por WhatsApp y cobras desde la orden.', g: 'taller, repuestos, servicios, carwash' },
   series:        { n: 'Serie / IMEI y garantía', d: 'Al cobrar anotas la serie de cada equipo; el comprobante sale con la serie y hasta cuándo tiene garantía.', g: 'tecnología' },
   variantes:     { n: 'Talla y color al vender', d: 'Si el producto tiene opciones (talla, color…), al tocarlo en Vender eliges cuál y el ticket lo dice.', g: 'boutique, variedades' },
   encargos:      { n: 'Encargos con fecha de entrega', d: 'Pedidos por encargo con día, hora y anticipo; en Inicio ves las entregas de hoy.', g: 'panadería, repostería' },
-  agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios' },
+  agenda:        { n: 'Agenda de citas', d: 'Citas por día y hora, quién atiende y recordatorio por WhatsApp; cobras desde la cita.', g: 'belleza, servicios, carwash' },
   suscripciones: { n: 'Suscripciones y mensualidades', d: 'Vencimientos, cuentas y perfiles; al vender te pide la fecha de vencimiento.', g: 'streaming' },
   mascotas:      { n: 'Mascotas, recetas y vacunas', d: 'Expediente de cada mascota con su dueño, consultas con receta, carnet de vacunación y recordatorios por WhatsApp.', g: 'veterinaria' },
   secciones:     { n: 'Tienda por secciones', d: 'Tu tienda en línea abre con un bloque grande por cada categoría, con su foto o color (Free Fire, Netflix, Roblox…). En Recargas y Streaming viene con fotos de fábrica; la foto y la frase de cada sección se cambian en «Mi tienda en línea».', g: 'recargas, streaming' },
@@ -7342,9 +7350,15 @@ const MODULOS_INFO = {
 const modOn = k => !!S.config && (S.config[k] === 'si' || girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k)));
 const modDelGiro = k => !!S.config && girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k));
 // Órdenes de trabajo en veterinaria: «Hospedaje y estética» (la mascota entra, se atiende y se entrega)
-const vetOrd = () => !!S.config && girosOn().includes('veterinaria') && !girosOn().some(g => ['repuestos', 'servicios'].includes(g));
+const vetOrd = () => !!S.config && girosOn().includes('veterinaria') && !girosOn().some(g => ['repuestos', 'servicios', 'carwash'].includes(g));
+// Carwash: las órdenes de trabajo se vuelven el patio (vehículos que están adentro)
+const cwOrd = () => !!S.config && girosOn().includes('carwash') && !girosOn().some(g => ['repuestos', 'servicios', 'veterinaria'].includes(g));
+// Minutos que lleva el vehículo adentro, desde que se recibió
+const enPatio = o => { const t = parseLocal(o.creado).getTime(); return isFinite(t) ? Math.max(0, Math.round((Date.now() - t) / 60000)) : 0; };
+const patioTxt = o => { const m = enPatio(o); return m < 60 ? m + ' min' : m < 1440 ? Math.floor(m / 60) + ' h ' + (m % 60) + ' min' : Math.floor(m / 1440) + (m < 2880 ? ' día' : ' días'); };
 const EST_ORD_VET = { recibido: 'Recibida', proceso: 'En atención', listo: 'Lista', entregado: 'Entregada', cancelado: 'Cancelada' };
-function estOrd(k) { const e = EST_ORD[k] || EST_ORD.recibido; return vetOrd() ? [EST_ORD_VET[k] || e[0], e[1]] : e; }
+const EST_ORD_CW = { proceso: 'Lavando', entregado: 'Entregado' };
+function estOrd(k) { const e = EST_ORD[k] || EST_ORD.recibido; return vetOrd() ? [EST_ORD_VET[k] || e[0], e[1]] : cwOrd() ? [EST_ORD_CW[k] || e[0], e[1]] : e; }
 function otx() {
   if (vetOrd()) return { vet: true, proceso: 'En atención', paraEntregar: 'para recoger', nueva: 'Recibir mascota', buscar: 'Mascota, dueño o servicio…', ico: 'bed', vacio: 'Nadie en la clínica',
     vacioTxt: 'Cuando recibas una mascota para baño, corte, hospedaje u observación, anótala aquí: queda con su servicio, sus indicaciones y su estado.', titulo: 'Recibir mascota',
@@ -7353,6 +7367,14 @@ function otx() {
     tLista: 'Lista para recoger', tProceso: 'En atención', guardada: 'Guardado', creada: g => g.equipo + ' quedó recibida',
     msjListo: o => `Hola ${o.cliente.split(' ')[0]} 👋 Te avisamos de ${S.config.nombre || 'la clínica'}: ${o.equipo} ya puede irse a casa 🐾${o.presupuesto ? ' Total: ' + money(o.presupuesto) + (o.anticipo ? ' (anticipo ' + money(o.anticipo) + ')' : '') + '.' : ''} Te esperamos.`,
     msjRecibo: g => `*${S.config.nombre || ''}* · ${g.numero}\nRecibimos a: ${g.equipo}${g.placa ? '\nServicio: ' + g.placa : ''}\nIndicaciones: ${g.falla}${g.promesa ? '\nSale: ' + fFechaC(g.promesa) : ''}${g.presupuesto ? '\nPrecio: ' + money(g.presupuesto) : ''}${g.anticipo ? '\nAnticipo recibido: ' + money(g.anticipo) : ''}${g.nota ? '\nPertenencias: ' + g.nota : ''}\nTe avisamos cuando esté lista para recoger 🐾` };
+  if (cwOrd()) return { vet: false, cw: true, proceso: 'Lavando', paraEntregar: 'para entregar', nueva: 'Recibir vehículo', buscar: 'Placa, cliente o vehículo…', ico: 'wrench', vacio: 'El patio está vacío',
+    vacioTxt: 'Cuando entre un vehículo, recíbelo aquí: queda con su placa, el servicio, quién lo lava y el tiempo que lleva adentro.', titulo: 'Recibir vehículo',
+    equipo: 'Vehículo', equipoEj: 'Ej. Toyota Corolla gris', placa: 'Placa', placaEj: 'Ej. HAB 1234', falla: 'Servicio', fallaEj: 'Ej. Lavado y aspirado · sedán',
+    dx: 'Lo que se le hizo', promesa: 'Entrega', precio: 'Precio', nota: 'Observaciones del vehículo', notaEj: 'Rayón en puerta trasera, lleva silla de bebé…',
+    faltaEquipo: 'Escribe qué vehículo recibes', faltaFalla: 'Escribe el servicio que lleva',
+    tLista: 'Vehículo listo para entregar', tProceso: 'Vehículo en lavado', guardada: 'Guardado', creada: g => (g.placa || g.equipo) + ' entró al patio',
+    msjListo: o => `Hola ${o.cliente.split(' ')[0]} 👋 Tu ${o.equipo}${o.placa ? ' (' + o.placa + ')' : ''} ya está listo 🚿${o.presupuesto ? ' Total: ' + money(o.presupuesto) + (o.anticipo ? ' (anticipo ' + money(o.anticipo) + ')' : '') + '.' : ''} Te esperamos en ${S.config.nombre || 'el carwash'}.`,
+    msjRecibo: g => `*${S.config.nombre || ''}* · ${g.numero}\nRecibimos: ${g.equipo}${g.placa ? ' (' + g.placa + ')' : ''}\nServicio: ${g.falla}${g.promesa ? '\nEntrega estimada: ' + fFechaC(g.promesa) : ''}${g.presupuesto ? '\nPrecio: ' + money(g.presupuesto) : ''}${g.anticipo ? '\nAnticipo recibido: ' + money(g.anticipo) : ''}${g.nota ? '\nObservaciones: ' + g.nota : ''}\nTe avisamos cuando esté listo 🚿` };
   return { vet: false, proceso: 'En proceso', paraEntregar: 'para entregar', nueva: 'Nueva orden', buscar: 'Cliente, equipo, placa…', ico: 'wrench', vacio: 'Sin órdenes todavía',
     vacioTxt: 'Cuando recibas un equipo o vehículo, crea la orden: queda con su número, el cliente, la falla y su estado.', titulo: 'Nueva orden de trabajo',
     equipo: 'Equipo o vehículo', equipoEj: 'Ej. Toyota Hilux 2015 / Laptop HP', placa: 'Placa / serie', placaEj: 'Opcional', falla: 'Falla o trabajo a realizar', fallaEj: 'Qué reporta el cliente o qué se va a hacer',
@@ -7434,15 +7456,17 @@ R.ordenes = async () => {
   let lista = f === 'abiertas' ? l.filter(o => ['recibido', 'proceso', 'listo'].includes(o.estado)) : f === 'todas' ? l : l.filter(o => o.estado === f);
   if (q) lista = lista.filter(o => norm(o.cliente + ' ' + o.equipo + ' ' + o.placa + ' ' + o.numero + ' ' + o.falla).includes(q));
   const chip = (k, t) => `<button class="chip ${f === k ? 'on' : ''}" data-a="ordF" data-f="${k}">${t}</button>`;
-  m.innerHTML = `<div class="kpis k4"><div class="kpi"><small>Recibidas</small><b>${n('recibido')}</b><i>por revisar</i></div><div class="kpi" style="--k:var(--warn)"><small>${OT.proceso}</small><b>${n('proceso')}</b><i>${atr ? atr + ' atrasadas' : 'en tiempo'}</i></div><div class="kpi" style="--k:#00b56e"><small>Listas</small><b>${n('listo')}</b><i>${OT.paraEntregar}</i></div><div class="kpi"><small>Entregadas</small><b>${n('entregado')}</b><i>últimos 90 días</i></div></div>
+  const L = OT.cw ? { rec: 'Recibidos', lis: 'Listos', ent: 'Entregados', atr: 'atrasados', abi: 'En el patio' } : { rec: 'Recibidas', lis: 'Listas', ent: 'Entregadas', atr: 'atrasadas', abi: 'Abiertas' };
+  m.innerHTML = `<div class="kpis k4"><div class="kpi"><small>${L.rec}</small><b>${n('recibido')}</b><i>${OT.cw ? 'en espera' : 'por revisar'}</i></div><div class="kpi" style="--k:var(--warn)"><small>${OT.proceso}</small><b>${n('proceso')}</b><i>${atr ? atr + ' ' + L.atr : 'en tiempo'}</i></div><div class="kpi" style="--k:#00b56e"><small>${L.lis}</small><b>${n('listo')}</b><i>${OT.paraEntregar}</i></div><div class="kpi"><small>${L.ent}</small><b>${n('entregado')}</b><i>últimos 90 días</i></div></div>
     <div class="row" style="margin-bottom:10px"><button class="btn pri" data-a="nuevaOrden">${ic('plus', 18)} ${OT.nueva}</button><div class="srch grow">${ic('search', 18)}<input id="ord-q" placeholder="${OT.buscar}" value="${esc(S.f.ordQ || '')}"></div></div>
-    <div class="chips" style="margin-bottom:10px">${chip('abiertas', 'Abiertas')}${chip('recibido', 'Recibidas')}${chip('proceso', OT.proceso)}${chip('listo', 'Listas')}${chip('entregado', 'Entregadas')}${chip('todas', 'Todas')}</div>
+    <div class="chips" style="margin-bottom:10px">${chip('abiertas', L.abi)}${chip('recibido', L.rec)}${chip('proceso', OT.proceso)}${chip('listo', L.lis)}${chip('entregado', L.ent)}${chip('todas', 'Todas')}</div>
     ${lista.length ? lista.map(o => tarjetaOrden(o)).join('') : `<div class="empty-big">${ic(OT.ico, 40)}<h3>${l.length ? 'Nada por aquí' : OT.vacio}</h3><p>${l.length ? 'Prueba con otro filtro.' : OT.vacioTxt}</p></div>`}`;
   const qi = $('#ord-q', m); if (qi) qi.addEventListener('input', () => { S.f.ordQ = qi.value; clearTimeout(S._ordT); S._ordT = setTimeout(() => R.ordenes(), 250); });
 };
 function tarjetaOrden(o) {
   const e = estOrd(o.estado), OT = otx(), h = hoy(), atr = ['recibido', 'proceso'].includes(o.estado) && o.promesa && o.promesa < h;
-  return `<div class="ord ${o.estado === 'listo' ? 'new' : ''}" data-a="verOrden" data-id="${o.id}"><div class="ord-h"><span class="oav ${colorDe(o.cliente)}">${esc(iniciales(o.cliente))}</span><div class="tx"><b>${esc(o.cliente)} · ${esc(o.equipo)}${o.placa ? ' · ' + esc(o.placa) : ''}</b><small>${esc(o.numero)} · ${esc(o.falla || '').slice(0, 60)}${o.promesa ? ` · ${atr ? '<b style="color:var(--bad)">prometida ' + fFechaC(o.promesa) + '</b>' : 'entrega ' + fFechaC(o.promesa)}` : ''}</small></div><span class="badge ${e[1]}">${e[0]}</span></div>
+  const cw = OT.cw && ['recibido', 'proceso', 'listo'].includes(o.estado) ? `<div class="ord-cw">${o.placa ? `<span class="placa">${esc(o.placa)}</span>` : ''}<span class="mut sm">${esc(o.lavador ? 'Lavador: ' + o.lavador : 'Sin asignar')}</span><span class="crono ${enPatio(o) >= 60 ? 'tarde' : ''}">${patioTxt(o)}</span></div>` : '';
+  return `<div class="ord ${o.estado === 'listo' ? 'new' : ''}" data-a="verOrden" data-id="${o.id}"><div class="ord-h"><span class="oav ${colorDe(o.cliente)}">${esc(iniciales(o.cliente))}</span><div class="tx"><b>${esc(o.cliente)} · ${esc(o.equipo)}${o.placa && !OT.cw ? ' · ' + esc(o.placa) : ''}</b><small>${esc(o.numero)} · ${esc(o.falla || '').slice(0, 60)}${o.promesa ? ` · ${atr ? '<b style="color:var(--bad)">prometida ' + fFechaC(o.promesa) + '</b>' : 'entrega ' + fFechaC(o.promesa)}` : ''}</small></div><span class="badge ${e[1]}">${e[0]}</span></div>${cw}
     ${['recibido', 'proceso', 'listo'].includes(o.estado) ? `<div class="row" style="margin-top:10px">${o.estado === 'listo' && o.telefono ? `<a class="btn wa sm" href="${waLink(o.telefono, OT.msjListo(o))}" target="_blank" rel="noopener">${ic('wa', 16)} Avisar</a>` : ''}
       ${o.estado === 'recibido' ? `<button class="btn sm" data-a="ordEstado" data-id="${o.id}" data-e="proceso">${ic('refresh', 16)} ${OT.proceso}</button>` : o.estado === 'proceso' ? `<button class="btn sm" data-a="ordEstado" data-id="${o.id}" data-e="listo">${ic('check', 16)} Listo</button>` : ''}
       ${o.estado === 'listo' && puede('admin', 'cajero') ? `<button class="btn sm pri" style="margin-left:auto" data-a="ordCobrar" data-id="${o.id}">${ic('cash', 16)} Cobrar${o.presupuesto ? ' · ' + money(Math.max(0, o.presupuesto - (o.anticipo || 0))) : ''}</button>` : ''}</div>` : ''}</div>`;
@@ -7470,6 +7494,7 @@ function formOrden(o) {
     ${clienteCampo('or-cli', cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : o.cliente)}
     ${!o.clienteId && nuevo ? '' : ''}<div class="f2"><label class="fld"><span>${OT.equipo} *</span><input id="or-eq" maxlength="80" value="${esc(o.equipo || (!OT.vet && cli && cli.equipo ? cli.equipo.split(' · ')[0] : ''))}" placeholder="${OT.equipoEj}" ${OT.vet ? 'list="dl-or-eq" autocomplete="off"' : ''}>${OT.vet ? '<datalist id="dl-or-eq"></datalist>' : ''}</label><label class="fld"><span>${OT.placa}</span><input id="or-pl" maxlength="80" value="${esc(o.placa || (!OT.vet && cli && cli.equipo && cli.equipo.includes(' · ') ? cli.equipo.split(' · ')[1] : ''))}" placeholder="${OT.placaEj}" ${OT.vet ? 'list="dl-or-pl" autocomplete="off"' : ''}>${OT.vet ? `<datalist id="dl-or-pl">${S.productos.filter(p => p.activo && p.tipo === 'servicio').map(p => `<option value="${esc(p.nombre)}">`).join('')}</datalist>` : ''}</label></div>
     <label class="fld"><span>${OT.falla} *</span><textarea id="or-fa" rows="2" maxlength="400" placeholder="${OT.fallaEj}">${esc(o.falla || '')}</textarea></label>
+    ${OT.cw ? `<label class="fld"><span>Lavador</span><input id="or-lv" maxlength="80" value="${esc(o.lavador || '')}" placeholder="Quién lo lava" list="dl-or-lv" autocomplete="off"><datalist id="dl-or-lv">${(S.usuarios || []).filter(x => x.activo).map(x => `<option value="${esc(x.nombre)}">`).join('')}</datalist></label>` : ''}
     ${!nuevo ? `<label class="fld"><span>${OT.dx}</span><textarea id="or-dg" rows="2" maxlength="400">${esc(o.diagnostico || '')}</textarea></label>` : ''}
     <div class="f3"><label class="fld"><span>${OT.promesa}</span><input id="or-pr" type="date" value="${esc(o.promesa || '')}"></label><label class="fld"><span>${OT.precio}</span><input id="or-pp" inputmode="decimal" value="${o.presupuesto ? o.presupuesto : ''}" placeholder="0.00"></label><label class="fld"><span>Anticipo</span><input id="or-an" inputmode="decimal" value="${o.anticipo ? o.anticipo : ''}" placeholder="0.00" ${!nuevo && o.anticipo ? 'readonly' : ''}></label></div>
     <label class="fld"><span>${OT.nota}</span><input id="or-no" maxlength="400" value="${esc(o.nota || '')}" placeholder="${OT.notaEj}"></label>
@@ -7479,10 +7504,11 @@ function formOrden(o) {
   if (!nuevo) $$('[data-e]', h.el).forEach(b => b.addEventListener('click', () => { estado = b.dataset.e; $$('[data-e]', h.el).forEach(x => x.classList.toggle('on', x === b)); }));
   const bs = [];
   if (!nuevo && o.telefono && o.estado === 'listo') bs.push({ t: ic('wa', 18), cls: 'wa icon', fn: () => window.open(waLink(o.telefono, OT.msjListo(o)), '_blank') });
-  bs.push({ t: nuevo ? (OT.vet ? 'Recibir' : 'Crear orden') : 'Guardar', cls: 'pri', fn: async () => {
+  bs.push({ t: nuevo ? (OT.vet ? 'Recibir' : OT.cw ? 'Recibir vehículo' : 'Crear orden') : 'Guardar', cls: 'pri', fn: async () => {
     const c = clienteLeer($('#or-cli', h.el), o);
     if (!c.cliente) throw new Error('Escribe el nombre del cliente');
     const reg = Object.assign({ id: o.id, equipo: $('#or-eq', h.el).value.trim(), placa: $('#or-pl', h.el).value.trim(), falla: $('#or-fa', h.el).value.trim(), promesa: $('#or-pr', h.el).value, presupuesto: r2($('#or-pp', h.el).value), nota: $('#or-no', h.el).value.trim(), estado }, c);
+    if ($('#or-lv', h.el)) reg.lavador = $('#or-lv', h.el).value.trim();
     if (nuevo || !o.anticipo) reg.anticipo = r2($('#or-an', h.el).value);
     if (!nuevo) reg.diagnostico = $('#or-dg', h.el).value.trim();
     if (!reg.equipo) throw new Error(OT.faltaEquipo);
@@ -7499,6 +7525,7 @@ function formOrden(o) {
 /* ---- Agenda de citas y encargos ---- */
 function agendaCfg(tipo) {
   return tipo === 'encargo' ? { t: 'Encargos', uno: 'encargo', nuevo: 'Nuevo encargo', que: 'Qué encargó', queEj: 'Ej. Pastel de chocolate 2 libras, "Feliz cumpleaños Ana"', listo: 'Entregado', vista: 'encargos', ico: 'gift' }
+    : cwOrd() ? { t: 'Agenda', uno: 'cita', nuevo: 'Apartar lavado', que: 'Servicio y vehículo', queEj: 'Ej. Lavado y aspirado · Corolla HAB 1234', listo: 'Atendido', vista: 'agenda', ico: 'cal' }
     : { t: 'Agenda', uno: 'cita', nuevo: 'Nueva cita', que: 'Servicio', queEj: 'Ej. Corte y tinte', listo: 'Atendido', vista: 'agenda', ico: 'cal' };
 }
 async function pintarAgenda(tipo) {
@@ -8690,6 +8717,9 @@ function confirmarGiro(id) {
 }
 
 const NOVEDADES = [
+  { v: '1.9.46', fecha: '2026-11-05', items: [
+    { i: 'store', t: 'Nuevo tipo de negocio: Carwash', d: 'Si lavas vehículos, el programa se adapta: una pantalla de Patio con los carros que están adentro (placa, servicio, quién lo lava y cuánto lleva), servicios de ejemplo con precio por tamaño de vehículo, y la tienda en línea donde tu cliente aparta día y hora. Al confirmar el pedido, la cita entra sola a tu Agenda. Lo activas en Ajustes › Tipo de negocio, o pídeme que te lo agregue como giro extra.' }
+  ] },
   { v: '1.9.44', fecha: '2026-11-04', items: [
     { i: 'store', t: 'Tienda por secciones para Recargas y Streaming', d: 'Tu tienda en línea abre con un bloque grande por cada juego o plataforma, con foto y una frase corta. Vienen fotos de fábrica; en «Mi tienda en línea › Secciones» cambias la foto, pones un color o escribes tu propia frase. Cualquier otro giro puede encenderlo en Ajustes › Funciones.' }
   ] },
@@ -9205,6 +9235,22 @@ const tGiros = () => (T.info && T.info.negocio.giros) || [];
 // En veterinaria solo los servicios piden fecha y nombre de la mascota; el alimento o un collar se piden como cualquier producto
 const cfgDe = p => { const c = opcGiro((p && p.g) || T.info.negocio.gid); return c.soloServ && !(p && p.serv) ? { g: c.g, ej: c.ej } : c; };
 const comprasOn = () => !!(T.info && T.info.negocio.compras);
+// Carwash: el cliente aparta día y hora y dice qué vehículo trae
+const citaOn = () => tGiros().some(g => g.id === 'carwash');
+// Horas disponibles según el horario que puso el negocio (cada 30 minutos)
+function horasTienda() {
+  const n = T.info.negocio, a = /^\d{2}:\d{2}$/.test(n.abre || '') ? n.abre : '08:00', c = /^\d{2}:\d{2}$/.test(n.cierra || '') ? n.cierra : '17:00';
+  const m0 = Number(a.slice(0, 2)) * 60 + Number(a.slice(3)), m1 = Number(c.slice(0, 2)) * 60 + Number(c.slice(3));
+  const l = []; for (let m = m0; m <= m1 - 30 && l.length < 40; m += 30) l.push(String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0'));
+  return l.length ? l : ['08:00', '09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00'];
+}
+const horaTxt = h => { const [a, b] = String(h).split(':').map(Number); return (a % 12 || 12) + ':' + String(b).padStart(2, '0') + (a < 12 ? ' a. m.' : ' p. m.'); };
+// Cuántos lugares quedan a esa hora: el negocio dice cuántos vehículos atiende a la vez (varios lavadores)
+function cupoHora(dia, hora) {
+  const c = T.info.negocio.cita; if (!c || !dia) return { quedan: 99, lleno: false };
+  const quedan = Math.max(0, c.cupo - ((c.ocupadas || {})[dia + ' ' + hora] || 0));
+  return { quedan: quedan, lleno: quedan <= 0 };
+}
 const precioCompraT = usd => { const c = T.info.negocio.compras; return Math.ceil(usd * c.cambio * (1 + c.recargo / 100) + c.envio); };
 function guardarCompras() { LS.set(tKey('compras'), JSON.stringify(T.compras)); }
 const SEP = '\u0001';                       // carrito: «id» o «id␁Talla: M, Color: Negro»
@@ -9522,7 +9568,7 @@ function tCarrito() {
     if (!items.length && !T.compras.length) { h.cerrar(); return; }
     const anticipo = comprasOn() && n.compras.anticipo ? Math.ceil(tSubCompras() * n.compras.anticipo / 100) : 0;
     const comprasHTML = T.compras.map((c, i) => `<div class="tk"><div class="tx"><b>🔗 Compra en línea</b><small class="op">${esc([c.talla && 'Talla: ' + c.talla, c.color && 'Color: ' + c.color].filter(Boolean).join(', ') || c.enlace.slice(0, 40))}</small><small>US$${c.usd.toFixed(2)} → ${money(precioCompraT(c.usd))} c/u · ${c.cantidad} ${c.cantidad === 1 ? 'artículo' : 'artículos'}</small></div><button class="btn icon sm ghost" data-qc="${i}" aria-label="Quitar">${ic('trash', 16)}</button></div>`).join('');
-    const valores = { nom: ($('#tc-n', h.el) || {}).value, tel: ($('#tc-t', h.el) || {}).value, dir: ($('#tc-d', h.el) || {}).value, pago: ($('#tc-p', h.el) || {}).value, nota: ($('#tc-o', h.el) || {}).value };
+    const valores = { nom: ($('#tc-n', h.el) || {}).value, tel: ($('#tc-t', h.el) || {}).value, dir: ($('#tc-d', h.el) || {}).value, pago: ($('#tc-p', h.el) || {}).value, nota: ($('#tc-o', h.el) || {}).value, veh: ($('#tc-v', h.el) || {}).value, pla: ($('#tc-pl', h.el) || {}).value };
     $('#tc', h.el).innerHTML = `${comprasHTML}${items.map(x => { const pu = precioLinea(x.p, x.op), esp = x.p.precioEsp && !(tVar(x.p, tVk(x.p, x.op)) || {}).p && pu === x.p.precioEsp; return `<div class="tk"><div class="tx"><b>${esc(x.p.nombre)}</b>${x.op ? `<small class="op">${esc(x.op)}</small>` : ''}<small>${money(pu)} c/u${esp ? ' · <b style="color:var(--pri)">precio especial</b>' : x.p.precioEsp ? ` · especial desde ${x.p.minEsp}` : ''}</small></div><div class="qty"><button data-id="${esc(x.k)}" data-d="-1">−</button><span>${x.q}</span><button data-id="${esc(x.k)}" data-d="1">+</button></div><b class="n tkt">${money(pu * x.q)}</b></div>`; }).join('')}
       <div class="tots"><div class="tot"><span>Productos</span><b class="n">${money(sub)}</b></div>${T.entrega === 'domicilio' ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${env ? money(env) : 'Gratis'}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(sub + env)}</b></div>${anticipo ? `<div class="tot"><span>Anticipo para pedir tus compras en línea</span><b class="n" style="color:var(--pri)">${money(anticipo)}</b></div>` : ''}</div>
       ${anticipo && n.compras.dias ? `<p class="xs mut" style="margin:-4px 2px 10px">Las compras en línea llegan en ${esc(n.compras.dias)}. El precio final te lo confirmamos por mensaje.</p>` : ''}
@@ -9532,26 +9578,38 @@ function tCarrito() {
       ${T.entrega === 'domicilio' ? `<label class="fld"><span>Dirección de entrega</span><input id="tc-d" autocomplete="street-address" placeholder="Colonia, calle, casa, referencia" value="${esc(valores.dir !== undefined ? valores.dir : cli.direccion || '')}"></label>` : ''}
       <label class="fld"><span>¿Cómo vas a pagar?</span><select id="tc-p">${n.pagos.map(x => `<option value="${esc(x)}" ${valores.pago === x ? 'selected' : ''}>${esc(x === 'Efectivo' && T.entrega === 'domicilio' ? 'Efectivo al recibir' : x)}</option>`).join('')}</select></label>
       <div id="tc-dp"></div>
+      ${citaOn() ? `<div class="t-cita"><div class="fld"><span>¿Qué día traes tu vehículo?</span><div class="pays" id="tc-dias">${[0, 1, 2].map(k => { const d = addDias(T.info.hoy || hoy(), k); return `<button type="button" class="pay ${T.cita === d ? 'on' : ''}" data-dia="${d}">${k === 0 ? 'Hoy' : k === 1 ? 'Mañana' : fFechaC(d)}</button>`; }).join('')}<input type="date" id="tc-dx" value="${esc(T.cita || '')}" min="${esc(T.info.hoy || hoy())}" style="width:auto"></div></div>
+        <div class="fld"><span>¿A qué hora?</span><div class="pays" id="tc-horas">${horasTienda().map(x => { const q = cupoHora(T.cita, x); return `<button type="button" class="pay ${T.hora === x ? 'on' : ''} ${q.lleno ? 'lleno' : ''}" data-hora="${q.lleno ? '' : x}" ${q.lleno ? 'disabled' : ''}>${horaTxt(x)}${q.lleno ? ' · lleno' : q.quedan === 1 ? ' · 1 lugar' : ''}</button>`; }).join('')}</div></div>
+        <div class="f2"><label class="fld"><span>Tu vehículo</span><input id="tc-v" maxlength="80" placeholder="Ej. Toyota Corolla gris" value="${esc(valores.veh !== undefined ? valores.veh : T.vehiculo || '')}"></label><label class="fld"><span>Placa</span><input id="tc-pl" maxlength="20" placeholder="Ej. HAB 1234" value="${esc(valores.pla !== undefined ? valores.pla : T.placa || '')}"></label></div></div>` : ''}
       <label class="fld"><span>Nota (opcional)</span><input id="tc-o" placeholder="Algo más que debamos saber" value="${esc(valores.nota || '')}"></label>`;
     const dp = () => { const pg = $('#tc-p', h.el).value;
       $('#tc-dp', h.el).innerHTML = (pg === 'Transferencia' && n.datosPago ? `<div class="aviso info sm">${ic('bank', 18)}<div>${esc(n.datosPago)}</div></div>` : '')
         + (pg !== 'Efectivo' ? `<label class="comp-t ${T.comp ? 'on' : ''}">${T.comp ? `<img src="${T.comp}" alt="">` : '<span class="ci">📎</span>'}<span class="tx"><b>${T.comp ? 'Comprobante adjunto ✓' : 'Adjuntar comprobante de pago'}</b><small>${T.comp ? 'Toca para cambiarlo' : 'Opcional: la foto o captura de tu transferencia. También lo puedes mandar después.'}</small></span><input type="file" accept="image/*" id="tc-cf" hidden></label>` : ''); };
     $('#tc-p', h.el).addEventListener('change', dp); dp();
     $('#tc-dp', h.el).addEventListener('change', async e => { const f = e.target.closest('#tc-cf'); if (!f || !f.files[0]) return; try { T.comp = await comprimirImagen(f.files[0], 1200); dp(); } catch (x) { err(x); } });
-    h.botones([{ t: `${ic('send', 18)} Enviar pedido · ${money(sub + env)}`, cls: 'wa big', fn: enviar }]);
+    h.botones([{ t: `${ic('send', 18)} ${citaOn() ? 'Apartar mi lavado' : 'Enviar pedido'} · ${money(sub + env)}`, cls: 'wa big', fn: enviar }]);
   };
   $('#tc', h.el).addEventListener('click', e => {
     const qc = e.target.closest('[data-qc]'); if (qc) { T.compras.splice(Number(qc.dataset.qc), 1); guardarCompras(); barTienda(); pinta(); return; }
     const q = e.target.closest('[data-d]'); if (q) { tAgregar(q.dataset.id, Number(q.dataset.d)); pinta(); return; }
-    const en = e.target.closest('[data-e]'); if (en) { T.entrega = en.dataset.e; pinta(); }
+    const en = e.target.closest('[data-e]'); if (en) { T.entrega = en.dataset.e; pinta(); return; }
+    const dd = e.target.closest('[data-dia]'); if (dd) { T.cita = dd.dataset.dia; pinta(); return; }
+    const hh = e.target.closest('[data-hora]'); if (hh) { T.hora = hh.dataset.hora; pinta(); }
   });
+  $('#tc', h.el).addEventListener('change', e => { const dx = e.target.closest('#tc-dx'); if (dx && dx.value) { T.cita = dx.value; pinta(); } });
   const enviar = async () => {
     const nombre = $('#tc-n', h.el).value.trim(), tel = $('#tc-t', h.el).value.trim(), dir = ($('#tc-d', h.el) || {}).value || '';
     if (nombre.length < 3) throw new Error('Escribe tu nombre');
     if (tel.replace(/\D/g, '').length < 8) throw new Error('Escribe tu número de WhatsApp');
     if (T.entrega === 'domicilio' && dir.trim().length < 5) throw new Error('Escribe la dirección de entrega');
+    const veh = ($('#tc-v', h.el) || {}).value || '', pla = ($('#tc-pl', h.el) || {}).value || '';
+    if (citaOn()) {
+      if (!T.cita) throw new Error('Elige el día en que traes tu vehículo');
+      if (!T.hora) throw new Error('Elige la hora a la que lo traes');
+      if (veh.trim().length < 2) throw new Error('Escribe qué vehículo traes');
+    }
     LS.set('cliente_tienda', JSON.stringify({ nombre, telefono: tel, direccion: dir || cli.direccion || '' }));
-    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: $('#tc-p', h.el).value !== 'Efectivo' && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => ({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }))) });
+    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, cita: citaOn() ? T.cita : '', hora: citaOn() ? T.hora : '', vehiculo: veh.trim(), placa: pla.trim(), pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: $('#tc-p', h.el).value !== 'Efectivo' && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => ({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }))) });
     const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 10)));
     T.cart = {}; guardarCarrito(); T.compras = []; guardarCompras(); T.comp = ''; h.cerrar(); gridTienda(); pedidoEnviado(r, nombre, tel); misPedidosTienda();
   };
@@ -9559,7 +9617,7 @@ function tCarrito() {
 }
 function pedidoEnviado(r, nombre, tel) {
   const n = T.info.negocio;
-  const txt = [`Hola, soy ${nombre}. Acabo de hacer el pedido *${r.numero}* en línea:`, ...r.items.map(i => `• ${i.cantidad} × ${i.nombre} — ${money(i.total)}${i.enlace ? '\n  ' + i.enlace : ''}`), r.envio ? `Envío: ${money(r.envio)}` : '', `*Total: ${money(r.total)}*`, r.anticipo ? `Anticipo para pedir: ${money(r.anticipo)}` : '', `${r.entrega === 'domicilio' ? 'A domicilio' : 'Para recoger'} · Pago: ${r.pago}`].filter(Boolean).join('\n');
+  const txt = [`Hola, soy ${nombre}. Acabo de hacer el pedido *${r.numero}* en línea:`, ...r.items.map(i => `• ${i.cantidad} × ${i.nombre} — ${money(i.total)}${i.enlace ? '\n  ' + i.enlace : ''}`), r.envio ? `Envío: ${money(r.envio)}` : '', `*Total: ${money(r.total)}*`, r.anticipo ? `Anticipo para pedir: ${money(r.anticipo)}` : '', r.cita ? `Lo llevo el ${fFechaC(r.cita)}${r.hora ? ' a las ' + horaTxt(r.hora) : ''}${r.vehiculo ? ' · ' + r.vehiculo : ''}${r.placa ? ' (' + r.placa + ')' : ''}` : '', r.cita ? '' : `${r.entrega === 'domicilio' ? 'A domicilio' : 'Para recoger'} · Pago: ${r.pago}`, r.cita ? `Pago: ${r.pago}` : ''].filter(Boolean).join('\n');
   const h = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic('check', 40)}</i><h2>¡Pedido enviado!</h2><p class="mut">Tu número de pedido es <b>${esc(r.numero)}</b></p><div class="ok-tot n">${money(r.total)}</div>
     ${r.anticipo ? `<p class="sm" style="color:var(--pri)"><b>Anticipo para pedir tus compras en línea: ${money(r.anticipo)}</b>${r.diasCompra ? `<br><span class="mut">Llegan en ${esc(r.diasCompra)}.</span>` : ''}</p>` : ''}<p class="sm">${esc(n.nombre)} ya lo recibió y te confirmará por WhatsApp.</p>${r.datosPago ? `<div class="aviso info sm" style="text-align:left">${ic('bank', 18)}<div><b>Datos para transferir</b><br>${esc(r.datosPago)}</div></div>` : ''}</div>` });
   const bs = [];

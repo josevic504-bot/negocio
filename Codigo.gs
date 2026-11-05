@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.45';
+const VERSION = '1.9.46';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -75,7 +75,7 @@ const SCHEMA = {
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
   Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal','cotizacionId'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
-  Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
+  Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','lavador','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado','mascotaId','mascota'],
   // Veterinaria: cada mascota con su dueño (un cliente), su historial clínico (consultas con receta) y sus vacunas y desparasitaciones
   Mascotas:       ['id','clienteId','nombre','especie','raza','sexo','nacimiento','color','esterilizado','chip','alergias','notas','peso','activo','creado','actualizado'],
@@ -89,7 +89,7 @@ const SCHEMA = {
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo','variante'],
-  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado'],
+  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
@@ -105,7 +105,7 @@ const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','li
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
-const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta']);
+const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','cita','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -117,7 +117,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
   // Cotizaciones y contratos (servicios)
@@ -163,6 +163,15 @@ const GIROS = {
     ej: [['Acetaminofén 500 mg (10)','Medicamentos','💊',35,20,40],['Antigripal (sobre)','Medicamentos','🤧',18,10,60],['Vitamina C 1 g (10)','Vitaminas','🍊',95,55,25,'Presentación: Tabletas, Efervescente'],['Suero oral','Medicamentos','🧃',42,26,30],['Alcohol 250 ml','Primeros auxilios','🧴',48,30,20],['Curitas (caja)','Primeros auxilios','🩹',55,32,15],['Pañales talla M (20)','Bebé','👶',260,190,10],['Protector solar','Cuidado personal','🧴',320,200,8]] },
   repuestos:  { n: 'Repuestos / taller', cats: ['Motor','Frenos','Eléctrico','Aceites','Llantas','Servicios'],
     ej: [['Aceite 20W-50 (litro)','Aceites','🛢️',190,130,30],['Filtro de aceite','Motor','🧰',150,90,20,'Vehículo: Toyota, Nissan, Honda'],['Pastillas de freno','Frenos','🛞',650,420,8],['Bujía','Motor','⚡',95,55,40],['Batería 12 V','Eléctrico','🔋',2300,1700,4],['Cambio de aceite (mano de obra)','Servicios','🔧',250,0,0],['Alineado y balanceo','Servicios','🛠️',450,0,0],['Llanta rin 14','Llantas','🛞',1650,1150,6]] },
+  carwash:    { n: 'Carwash / lavado de autos', cats: ['Lavado','Detallado','Motos','Extras','Productos'],
+    ej: [['Lavado y aspirado','Lavado','🚿',250,0,0,'Tamaño: Sedán, Camioneta, Microbús',{ vars: { 'Tamaño: Sedán': { p: 250, s: 0 }, 'Tamaño: Camioneta': { p: 320, s: 0 }, 'Tamaño: Microbús': { p: 400, s: 0 } } }],
+      ['Lavado express (solo exterior)','Lavado','💦',150,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 150, s: 0 }, 'Tamaño: Camioneta': { p: 190, s: 0 } } }],
+      ['Lavado completo (motor incluido)','Lavado','🧼',400,0,0,'Tamaño: Sedán, Camioneta, Microbús',{ vars: { 'Tamaño: Sedán': { p: 400, s: 0 }, 'Tamaño: Camioneta': { p: 520, s: 0 }, 'Tamaño: Microbús': { p: 650, s: 0 } } }],
+      ['Lavado de chasis','Lavado','🧯',200,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 200, s: 0 }, 'Tamaño: Camioneta': { p: 260, s: 0 } } }],
+      ['Pulido y encerado','Detallado','✨',900,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 900, s: 0 }, 'Tamaño: Camioneta': { p: 1200, s: 0 } } }],
+      ['Limpieza de tapicería','Detallado','🧽',750,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 750, s: 0 }, 'Tamaño: Camioneta': { p: 950, s: 0 } } }],
+      ['Lavado de moto','Motos','🏍️',80,0,0],['Lavado de moto con pulido','Motos','🛵',160,0,0],
+      ['Aromatizante','Extras','🌿',60,35,24],['Silicón para llantas','Extras','🛞',90,55,12],['Abrillantador de tablero','Productos','🧴',120,75,10],['Shampoo para auto 1 L','Productos','🫧',180,120,8]] },
   tecnologia: { n: 'Tecnología / celulares', cats: ['Celulares','Accesorios','Audio','Cargadores','Reparaciones'],
     ej: [['Celular gama media','Celulares','📱',4800,3600,5,'Capacidad: 128 GB, 256 GB | Color: Negro, Azul'],['Protector de pantalla','Accesorios','📲',150,40,40],['Funda de silicona','Accesorios','🛡️',180,60,30],['Cargador 20 W','Cargadores','🔌',350,180,15],['Audífonos Bluetooth','Audio','🎧',690,400,10],['Bocina portátil','Audio','🔊',950,580,6],['Memoria USB 64 GB','Accesorios','💾',260,150,20],['Cambio de pantalla','Reparaciones','🧑‍🔧',1200,600,0]] },
   belleza:    { n: 'Belleza / cosméticos', cats: ['Maquillaje','Cuidado de piel','Cabello','Uñas','Perfumes'],
@@ -1218,7 +1227,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -1246,7 +1255,7 @@ function ordenGuardar_(u, d) {
   if (r.id && !prev) throw new Error('La orden ya no existe');
   if (prev && ['entregado', 'cancelado'].indexOf(prev.estado) >= 0 && r.estado !== undefined && r.estado !== prev.estado && u.rol !== 'admin') throw new Error('Una orden ' + (prev.estado === 'entregado' ? 'entregada' : 'cancelada') + ' ya no se cambia');
   if (prev && r.presupuesto !== undefined && u.rol === 'bodega') delete r.presupuesto;
-  ['cliente', 'telefono', 'equipo', 'placa'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
+  ['cliente', 'telefono', 'equipo', 'placa', 'lavador'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
   ['falla', 'diagnostico', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
   if (prev && r.clienteId === '' && r.cliente === prev.cliente) { delete r.clienteId; delete r.cliente; delete r.telefono; }
   if (r.clienteId !== undefined) {
@@ -2853,7 +2862,8 @@ function cargarEjemplos_(u, d) {
     const p = upsert_('Productos', { codigo: 'EJ' + String(i + 1).padStart(3, '0'), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
       tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid,
-      sub: x[7] && x[7].sub || '', lema: x[7] && x[7].lema || '', puntos: x[7] && x[7].puntos || '', precioEsp: x[7] && x[7].precioEsp || 0, minEsp: x[7] && x[7].minEsp || 0 });
+      sub: x[7] && x[7].sub || '', lema: x[7] && x[7].lema || '', puntos: x[7] && x[7].puntos || '', precioEsp: x[7] && x[7].precioEsp || 0, minEsp: x[7] && x[7].minEsp || 0,
+      variantes: x[7] && x[7].vars ? JSON.stringify(x[7].vars) : '' });
     if (p.tipo === 'producto' && x[5] > 0) moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
     n++;
   });
@@ -3736,6 +3746,16 @@ function estadoPedido_(u, d) {
   if (d.estado === 'cancelado' && pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de cancelar.');
   const upd = { id: p.id, estado: d.estado, actualizado: ahora_() };
   if (d.estado === 'cancelado' && d.motivo) upd.nota = (p.nota ? p.nota + ' · ' : '') + 'Cancelado: ' + txt_(d.motivo, 120);
+  // Carwash: al confirmar un pedido que trae día y hora, la cita entra sola a la Agenda
+  if (d.estado === 'confirmado' && p.cita && !p.citaId && modOn_('agenda')) {
+    const items = parseJ_(p.items, []);
+    const det = [items.map(i => i.nombre).join(', ').slice(0, 120), p.vehiculo ? p.vehiculo + (p.placa ? ' · ' + p.placa : '') : ''].filter(Boolean).join(' · ');
+    const a = upsert_('Agenda', { tipo: 'cita', clienteId: p.clienteId || '', cliente: p.nombre, telefono: p.telefono, dia: p.cita, hora: p.hora || '',
+      detalle: txt_(det || 'Pedido ' + p.numero, 240), productoId: '', monto: p.total, anticipo: anticipoDe_(p.id), atiende: '', estado: 'pendiente', ventaId: '',
+      nota: 'Apartado desde la tienda en línea · pedido ' + p.numero, usuarioId: u.id, creado: ahora_(), actualizado: ahora_() });
+    upd.citaId = a.id;
+  }
+  if (d.estado === 'cancelado' && p.citaId) { const a = rows_('Agenda').find(x => x.id === p.citaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'cancelado', actualizado: ahora_() }); }
   const g = upsert_('Pedidos', upd);
   g.items = parseJ_(g.items, []); g.anticipoPagado = pagado;
   return g;
@@ -4681,7 +4701,7 @@ function tiendaInfo_(d) {
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago,
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
-      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
+      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
         datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null,
       giros: activos.map(g => ({ id: g, n: GIROS[g].n })),
@@ -4752,6 +4772,15 @@ function pedirLimites_(d) {
   if (Number(c.get('PH_' + (NEG ? NEG.id : '')) || 0) >= 150) throw new Error('La tienda está recibiendo muchos pedidos. Intenta de nuevo en unos minutos.');
 }
 
+// Carwash: cuántos vehículos ya están apartados para cada día y hora (un carwash con varios lavadores
+// puede recibir varios a la misma hora, por eso lo que manda es el cupo que puso el negocio)
+function citasOcupadas_() {
+  const h = hoy_(), o = {};
+  const sumar = (dia, hora) => { if (!dia || !hora || dia < h) return; const k = dia + ' ' + hora; o[k] = (o[k] || 0) + 1; };
+  rows_('Pedidos').forEach(p => { if (!p.citaId && ['nuevo', 'confirmado', 'listo'].indexOf(p.estado) >= 0) sumar(p.cita, p.hora); });
+  rows_('Agenda').forEach(a => { if (a.tipo === 'cita' && a.estado === 'pendiente' && !a.ventaId) sumar(a.dia, a.hora); });
+  return o;
+}
 function pedir_(d) {
   const cfg = tiendaNeg_(d);
   const nombre = txt_(d.nombre, 60), tel = String(d.telefono || '').replace(/\D/g, '');
@@ -4816,12 +4845,25 @@ function pedir_(d) {
   } else if (entrega === 'domicilio' && direccion && !cli.direccion) {
     upsert_('Clientes', { id: cli.id, direccion: direccion });
   }
+  // Carwash: el cliente aparta día y hora y dice qué vehículo trae
+  const conCita = girosActivos_(cfg).indexOf('carwash') >= 0;
+  const cita = conCita && /^\d{4}-\d{2}-\d{2}$/.test(String(d.cita || '')) ? String(d.cita) : '';
+  if (conCita && !cita) throw new Error('Elige el día en que traes tu vehículo');
+  if (cita && (cita < hoy_() || cita > diasAtras_(-60))) throw new Error('Elige un día entre hoy y los próximos 60 días');
+  const hora = cita && /^\d{2}:\d{2}$/.test(String(d.hora || '')) ? String(d.hora) : '';
+  if (cita && !hora) throw new Error('Elige la hora a la que traes tu vehículo');
+  const vehiculo = cita ? txt_(d.vehiculo, 80) : '', placa = cita ? txt_(d.placa, 20) : '';
+  if (cita && vehiculo.length < 2) throw new Error('Escribe qué vehículo traes');
+  // Varios lavadores pueden atender a la misma hora: el tope lo pone el negocio (citaCupo)
+  if (cita) { const cupo = Math.max(1, Math.floor(Number(cfg.citaCupo) || 3));
+    if ((citasOcupadas_()[cita + ' ' + hora] || 0) >= cupo) throw new Error('Esa hora ya se llenó. Elige otra, por favor.'); }
   const numP = siguiente_('P'), comp = d.comprobante ? guardarComprobante_(d.comprobante, numP) : '';
   const p = upsert_('Pedidos', { comprobante: comp, pagoEstado: comp ? 'revisar' : '', numero: numP, fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
-    pago: pago, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: r2_(subtotal + envio), estado: 'nuevo', ventaId: '', nota: txt_(d.nota, 300), actualizado: ahora_(), anticipo: Math.ceil(anticipo) });
+    pago: pago, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: r2_(subtotal + envio), estado: 'nuevo', ventaId: '', nota: txt_(d.nota, 300), actualizado: ahora_(), anticipo: Math.ceil(anticipo),
+    cita: cita, hora: hora, vehiculo: vehiculo, placa: placa, citaId: '' });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
-  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '',
+  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
     negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : '' };
 }
 
