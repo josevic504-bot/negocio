@@ -1,0 +1,14 @@
+import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
+const reg = await api('registrar', { negocio: 'Belleza Demo', nombre: 'Demo', giro: 'catalogo', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+await api('cargarEjemplos', {}, tok);
+const nid = db.T.Licencias[0].id, polvo = db.T.Productos.find(x => x.nombre.startsWith('Polvo'));
+const r = await api('pedir', { negocio: nid, nombre: 'María López', telefono: '9876-5432', entrega: 'recoger', pago: 'Efectivo', items: [{ id: polvo.id, cantidad: 3, opcion: 'Tono: Oscuro' }] });
+const pg = await nuevaPagina({ token: tok }); await pg.goto('http://localhost:8765/'); await esperar(pg, 8000); await pg.waitForTimeout(800);
+await pg.ir('pedidos'); await pg.waitForTimeout(600);
+await pg.evaluate(id => { const d = (S.pedidos || []); return d; }, r.data.id);
+const p = (await api('pedidos', {}, tok)).data; const lista = Array.isArray(p) ? p : (p.lista || p.pedidos);
+await pg.evaluate(ped => editarPedido(ped), lista[0]); await pg.waitForTimeout(500);
+await pg.evaluate(() => document.querySelector('#ep [data-d="-1"]').click()); await pg.waitForTimeout(300);
+const t = (await pg.locator('#ep').innerText()).replace(/\s+/g, ' ');
+ok('Negocio: al bajar a 2 muestra precio normal y total nuevo', /L 180\.00 c\/u/.test(t) && /Nuevo total L 360\.00/.test(t), t.slice(0, 300));
+await cerrar(); process.exit(0);

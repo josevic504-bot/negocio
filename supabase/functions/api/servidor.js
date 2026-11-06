@@ -614,6 +614,12 @@ function RECORDATORIOS_(ids) {
         out.push({ negocio: o.n, tipo: 'pedidos', titulo: '💳 Comprobante de pago' + (pe.numero ? ' · ' + pe.numero : ''), cuerpo: corto((pe.nombre || 'Un cliente') + ' envió su comprobante' + (pe.total ? ' · ' + money(o.n, pe.total) : ''), 140), vista: 'pedidos', tag: 'comp-' + (o.k && o.k.id) });
         return;
       }
+      // El cliente cambió un producto de su pedido desde «Tus pedidos» (la nota termina con «Cambio del cliente …»)
+      if (o.op === 'upd' && o.t === 'Pedidos' && o.n && o.row && o.row.items && /(^| · )Cambio del cliente [^·]*$/.test(o.row.nota || '')) {
+        const pe = objFila(tablaN(o.n, 'Pedidos'), o.k && o.k.id) || {};
+        out.push({ negocio: o.n, tipo: 'pedidos', titulo: '✏️ Cambiaron un pedido' + (pe.numero ? ' · ' + pe.numero : ''), cuerpo: corto((pe.nombre || 'Un cliente') + ' · nuevo total ' + money(o.n, o.row.total), 140), vista: 'pedidos', tag: 'ped-cambio-' + (o.k && o.k.id) });
+        return;
+      }
       // Vic: el negocio mandó el comprobante del pago de su licencia
       if (o.op === 'upd' && o.t === 'CuotasLic' && !o.n && o.row && o.row.compEstado === 'revisar') {
         const cu = objFila(tablaM('CuotasLic'), o.k && o.k.id) || {}, li = objFila(tablaM('Licencias'), cu.negocioId) || {};
