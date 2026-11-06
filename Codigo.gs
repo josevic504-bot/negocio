@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.49';
+const VERSION = '1.9.51';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -5083,13 +5083,15 @@ function reescribir_(name, objs) {
 function misPedidos_(d) {
   tiendaNeg_(d);
   const t8 = tel8_(d.telefono);
-  const ids = Array.isArray(d.ids) ? d.ids.slice(0, 20) : [];
+  const ids = Array.isArray(d.ids) ? d.ids.slice(0, 50) : [];
   if (!t8 || !ids.length) return [];
   const l = rows_('Pedidos').filter(p => ids.indexOf(p.id) >= 0 && tel8_(p.telefono) === t8);
-  const pm = l.some(p => p.estado === 'nuevo') ? porId_(rows_('Productos')) : {};
+  const pm = d.historial || l.some(p => p.estado === 'nuevo') ? porId_(rows_('Productos')) : {};
   return l.map(p => { const its = parseJ_(p.items, []), o = { id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega, pago: p.pago, pagoEstado: p.pagoEstado || '', items: its.length };
       // Solo un pedido que el cliente todavía puede cambiar lleva sus productos y su versión
       if (!bloqueoCliente_(p)) { o.editable = true; o.version = verPedido_(p); o.lineas = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
+      // Historial: lo que el cliente pidió en cada pedido
+      if (d.historial) { o.subtotal = p.subtotal; o.envio = p.envio; o.detalle = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
       return o; })
     .sort((a, b) => a.fecha < b.fecha ? 1 : -1);
 }
