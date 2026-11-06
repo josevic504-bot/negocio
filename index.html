@@ -1409,7 +1409,7 @@ const ICP = {
 const ICI = { cart: 'vender', inbox: 'pedidos', chat: 'mensajes', store: 'tienda', box: 'productos', tag: 'precios', layers: 'proyectos', users: 'clientes', truck: 'proveedores', bag: 'compras', receipt: 'gastos', wallet: 'caja', doc: 'ventas', chart: 'reportes', user: 'usuarios', gear: 'ajustes', cal: 'agenda', paw: 'mascotas', syringe: 'vacunas', steth: 'mascotas', wrench: 'ordenes', bed: 'hospedaje', gift: 'encargos', clock: 'vencimientos', key: 'cuentas', coin: 'qa_cobrar', help: 'ayuda', sparkle: 'qa_resumen' };
 const ICI_QA = { receipt: 'qa_gasto', truck: 'qa_compra' };
 const icImg = k => `<img class="ici" src="iconos/${k}.webp" alt="" loading="lazy" decoding="async">`;
-const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'carwash', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
+const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'carwash', 'joyeria', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
 const giroImg = (id, cls) => `<img class="gimg ${cls || ''}" src="iconos/g_${GIROS_IMG.includes(id) ? id : 'otro'}.webp" alt="" decoding="async">`;
 const ic = (n, sz = 22) => `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICP[n] || ''}</svg>`;
 
@@ -1557,7 +1557,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.51';
+const APP_VER = '1.9.52';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1641,6 +1641,12 @@ const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ
 const colorDe = s => { const c = ['t-pri', 't-azul', 't-morado', 't-cian', 't-naranja', 't-rojo', 't-verde', 't-acc']; let h = 0; String(s || '').split('').forEach(ch => { h = (h * 31 + ch.charCodeAt(0)) | 0; }); return c[Math.abs(h) % c.length]; };
 // Ilustraciones de línea por categoría/nombre, para productos sin foto (dibujos propios, 48×48)
 const ILUS = [
+  // Joyería
+  [/arete|zarcillo|topo/, 'M16 8a3 3 0 1 0 .1 0M16 11v5M16 16a8 8 0 1 0 .1 0M33 8a3 3 0 1 0 .1 0M33 11v9M33 20a5 5 0 1 0 .1 0'],
+  [/anillo|argolla|solitario|sortija/, 'M24 18a12 12 0 1 0 .1 0M24 22a8 8 0 1 0 .1 0M19 11l3-4h4l3 4-5 6zM19 11h10'],
+  [/cadena|gargantilla/, 'M10 8c0 13 6 21 14 25M38 8c0 13-6 21-14 25M24 33a4 4 0 1 0 .1 0M16 17l2 1M32 17l-2 1M13 11l2 1M35 11l-2 1'],
+  [/dije|medalla/, 'M24 6v6M24 40l-10-10a6 6 0 0 1 10-8 6 6 0 0 1 10 8z'],
+  [/esclava|pulsera|brazalete/, 'M8 24a16 10 0 1 0 32 0a16 10 0 1 0-32 0M13 24a11 5.5 0 1 0 22 0a11 5.5 0 1 0-22 0M24 34v4M22 38h4l-2 4z'],
   // Maquillaje (catálogo)
   [/locion|perfum|colonia|fragan|splash/, 'M20 6h8v6h-8zM16 12h16v4H16zM14 16h20a4 4 0 0 1 4 4v18a4 4 0 0 1-4 4H14a4 4 0 0 1-4-4V20a4 4 0 0 1 4-4z'],
   [/paleta|sombras? de ojos|sombras \d/, 'M8 12h32a3 3 0 0 1 3 3v18a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3V15a3 3 0 0 1 3-3zM15 19a3 3 0 1 0 .1 0M24 19a3 3 0 1 0 .1 0M33 19a3 3 0 1 0 .1 0M15 29a3 3 0 1 0 .1 0M24 29a3 3 0 1 0 .1 0M33 29a3 3 0 1 0 .1 0'],
@@ -2326,7 +2332,7 @@ function pintarLogin() {
     : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo. Sin tarjeta.</p><div class="in-mini"><span>Ventas</span><span>Inventario</span><span>Clientes</span><span>Caja</span><span>Tienda en línea</span><span>Reportes</span></div>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
-        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['compras', 'recargas', 'veterinaria', 'carwash'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
+        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['compras', 'recargas', 'veterinaria', 'carwash', 'joyeria'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
@@ -2348,7 +2354,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['carwash', 'Carwash / lavado de autos'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Beauty & Moda'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Beauty & Moda'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -7361,7 +7367,7 @@ ACC.cbPaqueteExcel = async () => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
@@ -7470,8 +7476,9 @@ ACC.comanda = () => S.ultVenta && imprimirComanda(S.ultVenta.v, S.ultVenta.det);
 function serieCampo(k) {
   const it = S.ticket.items[k], p = it.productoId ? byId(S.productos, it.productoId) : null;
   if (!p || p.tipo !== 'producto') return '';
-  return `<div class="sus-box serie-box"><label class="fld"><span>${ic('barcode', 14)} Serie / IMEI de ${esc(it.descripcion)}${p.garantia ? ` · garantía ${p.garantia} días` : ''}</span><input class="cb-serie" data-k="${k}" maxlength="60" value="${esc(it.serie || '')}" placeholder="${it.cantidad > 1 ? 'Separa con comas si son varios' : 'Opcional'}"></label></div>`;
+  return `<div class="sus-box serie-box"><label class="fld"><span>${ic('barcode', 14)} ${jySerie() ? 'Código o certificado' : 'Serie / IMEI'} de ${esc(it.descripcion)}${p.garantia ? ` · garantía ${p.garantia} días` : ''}</span><input class="cb-serie" data-k="${k}" maxlength="60" value="${esc(it.serie || '')}" placeholder="${it.cantidad > 1 ? 'Separa con comas si son varios' : 'Opcional'}"></label></div>`;
 }
+const jySerie = () => girosOn().includes('joyeria') && !girosOn().includes('tecnologia');
 const garantiaHasta = (fecha, dias) => { if (!dias) return ''; const d = parseLocal(fecha); d.setDate(d.getDate() + Number(dias)); return toLocal(d).slice(0, 10); };
 
 /* ---- Órdenes de trabajo ---- */
@@ -8426,7 +8433,7 @@ function editarPagosCot(q, cb) {
 /* ===================== SUSCRIPCIONES: vencimientos, cuentas y perfiles ===================== */
 const PLAT = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
 const susOn = () => modOn('suscripciones');
-const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', otro: '📦' };
+const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', joyeria: '💍', otro: '📦' };
 // Plataformas: las conocidas + las que el negocio agregó ("+ Otra") + las que ya usa en productos o cuentas
 function platsTodas() {
   const l = PLAT.map(x => x[0]), add = n => { n = String(n || '').trim(); if (n && !l.some(x => x.toLowerCase() === n.toLowerCase())) l.push(n); };
@@ -8804,7 +8811,7 @@ function confirmarGiro(id) {
   const fila = (av, t, s) => `<div class="li"><div class="av ${av}">${av === 't-verde' ? '+' : av === 't-pri' ? '↻' : '−'}</div><div class="tx"><b>${t}</b><small>${s}</small></div></div>`;
   const h = hoja({ titulo: 'Confirmar cambio', html: `<div style="text-align:center;padding:6px 0 10px"><div style="font-size:44px;display:flex;align-items:center;justify-content:center;gap:12px">${giroImg(ant.id)} → ${giroImg(id)}</div><h3 style="margin-top:6px">De ${esc(ant.n)} a ${esc(g.n)}</h3></div>
     <div class="aviso info sm">${ic('info', 18)}<div><b>Tus datos se conservan.</b> Productos, clientes, ventas, caja y reportes siguen igual; solo cambia lo que la app te muestra.</div></div>
-    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
+    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'joyeria' ? fila('t-verde', 'Código o certificado y garantía', 'Al cobrar, el comprobante sale con el código de la pieza y su garantía') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
     ${fila('t-pri', 'Categorías nuevas', esc(g.cats.slice(0, 6).join(' · ')))}${opcGiro(id).g.length ? fila('t-pri', 'Opción en productos: ' + esc(opcGiro(id).g[0]), esc(opcGiro(id).ej[0] || '')) : ''}
     ${nAnt ? fila('t-mut', `Se pueden ocultar ${nAnt} productos de ${esc(ant.n)}`, 'Quedan guardados; abajo eliges si desactivarlos') : ''}</div>
     <label class="chk" style="margin-top:12px"><input type="checkbox" id="cg-ej" checked> Cargar productos de ejemplo del nuevo tipo</label>
@@ -8867,6 +8874,9 @@ const GUIA = {
   servicios: { n: 'tus servicios', d: 'Tu programa ya viene listo para cotizar y dar seguimiento. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus servicios y precios', s: 'Modalidad y existencias', h: 'Tus servicios: modalidad y precio', p: 'Ejemplo: Visita a domicilio. Así se configura cada servicio.', img: 'p_servicios', n: 1, ir: 'productos', b: 'Ver mis servicios', l: ['<b>Nombre y categoría:</b> Visita a domicilio en Servicios.', '<b>Opciones:</b> a domicilio o en el local.', '<b>Costo y precio:</b> el costo es opcional.', '<b>Existencias:</b> apágalas si es un servicio.'] },
     { ic: 'doc', t: 'Haz tu primera cotización', s: 'Con plan de pagos', h: 'Haz tu primera cotización', p: 'Envíala por WhatsApp. Al aceptarla se vuelve proyecto y los pagos quedan agendados.', img: 'cotizaciones', ir: 'proyectos', b: 'Ir a Cotizaciones', l: ['Toca <b>Nueva cotización</b> y elige cliente y servicios.', 'Agrega descuento, ISV y plan de pagos con fechas.', 'Aceptada: el cliente firma con el dedo contrato y acta de entrega.'] }, 'ordenes', 'clientes', 'caja'] },
+  joyeria: { n: 'tu joyería', d: 'Tu programa ya viene listo para vender. Estos son tus primeros pasos:', p: [
+    { ic: 'box', t: 'Revisa tus joyas y precios', s: 'Talla, largo y existencia de cada una', h: 'Tus joyas: talla y largo', p: 'Ejemplo: Cadena de oro 14k. Así se configura cada pieza.', img: 'p_joyeria', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Cadena de oro 14k en Cadenas.', '<b>Opciones:</b> tallas de anillo o largos de cadena, separados por comas.', '<b>Por separado:</b> el precio y la existencia de cada largo o talla.', '<b>Garantía:</b> los días, y al cobrar anotas el código o certificado.'] },
+    { ic: 'barcode', t: 'Vende una joya con su certificado', s: 'Código o certificado y garantía en el comprobante', h: 'Vende una joya con su certificado', p: 'Al cobrar anotas el código o certificado de cada pieza.', img: 'vender', ir: 'vender', b: 'Ir a Vender', l: ['Agrega la joya al ticket y toca cobrar.', 'Escribe el código o certificado (y el peso, si quieres).', 'El comprobante sale con el código y hasta cuándo tiene garantía.'] }, 'tienda', 'caja'] },
   veterinaria: { n: 'Veterinaria', d: 'Tu programa ya viene listo para tus pacientes. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus servicios y productos', s: 'Consultas, vacunas, estética y alimentos', h: 'Tus servicios y productos', p: 'Ejemplo: Baño y corte. Así se configura cada servicio.', img: 'p_veterinaria', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Baño y corte en Estética.', '<b>Opciones:</b> tamaño pequeño, mediano o grande.', '<b>Costo y precio:</b> el costo es opcional.', '<b>Existencias:</b> apágalas en servicios; en medicinas anota la caducidad.'] },
     { ic: 'paw', t: 'Registra tu primera mascota', s: 'Con su dueño, peso y alergias', h: 'Registra tu primera mascota', p: 'Cada mascota tiene su expediente con consultas, vacunas y recetas.', img: 'mascotas', ir: 'mascotas', b: 'Ir a Mascotas', l: ['Toca <b>Nueva</b> y escribe nombre, especie y raza.', 'Agrega a su dueño. Queda guardado en Clientes.', 'Anota peso y alergias.'] },
@@ -8936,6 +8946,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.52', fecha: '2026-11-06', items: [
+    { i: 'tag', t: 'Nuevo giro: Joyería', d: 'Para negocios que venden joyas: talla de anillo y largo de cadena con su propia existencia y precio, código o certificado y garantía al cobrar, y texto para grabar en la tienda en línea.' }
+  ] },
   { v: '1.9.51', fecha: '2026-11-06', items: [
     { i: 'clock', t: 'Historial de tus clientes', d: 'En tu tienda, cada cliente ve desde su teléfono los pedidos que ha hecho y puede volver a pedir con un toque, al precio de hoy.' }
   ] },
@@ -9427,6 +9440,7 @@ const OPC_GIRO = {
   streaming:  { g: ['Plan'], ej: ['1 mes, 3 meses, 6 meses'] },
   compras:    { g: ['Talla', 'Color'], ej: ['S, M, L, XL', 'Negro, Blanco'], filtro: 'Talla' },
   recargas:   { g: ['Paquete'], ej: ['100, 310, 520'], nota: 'ID de jugador', notaEj: 'Ej. 123456789', notaReq: true },
+  joyeria:    { g: ['Talla', 'Largo'], ej: ['6, 7, 8, 9', '45 cm, 50 cm'], filtro: 'Talla', nota: 'Texto para grabar', notaEj: 'Ej. Ana & Luis · 14.02.2026' },
   veterinaria: { g: ['Tamaño'], ej: ['Pequeño, Mediano, Grande'], nota: 'Nombre y raza de tu mascota', notaEj: 'Ej. Toby, poodle', notaReq: true, cita: true, soloServ: true },
   otro:       { g: ['Opción', 'Color'], ej: ['Pequeño, Grande', 'Negro, Blanco'] }
 };
@@ -9463,7 +9477,7 @@ const T = { info: null, id: '', cat: '', sub: '', q: '', f: '', cart: {}, entreg
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
   boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Beauty & Moda', 'Maquillaje, ropa y lociones', '#13a58b'],
   tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
-  ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
+  ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], joyeria: ['Joyería', 'Anillos, cadenas y relojes', '#a8741a'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;
 const tGiros = () => (T.info && T.info.negocio.giros) || [];
 // En veterinaria solo los servicios piden fecha y nombre de la mascota; el alimento o un collar se piden como cualquier producto

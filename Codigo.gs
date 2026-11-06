@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.51';
+const VERSION = '1.9.52';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -212,6 +212,15 @@ const GIROS = {
     ej: [['Free Fire · 100 diamantes','Free Fire','💎',30,22,0],['Free Fire · 310 diamantes','Free Fire','💎',90,66,0],['Free Fire · 520 diamantes','Free Fire','💎',145,108,0],['PUBG Mobile · 60 UC','PUBG Mobile','🎯',25,18,0],
       ['PUBG Mobile · 325 UC','PUBG Mobile','🎯',120,90,0],['Roblox · 400 Robux','Roblox','🧱',125,95,0],['Roblox · 800 Robux','Roblox','🧱',240,185,0],['Call of Duty Mobile · 80 CP','Call of Duty Mobile','🪖',30,22,0],
       ['Fortnite · 1,000 V-Bucks','Fortnite','🎮',230,175,0],['Tarjeta de regalo Google Play L 250','Tarjetas de regalo','🎁',265,250,0]] },
+  joyeria:    { n: 'Joyería', cats: ['Anillos','Cadenas','Pulseras','Aretes','Dijes','Relojes'],
+    ej: [['Anillo solitario plata 925','Anillos','💍',1450,780,8,'Talla: 6, 7, 8, 9',{ vars: { 'Talla: 6': { s: 2 }, 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
+      ['Argolla de matrimonio oro 10k','Anillos','💍',4800,3300,6,'Talla: 7, 8, 9',{ vars: { 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
+      ['Cadena de oro 14k','Cadenas','📿',6900,4900,3,'Largo: 45 cm, 50 cm, 60 cm',{ vars: { 'Largo: 45 cm': { p: 6900, s: 1 }, 'Largo: 50 cm': { p: 7600, s: 1 }, 'Largo: 60 cm': { p: 8900, s: 1 } } }],
+      ['Cadena de plata 925','Cadenas','⛓️',650,320,10,'Largo: 45 cm, 50 cm',{ vars: { 'Largo: 45 cm': { p: 650, s: 5 }, 'Largo: 50 cm': { p: 720, s: 5 } } }],
+      ['Esclava de oro 10k','Pulseras','✨',3900,2700,3],['Pulsera de plata con dijes','Pulseras','🤍',890,450,6],
+      ['Aretes de perla','Aretes','🦪',520,260,8],['Aretes argolla oro 10k','Aretes','⭕',2100,1400,5],
+      ['Dije de corazón plata 925','Dijes','💗',380,170,12],['Dije con inicial','Dijes','🔤',450,210,10],
+      ['Reloj clásico de acero','Relojes','⌚',1850,1150,4],['Reloj de dama dorado','Relojes','⌚',2400,1500,3]] },
   veterinaria: { n: 'Veterinaria y mascotas', cats: ['Consultas','Vacunas','Desparasitación','Medicamentos','Estética','Hospedaje','Alimentos','Accesorios'],
     ej: [['Consulta general','Consultas','🩺',350,0,0],['Control o revisión','Consultas','🩺',200,0,0],['Vacuna antirrábica','Vacunas','💉',250,110,20],['Vacuna múltiple (perro)','Vacunas','💉',450,220,15],
       ['Triple felina (gato)','Vacunas','💉',450,230,10],['Desparasitación interna','Desparasitación','💊',150,55,30],['Pipeta antipulgas','Desparasitación','🐾',280,160,12],['Gotas óticas 15 ml','Medicamentos','💧',170,90,10],
@@ -1229,7 +1238,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
