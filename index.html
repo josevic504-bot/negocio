@@ -2347,7 +2347,7 @@ function pintarLogin() {
     : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo. Sin tarjeta.</p><div class="in-mini"><span>Ventas</span><span>Inventario</span><span>Clientes</span><span>Caja</span><span>Tienda en línea</span><span>Reportes</span></div>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
-        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['compras', 'recargas', 'veterinaria', 'carwash', 'joyeria', 'floristeria'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
+        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['carwash', 'joyeria', 'floristeria'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
@@ -2369,7 +2369,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['floristeria', 'Floristería'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Beauty & Moda'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['repuestos', 'Taller mecánico y repuestos'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['floristeria', 'Floristería'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Salón de belleza / estética'], ['catalogo', 'Maquillaje y moda por catálogo'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -7406,7 +7406,7 @@ ACC.cbPaqueteExcel = async () => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
@@ -8989,6 +8989,8 @@ ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda
 
 const NOVEDADES = [
   { v: '1.9.53', fecha: '2026-11-06', items: [
+    { i: 'sparkle', t: 'Nombres más claros', d: 'Algunos tipos de negocio cambian de nombre para distinguirlos mejor: Salón de belleza / estética, Maquillaje y moda por catálogo y Taller mecánico y repuestos. Tus datos siguen igual.' },
+    { i: 'wrench', t: 'Órdenes de trabajo en Tecnología', d: 'Si reparas celulares o equipos, ahora tienes Órdenes de trabajo para anotar el equipo que recibes, la falla y la entrega.' },
     { i: 'gift', t: 'Nuevo giro: Floristería', d: 'Arreglos con tamaño, fecha de entrega y mensaje para la tarjeta, y «Arma tu ramo»: tu cliente elige flores, cantidad y presupuesto, tú le mandas el precio desde Pedidos y lo acepta en su tienda.' }
   ] },
   { v: '1.9.52', fecha: '2026-11-06', items: [
@@ -9485,6 +9487,7 @@ const OPC_GIRO = {
   streaming:  { g: ['Plan'], ej: ['1 mes, 3 meses, 6 meses'] },
   compras:    { g: ['Talla', 'Color'], ej: ['S, M, L, XL', 'Negro, Blanco'], filtro: 'Talla' },
   recargas:   { g: ['Paquete'], ej: ['100, 310, 520'], nota: 'ID de jugador', notaEj: 'Ej. 123456789', notaReq: true },
+  carwash:    { g: ['Tamaño'], ej: ['Sedán, Camioneta, Microbús'] },
   floristeria: { g: ['Tamaño', 'Color'], ej: ['Mediano, Grande', 'Roja, Blanca'], nota: 'Mensaje para la tarjeta', notaEj: 'Ej. Feliz aniversario, mi amor', cita: true },
   joyeria:    { g: ['Talla', 'Largo'], ej: ['6, 7, 8, 9', '45 cm, 50 cm'], filtro: 'Talla', nota: 'Texto para grabar', notaEj: 'Ej. Ana & Luis · 14.02.2026' },
   veterinaria: { g: ['Tamaño'], ej: ['Pequeño, Mediano, Grande'], nota: 'Nombre y raza de tu mascota', notaEj: 'Ej. Toby, poodle', notaReq: true, cita: true, soloServ: true },
@@ -9521,7 +9524,7 @@ const juntarOpc = l => l.filter(x => x.n && x.v.length).map(x => x.n + ': ' + x.
 const T = { info: null, id: '', cat: '', sub: '', q: '', f: '', cart: {}, entrega: '', giro: '', compras: [] };
 // Cómo se ve cada giro como sección (módulo) en la portada de la tienda
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
-  boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Beauty & Moda', 'Maquillaje, ropa y lociones', '#13a58b'],
+  boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Maquillaje y moda', 'Maquillaje, ropa y lociones', '#13a58b'],
   tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
   ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], joyeria: ['Joyería', 'Anillos, cadenas y relojes', '#a8741a'], floristeria: ['Floristería', 'Arreglos y ramos a domicilio', '#c2416b'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;

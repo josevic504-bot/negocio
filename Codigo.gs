@@ -163,7 +163,7 @@ const GIROS = {
     ej: [['Blusa casual','Damas','👚',380,210,12,'Talla: S, M, L | Color: Blanco, Rosa'],['Vestido de verano','Damas','👗',650,360,8],['Camisa formal','Caballeros','👔',520,290,10],['Jeans','Caballeros','👖',690,400,14,'Talla: 28, 30, 32, 34, 36'],['Tenis deportivos','Calzado','👟',1150,700,6,'Talla: 38, 39, 40, 41, 42'],['Sandalias','Calzado','👡',450,250,10],['Bolso de mano','Accesorios','👜',780,420,5],['Gorra','Accesorios','🧢',220,110,15]] },
   farmacia:   { n: 'Farmacia', cats: ['Medicamentos','Vitaminas','Cuidado personal','Bebé','Primeros auxilios'],
     ej: [['Acetaminofén 500 mg (10)','Medicamentos','💊',35,20,40],['Antigripal (sobre)','Medicamentos','🤧',18,10,60],['Vitamina C 1 g (10)','Vitaminas','🍊',95,55,25,'Presentación: Tabletas, Efervescente'],['Suero oral','Medicamentos','🧃',42,26,30],['Alcohol 250 ml','Primeros auxilios','🧴',48,30,20],['Curitas (caja)','Primeros auxilios','🩹',55,32,15],['Pañales talla M (20)','Bebé','👶',260,190,10],['Protector solar','Cuidado personal','🧴',320,200,8]] },
-  repuestos:  { n: 'Repuestos / taller', cats: ['Motor','Frenos','Eléctrico','Aceites','Llantas','Servicios'],
+  repuestos:  { n: 'Taller mecánico y repuestos', ant: ['Repuestos / taller'], cats: ['Motor','Frenos','Eléctrico','Aceites','Llantas','Servicios'],
     ej: [['Aceite 20W-50 (litro)','Aceites','🛢️',190,130,30],['Filtro de aceite','Motor','🧰',150,90,20,'Vehículo: Toyota, Nissan, Honda'],['Pastillas de freno','Frenos','🛞',650,420,8],['Bujía','Motor','⚡',95,55,40],['Batería 12 V','Eléctrico','🔋',2300,1700,4],['Cambio de aceite (mano de obra)','Servicios','🔧',250,0,0],['Alineado y balanceo','Servicios','🛠️',450,0,0],['Llanta rin 14','Llantas','🛞',1650,1150,6]] },
   carwash:    { n: 'Carwash / lavado de autos', cats: ['Lavado','Detallado','Motos','Extras','Productos'],
     ej: [['Lavado y aspirado','Lavado','🚿',250,0,0,'Tamaño: Sedán, Camioneta, Microbús',{ vars: { 'Tamaño: Sedán': { p: 250, s: 0 }, 'Tamaño: Camioneta': { p: 320, s: 0 }, 'Tamaño: Microbús': { p: 400, s: 0 } } }],
@@ -176,9 +176,9 @@ const GIROS = {
       ['Aromatizante','Extras','🌿',60,35,24],['Silicón para llantas','Extras','🛞',90,55,12],['Abrillantador de tablero','Productos','🧴',120,75,10],['Shampoo para auto 1 L','Productos','🫧',180,120,8]] },
   tecnologia: { n: 'Tecnología / celulares', cats: ['Celulares','Accesorios','Audio','Cargadores','Reparaciones'],
     ej: [['Celular gama media','Celulares','📱',4800,3600,5,'Capacidad: 128 GB, 256 GB | Color: Negro, Azul'],['Protector de pantalla','Accesorios','📲',150,40,40],['Funda de silicona','Accesorios','🛡️',180,60,30],['Cargador 20 W','Cargadores','🔌',350,180,15],['Audífonos Bluetooth','Audio','🎧',690,400,10],['Bocina portátil','Audio','🔊',950,580,6],['Memoria USB 64 GB','Accesorios','💾',260,150,20],['Cambio de pantalla','Reparaciones','🧑‍🔧',1200,600,0]] },
-  belleza:    { n: 'Belleza / cosméticos', cats: ['Maquillaje','Cuidado de piel','Cabello','Uñas','Perfumes'],
+  belleza:    { n: 'Salón de belleza / estética', ant: ['Belleza / cosméticos'], cats: ['Maquillaje','Cuidado de piel','Cabello','Uñas','Perfumes'],
     ej: [['Base líquida','Maquillaje','💄',420,250,10,'Tono: Claro, Medio, Oscuro'],['Labial mate','Maquillaje','💋',180,90,20],['Crema hidratante','Cuidado de piel','🧴',350,200,12],['Shampoo 500 ml','Cabello','🧴',260,150,15],['Esmalte de uñas','Uñas','💅',95,45,30],['Perfume 100 ml','Perfumes','🌸',890,520,6],['Mascarilla facial','Cuidado de piel','🧖',120,60,25],['Delineador','Maquillaje','✏️',150,75,18]] },
-  catalogo:   { n: 'Beauty & Moda', cats: ['Rostro','Ojos','Labios','Cejas','Lociones','Ropa','Cuidado de piel','Accesorios'],
+  catalogo:   { n: 'Maquillaje y moda por catálogo', ant: ['Beauty & Moda'], cats: ['Rostro','Ojos','Labios','Cejas','Lociones','Ropa','Cuidado de piel','Accesorios'],
     ej: [['Primer hidratante','Rostro','🧴',220,150,24,'',{ sub: 'Preparación de la piel', lema: 'Hidratación que revela tu mejor brillo.', puntos: 'Textura ligera y nutritiva|Suaviza la textura de la piel|Ideal para piel normal a seca', precioEsp: 200, minEsp: 3 }],
       ['Corrector líquido','Rostro','💧',140,90,36,'Tono: Nude 1#fbe0cf, Nude 3#f3cfa8, Beige 2#f1c39e, Beige 3#efbd85, Chocolate 1#a86c45, Chocolate 6#8a5434',{ sub: 'Corrección', lema: 'Cobertura que se siente ligera.', puntos: 'Cobertura uniforme y natural|Textura líquida ligera|Acabado natural de larga duración', precioEsp: 130, minEsp: 3 }],
       ['Base líquida acabado mate','Rostro','🧴',260,170,20,'Tono: Marfil#f6dcc4, Natural#e9c39d, Canela#c99366, Café#8f5d3b',{ sub: 'Base', lema: 'Piel mate todo el día.', puntos: 'Control de brillo|Cobertura media a alta|No reseca', precioEsp: 240, minEsp: 3 }],
@@ -1249,7 +1249,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -2177,7 +2177,8 @@ function destinosAnuncio_(filtro, ids) {
   if (f.indexOf('giro:') === 0) { const g = f.slice(5); return vivas.filter(l => String(l.giros || '').split(',').concat([giroIdDeLic_(l)]).indexOf(g) >= 0); }
   return vivas;
 }
-function giroIdDeLic_(l) { const n = String(l.giro || ''); return Object.keys(GIROS).find(k => GIROS[k].n === n) || ''; }
+// Los giros renombrados guardan su nombre anterior (ant): las licencias viejas lo siguen reconociendo
+function giroIdDeLic_(l) { const n = String(l.giro || ''); return Object.keys(GIROS).find(k => GIROS[k].n === n || (GIROS[k].ant || []).indexOf(n) >= 0) || ''; }
 function panelAnunciar_(d) {
   const texto = txt_(d.texto, 400), titulo = txt_(d.titulo, 60) || 'Gestión de Negocio VM';
   if (texto.length < 3) throw new Error('Escribe el mensaje');
@@ -2344,7 +2345,7 @@ function grupoDe_(l) {
   return mRows_('Licencias').filter(x => !esEliminada_(x) && String(x.estado).toLowerCase() !== 'duplicada' && (x.id === k || x.persona === k))
     .sort((a, b) => (a.id === k ? -1 : b.id === k ? 1 : String(a.registro) < String(b.registro) ? -1 : 1));
 }
-function giroIdDe_(nombre) { const n = norm_(nombre); return Object.keys(GIROS).find(k => norm_(GIROS[k].n) === n || k === n) || 'otro'; }
+function giroIdDe_(nombre) { const n = norm_(nombre); return Object.keys(GIROS).find(k => norm_(GIROS[k].n) === n || k === n || (GIROS[k].ant || []).some(a => norm_(a) === n)) || 'otro'; }
 // Usuario administrador (el dueño) de un negocio: el que entra con el WhatsApp de la licencia
 function duenoDe_(lic) {
   const acc = mRows_('Accesos').find(a => a.negocioId === lic.id && String(a.whatsapp) === String(lic.whatsapp)) || mRows_('Accesos').find(a => a.negocioId === lic.id);
