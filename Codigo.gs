@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.52';
+const VERSION = '1.9.53';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -89,7 +89,7 @@ const SCHEMA = {
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo','variante'],
-  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId'],
+  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId','presupuesto','cotiza'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
@@ -109,6 +109,8 @@ const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','natur
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
+// Floristería «Arma tu ramo»: cotizar (el cliente pidió precio) → cotizado (el negocio mandó el precio) → nuevo (el cliente aceptó)
+const EST_RAMO = ['cotizar','cotizado'];
 
 const CONFIG_DEF = {
   nombre: 'Mi Negocio', giro: 'otro', eslogan: '', rtn: '', telefono: '', direccion: '', correo: '',
@@ -212,6 +214,13 @@ const GIROS = {
     ej: [['Free Fire · 100 diamantes','Free Fire','💎',30,22,0],['Free Fire · 310 diamantes','Free Fire','💎',90,66,0],['Free Fire · 520 diamantes','Free Fire','💎',145,108,0],['PUBG Mobile · 60 UC','PUBG Mobile','🎯',25,18,0],
       ['PUBG Mobile · 325 UC','PUBG Mobile','🎯',120,90,0],['Roblox · 400 Robux','Roblox','🧱',125,95,0],['Roblox · 800 Robux','Roblox','🧱',240,185,0],['Call of Duty Mobile · 80 CP','Call of Duty Mobile','🪖',30,22,0],
       ['Fortnite · 1,000 V-Bucks','Fortnite','🎮',230,175,0],['Tarjeta de regalo Google Play L 250','Tarjetas de regalo','🎁',265,250,0]] },
+  floristeria: { n: 'Floristería', cats: ['Arreglos','Ramos','Flores sueltas','Globos y detalles','Plantas'],
+    ej: [['Arreglo de rosas rojas','Arreglos','🌹',950,520,0,'Tamaño: 12 rosas, 24 rosas',{ vars: { 'Tamaño: 12 rosas': { p: 950 }, 'Tamaño: 24 rosas': { p: 1650 } } }],
+      ['Arreglo primaveral','Arreglos','💐',780,420,0,'Tamaño: Mediano, Grande',{ vars: { 'Tamaño: Mediano': { p: 780 }, 'Tamaño: Grande': { p: 1100 } } }],
+      ['Ramo de girasoles','Ramos','🌻',650,330,0],['Ramo de tulipanes','Ramos','🌷',890,500,0,'Color: Rosado, Amarillo, Blanco'],['Caja de rosas y chocolates','Arreglos','🎁',1250,700,0],
+      ['Rosa (unidad)','Flores sueltas','🌹',45,22,200,'Color: Roja, Blanca, Rosada, Amarilla'],['Girasol (unidad)','Flores sueltas','🌻',60,30,80],['Lirio (vara)','Flores sueltas','🤍',75,38,60,'Color: Blanco, Rosado'],
+      ['Tulipán (unidad)','Flores sueltas','🌷',70,40,60,'Color: Rosado, Amarillo, Blanco'],['Margarita (manojo)','Flores sueltas','🌼',90,45,40],['Follaje y relleno','Flores sueltas','🌿',60,25,50],
+      ['Globo metálico','Globos y detalles','🎈',120,60,30,'Diseño: Te amo, Feliz cumpleaños, Felicidades'],['Peluche mediano','Globos y detalles','🧸',350,190,12],['Orquídea en maceta','Plantas','🪴',850,480,8]] },
   joyeria:    { n: 'Joyería', cats: ['Anillos','Cadenas','Pulseras','Aretes','Dijes','Relojes'],
     ej: [['Anillo solitario plata 925','Anillos','💍',1450,780,8,'Talla: 6, 7, 8, 9',{ vars: { 'Talla: 6': { s: 2 }, 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
       ['Argolla de matrimonio oro 10k','Anillos','💍',4800,3300,6,'Talla: 7, 8, 9',{ vars: { 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
@@ -272,6 +281,7 @@ function route_(req) {
   if (a === 'misPedidos') return misPedidos_(d);
   if (a === 'pedidoComprobante') { tiendaNeg_(d); return lock_(() => pedidoComprobante_(d)); }
   if (a === 'pedidoClienteEditar') { tiendaNeg_(d); return lock_(() => pedidoClienteEditar_(d)); }
+  if (a === 'respuestaRamo') { tiendaNeg_(d); return lock_(() => respuestaRamo_(d)); }
   if (a === 'chatEnviar') { chatLimites_(d); return lock_(() => chatEnviar_(d)); }
   if (a === 'chatVer') return chatVer_(d);
   // Panel Molina (súper admin)
@@ -330,6 +340,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'anularGasto':     return lock_(() => anularGasto_(u, d));
     case 'pedidos':         return pedidos_(u, d);
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
+    case 'cotizarRamo':     return lock_(() => cotizarRamo_(u, d));
     case 'editarPedido':    return lock_(() => editarPedido_(u, d));
     case 'anticipoPedido':  return lock_(() => anticipoPedido_(u, d));
     case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
@@ -1238,7 +1249,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -3745,7 +3756,7 @@ function anularGasto_(u, d) {
 function pedidos_(u, d) {
   req_(u, ['admin','cajero']);
   const lim = diasAtras_(45) + 'T00:00';
-  let l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo'].indexOf(p.estado) >= 0 || p.fecha >= lim);
+  let l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo','cotizar','cotizado'].indexOf(p.estado) >= 0 || p.fecha >= lim);
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); l = l.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   const pagos = {}; rows_('Abonos').forEach(a => { if (a.ref && !a.anulado) pagos[a.ref] = r2_((pagos[a.ref] || 0) + (Number(a.monto) || 0)); });
   return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); return p; });
@@ -3754,7 +3765,7 @@ function pedidos_(u, d) {
 function pendientes_(u, d) {
   if (u.rol === 'bodega') return { nuevos: 0, mensajes: 0 };
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
-  let n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
+  let n = rows_('Pedidos').filter(p => p.estado === 'nuevo' || p.estado === 'cotizar');
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); n = n.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   let sop = 0; try { if (MULTI_NEGOCIO && NEG) sop = mRows_('Soporte').filter(c => c.negocioId === NEG.id && Number(c.sinLeerCli) > 0).length; } catch (e) {}
   const out = { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
@@ -4759,7 +4770,7 @@ function tiendaInfo_(d) {
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago,
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
-      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
+      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
         datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null,
       giros: activos.map(g => ({ id: g, n: GIROS[g].n })),
@@ -4806,8 +4817,36 @@ function pedidoComprobante_(d) {
   upsert_('Pedidos', { id: p.id, comprobante: url, pagoEstado: 'revisar', actualizado: ahora_() });
   return { id: p.id, pagoEstado: 'revisar' };
 }
+const cantTxt_ = n => String(Math.round(Number(n) * 100) / 100);
+const RAMO_CATS = ['flores sueltas', 'globos y detalles'];
+// El negocio pone el precio del ramo: las flores quedan en 0 (para descontar existencia al cobrar) y una línea «Ramo a tu gusto» lleva el precio
+function cotizarRamo_(u, d) {
+  req_(u, ['admin','cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p || EST_RAMO.indexOf(p.estado) < 0) throw new Error('Este pedido ya no espera precio');
+  const precio = r2_(Number(d.precio) || 0);
+  if (!(precio > 0) || precio > 1000000) throw new Error('Escribe el precio del ramo');
+  const lineas = parseJ_(p.items, []).filter(i => i.tipo !== 'ramo').map(i => ({ productoId: i.productoId, nombre: i.nombre, cantidad: i.cantidad, precio: 0, total: 0, lista: Number(i.lista !== undefined ? i.lista : i.precio) || 0 }));
+  lineas.push({ productoId: '', tipo: 'ramo', nombre: 'Ramo a tu gusto', cantidad: 1, precio: precio, total: precio });
+  const env = Number(p.envio) || 0, cot = { precio: precio, nota: txt_(d.nota, 300), el: ahora_() };
+  const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(lineas), subtotal: precio, total: r2_(precio + env), estado: 'cotizado', cotiza: JSON.stringify(cot), actualizado: ahora_() });
+  g.items = parseJ_(g.items, []); g.anticipoPagado = 0;
+  return g;
+}
+// El cliente acepta o no el precio desde «Tus pedidos» (se comprueba con su WhatsApp)
+function respuestaRamo_(d) {
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p || !tel8_(d.telefono) || tel8_(p.telefono) !== tel8_(d.telefono)) throw new Error('No encontramos ese pedido');
+  if (p.estado !== 'cotizado') throw new Error(p.estado === 'cotizar' ? 'La tienda todavía no te manda el precio' : 'Este ramo ya no está esperando tu respuesta');
+  const cot = parseJ_(p.cotiza, {});
+  if (d.precio !== undefined && r2_(Number(d.precio)) !== r2_(cot.precio)) throw new Error('La tienda cambió el precio. Revísalo de nuevo.');
+  const si = !!d.acepta, nota = ((p.nota ? p.nota + ' · ' : '') + (si ? 'Precio aceptado por el cliente' : 'El cliente no aceptó el precio')).slice(-1000);
+  upsert_('Pedidos', { id: p.id, estado: si ? 'nuevo' : 'cancelado', nota: nota, actualizado: ahora_() });
+  return { id: p.id, estado: si ? 'nuevo' : 'cancelado', total: p.total };
+}
 // El cliente solo cambia su pedido mientras esté «Recibido» y sin pago de por medio; después lo arregla con la tienda
 function bloqueoCliente_(p) {
+  if (p.cotiza) return 'Este ramo ya tiene precio. Para cambiarlo, escríbele a la tienda.';
   if (p.ventaId || p.estado !== 'nuevo') return 'Tu pedido ya no se puede cambiar desde aquí. Escríbele a la tienda.';
   if (p.pagoEstado === 'ok' || p.pagoEstado === 'revisar' || anticipoDe_(p.id) > 0) return 'Ya enviaste tu pago. Para cambiar el pedido, escríbele a la tienda.';
   return '';
@@ -4913,7 +4952,12 @@ function pedir_(d) {
   const c = CacheService.getScriptCache(), k = 'PD_' + (NEG ? NEG.id : '') + tel.slice(-8), n = Number(c.get(k) || 0);
   if (n >= 6) throw new Error('Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
   const pm = porId_(rows_('Productos'));
-  const sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
+  // «Arma tu ramo»: el cliente pide precio; la existencia y el precio los revisa el negocio al cotizar
+  const ramo = !!d.ramo;
+  if (ramo && girosActivos_(cfg).indexOf('floristeria') < 0) throw new Error('Esta tienda no arma ramos a tu gusto');
+  const presupuesto = ramo ? r2_(Math.max(0, Number(d.presupuesto) || 0)) : 0;
+  if (ramo && !(presupuesto > 0)) throw new Error('Escribe tu presupuesto');
+  const sin = ramo || cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
   const lista = Array.isArray(d.items) ? d.items.slice(0, 40) : [];
   const items = [], suma = {}, sumaV = {};
   const conCompras = girosActivos_(cfg).indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0;
@@ -4934,12 +4978,13 @@ function pedir_(d) {
     }
     const p = i && typeof i === 'object' ? pm[i.id] : null, cant = Math.floor(Number(i && i.cantidad) || 0);
     if (!p || !p.activo || !p.tienda) throw new Error('Uno de los productos ya no está disponible. Actualiza la página.');
+    if (ramo && RAMO_CATS.indexOf(String(p.categoria).toLowerCase()) < 0) throw new Error('«' + p.nombre + '» no se puede elegir para armar un ramo');
     if (cant < 1 || cant > 999) throw new Error('Cantidad no válida en «' + p.nombre + '»');
     suma[p.id] = (suma[p.id] || 0) + cant;
     if (p.tipo === 'producto' && !sin && p.stock < suma[p.id]) throw new Error(p.stock > 0 ? 'Solo quedan ' + Math.floor(p.stock) + ' de «' + p.nombre + '»' : '«' + p.nombre + '» se agotó');
     const op = txt_(i.opcion, 160), nom = op ? txt_(p.nombre + ' (' + op + ')', 240) : p.nombre;
     const V = varsDe_(p), vk = V ? varKey_(p, op) : '';
-    if (V && !vk) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
+    if (V && !vk && !ramo) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
     if (vk) { const kk = p.id + SEPV + vk; sumaV[kk] = (sumaV[kk] || 0) + cant; const hay = Math.floor(Number(V[vk] && V[vk].s) || 0);
       if (p.tipo === 'producto' && !sin && hay < sumaV[kk]) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + p.nombre + ' (' + vk + ')»' : '«' + p.nombre + ' (' + vk + ')» se agotó'); }
     const pu = precioVar_(p, vk);
@@ -4949,10 +4994,10 @@ function pedir_(d) {
     else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk) });
   });
   if (!items.length) throw new Error('Tu pedido está vacío');
-  items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p && !i._propio ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.normal = i.precio; i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
+  items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p && !i._propio && !ramo ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.normal = i.precio; i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   const min = Number(cfg.tiendaMinimo) || 0;
-  if (min > 0 && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
+  if (min > 0 && !ramo && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
   const envio = entrega === 'domicilio' ? r2_(Number(cfg.tiendaEnvio) || 0) : 0;
   const pagos = String(cfg.tiendaPagos || 'Efectivo').split(',');
   const pago = pagos.indexOf(d.pago) >= 0 ? d.pago : pagos[0];
@@ -4978,11 +5023,11 @@ function pedir_(d) {
     if ((citasOcupadas_()[cita + ' ' + hora] || 0) >= cupo) throw new Error('Esa hora ya se llenó. Elige otra, por favor.'); }
   const numP = siguiente_('P'), comp = d.comprobante ? guardarComprobante_(d.comprobante, numP) : '';
   const p = upsert_('Pedidos', { comprobante: comp, pagoEstado: comp ? 'revisar' : '', numero: numP, fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
-    pago: pago, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: r2_(subtotal + envio), estado: 'nuevo', ventaId: '', nota: txt_(d.nota, 300), actualizado: ahora_(), anticipo: Math.ceil(anticipo),
+    pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),
     cita: cita, hora: hora, vehiculo: vehiculo, placa: placa, citaId: '' });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
-  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
+  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
     negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : '' };
 }
 
@@ -5098,6 +5143,7 @@ function misPedidos_(d) {
   const pm = d.historial || l.some(p => p.estado === 'nuevo') ? porId_(rows_('Productos')) : {};
   return l.map(p => { const its = parseJ_(p.items, []), o = { id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega, pago: p.pago, pagoEstado: p.pagoEstado || '', items: its.length };
       // Solo un pedido que el cliente todavía puede cambiar lleva sus productos y su versión
+      if (EST_RAMO.indexOf(p.estado) >= 0 || p.cotiza) { o.ramo = true; o.presupuesto = Number(p.presupuesto) || 0; o.envio = p.envio; o.cotiza = parseJ_(p.cotiza, null); o.flores = its.filter(i => i.tipo !== 'ramo').map(i => cantTxt_(i.cantidad) + ' ' + String(i.nombre).replace(/ \(([^()]*)\)$/, (m, x) => ' ' + x.replace(/[^,:]+: /g, ''))); }
       if (!bloqueoCliente_(p)) { o.editable = true; o.version = verPedido_(p); o.lineas = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
       // Historial: lo que el cliente pidió en cada pedido
       if (d.historial) { o.subtotal = p.subtotal; o.envio = p.envio; o.detalle = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }

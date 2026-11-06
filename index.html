@@ -703,6 +703,10 @@ body.en-tienda{padding-bottom:110px}
 .btn.otro{color:var(--pri);border:1.5px solid var(--pri);background:transparent;white-space:nowrap}.tk .tx[data-cam]{cursor:pointer}.tk .tx small.tk-cam{display:flex;align-items:center;gap:4px;color:var(--pri);font-weight:600;margin-top:2px}
 .btn.hist{width:100%;margin:10px 0 4px;color:var(--pri);border:1.5px solid var(--pri);background:transparent}.hist-g{font-size:13px;color:var(--mut);margin-bottom:6px}.hist-g b{color:var(--pri)}
 .mis-l.h{align-items:flex-start}.mis-l .fin{text-align:right;flex:none}.mis-l .fin b{display:block;font-weight:600;margin-bottom:4px}
+.ramo-b{display:flex;gap:14px;align-items:center;width:100%;margin:2px 0 14px;padding:16px;border:0;border-radius:20px;background:linear-gradient(135deg,#c2416b,#e8789a);color:#fff;text-align:left;font:inherit;cursor:pointer}.ramo-b .e{font-size:38px;line-height:1}.ramo-b b{display:block;font-family:var(--serif,'Cormorant Garamond'),serif;font-size:20px;font-weight:600;line-height:1.15;margin-bottom:3px}.ramo-b small{opacity:.92;font-size:13px}.ramo-b .go{background:#fff;color:#c2416b;border-radius:99px;padding:8px 14px;font-weight:600;font-size:13px;white-space:nowrap}
+.rf{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed var(--line)}.rf .e{font-size:26px;width:30px;text-align:center}.rf .tx{flex:1;min-width:0}.rf .tx b{display:block;font-weight:500}.rf .tx small{color:var(--mut);font-size:12.5px}.rf .chips{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}.rf .chip{padding:3px 10px;font-size:12px}
+.rf-sum{display:flex;justify-content:space-between;margin:10px 0 2px;font-size:14px;color:var(--mut)}.rf-sum b{color:var(--fg)}.rf-av{margin:10px 0 2px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 8%,transparent);font-size:13px;color:var(--mut)}
+.ramo-c{border:1.5px solid var(--pri);border-radius:16px;padding:12px 14px;margin:6px 0 8px}.ramo-c .pp{display:flex;justify-content:space-between;align-items:baseline}.ramo-c .pp b{font-size:22px;color:var(--pri)}.ramo-c .nt{margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 7%,transparent);font-size:13px}.ramo-c .row{display:flex;gap:8px;margin-top:10px}.ramo-c .row .btn{flex:1}.ramo-c .row .acc{flex:2}
 .t-expl{font-size:12.5px;color:var(--mut);margin:14px 2px 8px}.ed-ped{text-align:center;font-size:12.5px;font-weight:600;color:var(--pri);margin-bottom:8px}.btn.quitar{color:var(--bad);border:1.5px solid var(--bad);background:transparent}
 .prod-big .ph{aspect-ratio:4/3;border-radius:22px;overflow:hidden;display:grid;place-items:center;color:#fff;position:relative;background:linear-gradient(135deg,var(--t1),var(--t2))}
 .prod-big .ph .emo{font-size:90px}.prod-big .ph .ini{font:600 60px var(--serif)}
@@ -1409,7 +1413,7 @@ const ICP = {
 const ICI = { cart: 'vender', inbox: 'pedidos', chat: 'mensajes', store: 'tienda', box: 'productos', tag: 'precios', layers: 'proyectos', users: 'clientes', truck: 'proveedores', bag: 'compras', receipt: 'gastos', wallet: 'caja', doc: 'ventas', chart: 'reportes', user: 'usuarios', gear: 'ajustes', cal: 'agenda', paw: 'mascotas', syringe: 'vacunas', steth: 'mascotas', wrench: 'ordenes', bed: 'hospedaje', gift: 'encargos', clock: 'vencimientos', key: 'cuentas', coin: 'qa_cobrar', help: 'ayuda', sparkle: 'qa_resumen' };
 const ICI_QA = { receipt: 'qa_gasto', truck: 'qa_compra' };
 const icImg = k => `<img class="ici" src="iconos/${k}.webp" alt="" loading="lazy" decoding="async">`;
-const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'carwash', 'joyeria', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
+const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'carwash', 'joyeria', 'floristeria', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
 const giroImg = (id, cls) => `<img class="gimg ${cls || ''}" src="iconos/g_${GIROS_IMG.includes(id) ? id : 'otro'}.webp" alt="" decoding="async">`;
 const ic = (n, sz = 22) => `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICP[n] || ''}</svg>`;
 
@@ -1557,7 +1561,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.52';
+const APP_VER = '1.9.53';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1641,6 +1645,17 @@ const norm = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ
 const colorDe = s => { const c = ['t-pri', 't-azul', 't-morado', 't-cian', 't-naranja', 't-rojo', 't-verde', 't-acc']; let h = 0; String(s || '').split('').forEach(ch => { h = (h * 31 + ch.charCodeAt(0)) | 0; }); return c[Math.abs(h) % c.length]; };
 // Ilustraciones de línea por categoría/nombre, para productos sin foto (dibujos propios, 48×48)
 const ILUS = [
+  // Floristería
+  [/girasol/, 'M24 16a8 8 0 1 0 .1 0M24 4v6M24 38v6M4 24h6M38 24h6M10 10l4 4M34 34l4 4M38 10l-4 4M14 34l-4 4'],
+  [/tulipan/, 'M24 26c-7 0-10-5-10-13l5 3 5-6 5 6 5-3c0 8-3 13-10 13zM24 26v18M24 36c-5 0-8-3-9-6M24 40c5 0 8-3 9-6'],
+  [/rosa|rosas/, 'M24 8c-6 0-10 4-10 9 0 6 5 10 10 10s10-4 10-10c0-5-4-9-10-9zM24 13c-3 0-4 2-4 4 0 3 2 4 4 4M28 15c0 2-2 3-4 3M24 27v17M24 34c-5 0-8-2-9-5M24 38c4 0 7-2 8-5'],
+  [/lirio|orquid|azucena/, 'M24 22l-6-14 6 4 6-4zM24 22l-14-4 6 8zM24 22l14-4-6 8zM24 22v22M24 34c-4 0-7-2-8-5'],
+  [/follaje|relleno|eucalipt|hoja/, 'M24 44V12M24 18c-6 0-10-4-10-10 6 0 10 4 10 10zM24 28c6 0 10-4 10-10-6 0-10 4-10 10zM24 36c-6 0-10-4-10-10 6 0 10 4 10 10z'],
+  [/margarit|flor\b|flores/, 'M24 20a4 4 0 1 0 .1 0M24 8a5 6 0 0 1 0 10M24 30a5 6 0 0 1 0 10M12 24a6 5 0 0 1 10 0M26 24a6 5 0 0 1 10 0M15 15l5 5M28 28l5 5M33 15l-5 5M20 28l-5 5'],
+  [/globo/, 'M24 6c-8 0-13 6-13 13 0 9 8 15 13 15s13-6 13-15c0-7-5-13-13-13zM22 34h4l-2 3zM24 37c-2 3 2 5 0 8'],
+  [/peluche|oso/, 'M14 10a5 5 0 1 0 .1 0M34 10a5 5 0 1 0 .1 0M24 10c-7 0-11 5-11 11s4 10 11 10 11-4 11-10-4-11-11-11zM16 31l-4 10h24l-4-10M20 20a1 1 0 1 0 .1 0M28 20a1 1 0 1 0 .1 0M22 25h4'],
+  [/maceta|planta/, 'M14 30h20l-2 12H16zM24 30V18M24 18c-8 0-12-6-12-10 6 0 12 4 12 10zM24 22c0-6 6-10 12-10 0 4-4 10-12 10z'],
+  [/arreglo|ramo|bouquet|caja de rosas/, 'M24 22l-8 22h16zM16 14a5 5 0 1 0 .1 0M32 14a5 5 0 1 0 .1 0M24 8a5 5 0 1 0 .1 0M20 22a4 4 0 1 0 .1 0M28 22a4 4 0 1 0 .1 0M20 36h8'],
   // Joyería
   [/arete|zarcillo|topo/, 'M16 8a3 3 0 1 0 .1 0M16 11v5M16 16a8 8 0 1 0 .1 0M33 8a3 3 0 1 0 .1 0M33 11v9M33 20a5 5 0 1 0 .1 0'],
   [/anillo|argolla|solitario|sortija/, 'M24 18a12 12 0 1 0 .1 0M24 22a8 8 0 1 0 .1 0M19 11l3-4h4l3 4-5 6zM19 11h10'],
@@ -2332,7 +2347,7 @@ function pintarLogin() {
     : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo. Sin tarjeta.</p><div class="in-mini"><span>Ventas</span><span>Inventario</span><span>Clientes</span><span>Caja</span><span>Tienda en línea</span><span>Reportes</span></div>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
-        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['compras', 'recargas', 'veterinaria', 'carwash', 'joyeria'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
+        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['compras', 'recargas', 'veterinaria', 'carwash', 'joyeria', 'floristeria'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
@@ -2354,7 +2369,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Beauty & Moda'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['repuestos', 'Repuestos / taller'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['floristeria', 'Floristería'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Belleza / cosméticos'], ['catalogo', 'Beauty & Moda'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -4746,7 +4761,7 @@ function elegirParaVenta(cb) {
 }
 
 /* ===================== PEDIDOS EN LÍNEA ===================== */
-const EST_P = { nuevo: { t: 'Nuevo', c: 'b-warn', s: 0 }, confirmado: { t: 'Confirmado', c: 'b-info', s: 1 }, listo: { t: 'Listo', c: 'b-ok', s: 2 }, entregado: { t: 'Entregado', c: 'b-mut', s: 3 }, cancelado: { t: 'Cancelado', c: 'b-bad', s: -1 } };
+const EST_P = { cotizar: { t: 'Por cotizar', c: 'b-warn', s: -1, ramo: 1 }, cotizado: { t: 'Precio enviado', c: 'b-info', s: -1, ramo: 1 }, nuevo: { t: 'Nuevo', c: 'b-warn', s: 0 }, confirmado: { t: 'Confirmado', c: 'b-info', s: 1 }, listo: { t: 'Listo', c: 'b-ok', s: 2 }, entregado: { t: 'Entregado', c: 'b-mut', s: 3 }, cancelado: { t: 'Cancelado', c: 'b-bad', s: -1 } };
 function linkTienda() { const u = location.href.split('#')[0].split('?')[0]; return u + '?tienda=' + encodeURIComponent(S.multi ? S.negocioId : '1'); }
 function plusCard(corto) {
   return `<div class="plus-card"><div class="plus-h"><span class="plus-b">PLUS</span><h3>Tienda en línea con fotos</h3></div>
@@ -4773,10 +4788,11 @@ R.pedidos = async () => {
   if (S.vista !== 'pedidos' || (S.tienda || '') !== t0) return;
   S.pedidosL = lp;
   const l = S.pedidosL, cnt = k => l.filter(p => p.estado === k).length;
-  S.pedidosNuevos = cnt('nuevo'); pintarNav();
-  if (!S.f.pest || (S.f.pestAuto && !cnt(S.f.pest))) { S.f.pest = ['nuevo', 'confirmado', 'listo'].find(k => cnt(k)) || 'nuevo'; S.f.pestAuto = 1; }
+  S.pedidosNuevos = cnt('nuevo') + cnt('cotizar'); pintarNav();
+  if (!S.f.pest || (S.f.pestAuto && !cnt(S.f.pest))) { S.f.pest = ['cotizar', 'nuevo', 'confirmado', 'listo'].find(k => cnt(k)) || 'nuevo'; S.f.pestAuto = 1; }
+  const conRamo = girosOn().includes('floristeria') || cnt('cotizar') || cnt('cotizado');
   const vis = l.filter(p => p.estado === S.f.pest);
-  m.innerHTML = tienda + `<div class="chips" style="margin:12px 0">${Object.keys(EST_P).map(k => `<button class="chip ${S.f.pest === k ? 'on' : ''}" data-a="pest" data-k="${k}">${EST_P[k].t}${['nuevo', 'confirmado', 'listo'].includes(k) ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
+  m.innerHTML = tienda + `<div class="chips" style="margin:12px 0">${Object.keys(EST_P).filter(k => conRamo || !EST_P[k].ramo).map(k => `<button class="chip ${S.f.pest === k ? 'on' : ''}" data-a="pest" data-k="${k}">${EST_P[k].t}${['cotizar', 'nuevo', 'confirmado', 'listo'].includes(k) ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
     <div class="ords">${vis.map(cardPedido).join('') || `<div class="empty">${S.f.pest === 'nuevo' ? 'No hay pedidos nuevos. Comparte el enlace de tu tienda para recibir más 🛍️' : 'No hay pedidos aquí'}</div>`}</div>`;
   clearTimeout(S.tPed);
   S.tPed = setTimeout(() => { if (S.vista === 'pedidos' && !PILA.length && !document.hidden) R.pedidos(); }, 30000);
@@ -4785,11 +4801,12 @@ R.pedidos = async () => {
 const enlaceSeguro = t => { t = String(t || '').trim(); return /^https?:\/\//i.test(t) ? t : 'https://www.google.com/search?q=' + encodeURIComponent(t); };
 function cardPedido(p) {
   const e = EST_P[p.estado] || EST_P.nuevo;
-  const accion = { nuevo: ['Confirmar', 'confirmado'], confirmado: ['Marcar listo', 'listo'], listo: ['Entregar y cobrar', 'cobrar'] }[p.estado];
+  const accion = { cotizar: ['Poner precio', 'cotizar'], cotizado: ['Cambiar precio', 'cotizar'], nuevo: ['Confirmar', 'confirmado'], confirmado: ['Marcar listo', 'listo'], listo: ['Entregar y cobrar', 'cobrar'] }[p.estado];
+  const ramoP = ['cotizar', 'cotizado'].includes(p.estado), monto = i => ramoP && !i.tipo ? (i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : 'sin precio') : money(i.total);
   return `<div class="ord ${p.estado === 'nuevo' ? 'new' : ''}"><div class="ord-h"><span class="oav ${colorDe(p.nombre)}">${esc(iniciales(p.nombre))}</span><div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.numero)} · ${hace(p.fecha)}</small></div><span class="badge ${e.c}">${e.t}</span></div>
     ${e.s >= 0 ? `<div class="steps">${[0, 1, 2, 3].map(i => `<i class="${i <= e.s ? 'on' : ''}"></i>`).join('')}</div>` : ''}
-    <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${money(i.total)}</span></div>`).join('')}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir${num(p.anticipoPagado) >= num(p.anticipo) ? ' · pagado ✓' : num(p.anticipoPagado) > 0 ? ' · pagó ' + money(p.anticipoPagado) : ''}</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
-    <div class="ord-f"><span class="t n">${money(p.total)}</span><span class="badge b-mut">${ic(p.entrega === 'domicilio' ? 'truck' : 'store', 14)} ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge b-mut">${esc(p.pago)}</span></div>
+    <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${monto(i)}</span></div>`).join('')}${ramoP && p.presupuesto ? `<div style="color:var(--pri)"><span>Presupuesto del cliente</span><span class="n">${money(p.presupuesto)}</span></div>` : ''}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir${num(p.anticipoPagado) >= num(p.anticipo) ? ' · pagado ✓' : num(p.anticipoPagado) > 0 ? ' · pagó ' + money(p.anticipoPagado) : ''}</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
+    <div class="ord-f"><span class="t n">${p.estado === 'cotizar' ? 'Por cotizar' : money(p.total)}</span><span class="badge b-mut">${ic(p.entrega === 'domicilio' ? 'truck' : 'store', 14)} ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge b-mut">${esc(p.pago)}</span></div>
     ${p.cita ? `<div class="ord-cw" style="margin-top:9px">${p.placa ? `<span class="placa">${esc(p.placa)}</span>` : ''}<span class="sm">${esc(p.vehiculo || '')}</span><span class="crono">${esc(diaTxt(p.cita))} · ${esc(fHoraC(p.hora))}</span></div>` : ''}
     ${p.entrega === 'domicilio' && p.direccion ? `<p class="xs mut" style="margin:8px 0 0">${ic('pin', 13)} ${esc(p.direccion)}</p>` : ''}${p.nota ? `<p class="xs mut" style="margin:6px 0 0">📝 ${esc(p.nota)}</p>` : ''}
     ${compPedidoHTML(p)}
@@ -4818,10 +4835,32 @@ function msjPedido(p) {
   if (p.estado === 'listo') return plantilla(S.config.msjListo, o) + (p.entrega === 'domicilio' ? ' Va en camino 🛵' : ' Puedes pasar a recogerlo.');
   return plantilla(S.config.msjPedido, o);
 }
+// Floristería: el negocio pone el precio del ramo que armó el cliente (o rechaza la solicitud)
+function cotizarRamo(p) {
+  const fl = p.items.filter(i => !i.tipo), lista = fl.reduce((a, i) => a + (i.lista || i.precio || 0) * i.cantidad, 0), sinP = fl.some(i => !(i.lista || i.precio));
+  const cost = fl.reduce((a, i) => { const x = byId(S.productos, i.productoId); return a + (x ? num(x.costo) : 0) * i.cantidad; }, 0), prev = p.cotiza ? (parseJ(p.cotiza) || {}) : {};
+  const h = hoja({ titulo: 'Ramo a tu gusto · ' + esc(p.numero), html: `<div class="mis-r"><span class="sm mut">${esc(p.nombre)} · ${esc(p.telefono)} · ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge ${EST_P[p.estado].c}">${EST_P[p.estado].t}</span></div>
+    ${fl.map(i => `<div class="tk"><div class="tx"><b>${cant(i.cantidad)} × ${esc(i.nombre)}</b></div><b class="n tkt">${i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : '<span class="mut">sin precio</span>'}</b></div>`).join('')}
+    <div class="tots"><div class="tot"><span>Flores a precio de lista${sinP ? ' (algunas sin precio)' : ''}</span><b class="n">${money(lista)}</b></div><div class="tot"><span>Presupuesto del cliente</span><b class="n">${money(p.presupuesto)}</b></div>${p.envio ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${money(p.envio)}</b></div>` : ''}</div>
+    ${p.nota ? `<p class="sm" style="margin:8px 0">📝 ${esc(p.nota)}</p>` : ''}
+    <div class="f2"><label class="fld"><span>Precio del ramo</span><input id="cr-p" inputmode="decimal" value="${prev.precio || ''}" placeholder="0.00"></label><label class="fld"><span>Margen</span><input id="cr-m" disabled></label></div>
+    <label class="fld"><span>Nota para el cliente (opcional)</span><input id="cr-n" maxlength="300" value="${esc(prev.nota || '')}" placeholder="Ej. El lirio va en botón para que dure más"></label>` });
+  const pm = () => { const v = num($('#cr-p', h.el).value); $('#cr-m', h.el).value = v > 0 ? money(v - cost) + (v ? ' · ' + Math.round((v - cost) / v * 100) + '%' : '') : ''; };
+  $('#cr-p', h.el).addEventListener('input', pm); pm();
+  h.botones([{ t: 'Rechazar', fn: async () => { const m = await pedirTexto('Rechazar solicitud', { label: 'Motivo (lo verás en la nota)', msg: 'La solicitud se cancela.' }); if (m === null) return;
+      await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m || 'No se pudo armar' }); h.cerrar(); S.pedidosL = null; toast('Solicitud rechazada', 'ok'); R.pedidos(); } },
+    { t: p.estado === 'cotizado' ? 'Cambiar precio' : 'Enviar precio', cls: 'pri', fn: async () => {
+      const v = num($('#cr-p', h.el).value); if (!(v > 0)) throw new Error('Escribe el precio del ramo');
+      const g = await api('cotizarRamo', { id: p.id, precio: v, nota: $('#cr-n', h.el).value.trim() }); Object.assign(p, g); h.cerrar(); toast('Precio enviado. Le llega a tu cliente en su tienda.', 'ok', 4000); R.pedidos();
+      const t = `Hola ${p.nombre.split(' ')[0]} 💐 Tu ramo a tu gusto queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Acéptalo en la tienda, en «Tus pedidos»: ${linkTienda()}`;
+      const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp? (opcional)</p><div class="msg-prev">${esc(t)}</div>` });
+      a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300)); } }]);
+}
 ACC.pest = el => { S.f.pest = el.dataset.k; S.f.pestAuto = 0; R.pedidos(); };
 ACC.pedAccion = async el => {
   const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
   if (el.dataset.e === 'cobrar') return cobrarPedido(p);
+  if (el.dataset.e === 'cotizar') return cotizarRamo(p);
   const g = await api('estadoPedido', { id: p.id, estado: el.dataset.e });
   Object.assign(p, g);
   toast(el.dataset.e === 'confirmado' ? 'Pedido confirmado' : 'Pedido listo', 'ok');
@@ -7367,7 +7406,7 @@ ACC.cbPaqueteExcel = async () => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
@@ -8433,7 +8472,7 @@ function editarPagosCot(q, cb) {
 /* ===================== SUSCRIPCIONES: vencimientos, cuentas y perfiles ===================== */
 const PLAT = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
 const susOn = () => modOn('suscripciones');
-const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', joyeria: '💍', otro: '📦' };
+const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', joyeria: '💍', floristeria: '💐', otro: '📦' };
 // Plataformas: las conocidas + las que el negocio agregó ("+ Otra") + las que ya usa en productos o cuentas
 function platsTodas() {
   const l = PLAT.map(x => x[0]), add = n => { n = String(n || '').trim(); if (n && !l.some(x => x.toLowerCase() === n.toLowerCase())) l.push(n); };
@@ -8811,7 +8850,7 @@ function confirmarGiro(id) {
   const fila = (av, t, s) => `<div class="li"><div class="av ${av}">${av === 't-verde' ? '+' : av === 't-pri' ? '↻' : '−'}</div><div class="tx"><b>${t}</b><small>${s}</small></div></div>`;
   const h = hoja({ titulo: 'Confirmar cambio', html: `<div style="text-align:center;padding:6px 0 10px"><div style="font-size:44px;display:flex;align-items:center;justify-content:center;gap:12px">${giroImg(ant.id)} → ${giroImg(id)}</div><h3 style="margin-top:6px">De ${esc(ant.n)} a ${esc(g.n)}</h3></div>
     <div class="aviso info sm">${ic('info', 18)}<div><b>Tus datos se conservan.</b> Productos, clientes, ventas, caja y reportes siguen igual; solo cambia lo que la app te muestra.</div></div>
-    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'joyeria' ? fila('t-verde', 'Código o certificado y garantía', 'Al cobrar, el comprobante sale con el código de la pieza y su garantía') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
+    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'floristeria' ? fila('t-verde', 'Arma tu ramo en tu tienda', 'Tu cliente elige flores, cantidad y presupuesto; tú le mandas el precio y lo acepta en la tienda') : ''}${id === 'joyeria' ? fila('t-verde', 'Código o certificado y garantía', 'Al cobrar, el comprobante sale con el código de la pieza y su garantía') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
     ${fila('t-pri', 'Categorías nuevas', esc(g.cats.slice(0, 6).join(' · ')))}${opcGiro(id).g.length ? fila('t-pri', 'Opción en productos: ' + esc(opcGiro(id).g[0]), esc(opcGiro(id).ej[0] || '')) : ''}
     ${nAnt ? fila('t-mut', `Se pueden ocultar ${nAnt} productos de ${esc(ant.n)}`, 'Quedan guardados; abajo eliges si desactivarlos') : ''}</div>
     <label class="chk" style="margin-top:12px"><input type="checkbox" id="cg-ej" checked> Cargar productos de ejemplo del nuevo tipo</label>
@@ -8874,6 +8913,9 @@ const GUIA = {
   servicios: { n: 'tus servicios', d: 'Tu programa ya viene listo para cotizar y dar seguimiento. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus servicios y precios', s: 'Modalidad y existencias', h: 'Tus servicios: modalidad y precio', p: 'Ejemplo: Visita a domicilio. Así se configura cada servicio.', img: 'p_servicios', n: 1, ir: 'productos', b: 'Ver mis servicios', l: ['<b>Nombre y categoría:</b> Visita a domicilio en Servicios.', '<b>Opciones:</b> a domicilio o en el local.', '<b>Costo y precio:</b> el costo es opcional.', '<b>Existencias:</b> apágalas si es un servicio.'] },
     { ic: 'doc', t: 'Haz tu primera cotización', s: 'Con plan de pagos', h: 'Haz tu primera cotización', p: 'Envíala por WhatsApp. Al aceptarla se vuelve proyecto y los pagos quedan agendados.', img: 'cotizaciones', ir: 'proyectos', b: 'Ir a Cotizaciones', l: ['Toca <b>Nueva cotización</b> y elige cliente y servicios.', 'Agrega descuento, ISV y plan de pagos con fechas.', 'Aceptada: el cliente firma con el dedo contrato y acta de entrega.'] }, 'ordenes', 'clientes', 'caja'] },
+  floristeria: { n: 'tu floristería', d: 'Tu programa ya viene listo para vender arreglos y cotizar ramos. Estos son tus primeros pasos:', p: [
+    { ic: 'box', t: 'Revisa tus arreglos y precios', s: 'Tamaño, color y precio de cada uno', h: 'Tus arreglos: tamaño y precio', p: 'Ejemplo: Arreglo de rosas rojas. Así se configura cada arreglo.', img: 'p_floristeria', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Arreglo de rosas rojas en Arreglos.', '<b>Opciones:</b> tamaños o colores, separados por comas.', '<b>Por separado:</b> el precio de cada tamaño.', '<b>En la tienda:</b> tu cliente elige la fecha y escribe el mensaje de la tarjeta.'] },
+    { ic: 'gift', t: 'Responde un «Arma tu ramo»', s: 'El cliente elige flores y presupuesto; tú mandas el precio', h: 'Ramos a tu gusto', p: 'Las flores que pones en «Flores sueltas» y «Globos y detalles» salen en «Arma tu ramo». Pueden ir sin precio.', img: 'pedidos', ir: 'pedidos', b: 'Ir a Pedidos', l: ['Te llega como <b>Por cotizar</b> con las flores, el presupuesto y la fecha.', 'Toca <b>Poner precio</b>, escribe el precio y una nota si quieres.', 'Tu cliente lo acepta en su tienda y queda como pedido normal.'] }, 'tienda', 'caja'] },
   joyeria: { n: 'tu joyería', d: 'Tu programa ya viene listo para vender. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus joyas y precios', s: 'Talla, largo y existencia de cada una', h: 'Tus joyas: talla y largo', p: 'Ejemplo: Cadena de oro 14k. Así se configura cada pieza.', img: 'p_joyeria', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Cadena de oro 14k en Cadenas.', '<b>Opciones:</b> tallas de anillo o largos de cadena, separados por comas.', '<b>Por separado:</b> el precio y la existencia de cada largo o talla.', '<b>Garantía:</b> los días, y al cobrar anotas el código o certificado.'] },
     { ic: 'barcode', t: 'Vende una joya con su certificado', s: 'Código o certificado y garantía en el comprobante', h: 'Vende una joya con su certificado', p: 'Al cobrar anotas el código o certificado de cada pieza.', img: 'vender', ir: 'vender', b: 'Ir a Vender', l: ['Agrega la joya al ticket y toca cobrar.', 'Escribe el código o certificado (y el peso, si quieres).', 'El comprobante sale con el código y hasta cuándo tiene garantía.'] }, 'tienda', 'caja'] },
@@ -8946,6 +8988,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.53', fecha: '2026-11-06', items: [
+    { i: 'gift', t: 'Nuevo giro: Floristería', d: 'Arreglos con tamaño, fecha de entrega y mensaje para la tarjeta, y «Arma tu ramo»: tu cliente elige flores, cantidad y presupuesto, tú le mandas el precio desde Pedidos y lo acepta en su tienda.' }
+  ] },
   { v: '1.9.52', fecha: '2026-11-06', items: [
     { i: 'tag', t: 'Nuevo giro: Joyería', d: 'Para negocios que venden joyas: talla de anillo y largo de cadena con su propia existencia y precio, código o certificado y garantía al cobrar, y texto para grabar en la tienda en línea.' }
   ] },
@@ -9440,6 +9485,7 @@ const OPC_GIRO = {
   streaming:  { g: ['Plan'], ej: ['1 mes, 3 meses, 6 meses'] },
   compras:    { g: ['Talla', 'Color'], ej: ['S, M, L, XL', 'Negro, Blanco'], filtro: 'Talla' },
   recargas:   { g: ['Paquete'], ej: ['100, 310, 520'], nota: 'ID de jugador', notaEj: 'Ej. 123456789', notaReq: true },
+  floristeria: { g: ['Tamaño', 'Color'], ej: ['Mediano, Grande', 'Roja, Blanca'], nota: 'Mensaje para la tarjeta', notaEj: 'Ej. Feliz aniversario, mi amor', cita: true },
   joyeria:    { g: ['Talla', 'Largo'], ej: ['6, 7, 8, 9', '45 cm, 50 cm'], filtro: 'Talla', nota: 'Texto para grabar', notaEj: 'Ej. Ana & Luis · 14.02.2026' },
   veterinaria: { g: ['Tamaño'], ej: ['Pequeño, Mediano, Grande'], nota: 'Nombre y raza de tu mascota', notaEj: 'Ej. Toby, poodle', notaReq: true, cita: true, soloServ: true },
   otro:       { g: ['Opción', 'Color'], ej: ['Pequeño, Grande', 'Negro, Blanco'] }
@@ -9477,7 +9523,7 @@ const T = { info: null, id: '', cat: '', sub: '', q: '', f: '', cart: {}, entreg
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
   boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Beauty & Moda', 'Maquillaje, ropa y lociones', '#13a58b'],
   tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
-  ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], joyeria: ['Joyería', 'Anillos, cadenas y relojes', '#a8741a'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
+  ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], joyeria: ['Joyería', 'Anillos, cadenas y relojes', '#a8741a'], floristeria: ['Floristería', 'Arreglos y ramos a domicilio', '#c2416b'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;
 const tGiros = () => (T.info && T.info.negocio.giros) || [];
 // En veterinaria solo los servicios piden fecha y nombre de la mascota; el alimento o un collar se piden como cualquier producto
@@ -9641,7 +9687,7 @@ function pintarTienda() {
       ${n.mensaje ? `<div class="shop-msg">${esc(n.mensaje)}</div>` : ''}<div id="t-mis"></div><div id="t-chatmis"></div>
       <div class="shop-two" id="t-sobre">${n.sobre ? `<div class="shop-about"><div class="shop-sec">Sobre nosotros</div><p>${esc(n.sobre)}</p></div>` : ''}${owner}</div>
       <div class="shop-h2" id="t-cat"><span>${portada ? '¿Qué deseas comprar hoy?' : 'Nuestro catálogo'}</span><small>${portada ? gs.length + ' secciones' : ps.length + ' ' + (ps.length === 1 ? 'producto' : 'productos')}</small></div>
-      ${mods}${modH}${enl}
+      ${n.ramo && ramoFlores().length && !portada ? `<button type="button" class="ramo-b" data-ramo="1"><span class="e">💐</span><span style="flex:1"><b>Arma tu ramo a tu gusto</b><small>Elige las flores, dinos tu presupuesto y te mandamos el precio.</small></span><span class="go">Armar</span></button>` : ''}${mods}${modH}${enl}
       <div class="shop-srch" ${portada || (conEnlace && !ps.length) ? 'hidden' : ''}><div class="srch">${ic('search', 18)}<input id="t-q" placeholder="¿Qué estás buscando?" value="${esc(T.q)}"></div>
       ${cat ? '' : cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${cat ? '' : filtroTienda()}</div>
       ${portada ? '' : (secs ? '<div class="t-expl" id="t-expl" hidden>O explora por categoría</div>' : '') + secs + banda}${subs.length > 1 ? `<div class="chips" style="margin:0 0 12px" id="t-subs"><button class="chip ${!T.sub ? 'on' : ''}" data-sub="">Todo</button>${subs.map(c => `<button class="chip ${T.sub === c ? 'on' : ''}" data-sub="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${cat && !portada ? `<div style="margin:-2px 0 12px">${filtroTienda()}</div>` : ''}
@@ -9665,6 +9711,7 @@ function pintarTienda() {
     if (e.target.closest('[data-compra]')) return tCompra();
     if (e.target.closest('[data-chat]')) return chatTienda('');
     if (e.target.closest('#t-chatbtn')) return chatTienda('');
+    if (e.target.closest('[data-ramo]')) return armaRamo();
     if (e.target.closest('[data-cart]')) return tCant() ? tCarrito() : toast('Todavía no has agregado productos', 'ok', 1800);
     if (e.target.closest('[data-share]')) { const u = location.href.split('#')[0]; if (navigator.share) navigator.share({ title: n.nombre, text: 'Mira la tienda en línea de ' + n.nombre, url: u }).catch(() => {}); else { navigator.clipboard && navigator.clipboard.writeText(u); toast('Enlace copiado', 'ok', 1800); } }
   };
@@ -9984,7 +10031,7 @@ function chatTienda(productoId) {
   timer = setInterval(() => { if (!document.hidden && chatClave()) cargar(); }, 20000);
   h.botones([]);
 }
-const EST_T = { nuevo: ['Recibido', 'b-warn'], confirmado: ['Confirmado', 'b-info'], listo: ['¡Listo!', 'b-ok'], entregado: ['Entregado', 'b-mut'], cancelado: ['Cancelado', 'b-bad'] };
+const EST_T = { cotizar: ['Esperando precio', 'b-warn'], cotizado: ['Precio listo', 'b-info'], nuevo: ['Recibido', 'b-warn'], confirmado: ['Confirmado', 'b-info'], listo: ['¡Listo!', 'b-ok'], entregado: ['Entregado', 'b-mut'], cancelado: ['Cancelado', 'b-bad'] };
 // Historial del cliente: los pedidos hechos desde este teléfono (se comprueba con su WhatsApp, igual que «Tus pedidos»)
 async function tHistorial() {
   const ids = LS.json(tKey('pedidos'), []) || [], cli = LS.json('cliente_tienda', {}) || {};
@@ -10005,6 +10052,7 @@ function tDetallePedido(p) {
 function volverAPedir(p) {
   const fuera = []; let n = 0;
   p.detalle.forEach(x => {
+    if (!x.id && x.nombre === 'Ramo a tu gusto') return;
     const pr = x.id ? T.info.productos.find(y => y.id === x.id) : null, nom = String(x.nombre).split(' (')[0];
     const vale = pr && !pr.agotado && !cfgDe(pr).cita && pr.ops.every(o => o.v.length < 2 || o.v.some(v => (', ' + x.opcion + ',').includes(', ' + o.n + ': ' + v + ',')));
     if (!vale) return fuera.push(nom);
@@ -10017,12 +10065,55 @@ function volverAPedir(p) {
   guardarCarrito(); gridTienda(); cerrarHojas(); tCarrito();
   toast(fuera.length ? 'No se agregó todo: ' + fuera.join(', ') : 'Agregado a tu pedido. Precios de hoy.', fuera.length ? 'error' : 'ok', fuera.length ? 5000 : 2500);
 }
+// Floristería «Arma tu ramo»: flores y detalles que el cliente puede elegir; el precio lo manda el negocio
+const ramoFlores = () => (T.info.productos || []).filter(p => ['flores sueltas', 'globos y detalles'].includes(String(p.categoria).toLowerCase()));
+function armaRamo() {
+  const fl = ramoFlores(), q = {}, op = {}, cli = LS.json('cliente_tienda', {}) || {}, n = T.info.negocio;
+  const ent = n.entrega || 'ambos'; let entrega = ent === 'recoger' ? 'recoger' : ent === 'domicilio' ? 'domicilio' : (cli.direccion ? 'domicilio' : 'recoger');
+  const pr = p => Number(p.precio) || 0, emo = p => p.icono || '🌸';
+  const h = hoja({ titulo: 'Arma tu ramo', html: `<div class="sm mut" style="margin-bottom:4px">Elige las flores y cuántas. La tienda revisa tu ramo y te manda el precio aquí mismo.</div>
+    ${fl.map(p => `<div class="rf"><span class="e">${esc(emo(p))}</span><div class="tx"><b>${esc(p.nombre)}</b><small>${pr(p) ? money(pr(p)) + ' c/u' : 'Precio a cotizar'}</small>${p.ops.filter(o => o.v.length > 1).map(o => `<div class="chips" data-o="${esc(p.id)}" data-n="${esc(o.n)}">${o.v.map((v, i) => `<button type="button" class="chip ${i ? '' : 'on'}" data-rv="${esc(v)}">${esc(v)}</button>`).join('')}</div>`).join('')}</div><div class="qty"><button type="button" data-rq="${esc(p.id)}" data-d="-1">−</button><span id="rq-${esc(p.id)}">0</span><button type="button" data-rq="${esc(p.id)}" data-d="1">+</button></div></div>`).join('')}
+    <div id="rf-sum"></div>
+    <div class="f2"><label class="fld"><span>Tu presupuesto</span><input id="rf-pre" inputmode="decimal" placeholder="Ej. 1000"></label><label class="fld"><span>¿Para cuándo?</span><input id="rf-fe" type="date" min="${hoy()}"></label></div>
+    <label class="fld"><span>¿Algo más? (envoltura, colores, ocasión)</span><input id="rf-det" maxlength="150" placeholder="Ej. Papel kraft con listón rojo"></label>
+    <label class="fld"><span>Mensaje para la tarjeta (opcional)</span><input id="rf-msj" maxlength="120" placeholder="Ej. Feliz aniversario"></label>
+    <div class="f2"><label class="fld"><span>Tu nombre</span><input id="rf-n" maxlength="60" value="${esc(cli.nombre || '')}"></label><label class="fld"><span>Tu WhatsApp</span><input id="rf-t" type="tel" inputmode="tel" value="${esc(cli.telefono || '')}" placeholder="9876-5432"></label></div>
+    ${ent === 'ambos' ? `<div class="seg" id="rf-ent" style="margin-top:10px"><button type="button" data-e="recoger" class="${entrega === 'recoger' ? 'on' : ''}">${ic('store', 16)} Recoger</button><button type="button" data-e="domicilio" class="${entrega === 'domicilio' ? 'on' : ''}">${ic('truck', 16)} A domicilio</button></div>` : ''}
+    <label class="fld" id="rf-dw" ${entrega === 'domicilio' ? '' : 'hidden'}><span>Dirección de entrega</span><input id="rf-d" maxlength="200" value="${esc(cli.direccion || '')}"></label>` });
+  const pinta = () => {
+    fl.forEach(p => { const e = $('#rq-' + p.id, h.el); if (e) e.textContent = q[p.id] || 0; });
+    const elegidas = fl.filter(p => q[p.id] > 0), con = elegidas.filter(p => pr(p)), sinP = elegidas.length > con.length, sum = con.reduce((a, p) => a + pr(p) * q[p.id], 0);
+    $('#rf-sum', h.el).innerHTML = !elegidas.length ? '' : !con.length ? '<div class="rf-av">💐 La tienda te dirá el precio de tu ramo según las flores que elijas.</div>'
+      : `<div class="rf-sum"><span>${sinP ? 'Aproximado de las flores con precio' : 'Flores aproximadas'}</span><b class="n">${money(sum)}${sinP ? ' +' : ''}</b></div>${sinP ? '<div class="sm mut">Algunas flores se cotizan aparte.</div>' : ''}`;
+    h.botones([{ t: elegidas.length ? 'Pedir precio' : 'Elige tus flores', cls: 'acc big', fn: enviar }]);
+  };
+  const enviar = async () => {
+    const items = fl.filter(p => q[p.id] > 0).map(p => ({ id: p.id, cantidad: q[p.id], opcion: p.ops.filter(o => o.v.length > 1).map(o => o.n + ': ' + (op[p.id + '|' + o.n] || o.v[0])).join(', ') }));
+    if (!items.length) throw new Error('Elige al menos una flor');
+    const pre = num($('#rf-pre', h.el).value.replace(/[^\d.]/g, '')); if (!(pre > 0)) { $('#rf-pre', h.el).focus(); throw new Error('Escribe tu presupuesto'); }
+    const fe = $('#rf-fe', h.el).value; if (!fe) throw new Error('Elige para cuándo lo quieres');
+    const nombre = $('#rf-n', h.el).value.trim(), telefono = $('#rf-t', h.el).value.trim(), direccion = ($('#rf-d', h.el) || {}).value || '';
+    const det = $('#rf-det', h.el).value.trim(), msj = $('#rf-msj', h.el).value.trim();
+    const nota = ['Para el ' + fFechaC(fe), det, msj ? 'Tarjeta: ' + msj : ''].filter(Boolean).join(' · ');
+    const r = await api('pedir', { negocio: T.id, ramo: true, presupuesto: pre, items, nombre, telefono, entrega, direccion: entrega === 'domicilio' ? direccion : '', pago: (n.pagos || ['Efectivo'])[0], nota });
+    LS.set('cliente_tienda', JSON.stringify(Object.assign(cli, { nombre, telefono, direccion: direccion || cli.direccion || '' })));
+    const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
+    h.cerrar(); toast('¡Listo! La tienda te mandará el precio aquí, en «Tus pedidos».', 'ok', 5000); misPedidosTienda();
+    const b = $('#t-mis'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+  h.el.addEventListener('click', e => {
+    const b = e.target.closest('[data-rq]'); if (b) { const id = b.dataset.rq; q[id] = Math.max(0, Math.min(999, (q[id] || 0) + Number(b.dataset.d))); pinta(); return; }
+    const v = e.target.closest('[data-rv]'); if (v) { const g = v.parentNode; op[g.dataset.o + '|' + g.dataset.n] = v.dataset.rv; $$('.chip', g).forEach(c => c.classList.toggle('on', c === v)); return; }
+    const en = e.target.closest('#rf-ent [data-e]'); if (en) { entrega = en.dataset.e; $$('#rf-ent button', h.el).forEach(x => x.classList.toggle('on', x === en)); $('#rf-dw', h.el).hidden = entrega !== 'domicilio'; }
+  });
+  pinta();
+}
 async function misPedidosTienda() {
   const ids = LS.json(tKey('pedidos'), []) || [], cli = LS.json('cliente_tienda', {}) || {};
   const box = $('#t-mis'); if (!box || !ids.length || !cli.telefono) return;
   try {
     const l = await api('misPedidos', { negocio: T.id, telefono: cli.telefono, ids }, true);
-    const est = { nuevo: ['Recibido', 'b-warn', '📨'], confirmado: ['Confirmado', 'b-info', '👍'], listo: ['¡Listo!', 'b-ok', '✅'], entregado: ['Entregado', 'b-mut', '🎉'], cancelado: ['Cancelado', 'b-bad', '✖️'] };
+    const est = { cotizar: ['Esperando precio', 'b-warn', '💐'], cotizado: ['Precio listo', 'b-info', '💐'], nuevo: ['Recibido', 'b-warn', '📨'], confirmado: ['Confirmado', 'b-info', '👍'], listo: ['¡Listo!', 'b-ok', '✅'], entregado: ['Entregado', 'b-mut', '🎉'], cancelado: ['Cancelado', 'b-bad', '✖️'] };
     const vis = l.filter(p => p.estado !== 'entregado' && p.estado !== 'cancelado' || (Date.now() - parseLocal(p.fecha).getTime()) < 86400000 * 2).slice(0, 3);
     const comp = p => { if (!p.pago || p.pago === 'Efectivo' || ['cancelado', 'entregado'].includes(p.estado)) return p.pagoEstado === 'ok' ? '<div class="mis-c ok">✓ Pago verificado</div>' : '';
       if (p.pagoEstado === 'ok') return '<div class="mis-c ok">✓ El negocio confirmó tu pago</div>';
@@ -10032,10 +10123,17 @@ async function misPedidosTienda() {
     if (!l.length) { box.innerHTML = ''; return; }
     const linea = (p, i) => { const x = p.lineas[i], ok = x.id && T.info.productos.some(y => y.id === x.id), nom = String(x.nombre).split(' (')[0], ah = x.normal > x.precio;
       return `<button type="button" class="mis-l ${x.id ? '' : 'fija'}" ${x.id ? `data-pl="${esc(p.id)}" data-i="${i}"` : 'disabled'}><span class="tx"><b>${esc(x.opcion ? nom : x.nombre)}</b>${x.opcion ? `<small class="op">${esc(x.opcion)}</small>` : ''}<small>${cant(x.cantidad)} × ${ah ? `<s>${money(x.normal)}</s> ` : ''}${money(x.precio)}</small>${ah ? `<small class="ahorro">Ahorras ${money((x.normal - x.precio) * x.cantidad)}</small>` : ''}</span><b class="n">${money(x.total)}</b>${x.id ? ic('arrow', 16) : ''}</button>`; };
-    const cambiar = p => p.editable ? `<div class="mis-h">Puedes cambiarlo mientras la tienda no lo confirme. Toca un producto.</div>${p.lineas.map((x, i) => linea(p, i)).join('')}`
+    const ramoC = p => !p.ramo ? '' : p.estado === 'cotizar' ? `<div class="mis-h">${esc((p.flores || []).join(' · '))}<br>Tu presupuesto: ${money(p.presupuesto)} · La tienda te mandará el precio aquí.</div>`
+      : p.estado === 'cotizado' && p.cotiza ? `<div class="ramo-c"><div class="pp"><span class="sm mut">La tienda te propone</span><b class="n">${money(p.cotiza.precio)}</b></div><div class="sm" style="margin:6px 0 2px">${esc((p.flores || []).join(' · '))}</div><div class="sm mut">Tu presupuesto: ${money(p.presupuesto)}${p.envio ? ' · Envío ' + money(p.envio) : ''}</div>${p.cotiza.nota ? `<div class="nt">«${esc(p.cotiza.nota)}»</div>` : ''}<div class="row"><button type="button" class="btn" data-rr="${esc(p.id)}" data-si="">No, gracias</button><button type="button" class="btn acc" data-rr="${esc(p.id)}" data-si="1">Aceptar · ${money(p.total)}</button></div></div>` : '';
+    const cambiar = p => p.ramo && ['cotizar', 'cotizado'].includes(p.estado) ? '' : p.editable ? `<div class="mis-h">Puedes cambiarlo mientras la tienda no lo confirme. Toca un producto.</div>${p.lineas.map((x, i) => linea(p, i)).join('')}`
       : ['nuevo', 'confirmado', 'listo'].includes(p.estado) ? (tel ? `<a class="mis-w" href="${waLink(tel, 'Hola, quiero cambiar mi pedido ' + p.numero)}" target="_blank" rel="noopener">¿Quieres cambiarlo? <b>Escríbele a la tienda</b></a>` : '<span class="mis-w">Para cambiarlo, escríbele a la tienda.</span>') : '';
-    box.innerHTML = vis.length ? `<div class="mis"><b>Tus pedidos</b>${vis.map(p => `<div class="mis-r"><span>${est[p.estado][2]} ${esc(p.numero)} · ${money(p.total)}</span><span class="badge ${est[p.estado][1]}">${est[p.estado][0]}</span></div>${comp(p)}${cambiar(p)}`).join('')}<button type="button" class="btn hist" data-hist="1">Ver mi historial · ${l.length} ${l.length === 1 ? 'pedido' : 'pedidos'}</button></div>` : `<div class="mis"><button type="button" class="btn hist" style="margin:2px 0" data-hist="1">Ver mi historial · ${l.length} ${l.length === 1 ? 'pedido' : 'pedidos'}</button></div>`;
-    box.onclick = e => { if (e.target.closest('[data-hist]')) return tHistorial().catch(err); const b = e.target.closest('[data-pl]'); if (!b) return;
+    box.innerHTML = vis.length ? `<div class="mis"><b>Tus pedidos</b>${vis.map(p => `<div class="mis-r"><span>${est[p.estado][2]} ${esc(p.numero)} · ${p.ramo && p.estado === 'cotizar' ? 'Ramo a tu gusto' : money(p.total)}</span><span class="badge ${est[p.estado][1]}">${est[p.estado][0]}</span></div>${p.ramo && ['cotizar', 'cotizado'].includes(p.estado) ? ramoC(p) : comp(p)}${cambiar(p)}`).join('')}<button type="button" class="btn hist" data-hist="1">Ver mi historial · ${l.length} ${l.length === 1 ? 'pedido' : 'pedidos'}</button></div>` : `<div class="mis"><button type="button" class="btn hist" style="margin:2px 0" data-hist="1">Ver mi historial · ${l.length} ${l.length === 1 ? 'pedido' : 'pedidos'}</button></div>`;
+    box.onclick = e => { if (e.target.closest('[data-hist]')) return tHistorial().catch(err);
+      const rr = e.target.closest('[data-rr]'); if (rr) { const p = vis.find(x => x.id === rr.dataset.rr), si = !!rr.dataset.si;
+        (async () => { if (!si && !(await confirmar('¿No aceptas el precio de tu ramo? Se cancela la solicitud.', { si: 'No acepto' }))) return;
+          await api('respuestaRamo', { negocio: T.id, id: p.id, telefono: cli.telefono, acepta: si, precio: p.cotiza.precio });
+          toast(si ? '¡Tu ramo quedó pedido! La tienda ya lo tiene.' : 'Listo, cancelamos la solicitud.', 'ok', 4000); misPedidosTienda(); })().catch(err); return; }
+      const b = e.target.closest('[data-pl]'); if (!b) return;
       const p = vis.find(x => x.id === b.dataset.pl), i = Number(b.dataset.i), x = p.lineas[i], pr = T.info.productos.find(y => y.id === x.id);
       if (!pr) return toast('Ese producto ya no está en la tienda. Escríbele al negocio.', 'error', 3500);
       const otras = p.lineas.filter((y, j) => j !== i && y.id === x.id);
