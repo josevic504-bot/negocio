@@ -614,6 +614,12 @@ function RECORDATORIOS_(ids) {
         out.push({ negocio: o.n, tipo: 'pedidos', titulo: '💳 Comprobante de pago' + (pe.numero ? ' · ' + pe.numero : ''), cuerpo: corto((pe.nombre || 'Un cliente') + ' envió su comprobante' + (pe.total ? ' · ' + money(o.n, pe.total) : ''), 140), vista: 'pedidos', tag: 'comp-' + (o.k && o.k.id) });
         return;
       }
+      // Floristería: el cliente aceptó o no el precio de su ramo
+      if (o.op === 'upd' && o.t === 'Pedidos' && o.n && o.row && /(^| · )(Precio aceptado por el cliente|El cliente no aceptó el precio)$/.test(o.row.nota || '')) {
+        const pe = objFila(tablaN(o.n, 'Pedidos'), o.k && o.k.id) || {}, si = o.row.estado === 'nuevo';
+        out.push({ negocio: o.n, tipo: 'pedidos', titulo: si ? '💐 ¡Aceptaron el precio del ramo!' : '💐 No aceptaron el precio del ramo', cuerpo: corto((pe.nombre || 'Tu cliente') + (pe.numero ? ' · ' + pe.numero : '') + (si ? ' · ' + money(o.n, pe.total) : ''), 140), vista: 'pedidos', tag: 'ramo-' + (o.k && o.k.id) });
+        return;
+      }
       // El cliente cambió un producto de su pedido desde «Tus pedidos» (la nota termina con «Cambio del cliente …»)
       if (o.op === 'upd' && o.t === 'Pedidos' && o.n && o.row && o.row.items && /(^| · )Cambio del cliente [^·]*$/.test(o.row.nota || '')) {
         const pe = objFila(tablaN(o.n, 'Pedidos'), o.k && o.k.id) || {};
@@ -630,6 +636,7 @@ function RECORDATORIOS_(ids) {
       const r = o.row;
       if (o.t === 'Pedidos' && o.n) {
         let n = 0; try { n = (JSON.parse(r.items || '[]') || []).reduce((s, x) => s + (Number(x.cantidad) || 1), 0); } catch (e) {}
+        if (r.estado === 'cotizar') { out.push({ negocio: o.n, tipo: 'pedidos', titulo: '💐 Te piden precio de un ramo', cuerpo: corto((r.nombre || 'Un cliente') + ' · ' + (n === 1 ? '1 flor' : n + ' flores') + ' · presupuesto ' + money(o.n, r.presupuesto), 140), vista: 'pedidos' }); return; }
         out.push({ negocio: o.n, tipo: 'pedidos', titulo: '🛍️ ¡Nuevo pedido en línea!', cuerpo: corto((r.nombre || 'Un cliente') + ' · ' + (n === 1 ? '1 producto' : n + ' productos') + ' · ' + money(o.n, r.total) + (r.comprobante ? ' · con comprobante de pago' : ''), 140), vista: 'pedidos' });
       } else if (o.t === 'Mensajes' && o.n && r.de === 'cliente') {
         const ch = objFila(tablaN(o.n, 'Chats'), r.chatId);
