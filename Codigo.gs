@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.47';
+const VERSION = '1.9.49';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -262,6 +262,7 @@ function route_(req) {
   if (a === 'pedir') { pedirLimites_(d); return lock_(() => pedir_(d)); }
   if (a === 'misPedidos') return misPedidos_(d);
   if (a === 'pedidoComprobante') { tiendaNeg_(d); return lock_(() => pedidoComprobante_(d)); }
+  if (a === 'pedidoClienteEditar') { tiendaNeg_(d); return lock_(() => pedidoClienteEditar_(d)); }
   if (a === 'chatEnviar') { chatLimites_(d); return lock_(() => chatEnviar_(d)); }
   if (a === 'chatVer') return chatVer_(d);
   // Panel Molina (súper admin)
@@ -3807,6 +3808,21 @@ function anticipoPedido_(u, d) {
   return g;
 }
 
+// Precio por cantidad en un pedido ya hecho: al cambiar lo que lleva, pasa del precio normal al especial o regresa.
+// No toca el precio propio de una opción ni un precio distinto al de hoy (el que se acordó al pedir).
+function repreciarPedido_(items, pm) {
+  const suma = {};
+  items.forEach(i => { if (i.productoId) suma[i.productoId] = (suma[i.productoId] || 0) + i.cantidad; });
+  items.forEach(i => {
+    const p = i.productoId ? pm[i.productoId] : null; if (!p || !(Number(p.precioEsp) > 0) || !(Number(p.minEsp) > 1)) return;
+    if (tienePrecioVar_(p, varsDe_(p) ? varKey_(p, i.nombre) : '')) return;
+    const nor = Number(p.precio) || 0, esp = r2_(p.precioEsp);
+    if (Math.abs(i.precio - nor) > 0.004 && Math.abs(i.precio - esp) > 0.004) return;
+    if (precioCant_(p, suma[p.id])) { i.precio = esp; i.normal = nor; } else { i.precio = nor; delete i.normal; }
+    i.total = r2_(i.cantidad * i.precio);
+  });
+}
+const descuentoCant_ = items => r2_(items.reduce((a, i) => a + (Number(i.normal) > i.precio ? (i.normal - i.precio) * i.cantidad : 0), 0));
 // Corregir un pedido en línea antes de cobrarlo: cambiar cantidades o quitar productos (se agotó, error de precio…)
 function editarPedido_(u, d) {
   req_(u, ['admin','cajero']);
@@ -3835,6 +3851,7 @@ function editarPedido_(u, d) {
   });
   if (!lineas.length) throw new Error('No cambiaste nada');
   if (!items.length) throw new Error('Si quitas todo, mejor cancela el pedido');
+  repreciarPedido_(items, pm);
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   const pct = Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0));
   const anticipo = Math.ceil(items.filter(i => i.tipo === 'compra').reduce((a, i) => a + i.total, 0) * pct / 100);
@@ -4780,6 +4797,67 @@ function pedidoComprobante_(d) {
   upsert_('Pedidos', { id: p.id, comprobante: url, pagoEstado: 'revisar', actualizado: ahora_() });
   return { id: p.id, pagoEstado: 'revisar' };
 }
+// El cliente solo cambia su pedido mientras esté «Recibido» y sin pago de por medio; después lo arregla con la tienda
+function bloqueoCliente_(p) {
+  if (p.ventaId || p.estado !== 'nuevo') return 'Tu pedido ya no se puede cambiar desde aquí. Escríbele a la tienda.';
+  if (p.pagoEstado === 'ok' || p.pagoEstado === 'revisar' || anticipoDe_(p.id) > 0) return 'Ya enviaste tu pago. Para cambiar el pedido, escríbele a la tienda.';
+  return '';
+}
+// Huella de los productos del pedido: si cambiaron desde que el cliente los vio, no se guarda sobre algo distinto
+const verPedido_ = p => { let h = 7; String(p.items || '').split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) % 1000000007; }); return String(h); };
+// Opción elegida en una línea: el nombre se guardó como «Producto (Talla: M, Color: Negro)»
+function opcionLinea_(it, pm) {
+  const p = pm[it.productoId], n = String(it.nombre || ''), base = p ? p.nombre + ' (' : '';
+  return base && n.indexOf(base) === 0 && n.slice(-1) === ')' ? n.slice(base.length, -1) : '';
+}
+// El cliente cambia una línea de su pedido (opción y cantidad) o la quita; se comprueba con su WhatsApp, igual que el comprobante
+function pedidoClienteEditar_(d) {
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p || !tel8_(d.telefono) || tel8_(p.telefono) !== tel8_(d.telefono)) throw new Error('No encontramos ese pedido');
+  const no = bloqueoCliente_(p); if (no) throw new Error(no);
+  if (String(d.version || '') !== verPedido_(p)) throw new Error('Tu pedido cambió. Revísalo de nuevo.');
+  const c = CacheService.getScriptCache(), k = 'PE_' + (NEG ? NEG.id : '') + p.id, veces = Number(c.get(k) || 0);
+  if (veces >= 15) throw new Error('Ya cambiaste varias veces este pedido. Escríbele a la tienda.');
+  const cfg = config_(), pm = porId_(rows_('Productos')), sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
+  const antes = parseJ_(p.items, []), ix = Math.floor(Number(d.linea)), it = antes[ix], cant = Math.floor(Number(d.cantidad));
+  if (!it || !it.productoId) throw new Error('Tu pedido cambió. Revísalo de nuevo.');
+  if (!(cant >= 0) || cant > 999) throw new Error('Cantidad no válida');
+  const items = antes.map(x => Object.assign({}, x));
+  let detalle;
+  if (!cant) {
+    if (items.length === 1) throw new Error('Es el único producto del pedido. Si ya no lo quieres, escríbele a la tienda.');
+    items.splice(ix, 1); detalle = 'quitó ' + it.nombre;
+  } else {
+    const pr = pm[it.productoId];
+    if (!pr || !pr.activo || !pr.tienda) throw new Error('Este producto ya no está en la tienda. Escríbele al negocio.');
+    const op = txt_(d.opcion, 160), nom = op ? txt_(pr.nombre + ' (' + op + ')', 240) : pr.nombre;
+    const V = varsDe_(pr), vk = V ? varKey_(pr, op) : '';
+    if (V && !vk) throw new Error('Elige ' + opsDe_(pr).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + pr.nombre + '»');
+    if (nom === it.nombre && cant === it.cantidad) throw new Error('No cambiaste nada');
+    if (nom !== it.nombre && opsDe_(pr).length && !op) throw new Error('Elige ' + opsDe_(pr).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + pr.nombre + '»');
+    const precio = nom === it.nombre ? (Number(it.normal) > 0 ? it.normal : it.precio) : precioVar_(pr, vk);
+    items[ix] = { productoId: pr.id, nombre: nom, cantidad: cant, precio: precio, total: r2_(cant * precio) };
+    const otra = items.findIndex((x, j) => j !== ix && x.productoId === pr.id && x.nombre === nom);
+    if (otra >= 0) { items[ix].cantidad += items[otra].cantidad; items[ix].total = r2_(items[ix].cantidad * precio); items.splice(otra, 1); }
+    // Existencia: se revisa lo que suma el pedido, como al pedir
+    const cuenta = (l, f) => l.reduce((a, x) => a + (f(x) ? x.cantidad : 0), 0), mismo = x => x.productoId === pr.id;
+    const ahora = cuenta(items, mismo);
+    if (pr.tipo === 'producto' && !sin) {
+      if (ahora > cuenta(antes, mismo) && pr.stock < ahora) throw new Error(pr.stock > 0 ? 'Solo quedan ' + Math.floor(pr.stock) + ' de «' + pr.nombre + '»' : '«' + pr.nombre + '» se agotó');
+      if (vk) { const igual = x => mismo(x) && varKey_(pr, x.nombre) === vk, hay = Math.floor(Number(V[vk] && V[vk].s) || 0), va = cuenta(items, igual);
+        if (va > cuenta(antes, igual) && hay < va) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + pr.nombre + ' (' + vk + ')»' : '«' + pr.nombre + ' (' + vk + ')» se agotó'); }
+    }
+    detalle = (nom === it.nombre ? '' : it.nombre + ' → ') + nom + ' × ' + cant + (cant !== it.cantidad && nom === it.nombre ? ' (eran ' + it.cantidad + ')' : '');
+  }
+  repreciarPedido_(items, pm);
+  const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
+  const min = Number(cfg.tiendaMinimo) || 0;
+  if (min > 0 && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
+  const nota = ((p.nota ? p.nota + ' · ' : '') + 'Cambio del cliente ' + ahora_().replace('T', ' ').slice(5, 16) + ': ' + txt_(detalle.replace(/ · /g, ' '), 200)).slice(-1000);
+  c.put(k, String(veces + 1), 21600);
+  upsert_('Pedidos', { id: p.id, items: JSON.stringify(items), subtotal: subtotal, total: r2_(subtotal + (Number(p.envio) || 0)), nota: nota, actualizado: ahora_() });
+  return { id: p.id, total: r2_(subtotal + (Number(p.envio) || 0)) };
+}
 // El negocio revisa el comprobante: «ok» anota lo que falta como anticipo (el pedido sale pagado al cobrarlo); «no» le pide otro al cliente
 function pedidoPago_(u, d) {
   req_(u, ['admin', 'cajero']);
@@ -4862,7 +4940,7 @@ function pedir_(d) {
     else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk) });
   });
   if (!items.length) throw new Error('Tu pedido está vacío');
-  items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p && !i._propio ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
+  items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p && !i._propio ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.normal = i.precio; i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   const min = Number(cfg.tiendaMinimo) || 0;
   if (min > 0 && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
@@ -4895,7 +4973,7 @@ function pedir_(d) {
     cita: cita, hora: hora, vehiculo: vehiculo, placa: placa, citaId: '' });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
-  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
+  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
     negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : '' };
 }
 
@@ -5007,8 +5085,12 @@ function misPedidos_(d) {
   const t8 = tel8_(d.telefono);
   const ids = Array.isArray(d.ids) ? d.ids.slice(0, 20) : [];
   if (!t8 || !ids.length) return [];
-  return rows_('Pedidos').filter(p => ids.indexOf(p.id) >= 0 && tel8_(p.telefono) === t8)
-    .map(p => ({ id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega, pago: p.pago, pagoEstado: p.pagoEstado || '', items: parseJ_(p.items, []).length }))
+  const l = rows_('Pedidos').filter(p => ids.indexOf(p.id) >= 0 && tel8_(p.telefono) === t8);
+  const pm = l.some(p => p.estado === 'nuevo') ? porId_(rows_('Productos')) : {};
+  return l.map(p => { const its = parseJ_(p.items, []), o = { id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega, pago: p.pago, pagoEstado: p.pagoEstado || '', items: its.length };
+      // Solo un pedido que el cliente todavía puede cambiar lleva sus productos y su versión
+      if (!bloqueoCliente_(p)) { o.editable = true; o.version = verPedido_(p); o.lineas = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
+      return o; })
     .sort((a, b) => a.fecha < b.fecha ? 1 : -1);
 }
 
