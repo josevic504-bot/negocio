@@ -24,9 +24,9 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.21';
+const VERSION = '1.9.58';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
-const ESQUEMA = VERSION + '-g1';
+const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -35,7 +35,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo','eliminadoEl','purgado'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -43,7 +43,9 @@ const SCHEMA_M = {
   Seguimiento: ['id','negocioId','tipo','fecha','nota'],
   PagosLic:    ['id','negocioId','fecha','monto','concepto','metodo','nota'],
   // Pagos programados por Vic para cada cliente (cuotas del programa, Plus, giros extra…)
-  CuotasLic:   ['id','negocioId','fecha','monto','concepto','gracia','estado','pagoId','pagadaEl','nota','creado'],
+  CuotasLic:   ['id','negocioId','fecha','monto','concepto','gracia','estado','pagoId','pagadaEl','nota','creado','comprobante','compFecha','compEstado'],
+  // Mensajes de Vic a los negocios (aviso al teléfono y/o banner en la app). destinos y vistos: ids de negocio separados por coma
+  Anuncios:    ['id','fecha','titulo','texto','filtro','destinos','canales','vence','vistos','creado'],
   // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
   GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado'],
   // Contratos de licencia: Vic los crea desde el Panel y el dueño los firma desde su celular (la firma es una imagen pequeña)
@@ -51,18 +53,19 @@ const SCHEMA_M = {
   // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
   Visitas:     ['id','fecha','pagina','origen','disp','vid','ref']
 };
-const PANEL_SEG = 21600;
+const PANEL_SEG = 7776000; // 90 días sin usarlo (se renueva al entrar); en Supabase ya no aplica el límite de 6 horas de Google
 const GRACIA_DEF = 5; // días después de la fecha de pago antes de pausar el programa
 // Motivos de contacto con el administrador (el cliente elige antes de abrir el chat)
 const MOTIVOS = { error: 'Error del programa', duda: 'No sé cómo hacer algo', prueba: 'Prueba y activación', idea: 'Sugerencia', app: 'App Android / instalación', otro: 'Otro' };
 let NEG = null; // negocio de la solicitud actual (modo multi)
+let SOLO_VER = false; // modo soporte desde el Panel: se puede ver todo, pero nada se guarda
 
 const TZ = 'America/Tegucigalpa';
 const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado','sucursal'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes','rinde','lotes'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Conciliacion:   ['id','mes','saldoBanco','marcados','nota','actualizado','listo'],
@@ -72,7 +75,7 @@ const SCHEMA = {
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
   Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal','cotizacionId'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
-  Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','usuarioId','creado','actualizado'],
+  Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','lavador','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado','mascotaId','mascota'],
   // Veterinaria: cada mascota con su dueño (un cliente), su historial clínico (consultas con receta) y sus vacunas y desparasitaciones
   Mascotas:       ['id','clienteId','nombre','especie','raza','sexo','nacimiento','color','esterilizado','chip','alergias','notas','peso','activo','creado','actualizado'],
@@ -85,8 +88,8 @@ const SCHEMA = {
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
-  Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo'],
-  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo'],
+  Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo','variante'],
+  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId','presupuesto','cotiza'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
@@ -99,13 +102,15 @@ const SCHEMA = {
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
   Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp','rinde']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
-const TEXTO = new Set(['marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta']);
+const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','cita','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta','lotes']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
+// Floristería «Arma tu ramo»: cotizar (el cliente pidió precio) → cotizado (el negocio mandó el precio) → nuevo (el cliente aceptó)
+const EST_RAMO = ['cotizar','cotizado'];
 
 const CONFIG_DEF = {
   nombre: 'Mi Negocio', giro: 'otro', eslogan: '', rtn: '', telefono: '', direccion: '', correo: '',
@@ -114,7 +119,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
   // Cotizaciones y contratos (servicios)
@@ -158,12 +163,51 @@ const GIROS = {
     ej: [['Blusa casual','Damas','👚',380,210,12,'Talla: S, M, L | Color: Blanco, Rosa'],['Vestido de verano','Damas','👗',650,360,8],['Camisa formal','Caballeros','👔',520,290,10],['Jeans','Caballeros','👖',690,400,14,'Talla: 28, 30, 32, 34, 36'],['Tenis deportivos','Calzado','👟',1150,700,6,'Talla: 38, 39, 40, 41, 42'],['Sandalias','Calzado','👡',450,250,10],['Bolso de mano','Accesorios','👜',780,420,5],['Gorra','Accesorios','🧢',220,110,15]] },
   farmacia:   { n: 'Farmacia', cats: ['Medicamentos','Vitaminas','Cuidado personal','Bebé','Primeros auxilios'],
     ej: [['Acetaminofén 500 mg (10)','Medicamentos','💊',35,20,40],['Antigripal (sobre)','Medicamentos','🤧',18,10,60],['Vitamina C 1 g (10)','Vitaminas','🍊',95,55,25,'Presentación: Tabletas, Efervescente'],['Suero oral','Medicamentos','🧃',42,26,30],['Alcohol 250 ml','Primeros auxilios','🧴',48,30,20],['Curitas (caja)','Primeros auxilios','🩹',55,32,15],['Pañales talla M (20)','Bebé','👶',260,190,10],['Protector solar','Cuidado personal','🧴',320,200,8]] },
-  repuestos:  { n: 'Repuestos / taller', cats: ['Motor','Frenos','Eléctrico','Aceites','Llantas','Servicios'],
+  vitaminas:  { n: 'Vitaminas y suplementos', cats: ['Energía','Defensas','Articulaciones','Cabello, piel y uñas','Deporte','Niños'],
+    ej: [['Multivitamínico adulto','Defensas','💊',350,210,12,'Presentación: 60 cápsulas, 120 cápsulas',{ vars: { 'Presentación: 60 cápsulas': { p: 350, s: 8 }, 'Presentación: 120 cápsulas': { p: 620, s: 4 } }, rinde: 60, lema: '1 cápsula al día con alimentos', vm: 10 }],
+      ['Vitamina C 1000 mg','Defensas','🍊',220,120,15,'',{ rinde: 30, precioEsp: 200, minEsp: 3, vm: 8 }],
+      ['Complejo B','Energía','⚡',260,150,10,'',{ rinde: 30, vm: 12 }],
+      ['Magnesio citrato','Energía','🔋',280,165,10,'',{ rinde: 30, vm: 2 }],
+      ['Colágeno + biotina','Cabello, piel y uñas','💧',480,290,8,'',{ rinde: 30, precioEsp: 440, minEsp: 3, vm: 1 }],
+      ['Omega 3 · 90 cápsulas','Articulaciones','🐟',390,230,8,'',{ rinde: 90, vm: 1 }],
+      ['Glucosamina + condroitina','Articulaciones','🦴',520,320,6,'',{ rinde: 30, vm: 14 }],
+      ['Proteína whey 2 lb','Deporte','💪',890,600,6,'Sabor: Vainilla, Chocolate',{ rinde: 30, vm: 3 }],
+      ['Creatina 300 g','Deporte','🏋️',650,420,5,'',{ rinde: 60, vm: 16 }],
+      ['Vitaminas masticables niños','Niños','🧸',240,140,10,'',{ rinde: 30, vm: 9 }]] },
+  repuestos:  { n: 'Taller mecánico y repuestos', ant: ['Repuestos / taller'], cats: ['Motor','Frenos','Eléctrico','Aceites','Llantas','Servicios'],
     ej: [['Aceite 20W-50 (litro)','Aceites','🛢️',190,130,30],['Filtro de aceite','Motor','🧰',150,90,20,'Vehículo: Toyota, Nissan, Honda'],['Pastillas de freno','Frenos','🛞',650,420,8],['Bujía','Motor','⚡',95,55,40],['Batería 12 V','Eléctrico','🔋',2300,1700,4],['Cambio de aceite (mano de obra)','Servicios','🔧',250,0,0],['Alineado y balanceo','Servicios','🛠️',450,0,0],['Llanta rin 14','Llantas','🛞',1650,1150,6]] },
+  carwash:    { n: 'Carwash / lavado de autos', cats: ['Lavado','Detallado','Motos','Extras','Productos'],
+    ej: [['Lavado y aspirado','Lavado','🚿',250,0,0,'Tamaño: Sedán, Camioneta, Microbús',{ vars: { 'Tamaño: Sedán': { p: 250, s: 0 }, 'Tamaño: Camioneta': { p: 320, s: 0 }, 'Tamaño: Microbús': { p: 400, s: 0 } } }],
+      ['Lavado express (solo exterior)','Lavado','💦',150,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 150, s: 0 }, 'Tamaño: Camioneta': { p: 190, s: 0 } } }],
+      ['Lavado completo (motor incluido)','Lavado','🧼',400,0,0,'Tamaño: Sedán, Camioneta, Microbús',{ vars: { 'Tamaño: Sedán': { p: 400, s: 0 }, 'Tamaño: Camioneta': { p: 520, s: 0 }, 'Tamaño: Microbús': { p: 650, s: 0 } } }],
+      ['Lavado de chasis','Lavado','🧯',200,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 200, s: 0 }, 'Tamaño: Camioneta': { p: 260, s: 0 } } }],
+      ['Pulido y encerado','Detallado','✨',900,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 900, s: 0 }, 'Tamaño: Camioneta': { p: 1200, s: 0 } } }],
+      ['Limpieza de tapicería','Detallado','🧽',750,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 750, s: 0 }, 'Tamaño: Camioneta': { p: 950, s: 0 } } }],
+      ['Lavado de moto','Motos','🏍️',80,0,0],['Lavado de moto con pulido','Motos','🛵',160,0,0],
+      ['Aromatizante','Extras','🌿',60,35,24],['Silicón para llantas','Extras','🛞',90,55,12],['Abrillantador de tablero','Productos','🧴',120,75,10],['Shampoo para auto 1 L','Productos','🫧',180,120,8]] },
   tecnologia: { n: 'Tecnología / celulares', cats: ['Celulares','Accesorios','Audio','Cargadores','Reparaciones'],
     ej: [['Celular gama media','Celulares','📱',4800,3600,5,'Capacidad: 128 GB, 256 GB | Color: Negro, Azul'],['Protector de pantalla','Accesorios','📲',150,40,40],['Funda de silicona','Accesorios','🛡️',180,60,30],['Cargador 20 W','Cargadores','🔌',350,180,15],['Audífonos Bluetooth','Audio','🎧',690,400,10],['Bocina portátil','Audio','🔊',950,580,6],['Memoria USB 64 GB','Accesorios','💾',260,150,20],['Cambio de pantalla','Reparaciones','🧑‍🔧',1200,600,0]] },
-  belleza:    { n: 'Belleza / cosméticos', cats: ['Maquillaje','Cuidado de piel','Cabello','Uñas','Perfumes'],
+  belleza:    { n: 'Salón de belleza / estética', ant: ['Belleza / cosméticos'], cats: ['Maquillaje','Cuidado de piel','Cabello','Uñas','Perfumes'],
     ej: [['Base líquida','Maquillaje','💄',420,250,10,'Tono: Claro, Medio, Oscuro'],['Labial mate','Maquillaje','💋',180,90,20],['Crema hidratante','Cuidado de piel','🧴',350,200,12],['Shampoo 500 ml','Cabello','🧴',260,150,15],['Esmalte de uñas','Uñas','💅',95,45,30],['Perfume 100 ml','Perfumes','🌸',890,520,6],['Mascarilla facial','Cuidado de piel','🧖',120,60,25],['Delineador','Maquillaje','✏️',150,75,18]] },
+  catalogo:   { n: 'Maquillaje y moda por catálogo', ant: ['Beauty & Moda'], cats: ['Rostro','Ojos','Labios','Cejas','Lociones','Ropa','Cuidado de piel','Accesorios'],
+    ej: [['Primer hidratante','Rostro','🧴',220,150,24,'',{ sub: 'Preparación de la piel', lema: 'Hidratación que revela tu mejor brillo.', puntos: 'Textura ligera y nutritiva|Suaviza la textura de la piel|Ideal para piel normal a seca', precioEsp: 200, minEsp: 3 }],
+      ['Corrector líquido','Rostro','💧',140,90,36,'Tono: Nude 1#fbe0cf, Nude 3#f3cfa8, Beige 2#f1c39e, Beige 3#efbd85, Chocolate 1#a86c45, Chocolate 6#8a5434',{ sub: 'Corrección', lema: 'Cobertura que se siente ligera.', puntos: 'Cobertura uniforme y natural|Textura líquida ligera|Acabado natural de larga duración', precioEsp: 130, minEsp: 3 }],
+      ['Base líquida acabado mate','Rostro','🧴',260,170,20,'Tono: Marfil#f6dcc4, Natural#e9c39d, Canela#c99366, Café#8f5d3b',{ sub: 'Base', lema: 'Piel mate todo el día.', puntos: 'Control de brillo|Cobertura media a alta|No reseca', precioEsp: 240, minEsp: 3 }],
+      ['Polvo compacto','Rostro','🪞',180,115,24,'Tono: Claro#f2d6bd, Medio#ddb48c, Oscuro#a8754d',{ sub: 'Finalización', puntos: 'Sella el maquillaje|Acabado suave|Con espejo', precioEsp: 165, minEsp: 3 }],
+      ['Blush en polvo','Rostro','🌸',150,95,24,'Tono: Rosa#f19aa8, Durazno#f4a882, Coral#ee7f6e',{ sub: 'Blush', lema: 'Un rubor que ilumina.', puntos: 'Color modulable|Larga duración', precioEsp: 135, minEsp: 3 }],
+      ['Iluminador shimmer','Rostro','✨',240,160,24,'',{ sub: 'Iluminador', lema: 'Un realce sofisticado que resalta tu luz natural.', puntos: 'Brillo intenso y elegante|Textura suave al tacto|Para rostro y escote', precioEsp: 220, minEsp: 3 }],
+      ['Paleta de sombras 12 tonos','Ojos','🎨',320,210,15,'Paleta: Cálida#c98b5e, Fría#8c8fb8, Nude#d8b49a',{ sub: 'Paletas de sombra', puntos: '12 tonos mate y metálicos|Alta pigmentación|Fácil de difuminar', precioEsp: 295, minEsp: 3 }],
+      ['Delineador líquido','Ojos','🖊️',130,80,30,'',{ sub: 'Delineadores', puntos: 'Punta fina de precisión|Secado rápido|A prueba de agua', precioEsp: 115, minEsp: 3 }],
+      ['Máscara de pestañas','Ojos','👁️',190,120,24,'Efecto: Volumen, Alargamiento, Rizado',{ sub: 'Máscara para pestañas', puntos: 'No se corre|Fácil de retirar', precioEsp: 170, minEsp: 3 }],
+      ['Labial líquido mate','Labios','💄',160,100,30,'Tono: Rojo#b02a4c, Rosa#c4566b, Vino#8e2b3b, Nude#d97a83',{ sub: 'Labial líquido', lema: 'Color intenso que no se transfiere.', puntos: 'Acabado mate|Larga duración|No reseca', precioEsp: 145, minEsp: 3 }],
+      ['Lip gloss','Labios','💋',120,75,30,'Tono: Transparente#f5e1e6, Rosa#f2a7bd, Durazno#f6b496',{ sub: 'Gloss', puntos: 'Brillo espejo|Sin sensación pegajosa', precioEsp: 105, minEsp: 3 }],
+      ['Gel para cejas','Cejas','🪮',140,85,24,'Tono: Transparente#eeeeee, Café#7a5236',{ sub: 'Cejas', puntos: 'Fija todo el día|Peina y define', precioEsp: 125, minEsp: 3 }],
+      ['Loción para dama 100 ml','Lociones','🌷',650,420,12,'Aroma: Floral, Frutal, Dulce',{ sub: 'Dama', lema: 'Una fragancia que te acompaña todo el día.', puntos: 'Larga duración|Frasco de 100 ml|Ideal para regalo', precioEsp: 600, minEsp: 3 }],
+      ['Loción para caballero 100 ml','Lociones','🧴',690,450,12,'Aroma: Amaderado, Fresco, Intenso',{ sub: 'Caballero', lema: 'Elegancia que se nota.', puntos: 'Larga duración|Frasco de 100 ml|Ideal para regalo', precioEsp: 640, minEsp: 3 }],
+      ['Body splash 250 ml','Lociones','🫧',220,130,24,'Aroma: Vainilla, Coco, Frutos rojos',{ sub: 'Body splash', puntos: 'Aroma fresco y ligero|Para todos los días', precioEsp: 195, minEsp: 3 }],
+      ['Blusa casual','Ropa','👚',380,220,15,'Talla: S, M, L, XL | Color: Negro#222222, Blanco#f5f5f5, Rosa#f2a7bd',{ sub: 'Dama', lema: 'Cómoda y con estilo.', puntos: 'Tela suave y fresca|Fácil de combinar', precioEsp: 340, minEsp: 3 }],
+      ['Vestido de verano','Ropa','👗',650,380,8,'Talla: S, M, L | Color: Azul#5b8def, Coral#f0806a, Verde#13a58b',{ sub: 'Dama', puntos: 'Tela ligera|Corte favorecedor', precioEsp: 590, minEsp: 3 }],
+      ['Camisa casual','Ropa','👔',450,260,10,'Talla: S, M, L, XL | Color: Celeste#a6c8ea, Blanco#f5f5f5, Negro#222222',{ sub: 'Caballero', puntos: 'Algodón|Manga larga', precioEsp: 410, minEsp: 3 }]] },
   panaderia:  { n: 'Panadería / repostería', cats: ['Pan dulce','Pan salado','Pasteles','Galletas','Bebidas'],
     ej: [['Pan blanco (bolsa)','Pan salado','🍞',35,18,30],['Semita','Pan dulce','🥯',15,6,40],['Cachitos','Pan dulce','🥐',12,5,50],['Rosquillas (bolsa)','Galletas','🍩',45,22,25],['Pastel de cumpleaños','Pasteles','🎂',650,300,3,'Sabor: Chocolate, Vainilla, Tres leches'],['Galletas de mantequilla','Galletas','🍪',60,28,20],['Café con leche','Bebidas','☕',25,8,0],['Pan de coco','Pan dulce','🥥',20,9,30]] },
   servicios:  { n: 'Servicios', cats: ['Servicios','Paquetes','Materiales'],
@@ -181,6 +225,22 @@ const GIROS = {
     ej: [['Free Fire · 100 diamantes','Free Fire','💎',30,22,0],['Free Fire · 310 diamantes','Free Fire','💎',90,66,0],['Free Fire · 520 diamantes','Free Fire','💎',145,108,0],['PUBG Mobile · 60 UC','PUBG Mobile','🎯',25,18,0],
       ['PUBG Mobile · 325 UC','PUBG Mobile','🎯',120,90,0],['Roblox · 400 Robux','Roblox','🧱',125,95,0],['Roblox · 800 Robux','Roblox','🧱',240,185,0],['Call of Duty Mobile · 80 CP','Call of Duty Mobile','🪖',30,22,0],
       ['Fortnite · 1,000 V-Bucks','Fortnite','🎮',230,175,0],['Tarjeta de regalo Google Play L 250','Tarjetas de regalo','🎁',265,250,0]] },
+  floristeria: { n: 'Floristería', cats: ['Arreglos','Ramos','Flores sueltas','Globos y detalles','Plantas'],
+    ej: [['Arreglo de rosas rojas','Arreglos','🌹',950,520,0,'Tamaño: 12 rosas, 24 rosas',{ vars: { 'Tamaño: 12 rosas': { p: 950 }, 'Tamaño: 24 rosas': { p: 1650 } } }],
+      ['Arreglo primaveral','Arreglos','💐',780,420,0,'Tamaño: Mediano, Grande',{ vars: { 'Tamaño: Mediano': { p: 780 }, 'Tamaño: Grande': { p: 1100 } } }],
+      ['Ramo de girasoles','Ramos','🌻',650,330,0],['Ramo de tulipanes','Ramos','🌷',890,500,0,'Color: Rosado, Amarillo, Blanco'],['Caja de rosas y chocolates','Arreglos','🎁',1250,700,0],
+      ['Rosa (unidad)','Flores sueltas','🌹',45,22,200,'Color: Roja, Blanca, Rosada, Amarilla'],['Girasol (unidad)','Flores sueltas','🌻',60,30,80],['Lirio (vara)','Flores sueltas','🤍',75,38,60,'Color: Blanco, Rosado'],
+      ['Tulipán (unidad)','Flores sueltas','🌷',70,40,60,'Color: Rosado, Amarillo, Blanco'],['Margarita (manojo)','Flores sueltas','🌼',90,45,40],['Follaje y relleno','Flores sueltas','🌿',60,25,50],
+      ['Globo metálico','Globos y detalles','🎈',120,60,30,'Diseño: Te amo, Feliz cumpleaños, Felicidades'],['Peluche mediano','Globos y detalles','🧸',350,190,12],['Orquídea en maceta','Plantas','🪴',850,480,8]] },
+  joyeria:    { n: 'Joyería', cats: ['Anillos','Cadenas','Pulseras','Aretes','Dijes','Relojes'],
+    ej: [['Anillo solitario plata 925','Anillos','💍',1450,780,8,'Talla: 6, 7, 8, 9',{ vars: { 'Talla: 6': { s: 2 }, 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
+      ['Argolla de matrimonio oro 10k','Anillos','💍',4800,3300,6,'Talla: 7, 8, 9',{ vars: { 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
+      ['Cadena de oro 14k','Cadenas','📿',6900,4900,3,'Largo: 45 cm, 50 cm, 60 cm',{ vars: { 'Largo: 45 cm': { p: 6900, s: 1 }, 'Largo: 50 cm': { p: 7600, s: 1 }, 'Largo: 60 cm': { p: 8900, s: 1 } } }],
+      ['Cadena de plata 925','Cadenas','⛓️',650,320,10,'Largo: 45 cm, 50 cm',{ vars: { 'Largo: 45 cm': { p: 650, s: 5 }, 'Largo: 50 cm': { p: 720, s: 5 } } }],
+      ['Esclava de oro 10k','Pulseras','✨',3900,2700,3],['Pulsera de plata con dijes','Pulseras','🤍',890,450,6],
+      ['Aretes de perla','Aretes','🦪',520,260,8],['Aretes argolla oro 10k','Aretes','⭕',2100,1400,5],
+      ['Dije de corazón plata 925','Dijes','💗',380,170,12],['Dije con inicial','Dijes','🔤',450,210,10],
+      ['Reloj clásico de acero','Relojes','⌚',1850,1150,4],['Reloj de dama dorado','Relojes','⌚',2400,1500,3]] },
   veterinaria: { n: 'Veterinaria y mascotas', cats: ['Consultas','Vacunas','Desparasitación','Medicamentos','Estética','Hospedaje','Alimentos','Accesorios'],
     ej: [['Consulta general','Consultas','🩺',350,0,0],['Control o revisión','Consultas','🩺',200,0,0],['Vacuna antirrábica','Vacunas','💉',250,110,20],['Vacuna múltiple (perro)','Vacunas','💉',450,220,15],
       ['Triple felina (gato)','Vacunas','💉',450,230,10],['Desparasitación interna','Desparasitación','💊',150,55,30],['Pipeta antipulgas','Desparasitación','🐾',280,160,12],['Gotas óticas 15 ml','Medicamentos','💧',170,90,10],
@@ -213,13 +273,15 @@ function json_(o) {
 
 function route_(req) {
   Object.keys(MEMO).forEach(k => { delete MEMO[k]; });
-  NEG = null;
+  NEG = null; SOLO_VER = false;
   const a = req.action, d = req.data || {};
+  // Servidor de Google cerrado: los datos ya viven en Supabase (propiedad MIGRADO = si, la pone cambioFinal() de Exportar.gs)
+  if (a !== 'info' && String(PropertiesService.getScriptProperties().getProperty('MIGRADO') || '') === 'si') throw new Error('El programa se actualizó. Cierra la app y vuelve a abrirla.');
   if (!MULTI_NEGOCIO && ['tiendaInfo', 'pedir', 'misPedidos', 'chatEnviar', 'chatVer'].indexOf(a) < 0) {
     const lic = licencia_();
     if (lic.estado === 'vencida') throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: config_().nombre }));
   }
-  if (a === 'login') return lock_(() => MULTI_NEGOCIO ? loginMulti_(d) : login_(d));
+  if (a === 'login') return lock_(() => MULTI_NEGOCIO ? loginMulti_(d, ipDe_(req)) : login_(d));
   if (a === 'registrar') return registrar_(d);
   if (a === 'info') return { multi: MULTI_NEGOCIO, version: VERSION };
   // Contador de visitas (público, sin usuario)
@@ -228,10 +290,13 @@ function route_(req) {
   if (a === 'tiendaInfo') return tiendaInfo_(d);
   if (a === 'pedir') { pedirLimites_(d); return lock_(() => pedir_(d)); }
   if (a === 'misPedidos') return misPedidos_(d);
+  if (a === 'pedidoComprobante') { tiendaNeg_(d); return lock_(() => pedidoComprobante_(d)); }
+  if (a === 'pedidoClienteEditar') { tiendaNeg_(d); return lock_(() => pedidoClienteEditar_(d)); }
+  if (a === 'respuestaRamo') { tiendaNeg_(d); return lock_(() => respuestaRamo_(d)); }
   if (a === 'chatEnviar') { chatLimites_(d); return lock_(() => chatEnviar_(d)); }
   if (a === 'chatVer') return chatVer_(d);
   // Panel Molina (súper admin)
-  if (a === 'panelLogin') return panelLogin_(d);
+  if (a === 'panelLogin') return panelLogin_(d, ipDe_(req));
   if (a.indexOf('panel') === 0) { panelAuth_(req); if (a === 'panelSalir') d._tok = String(req.panel || ''); return PANEL_LECTURA.indexOf(a) >= 0 ? rutaPanel_(a, d) : lock_(() => rutaPanel_(a, d)); }
   const u = auth_(req.token);
   const res = rutaUsuario_(a, u, d, req);
@@ -239,7 +304,7 @@ function route_(req) {
 }
 
 // Acciones del Panel que solo leen: no esperan ni frenan el candado que usan las ventas de todos los negocios
-const PANEL_LECTURA = ['panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelSalir'];
+const PANEL_LECTURA = ['panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelVendedores', 'panelSalir'];
 function sinCostos_(x) {
   if (Array.isArray(x)) return x.map(sinCostos_);
   if (!x || typeof x !== 'object') return x;
@@ -259,6 +324,9 @@ function rutaUsuario_(a, u, d, req) {
     case 'eliminar':        return lock_(() => eliminar_(u, d));
     case 'guardarUsuario':  d._token = req.token; return lock_(() => guardarUsuario_(u, d));
     case 'cambiarClave':    d._token = req.token; return lock_(() => cambiarClave_(u, d));
+    case 'misDatos':        return misDatos_(u);
+    case 'borrarDatos':     return lock_(() => borrarDatos_(u, d));
+    case 'eliminarCuenta':  return lock_(() => eliminarCuenta_(u, d));
     case 'subirFoto':       return subirFoto_(u, d);
     case 'cargarEjemplos':  return lock_(() => cargarEjemplos_(u, d));
     case 'precios':         return lock_(() => precios_(u, d));
@@ -283,8 +351,12 @@ function rutaUsuario_(a, u, d, req) {
     case 'anularGasto':     return lock_(() => anularGasto_(u, d));
     case 'pedidos':         return pedidos_(u, d);
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
+    case 'cotizarRamo':     return lock_(() => cotizarRamo_(u, d));
     case 'editarPedido':    return lock_(() => editarPedido_(u, d));
     case 'anticipoPedido':  return lock_(() => anticipoPedido_(u, d));
+    case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
+    case 'cobroComprobante': return lock_(() => cobroComprobante_(u, d));
+    case 'pedidoPago':      return lock_(() => pedidoPago_(u, d));
     case 'chats':           return chats_(u);
     case 'chat':            return lock_(() => chat_(u, d));
     case 'chatResponder':   return lock_(() => chatResponder_(u, d));
@@ -295,9 +367,16 @@ function rutaUsuario_(a, u, d, req) {
     case 'soporteLista':    return soporteLista_(u);
     case 'soporteVer':      return lock_(() => soporteVer_(u, d));
     case 'soporteEnviar':   return lock_(() => soporteEnviar_(u, d));
+    case 'lotes':           return lotes_(u, d);
+    case 'loteAgregar':     return lock_(() => loteAgregar_(u, d));
+    case 'loteBaja':        return lock_(() => loteBaja_(u, d));
+    case 'loteEditar':      return lock_(() => loteEditar_(u, d));
+    case 'recompra':        return recompra_(u, d);
+    case 'recompraAvisado': return lock_(() => recompraAvisado_(u, d));
     case 'susCuentas':      return susCuentas_(u);
     case 'suscripciones':   return suscripciones_(u);
     case 'susEstado':       return lock_(() => susEstado_(u, d));
+    case 'susAsignar':      return lock_(() => susAsignar_(u, d));
     case 'cambiarGiro':     return lock_(() => cambiarGiro_(u, d));
     case 'cambiarNegocio':  return lock_(() => cambiarNegocio_(u, d));
     case 'ordenes':         return ordenes_(u, d);
@@ -353,7 +432,10 @@ function rutaUsuario_(a, u, d, req) {
 }
 
 let EN_LOCK = 0; // profundidad del candado: dentro de él siempre se lee la hoja (nunca la caché)
+const MSJ_SOLO_VER = 'Modo soporte: aquí solo puedes ver. Los cambios los hace el cliente (o tú desde el Panel).';
+const noVer_ = () => { if (SOLO_VER) throw new Error(MSJ_SOLO_VER); };
 function lock_(fn) {
+  noVer_();
   const l = LockService.getScriptLock();
   l.waitLock(25000);
   if (!EN_LOCK) Object.keys(MEMO).forEach(k => { if (k !== '_ss' && k.indexOf('_m_') !== 0) delete MEMO[k]; }); // lo leído antes del candado puede estar viejo
@@ -530,6 +612,7 @@ function newId_(name) {
 }
 
 function upsert_(name, rec) {
+  noVer_();
   const s = sh_(name), h = SCHEMA[name];
   const r = rec.id ? findRow_(s, rec.id) : 0;
   let full = rec;
@@ -548,6 +631,7 @@ function upsert_(name, rec) {
 
 function appendRows_(name, objs) {
   if (!objs.length) return;
+  noVer_();
   const s = sh_(name), h = SCHEMA[name];
   const vals = objs.map(o => h.map(k => cell_(o[k], k)));
   s.getRange(filasLibres_(s, name, vals.length), 1, vals.length, h.length).setValues(vals);
@@ -563,6 +647,7 @@ function deleteRow_(name, id) {
 
 function ahora_() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm"); }
 function hoy_() { return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'); }
+function fechaMas_(f, n) { const d = new Date(String(f).slice(0, 10) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 function diasAtras_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
 function r2_(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 function r3_(n) { return Math.round((Number(n) || 0) * 1000) / 1000; }
@@ -581,6 +666,8 @@ function opciones_(t) {
     return n && v.length ? n + ': ' + v.join(', ') : '';
   }).filter(Boolean).slice(0, 3).join(' | ').slice(0, 400);
 }
+// Precio por cantidad (catálogo): desde minEsp piezas del mismo producto vale el precio especial
+function precioCant_(p, n) { return p && Number(p.precioEsp) > 0 && Number(p.minEsp) > 1 && Number(n) >= Number(p.minEsp) ? r2_(p.precioEsp) : 0; }
 function txt_(s, max) { return String(s === undefined || s === null ? '' : s).trim().replace(/\s+/g, ' ').slice(0, max || 200); }
 function tel8_(t) { return String(t || '').replace(/\D/g, '').slice(-8); }
 function porId_(lista) { const m = Object.create(null); lista.forEach(x => { m[x.id] = x; }); return m; }
@@ -598,6 +685,30 @@ function hash_(clave, salt) {
 
 function publico_(u) { const o = Object.assign({}, u); delete o.hash; delete o.salt; return o; }
 
+/* ---- Intentos fallidos con bloqueo progresivo ----
+ * k identifica a quién se cuenta (WhatsApp, usuario, conexión «i…», Panel «p…»). Al llegar al máximo de fallos seguidos se bloquea
+ * 10 minutos; si vuelve a pasar el mismo día, 1 hora; la tercera vez, 24 horas. El bloqueo es solo para ese k: a nadie más le afecta. */
+const BLOQ_ESC = [600, 3600, 86400];
+const bloqTexto_ = seg => seg >= 86400 ? 'hasta mañana' : seg >= 3600 ? '1 hora' : '10 minutos';
+function bloqueado_(k, msg) { const b = CacheService.getScriptCache().get('BL_' + k); if (b) throw new Error((msg || 'Demasiados intentos fallidos.') + ' Espera ' + b + '.'); }
+// Anota un fallo; devuelve los segundos de bloqueo si con este fallo quedó bloqueado (0 si todavía no)
+function fallo_(k, max) {
+  const c = CacheService.getScriptCache(), n = Number(c.get('F_' + k) || 0) + 1;
+  if (n < (max || 5)) { c.put('F_' + k, String(n), 600); return 0; }
+  const s = Number(c.get('BS_' + k) || 0), seg = BLOQ_ESC[Math.min(s, 2)];
+  c.put('BS_' + k, String(s + 1), 86400); c.put('BL_' + k, bloqTexto_(seg), seg); c.remove('F_' + k);
+  return seg;
+}
+const acierto_ = k => CacheService.getScriptCache().remove('F_' + k);
+// Huella de la conexión (la calcula el servidor en la nube; en Apps Script no existe)
+const ipDe_ = req => String(req && req.ip || '').replace(/[^a-f0-9]/g, '').slice(0, 16);
+// Aviso al dueño: alguien falló el PIN con su WhatsApp hasta quedar bloqueado (llega al teléfono y queda en el historial del Panel)
+function avisarBloqueo_(negocios, seg) {
+  const vistos = {};
+  (negocios || []).forEach(id => { if (!id || vistos[id]) return; vistos[id] = 1;
+    mAppend_('Seguimiento', { id: mId_('SG'), negocioId: id, tipo: 'seguridad', fecha: ahora_().replace('T', ' '), nota: 'Alguien falló el PIN 5 veces con el WhatsApp del negocio; la entrada quedó bloqueada ' + bloqTexto_(seg) + '. Si no fuiste tú, cambia tu PIN en Ajustes.' }); });
+}
+
 function req_(u, roles) {
   if (roles.indexOf(u.rol) < 0) throw new Error('No tienes permiso para esta acción');
 }
@@ -605,15 +716,13 @@ function req_(u, roles) {
 function login_(d) {
   const c = CacheService.getScriptCache();
   const usuario = String(d.usuario || '').trim().toLowerCase();
-  const kf = 'F_' + usuario;
-  const fallos = Number(c.get(kf) || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
+  bloqueado_(usuario);
   const u = rows_('Usuarios').find(x => String(x.usuario).toLowerCase() === usuario);
   if (!u || !u.activo || hash_(String(d.clave || ''), u.salt) !== u.hash) {
-    c.put(kf, String(fallos + 1), 600);
+    fallo_(usuario, 5);
     throw new Error('Usuario o contraseña incorrectos');
   }
-  c.remove(kf);
+  acierto_(usuario);
   return { token: nuevoToken_(u.id + '|' + String(u.salt).slice(0, 8)), usuario: publico_(u) };
 }
 
@@ -626,14 +735,18 @@ function auth_(token) {
   let uid = p[0], firma = p[1];
   if (MULTI_NEGOCIO) {
     const lic = negocioPorId_(p[0]);
-    if (!lic) throw new Error('SESION');
-    setNegocio_(lic); uid = p[1]; firma = p[2];
+    if (!lic) { // el administrador eliminó la cuenta desde la app: sus usuarios ven el aviso (30 días), no «sesión vencida»
+      const le = mRows_('Licencias').find(x => x.id === p[0]);
+      if (le && esEliminada_(le) && le.eliminadoEl && le.purgado !== 'si') throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: le.negocio, tipo: 'eliminada' }));
+      throw new Error('SESION');
+    }
+    setNegocio_(lic); uid = p[1]; firma = p[2]; SOLO_VER = p[3] === 'ver';
     bloquearSiVence_();
   }
   const u = rows_('Usuarios').find(x => x.id === uid);
   if (!u || !u.activo) throw new Error('SESION');
   if (firma && String(u.salt).slice(0, 8) !== firma) throw new Error('SESION'); // le cambiaron el PIN: se cierran las sesiones abiertas
-  c.put('S_' + token, val, SESION_SEG); // sesión deslizante
+  if (!SOLO_VER) c.put('S_' + token, val, SESION_SEG); // sesión deslizante (la de soporte vence sola en 2 horas)
   return u;
 }
 
@@ -643,11 +756,57 @@ function nuevoToken_(valor) {
   return token;
 }
 
+// Verifica el PIN del usuario (máximo 5 intentos fallidos cada 10 minutos)
+function pinOk_(u, pin) {
+  const k = 'c' + (NEG ? NEG.id : '') + u.id;
+  bloqueado_(k);
+  if (hash_(String(pin || ''), u.salt) !== u.hash) { const seg = fallo_(k, 5); throw new Error((MULTI_NEGOCIO ? 'El PIN no es correcto' : 'La contraseña no es correcta') + (seg ? '. Espera ' + bloqTexto_(seg) + '.' : '')); }
+  acierto_(k);
+}
+/* ---- El cliente borra sus datos o elimina su cuenta (Ajustes › Mi cuenta, solo el administrador) ----
+ * Antes de las dos cosas, el servidor en la nube guarda una copia «antes de restaurar»: Vic puede recuperarla durante 30 días. */
+const TABLAS_BASE = ['Usuarios', 'Config', 'PlanCuentas', 'Cuentas'];          // nunca se borran desde la app
+const TABLAS_CATALOGO = ['Productos', 'Clientes', 'Proveedores', 'Mascotas'];   // se conservan al borrar «solo movimientos»
+function vaciarHoja_(t) { const sh = sh_(t), n = sh.getLastRow(); if (n > 1) sh.deleteRows(2, n - 1); invalidar_(t); }
+function misDatos_(u) {
+  req_(u, ['admin']);
+  const o = {};
+  Object.keys(SCHEMA).forEach(t => { if (t === 'Usuarios') return; const r = rows_(t); if (r.length) o[t] = r; });
+  return o;
+}
+function borrarDatos_(u, d) {
+  req_(u, ['admin']); noVer_();
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('Esta opción no está disponible aquí');
+  if (norm_(d.confirmar) !== norm_(NEG.lic.negocio)) throw new Error('El nombre no coincide. Escríbelo tal como aparece en Ajustes.');
+  pinOk_(u, d.pin);
+  const todo = d.alcance === 'todo';
+  if (todo) rows_('Productos').forEach(p => { if (p.foto) borrarFoto_(p.foto); });
+  const tablas = Object.keys(SCHEMA).filter(t => TABLAS_BASE.indexOf(t) < 0 && (todo || TABLAS_CATALOGO.indexOf(t) < 0));
+  tablas.forEach(vaciarHoja_);
+  mSet_('Licencias', NEG.lic, { ultimaVenta: '', ventas7: '0' }); CacheService.getScriptCache().remove('L_' + NEG.id);
+  mAppend_('Seguimiento', { id: mId_('SG'), negocioId: NEG.id, tipo: 'cliente', fecha: ahora_().replace('T', ' '), nota: 'El cliente borró ' + (todo ? 'todos sus datos y empezó de cero' : 'sus movimientos (ventas, compras, gastos, caja y pedidos)') + ' · ' + txt_(u.nombre, 40) });
+  return { tablas: tablas.length, todo: todo };
+}
+function eliminarCuenta_(u, d) {
+  req_(u, ['admin']); noVer_();
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('Esta opción no está disponible aquí');
+  if (String(d.confirmar || '').trim().toUpperCase() !== 'ELIMINAR') throw new Error('Escribe ELIMINAR para confirmar');
+  pinOk_(u, d.pin);
+  const l = NEG.lic, hoy = hoy_(), motivo = txt_(d.motivo, 120);
+  // Su WhatsApp queda libre para registrarse de nuevo: los accesos se marcan (si Vic recupera la cuenta, se destapan)
+  const sa = masterSheet_('Accesos'), h = SCHEMA_M.Accesos;
+  mRows_('Accesos').filter(a => a.negocioId === l.id && a._fila && String(a.whatsapp).indexOf('x') !== 0).forEach(a => sa.getRange(a._fila, h.indexOf('whatsapp') + 1).setValue('x' + a.whatsapp));
+  delete MEMO._m_Accesos;
+  mSet_('Licencias', l, { estado: 'Eliminada', eliminadoEl: hoy + '|' + String(l.estado || '') + '|' + motivo, notas: ('Eliminada por el cliente ' + hoy + (motivo ? ' · ' + motivo : '') + (l.notas ? ' · ' + l.notas : '')).slice(0, 500) });
+  CacheService.getScriptCache().remove('L_' + l.id);
+  mAppend_('Seguimiento', { id: mId_('SG'), negocioId: l.id, tipo: 'cliente', fecha: ahora_().replace('T', ' '), nota: 'El cliente eliminó su cuenta' + (motivo ? ' · «' + motivo + '»' : '') + ' · ' + txt_(u.nombre, 40) });
+  return { hasta: addDiasIso_(hoy, 30) };
+}
 function cambiarClave_(u, d) {
-  const c = CacheService.getScriptCache(), kf = 'FC_' + (NEG ? NEG.id : '') + u.id, fallos = Number(c.get(kf) || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
-  if (hash_(String(d.actual || ''), u.salt) !== u.hash) { c.put(kf, String(fallos + 1), 600); throw new Error(MULTI_NEGOCIO ? 'El PIN actual no es correcto' : 'La contraseña actual no es correcta'); }
-  c.remove(kf);
+  const c = CacheService.getScriptCache(), k = 'c' + (NEG ? NEG.id : '') + u.id;
+  bloqueado_(k);
+  if (hash_(String(d.actual || ''), u.salt) !== u.hash) { const seg = fallo_(k, 5); throw new Error((MULTI_NEGOCIO ? 'El PIN actual no es correcto' : 'La contraseña actual no es correcta') + (seg ? '. Espera ' + bloqTexto_(seg) + '.' : '')); }
+  acierto_(k);
   if (MULTI_NEGOCIO ? !/^\d{4,6}$/.test(String(d.nueva || '')) : String(d.nueva || '').length < 6) throw new Error(MULTI_NEGOCIO ? 'El PIN debe tener de 4 a 6 números' : 'La nueva contraseña debe tener al menos 6 caracteres');
   const salt = Utilities.getUuid();
   const hashN = hash_(d.nueva, salt);
@@ -711,6 +870,7 @@ function config_() {
 }
 
 function guardarConfig_(reg) {
+  noVer_();
   if (reg && reg.logo && String(reg.logo).length > 48000) throw new Error('El logo es muy pesado. Usa una imagen más sencilla o más pequeña.');
   const s = sh_('Config');
   invalidar_('Config');
@@ -778,7 +938,10 @@ function bootstrap_(u, d) {
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); if (d && d.vid && !NEG.lic.vid && u.rol === 'admin') upd.vid = String(d.vid).replace(/[^A-Za-z0-9]/g, '').slice(0, 24); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u, d);
-  if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && cb.vencidas.length) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && (cb.vencidas.length || (cb.proxima && cb.proxima.f <= addDiasIso_(hoy_(), 5)))) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
+  if (r.cobroVM) r.cobroVM.datosPago = PropertiesService.getScriptProperties().getProperty('DATOS_PAGO_LIC') || '';
+  if (MULTI_NEGOCIO && NEG && ['admin', 'cajero'].indexOf(u.rol) >= 0) { const an = anuncioPara_(); if (an) r.anuncio = an; }
+  if (SOLO_VER) r.soporte = { negocio: NEG ? NEG.lic.negocio : '' };
   return r;
 }
 
@@ -888,6 +1051,7 @@ function mFila_(name, rec) {
   return x ? x._fila : 0;
 }
 function mSet_(name, rec, campos) {
+  noVer_();
   const fila = mFila_(name, rec);
   if (!fila) return;
   const s = masterSheet_(name), h = SCHEMA_M[name];
@@ -896,6 +1060,7 @@ function mSet_(name, rec, campos) {
 }
 
 function mAppend_(name, o) {
+  noVer_();
   masterSheet_(name).appendRow(SCHEMA_M[name].map(k => mCell_(o[k], k)));
   delete MEMO['_m_' + name];
 }
@@ -948,7 +1113,7 @@ function esColab_(l) { return String(l && l.estado || '').trim().toLowerCase() =
 function licNegocio_(l) {
   const est = String(l.estado || '').trim().toLowerCase();
   if (est === 'activa' || est === 'colaborador') return { estado: 'completa' };
-  if (est === 'bloqueada' || est === 'eliminada') return { estado: 'bloqueada', contacto: CONTACTO_WA };
+  if (est === 'bloqueada' || est === 'eliminada') return { estado: 'bloqueada', contacto: CONTACTO_WA, eliminada: est === 'eliminada' && !!l.eliminadoEl };
   const vence = String(l.vencePrueba || '').slice(0, 10);
   const fin = /^\d{4}-\d{2}-\d{2}$/.test(vence) ? new Date(vence + 'T00:00:00').getTime() : 0;
   const resta = Math.ceil((fin - Date.now()) / 86400000);
@@ -964,20 +1129,25 @@ function licNegocio_(l) {
 function bloquearSiVence_() {
   const lic = licencia_();
   if (lic.estado === 'vencida' || lic.estado === 'bloqueada') {
-    throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: NEG ? NEG.lic.negocio : '', tipo: lic.estado }));
+    throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: NEG ? NEG.lic.negocio : '', tipo: lic.eliminada ? 'eliminada' : lic.estado }));
   }
   // Pago programado vencido y sin registrar después de los días de gracia: el programa se pausa hasta que Vic lo marque
   const cb = MULTI_NEGOCIO && NEG && NEG.lic ? cobroDe_(NEG.lic) : null;
   if (cb && cb.pausado) throw new Error('PRUEBA_VENCIDA|' + JSON.stringify({ contacto: CONTACTO_WA, nombre: NEG.lic.negocio, tipo: 'pago', total: cb.total, conceptos: cb.vencidas.map(c => c.c), desde: cb.desde }));
 }
 
-function loginMulti_(d) {
-  const c = CacheService.getScriptCache(), wa = waNorm_(d.whatsapp), kf = 'F_' + wa;
-  const fallos = Number(c.get(kf) || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos fallidos. Espera 10 minutos.');
-  const falla = () => { c.put(kf, String(fallos + 1), 600); return new Error('WhatsApp o PIN incorrectos'); };
+function loginMulti_(d, ip) {
+  const wa = waNorm_(d.whatsapp);
+  // Bloqueo progresivo por WhatsApp (5 fallos) y por conexión (20 fallos con cualquier número): 10 min → 1 h → 24 h
+  bloqueado_(wa, 'Demasiados intentos fallidos.');
+  if (ip) bloqueado_('i' + ip, 'Demasiados intentos fallidos desde esta conexión.');
   // Una persona puede tener varios negocios con el mismo WhatsApp y PIN (los vincula Vic desde el Panel)
   const accs = mRows_('Accesos').filter(x => String(x.whatsapp) === wa && x.activo);
+  const falla = () => {
+    const seg = fallo_(wa, 5); if (ip) fallo_('i' + ip, 20);
+    if (seg) avisarBloqueo_(accs.map(a => a.negocioId), seg);
+    return new Error('WhatsApp o PIN incorrectos' + (seg ? '. Espera ' + bloqTexto_(seg) + '.' : ''));
+  };
   if (!accs.length) throw falla();
   const validos = []; let errHoja = null;
   accs.forEach(acc => {
@@ -991,7 +1161,7 @@ function loginMulti_(d) {
   });
   if (!validos.length && errHoja) throw errHoja; // la hoja no abrió: no es un PIN malo
   if (!validos.length) throw falla();
-  c.remove(kf);
+  acierto_(wa); if (ip) acierto_('i' + ip); // un ingreso correcto también limpia el contador de la conexión (si no, una conexión compartida se bloqueaba con fallos sueltos acumulados)
   let v = validos[0];
   const lista = () => validos.map(x => ({ id: x.lic.id, negocio: x.lic.negocio, giro: x.lic.giro, estado: licNegocio_(x.lic).estado }));
   if (validos.length > 1) {
@@ -1097,7 +1267,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], servicios: ['ordenes'], tecnologia: ['series'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], streaming: ['suscripciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -1125,7 +1295,7 @@ function ordenGuardar_(u, d) {
   if (r.id && !prev) throw new Error('La orden ya no existe');
   if (prev && ['entregado', 'cancelado'].indexOf(prev.estado) >= 0 && r.estado !== undefined && r.estado !== prev.estado && u.rol !== 'admin') throw new Error('Una orden ' + (prev.estado === 'entregado' ? 'entregada' : 'cancelada') + ' ya no se cambia');
   if (prev && r.presupuesto !== undefined && u.rol === 'bodega') delete r.presupuesto;
-  ['cliente', 'telefono', 'equipo', 'placa'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
+  ['cliente', 'telefono', 'equipo', 'placa', 'lavador'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 80); });
   ['falla', 'diagnostico', 'nota'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 400); });
   if (prev && r.clienteId === '' && r.cliente === prev.cliente) { delete r.clienteId; delete r.cliente; delete r.telefono; }
   if (r.clienteId !== undefined) {
@@ -1612,11 +1782,7 @@ function anticipoDe_(ref) {
 }
 // Al cobrar una venta ligada a una orden, cita o encargo, se cierra solo
 // Lo que salió del inventario con una venta (si un artículo era servicio al venderse, no se devuelve nada)
-function salidoDe_(v) {
-  const o = {};
-  rowsDesde_('Inventario', (idMs_(v.id) || 0) - 60000).forEach(m => { if (m.refId === v.id && m.tipo === 'venta') o[m.productoId] = r3_((o[m.productoId] || 0) - Number(m.cantidad)); });
-  return o;
-}
+function salidoDe_(v) { return movDe_(v.id, 'venta', (idMs_(v.id) || 0) - 60000); }
 function cerrarLigados_(d, venta) {
   if (d.ordenId) { const o = rows_('Ordenes').find(x => x.id === d.ordenId); if (o && o.estado !== 'entregado') upsert_('Ordenes', { id: o.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
   if (d.agendaId) { const a = rows_('Agenda').find(x => x.id === d.agendaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
@@ -1670,7 +1836,7 @@ function suscripciones_(u) {
   return rows_('Suscripciones').map(s => {
     const c = cu[s.cuentaId], cli = cl[s.clienteId];
     return Object.assign({}, s, { perfil: perfilN_(s.perfil), estadoR: susEstadoDe_(s, h), dias: Math.ceil((msDeLocal_(s.vence + 'T00:00') - msDeLocal_(h + 'T00:00')) / 86400000),
-      cuentaNombre: c ? c.nombre : '', correo: c ? c.correo : '', clave: c ? (u.rol === 'admin' || true ? c.clave : '') : '', telefono: cli ? cli.telefono : s.telefono, cliente: cli ? cli.nombre : s.cliente });
+      cuentaNombre: c ? c.nombre : '', correo: c ? c.correo : '', clave: c && u.rol === 'admin' ? c.clave : '', telefono: cli ? cli.telefono : s.telefono, cliente: cli ? cli.nombre : s.cliente });
   }).sort((a, b) => a.vence < b.vence ? -1 : a.vence > b.vence ? 1 : 0);
 }
 function susEstado_(u, d) {
@@ -1681,6 +1847,37 @@ function susEstado_(u, d) {
   if (d.nota !== undefined) r.nota = txt_(d.nota, 120);
   if (d.pin !== undefined) r.pin = txt_(d.pin, 12);
   if (d.vence !== undefined) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.vence))) throw new Error('Fecha no válida'); r.vence = String(d.vence); }
+  upsert_('Suscripciones', r);
+  return suscripciones_(u);
+}
+// Asignar (o cambiar) la cuenta de una suscripción ya vendida: cuenta guardada + perfil, o cuenta nueva (correo y clave).
+// No toca la venta, la caja ni el inventario.
+function susAsignar_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const s = rows_('Suscripciones').find(x => x.id === d.id); if (!s) throw new Error('La suscripción no existe');
+  if (s.estado === 'cancelada' || s.estado === 'renovada') throw new Error('Esta suscripción ya no está activa');
+  const completa = d.entrega === 'cuenta';
+  let cuentaId = String(d.cuentaId || ''), perfil = completa ? 0 : Math.max(1, parseInt(d.perfil, 10) || 1);
+  if (d.nueva) {
+    req_(u, ['admin']);
+    const n = d.nueva, correo = txt_(n.correo, 80), clave = txt_(n.clave, 80);
+    if (!correo) throw new Error('Escribe el correo de la cuenta');
+    if (!clave) throw new Error('Escribe la contraseña de la cuenta');
+    const plat = txt_(s.plataforma, 40) || 'Cuenta', mismas = rows_('Cuentas').filter(c => String(c.plataforma).toLowerCase() === plat.toLowerCase());
+    const ya = mismas.find(c => String(c.correo).toLowerCase() === correo.toLowerCase());
+    if (ya) cuentaId = ya.id; // el mismo correo ya está guardado: se usa esa cuenta
+    else {
+      const perfiles = completa ? 1 : Math.max(perfil, Math.min(20, parseInt(n.perfiles, 10) || 5));
+      cuentaId = upsert_('Cuentas', { plataforma: plat, nombre: txt_(n.nombre, 80) || plat + ' ' + (mismas.length + 1), correo: correo, clave: clave, perfiles: perfiles, costo: 0, vence: '', nota: '', activo: true, creado: ahora_() }).id;
+    }
+  }
+  const c = rows_('Cuentas').find(x => x.id === cuentaId); if (!c) throw new Error('Elige una cuenta');
+  if (!completa && perfil > Math.max(1, Number(c.perfiles) || 1)) throw new Error('«' + c.nombre + '» solo tiene ' + c.perfiles + ' perfiles');
+  const oc = ocupados_()[c.id] || {}, otra = completa ? Object.keys(oc).map(k => oc[k]).find(x => x.id !== s.id) : (oc[String(perfil)] && oc[String(perfil)].id !== s.id ? oc[String(perfil)] : (oc['0'] && oc['0'].id !== s.id ? oc['0'] : null));
+  if (otra) throw new Error(completa ? '«' + c.nombre + '» ya tiene perfiles vendidos' : 'El perfil ' + perfil + ' de «' + c.nombre + '» ya es de ' + (otra.cliente || 'otro cliente'));
+  const r = { id: s.id, cuentaId: c.id, perfil: perfil };
+  if (d.pin !== undefined) r.pin = txt_(d.pin, 12);
+  if (d.vence) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.vence))) throw new Error('Fecha no válida'); r.vence = String(d.vence); }
   upsert_('Suscripciones', r);
   return suscripciones_(u);
 }
@@ -1769,10 +1966,18 @@ function cambiarGiro_(u, d) {
     const cats = GIROS[ant].cats.map(c => c.toLowerCase());
     rows_('Productos').forEach(p => { if (p.activo && cats.indexOf(String(p.categoria).toLowerCase()) >= 0) { upsert_('Productos', { id: p.id, activo: false }); desactivados++; } });
   }
+  // Con varias tiendas (giros extra), cambiar el principal es un intercambio: el giro anterior queda como sección extra
+  // y sus productos sin giro se marcan, para que ninguna sección desaparezca de la tienda en línea, los reportes ni las cajas.
+  let girosExtra = null;
+  if (MULTI_NEGOCIO && NEG && girosExtra_().length) {
+    const activos = girosActivos_(cfg);
+    rows_('Productos').forEach(p => { if (!p.giro && giroDeProd_(p, activos) === ant) upsert_('Productos', { id: p.id, giro: ant }); });
+    girosExtra = girosExtra_().filter(g => g !== d.giro); if (girosExtra.indexOf(ant) < 0 && own_(GIROS, ant)) girosExtra.push(ant);
+  }
   guardarConfig_({ giro: d.giro });
   let agregados = 0;
   if (d.ejemplos) agregados = cargarEjemplos_(u, { giro: d.giro }).agregados;
-  if (MULTI_NEGOCIO && NEG) { try { mSet_('Licencias', NEG.lic, { giro: GIROS[d.giro].n }); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { const upd = { giro: GIROS[d.giro].n }; if (girosExtra) { upd.giros = girosExtra.join(','); NEG.lic.giros = upd.giros; } mSet_('Licencias', NEG.lic, upd); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   return { config: sinInternos_(config_()), productos: rows_('Productos'), agregados: agregados, desactivados: desactivados, girosActivos: girosActivos_() };
 }
 
@@ -1780,14 +1985,19 @@ function cambiarGiro_(u, d) {
 /* El panel se abre en …/?panel con la clave guardada en Propiedades del script → PANEL_CLAVE.
  * Desde ahí se administran todos los negocios: licencias, Plus, prueba, pagos, seguimiento y el chat de soporte. */
 function panelClave_() { return String(PropertiesService.getScriptProperties().getProperty('PANEL_CLAVE') || ''); }
-function panelLogin_(d) {
+function panelLogin_(d, ip) {
   if (!MULTI_NEGOCIO) throw new Error('El panel solo funciona en modo multi-negocio');
-  const c = CacheService.getScriptCache(), fallos = Number(c.get('FPANEL') || 0);
-  if (fallos >= 5) throw new Error('Demasiados intentos. Espera 10 minutos.');
+  // El bloqueo es solo para la conexión que falla (nadie puede dejar fuera a Vic); sin huella de conexión, se cuenta en general
+  const k = ip ? 'p' + ip : 'PANEL', c = CacheService.getScriptCache();
+  bloqueado_(k, 'Demasiados intentos.');
   const clave = panelClave_();
   if (!clave) throw new Error('Falta la clave del panel: en el Apps Script, Configuración del proyecto → Propiedades del script, crea PANEL_CLAVE.');
-  if (String(d.clave || '') !== clave) { c.put('FPANEL', String(fallos + 1), 600); throw new Error('Clave incorrecta'); }
-  c.remove('FPANEL');
+  if (String(d.clave || '') !== clave) {
+    const seg = fallo_(k, 5);
+    if (seg) mAppend_('Seguimiento', { id: mId_('SG'), negocioId: '', tipo: 'seguridad-panel', fecha: ahora_().replace('T', ' '), nota: 'Alguien intentó la clave del Panel 5 veces y quedó bloqueado ' + bloqTexto_(seg) + '.' });
+    throw new Error('Clave incorrecta' + (seg ? '. Espera ' + bloqTexto_(seg) + '.' : ''));
+  }
+  acierto_(k);
   const tok = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
   c.put('P_' + tok, '1', PANEL_SEG);
   return { token: tok, plantillas: plantillas_() };
@@ -1801,6 +2011,13 @@ function rutaPanel_(a, d) {
   switch (a) {
     case 'panelResumen':           return panelResumen_();
     case 'panelNegocio':           return panelNegocio_(d);
+    case 'panelImportar':          return panelImportar_(d);
+    case 'panelVerApp':            return panelVerApp_(d);
+    case 'panelAnunciar':          return panelAnunciar_(d);
+    case 'panelAnuncios':          return panelAnuncios_();
+    case 'panelAnuncioQuitar':     return panelAnuncioQuitar_(d);
+    case 'panelComprobantes':      return panelComprobantes_();
+    case 'panelDatosPago':         { PropertiesService.getScriptProperties().setProperty('DATOS_PAGO_LIC', txt_(d.texto, 300)); return { datosPago: txt_(d.texto, 300) }; }
     case 'panelAccion':            return panelAccion_(d);
     case 'panelLimpiarDuplicados': return panelLimpiarDuplicados_();
     case 'panelContacto':          return panelContacto_(d);
@@ -1820,6 +2037,9 @@ function rutaPanel_(a, d) {
     case 'panelTasa':              return { tasa: tasaDolar_(d && d.forzar) };
     case 'panelLlego':             return panelLlego_(d);
     case 'panelVisitas':           return panelVisitas_(d);
+    case 'panelVendedores':        return panelVendedores_();
+    case 'panelVendedorGuardar':   return panelVendedorGuardar_(d);
+    case 'panelVendedorQuitar':    return panelVendedorQuitar_(d);
     case 'panelSalir':             { try { if (d && d._tok) CacheService.getScriptCache().remove('P_' + d._tok); } catch (e) {} return true; }
   }
   throw new Error('Acción no válida: ' + a);
@@ -1835,15 +2055,19 @@ const PLANTILLAS_DEF = {
 // Texto del contrato de licencia. Se edita desde Panel › Mensajes; los {campos} se rellenan al crear cada contrato.
 const CONTRATO_DEF = `Entre MOLINA SOLUCIONES DIGITALES, representada por José Vicdonio Molina Izaguirre, en adelante «el Licenciante», y {dueno}, en representación del negocio {negocio}{rtn}{direccion}, con WhatsApp {whatsapp}, en adelante «el Cliente», se celebra el presente contrato bajo las siguientes cláusulas:
 
-PRIMERA · Objeto y alcance. El Licenciante otorga al Cliente una licencia de uso no exclusiva e intransferible del programa «Gestión de Negocio VM» para administrar el negocio {negocio}: ventas, inventario, clientes, compras, gastos, caja y reportes, según el plan contratado ({plan}). El plan Plus (tienda en línea y fotos), la Contabilidad y los giros adicionales se contratan por separado. Las mejoras y actualizaciones del programa se aplican de forma automática y sin costo adicional.
+PRIMERA · Objeto y alcance. El Licenciante otorga al Cliente una licencia de uso no exclusiva e intransferible del programa «Gestión de Negocio VM», que funciona en internet desde el celular o la computadora, para administrar el negocio {negocio}: ventas, inventario, clientes, compras, gastos, caja, reportes y las funciones propias del tipo de negocio elegido, según el plan contratado ({plan}). El plan Plus (tienda en línea con catálogo, fotos, pedidos y mensajes de los compradores), la Contabilidad, los negocios adicionales y los giros extra se contratan por separado. Las mejoras y actualizaciones del programa se aplican de forma automática y sin costo adicional.
 
-SEGUNDA · Vigencia, precio y forma de pago. La licencia rige desde el {desde} y {vigencia}. El valor de la licencia es de {monto}. {cuotas} Si un pago no se recibe en la fecha acordada, el programa se lo recuerda al Cliente y, pasados los días de gracia, el acceso se pausa hasta que el pago se registre; los datos no se pierden durante la pausa. Los montos pagados no son reembolsables.
+SEGUNDA · Vigencia, precio y forma de pago. La licencia rige desde el {desde} y {vigencia}. El valor de la licencia es de {monto}. {cuotas} El Cliente paga por transferencia, depósito o efectivo a los datos de cobro que el programa le muestra, y puede enviar el comprobante desde el mismo programa; el pago queda registrado cuando el Licenciante lo confirma. Unos días antes de cada vencimiento el programa se lo recuerda al Cliente; si un pago no se recibe en la fecha acordada y pasan los días de gracia, el acceso se pausa hasta que el pago se registre. Los datos no se pierden durante la pausa. Los montos pagados no son reembolsables.
 
-TERCERA · Datos y soporte. La información registrada pertenece al Cliente y se guarda en una hoja de cálculo de Google exclusiva para su negocio, administrada por el Licenciante, quien no vende ni comparte estos datos y los usa solo para el funcionamiento del programa y el soporte. El Cliente puede solicitar una copia de sus datos en cualquier momento. El Licenciante brinda soporte por WhatsApp y desde la sección «Ayuda» del programa, en horario hábil y sin costo adicional, para dudas de uso y fallas del programa; la capacitación presencial y los desarrollos a medida se cotizan aparte.
+TERCERA · Datos del Cliente. La información registrada pertenece al Cliente y se guarda en una base de datos en la nube, separada por negocio y administrada por el Licenciante, quien no vende ni comparte estos datos y los usa únicamente para el funcionamiento del programa, los respaldos y el soporte. Las fotos de productos se guardan en el mismo servicio; las fotos de productos agotados y sin movimiento por más de noventa (90) días se eliminan de forma automática para no ocupar espacio. El Cliente puede pedir en cualquier momento una copia de su información, que se le entrega en formato de Excel. Los datos de los clientes finales del negocio (nombres, teléfonos, direcciones, saldos) los registra el Cliente bajo su responsabilidad y con el consentimiento de esas personas.
 
-CUARTA · Obligaciones y responsabilidad. El Cliente es responsable del resguardo de sus PIN de acceso y de los usuarios que cree; de la veracidad de los datos que registra, incluidos los datos fiscales (RTN, CAI y rangos de facturación autorizados por el SAR) y sus declaraciones ante las autoridades; y de contar con conexión a internet. El Cliente no puede copiar, revender, ceder ni modificar el programa. El programa es una herramienta de apoyo administrativo: el Licenciante no responde por decisiones comerciales o fiscales del Cliente ni por interrupciones causadas por los servicios de Google, el proveedor de internet o el equipo del Cliente, y su responsabilidad se limita en todo caso al monto pagado por la licencia.
+CUARTA · Respaldos. El Licenciante hace cada noche una copia de respaldo de la información del negocio, siempre que haya tenido cambios desde la copia anterior. Las copias se conservan por un máximo de treinta (30) días y después se eliminan de forma automática; la copia más reciente se conserva siempre. A solicitud del Cliente, el Licenciante puede devolver la información completa, o solo los productos o los clientes, a como estaba en alguna de las copias disponibles; lo registrado después de la fecha de esa copia se reemplaza, y antes de restaurar se guarda una copia del estado actual. El Licenciante no está obligado a recuperar información de fechas para las que no exista una copia disponible.
 
-QUINTA · Terminación y aceptación. El Cliente puede dejar de usar el programa cuando lo desee. El Licenciante puede dar por terminado el contrato por falta de pago mayor a sesenta (60) días o por uso indebido del programa; en ambos casos, el Cliente puede solicitar una copia de sus datos dentro de los treinta (30) días siguientes. Este contrato se acepta mediante firma electrónica desde el programa, en el celular o la computadora del Cliente; ambas partes reconocen que esa firma, junto con la fecha, la hora y la huella digital del documento, tiene la misma validez que una firma manuscrita.
+QUINTA · Soporte y acceso del Licenciante. El Licenciante brinda soporte por WhatsApp y desde la sección «Ayuda» del programa, en horario hábil y sin costo adicional, para dudas de uso y fallas del programa; la capacitación presencial, la carga de la lista inicial de productos a partir de un archivo del Cliente y los desarrollos a medida se cotizan aparte. Para atender el soporte, el Cliente autoriza al Licenciante a ver su programa en modo de solo lectura, sin necesidad del PIN del Cliente, durante sesiones de hasta dos (2) horas que quedan anotadas en el historial del negocio; en ese modo el Licenciante no puede registrar, modificar ni borrar información. El Licenciante puede enviar al Cliente avisos dentro del programa y al teléfono sobre novedades, mantenimiento y pagos; el Cliente puede desactivar los avisos al teléfono cuando lo desee.
+
+SEXTA · Obligaciones y responsabilidad. El Cliente es responsable del resguardo de sus PIN de acceso y de los usuarios que cree; de la veracidad de los datos que registra, incluidos los datos fiscales (RTN, CAI y rangos de facturación autorizados por el SAR) y sus declaraciones ante las autoridades; de los precios, productos y condiciones que publique en su tienda en línea y de la entrega de los pedidos que reciba; y de contar con conexión a internet. El Cliente no puede copiar, revender, ceder ni modificar el programa. El programa es una herramienta de apoyo administrativo: el Licenciante no responde por decisiones comerciales o fiscales del Cliente ni por interrupciones causadas por los proveedores de nube e internet, por el equipo del Cliente o por causas de fuerza mayor, y su responsabilidad se limita en todo caso al monto pagado por la licencia en los últimos doce (12) meses.
+
+SÉPTIMA · Terminación y aceptación. El Cliente puede dejar de usar el programa cuando lo desee. El Licenciante puede dar por terminado el contrato por falta de pago mayor a sesenta (60) días o por uso indebido del programa. En ambos casos, el Cliente puede solicitar una copia de su información dentro de los treinta (30) días siguientes; pasado ese plazo, la información y sus respaldos pueden eliminarse de forma definitiva. Este contrato se acepta mediante firma electrónica desde el programa, en el celular o la computadora del Cliente; ambas partes reconocen que esa firma, junto con la fecha, la hora y la huella digital del documento, tiene la misma validez que una firma manuscrita.
 
 Honduras, {fecha}.`;
 function textoLargo_(s, max) { return String(s === undefined || s === null ? '' : s).replace(/\r\n?/g, '\n').replace(/[ \t]+\n/g, '\n').replace(/\n{3,}/g, '\n\n').trim().slice(0, max || 6000); }
@@ -1857,7 +2081,7 @@ function plantillasGuardar_(d) {
   const p = {}; Object.keys(PLANTILLAS_DEF).forEach(k => { if (d.plantillas && d.plantillas[k] !== undefined) p[k] = txt_(d.plantillas[k], 600); });
   const ps = PropertiesService.getScriptProperties();
   ps.setProperty('PANEL_PLANTILLAS', JSON.stringify(p));
-  if (d.plantillas && d.plantillas.contrato !== undefined) { const c = textoLargo_(d.plantillas.contrato, 6000); if (c && c !== CONTRATO_DEF) ps.setProperty('PANEL_CONTRATO', c); else ps.deleteProperty('PANEL_CONTRATO'); }
+  if (d.plantillas && d.plantillas.contrato !== undefined) { const c = textoLargo_(d.plantillas.contrato, 9000); if (c && c !== CONTRATO_DEF) ps.setProperty('PANEL_CONTRATO', c); else ps.deleteProperty('PANEL_CONTRATO'); }
   return plantillas_();
 }
 function diasDesde_(f) { const ms = msDeLocal_(String(f || '').replace(' ', 'T')); return ms ? (Date.now() - ms) / 86400000 : 9999; }
@@ -1871,12 +2095,26 @@ function panelFicha_(l, segs) {
     ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '',
     giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l), colab: esColab_(l) };
   if (o.colab) { o.plus = true; o.contab = true; }
+  o.salud = saludDe_(o, l.nProductos, l.nClientes); o.respaldo = l.respaldo || '';
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
   else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
   else if (est === 'vencida' && diasDesde_(hecho('vencida')) > 14) o.contactar = 'vencida';
   else if ((est === 'prueba' || est === 'activa') && sin >= 5 && diasDesde_(hecho('inactivo')) > 7) o.contactar = 'inactivo';
   return o;
+}
+/* Salud del negocio (0-100) para el Panel: entra a la app, vende, productos cargados y clientes registrados.
+ * Productos y clientes se cuentan en el respaldo de cada noche; mientras no haya, la nota sale solo de entrar y vender. */
+function saludDe_(o, np, nc) {
+  const num = x => (x === '' || x === null || x === undefined || !isFinite(Number(x))) ? null : Number(x);
+  np = num(np); nc = num(nc);
+  const sin = Number(o.sinEntrar), v7 = Number(o.ventas7) || 0, sv = Number(o.sinVender);
+  const entra = !o.ultimaConexion ? 0 : sin <= 1 ? 35 : sin <= 3 ? 25 : sin <= 7 ? 12 : 0;
+  const vende = v7 >= 10 ? 35 : v7 >= 3 ? 25 : v7 >= 1 ? 15 : (o.ultimaVenta && sv <= 14) ? 5 : 0;
+  const prod = np === null ? null : np >= 20 ? 15 : np >= 5 ? 10 : np >= 1 ? 5 : 0;
+  const cli = nc === null ? null : nc >= 10 ? 15 : nc >= 3 ? 10 : nc >= 1 ? 5 : 0;
+  const max = 70 + (prod === null ? 0 : 15) + (cli === null ? 0 : 15);
+  return { n: Math.round((entra + vende + (prod || 0) + (cli || 0)) * 100 / max), entra: entra, vende: vende, prod: prod, cli: cli, np: np, nc: nc };
 }
 // Filas de Licencias a las que nadie entra: sin acceso en la hoja Accesos (registros repetidos) o ya marcadas como Duplicada
 function licsDuplicadas_() {
@@ -1927,14 +2165,163 @@ function panelResumen_() {
       invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION, colaboradores: colabs.length,
-    visitas: visitasMini_(),
+    visitas: visitasMini_(), vendedores: vendedores_().map(v => ({ codigo: v.codigo, nombre: v.nombre })),
+    eliminadas: mRows_('Licencias').filter(l => esEliminada_(l) && l.eliminadoEl && l.purgado !== 'si').map(l => { const p = String(l.eliminadoEl).split('|'); return { id: l.id, negocio: l.negocio, dueno: l.dueno, giro: l.giro, whatsapp: l.whatsapp, estado: 'eliminada', fecha: p[0], antes: p[1] || '', motivo: p[2] || '', borraEl: addDiasIso_(p[0], 30), ultimaConexion: l.ultimaConexion, plus: false, giros: [], cobro: null }; }),
+    avisosCli: segs.filter(x => x.tipo === 'cliente' && diasDesde_(x.fecha) <= 7).sort((a, b) => a.fecha < b.fecha ? 1 : -1).slice(0, 10).map(x => { const l = vivas.concat(mRows_('Licencias').filter(esEliminada_)).find(k => k.id === x.negocioId) || {}; return { id: x.negocioId, negocio: l.negocio || '', fecha: x.fecha, nota: x.nota }; }),
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics.concat(colabs), duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
-    soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
+    comprobantes: panelComprobantes_(), datosPagoLic: PropertiesService.getScriptProperties().getProperty('DATOS_PAGO_LIC') || '', soporteSin: sop.filter(c => Number(c.sinLeerAdm) > 0).length, erroresAbiertos: sop.filter(c => c.motivo === 'error' && c.estado !== 'resuelto').length, plantillas: plantillas_(), hoy: hoy_() };
+}
+/* ---- Panel: entrar a ver la app de un negocio (modo soporte, solo ver, 2 horas) ---- */
+function panelVerApp_(d) {
+  const l = licDe_(d.id);
+  if (!l.hojaId || esEliminada_(l)) throw new Error('Ese negocio no está activo');
+  setNegocio_(l);
+  const us = rows_('Usuarios'), adm = us.find(x => x.rol === 'admin' && x.activo) || us.find(x => x.rol === 'admin');
+  if (!adm) throw new Error('El negocio no tiene administrador');
+  const tok = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
+  CacheService.getScriptCache().put('S_' + tok, l.id + '|' + adm.id + '|' + String(adm.salt).slice(0, 8) + '|ver', 7200);
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Vic entró a ver la app (modo soporte)' });
+  return { token: tok, negocio: l.negocio };
+}
+
+/* ---- Panel: mensajes a los negocios (aviso al teléfono y/o banner en la app) ---- */
+function destinosAnuncio_(filtro, ids) {
+  const vivas = mRows_('Licencias').filter(l => l.hojaId && !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada');
+  const f = String(filtro || 'todos');
+  if (f === 'ids') { const set = (Array.isArray(ids) ? ids : []).map(String); return vivas.filter(l => set.indexOf(l.id) >= 0); }
+  if (f === 'prueba') return vivas.filter(l => licNegocio_(l).estado === 'prueba');
+  if (f === 'activos') return vivas.filter(l => licNegocio_(l).estado === 'completa');
+  if (f.indexOf('giro:') === 0) { const g = f.slice(5); return vivas.filter(l => String(l.giros || '').split(',').concat([giroIdDeLic_(l)]).indexOf(g) >= 0); }
+  return vivas;
+}
+// Los giros renombrados guardan su nombre anterior (ant): las licencias viejas lo siguen reconociendo
+function giroIdDeLic_(l) { const n = String(l.giro || ''); return Object.keys(GIROS).find(k => GIROS[k].n === n || (GIROS[k].ant || []).indexOf(n) >= 0) || ''; }
+function panelAnunciar_(d) {
+  const texto = txt_(d.texto, 400), titulo = txt_(d.titulo, 60) || 'Gestión de Negocio VM';
+  if (texto.length < 3) throw new Error('Escribe el mensaje');
+  const push = !!d.push, banner = !!d.banner; if (!push && !banner) throw new Error('Elige cómo enviarlo: aviso al teléfono, banner o los dos');
+  const ls = destinosAnuncio_(d.filtro, d.ids); if (!ls.length) throw new Error('No hay negocios con ese filtro');
+  const dias = Math.max(1, Math.min(30, parseInt(d.dias, 10) || 7));
+  mAppend_('Anuncios', { id: mId_('AN'), fecha: ahora_().replace('T', ' '), titulo: titulo, texto: texto, filtro: String(d.filtro || 'todos').slice(0, 40), destinos: ls.map(l => l.id).join(','),
+    canales: [push ? 'push' : '', banner ? 'banner' : ''].filter(Boolean).join(','), vence: addDiasIso_(hoy_(), dias), vistos: '', creado: ahora_() });
+  return panelAnuncios_();
+}
+function panelAnuncios_() {
+  return mRows_('Anuncios').slice().reverse().slice(0, 30).map(a => { const ds = String(a.destinos || '').split(',').filter(Boolean), vs = String(a.vistos || '').split(',').filter(Boolean);
+    return { id: a.id, fecha: a.fecha, titulo: a.titulo, texto: a.texto, filtro: a.filtro, canales: a.canales, vence: a.vence, enviados: ds.length, vistos: vs.length, activo: String(a.vence) >= hoy_() }; });
+}
+function panelAnuncioQuitar_(d) { const a = mRows_('Anuncios').find(x => x.id === d.id); if (!a) throw new Error('Ese mensaje ya no existe'); mSet_('Anuncios', a, { vence: addDiasIso_(hoy_(), -1) }); return panelAnuncios_(); }
+// Banner para este negocio: el mensaje vigente más reciente que no ha marcado como visto
+function anuncioPara_() {
+  if (!MULTI_NEGOCIO || !NEG) return null;
+  try {
+    const h = hoy_(), a = mRows_('Anuncios').slice().reverse().find(x => String(x.vence) >= h && String(x.canales).indexOf('banner') >= 0 && (',' + x.destinos + ',').indexOf(',' + NEG.id + ',') >= 0 && (',' + x.vistos + ',').indexOf(',' + NEG.id + ',') < 0);
+    return a ? { id: a.id, titulo: a.titulo, texto: a.texto, fecha: String(a.fecha).slice(0, 10) } : null;
+  } catch (e) { return null; }
+}
+function anuncioVisto_(u, d) {
+  const a = mRows_('Anuncios').find(x => x.id === d.id);
+  if (!a || !NEG || (',' + a.vistos + ',').indexOf(',' + NEG.id + ',') >= 0) return true;
+  mSet_('Anuncios', a, { vistos: (a.vistos ? a.vistos + ',' : '') + NEG.id });
+  return true;
+}
+
+/* ---- Cobro de la licencia con comprobante: el administrador del negocio lo manda desde la app y Vic lo aprueba en el Panel ---- */
+function cobroComprobante_(u, d) {
+  req_(u, ['admin']);
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('No disponible');
+  const h = hoy_(), lim = addDiasIso_(h, 7);
+  const cs = cuotasDe_(NEG.id).filter(c => c.estado === 'pendiente' && String(c.fecha).slice(0, 10) <= lim && (!Array.isArray(d.cuotas) || !d.cuotas.length || d.cuotas.indexOf(c.id) >= 0));
+  if (!cs.length) throw new Error('No tienes pagos pendientes por ahora');
+  const url = guardarComprobante_(d.foto, 'licencia');
+  cs.forEach(c => { if (c.comprobante && c.comprobante !== url && !cs.some(x => x !== c && x.comprobante === c.comprobante)) borrarFoto_(c.comprobante); mSet_('CuotasLic', c, { comprobante: url, compFecha: ahora_().replace('T', ' '), compEstado: 'revisar' }); });
+  cobroResumen_(NEG.id);
+  return cobroDe_(licDe_(NEG.id));
+}
+// Panel: comprobantes de licencia por revisar (de todos los negocios)
+function panelComprobantes_() {
+  const ls = porId_(mRows_('Licencias'));
+  return mRows_('CuotasLic').filter(c => c.estado === 'pendiente' && c.compEstado === 'revisar').map(c => ({ id: c.id, negocioId: c.negocioId, negocio: (ls[c.negocioId] || {}).negocio || '', fecha: String(c.fecha).slice(0, 10),
+    monto: Number(c.monto) || 0, concepto: c.concepto, comprobante: c.comprobante, compFecha: c.compFecha })).sort((a, b) => a.compFecha < b.compFecha ? 1 : -1);
+}
+
+/* ---- Panel: cargar los productos de un negocio desde una hoja de Excel ----
+   d.filas: [{ _fila, nombre, categoria, sub, precio, costo, existencia, codigo, op1, val1, op2, val2, op3, val3, precioEsp, minEsp,
+              descripcion, lema, puntos, preciosOp, existOp, tienda }] · d.revisar = true solo revisa (no guarda nada) */
+function panelImportar_(d) {
+  const l = licDe_(d.negocio);
+  if (esEliminada_(l) || !l.hojaId) throw new Error('Ese negocio no está activo');
+  setNegocio_(l);
+  const filas = Array.isArray(d.filas) ? d.filas.slice(0, 1000) : [];
+  if (!filas.length) throw new Error('La hoja no tiene productos');
+  const prods = rows_('Productos'), porCod = {}, porNom = {};
+  prods.forEach(p => { if (p.codigo) porCod[String(p.codigo).toLowerCase()] = p; porNom[String(p.nombre).trim().toLowerCase()] = p; });
+  const n_ = x => { const v = Number(String(x === undefined || x === null ? '' : x).replace(/[^\d.\-]/g, '')); return isFinite(v) ? v : NaN; };
+  const vacio = x => x === undefined || x === null || String(x).trim() === '';
+  const res = { nuevos: 0, actualizados: 0, errores: [], lista: [] }, plan = [], vistos = {};
+  filas.forEach((f, i) => {
+    const fila = Number(f._fila) || i + 2, nombre = txt_(f.nombre, 80);
+    try {
+      if (!nombre) throw new Error('falta el nombre');
+      const clave = nombre.toLowerCase(); if (vistos[clave]) throw new Error('está repetido (fila ' + vistos[clave] + ')'); vistos[clave] = fila;
+      const categoria = txt_(f.categoria, 40); if (!categoria) throw new Error('falta la categoría');
+      const precio = n_(f.precio); if (!(precio > 0)) throw new Error('falta el precio');
+      const costo = vacio(f.costo) ? null : n_(f.costo); if (costo !== null && !(costo >= 0)) throw new Error('el costo no es válido');
+      const exist = vacio(f.existencia) ? null : n_(f.existencia); if (exist !== null && !(exist >= 0)) throw new Error('la existencia no es válida');
+      const codigo = txt_(f.codigo, 40);
+      const opciones = opciones_([[f.op1, f.val1], [f.op2, f.val2], [f.op3, f.val3]].filter(x => !vacio(x[0]) && !vacio(x[1])).map(x => txt_(x[0], 30) + ': ' + String(x[1])).join('|'));
+      const ex = (codigo && porCod[codigo.toLowerCase()]) || porNom[clave] || null;
+      const reg = { nombre: nombre, categoria: categoria, precio: r2_(precio), tienda: !/^no$/i.test(String(f.tienda || '').trim()) };
+      if (ex) reg.id = ex.id;
+      if (codigo) reg.codigo = codigo;
+      if (costo !== null) reg.costo = r4_(costo);
+      if (opciones) reg.opciones = opciones;
+      ['sub', 'lema', 'descripcion'].forEach(k => { if (!vacio(f[k])) reg[k] = txt_(f[k], k === 'descripcion' ? 300 : 90); });
+      if (!vacio(f.puntos)) reg.puntos = String(f.puntos).split(/\||\n/).map(x => txt_(x, 80)).filter(Boolean).slice(0, 6).join('|');
+      if (!vacio(f.precioEsp)) { reg.precioEsp = r2_(n_(f.precioEsp) || 0); reg.minEsp = Math.floor(n_(f.minEsp) || 0); if (reg.precioEsp > 0 && reg.minEsp < 2) throw new Error('falta desde cuántas piezas vale el precio especial'); if (reg.precioEsp >= reg.precio) throw new Error('el precio especial debe ser menor que el normal'); }
+      // Precio y existencia por opción: «50 ml = 450; 100 ml = 650» · con dos opciones «M / Negro = 3»
+      const base = { nombre: nombre, opciones: opciones || (ex ? ex.opciones : '') }, por = {};
+      [['preciosOp', 'p'], ['existOp', 's']].forEach(([col, campo]) => {
+        if (vacio(f[col])) return;
+        if (!opsDe_(base).length) throw new Error('para poner ' + (campo === 'p' ? 'precios' : 'existencias') + ' por opción, primero escribe las opciones');
+        String(f[col]).split(/;|\n/).map(x => x.trim()).filter(Boolean).forEach(par => {
+          const j = par.lastIndexOf('='); if (j < 0) throw new Error('«' + par + '» debe ser como «Nude 1 = 10»');
+          const k = varKey_(base, par.slice(0, j).replace(/\//g, ',')), v = n_(par.slice(j + 1));
+          if (!k) throw new Error('la opción «' + par.slice(0, j).trim() + '» no está en las opciones del producto');
+          if (!(v >= 0)) throw new Error('el número de «' + par + '» no es válido');
+          (por[k] = por[k] || {})[campo] = v;
+        });
+      });
+      if (Object.keys(por).length) { const V = {}; combosDe_(base).forEach(k => { V[k] = { p: por[k] && por[k].p || 0, s: por[k] && por[k].s !== undefined ? por[k].s : 0 }; }); reg.variantes = V; }
+      plan.push({ fila: fila, ex: ex, reg: reg, exist: reg.variantes ? null : exist });
+    } catch (e) { res.errores.push({ fila: fila, nombre: nombre, error: e.message }); }
+  });
+  res.nuevos = plan.filter(x => !x.ex).length; res.actualizados = plan.length - res.nuevos;
+  res.lista = plan.slice(0, 400).map(x => { const r = x.reg, V = r.variantes, ops = opsDe_(r.opciones ? r : (x.ex || {}));
+    let ex = x.exist; if (V) ex = Object.keys(V).reduce((a, k) => a + Number(V[k].s || 0), 0);
+    return { fila: x.fila, nombre: r.nombre, categoria: r.categoria, precio: r.precio, existencia: ex, nuevo: !x.ex,
+      det: [ops.map(o => o.v.length + ' ' + o.n.toLowerCase()).join(' · '), r.precioEsp ? 'esp. ' + r.precioEsp + ' desde ' + r.minEsp : '', V && Object.keys(V).some(k => V[k].p > 0) ? 'precio por opción' : ''].filter(Boolean).join(' · ') }; });
+  if (d.revisar) return res;
+  const adm = rows_('Usuarios').find(x => x.rol === 'admin' && x.activo) || rows_('Usuarios').find(x => x.rol === 'admin');
+  if (!adm) throw new Error('El negocio no tiene administrador');
+  let hechos = 0;
+  plan.forEach(x => {
+    try {
+      const reg = Object.assign({}, x.reg); if (reg.variantes) reg.variantes = JSON.stringify(reg.variantes);
+      if (!x.ex && x.exist !== null) reg.stock = x.exist;
+      const g = guardar_(adm, { entidad: 'Productos', registro: reg });
+      if (x.ex && x.exist !== null && !varsDe_(g) && g.tipo === 'producto' && Math.abs(Number(g.stock) - x.exist) > 0.0005) ajusteStock_(adm, { id: g.id, modo: 'conteo', cantidad: x.exist, motivo: 'Carga desde Excel' });
+      hechos++;
+    } catch (e) { res.errores.push({ fila: x.fila, nombre: x.reg.nombre, error: e.message }); }
+  });
+  res.cargados = hechos;
+  return res;
 }
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
   const l = licDe_(d.id), f = panelFicha_(l, mRows_('Seguimiento'));
+  if (esEliminada_(l) && l.eliminadoEl) { const p = String(l.eliminadoEl).split('|'); f.estado = 'eliminada'; f.eliminada = { fecha: p[0], antes: p[1] || '', motivo: p[2] || '', borraEl: addDiasIso_(p[0], 30), purgado: l.purgado === 'si' }; }
   const camps = campanas_(), og = origenesLic_([l])[l.id] || {}, c = campanaDe_(l, camps, og.canal);
   f.origen = og;
   f.llego = c ? { id: c.id, nombre: c.plataforma + ' · «' + c.nombre + '»', desde: c.desde, hasta: c.hasta, auto: !l.llegoPor } : { id: '', nombre: '', directo: l.llegoPor === 'directo' };
@@ -1962,6 +2349,7 @@ function panelNegocio_(d) {
     f.datos = { rtn: cfg.sarRtn || cfg.rtn || '', direccion: cfg.sarDireccion || cfg.direccion || '', razon: cfg.sarRazon || '', telefono: cfg.telefono || '', correo: cfg.correo || '' }; // para rellenar el contrato
     f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
       pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+    f.salud = saludDe_(f, f.uso.productos, f.uso.clientes); // en la ficha, con los conteos de hoy
     // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
     const dsf = licDesfase_(cfg);
     if (Object.keys(dsf).length) { mSet_('Licencias', l, dsf); Object.assign(f, dsf); CacheService.getScriptCache().remove('L_' + l.id); }
@@ -1975,7 +2363,7 @@ function grupoDe_(l) {
   return mRows_('Licencias').filter(x => !esEliminada_(x) && String(x.estado).toLowerCase() !== 'duplicada' && (x.id === k || x.persona === k))
     .sort((a, b) => (a.id === k ? -1 : b.id === k ? 1 : String(a.registro) < String(b.registro) ? -1 : 1));
 }
-function giroIdDe_(nombre) { const n = norm_(nombre); return Object.keys(GIROS).find(k => norm_(GIROS[k].n) === n || k === n) || 'otro'; }
+function giroIdDe_(nombre) { const n = norm_(nombre); return Object.keys(GIROS).find(k => norm_(GIROS[k].n) === n || k === n || (GIROS[k].ant || []).some(a => norm_(a) === n)) || 'otro'; }
 // Usuario administrador (el dueño) de un negocio: el que entra con el WhatsApp de la licencia
 function duenoDe_(lic) {
   const acc = mRows_('Accesos').find(a => a.negocioId === lic.id && String(a.whatsapp) === String(lic.whatsapp)) || mRows_('Accesos').find(a => a.negocioId === lic.id);
@@ -2041,8 +2429,10 @@ function estadoAntesPausa_(l) {
   const ev = seg.find(x => /^(Acceso pausado · estaba (Activa|Prueba|Vencida)|Licencia activada|Prueba extendida)/.test(String(x.nota)));
   const vencida = !((msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now());
   let e = ev ? (/estaba Activa|^Licencia activada/.test(ev.nota) ? 'Activa' : 'Prueba') : (vencida ? 'Activa' : 'Prueba'); // sin historial: la regla de antes
-  // Una prueba ya vencida con pagos anotados es de alguien que pagó (por ejemplo, activado a mano en la hoja)
-  if (e === 'Prueba' && vencida && mRows_('PagosLic').some(x => x.negocioId === l.id && Number(x.monto) > 0)) e = 'Activa';
+  // Una prueba ya vencida con pagos anotados es de alguien que pagó (por ejemplo, activado a mano en la hoja).
+  // Pero si la pausa dejó escrito «estaba Vencida», vuelve exactamente a Vencida: un anticipo o un pago de giro no activan la licencia.
+  if (ev && /estaba Vencida/.test(ev.nota)) e = 'Prueba';
+  else if (e === 'Prueba' && vencida && mRows_('PagosLic').some(x => x.negocioId === l.id && Number(x.monto) > 0)) e = 'Activa';
   return e; // una prueba con la fecha pasada queda «Vencida» sola
 }
 const ETIQUETAS_LIC = ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido'];
@@ -2052,6 +2442,15 @@ function panelAccion_(d) {
   const pago = (concepto, idNeg) => { if (Number(d.monto) > 0) mAppend_('PagosLic', { id: mId_('G'), negocioId: idNeg || l.id, fecha: f, monto: r2_(Number(d.monto)), concepto: txt_(d.concepto, 60) || concepto, metodo: txt_(d.metodo, 20) || 'Efectivo', nota: '' }); };
   switch (d.accion) {
     case 'activar':    upd.estado = 'Activa'; nota = 'Licencia activada'; pago('Licencia'); break;
+    case 'recuperar': { // cuenta que el cliente eliminó: vuelve al estado que tenía y sus usuarios entran de nuevo
+      if (!esEliminada_(l) || !l.eliminadoEl) throw new Error('Esta cuenta no la eliminó el cliente');
+      if (l.purgado === 'si') throw new Error('Sus datos ya se borraron definitivamente');
+      const antes = String(l.eliminadoEl).split('|')[1] || 'Prueba';
+      const sa = masterSheet_('Accesos'), ha = SCHEMA_M.Accesos;
+      mRows_('Accesos').filter(a => a.negocioId === l.id && a._fila && String(a.whatsapp).indexOf('x') === 0).forEach(a => sa.getRange(a._fila, ha.indexOf('whatsapp') + 1).setValue(String(a.whatsapp).slice(1)));
+      delete MEMO._m_Accesos;
+      upd.estado = antes === 'Eliminada' ? 'Prueba' : antes; upd.eliminadoEl = ''; nota = 'Cuenta recuperada (el cliente la había eliminado)'; break;
+    }
     case 'colaborador': upd.estado = 'Colaborador'; upd.cobro = ''; nota = 'Marcado como colaborador · todo activo sin cobro' + (d.nota ? ' · ' + txt_(d.nota, 120) : ''); break;
     case 'quitarColab': upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Vencida'; nota = 'Ya no es colaborador'; break;
     case 'plus':       upd.plus = 'Sí'; nota = 'Plus activado'; pago('Plus'); break;
@@ -2116,7 +2515,7 @@ function panelPago_(d) {
 function cuotasDe_(id) { return mRows_('CuotasLic').filter(c => c.negocioId === id && c.estado !== 'anulada').sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0); }
 function cobroResumen_(id) {
   const l = licDe_(id), pend = cuotasDe_(id).filter(c => c.estado === 'pendiente')
-    .map(c => ({ id: c.id, f: String(c.fecha).slice(0, 10), m: Number(c.monto) || 0, c: c.concepto, g: esNum_(c.gracia) ? Number(c.gracia) : GRACIA_DEF }));
+    .map(c => ({ id: c.id, f: String(c.fecha).slice(0, 10), m: Number(c.monto) || 0, c: c.concepto, g: esNum_(c.gracia) ? Number(c.gracia) : GRACIA_DEF, r: c.compEstado === 'revisar' || c.compEstado === 'no' ? c.compEstado : '' }));
   mSet_('Licencias', l, { cobro: pend.length ? JSON.stringify(pend) : '' });
   try { CacheService.getScriptCache().remove('L_' + l.id); } catch (e) {}
 }
@@ -2148,7 +2547,11 @@ function panelCuotas_(d) {
       if (c.estado === 'pagada') throw new Error('Ese pago ya está marcado como recibido');
       const monto = r2_(Number(d.monto) || Number(c.monto) || 0), pid = mId_('G');
       mAppend_('PagosLic', { id: pid, negocioId: l.id, fecha: ahora_().replace('T', ' '), monto: monto, concepto: c.concepto, metodo: txt_(d.metodo, 20) || 'Transferencia', nota: txt_(d.nota, 120) });
-      mSet_('CuotasLic', c, { estado: 'pagada', pagoId: pid, pagadaEl: ahora_().replace('T', ' ') });
+      mSet_('CuotasLic', c, { estado: 'pagada', pagoId: pid, pagadaEl: ahora_().replace('T', ' '), compEstado: c.comprobante ? 'ok' : c.compEstado });
+    } else if (acc === 'rechazar') {
+      if (c.estado === 'pagada') throw new Error('Ese pago ya está marcado como recibido');
+      mSet_('CuotasLic', c, { compEstado: 'no' });
+      mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Comprobante rechazado: ' + c.concepto + (d.nota ? ' · ' + txt_(d.nota, 120) : '') });
     } else if (acc === 'quitar') {
       if (c.estado === 'pagada') throw new Error('Ese pago ya se recibió; para quitarlo, borra el pago anotado');
       mSet_('CuotasLic', c, { estado: 'anulada' });
@@ -2172,7 +2575,7 @@ function escH_(s) { return String(s === undefined || s === null ? '' : s).replac
 function waBonito_(w) { const d = String(w || '').replace(/\D/g, ''); return d.length === 11 && d.indexOf('504') === 0 ? '+504 ' + d.slice(3, 7) + '-' + d.slice(7) : d ? '+' + d : ''; }
 function contratosDe_(id) { return mRows_('Contratos').filter(c => c.negocioId === id).sort((a, b) => a.fecha < b.fecha ? 1 : a.fecha > b.fecha ? -1 : 0); }
 function contratoPublico_(c) {
-  return { id: c.id, fecha: String(c.fecha).slice(0, 10), titulo: c.titulo, monto: Number(c.monto) || 0, desde: c.desde, hasta: c.hasta, estado: c.estado, firmadoEl: c.firmadoEl, firmadoPor: c.firmadoPor, huella: c.huella ? String(c.huella).slice(0, 12) : '', pdf: c.pdfId ? 'https://drive.google.com/file/d/' + c.pdfId + '/view' : '' };
+  return { id: c.id, fecha: String(c.fecha).slice(0, 10), titulo: c.titulo, monto: Number(c.monto) || 0, desde: c.desde, hasta: c.hasta, estado: c.estado, firmadoEl: c.firmadoEl, firmadoPor: c.firmadoPor, huella: c.huella ? String(c.huella).slice(0, 12) : '', pdf: c.pdfId ? (/^https?:\/\//.test(String(c.pdfId)) ? String(c.pdfId) : 'https://drive.google.com/file/d/' + c.pdfId + '/view') : '' };
 }
 // Lo que ve el administrador del negocio al abrir la app: el contrato pendiente de firma (si hay) y cuántos tiene firmados
 function contratosResumen_(negocioId) {
@@ -2365,7 +2768,12 @@ function guardar_(u, d) {
     req_(u, ['admin']);
     const reg = {};
     Object.keys(d.registro || {}).forEach(k => { if (CONFIG_EDITABLE.indexOf(k) >= 0) reg[k] = String(d.registro[k]); });
-    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && k !== 'tiendaPortada' && k !== 'vetFirma' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
+    if (reg.tiendaSecciones !== undefined) { // catálogo: { categoría: { c: color, f: foto } }
+      const o = parseJ_(reg.tiendaSecciones, {}), out = {};
+      Object.keys(o || {}).slice(0, 40).forEach(k => { const x = o[k] || {}, c = /^#[0-9a-f]{6}$/i.test(String(x.c || '')) ? String(x.c) : '', f = x.f && (String(x.f).indexOf('data:image/') === 0 ? String(x.f).length <= 160000 : fotoPropia_(String(x.f))) ? String(x.f) : '', t = txt_(x.t, 60); if (c || f || t) out[txt_(k, 40)] = { c: c, f: f, t: t }; });
+      reg.tiendaSecciones = JSON.stringify(out);
+    }
+    Object.keys(reg).forEach(k => { if (k !== 'logo' && k !== 'duenoFoto' && k !== 'tiendaPortada' && k !== 'vetFirma' && k !== 'tiendaSecciones' && reg[k].length > 3000) throw new Error('Uno de los textos es demasiado largo'); });
     if (reg.vetFirma && (reg.vetFirma.length > 48000 || reg.vetFirma.indexOf('data:image/') !== 0)) throw new Error('La firma no es válida. Súbela de nuevo.');
     if (reg.vacAviso !== undefined) reg.vacAviso = String(Math.max(1, Math.min(30, parseInt(reg.vacAviso, 10) || 7)));
     if (reg.duenoFoto && (reg.duenoFoto.length > 48000 || reg.duenoFoto.indexOf('data:image/') !== 0)) throw new Error('La foto del propietario no es válida. Súbela de nuevo.');
@@ -2403,6 +2811,13 @@ function guardar_(u, d) {
     return upsert_('Cuentas', r);
   }
   if (ent === 'Productos') {
+    // Bodega con tienda asignada: solo sus productos y solo en su tienda (igual que precios_ y ajusteStock_)
+    const actP = girosActivos_(), fija = tiendaAsignada_(u, actP);
+    if (fija) {
+      if (prev && giroDeProd_(prev, actP) !== fija) throw new Error('«' + prev.nombre + '» es de otra tienda');
+      if (r.giro !== undefined && r.giro && r.giro !== fija) throw new Error('Solo puedes crear productos en tu tienda (' + GIROS[fija].n + ')');
+      if (!prev && !r.giro) r.giro = fija;
+    }
     if (r.codigo !== undefined) r.codigo = txt_(r.codigo, 40);
     if (r.codigo && rows_('Productos').some(p => p.codigo && String(p.codigo).toLowerCase() === r.codigo.toLowerCase() && p.id !== r.id)) throw new Error('Ya existe un producto con ese código');
     if (r.categoria !== undefined) r.categoria = txt_(r.categoria, 40) || 'General';
@@ -2422,6 +2837,33 @@ function guardar_(u, d) {
     if (r.incluye !== undefined) r.incluye = incluye_(r.incluye).map(x => x.plataforma + ':' + x.n).join('|');
     if (r.caduca !== undefined && r.caduca && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.caduca))) r.caduca = '';
     if (r.garantia !== undefined) r.garantia = Math.max(0, Math.min(3650, parseInt(r.garantia, 10) || 0));
+    // Vitaminas: cuántos días rinde una unidad (para avisar la recompra). Los lotes solo cambian con loteAgregar/loteBaja y el inventario
+    if (r.rinde !== undefined) r.rinde = Math.max(0, Math.min(3650, parseInt(r.rinde, 10) || 0));
+    delete r.lotes;
+    // Catálogo: subcategoría, frase destacada, beneficios y precio especial desde N piezas
+    if (r.sub !== undefined) r.sub = txt_(r.sub, 40);
+    if (r.lema !== undefined) r.lema = txt_(r.lema, 90);
+    if (r.puntos !== undefined) r.puntos = String(r.puntos || '').split('|').map(x => txt_(x, 80)).filter(Boolean).slice(0, 6).join('|');
+    if (r.precioEsp !== undefined) { r.precioEsp = r2_(Number(r.precioEsp) || 0); if (r.precioEsp < 0) throw new Error('Los montos no pueden ser negativos'); }
+    if (r.minEsp !== undefined) r.minEsp = Math.max(0, Math.min(999, parseInt(r.minEsp, 10) || 0));
+    { const pe = r.precioEsp !== undefined ? r.precioEsp : prev ? prev.precioEsp : 0, me = r.minEsp !== undefined ? r.minEsp : prev ? prev.minEsp : 0, pr = r.precio !== undefined ? r.precio : prev ? prev.precio : 0;
+      if (pe > 0 && me < 2) throw new Error('Escribe desde cuántas piezas vale el precio especial (2 o más)');
+      if (pe > 0 && pr > 0 && pe >= pr) throw new Error('El precio especial debe ser menor que el precio normal'); }
+    // Existencia y precio por opción: { «Tono: Nude 1»: { s: existencia, p: precio (0 = el normal) } }
+    let varQuiere = null;
+    if (r.variantes !== undefined) {
+      if (!r.variantes) r.variantes = '';
+      else {
+        const o = typeof r.variantes === 'object' ? r.variantes : parseJ_(r.variantes, null);
+        if (!o || typeof o !== 'object') throw new Error('Las existencias por opción no son válidas');
+        const base = { nombre: r.nombre || (prev && prev.nombre) || '', opciones: r.opciones !== undefined ? r.opciones : prev ? prev.opciones : '' };
+        const combos = combosDe_(base), Vp = prev ? varsDe_(prev) || {} : {}, V = {};
+        if (!combos.length) throw new Error('Para llevar existencias por opción, primero escribe las opciones (tono, talla…)');
+        combos.forEach(k => { const x = o[k] || {}, pr = r2_(Number(x.p) || 0); if (pr < 0) throw new Error('Los montos no pueden ser negativos'); V[k] = { s: Vp[k] ? Number(Vp[k].s) || 0 : 0, p: pr }; });
+        varQuiere = {}; combos.forEach(k => { const n = Number((o[k] || {}).s); varQuiere[k] = isFinite(n) && n >= 0 ? r3_(n) : V[k].s; });
+        r.variantes = JSON.stringify(V);
+      }
+    }
     if (r.giro !== undefined) r.giro = own_(GIROS, r.giro) && girosActivos_().indexOf(r.giro) > 0 ? r.giro : ''; // vacío = giro principal
     // Las existencias solo cambian con compras, ventas y ajustes (queda registrado)
     const stockIni = r.stock;
@@ -2432,7 +2874,16 @@ function guardar_(u, d) {
     if (r.categoria) { const ex = rows_('Productos').find(p => p.categoria.toLowerCase() === r.categoria.toLowerCase()); if (ex) r.categoria = ex.categoria; }
     if (prev && prev.foto && r.foto !== undefined && r.foto !== prev.foto) borrarFoto_(prev.foto);
     const g = upsert_('Productos', r);
+    // Las existencias por opción se dejan como las escribió, y el total del producto queda igual a la suma (con su movimiento de inventario)
+    if (varQuiere && g.tipo === 'producto') {
+      const V = varsDe_(g) || {}, mov = {}; let suma = 0, dv = 0;
+      Object.keys(varQuiere).forEach(k => { const d0 = r3_(varQuiere[k] - (V[k] ? Number(V[k].s) || 0 : 0)); suma = r3_(suma + varQuiere[k]); if (d0) { mov[g.id + SEPV + k] = d0; dv = r3_(dv + d0); } });
+      const resto = r3_(suma - (Number(g.stock) || 0) - dv); if (resto) mov[g.id] = resto;
+      if (Object.keys(mov).length) moverStock_(mov, prev ? 'ajuste' : 'inicial', '', u, prev ? 'Existencias por opción' : 'Existencia inicial');
+      return rows_('Productos').find(p => p.id === g.id);
+    }
     if (!prev && g.tipo === 'producto' && Number(stockIni) > 0) {
+      if (modOn_('lotes') && /^\d{4}-\d{2}-\d{2}$/.test(String(g.caduca || ''))) LOTE_ENT[g.id] = { l: 'Lote 1', v: String(g.caduca) };
       moverStock_({ [g.id]: r3_(stockIni) }, 'inicial', '', u, 'Existencia inicial');
       return rows_('Productos').find(p => p.id === g.id);
     }
@@ -2486,8 +2937,13 @@ function cargarEjemplos_(u, d) {
     if (existentes.indexOf(x[0].toLowerCase()) >= 0) return;
     const p = upsert_('Productos', { codigo: 'EJ' + String(i + 1).padStart(3, '0'), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
-      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid });
-    if (p.tipo === 'producto' && x[5] > 0) moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
+      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid,
+      sub: x[7] && x[7].sub || '', lema: x[7] && x[7].lema || '', puntos: x[7] && x[7].puntos || '', precioEsp: x[7] && x[7].precioEsp || 0, minEsp: x[7] && x[7].minEsp || 0,
+      variantes: x[7] && x[7].vars ? JSON.stringify(x[7].vars) : '', rinde: x[7] && x[7].rinde || 0, lotes: '' });
+    if (p.tipo === 'producto' && x[5] > 0) {
+      if (x[7] && x[7].vm) LOTE_ENT[p.id] = { l: 'EJ-' + String(i + 1).padStart(3, '0'), v: mesesSumar_(hoy_(), x[7].vm) };
+      moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
+    }
     n++;
   });
   return { agregados: n, productos: rows_('Productos') };
@@ -2641,19 +3097,165 @@ function instalarLimpiezaDiaria() {
 /* ===================== INVENTARIO ===================== */
 
 // Cambia existencias y deja registro en la hoja Inventario. cambios = { productoId: +/-cantidad }
+// cambios: { idProducto: cantidad } o { idProducto␁«Tono: Nude 1»: cantidad } (existencia por opción). El total del producto siempre se mueve.
 function moverStock_(cambios, tipo, refId, u, nota, fecha, costos) {
-  const ids = Object.keys(cambios);
-  if (!ids.length) return;
-  const pm = porId_(rows_('Productos')), mov = [], f = fecha || ahora_();
-  ids.forEach(id => {
-    const p = pm[id];
-    if (!p || p.tipo !== 'producto') return;
-    const nuevo = r3_(p.stock + cambios[id]);
-    upsert_('Productos', { id: id, stock: nuevo });
-    mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: r3_(cambios[id]), stock: nuevo, refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '', costo: r4_(costos && costos[id] !== undefined ? costos[id] : p.costo) }); // costo unitario del momento
+  const ks = Object.keys(cambios);
+  if (!ks.length) return;
+  const pm = porId_(rows_('Productos')), mov = [], f = fecha || ahora_(), cur = {}, vars = {};
+  ks.forEach(k => {
+    const id = k.split(SEPV)[0], vk = k.split(SEPV)[1] || '', p = pm[id], n = r3_(Number(cambios[k]) || 0);
+    if (!p || p.tipo !== 'producto' || !n) return;
+    if (cur[id] === undefined) cur[id] = Number(p.stock) || 0;
+    cur[id] = r3_(cur[id] + n);
+    if (vk) { const V = vars[id] || (vars[id] = varsDe_(p)); if (V && V[vk]) V[vk].s = r3_((Number(V[vk].s) || 0) + n); }
+    mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: n, stock: cur[id], refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '', variante: vk,
+      costo: r4_(costos && costos[id] !== undefined ? costos[id] : p.costo) }); // costo unitario del momento
   });
+  Object.keys(cur).forEach(id => { const upd = { id: id, stock: cur[id] }; if (vars[id]) upd.variantes = JSON.stringify(vars[id]);
+    const lt = lotesMover_(pm[id], cur[id], ks.filter(k => k.split(SEPV)[0] === id).reduce((a, k) => r3_(a + (Number(cambios[k]) || 0)), 0));
+    if (lt) { upd.lotes = lt.lotes; upd.caduca = lt.caduca; }
+    upsert_('Productos', upd); });
+  Object.keys(LOTE_ENT).forEach(k => { delete LOTE_ENT[k]; }); Object.keys(LOTE_SIN).forEach(k => { delete LOTE_SIN[k]; });
   appendRows_('Inventario', mov);
 }
+
+/* ---- Lotes con fecha de vencimiento (vitaminas, farmacia): [{ l: código, v: 'yyyy-MM-dd', n: cantidad }] ----
+   Las salidas consumen primero el lote que vence antes. Una entrada solo crea lote si viene en LOTE_ENT (loteAgregar).
+   Lo que no tiene lote queda «sin lote» (existencia − suma de lotes). La caducidad del producto = el lote más próximo. */
+const LOTE_ENT = {}, LOTE_SIN = {};
+function lotesDe_(p) { const a = parseJ_(p && p.lotes, null); return Array.isArray(a) ? a.filter(x => x && Number(x.n) > 0).map(x => ({ l: String(x.l || ''), v: String(x.v || ''), n: r3_(Number(x.n) || 0) })) : null; }
+function lotesOrden_(a) { return a.sort((x, y) => (x.v || '9999') < (y.v || '9999') ? -1 : (x.v || '9999') > (y.v || '9999') ? 1 : 0); }
+function lotesMover_(p, stockNuevo, neto) {
+  const ent = LOTE_ENT[p.id], prev = lotesDe_(p);
+  if (!ent && !prev) return null;
+  let a = lotesOrden_((prev || []).slice());
+  if (ent && neto > 0) { const ex = a.find(x => x.l === ent.l && x.v === ent.v); if (ex) ex.n = r3_(ex.n + neto); else a.push({ l: ent.l, v: ent.v, n: neto }); a = lotesOrden_(a); }
+  else if (neto < 0 && !LOTE_SIN[p.id]) { let q = -neto; for (const x of a) { if (q <= 0) break; const t = Math.min(x.n, q); x.n = r3_(x.n - t); q = r3_(q - t); } }
+  // Los lotes nunca suman más que la existencia: lo que sobra sale de los que vencen antes
+  let exceso = r3_(a.reduce((s, x) => s + x.n, 0) - Math.max(0, Number(stockNuevo) || 0));
+  for (const x of a) { if (exceso <= 0) break; const t = Math.min(x.n, exceso); x.n = r3_(x.n - t); exceso = r3_(exceso - t); }
+  a = a.filter(x => x.n > 0);
+  return { lotes: JSON.stringify(a), caduca: a.length ? a[0].v : (prev ? '' : p.caduca || '') };
+}
+function lotes_(u, d) {
+  req_(u, ['admin', 'bodega', 'cajero']);
+  const h = hoy_();
+  const l = [];
+  rows_('Productos').filter(p => p.activo && p.tipo === 'producto').forEach(p => {
+    const a = lotesDe_(p) || [];
+    a.forEach((x, i) => l.push({ productoId: p.id, nombre: p.nombre, icono: p.icono, foto: p.foto, i: i, l: x.l, v: x.v, n: x.n,
+      dias: x.v ? Math.round((msDeLocal_(x.v + 'T00:00') - msDeLocal_(h + 'T00:00')) / 86400000) : null }));
+    const sin = r3_((Number(p.stock) || 0) - a.reduce((s, x) => s + x.n, 0));
+    if (a.length && sin > 0) l.push({ productoId: p.id, nombre: p.nombre, icono: p.icono, foto: p.foto, i: -1, l: '', v: '', n: sin, dias: null });
+  });
+  return l.sort((a, b) => (a.v || '9999') < (b.v || '9999') ? -1 : (a.v || '9999') > (b.v || '9999') ? 1 : a.nombre.localeCompare(b.nombre));
+}
+function loteAgregar_(u, d) {
+  req_(u, ['admin', 'bodega']);
+  const p = rows_('Productos').find(x => x.id === d.productoId);
+  if (!p || p.tipo !== 'producto') throw new Error('El producto ya no existe');
+  const n = r3_(Number(d.cantidad) || 0), v = String(d.vence || '');
+  if (!(n > 0)) throw new Error('Escribe cuántas unidades trae el lote');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) throw new Error('Escribe la fecha de vencimiento del lote');
+  LOTE_ENT[p.id] = { l: txt_(d.lote, 30) || 'Lote ' + v.slice(0, 7), v: v };
+  const vk = d.variante && (varsDe_(p) || {})[d.variante] ? p.id + SEPV + d.variante : p.id;
+  moverStock_({ [vk]: n }, 'entrada', '', u, 'Lote ' + LOTE_ENT[p.id].l + ' · vence ' + v);
+  return rows_('Productos').find(x => x.id === p.id);
+}
+// Sacar un lote (vencido o dañado): baja su existencia con registro en el inventario
+function loteBaja_(u, d) {
+  req_(u, ['admin', 'bodega']);
+  const p = rows_('Productos').find(x => x.id === d.productoId);
+  const a = p ? lotesDe_(p) : null, x = a ? lotesOrden_(a)[Number(d.i)] : null;
+  if (!x) throw new Error('El lote ya no existe');
+  // Se quita ese lote y la existencia baja lo mismo, sin tocar los demás lotes
+  upsert_('Productos', { id: p.id, lotes: JSON.stringify(a.filter(y => y !== x)) });
+  LOTE_SIN[p.id] = true;
+  moverStock_({ [p.id]: -x.n }, 'ajuste', '', u, 'Baja del lote ' + (x.l || '') + (x.v ? ' (vence ' + x.v + ')' : ''));
+  return lotes_(u, d);
+}
+function loteEditar_(u, d) {
+  req_(u, ['admin', 'bodega']);
+  const p = rows_('Productos').find(x => x.id === d.productoId);
+  const a = p ? lotesOrden_(lotesDe_(p) || []) : [], x = a[Number(d.i)];
+  if (!x) throw new Error('El lote ya no existe');
+  if (d.vence !== undefined) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.vence))) throw new Error('Fecha no válida'); x.v = String(d.vence); }
+  if (d.lote !== undefined) x.l = txt_(d.lote, 30);
+  lotesOrden_(a);
+  upsert_('Productos', { id: p.id, lotes: JSON.stringify(a), caduca: a.length ? a[0].v : '' });
+  return lotes_(u, d);
+}
+
+/* ---- Recompra (vitaminas): a quién se le termina lo que compró, según los días que rinde cada unidad ---- */
+function recompra_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const cfg = config_(), h = hoy_(), dias = Math.max(1, Math.min(30, parseInt(cfg.recAviso, 10) || 7));
+  const prods = porId_(rows_('Productos').filter(p => Number(p.rinde) > 0));
+  if (!Object.keys(prods).length) return { lista: [], semana: 0, avisados: 0, sinRinde: true };
+  const desde = diasAtras_(400) + 'T00:00', cl = porId_(rows_('Clientes'));
+  const vs = porId_(rows_('Ventas').filter(v => !v.anulada && v.clienteId && String(v.fecha) >= desde));
+  const ult = {}; // cliente|producto → última compra
+  rows_('VentaDetalle').forEach(x => {
+    const v = vs[x.ventaId], p = prods[x.productoId]; if (!v || !p) return;
+    const k = v.clienteId + '|' + p.id, f = String(v.fecha).slice(0, 10), o = ult[k];
+    if (!o || f > o.f) ult[k] = { f: f, n: Number(x.cantidad) || 1, ventaId: v.id };
+    else if (f === o.f) o.n += Number(x.cantidad) || 1;
+  });
+  const av = parseJ_(cfg.recompraAv, {}) || {}, out = [];
+  Object.keys(ult).forEach(k => {
+    const [cid, pid] = k.split('|'), o = ult[k], c = cl[cid], p = prods[pid]; if (!c || !p || c.activo === false) return;
+    const fin = fechaMas_(o.f, Math.round(Number(p.rinde) * Math.max(1, o.n)));
+    const faltan = Math.round((msDeLocal_(fin + 'T00:00') - msDeLocal_(h + 'T00:00')) / 86400000);
+    if (faltan > dias || faltan < -45) return;
+    out.push({ clienteId: cid, cliente: c.nombre, telefono: c.telefono, productoId: pid, producto: p.nombre, icono: p.icono, compro: o.f, cantidad: o.n,
+      ventaId: o.ventaId, haceDias: Math.round((msDeLocal_(h + 'T00:00') - msDeLocal_(o.f + 'T00:00')) / 86400000), termina: fin, faltan: faltan, avisado: av[k] && av[k].ventaId === o.ventaId ? av[k].f : '' });
+  });
+  out.sort((a, b) => (a.avisado ? 1 : 0) - (b.avisado ? 1 : 0) || a.faltan - b.faltan);
+  return { lista: out, semana: out.length, avisados: out.filter(x => x.avisado).length, dias: dias, sinRinde: false };
+}
+function recompraAvisado_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const cfg = config_(), av = parseJ_(cfg.recompraAv, {}) || {}, k = String(d.clienteId || '') + '|' + String(d.productoId || '');
+  const lim = diasAtras_(120);
+  Object.keys(av).forEach(x => { if (!av[x] || av[x].f < lim) delete av[x]; }); // se limpian los avisos viejos
+  if (d.quitar) delete av[k];
+  else av[k] = { f: hoy_(), ventaId: String(d.ventaId || (recompra_(u, {}).lista.find(x => x.clienteId + '|' + x.productoId === k) || {}).ventaId || '') };
+  guardarConfig_({ recompraAv: JSON.stringify(av) });
+  return recompra_(u, d);
+}
+
+/* ---- Existencia y precio por opción (tono, talla, presentación) ---- */
+const SEPV = '\u0001';
+// Opciones del producto sin el color: [{ n: 'Tono', v: ['Nude 1', …] }]
+function opsDe_(p) {
+  return String(p && p.opciones || '').split('|').map(g => { const i = g.indexOf(':'); if (i < 0) return null;
+    return { n: g.slice(0, i).trim(), v: g.slice(i + 1).split(',').map(x => x.trim().replace(/#[0-9a-f]{6}$/i, '').trim()).filter(Boolean) }; }).filter(o => o && o.n && o.v.length);
+}
+function varsDe_(p) { const o = parseJ_(p && p.variantes, null); return o && typeof o === 'object' && !Array.isArray(o) && Object.keys(o).length ? o : null; }
+// Todas las combinaciones: «Talla: M, Color: Negro»
+function combosDe_(p) {
+  let l = [''];
+  opsDe_(p).forEach(o => { const nl = []; l.forEach(a => o.v.forEach(v => nl.push((a ? a + ', ' : '') + o.n + ': ' + v))); l = nl; });
+  return l[0] === '' ? [] : l.slice(0, 120);
+}
+// Texto de la opción como venga («Tono: Nude 1», «M · Negro», «Corrector (Talla: M, Color: Negro)») → llave «Talla: M, Color: Negro»
+function varKey_(p, texto) {
+  const ops = opsDe_(p); if (!ops.length || !texto) return '';
+  let t = String(texto);
+  const m = /\(([^()]*)\)\s*$/.exec(t); if (m) t = m[1]; else if (t.indexOf(p.nombre + ' · ') === 0) t = t.slice(p.nombre.length + 3);
+  const toks = t.split(/,|·/).map(x => { const z = x.trim(), j = z.indexOf(':'); return (j >= 0 ? z.slice(j + 1) : z).trim().toLowerCase(); }).filter(Boolean);
+  const sel = ops.map(o => { const k = toks.findIndex(x => o.v.some(v => v.toLowerCase() === x)); if (k < 0) return null; const v = o.v.find(y => y.toLowerCase() === toks[k]); toks.splice(k, 1); return v; });
+  return sel.some(x => x === null) ? '' : ops.map((o, i) => o.n + ': ' + sel[i]).join(', ');
+}
+function precioVar_(p, vk) { const V = varsDe_(p), x = V && vk ? V[vk] : null; return x && Number(x.p) > 0 ? r2_(x.p) : Number(p.precio) || 0; }
+const tienePrecioVar_ = (p, vk) => { const V = varsDe_(p), x = V && vk ? V[vk] : null; return !!(x && Number(x.p) > 0); };
+// Lo que salió con una venta o entró con una compra, por producto y opción (para devolverlo al anular)
+function movDe_(refId, tipo, desdeMs) {
+  const o = {};
+  rowsDesde_('Inventario', desdeMs).forEach(m => { if (m.refId === refId && m.tipo === tipo) { const k = m.productoId + (m.variante ? SEPV + m.variante : ''); o[k] = r3_((o[k] || 0) - Number(m.cantidad)); } });
+  return o;
+}
+const totPorId_ = o => { const t = {}; Object.keys(o || {}).forEach(k => { const id = k.split(SEPV)[0]; t[id] = r3_((t[id] || 0) + o[k]); }); return t; };
 
 function ajusteStock_(u, d) {
   req_(u, ['admin','bodega']);
@@ -2666,15 +3268,18 @@ function ajusteStock_(u, d) {
   if (!esNum_(d.cantidad)) throw new Error('Escribe la cantidad');
   const n = r3_(d.cantidad);
   if (!(n >= 0)) throw new Error('Cantidad no válida');
+  const V = varsDe_(p), vk = V ? varKey_(p, d.variante) : '';
+  if (V && !vk) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' que ajustas');
+  const base = vk && V[vk] ? Number(V[vk].s) || 0 : p.stock;
   let delta;
-  if (modo === 'conteo') delta = r3_(n - p.stock);
+  if (modo === 'conteo') delta = r3_(n - base);
   else if (modo === 'entrada') delta = n;
   else if (modo === 'salida') delta = -n;
   else throw new Error('Tipo de ajuste no válido');
   if (!delta) return rows_('Productos').find(x => x.id === p.id);
   if (modo !== 'conteo' && !(n > 0)) throw new Error('La cantidad debe ser mayor a cero');
   const motivo = txt_(d.motivo, 120) || (modo === 'conteo' ? 'Conteo físico' : modo === 'entrada' ? 'Entrada' : 'Salida');
-  moverStock_({ [p.id]: delta }, 'ajuste', '', u, motivo, undefined, { [p.id]: p.costo });
+  moverStock_({ [p.id + (vk ? SEPV + vk : '')]: delta }, 'ajuste', '', u, motivo, undefined, { [p.id]: p.costo });
   return rows_('Productos').find(x => x.id === p.id);
 }
 
@@ -2699,7 +3304,7 @@ function venta_(u, d, interno) {
   const incl = cfg.preciosConISV !== 'no';
   // Si la misma venta llega dos veces (se cortó la conexión y se volvió a tocar Cobrar), se devuelve la primera
   // ed: datos de la venta que se está corrigiendo (editarVenta_). Lo devuelto por la original cuenta como existencia.
-  const ed = interno.ed || null, dev = ed ? ed.devuelto : {};
+  const ed = interno.ed || null, dev = ed ? ed.devuelto : {}, devTot = totPorId_(dev);
   const clave = ed ? '' : txt_(d.clave, 60), kc = clave ? 'VK_' + (NEG ? NEG.id : '') + '_' + clave : '';
   if (kc) {
     let vid = null; try { vid = CacheService.getScriptCache().get(kc); } catch (e) {}
@@ -2725,6 +3330,7 @@ function venta_(u, d, interno) {
     const h0 = hoy_();
     d.sus.forEach(sd => { if (sd.vence && sd.vence < h0) throw new Error('Una fecha de vencimiento ya pasó'); (Array.isArray(sd.asig) ? sd.asig : []).forEach(a => { if (a.vence && a.vence < h0) throw new Error('La fecha de vencimiento de ' + (a.plataforma || 'una plataforma') + ' ya pasó'); }); });
   }
+  const sumaP = {}; d.items.forEach(i => { if (i && i.productoId) sumaP[i.productoId] = (sumaP[i.productoId] || 0) + (Number(i.cantidad) || 0); });
   const items = d.items.map(i => {
     if (!i || typeof i !== 'object') throw new Error('Un artículo del ticket no es válido');
     const p = i.productoId ? pm[i.productoId] : null;
@@ -2732,25 +3338,31 @@ function venta_(u, d, interno) {
     if (!esNum_(i.cantidad)) throw new Error('Cantidad no válida');
     const cant = r3_(i.cantidad);
     if (!(cant > 0)) throw new Error('Cantidad no válida');
+    // Existencia por opción: la línea dice qué tono / talla / presentación es
+    const vk = p && varsDe_(p) ? varKey_(p, i.variante || i.descripcion) : '';
+    if (p && varsDe_(p) && !vk && p.tipo === 'producto') throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
     if (!(i.precio === undefined || i.precio === '' || i.precio === null) && !esNum_(i.precio)) throw new Error('Precio no válido');
-    let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? p.precio : 0) : r2_(i.precio);
+    let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? precioVar_(p, vk) : 0) : r2_(i.precio);
     if (p && u.rol !== 'admin' && !precioLigado(p)) { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
       const delPedido = preciosPedido[p.id];
-      if (Math.abs(precio - p.precio) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005)) precio = delPedido !== undefined ? delPedido : p.precio;
+      const esp = tienePrecioVar_(p, vk) ? 0 : precioCant_(p, sumaP[p.id]), pv = precioVar_(p, vk);
+      if (Math.abs(precio - pv) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005) && !(esp && Math.abs(precio - esp) < 0.005)) precio = delPedido !== undefined ? delPedido : pv;
     }
     if (precio < 0) throw new Error('Precio no válido');
     const desc = p ? p.nombre + (i.variante ? ' · ' + txt_(i.variante, 60) : '') : txt_(i.descripcion, 80);
     if (!desc) throw new Error('Escribe la descripción del artículo');
     if (!p && !(i.costo === undefined || i.costo === '' || i.costo === null) && !(Number(i.costo) >= 0)) throw new Error('El costo de «' + desc + '» no es válido');
     const costoP = p ? (ed && ed.costos && ed.costos[p.id] !== undefined ? ed.costos[p.id] : p.costo) : 0; // al editar, lo ya vendido conserva su costo
-    return { p: p, productoId: p ? p.id : '', descripcion: desc, cantidad: cant, precio: precio, costo: p ? costoP : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
+    return { p: p, vk: vk, productoId: p ? p.id : '', descripcion: vk && i.variante === undefined && p ? p.nombre + ' · ' + vk.split(', ').map(x => x.split(': ')[1]).join(' · ') : desc, cantidad: cant, precio: precio, costo: p ? costoP : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
   });
   if (!items.length) throw new Error('El ticket está vacío');
   // Existencias
-  const pedido = {};
-  items.forEach(i => { if (i.p && i.p.tipo === 'producto') pedido[i.productoId] = r3_((pedido[i.productoId] || 0) + i.cantidad); });
+  const pedido = {}, pedidoK = {};
+  items.forEach(i => { if (i.p && i.p.tipo === 'producto') { pedido[i.productoId] = r3_((pedido[i.productoId] || 0) + i.cantidad); const k = i.productoId + (i.vk ? SEPV + i.vk : ''); pedidoK[k] = r3_((pedidoK[k] || 0) + i.cantidad); } });
   if (cfg.venderSinStock !== 'si') {
-    Object.keys(pedido).forEach(id => { const p = pm[id], hay = r3_(p.stock + (ed && !ed.listo ? dev[id] || 0 : 0)); if (hay < pedido[id]) throw new Error('No hay suficiente «' + p.nombre + '» (quedan ' + hay + ')'); });
+    Object.keys(pedido).forEach(id => { const p = pm[id], hay = r3_(p.stock + (ed && !ed.listo ? devTot[id] || 0 : 0)); if (hay < pedido[id]) throw new Error('No hay suficiente «' + p.nombre + '» (quedan ' + hay + ')'); });
+    Object.keys(pedidoK).forEach(k => { const [id, vk] = k.split(SEPV); if (!vk) return; const p = pm[id], V = varsDe_(p), x = V && V[vk]; if (!x) return;
+      const hay = r3_((Number(x.s) || 0) + (ed && !ed.listo ? dev[k] || 0 : 0)); if (hay < pedidoK[k]) throw new Error('No hay suficiente «' + p.nombre + ' (' + vk + ')» (quedan ' + hay + ')'); });
   }
   const metodo = METODOS.indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
   // Facturación SAR (solo si el negocio la activó en Ajustes)
@@ -2844,7 +3456,7 @@ function venta_(u, d, interno) {
   appendRows_('Ventas', [venta]);
   appendRows_('VentaDetalle', detalle);
   const cambios = {};
-  Object.keys(pedido).forEach(id => { cambios[id] = -pedido[id]; });
+  Object.keys(pedidoK).forEach(k => { cambios[k] = -pedidoK[k]; });
   moverStock_(cambios, 'venta', venta.id, u, ed ? 'Edición ' + venta.numero : venta.numero, fecha);
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   const nuevasSus = susRegistrar_(u, planSus, venta);
@@ -3052,7 +3664,9 @@ function compra_(u, d) {
     if (!esNum_(i.costo) || Number(i.costo) < 0) throw new Error('Costo no válido en «' + p.nombre + '»');
     if (!vacio(i.precio) && (!esNum_(i.precio) || precio < 0)) throw new Error('Precio no válido en «' + p.nombre + '»');
     const cant = r3_(i.cantidad), costo = r4_(i.costo);
-    return { p: p, cantidad: cant, costo: costo, precio: precio, margen: margen };
+    const vk = !p._nuevo && varsDe_(p) ? varKey_(p, i.variante) : '';
+    if (!p._nuevo && varsDe_(p) && !vk) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '» en la compra');
+    return { p: p, vk: vk, cantidad: cant, costo: costo, precio: precio, margen: margen };
   });
   if (!items.length) throw new Error('Agrega al menos un producto');
   const prov = d.proveedorId ? rows_('Proveedores').find(x => x.id === d.proveedorId) : null;
@@ -3079,7 +3693,7 @@ function compra_(u, d) {
   };
   if (girosActivos_().length > 1) c.sucursal = tiendaReq_(u, d) || girosActivos_()[0];
   appendRows_('Compras', [c]);
-  appendRows_('CompraDetalle', items.map((i, k) => ({ id: newId_('CompraDetalle') + k, compraId: c.id, productoId: i.p.id, descripcion: i.p.nombre,
+  appendRows_('CompraDetalle', items.map((i, k) => ({ id: newId_('CompraDetalle') + k, compraId: c.id, productoId: i.p.id, descripcion: i.p.nombre + (i.vk ? ' (' + i.vk + ')' : ''),
     cantidad: i.cantidad, costo: i.costo, total: r2_(i.cantidad * i.costo),
     precioAnt: i.precio !== null && i.precio > 0 && Math.abs(i.precio - (i.p.precio || 0)) > 0.004 ? (nuevos.indexOf(i.p.id) >= 0 ? 0 : i.p.precio) : '',
     precio: i.precio !== null && i.precio > 0 && Math.abs(i.precio - (i.p.precio || 0)) > 0.004 ? i.precio : '' })));
@@ -3094,8 +3708,8 @@ function compra_(u, d) {
     if (x.precio !== null && x.precio > 0) upd.precio = x.precio;
     if (x.margen !== null) upd.margen = x.margen;
     upsert_('Productos', upd);
-    cambios[id] = r3_(x.cant);
   });
+  items.forEach(i => { const k = i.p.id + (i.vk ? SEPV + i.vk : ''); cambios[k] = r3_((cambios[k] || 0) + i.cantidad); });
   moverStock_(cambios, 'compra', c.id, u, c.numero + (c.factura ? ' · Fact. ' + c.factura : ''), fecha);
   return { compra: c, productos: rows_('Productos'), proveedores: proveedoresConSaldo_(), nuevos: nuevos };
 }
@@ -3125,12 +3739,16 @@ function anularCompra_(u, d) {
   if (rows_('Pagos').some(p => !p.anulado && parseJ_(p.aplicado, []).some(x => x.id === c.id))) throw new Error('Esta compra tiene pagos. Anula primero los pagos al proveedor.');
   const det = rows_('CompraDetalle').filter(x => x.compraId === c.id), pm = porId_(rows_('Productos')), cambios = {}, agr = {};
   det.forEach(i => {
-    cambios[i.productoId] = r3_((cambios[i.productoId] || 0) - i.cantidad);
     const x = agr[i.productoId] || (agr[i.productoId] = { cant: 0, valor: 0, precioAnt: null, precio: null });
     x.cant += i.cantidad; x.valor += i.cantidad * i.costo;
     if (i.precio > 0) { x.precio = i.precio; if (x.precioAnt === null) x.precioAnt = i.precioAnt; }
   });
-  const falta = Object.keys(cambios).filter(id => pm[id] && pm[id].stock + cambios[id] < -0.0005);
+  // Se devuelve lo que entró con la compra (por producto y opción); las compras viejas, por su detalle
+  const entro = movDe_(c.id, 'compra', (idMs_(c.id) || 0) - 60000);
+  if (Object.keys(entro).length) Object.keys(entro).forEach(k => { cambios[k] = entro[k]; });
+  else det.forEach(i => { cambios[i.productoId] = r3_((cambios[i.productoId] || 0) - i.cantidad); });
+  const tot = totPorId_(cambios);
+  const falta = Object.keys(tot).filter(id => pm[id] && pm[id].stock + tot[id] < -0.0005);
   if (falta.length) throw new Error('No se puede anular: ya se vendió parte de «' + pm[falta[0]].nombre + '». Haz un ajuste de inventario si es necesario.');
   Object.keys(agr).forEach(id => {
     const p = pm[id], x = agr[id]; if (!p) return;
@@ -3273,7 +3891,7 @@ function anularGasto_(u, d) {
 function pedidos_(u, d) {
   req_(u, ['admin','cajero']);
   const lim = diasAtras_(45) + 'T00:00';
-  let l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo'].indexOf(p.estado) >= 0 || p.fecha >= lim);
+  let l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo','cotizar','cotizado'].indexOf(p.estado) >= 0 || p.fecha >= lim);
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); l = l.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   const pagos = {}; rows_('Abonos').forEach(a => { if (a.ref && !a.anulado) pagos[a.ref] = r2_((pagos[a.ref] || 0) + (Number(a.monto) || 0)); });
   return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); return p; });
@@ -3282,7 +3900,7 @@ function pedidos_(u, d) {
 function pendientes_(u, d) {
   if (u.rol === 'bodega') return { nuevos: 0, mensajes: 0 };
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
-  let n = rows_('Pedidos').filter(p => p.estado === 'nuevo');
+  let n = rows_('Pedidos').filter(p => p.estado === 'nuevo' || p.estado === 'cotizar');
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); n = n.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   let sop = 0; try { if (MULTI_NEGOCIO && NEG) sop = mRows_('Soporte').filter(c => c.negocioId === NEG.id && Number(c.sinLeerCli) > 0).length; } catch (e) {}
   const out = { nuevos: n.length, ultimo: n.length ? n.map(p => p.fecha).sort().pop() : '', mensajes: rows_('Chats').filter(c => c.sinLeer > 0).length, soporte: sop };
@@ -3316,6 +3934,16 @@ function estadoPedido_(u, d) {
   if (d.estado === 'cancelado' && pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de cancelar.');
   const upd = { id: p.id, estado: d.estado, actualizado: ahora_() };
   if (d.estado === 'cancelado' && d.motivo) upd.nota = (p.nota ? p.nota + ' · ' : '') + 'Cancelado: ' + txt_(d.motivo, 120);
+  // Carwash: al confirmar un pedido que trae día y hora, la cita entra sola a la Agenda
+  if (d.estado === 'confirmado' && p.cita && !p.citaId && modOn_('agenda')) {
+    const items = parseJ_(p.items, []);
+    const det = [items.map(i => i.nombre).join(', ').slice(0, 120), p.vehiculo ? p.vehiculo + (p.placa ? ' · ' + p.placa : '') : ''].filter(Boolean).join(' · ');
+    const a = upsert_('Agenda', { tipo: 'cita', clienteId: p.clienteId || '', cliente: p.nombre, telefono: p.telefono, dia: p.cita, hora: p.hora || '',
+      detalle: txt_(det || 'Pedido ' + p.numero, 240), productoId: '', monto: p.total, anticipo: anticipoDe_(p.id), atiende: '', estado: 'pendiente', ventaId: '',
+      nota: 'Apartado desde la tienda en línea · pedido ' + p.numero, usuarioId: u.id, creado: ahora_(), actualizado: ahora_() });
+    upd.citaId = a.id;
+  }
+  if (d.estado === 'cancelado' && p.citaId) { const a = rows_('Agenda').find(x => x.id === p.citaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'cancelado', actualizado: ahora_() }); }
   const g = upsert_('Pedidos', upd);
   g.items = parseJ_(g.items, []); g.anticipoPagado = pagado;
   return g;
@@ -3335,6 +3963,21 @@ function anticipoPedido_(u, d) {
   return g;
 }
 
+// Precio por cantidad en un pedido ya hecho: al cambiar lo que lleva, pasa del precio normal al especial o regresa.
+// No toca el precio propio de una opción ni un precio distinto al de hoy (el que se acordó al pedir).
+function repreciarPedido_(items, pm) {
+  const suma = {};
+  items.forEach(i => { if (i.productoId) suma[i.productoId] = (suma[i.productoId] || 0) + i.cantidad; });
+  items.forEach(i => {
+    const p = i.productoId ? pm[i.productoId] : null; if (!p || !(Number(p.precioEsp) > 0) || !(Number(p.minEsp) > 1)) return;
+    if (tienePrecioVar_(p, varsDe_(p) ? varKey_(p, i.nombre) : '')) return;
+    const nor = Number(p.precio) || 0, esp = r2_(p.precioEsp);
+    if (Math.abs(i.precio - nor) > 0.004 && Math.abs(i.precio - esp) > 0.004) return;
+    if (precioCant_(p, suma[p.id])) { i.precio = esp; i.normal = nor; } else { i.precio = nor; delete i.normal; }
+    i.total = r2_(i.cantidad * i.precio);
+  });
+}
+const descuentoCant_ = items => r2_(items.reduce((a, i) => a + (Number(i.normal) > i.precio ? (i.normal - i.precio) * i.cantidad : 0), 0));
 // Corregir un pedido en línea antes de cobrarlo: cambiar cantidades o quitar productos (se agotó, error de precio…)
 function editarPedido_(u, d) {
   req_(u, ['admin','cajero']);
@@ -3344,7 +3987,7 @@ function editarPedido_(u, d) {
   const antes = parseJ_(p.items, []), cambios = Array.isArray(d.cantidades) ? d.cantidades : [];
   if (cambios.length !== antes.length) throw new Error('El pedido cambió mientras lo editabas. Ábrelo de nuevo.');
   const cfg = config_(), pm = porId_(rows_('Productos')), sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
-  const items = [], lineas = [], suma = {};
+  const items = [], lineas = [], suma = {}, sumaV = {};
   antes.forEach((it, i) => {
     const n = Math.floor(Number(cambios[i]) || 0);
     if (n < 0 || n > 999) throw new Error('Cantidad no válida en «' + it.nombre + '»');
@@ -3354,11 +3997,16 @@ function editarPedido_(u, d) {
     if (pr) {
       suma[pr.id] = (suma[pr.id] || 0) + n;
       if (n > it.cantidad && pr.tipo === 'producto' && !sin && pr.stock < suma[pr.id]) throw new Error(pr.stock > 0 ? 'Solo quedan ' + Math.floor(pr.stock) + ' de «' + pr.nombre + '»' : '«' + pr.nombre + '» está agotado');
+      // Existencia por opción (tono, talla…), igual que al pedir: la opción viene en el nombre «Producto (Talla: L, Color: Blanco)»
+      const V = varsDe_(pr), vk = V ? varKey_(pr, it.nombre) : '';
+      if (vk) { const kk = pr.id + SEPV + vk; sumaV[kk] = (sumaV[kk] || 0) + n; const hay = Math.floor(Number(V[vk] && V[vk].s) || 0);
+        if (n > it.cantidad && pr.tipo === 'producto' && !sin && hay < sumaV[kk]) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + pr.nombre + ' (' + vk + ')»' : '«' + pr.nombre + ' (' + vk + ')» está agotado'); }
     }
     items.push(Object.assign({}, it, { cantidad: n, total: r2_(n * it.precio) }));
   });
   if (!lineas.length) throw new Error('No cambiaste nada');
   if (!items.length) throw new Error('Si quitas todo, mejor cancela el pedido');
+  repreciarPedido_(items, pm);
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   const pct = Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0));
   const anticipo = Math.ceil(items.filter(i => i.tipo === 'compra').reduce((a, i) => a + i.total, 0) * pct / 100);
@@ -3490,6 +4138,7 @@ function inicio_(u, d) {
   if (u.rol !== 'bodega' && susActivas_()) { try { out.sus = susResumen_(); } catch (e) {} }
   try {
     if (modOn_('caducidad')) out.caducan = caducan_();
+    if (modOn_('recompra') && u.rol !== 'bodega') { const rc = recompra_(u, {}); out.recompra = { n: rc.lista.length, pendientes: rc.lista.filter(x => !x.avisado).length }; }
     if (modOn_('ordenes')) out.ordenes = ordenResumen_();
     if (modOn_('agenda')) out.agenda = agendaResumen_('cita');
     if (modOn_('encargos')) out.encargos = agendaResumen_('encargo');
@@ -4039,11 +4688,12 @@ function guardarProyecto_(u, d) {
   if (!(rec.margen >= 0 && rec.margen <= 1000)) throw new Error('El % de ganancia deseado no es válido');
   if (prev) rec.id = prev.id;
   else Object.assign(rec, { estado: 'curso', fin: '', usuarioId: u.id, creado: ahora_() });
+  // Al crear, se puede indicar de una vez el producto final (se valida antes de escribir: si no, quedaba un proyecto sin producto)
+  const conProd = !prev && r.producto && txt_(r.producto.nombre, 80);
+  if (conProd && !(r3_(r.producto.cantidad) > 0)) throw new Error('Escribe la cantidad que vas a producir');
   const p = upsert_('Proyectos', rec);
-  // Al crear, se puede indicar de una vez el producto final
-  if (!prev && r.producto && txt_(r.producto.nombre, 80)) {
+  if (conProd) {
     const cant = r3_(r.producto.cantidad);
-    if (!(cant > 0)) throw new Error('Escribe la cantidad que vas a producir');
     upsert_('ProyectoProductos', { proyectoId: p.id, nombre: txt_(r.producto.nombre, 80), cantidad: cant, unidad: txt_(r.producto.unidad, 20) || 'unidad',
       peso: 1, precio: r2_(r.producto.precio) > 0 ? r2_(r.producto.precio) : 0, productoId: '', inventario: '', creado: ahora_() });
   }
@@ -4248,22 +4898,31 @@ function tiendaNeg_(d) {
 function tiendaInfo_(d) {
   const cfg = tiendaNeg_(d);
   const ver = cfg.tiendaMostrarStock === 'si', sin = cfg.tiendaSinStock === 'si', nuevoDesde = diasAtras_(15);
-  const activos = girosActivos_(cfg);
+  const activos = girosActivos_(cfg), catOn = modOn_('catalogo');
+  // Tienda por secciones (un bloque por categoría): Beauty & Moda (catálogo), Recargas y Streaming de fábrica, o cualquier giro con el módulo encendido
+  const secGiros = activos.filter(g => cfg.secciones === 'si' || g === 'catalogo' || (MODULOS_GIRO[g] || []).indexOf('secciones') >= 0), secOn = secGiros.length > 0;
   return {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago,
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
-      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
+      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, ramoPrecios: cfg.ramoPrecios !== 'no', cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
         datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null,
       giros: activos.map(g => ({ id: g, n: GIROS[g].n })),
+      catalogo: catOn, secciones: secOn ? parseJ_(cfg.tiendaSecciones, {}) : {}, ordenCats: secOn ? [].concat.apply([], secGiros.map(g => GIROS[g].cats)) : [], porSecciones: secOn, girosSec: secGiros,
       compras: activos.indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0 ? { cambio: Number(cfg.comprasCambio) || 0, recargo: Math.max(0, Number(cfg.comprasRecargo) || 0), envio: Math.max(0, Number(cfg.comprasEnvio) || 0),
         anticipo: Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0)), dias: cfg.comprasDias, tiendas: cfg.comprasTiendas } : null },
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
       const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '', g: giroDeProd_(p, activos) };
+      if (p.sub) o.sub = p.sub; if (p.lema) o.lema = p.lema; if (p.puntos) o.puntos = p.puntos; if (p.codigo && catOn && !/^EJ\d/.test(p.codigo)) o.codigo = p.codigo;
+      if (p.precioEsp > 0 && p.minEsp > 1) { o.precioEsp = p.precioEsp; o.minEsp = p.minEsp; }
+      const V = varsDe_(p);
+      if (V) { o.vars = {}; Object.keys(V).forEach(k => { const x = {}; if (Number(V[k].p) > 0) x.p = r2_(V[k].p); if (p.tipo === 'producto' && !sin) x.n = Math.max(0, Math.floor(Number(V[k].s) || 0)); o.vars[k] = x; }); }
       if (String(p.creado).slice(0, 10) >= nuevoDesde) o.nuevo = true;
       if (p.tipo === 'servicio') o.serv = 1;
+      if (Number(p.rinde) > 0) o.rinde = Number(p.rinde);
+      if (p.caduca && activos.indexOf('vitaminas') >= 0 && p.caduca >= hoy_()) o.vence = String(p.caduca).slice(0, 7);
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
       return o;
     }).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre)),
@@ -4272,6 +4931,154 @@ function tiendaInfo_(d) {
 }
 
 // Antes de esperar el candado: el negocio existe, la tienda está abierta y no hay una avalancha de pedidos
+/* ---- Comprobante de pago de un pedido en línea ---- */
+// Guarda la foto del comprobante (la manda el cliente desde la tienda) y devuelve su dirección
+function guardarFoto_(data, nombre, que) {
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(data || ''));
+  if (!m) throw new Error(que + ' debe ser una foto');
+  if (m[2].length > 900000) throw new Error(que + ' es muy pesada. Prueba con otra.');
+  const f = carpetaFotos_().createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], nombre + '-' + Date.now() + '.jpg'));
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  return f.getId();
+}
+const DIAS_FOTOS_RAMO = 7;
+// Fotos de referencia de ramos ya entregados o cancelados hace más de 7 días: se borran y queda la fecha
+function limpiarFotosRamo_() {
+  const lim = diasAtras_(DIAS_FOTOS_RAMO); let n = 0;
+  rows_('Pedidos').forEach(p => {
+    if (['entregado', 'cancelado'].indexOf(p.estado) < 0 || String(p.actualizado).slice(0, 10) >= lim || String(p.cotiza).indexOf('"fotos"') < 0) return;
+    const c = parseJ_(p.cotiza, {}); (c.fotos || []).forEach(id => { borrarFoto_(id); n++; });
+    delete c.fotos; c.fotosBorradas = hoy_(); upsert_('Pedidos', { id: p.id, cotiza: JSON.stringify(c) });
+  });
+  return n;
+}
+function guardarComprobante_(data, numero) {
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(data || ''));
+  if (!m) throw new Error('El comprobante debe ser una foto o captura');
+  if (m[2].length > 900000) throw new Error('La foto del comprobante es muy pesada. Prueba con una captura.');
+  const f = carpetaFotos_().createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], 'comprobante-' + String(numero || '') + '-' + Date.now() + '.jpg'));
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  return f.getId();
+}
+// El cliente manda (o vuelve a mandar) el comprobante de un pedido suyo: se comprueba con su WhatsApp
+function pedidoComprobante_(d) {
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p || !tel8_(d.telefono) || tel8_(p.telefono) !== tel8_(d.telefono)) throw new Error('No encontramos ese pedido');
+  if (p.estado === 'cancelado' || p.ventaId) throw new Error('Este pedido ya está ' + (p.estado === 'cancelado' ? 'cancelado' : 'cobrado'));
+  if (p.pagoEstado === 'ok') throw new Error('El negocio ya confirmó tu pago');
+  const c = CacheService.getScriptCache(), k = 'PC_' + (NEG ? NEG.id : '') + p.id, n = Number(c.get(k) || 0);
+  if (n >= 5) throw new Error('Ya mandaste varios comprobantes. Escríbele al negocio por WhatsApp.');
+  const url = guardarComprobante_(d.foto, p.numero);
+  if (p.comprobante && p.comprobante !== url) borrarFoto_(p.comprobante);
+  c.put(k, String(n + 1), 21600);
+  upsert_('Pedidos', { id: p.id, comprobante: url, pagoEstado: 'revisar', actualizado: ahora_() });
+  return { id: p.id, pagoEstado: 'revisar' };
+}
+const cantTxt_ = n => String(Math.round(Number(n) * 100) / 100);
+const RAMO_CATS = ['flores sueltas', 'globos y detalles'];
+// El negocio pone el precio del ramo: las flores quedan en 0 (para descontar existencia al cobrar) y una línea «Ramo a tu gusto» lleva el precio
+function cotizarRamo_(u, d) {
+  req_(u, ['admin','cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p || EST_RAMO.indexOf(p.estado) < 0) throw new Error('Este pedido ya no espera precio');
+  const precio = r2_(Number(d.precio) || 0);
+  if (!(precio > 0) || precio > 1000000) throw new Error('Escribe el precio del ramo');
+  const lineas = parseJ_(p.items, []).filter(i => i.tipo !== 'ramo').map(i => ({ productoId: i.productoId, nombre: i.nombre, cantidad: i.cantidad, precio: 0, total: 0, lista: Number(i.lista !== undefined ? i.lista : i.precio) || 0 }));
+  lineas.push({ productoId: '', tipo: 'ramo', nombre: 'Ramo a tu gusto', cantidad: 1, precio: precio, total: precio });
+  const env = Number(p.envio) || 0, cot = Object.assign(parseJ_(p.cotiza, {}), { precio: precio, nota: txt_(d.nota, 300), el: ahora_() });
+  const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(lineas), subtotal: precio, total: r2_(precio + env), estado: 'cotizado', cotiza: JSON.stringify(cot), actualizado: ahora_() });
+  g.items = parseJ_(g.items, []); g.anticipoPagado = 0;
+  return g;
+}
+// El cliente acepta o no el precio desde «Tus pedidos» (se comprueba con su WhatsApp)
+function respuestaRamo_(d) {
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p || !tel8_(d.telefono) || tel8_(p.telefono) !== tel8_(d.telefono)) throw new Error('No encontramos ese pedido');
+  if (p.estado !== 'cotizado') throw new Error(p.estado === 'cotizar' ? 'La tienda todavía no te manda el precio' : 'Este ramo ya no está esperando tu respuesta');
+  const cot = parseJ_(p.cotiza, {});
+  if (d.precio !== undefined && r2_(Number(d.precio)) !== r2_(cot.precio)) throw new Error('La tienda cambió el precio. Revísalo de nuevo.');
+  const si = !!d.acepta, nota = ((p.nota ? p.nota + ' · ' : '') + (si ? 'Precio aceptado por el cliente' : 'El cliente no aceptó el precio')).slice(-1000);
+  upsert_('Pedidos', { id: p.id, estado: si ? 'nuevo' : 'cancelado', nota: nota, actualizado: ahora_() });
+  return { id: p.id, estado: si ? 'nuevo' : 'cancelado', total: p.total };
+}
+// El cliente solo cambia su pedido mientras esté «Recibido» y sin pago de por medio; después lo arregla con la tienda
+function bloqueoCliente_(p) {
+  if (p.cotiza) return 'Este ramo ya tiene precio. Para cambiarlo, escríbele a la tienda.';
+  if (p.ventaId || p.estado !== 'nuevo') return 'Tu pedido ya no se puede cambiar desde aquí. Escríbele a la tienda.';
+  if (p.pagoEstado === 'ok' || p.pagoEstado === 'revisar' || anticipoDe_(p.id) > 0) return 'Ya enviaste tu pago. Para cambiar el pedido, escríbele a la tienda.';
+  return '';
+}
+// Huella de los productos del pedido: si cambiaron desde que el cliente los vio, no se guarda sobre algo distinto
+const verPedido_ = p => { let h = 7; String(p.items || '').split('').forEach(c => { h = (h * 31 + c.charCodeAt(0)) % 1000000007; }); return String(h); };
+// Opción elegida en una línea: el nombre se guardó como «Producto (Talla: M, Color: Negro)»
+function opcionLinea_(it, pm) {
+  const p = pm[it.productoId], n = String(it.nombre || ''), base = p ? p.nombre + ' (' : '';
+  return base && n.indexOf(base) === 0 && n.slice(-1) === ')' ? n.slice(base.length, -1) : '';
+}
+// El cliente cambia una línea de su pedido (opción y cantidad) o la quita; se comprueba con su WhatsApp, igual que el comprobante
+function pedidoClienteEditar_(d) {
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p || !tel8_(d.telefono) || tel8_(p.telefono) !== tel8_(d.telefono)) throw new Error('No encontramos ese pedido');
+  const no = bloqueoCliente_(p); if (no) throw new Error(no);
+  if (String(d.version || '') !== verPedido_(p)) throw new Error('Tu pedido cambió. Revísalo de nuevo.');
+  const c = CacheService.getScriptCache(), k = 'PE_' + (NEG ? NEG.id : '') + p.id, veces = Number(c.get(k) || 0);
+  if (veces >= 15) throw new Error('Ya cambiaste varias veces este pedido. Escríbele a la tienda.');
+  const cfg = config_(), pm = porId_(rows_('Productos')), sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
+  const antes = parseJ_(p.items, []), ix = Math.floor(Number(d.linea)), it = antes[ix], cant = Math.floor(Number(d.cantidad));
+  if (!it || !it.productoId) throw new Error('Tu pedido cambió. Revísalo de nuevo.');
+  if (!(cant >= 0) || cant > 999) throw new Error('Cantidad no válida');
+  const items = antes.map(x => Object.assign({}, x));
+  let detalle;
+  if (!cant) {
+    if (items.length === 1) throw new Error('Es el único producto del pedido. Si ya no lo quieres, escríbele a la tienda.');
+    items.splice(ix, 1); detalle = 'quitó ' + it.nombre;
+  } else {
+    const pr = pm[it.productoId];
+    if (!pr || !pr.activo || !pr.tienda) throw new Error('Este producto ya no está en la tienda. Escríbele al negocio.');
+    const op = txt_(d.opcion, 160), nom = op ? txt_(pr.nombre + ' (' + op + ')', 240) : pr.nombre;
+    const V = varsDe_(pr), vk = V ? varKey_(pr, op) : '';
+    if (V && !vk) throw new Error('Elige ' + opsDe_(pr).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + pr.nombre + '»');
+    if (nom === it.nombre && cant === it.cantidad) throw new Error('No cambiaste nada');
+    if (nom !== it.nombre && opsDe_(pr).length && !op) throw new Error('Elige ' + opsDe_(pr).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + pr.nombre + '»');
+    const precio = nom === it.nombre ? (Number(it.normal) > 0 ? it.normal : it.precio) : precioVar_(pr, vk);
+    items[ix] = { productoId: pr.id, nombre: nom, cantidad: cant, precio: precio, total: r2_(cant * precio) };
+    const otra = items.findIndex((x, j) => j !== ix && x.productoId === pr.id && x.nombre === nom);
+    if (otra >= 0) { items[ix].cantidad += items[otra].cantidad; items[ix].total = r2_(items[ix].cantidad * precio); items.splice(otra, 1); }
+    // Existencia: se revisa lo que suma el pedido, como al pedir
+    const cuenta = (l, f) => l.reduce((a, x) => a + (f(x) ? x.cantidad : 0), 0), mismo = x => x.productoId === pr.id;
+    const ahora = cuenta(items, mismo);
+    if (pr.tipo === 'producto' && !sin) {
+      if (ahora > cuenta(antes, mismo) && pr.stock < ahora) throw new Error(pr.stock > 0 ? 'Solo quedan ' + Math.floor(pr.stock) + ' de «' + pr.nombre + '»' : '«' + pr.nombre + '» se agotó');
+      if (vk) { const igual = x => mismo(x) && varKey_(pr, x.nombre) === vk, hay = Math.floor(Number(V[vk] && V[vk].s) || 0), va = cuenta(items, igual);
+        if (va > cuenta(antes, igual) && hay < va) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + pr.nombre + ' (' + vk + ')»' : '«' + pr.nombre + ' (' + vk + ')» se agotó'); }
+    }
+    detalle = (nom === it.nombre ? '' : it.nombre + ' → ') + nom + ' × ' + cant + (cant !== it.cantidad && nom === it.nombre ? ' (eran ' + it.cantidad + ')' : '');
+  }
+  repreciarPedido_(items, pm);
+  const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
+  const min = Number(cfg.tiendaMinimo) || 0;
+  if (min > 0 && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
+  const nota = ((p.nota ? p.nota + ' · ' : '') + 'Cambio del cliente ' + ahora_().replace('T', ' ').slice(5, 16) + ': ' + txt_(detalle.replace(/ · /g, ' '), 200)).slice(-1000);
+  c.put(k, String(veces + 1), 21600);
+  upsert_('Pedidos', { id: p.id, items: JSON.stringify(items), subtotal: subtotal, total: r2_(subtotal + (Number(p.envio) || 0)), nota: nota, actualizado: ahora_() });
+  return { id: p.id, total: r2_(subtotal + (Number(p.envio) || 0)) };
+}
+// El negocio revisa el comprobante: «ok» anota lo que falta como anticipo (el pedido sale pagado al cobrarlo); «no» le pide otro al cliente
+function pedidoPago_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('El pedido no existe');
+  if (p.pagoEstado === 'ok' && d.ok) throw new Error('Este pago ya está confirmado');
+  if (d.ok) {
+    if (p.ventaId || ['nuevo', 'confirmado', 'listo'].indexOf(p.estado) < 0) throw new Error('Este pedido ya está ' + p.estado);
+    const falta = r2_(Number(p.total) - anticipoDe_(p.id));
+    if (falta > 0.004) anticipoPedido_(u, { id: p.id, monto: falta, metodo: 'Transferencia', tienda: d.tienda });
+  }
+  const g = upsert_('Pedidos', { id: p.id, pagoEstado: d.ok ? 'ok' : 'no', actualizado: ahora_() });
+  g.items = parseJ_(g.items, []); g.anticipoPagado = anticipoDe_(p.id);
+  return g;
+}
+
 function pedirLimites_(d) {
   tiendaNeg_(d);
   if (!Array.isArray(d.items) || !d.items.length) throw new Error('Tu pedido está vacío');
@@ -4280,6 +5087,15 @@ function pedirLimites_(d) {
   if (Number(c.get('PH_' + (NEG ? NEG.id : '')) || 0) >= 150) throw new Error('La tienda está recibiendo muchos pedidos. Intenta de nuevo en unos minutos.');
 }
 
+// Carwash: cuántos vehículos ya están apartados para cada día y hora (un carwash con varios lavadores
+// puede recibir varios a la misma hora, por eso lo que manda es el cupo que puso el negocio)
+function citasOcupadas_() {
+  const h = hoy_(), o = {};
+  const sumar = (dia, hora) => { if (!dia || !hora || dia < h) return; const k = dia + ' ' + hora; o[k] = (o[k] || 0) + 1; };
+  rows_('Pedidos').forEach(p => { if (!p.citaId && ['nuevo', 'confirmado', 'listo'].indexOf(p.estado) >= 0) sumar(p.cita, p.hora); });
+  rows_('Agenda').forEach(a => { if (a.tipo === 'cita' && a.estado === 'pendiente' && !a.ventaId) sumar(a.dia, a.hora); });
+  return o;
+}
 function pedir_(d) {
   const cfg = tiendaNeg_(d);
   const nombre = txt_(d.nombre, 60), tel = String(d.telefono || '').replace(/\D/g, '');
@@ -4293,9 +5109,14 @@ function pedir_(d) {
   const c = CacheService.getScriptCache(), k = 'PD_' + (NEG ? NEG.id : '') + tel.slice(-8), n = Number(c.get(k) || 0);
   if (n >= 6) throw new Error('Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
   const pm = porId_(rows_('Productos'));
-  const sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
+  // «Arma tu ramo»: el cliente pide precio; la existencia y el precio los revisa el negocio al cotizar
+  const ramo = !!d.ramo;
+  if (ramo && girosActivos_(cfg).indexOf('floristeria') < 0) throw new Error('Esta tienda no arma ramos a tu gusto');
+  const presupuesto = ramo ? r2_(Math.max(0, Number(d.presupuesto) || 0)) : 0;
+  if (ramo && !(presupuesto > 0)) throw new Error('Escribe tu presupuesto');
+  const sin = ramo || cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
   const lista = Array.isArray(d.items) ? d.items.slice(0, 40) : [];
-  const items = [], suma = {};
+  const items = [], suma = {}, sumaV = {};
   const conCompras = girosActivos_(cfg).indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0;
   let anticipo = 0;
   lista.forEach(i => {
@@ -4314,19 +5135,26 @@ function pedir_(d) {
     }
     const p = i && typeof i === 'object' ? pm[i.id] : null, cant = Math.floor(Number(i && i.cantidad) || 0);
     if (!p || !p.activo || !p.tienda) throw new Error('Uno de los productos ya no está disponible. Actualiza la página.');
+    if (ramo && RAMO_CATS.indexOf(String(p.categoria).toLowerCase()) < 0) throw new Error('«' + p.nombre + '» no se puede elegir para armar un ramo');
     if (cant < 1 || cant > 999) throw new Error('Cantidad no válida en «' + p.nombre + '»');
     suma[p.id] = (suma[p.id] || 0) + cant;
     if (p.tipo === 'producto' && !sin && p.stock < suma[p.id]) throw new Error(p.stock > 0 ? 'Solo quedan ' + Math.floor(p.stock) + ' de «' + p.nombre + '»' : '«' + p.nombre + '» se agotó');
     const op = txt_(i.opcion, 160), nom = op ? txt_(p.nombre + ' (' + op + ')', 240) : p.nombre;
+    const V = varsDe_(p), vk = V ? varKey_(p, op) : '';
+    if (V && !vk && !ramo) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
+    if (vk) { const kk = p.id + SEPV + vk; sumaV[kk] = (sumaV[kk] || 0) + cant; const hay = Math.floor(Number(V[vk] && V[vk].s) || 0);
+      if (p.tipo === 'producto' && !sin && hay < sumaV[kk]) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + p.nombre + ' (' + vk + ')»' : '«' + p.nombre + ' (' + vk + ')» se agotó'); }
+    const pu = precioVar_(p, vk);
     if (giroDeProd_(p, girosActivos_(cfg)) === 'recargas' && !/ID de jugador:\s*\S/i.test(op)) throw new Error('Escribe tu ID de jugador para «' + p.nombre + '»');
     const ya = items.find(x => x.productoId === p.id && x.nombre === nom);
-    if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * p.precio); }
-    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: p.precio, total: r2_(cant * p.precio) });
+    if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * ya.precio); }
+    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk) });
   });
   if (!items.length) throw new Error('Tu pedido está vacío');
+  items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p && !i._propio && !ramo ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.normal = i.precio; i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   const min = Number(cfg.tiendaMinimo) || 0;
-  if (min > 0 && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
+  if (min > 0 && !ramo && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
   const envio = entrega === 'domicilio' ? r2_(Number(cfg.tiendaEnvio) || 0) : 0;
   const pagos = String(cfg.tiendaPagos || 'Efectivo').split(',');
   const pago = pagos.indexOf(d.pago) >= 0 ? d.pago : pagos[0];
@@ -4338,11 +5166,27 @@ function pedir_(d) {
   } else if (entrega === 'domicilio' && direccion && !cli.direccion) {
     upsert_('Clientes', { id: cli.id, direccion: direccion });
   }
-  const p = upsert_('Pedidos', { numero: siguiente_('P'), fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
-    pago: pago, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: r2_(subtotal + envio), estado: 'nuevo', ventaId: '', nota: txt_(d.nota, 300), actualizado: ahora_(), anticipo: Math.ceil(anticipo) });
+  // Carwash: el cliente aparta día y hora y dice qué vehículo trae
+  const conCita = girosActivos_(cfg).indexOf('carwash') >= 0;
+  const cita = conCita && /^\d{4}-\d{2}-\d{2}$/.test(String(d.cita || '')) ? String(d.cita) : '';
+  if (conCita && !cita) throw new Error('Elige el día en que traes tu vehículo');
+  if (cita && (cita < hoy_() || cita > diasAtras_(-60))) throw new Error('Elige un día entre hoy y los próximos 60 días');
+  const hora = cita && /^\d{2}:\d{2}$/.test(String(d.hora || '')) ? String(d.hora) : '';
+  if (cita && !hora) throw new Error('Elige la hora a la que traes tu vehículo');
+  const vehiculo = cita ? txt_(d.vehiculo, 80) : '', placa = cita ? txt_(d.placa, 20) : '';
+  if (cita && vehiculo.length < 2) throw new Error('Escribe qué vehículo traes');
+  // Varios lavadores pueden atender a la misma hora: el tope lo pone el negocio (citaCupo)
+  if (cita) { const cupo = Math.max(1, Math.floor(Number(cfg.citaCupo) || 3));
+    if ((citasOcupadas_()[cita + ' ' + hora] || 0) >= cupo) throw new Error('Esa hora ya se llenó. Elige otra, por favor.'); }
+  const numP = siguiente_('P'), comp = d.comprobante ? guardarComprobante_(d.comprobante, numP) : '';
+  // «Arma tu ramo»: hasta 2 fotos de referencia; se borran solas 7 días después de entregado o cancelado
+  const fotosRef = ramo && Array.isArray(d.fotos) ? d.fotos.slice(0, 2).map((f, i) => guardarFoto_(f, 'ramo-' + numP + '-' + (i + 1), 'La foto de referencia')) : [];
+  const p = upsert_('Pedidos', { comprobante: comp, pagoEstado: comp ? 'revisar' : '', numero: numP, fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
+    pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: fotosRef.length ? JSON.stringify({ fotos: fotosRef }) : '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),
+    cita: cita, hora: hora, vehiculo: vehiculo, placa: placa, citaId: '' });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
-  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: subtotal, envio: envio, items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '',
+  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
     negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : '' };
 }
 
@@ -4434,6 +5278,7 @@ function limpiarChats_(forzar) {
   const h = hoy_();
   if (!forzar && config_().sysChats === h) return 0;
   guardarConfig_({ sysChats: h });
+  try { limpiarFotosRamo_(); } catch (e) {}
   const lim = diasAtras_(DIAS_CHAT), chats = rows_('Chats');
   const viejos = new Set(chats.filter(c => String(c.ultimo).slice(0, 10) < lim).map(c => c.id));
   if (!viejos.size) return 0;
@@ -4452,10 +5297,17 @@ function reescribir_(name, objs) {
 function misPedidos_(d) {
   tiendaNeg_(d);
   const t8 = tel8_(d.telefono);
-  const ids = Array.isArray(d.ids) ? d.ids.slice(0, 20) : [];
+  const ids = Array.isArray(d.ids) ? d.ids.slice(0, 50) : [];
   if (!t8 || !ids.length) return [];
-  return rows_('Pedidos').filter(p => ids.indexOf(p.id) >= 0 && tel8_(p.telefono) === t8)
-    .map(p => ({ id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega }))
+  const l = rows_('Pedidos').filter(p => ids.indexOf(p.id) >= 0 && tel8_(p.telefono) === t8);
+  const pm = d.historial || l.some(p => p.estado === 'nuevo') ? porId_(rows_('Productos')) : {};
+  return l.map(p => { const its = parseJ_(p.items, []), o = { id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega, pago: p.pago, pagoEstado: p.pagoEstado || '', items: its.length };
+      // Solo un pedido que el cliente todavía puede cambiar lleva sus productos y su versión
+      if (EST_RAMO.indexOf(p.estado) >= 0 || p.cotiza) { o.ramo = true; o.presupuesto = Number(p.presupuesto) || 0; o.envio = p.envio; o.cotiza = parseJ_(p.cotiza, null); o.flores = its.filter(i => i.tipo !== 'ramo').map(i => cantTxt_(i.cantidad) + ' ' + String(i.nombre).replace(/ \(([^()]*)\)$/, (m, x) => ' ' + x.replace(/[^,:]+: /g, ''))); }
+      if (!bloqueoCliente_(p)) { o.editable = true; o.version = verPedido_(p); o.lineas = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
+      // Historial: lo que el cliente pidió en cada pedido
+      if (d.historial) { o.subtotal = p.subtotal; o.envio = p.envio; o.detalle = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
+      return o; })
     .sort((a, b) => a.fecha < b.fecha ? 1 : -1);
 }
 
@@ -5166,6 +6018,39 @@ function campanas_() {
 const CANAL_PLAT = { facebook: /facebook|instagram|meta/i, fb: /facebook|instagram|meta/i, meta: /facebook|instagram|meta/i, messenger: /facebook|instagram|meta|messenger/i, msg: /facebook|instagram|meta|messenger/i,
   instagram: /instagram|facebook|meta/i, ig: /instagram|facebook|meta/i, tiktok: /tiktok/i, tt: /tiktok/i, wa: /whatsapp/i, whatsapp: /whatsapp/i, estado: /whatsapp/i, google: /google/i, youtube: /youtube|google/i, yt: /youtube|google/i };
 const SIN_CANAL = ['', 'directo', 'mis-paginas', 'otro-sitio'];
+/* ---- Vendedores (apoyo en ventas): cada uno tiene su enlace …/?src=v-nombre y se cuenta lo que trajo ---- */
+function vendedores_() { const l = parseJ_(PropertiesService.getScriptProperties().getProperty('VENDEDORES'), []); return Array.isArray(l) ? l : []; }
+function guardarVendedores_(l) { noVer_(); PropertiesService.getScriptProperties().setProperty('VENDEDORES', JSON.stringify(l)); }
+function panelVendedores_() {
+  const vs = vendedores_(); if (!vs.length) return { vendedores: [] };
+  let filas = []; try { filas = visitasFilas_(60000); } catch (e) {}
+  const dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)), org = origenesLic_(lics), pagos = mRows_('PagosLic');
+  const pagoDe = {}; pagos.forEach(p => { pagoDe[p.negocioId] = r2_((pagoDe[p.negocioId] || 0) + (Number(p.monto) || 0)); });
+  return { vendedores: vs.map(v => {
+    const f = filas.filter(x => x.origen === v.codigo), u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
+    const negs = lics.filter(l => (org[l.id] || {}).canal === v.codigo).map(l => {
+      const ln = licNegocio_(l), e = esColab_(l) ? 'colaborador' : ln.estado === 'completa' ? 'activa' : ln.estado;
+      return { id: l.id, negocio: l.negocio, giro: l.giro, estado: e, dia: diaPrueba_(l), registro: String(l.registro).slice(0, 10), pagado: pagoDe[l.id] || 0 };
+    }).sort((a, b) => a.registro < b.registro ? 1 : -1);
+    return { codigo: v.codigo, nombre: v.nombre, whatsapp: v.whatsapp || '', creado: v.creado || '', visitas: f.length, personas: Object.keys(u).length, registros: negs.length,
+      compraron: negs.filter(n => n.pagado > 0 || n.estado === 'activa').length, pagado: r2_(negs.reduce((a, n) => a + n.pagado, 0)), negocios: negs };
+  }) };
+}
+function panelVendedorGuardar_(d) {
+  const l = vendedores_(), nombre = txt_(d.nombre, 60), wa = String(d.whatsapp || '').replace(/\D/g, '').slice(0, 15);
+  if (!nombre) throw new Error('Escribe el nombre');
+  let v = d.codigo ? l.find(x => x.codigo === d.codigo) : null;
+  if (v) { v.nombre = nombre; v.whatsapp = wa; }
+  else {
+    const p = norm_(nombre).split(' '), base = 'v-' + (slug_(p[0], 10) || 'vendedor'), usados = l.map(x => x.codigo);
+    let c = base; if (usados.indexOf(c) >= 0 && p[1]) c = base + '-' + slug_(p[1], 6); // máximo 20 letras: así lo guarda el contador de visitas
+    for (let i = 2; usados.indexOf(c) >= 0; i++) c = base + i;
+    v = { codigo: c, nombre: nombre, whatsapp: wa, creado: hoy_() }; l.push(v);
+  }
+  guardarVendedores_(l);
+  return v;
+}
+function panelVendedorQuitar_(d) { guardarVendedores_(vendedores_().filter(x => x.codigo !== d.codigo)); return true; }
 function origenesLic_(lics) {
   if (!MEMO._orig) { // todas las visitas por vid (una sola lectura por solicitud, sirve para cualquier lista)
     const porVid = {};
@@ -5318,8 +6203,10 @@ function visitasMini_() {
   try {
     const hoy = hoy_(), d7 = diaMenos_(6), f = visitasFilas_(8000).filter(x => x.fecha.slice(0, 10) >= d7);
     const u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
-    return { hoy: f.filter(x => x.fecha.slice(0, 10) === hoy).length, semana: f.length, unicos: Object.keys(u).length };
-  } catch (e) { return { hoy: 0, semana: 0, unicos: 0 }; }
+    const o = {}; f.forEach(x => { const k = x.origen || 'directo'; o[k] = (o[k] || 0) + 1; }); // de dónde vienen (para Marketing en el Panel)
+    const origen = Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n).slice(0, 4);
+    return { hoy: f.filter(x => x.fecha.slice(0, 10) === hoy).length, semana: f.length, unicos: Object.keys(u).length, origen: origen };
+  } catch (e) { return { hoy: 0, semana: 0, unicos: 0, origen: [] }; }
 }
 function borrarVisitasViejas_() {
   const s = masterSheet_('Visitas'), n = s.getLastRow();
