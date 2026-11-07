@@ -8998,6 +8998,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.57', fecha: '2026-11-06', items: [
+    { i: 'store', t: 'Tienda sin productos', d: 'Si tu tienda todavía no tiene productos, tus clientes ven «Pronto verás aquí nuestros productos» y un botón para escribirte por WhatsApp.' }
+  ] },
   { v: '1.9.56', fecha: '2026-11-06', items: [
     { i: 'store', t: '«Ver tienda» desde la app instalada', d: 'Si usas la app instalada, «Ver» tu tienda ahora la abre en la misma ventana (antes volvía a abrir la app). Con «atrás» regresas.' }
   ] },
