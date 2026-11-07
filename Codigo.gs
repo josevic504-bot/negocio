@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.57';
+const VERSION = '1.9.58';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -65,7 +65,7 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado','sucursal'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes','rinde','lotes'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Conciliacion:   ['id','mes','saldoBanco','marcados','nota','actualizado','listo'],
@@ -102,10 +102,10 @@ const SCHEMA = {
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
   Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp','rinde']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
-const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','cita','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta']);
+const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','cita','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta','lotes']);
 const ROLES = ['admin','cajero','bodega'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
@@ -119,7 +119,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
   // Cotizaciones y contratos (servicios)
@@ -163,6 +163,17 @@ const GIROS = {
     ej: [['Blusa casual','Damas','👚',380,210,12,'Talla: S, M, L | Color: Blanco, Rosa'],['Vestido de verano','Damas','👗',650,360,8],['Camisa formal','Caballeros','👔',520,290,10],['Jeans','Caballeros','👖',690,400,14,'Talla: 28, 30, 32, 34, 36'],['Tenis deportivos','Calzado','👟',1150,700,6,'Talla: 38, 39, 40, 41, 42'],['Sandalias','Calzado','👡',450,250,10],['Bolso de mano','Accesorios','👜',780,420,5],['Gorra','Accesorios','🧢',220,110,15]] },
   farmacia:   { n: 'Farmacia', cats: ['Medicamentos','Vitaminas','Cuidado personal','Bebé','Primeros auxilios'],
     ej: [['Acetaminofén 500 mg (10)','Medicamentos','💊',35,20,40],['Antigripal (sobre)','Medicamentos','🤧',18,10,60],['Vitamina C 1 g (10)','Vitaminas','🍊',95,55,25,'Presentación: Tabletas, Efervescente'],['Suero oral','Medicamentos','🧃',42,26,30],['Alcohol 250 ml','Primeros auxilios','🧴',48,30,20],['Curitas (caja)','Primeros auxilios','🩹',55,32,15],['Pañales talla M (20)','Bebé','👶',260,190,10],['Protector solar','Cuidado personal','🧴',320,200,8]] },
+  vitaminas:  { n: 'Vitaminas y suplementos', cats: ['Energía','Defensas','Articulaciones','Cabello, piel y uñas','Deporte','Niños'],
+    ej: [['Multivitamínico adulto','Defensas','💊',350,210,12,'Presentación: 60 cápsulas, 120 cápsulas',{ vars: { 'Presentación: 60 cápsulas': { p: 350, s: 8 }, 'Presentación: 120 cápsulas': { p: 620, s: 4 } }, rinde: 60, lema: '1 cápsula al día con alimentos', vm: 10 }],
+      ['Vitamina C 1000 mg','Defensas','🍊',220,120,15,'',{ rinde: 30, precioEsp: 200, minEsp: 3, vm: 8 }],
+      ['Complejo B','Energía','⚡',260,150,10,'',{ rinde: 30, vm: 12 }],
+      ['Magnesio citrato','Energía','🔋',280,165,10,'',{ rinde: 30, vm: 2 }],
+      ['Colágeno + biotina','Cabello, piel y uñas','💧',480,290,8,'',{ rinde: 30, precioEsp: 440, minEsp: 3, vm: 1 }],
+      ['Omega 3 · 90 cápsulas','Articulaciones','🐟',390,230,8,'',{ rinde: 90, vm: 1 }],
+      ['Glucosamina + condroitina','Articulaciones','🦴',520,320,6,'',{ rinde: 30, vm: 14 }],
+      ['Proteína whey 2 lb','Deporte','💪',890,600,6,'Sabor: Vainilla, Chocolate',{ rinde: 30, vm: 3 }],
+      ['Creatina 300 g','Deporte','🏋️',650,420,5,'',{ rinde: 60, vm: 16 }],
+      ['Vitaminas masticables niños','Niños','🧸',240,140,10,'',{ rinde: 30, vm: 9 }]] },
   repuestos:  { n: 'Taller mecánico y repuestos', ant: ['Repuestos / taller'], cats: ['Motor','Frenos','Eléctrico','Aceites','Llantas','Servicios'],
     ej: [['Aceite 20W-50 (litro)','Aceites','🛢️',190,130,30],['Filtro de aceite','Motor','🧰',150,90,20,'Vehículo: Toyota, Nissan, Honda'],['Pastillas de freno','Frenos','🛞',650,420,8],['Bujía','Motor','⚡',95,55,40],['Batería 12 V','Eléctrico','🔋',2300,1700,4],['Cambio de aceite (mano de obra)','Servicios','🔧',250,0,0],['Alineado y balanceo','Servicios','🛠️',450,0,0],['Llanta rin 14','Llantas','🛞',1650,1150,6]] },
   carwash:    { n: 'Carwash / lavado de autos', cats: ['Lavado','Detallado','Motos','Extras','Productos'],
@@ -356,6 +367,12 @@ function rutaUsuario_(a, u, d, req) {
     case 'soporteLista':    return soporteLista_(u);
     case 'soporteVer':      return lock_(() => soporteVer_(u, d));
     case 'soporteEnviar':   return lock_(() => soporteEnviar_(u, d));
+    case 'lotes':           return lotes_(u, d);
+    case 'loteAgregar':     return lock_(() => loteAgregar_(u, d));
+    case 'loteBaja':        return lock_(() => loteBaja_(u, d));
+    case 'loteEditar':      return lock_(() => loteEditar_(u, d));
+    case 'recompra':        return recompra_(u, d);
+    case 'recompraAvisado': return lock_(() => recompraAvisado_(u, d));
     case 'susCuentas':      return susCuentas_(u);
     case 'suscripciones':   return suscripciones_(u);
     case 'susEstado':       return lock_(() => susEstado_(u, d));
@@ -630,6 +647,7 @@ function deleteRow_(name, id) {
 
 function ahora_() { return Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm"); }
 function hoy_() { return Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd'); }
+function fechaMas_(f, n) { const d = new Date(String(f).slice(0, 10) + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 function diasAtras_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
 function r2_(n) { return Math.round((Number(n) || 0) * 100) / 100; }
 function r3_(n) { return Math.round((Number(n) || 0) * 1000) / 1000; }
@@ -1249,7 +1267,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -2819,6 +2837,9 @@ function guardar_(u, d) {
     if (r.incluye !== undefined) r.incluye = incluye_(r.incluye).map(x => x.plataforma + ':' + x.n).join('|');
     if (r.caduca !== undefined && r.caduca && !/^\d{4}-\d{2}-\d{2}$/.test(String(r.caduca))) r.caduca = '';
     if (r.garantia !== undefined) r.garantia = Math.max(0, Math.min(3650, parseInt(r.garantia, 10) || 0));
+    // Vitaminas: cuántos días rinde una unidad (para avisar la recompra). Los lotes solo cambian con loteAgregar/loteBaja y el inventario
+    if (r.rinde !== undefined) r.rinde = Math.max(0, Math.min(3650, parseInt(r.rinde, 10) || 0));
+    delete r.lotes;
     // Catálogo: subcategoría, frase destacada, beneficios y precio especial desde N piezas
     if (r.sub !== undefined) r.sub = txt_(r.sub, 40);
     if (r.lema !== undefined) r.lema = txt_(r.lema, 90);
@@ -2862,6 +2883,7 @@ function guardar_(u, d) {
       return rows_('Productos').find(p => p.id === g.id);
     }
     if (!prev && g.tipo === 'producto' && Number(stockIni) > 0) {
+      if (modOn_('lotes') && /^\d{4}-\d{2}-\d{2}$/.test(String(g.caduca || ''))) LOTE_ENT[g.id] = { l: 'Lote 1', v: String(g.caduca) };
       moverStock_({ [g.id]: r3_(stockIni) }, 'inicial', '', u, 'Existencia inicial');
       return rows_('Productos').find(p => p.id === g.id);
     }
@@ -2917,8 +2939,11 @@ function cargarEjemplos_(u, d) {
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
       tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid,
       sub: x[7] && x[7].sub || '', lema: x[7] && x[7].lema || '', puntos: x[7] && x[7].puntos || '', precioEsp: x[7] && x[7].precioEsp || 0, minEsp: x[7] && x[7].minEsp || 0,
-      variantes: x[7] && x[7].vars ? JSON.stringify(x[7].vars) : '' });
-    if (p.tipo === 'producto' && x[5] > 0) moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
+      variantes: x[7] && x[7].vars ? JSON.stringify(x[7].vars) : '', rinde: x[7] && x[7].rinde || 0, lotes: '' });
+    if (p.tipo === 'producto' && x[5] > 0) {
+      if (x[7] && x[7].vm) LOTE_ENT[p.id] = { l: 'EJ-' + String(i + 1).padStart(3, '0'), v: mesesSumar_(hoy_(), x[7].vm) };
+      moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
+    }
     n++;
   });
   return { agregados: n, productos: rows_('Productos') };
@@ -3086,8 +3111,117 @@ function moverStock_(cambios, tipo, refId, u, nota, fecha, costos) {
     mov.push({ id: newId_('Inventario'), fecha: f, productoId: id, tipo: tipo, cantidad: n, stock: cur[id], refId: refId || '', usuarioId: u ? u.id : '', nota: nota || '', variante: vk,
       costo: r4_(costos && costos[id] !== undefined ? costos[id] : p.costo) }); // costo unitario del momento
   });
-  Object.keys(cur).forEach(id => { const upd = { id: id, stock: cur[id] }; if (vars[id]) upd.variantes = JSON.stringify(vars[id]); upsert_('Productos', upd); });
+  Object.keys(cur).forEach(id => { const upd = { id: id, stock: cur[id] }; if (vars[id]) upd.variantes = JSON.stringify(vars[id]);
+    const lt = lotesMover_(pm[id], cur[id], ks.filter(k => k.split(SEPV)[0] === id).reduce((a, k) => r3_(a + (Number(cambios[k]) || 0)), 0));
+    if (lt) { upd.lotes = lt.lotes; upd.caduca = lt.caduca; }
+    upsert_('Productos', upd); });
+  Object.keys(LOTE_ENT).forEach(k => { delete LOTE_ENT[k]; }); Object.keys(LOTE_SIN).forEach(k => { delete LOTE_SIN[k]; });
   appendRows_('Inventario', mov);
+}
+
+/* ---- Lotes con fecha de vencimiento (vitaminas, farmacia): [{ l: código, v: 'yyyy-MM-dd', n: cantidad }] ----
+   Las salidas consumen primero el lote que vence antes. Una entrada solo crea lote si viene en LOTE_ENT (loteAgregar).
+   Lo que no tiene lote queda «sin lote» (existencia − suma de lotes). La caducidad del producto = el lote más próximo. */
+const LOTE_ENT = {}, LOTE_SIN = {};
+function lotesDe_(p) { const a = parseJ_(p && p.lotes, null); return Array.isArray(a) ? a.filter(x => x && Number(x.n) > 0).map(x => ({ l: String(x.l || ''), v: String(x.v || ''), n: r3_(Number(x.n) || 0) })) : null; }
+function lotesOrden_(a) { return a.sort((x, y) => (x.v || '9999') < (y.v || '9999') ? -1 : (x.v || '9999') > (y.v || '9999') ? 1 : 0); }
+function lotesMover_(p, stockNuevo, neto) {
+  const ent = LOTE_ENT[p.id], prev = lotesDe_(p);
+  if (!ent && !prev) return null;
+  let a = lotesOrden_((prev || []).slice());
+  if (ent && neto > 0) { const ex = a.find(x => x.l === ent.l && x.v === ent.v); if (ex) ex.n = r3_(ex.n + neto); else a.push({ l: ent.l, v: ent.v, n: neto }); a = lotesOrden_(a); }
+  else if (neto < 0 && !LOTE_SIN[p.id]) { let q = -neto; for (const x of a) { if (q <= 0) break; const t = Math.min(x.n, q); x.n = r3_(x.n - t); q = r3_(q - t); } }
+  // Los lotes nunca suman más que la existencia: lo que sobra sale de los que vencen antes
+  let exceso = r3_(a.reduce((s, x) => s + x.n, 0) - Math.max(0, Number(stockNuevo) || 0));
+  for (const x of a) { if (exceso <= 0) break; const t = Math.min(x.n, exceso); x.n = r3_(x.n - t); exceso = r3_(exceso - t); }
+  a = a.filter(x => x.n > 0);
+  return { lotes: JSON.stringify(a), caduca: a.length ? a[0].v : (prev ? '' : p.caduca || '') };
+}
+function lotes_(u, d) {
+  req_(u, ['admin', 'bodega', 'cajero']);
+  const h = hoy_();
+  const l = [];
+  rows_('Productos').filter(p => p.activo && p.tipo === 'producto').forEach(p => {
+    const a = lotesDe_(p) || [];
+    a.forEach((x, i) => l.push({ productoId: p.id, nombre: p.nombre, icono: p.icono, foto: p.foto, i: i, l: x.l, v: x.v, n: x.n,
+      dias: x.v ? Math.round((msDeLocal_(x.v + 'T00:00') - msDeLocal_(h + 'T00:00')) / 86400000) : null }));
+    const sin = r3_((Number(p.stock) || 0) - a.reduce((s, x) => s + x.n, 0));
+    if (a.length && sin > 0) l.push({ productoId: p.id, nombre: p.nombre, icono: p.icono, foto: p.foto, i: -1, l: '', v: '', n: sin, dias: null });
+  });
+  return l.sort((a, b) => (a.v || '9999') < (b.v || '9999') ? -1 : (a.v || '9999') > (b.v || '9999') ? 1 : a.nombre.localeCompare(b.nombre));
+}
+function loteAgregar_(u, d) {
+  req_(u, ['admin', 'bodega']);
+  const p = rows_('Productos').find(x => x.id === d.productoId);
+  if (!p || p.tipo !== 'producto') throw new Error('El producto ya no existe');
+  const n = r3_(Number(d.cantidad) || 0), v = String(d.vence || '');
+  if (!(n > 0)) throw new Error('Escribe cuántas unidades trae el lote');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(v)) throw new Error('Escribe la fecha de vencimiento del lote');
+  LOTE_ENT[p.id] = { l: txt_(d.lote, 30) || 'Lote ' + v.slice(0, 7), v: v };
+  const vk = d.variante && (varsDe_(p) || {})[d.variante] ? p.id + SEPV + d.variante : p.id;
+  moverStock_({ [vk]: n }, 'entrada', '', u, 'Lote ' + LOTE_ENT[p.id].l + ' · vence ' + v);
+  return rows_('Productos').find(x => x.id === p.id);
+}
+// Sacar un lote (vencido o dañado): baja su existencia con registro en el inventario
+function loteBaja_(u, d) {
+  req_(u, ['admin', 'bodega']);
+  const p = rows_('Productos').find(x => x.id === d.productoId);
+  const a = p ? lotesDe_(p) : null, x = a ? lotesOrden_(a)[Number(d.i)] : null;
+  if (!x) throw new Error('El lote ya no existe');
+  // Se quita ese lote y la existencia baja lo mismo, sin tocar los demás lotes
+  upsert_('Productos', { id: p.id, lotes: JSON.stringify(a.filter(y => y !== x)) });
+  LOTE_SIN[p.id] = true;
+  moverStock_({ [p.id]: -x.n }, 'ajuste', '', u, 'Baja del lote ' + (x.l || '') + (x.v ? ' (vence ' + x.v + ')' : ''));
+  return lotes_(u, d);
+}
+function loteEditar_(u, d) {
+  req_(u, ['admin', 'bodega']);
+  const p = rows_('Productos').find(x => x.id === d.productoId);
+  const a = p ? lotesOrden_(lotesDe_(p) || []) : [], x = a[Number(d.i)];
+  if (!x) throw new Error('El lote ya no existe');
+  if (d.vence !== undefined) { if (!/^\d{4}-\d{2}-\d{2}$/.test(String(d.vence))) throw new Error('Fecha no válida'); x.v = String(d.vence); }
+  if (d.lote !== undefined) x.l = txt_(d.lote, 30);
+  lotesOrden_(a);
+  upsert_('Productos', { id: p.id, lotes: JSON.stringify(a), caduca: a.length ? a[0].v : '' });
+  return lotes_(u, d);
+}
+
+/* ---- Recompra (vitaminas): a quién se le termina lo que compró, según los días que rinde cada unidad ---- */
+function recompra_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const cfg = config_(), h = hoy_(), dias = Math.max(1, Math.min(30, parseInt(cfg.recAviso, 10) || 7));
+  const prods = porId_(rows_('Productos').filter(p => Number(p.rinde) > 0));
+  if (!Object.keys(prods).length) return { lista: [], semana: 0, avisados: 0, sinRinde: true };
+  const desde = diasAtras_(400) + 'T00:00', cl = porId_(rows_('Clientes'));
+  const vs = porId_(rows_('Ventas').filter(v => !v.anulada && v.clienteId && String(v.fecha) >= desde));
+  const ult = {}; // cliente|producto → última compra
+  rows_('VentaDetalle').forEach(x => {
+    const v = vs[x.ventaId], p = prods[x.productoId]; if (!v || !p) return;
+    const k = v.clienteId + '|' + p.id, f = String(v.fecha).slice(0, 10), o = ult[k];
+    if (!o || f > o.f) ult[k] = { f: f, n: Number(x.cantidad) || 1, ventaId: v.id };
+    else if (f === o.f) o.n += Number(x.cantidad) || 1;
+  });
+  const av = parseJ_(cfg.recompraAv, {}) || {}, out = [];
+  Object.keys(ult).forEach(k => {
+    const [cid, pid] = k.split('|'), o = ult[k], c = cl[cid], p = prods[pid]; if (!c || !p || c.activo === false) return;
+    const fin = fechaMas_(o.f, Math.round(Number(p.rinde) * Math.max(1, o.n)));
+    const faltan = Math.round((msDeLocal_(fin + 'T00:00') - msDeLocal_(h + 'T00:00')) / 86400000);
+    if (faltan > dias || faltan < -45) return;
+    out.push({ clienteId: cid, cliente: c.nombre, telefono: c.telefono, productoId: pid, producto: p.nombre, icono: p.icono, compro: o.f, cantidad: o.n,
+      ventaId: o.ventaId, haceDias: Math.round((msDeLocal_(h + 'T00:00') - msDeLocal_(o.f + 'T00:00')) / 86400000), termina: fin, faltan: faltan, avisado: av[k] && av[k].ventaId === o.ventaId ? av[k].f : '' });
+  });
+  out.sort((a, b) => (a.avisado ? 1 : 0) - (b.avisado ? 1 : 0) || a.faltan - b.faltan);
+  return { lista: out, semana: out.length, avisados: out.filter(x => x.avisado).length, dias: dias, sinRinde: false };
+}
+function recompraAvisado_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const cfg = config_(), av = parseJ_(cfg.recompraAv, {}) || {}, k = String(d.clienteId || '') + '|' + String(d.productoId || '');
+  const lim = diasAtras_(120);
+  Object.keys(av).forEach(x => { if (!av[x] || av[x].f < lim) delete av[x]; }); // se limpian los avisos viejos
+  if (d.quitar) delete av[k];
+  else av[k] = { f: hoy_(), ventaId: String(d.ventaId || (recompra_(u, {}).lista.find(x => x.clienteId + '|' + x.productoId === k) || {}).ventaId || '') };
+  guardarConfig_({ recompraAv: JSON.stringify(av) });
+  return recompra_(u, d);
 }
 
 /* ---- Existencia y precio por opción (tono, talla, presentación) ---- */
@@ -4004,6 +4138,7 @@ function inicio_(u, d) {
   if (u.rol !== 'bodega' && susActivas_()) { try { out.sus = susResumen_(); } catch (e) {} }
   try {
     if (modOn_('caducidad')) out.caducan = caducan_();
+    if (modOn_('recompra') && u.rol !== 'bodega') { const rc = recompra_(u, {}); out.recompra = { n: rc.lista.length, pendientes: rc.lista.filter(x => !x.avisado).length }; }
     if (modOn_('ordenes')) out.ordenes = ordenResumen_();
     if (modOn_('agenda')) out.agenda = agendaResumen_('cita');
     if (modOn_('encargos')) out.encargos = agendaResumen_('encargo');
@@ -4786,6 +4921,8 @@ function tiendaInfo_(d) {
       if (V) { o.vars = {}; Object.keys(V).forEach(k => { const x = {}; if (Number(V[k].p) > 0) x.p = r2_(V[k].p); if (p.tipo === 'producto' && !sin) x.n = Math.max(0, Math.floor(Number(V[k].s) || 0)); o.vars[k] = x; }); }
       if (String(p.creado).slice(0, 10) >= nuevoDesde) o.nuevo = true;
       if (p.tipo === 'servicio') o.serv = 1;
+      if (Number(p.rinde) > 0) o.rinde = Number(p.rinde);
+      if (p.caduca && activos.indexOf('vitaminas') >= 0 && p.caduca >= hoy_()) o.vence = String(p.caduca).slice(0, 7);
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
       return o;
     }).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre)),

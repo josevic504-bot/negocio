@@ -211,7 +211,7 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 }
 /* ===== Etiquetas ===== */
 .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:500;background:var(--pri2);color:var(--pri);white-space:nowrap}
-.b-ok{background:var(--okb);color:var(--ok)}.b-warn{background:var(--warnb);color:var(--warn)}.b-bad{background:var(--badb);color:var(--bad)}.b-info{background:var(--infob);color:var(--info)}.b-mut{background:color-mix(in srgb,var(--mut) 14%,transparent);color:var(--mut)}
+.vit-inf{display:flex;justify-content:space-between;gap:10px;margin:10px 0 2px;font-size:13px;color:var(--mut)}.vit-inf span{display:inline-flex;align-items:center;gap:5px}.lote-r{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid var(--line)}.lote-r:last-of-type{border-bottom:0}.lote-r b{display:block;font-size:14px}.lote-r small{color:var(--mut);font-size:12px}.c-bad{color:var(--bad)!important}.c-warn{color:var(--warn)!important}.rec-li .tx small{display:block;white-space:normal}.b-ok{background:var(--okb);color:var(--ok)}.b-warn{background:var(--warnb);color:var(--warn)}.b-bad{background:var(--badb);color:var(--bad)}.b-info{background:var(--infob);color:var(--info)}.b-mut{background:color-mix(in srgb,var(--mut) 14%,transparent);color:var(--mut)}
 /* ===== Vender ===== */
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
 .pc{background:var(--card);border:1px solid var(--line);border-radius:18px;overflow:hidden;cursor:pointer;box-shadow:var(--sh);position:relative;text-align:left;padding:0;font:inherit;color:inherit;display:flex;flex-direction:column}
@@ -1415,7 +1415,7 @@ const ICP = {
 const ICI = { cart: 'vender', inbox: 'pedidos', chat: 'mensajes', store: 'tienda', box: 'productos', tag: 'precios', layers: 'proyectos', users: 'clientes', truck: 'proveedores', bag: 'compras', receipt: 'gastos', wallet: 'caja', doc: 'ventas', chart: 'reportes', user: 'usuarios', gear: 'ajustes', cal: 'agenda', paw: 'mascotas', syringe: 'vacunas', steth: 'mascotas', wrench: 'ordenes', bed: 'hospedaje', gift: 'encargos', clock: 'vencimientos', key: 'cuentas', coin: 'qa_cobrar', help: 'ayuda', sparkle: 'qa_resumen' };
 const ICI_QA = { receipt: 'qa_gasto', truck: 'qa_compra' };
 const icImg = k => `<img class="ici" src="iconos/${k}.webp" alt="" loading="lazy" decoding="async">`;
-const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'repuestos', 'carwash', 'joyeria', 'floristeria', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
+const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'vitaminas', 'repuestos', 'carwash', 'joyeria', 'floristeria', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
 const giroImg = (id, cls) => `<img class="gimg ${cls || ''}" src="iconos/g_${GIROS_IMG.includes(id) ? id : 'otro'}.webp" alt="" decoding="async">`;
 const ic = (n, sz = 22) => `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICP[n] || ''}</svg>`;
 
@@ -1563,7 +1563,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.57';
+const APP_VER = '1.9.58';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1978,6 +1978,8 @@ const VISTAS = {
   vacunas:     { t: 'Vacunas', c: 'Vacunas', i: 'syringe', roles: ['admin', 'cajero'], si: () => modOn('mascotas') },
   encargos:    { t: 'Encargos', i: 'gift', roles: TODOS, si: () => modOn('encargos') },
   vencimientos:{ t: 'Vencimientos', i: 'clock', roles: ['admin', 'cajero'], si: () => susOn() },
+  lotes:       { t: 'Lotes y vencimientos', c: 'Lotes', i: 'alert', roles: TODOS, si: () => modOn('lotes') },
+  recompra:    { t: 'Recompra', i: 'refresh', roles: ['admin', 'cajero'], si: () => modOn('recompra') },
   cuentas:     { t: 'Cuentas y perfiles', c: 'Cuentas', i: 'key', roles: ['admin', 'cajero'], si: () => susOn() },
   proveedores: { t: 'Proveedores', i: 'truck', roles: ['admin', 'bodega'] },
   compras:     { t: 'Compras', i: 'bag', roles: ['admin', 'bodega'] },
@@ -1988,7 +1990,7 @@ const VISTAS = {
   usuarios:    { t: 'Usuarios', i: 'user', roles: ['admin'] },
   ajustes:     { t: 'Ajustes', i: 'gear', roles: TODOS }
 };
-const NAV_PC = ['inicio', 'vender', 'pedidos', 'mascotas', 'agenda', 'vacunas', 'ordenes', 'encargos', 'mensajes', 'tienda', 'productos', 'vencimientos', 'cuentas', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
+const NAV_PC = ['inicio', 'vender', 'pedidos', 'mascotas', 'agenda', 'vacunas', 'ordenes', 'encargos', 'mensajes', 'tienda', 'productos', 'vencimientos', 'cuentas', 'lotes', 'recompra', 'clientes', 'compras', 'gastos', 'caja', 'reportes'];
 const R = {}; // funciones que pintan cada vista
 const puedeVer = v => VISTAS[v] && VISTAS[v].roles.includes(S.user.rol) && (!VISTAS[v].si || VISTAS[v].si());
 
@@ -2191,7 +2193,7 @@ function firmarContrato(c) {
 ACC.ir = el => { cerrarHojas(); ir(el.dataset.v, el.dataset.p ? JSON.parse(el.dataset.p) : {}); };
 ACC.mas = () => {
   const items = Object.keys(VISTAS).filter(k => k !== 'inicio' && puedeVer(k));
-  const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}">${(img => img ? `<i class="ci-img">${icImg(img)}</i>` : `<i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i>`)(k === 'proyectos' && modOn('cotizaciones') ? 'cotizaciones' : k === 'ordenes' && VISTAS.ordenes.i === 'bed' ? 'hospedaje' : ICI[VISTAS[k].i] === k || ['pedidos', 'mensajes', 'tienda', 'productos', 'precios', 'proyectos', 'clientes', 'proveedores', 'compras', 'gastos', 'caja', 'ventas', 'reportes', 'usuarios', 'ajustes', 'agenda', 'mascotas', 'vacunas', 'ordenes', 'encargos', 'vencimientos', 'cuentas', 'vender'].includes(k) ? k : '')}<span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : k === 'mensajes' && S.chatsNuevos ? `<b class="cnt">${S.chatsNuevos}</b>` : ''}</button>`).join('')}</div>
+  const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}">${(img => img ? `<i class="ci-img">${icImg(img)}</i>` : `<i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i>`)(k === 'proyectos' && modOn('cotizaciones') ? 'cotizaciones' : k === 'ordenes' && VISTAS.ordenes.i === 'bed' ? 'hospedaje' : ICI[VISTAS[k].i] === k || ['pedidos', 'mensajes', 'tienda', 'productos', 'precios', 'proyectos', 'clientes', 'proveedores', 'compras', 'gastos', 'caja', 'ventas', 'reportes', 'usuarios', 'ajustes', 'agenda', 'mascotas', 'vacunas', 'ordenes', 'encargos', 'vencimientos', 'cuentas', 'vender', 'lotes', 'recompra'].includes(k) ? k : '')}<span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : k === 'mensajes' && S.chatsNuevos ? `<b class="cnt">${S.chatsNuevos}</b>` : ''}</button>`).join('')}</div>
     ${modoTienda() && !tiendaFija() ? `<button class="me-ay" data-a="cambiarTienda">${ic('store', 20)}<span><b>Cambiar de tienda</b><small>Estás en ${S.tienda ? esc(secNom(S.tienda)) : 'todas las tiendas'}</small></span>${ic('right', 18)}</button>` : ''}
     ${(S.negocios || []).length > 1 ? `<button class="me-ay" data-a="cambiarNegocio">${ic('refresh', 20)}<span><b>Cambiar de negocio</b><small>Estás en ${esc(S.config.nombre || '')} · tienes ${S.negocios.length} negocios</small></span>${ic('right', 18)}</button>` : ''}
     <button class="me-ay" data-a="ayuda">${ic('help', 20)}<span><b>Ayuda y novedades</b><small>Cómo se usa cada pantalla · versión ${APP_VER}</small></span>${ic('right', 18)}</button>
@@ -2356,7 +2358,7 @@ function pintarLogin() {
     : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo. Sin tarjeta.</p><div class="in-mini"><span>Ventas</span><span>Inventario</span><span>Clientes</span><span>Caja</span><span>Tienda en línea</span><span>Reportes</span></div>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
-        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['carwash', 'joyeria', 'floristeria'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
+        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['carwash', 'joyeria', 'floristeria', 'vitaminas'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
@@ -2378,7 +2380,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['repuestos', 'Taller mecánico y repuestos'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['floristeria', 'Floristería'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Salón de belleza / estética'], ['catalogo', 'Maquillaje y moda por catálogo'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['vitaminas', 'Vitaminas y suplementos'], ['repuestos', 'Taller mecánico y repuestos'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['floristeria', 'Floristería'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Salón de belleza / estética'], ['catalogo', 'Maquillaje y moda por catálogo'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -4029,7 +4031,8 @@ R.inicio = () => {
     else if (d.ordenes && modOn('ordenes') && !vetT) tiles += tile('t-azul', 'wrench', 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : (d.ordenes.recibido + d.ordenes.proceso) + ' abiertas', d.ordenes.atrasadas ? d.ordenes.atrasadas + ' atrasadas' : d.ordenes.proceso + ' en proceso · ' + d.ordenes.recibido + ' recibidas', ['ir', 'ordenes']);
     if (d.agenda && modOn('agenda') && !vetT) tiles += tile('t-cian', 'cal', 'Citas de hoy', String(d.agenda.hoy), d.agenda.atrasados ? d.agenda.atrasados + ' sin cerrar' : d.agenda.manana + ' mañana', ['ir', 'agenda']);
     if (d.encargos && modOn('encargos')) tiles += tile('t-naranja', 'gift', 'Entregas de hoy', String(d.encargos.hoy), d.encargos.atrasados ? d.encargos.atrasados + ' sin entregar' : d.encargos.manana + ' mañana', ['ir', 'encargos']);
-    if (d.caducan && modOn('caducidad') && (rol === 'admin')) tiles += tile('t-rojo', 'alert', 'Por caducar', d.caducan.n === 1 ? '1 producto' : d.caducan.n + ' productos', d.caducan.vencidos ? d.caducan.vencidos + ' ya vencidos' : 'En los próximos 30 días', ['ir', 'productos', { filtro: 'caducan' }]);
+    if (d.caducan && modOn('caducidad') && (rol === 'admin')) tiles += tile('t-rojo', 'alert', 'Por caducar', d.caducan.n === 1 ? '1 producto' : d.caducan.n + ' productos', d.caducan.vencidos ? d.caducan.vencidos + ' ya vencidos' : 'En los próximos 30 días', modOn('lotes') ? ['ir', 'lotes', { }] : ['ir', 'productos', { filtro: 'caducan' }]);
+    if (d.recompra && modOn('recompra')) tiles += tile('t-verde', 'refresh', 'Recompra', d.recompra.n === 1 ? '1 cliente' : d.recompra.n + ' clientes', d.recompra.pendientes ? d.recompra.pendientes + ' sin avisar' : d.recompra.n ? 'Todos avisados' : 'Nadie esta semana', ['ir', 'recompra']);
     if (d.sus && susOn()) {
       tiles += tile('t-pri', 'clock', 'Vencimientos', d.sus.semana + d.sus.hoy ? (d.sus.semana + d.sus.hoy) + ' esta semana' : d.sus.vencidas ? d.sus.vencidas + ' vencidas' : 'Al día', d.sus.vencidas ? d.sus.vencidas + ' vencidas · ' + money(d.sus.montoVencidas) : d.sus.activas + ' activas', ['ir', 'vencimientos']);
       tiles += tile('t-verde', 'key', 'Cuentas y perfiles', d.sus.ocupados + ' / ' + d.sus.perfiles, d.sus.perfiles - d.sus.ocupados === 1 ? '1 perfil libre' : (d.sus.perfiles - d.sus.ocupados) + ' perfiles libres', ['ir', 'cuentas']);
@@ -4051,7 +4054,7 @@ R.inicio = () => {
       tile('t-verde', 'truck', 'Proveedores', String(S.proveedores.filter(p => p.activo).length), 'Contactos y compras', ['ir', 'proveedores']);
     listas += `<div class="sec-t"><h3>Movimientos de inventario</h3><a data-a="ir" data-v="productos">Productos</a></div><div class="list">${(d.movimientos || []).map(x => `<div class="li"><div class="av ${x.cantidad >= 0 ? 't-verde' : 't-rojo'}">${ic(x.cantidad >= 0 ? 'down' : 'up', 20)}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${esc(cap(x.tipo))} · ${esc(x.nota || '')} · ${hace(x.fecha)}</small></div><div class="am n ${x.cantidad >= 0 ? 'pos' : 'neg'}">${x.cantidad > 0 ? '+' : ''}${cant(x.cantidad)}</div></div>`).join('') || '<div class="empty">Sin movimientos todavía</div>'}</div>`;
   }
-  if (d.caducan && modOn('caducidad') && rol === 'bodega') tiles += tile('t-rojo', 'alert', 'Por caducar', d.caducan.n === 1 ? '1 producto' : d.caducan.n + ' productos', d.caducan.vencidos ? d.caducan.vencidos + ' ya vencidos' : 'En los próximos 30 días', ['ir', 'productos', { filtro: 'caducan' }]);
+  if (d.caducan && modOn('caducidad') && rol === 'bodega') tiles += tile('t-rojo', 'alert', 'Por caducar', d.caducan.n === 1 ? '1 producto' : d.caducan.n + ' productos', d.caducan.vencidos ? d.caducan.vencidos + ' ya vencidos' : 'En los próximos 30 días', modOn('lotes') ? ['ir', 'lotes', {}] : ['ir', 'productos', { filtro: 'caducan' }]);
   ['agenda', 'encargos'].forEach(k => {
     if (!(d[k] && modOn(k) && d[k].lista.length)) return;
     const C = agendaCfg(k === 'agenda' ? 'cita' : 'encargo');
@@ -5178,7 +5181,7 @@ function formProducto(p, onSave, pre) {
       <div class="emojis" id="pf-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${st.icono === e ? 'on' : ''}">${e}</button>`).join('')}<input id="pf-emo-in" maxlength="4" placeholder="Otro" value="${EMOJIS.includes(st.icono) ? '' : esc(st.icono)}"></div></div></div>
     <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. Camiseta básica"></label>
     <div class="fld"><span>Categoría *</span>${elegirHTML('pf-cat', p.categoria || '', catsSugeridas(), 'Escribe la categoría nueva')}</div>
-    ${modOn('catalogo') ? `<div class="fld"><span>Subcategoría</span><div id="pf-subw">${elegirHTML('pf-sub', p.sub || '', subsDe(p.categoria), 'Ej. Dama, Base, Gloss')}</div></div>` : ''}
+    ${modOn('catalogo') ? `<div class="fld"><span>Subcategoría</span><div id="pf-subw">${elegirHTML('pf-sub', p.sub || '', subsDe(p.categoria), girosOn().includes('vitaminas') ? 'Ej. Multivitamínicos, Proteínas' : 'Ej. Dama, Base, Gloss')}</div></div>` : ''}
     <label class="fld"><span>Código de barras</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div></label>
     ${girosOn().length > 1 ? `<span class="op-l" style="margin-top:4px">Sección de la tienda</span><div class="chips" id="pf-giro" style="flex-wrap:wrap;margin-bottom:10px">${girosOn().map(id => `<button type="button" class="chip ${(p.id ? giroDeP(p) : S.tienda || giroDeP(p)) === id ? 'on' : ''}" data-g="${id}">${giroImg(id)} ${esc(giroN(id).replace(/ \(.*\)$/, ''))}</button>`).join('')}</div>` : ''}
     ${susOn() ? susFormProducto(p) : ''}
@@ -5195,19 +5198,21 @@ function formProducto(p, onSave, pre) {
         <label class="chk"><input type="checkbox" id="pf-conisv" ${S.config.preciosConISV !== 'no' ? 'checked' : ''}> Sumar el ISV al precio</label>
         <div class="sug" id="pf-sug"></div></div>
       ${!nuevo ? `<small class="hint">El costo promedio se actualiza solo con cada compra.</small>` : `<small class="hint">¿No sabes el costo? Déjalo vacío y escribe solo el precio.</small>`}</div>
-    ${modOn('catalogo') ? `<div class="precio-box"><h4>${ic('sparkle', 18)} Catálogo</h4>
+    ${modOn('catalogo') ? (vit => `<div class="precio-box"><h4>${ic('sparkle', 18)} ${vit ? 'Precio por cantidad y ficha' : 'Catálogo'}</h4>
       <div class="f2"><label class="fld"><span>Precio especial</span><input id="pf-pe" inputmode="decimal" value="${p.precioEsp ? p.precioEsp : ''}" placeholder="Ej. 200"></label>
-      <label class="fld"><span>Desde cuántas piezas</span><input id="pf-me" inputmode="numeric" value="${p.minEsp ? p.minEsp : ''}" placeholder="3"></label></div>
-      <small class="hint">Detalle al precio normal y especial cuando llevan esa cantidad o más (sumando todos los tonos, tallas y colores). Se aplica solo en la tienda y en Vender.</small>
-      <label class="fld"><span>Frase destacada</span><input id="pf-lema" maxlength="90" value="${esc(p.lema || '')}" placeholder="Ej. Hidratación que revela tu brillo."></label>
-      <label class="fld"><span>Beneficios (uno por línea)</span><textarea id="pf-pun" rows="3" maxlength="500" placeholder="Textura ligera&#10;Larga duración&#10;Para todo tipo de piel">${esc(String(p.puntos || '').split('|').join('\n'))}</textarea></label></div>` : ''}
+      <label class="fld"><span>${vit ? 'Desde cuántos frascos' : 'Desde cuántas piezas'}</span><input id="pf-me" inputmode="numeric" value="${p.minEsp ? p.minEsp : ''}" placeholder="3"></label></div>
+      <small class="hint">${vit ? 'Precio normal por unidad y especial cuando llevan esa cantidad o más (sumando todas las presentaciones). Se aplica en la tienda y en Vender.' : 'Detalle al precio normal y especial cuando llevan esa cantidad o más (sumando todos los tonos, tallas y colores). Se aplica solo en la tienda y en Vender.'}</small>
+      <label class="fld"><span>${vit ? 'Modo de uso' : 'Frase destacada'}</span><input id="pf-lema" maxlength="90" value="${esc(p.lema || '')}" placeholder="${vit ? 'Ej. 1 cápsula al día con alimentos' : 'Ej. Hidratación que revela tu brillo.'}"></label>
+      <label class="fld"><span>${vit ? 'Características (una por línea)' : 'Beneficios (uno por línea)'}</span><textarea id="pf-pun" rows="3" maxlength="500" placeholder="${vit ? 'Sin azúcar&#10;Apto para veganos&#10;60 cápsulas' : 'Textura ligera&#10;Larga duración&#10;Para todo tipo de piel'}">${esc(String(p.puntos || '').split('|').join('\n'))}</textarea></label></div>`)(girosOn().includes('vitaminas')) : ''}
     ${S.plus || modOn('variantes') ? `<div class="precio-box" id="pf-varbox"><h4>${ic('layers', 18)} Existencia y precio por opción</h4>
       <label class="sw-row" style="margin:0"><input type="checkbox" id="pf-var" ${varsDe(p) ? 'checked' : ''}><span class="sw"></span><div><b>Llevar cada opción por separado</b><small>Cada tono, talla o presentación con su propia existencia y, si quieres, su propio precio</small></div></label>
       <div id="pf-vg"></div></div>` : ''}
     <label class="sw-row"><input type="checkbox" id="pf-ctrl" ${p.tipo === 'producto' ? 'checked' : ''}><span class="sw"></span><div><b>Controlar existencias</b><small>Apágalo para servicios o platos que no llevan inventario</small></div></label>
     <div id="pf-stk" class="f2">${nuevo ? `<label class="fld"><span>Existencia inicial</span><input id="pf-stock" inputmode="decimal" placeholder="0"></label>` : `<div class="fld"><span>Existencias</span><div class="stk-now"><b>${cant(p.stock)}</b><button class="btn sm" type="button" data-a="pfAjuste">Ajustar</button><button class="btn sm ghost" type="button" data-a="pfKardex">Movimientos</button></div></div>`}
       <label class="fld"><span>Avisar cuando queden</span><input id="pf-min" inputmode="decimal" value="${p.stockMin || ''}" placeholder="0"></label></div>
-    ${modOn('caducidad') || modOn('series') ? `<div class="f2">${modOn('caducidad') ? `<label class="fld"><span>Fecha de caducidad</span><input id="pf-cad" type="date" value="${esc(p.caduca || '')}"></label>` : ''}${modOn('series') ? `<label class="fld"><span>Garantía (días)</span><input id="pf-gar" inputmode="numeric" value="${p.garantia || ''}" placeholder="Ej. 90"></label>` : ''}</div>` : ''}
+    ${modOn('lotes') && !nuevo && p.tipo === 'producto' ? `<div class="precio-box" id="pf-lotes">${lotesProdHTML(p)}</div>` : ''}
+    ${modOn('recompra') ? `<label class="fld"><span>Una unidad rinde (días)</span><input id="pf-rinde" inputmode="numeric" value="${p.rinde || ''}" placeholder="Ej. 30 (frasco de 30 cápsulas, 1 al día)"><small class="hint">Con esto la app te avisa en «Recompra» cuándo se le termina al cliente. Déjalo vacío si no aplica.</small></label>` : ''}
+    ${(modOn('caducidad') && !(modOn('lotes') && !nuevo && p.tipo === 'producto')) || modOn('series') ? `<div class="f2">${modOn('caducidad') && !(modOn('lotes') && !nuevo && p.tipo === 'producto') ? `<label class="fld"><span>${modOn('lotes') ? 'Vencimiento del primer lote' : 'Fecha de caducidad'}</span><input id="pf-cad" type="date" value="${esc(p.caduca || '')}"></label>` : ''}${modOn('series') ? `<label class="fld"><span>Garantía (días)</span><input id="pf-gar" inputmode="numeric" value="${p.garantia || ''}" placeholder="Ej. 90"></label>` : ''}</div>` : ''}
     <details class="pf-more" id="pf-more"><summary>${ic('dots', 18)} Más detalles <small>ISV · unidad · tienda en línea</small>${ic('down', 18)}</summary>
     <div class="f2"><label class="fld"><span>ISV</span><select id="pf-isv"><option value="">General (${isvG}%)</option><option value="0">Exento</option><option value="15">15%</option><option value="18">18%</option></select></label>
       <label class="fld"><span>Se vende por</span><select id="pf-uni">${UNIDADES.map(u => `<option ${p.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
@@ -5224,7 +5229,7 @@ function formProducto(p, onSave, pre) {
   $('#pf-emo-in', h.el).addEventListener('input', e => { st.icono = e.target.value.trim(); $$('#pf-emo [data-e]', h.el).forEach(x => x.classList.remove('on')); img(); });
   $('#pf-nom', h.el).addEventListener('input', img);
   // Al cambiar la categoría: color del dibujo y subcategorías de esa categoría
-  $('#pf-cat', h.el).addEventListener('input', () => { img(); const w = $('#pf-subw', h.el); if (w) { const l = subsDe($('#pf-cat', h.el).value.trim()), v0 = $('#pf-sub', h.el).value; w.innerHTML = elegirHTML('pf-sub', l.includes(v0) ? v0 : '', l, 'Ej. Dama, Base, Gloss'); } });
+  $('#pf-cat', h.el).addEventListener('input', () => { img(); const w = $('#pf-subw', h.el); if (w) { const l = subsDe($('#pf-cat', h.el).value.trim()), v0 = $('#pf-sub', h.el).value; w.innerHTML = elegirHTML('pf-sub', l.includes(v0) ? v0 : '', l, girosOn().includes('vitaminas') ? 'Ej. Multivitamínicos, Proteínas' : 'Ej. Dama, Base, Gloss'); } });
   const pg = $('#pf-giro', h.el); if (pg) pg.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; $$('.chip', pg).forEach(c => c.classList.toggle('on', c === b)); });
   const file = $('#pf-file', h.el);
   if (file) file.addEventListener('change', async () => { if (!file.files[0]) return; try { st.fotoNueva = await comprimirImagen(file.files[0], DEMO.on ? 360 : 800); img(); } catch (e) { err(e); } });
@@ -5243,7 +5248,7 @@ function formProducto(p, onSave, pre) {
     stk.hidden = !ctrl.checked || varOn();
     if (!varOn()) { w.innerHTML = ''; return; }
     const ops = opsForm(), cs = combosDe(ops), hx = {}; ops.forEach(o => Object.assign(hx, o.hex || {}));
-    if (!cs.length) { w.innerHTML = `<p class="xs mut" style="margin:10px 0 0">Primero escribe las opciones (tono, talla, presentación…) en «${modOn('catalogo') ? 'Tonos y opciones' : 'Opciones'}».</p>`; return; }
+    if (!cs.length) { w.innerHTML = `<p class="xs mut" style="margin:10px 0 0">Primero escribe las opciones (tono, talla, presentación…) en «${modOn('catalogo') && !girosOn().includes('vitaminas') ? 'Tonos y opciones' : 'Opciones'}».</p>`; return; }
     const total = cs.reduce((a, k) => a + num((vAct[k] || {}).s), 0);
     w.innerHTML = `<div class="vgr"><span class="h">Opción</span><span class="h">Precio</span>${ctrl.checked ? '<span class="h">Existencia</span>' : '<span></span>'}
       ${cs.map(k => { const x = vAct[k] || {}, et = etiquetaVar(k), hh = k.split(', ').map(z => hx[z.split(': ')[1]]).find(Boolean);
@@ -5316,6 +5321,7 @@ function formProducto(p, onSave, pre) {
     }
     if ($('#pf-act', h.el)) reg.activo = $('#pf-act', h.el).checked;
     if ($('#pf-cad', h.el)) reg.caduca = $('#pf-cad', h.el).value;
+    if ($('#pf-rinde', h.el)) reg.rinde = parseInt($('#pf-rinde', h.el).value, 10) || 0;
     if ($('#pf-gar', h.el)) reg.garantia = parseInt($('#pf-gar', h.el).value, 10) || 0;
     if (leerSus) { const sv = leerSus(); if (sv.plataforma || sv.incluye || p.plataforma || p.incluye) Object.assign(reg, sv); }
     if (st.fotoNueva) { const f = await api('subirFoto', { data: st.fotoNueva }); reg.foto = f.foto; }
@@ -5333,21 +5339,21 @@ function formProducto(p, onSave, pre) {
 const opcArriba = () => (S.plus || modOn('variantes')) && (girosOn().some(id => opcGiro(id).filtro) || modOn('catalogo'));
 // Opciones que el cliente elige en la tienda (según el tipo de negocio)
 function opcForm(p) {
-  const cfg = opcGiro(modOn('catalogo') ? 'catalogo' : S.config.giro), act = leerOpc(p.opciones, true);
+  const cfg = opcGiro(girosOn().includes('vitaminas') ? 'vitaminas' : modOn('catalogo') ? 'catalogo' : S.config.giro), act = leerOpc(p.opciones, true);
   const filas = (act.length ? act : cfg.g.map(n => ({ n, v: [] }))).slice(0, 3); while (filas.length < 3) filas.push({ n: '', v: [] });
-  return `<div class="precio-box"><h4>${ic('layers', 18)} ${modOn('catalogo') ? 'Tonos y opciones' : 'Opciones que elige el cliente'}</h4><small class="hint">Escribe cada opción separada por comas. Deja en blanco las que no uses.${modOn('catalogo') ? ' Toca el círculo de cada tono para elegir su color: así lo ve tu cliente.' : ''}</small>
+  return `<div class="precio-box"><h4>${ic('layers', 18)} ${modOn('catalogo') && !girosOn().includes('vitaminas') ? 'Tonos y opciones' : 'Opciones que elige el cliente'}</h4><small class="hint">Escribe cada opción separada por comas. Deja en blanco las que no uses.${modOn('catalogo') && !girosOn().includes('vitaminas') ? ' Toca el círculo de cada tono para elegir su color: así lo ve tu cliente.' : ''}</small>
     ${filas.map((f, i) => `<div class="opc-row"><label class="fld"><span>Nombre</span><input class="pf-on" maxlength="30" value="${esc(f.n)}" placeholder="${esc(cfg.g[i] || 'Opción')}"></label>
       <label class="fld"><span>Opciones</span><input class="pf-ov" maxlength="400" value="${esc(f.v.join(', '))}" placeholder="${esc(cfg.ej[i] || '')}"></label></div>${swForm(f.v.join(', '))}`).join('')}</div>`;
 }
 // Ruedas de color para cada tono (catálogo). El color se guarda junto al nombre: «Nude 1#fbe0cf»
 function swForm(t) {
-  if (!modOn('catalogo')) return '';
+  if (!(modOn('catalogo') && !girosOn().includes('vitaminas'))) return '';
   const l = String(t || '').split(',').map(x => x.trim()).filter(Boolean);
   return `<div class="pf-sw">${l.map((x, i) => { const m = /^(.*?)#([0-9a-f]{6})$/i.exec(x), n = m ? m[1].trim() : x; return `<label title="Color de ${esc(n)}"><input type="color" class="pf-col" data-i="${i}" value="${m ? '#' + m[2].toLowerCase() : '#dddddd'}"><span>${esc(n)}</span></label>`; }).join('')}</div>`;
 }
 document.addEventListener('input', e => {
   const ov = e.target.closest('.pf-ov');
-  if (ov && modOn('catalogo')) { const sw = ov.closest('.opc-row').nextElementSibling; if (sw && sw.classList.contains('pf-sw')) sw.outerHTML = swForm(ov.value); return; }
+  if (ov && (modOn('catalogo') && !girosOn().includes('vitaminas'))) { const sw = ov.closest('.opc-row').nextElementSibling; if (sw && sw.classList.contains('pf-sw')) sw.outerHTML = swForm(ov.value); return; }
   const c = e.target.closest('.pf-col'); if (!c) return;
   const inp = c.closest('.pf-sw').previousElementSibling.querySelector('.pf-ov'), l = inp.value.split(',').map(x => x.trim()).filter(Boolean), i = Number(c.dataset.i);
   if (l[i] !== undefined) { l[i] = l[i].replace(/#[0-9a-f]{6}$/i, '').trim() + c.value; inp.value = l.join(', '); }
@@ -6376,7 +6382,7 @@ R.tienda = () => {
     const fabDe = k => { const f = SEC_FAB[norm(k)]; return f ? { f: 'iconos/sec_' + f[0] + '.webp', t: f[1] } : null; };
     const cs = [...new Set(S.productos.filter(p => p.activo && p.tienda).map(p => p.categoria))].sort((a, b) => pos(a) - pos(b) || a.localeCompare(b));
     h += sec('seccat', 'sparkle', 'Secciones del catálogo', `<p class="xs mut" style="margin-top:0">Tu tienda abre con una sección grande por cada categoría (como las páginas de un catálogo). Elige su color o ponle una foto.</p>
-      <div class="list">${cs.map((k, i) => { const x = se[k] || {}, col = /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : CAT_COL[i % CAT_COL.length], n = S.productos.filter(p => p.activo && p.tienda && p.categoria === k).length;
+      <div class="list">${cs.map((k, i) => { const x = se[k] || {}, col = /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : colSec(k, i), n = S.productos.filter(p => p.activo && p.tienda && p.categoria === k).length;
         const fab = !x.f && !x.c ? fabDe(k) : null;
         return `<div class="li" style="flex-wrap:wrap">${x.f ? `<img class="sec-fo" src="${esc(fotoSrc(x.f))}" alt="">` : fab ? `<img class="sec-fo" src="${fab.f}" alt="">` : `<label class="sec-col" title="Color"><input type="color" data-sc="${esc(k)}" value="${col}"></label>`}<div class="tx"><b>${esc(k)}</b><small>${n} ${n === 1 ? 'producto' : 'productos'}${x.f ? ' · tu foto' : fab ? ' · foto de fábrica' : ''}</small></div>
           <label class="btn sm">${ic('cam', 15)} ${x.f || fab ? 'Cambiar' : 'Foto'}<input type="file" accept="image/*" data-sf="${esc(k)}" hidden></label>${x.f ? `<button class="btn sm ghost" data-a="secQuitarFoto" data-k="${esc(k)}">Quitar</button>` : fab ? `<button class="btn sm ghost" data-a="secColorEnVez" data-k="${esc(k)}" title="Usar un color en vez de la foto">Color</button>` : ''}</div>
@@ -6457,6 +6463,9 @@ ACC.tema = async el => {
 ACC.modoColor = el => { LS.set('modoColor', el.dataset.m); aplicarTema(S.tema); $$('.modos .pay').forEach(x => x.classList.toggle('on', x === el)); };
 // Secciones del catálogo: color o foto por categoría (se guardan juntas en tiendaSecciones)
 const CAT_COL = ['#e8758f', '#9a83d8', '#f0806a', '#13a58b', '#5b8def', '#c98b5e', '#d45d9b', '#3fa7b5'];
+// Colores de fábrica por sección (vitaminas: uno por objetivo)
+const SEC_FCOL = { 'energia': '#d98a1c', 'defensas': '#13a58b', 'articulaciones': '#3f7fd9', 'cabello, piel y unas': '#d45d9b', 'deporte': '#4f9a2a', 'ninos': '#7f6fd6' };
+const colSec = (k, i) => SEC_FCOL[norm(k)] || CAT_COL[i % CAT_COL.length];
 // Fotos y frases de fábrica de las secciones (fotos libres de derechos, sin logos): el negocio puede cambiarlas en «Mi tienda en línea»
 const SEC_FAB = { 'free fire': ['freefire', 'Diamantes · entrega inmediata'], 'pubg mobile': ['pubg', 'UC · Royale Pass'], 'roblox': ['roblox', 'Robux · packs'], 'call of duty mobile': ['cod', 'CP · pase de batalla'], 'fortnite': ['fortnite', 'V-Bucks · skins'], 'tarjetas de regalo': ['regalo', 'Google Play · PlayStation · Steam'],
   'netflix': ['netflix', 'Perfiles y cuentas · por mes'], 'disney+': ['disney', 'Perfiles · por mes'], 'hbo max': ['hbo', 'Series y películas · por mes'], 'prime video': ['prime', 'Perfiles · por mes'], 'spotify': ['spotify', 'Premium · por mes'], 'youtube premium': ['youtube', 'Sin anuncios · por mes'], 'iptv': ['iptv', 'Canales en vivo · por dispositivo'], 'combos': ['combos', 'Varias plataformas · ahorra'] };
@@ -7416,9 +7425,11 @@ ACC.cbPaqueteExcel = async () => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
+  lotes:         { n: 'Lotes y vencimientos', d: 'Cada producto lleva sus lotes con su fecha de vencimiento; al vender sale primero el que vence antes y ves qué vence en 30 y 90 días.', g: 'vitaminas, farmacia' },
+  recompra:      { n: 'Recompra', d: 'Anotas cuántos días rinde cada producto y la app te dice a qué clientes se les está terminando, para avisarles por WhatsApp.', g: 'vitaminas' },
   comanda:       { n: 'Mesa, para llevar y comanda', d: 'Al cobrar eliges mesa, para llevar o domicilio, con nota para la cocina; imprime la comanda sin precios.', g: 'restaurante' },
   ordenes:       { n: 'Órdenes de trabajo', d: 'Recibes el equipo o vehículo, anotas la falla y lo pasas por recibido → en proceso → listo → entregado. Avisas por WhatsApp y cobras desde la orden.', g: 'taller, repuestos, servicios, carwash' },
   series:        { n: 'Serie / IMEI y garantía', d: 'Al cobrar anotas la serie de cada equipo; el comprobante sale con la serie y hasta cuándo tiene garantía.', g: 'tecnología' },
@@ -8482,7 +8493,7 @@ function editarPagosCot(q, cb) {
 /* ===================== SUSCRIPCIONES: vencimientos, cuentas y perfiles ===================== */
 const PLAT = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
 const susOn = () => modOn('suscripciones');
-const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', joyeria: '💍', floristeria: '💐', otro: '📦' };
+const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', vitaminas: '🌿', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', joyeria: '💍', floristeria: '💐', otro: '📦' };
 // Plataformas: las conocidas + las que el negocio agregó ("+ Otra") + las que ya usa en productos o cuentas
 function platsTodas() {
   const l = PLAT.map(x => x[0]), add = n => { n = String(n || '').trim(); if (n && !l.some(x => x.toLowerCase() === n.toLowerCase())) l.push(n); };
@@ -8526,6 +8537,129 @@ function platChipsBind(el, st, multi, onChange) {
     if (onChange) onChange();
   });
 }
+
+/* ===================== LOTES Y RECOMPRA (vitaminas, farmacia) ===================== */
+const lotesDeP = p => { try { const a = JSON.parse(p && p.lotes || '[]'); return Array.isArray(a) ? a.filter(x => x && num(x.n) > 0) : []; } catch (e) { return []; } };
+const mesAnio = v => { const M = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic']; return v ? M[Number(v.slice(5, 7)) - 1] + ' ' + v.slice(0, 4) : ''; };
+function badgeVence(d) {
+  if (d === null) return '<span class="badge b-mut">Sin lote</span>';
+  if (d < 0) return `<span class="badge b-bad">Vencido</span>`;
+  if (d <= 30) return `<span class="badge b-bad">${d === 0 ? 'Vence hoy' : d === 1 ? '1 día' : d + ' días'}</span>`;
+  if (d <= 90) return `<span class="badge b-warn">${Math.round(d / 30) <= 1 ? d + ' días' : Math.round(d / 30) + ' meses'}</span>`;
+  return `<span class="badge b-ok">${mesAnio(fechaMasDias(d))}</span>`;
+}
+const fechaMasDias = d => { const x = parseLocal(hoy() + 'T12:00'); x.setDate(x.getDate() + d); return toLocal(x).slice(0, 10); };
+// Recuadro de lotes dentro del producto
+function lotesProdHTML(p) {
+  const a = lotesDeP(p).sort((x, y) => (x.v || '9') < (y.v || '9') ? -1 : 1), sin = r2(num(p.stock) - a.reduce((t, x) => t + num(x.n), 0));
+  return `<h4>${ic('alert', 18)} Lotes y vencimientos</h4>
+    ${a.length ? a.map(x => `<div class="lote-r"><div><b>${esc(x.l || 'Lote')}</b><small>${cant(x.n)} ${num(x.n) === 1 ? 'unidad' : 'unidades'} · vence ${esc(fFechaC(x.v))}</small></div>${badgeVence(diasHasta(x.v))}</div>`).join('') : '<p class="xs mut" style="margin:0 0 8px">Todavía no tiene lotes. Agrega cada lote que te llega con su fecha de vencimiento.</p>'}
+    ${sin > 0 && a.length ? `<div class="lote-r"><div><b>Sin lote</b><small>${cant(sin)} ${sin === 1 ? 'unidad' : 'unidades'} sin fecha</small></div>${badgeVence(null)}</div>` : ''}
+    ${puede('admin', 'bodega') ? `<button class="btn sm" type="button" data-a="loteNuevo" data-id="${p.id}" style="margin-top:8px">${ic('plus', 16)} Agregar lote</button>` : ''}
+    <small class="hint" style="display:block;margin-top:8px">Al vender, sale primero el lote que vence antes.</small>`;
+}
+ACC.loteNuevo = el => loteNuevo(el.dataset.id);
+function loteNuevo(pid) {
+  const prods = (S.productos || []).filter(p => p.activo !== false && p.tipo === 'producto').sort((a, b) => a.nombre.localeCompare(b.nombre));
+  let p = pid ? byId(S.productos, pid) : null;
+  const vs = () => p && varsDe(p) ? Object.keys(varsDe(p)) : [];
+  const h = hoja({ titulo: 'Agregar lote', html: `${p ? `<p class="sm" style="margin:0 0 12px"><b>${esc(p.nombre)}</b> · hoy tiene ${cant(p.stock)}</p>` : `<label class="fld"><span>Producto</span><select id="lt-p"><option value="">Elige el producto…</option>${prods.map(x => `<option value="${x.id}">${esc(x.nombre)}</option>`).join('')}</select></label>`}
+    <div id="lt-vw"></div>
+    <div class="f2"><label class="fld"><span>Código del lote</span><input id="lt-l" maxlength="30" placeholder="Ej. A-114"></label><label class="fld"><span>Cantidad que entra</span><input id="lt-n" inputmode="decimal" placeholder="0"></label></div>
+    <label class="fld"><span>Vence</span><input id="lt-v" type="date" min="${hoy()}"></label>
+    <small class="hint">La existencia del producto sube con esta cantidad y queda en el registro de movimientos.</small>` });
+  const pintaV = () => { const w = $('#lt-vw', h.el); w.innerHTML = vs().length ? `<label class="fld"><span>Opción</span><select id="lt-o">${vs().map(k => `<option>${esc(k)}</option>`).join('')}</select></label>` : ''; };
+  pintaV();
+  const sel = $('#lt-p', h.el); if (sel) sel.addEventListener('change', () => { p = byId(S.productos, sel.value); pintaV(); });
+  h.botones([{ t: 'Guardar lote', cls: 'pri', fn: async () => {
+    if (!p) throw new Error('Elige el producto');
+    const n = num($('#lt-n', h.el).value), v = $('#lt-v', h.el).value;
+    if (!(n > 0)) throw new Error('Escribe cuántas unidades trae el lote');
+    if (!v) throw new Error('Escribe la fecha de vencimiento');
+    const o = $('#lt-o', h.el);
+    const g = await api('loteAgregar', { productoId: p.id, lote: $('#lt-l', h.el).value.trim(), vence: v, cantidad: n, variante: o ? o.value : '' });
+    const i = S.productos.findIndex(x => x.id === g.id); if (i >= 0) S.productos[i] = g;
+    guardarCache(); S.inicio = null; S.lotesL = null; h.cerrar(); toast('Lote agregado', 'ok');
+    const box = $('#pf-lotes'); if (box) { box.innerHTML = lotesProdHTML(g); const b = $('.stk-now b'); if (b) b.textContent = cant(g.stock); }
+    if (S.vista === 'lotes') R.lotes();
+  } }]);
+}
+R.lotes = async () => {
+  const m = $('#main');
+  if (!S.lotesL) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const l = S.lotesL = await api('lotes', {}, !!S.lotesL);
+  if (S.vista !== 'lotes') return;
+  const f = S.f.ltF || 'todos', q = norm(S.f.ltQ || '');
+  const con = l.filter(x => x.v), v30 = con.filter(x => x.dias <= 30), v90 = con.filter(x => x.dias > 30 && x.dias <= 90), venc = con.filter(x => x.dias < 0);
+  let lista = f === '30' ? v30 : f === '90' ? v90 : f === 'venc' ? venc : f === 'sin' ? l.filter(x => !x.v) : l;
+  if (q) lista = lista.filter(x => norm(x.nombre + ' ' + x.l).includes(q));
+  const chip = (k, t) => `<button class="chip ${f === k ? 'on' : ''}" data-a="ltF" data-f="${k}">${t}</button>`;
+  const sumN = a => a.reduce((t, x) => t + num(x.n), 0);
+  m.innerHTML = `<div class="kpis k2"><div class="kpi" style="--k:var(--bad)"><small>Vence en 30 días</small><b>${v30.length} ${v30.length === 1 ? 'lote' : 'lotes'}</b><i>${cant(sumN(v30))} unidades${venc.length ? ' · ' + venc.length + ' vencidos' : ''}</i></div><div class="kpi" style="--k:var(--warn)"><small>Vence en 90 días</small><b>${v90.length} ${v90.length === 1 ? 'lote' : 'lotes'}</b><i>${cant(sumN(v90))} unidades</i></div></div>
+    <div class="row" style="margin-bottom:10px"><div class="srch grow">${ic('search', 18)}<input id="lt-q" placeholder="Buscar producto o lote…" value="${esc(S.f.ltQ || '')}"></div>${puede('admin', 'bodega') ? `<button class="btn pri" data-a="loteNuevo">${ic('plus', 18)} Lote</button>` : ''}</div>
+    <div class="chips" style="margin-bottom:10px">${chip('todos', 'Todos')}${chip('30', '30 días')}${chip('90', '90 días')}${chip('venc', 'Vencidos')}${l.some(x => !x.v) ? chip('sin', 'Sin lote') : ''}</div>
+    ${lista.length ? `<div class="list">${lista.map(x => `<div class="li" data-a="loteVer" data-id="${x.productoId}" data-i="${x.i}"><div class="av">${x.foto ? `<img src="${esc(fotoSrc(x.foto))}" alt="">` : esc(x.icono || '📦')}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${x.v ? 'Lote ' + esc(x.l || '—') + ' · ' : ''}${cant(x.n)} ${num(x.n) === 1 ? 'unidad' : 'unidades'}${x.v ? ' · vence ' + esc(fFechaC(x.v)) : ''}</small></div>${badgeVence(x.v ? x.dias : null)}</div>`).join('')}</div>
+      <p class="xs mut" style="margin:12px 2px">${ic('down', 14)} Al vender, sale primero el lote que vence antes.</p>`
+      : `<div class="empty-big">${ic('alert', 40)}<h3>${l.length ? 'Nada por aquí' : 'Todavía no hay lotes'}</h3><p>${l.length ? 'Prueba con otro filtro.' : 'Cuando te llegue mercadería, agrégala por lote con su fecha de vencimiento y aquí verás qué vence primero.'}</p></div>`}`;
+  const qi = $('#lt-q', m); if (qi) qi.addEventListener('input', () => { S.f.ltQ = qi.value; clearTimeout(S._ltT); S._ltT = setTimeout(() => R.lotes(), 250); });
+};
+ACC.ltF = el => { S.f.ltF = el.dataset.f; R.lotes(); };
+ACC.loteVer = el => {
+  const x = (S.lotesL || []).find(y => y.productoId === el.dataset.id && String(y.i) === el.dataset.i); if (!x) return;
+  const p = byId(S.productos, x.productoId);
+  if (x.i < 0) { if (p && puede('admin', 'bodega')) loteNuevo(p.id); return; }
+  const h = hoja({ titulo: esc(x.nombre), html: `<div class="kv"><div><small>Lote</small><b>${esc(x.l || '—')}</b></div><div><small>Unidades</small>${cant(x.n)}</div><div><small>Vence</small><b>${esc(fFechaC(x.v))}</b></div><div><small>Estado</small>${badgeVence(x.dias)}</div></div>
+    ${puede('admin', 'bodega') ? `<div class="f2" style="margin-top:12px"><label class="fld"><span>Código</span><input id="lv-l" maxlength="30" value="${esc(x.l || '')}"></label><label class="fld"><span>Vence</span><input id="lv-v" type="date" value="${esc(x.v)}"></label></div>` : ''}` });
+  const bs = [];
+  if (p) bs.push({ t: `${ic('box', 16)} Ver producto`, fn: () => { h.cerrar(); formProducto(p); } });
+  if (puede('admin', 'bodega')) {
+    bs.push({ t: `${ic('trash', 16)} Dar de baja`, cls: 'bad', fn: async () => {
+      if (!(await confirmar(`¿Dar de baja el lote ${x.l || ''}? La existencia baja ${cant(x.n)} ${num(x.n) === 1 ? 'unidad' : 'unidades'} (vencido o dañado) y queda en el registro.`, { si: 'Dar de baja', peligro: 1 }))) return;
+      S.lotesL = await api('loteBaja', { productoId: x.productoId, i: x.i }); await refrescarProd(x.productoId); h.cerrar(); toast('Lote dado de baja', 'ok'); R.lotes(); } });
+    bs.push({ t: 'Guardar', cls: 'pri', fn: async () => {
+      S.lotesL = await api('loteEditar', { productoId: x.productoId, i: x.i, lote: $('#lv-l', h.el).value.trim(), vence: $('#lv-v', h.el).value }); await refrescarProd(x.productoId); h.cerrar(); toast('Lote actualizado', 'ok'); R.lotes(); } });
+  }
+  h.botones(bs);
+};
+async function refrescarProd(id) { try { const b = await api('bootstrap', {}, true); if (b && b.productos) { S.productos = b.productos; guardarCache(); } } catch (e) { } S.inicio = null; }
+
+/* ---- Recompra ---- */
+const recDias = () => Math.max(1, Math.min(30, parseInt(S.config.recAviso, 10) || 7));
+const MSJ_RECOMPRA = 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}';
+const textoRecompra = x => plantilla(S.config.msjRecompra || MSJ_RECOMPRA, { cliente: (x.cliente || '').split(' ')[0] || 'cliente', producto: x.producto, negocio: S.config.nombre || '', dias: String(Math.max(0, x.faltan)) });
+const terminaTxt = d => d < -1 ? 'se le terminó hace ' + (-d) + ' días' : d === -1 ? 'se le terminó ayer' : d === 0 ? 'se le termina hoy' : d === 1 ? 'se le termina mañana' : 'se le termina en ' + d + ' días';
+R.recompra = async () => {
+  const m = $('#main');
+  if (!S.recL) m.innerHTML = '<div class="empty">Cargando…</div>';
+  const r = S.recL = await api('recompra', {}, !!S.recL);
+  if (S.vista !== 'recompra') return;
+  const l = r.lista || [], pend = l.filter(x => !x.avisado);
+  m.innerHTML = `<div class="kpis k2"><div class="kpi" style="--k:var(--pri)"><small>${recDias() === 7 ? 'Esta semana' : 'Próximos ' + recDias() + ' días'}</small><b>${l.length} ${l.length === 1 ? 'cliente' : 'clientes'}</b><i>${pend.length} sin avisar</i></div><div class="kpi" style="--k:var(--ok)"><small>Avisados</small><b>${r.avisados || 0}</b><i>Les mandaste el mensaje</i></div></div>
+    ${puede('admin') ? `<div class="row" style="margin-bottom:10px;justify-content:flex-end"><button class="btn" data-a="recMensaje">${ic('edit', 18)} Mensaje y días</button></div>` : ''}
+    ${r.sinRinde ? `<div class="empty-big">${ic('refresh', 40)}<h3>Anota cuánto rinde cada producto</h3><p>En cada producto escribe «Una unidad rinde (días)». Ej.: un frasco de 30 cápsulas, 1 al día = 30. Con eso la app calcula a quién se le termina.</p><button class="btn pri" data-a="ir" data-v="productos">${ic('box', 18)} Ir a productos</button></div>`
+      : l.length ? `<div class="list">${l.map(x => `<div class="li rec-li"><div class="av ${colorDe(x.cliente)}">${esc(iniciales(x.cliente))}</div><div class="tx"><b>${esc(x.cliente)}</b><small>${esc(x.producto)}${x.cantidad > 1 ? ' ×' + cant(x.cantidad) : ''}</small><small><span class="${x.faltan < 0 ? 'c-bad' : 'c-warn'}">${cap(terminaTxt(x.faltan))}</span> · compró hace ${x.haceDias} días</small></div>${x.avisado ? `<button class="btn sm ghost" data-a="recQuitar" data-c="${x.clienteId}" data-p="${x.productoId}">${ic('check', 15)} Avisada</button>` : x.telefono ? `<button class="btn sm wa" data-a="recAvisar" data-c="${x.clienteId}" data-p="${x.productoId}">${ic('wa', 15)} Avisar</button>` : `<span class="badge b-mut">Sin teléfono</span>`}</div>`).join('')}</div>`
+      : `<div class="empty-big">${ic('refresh', 40)}<h3>Nadie por ahora</h3><p>Aquí aparecen los clientes a quienes se les termina lo que compraron en los próximos ${recDias()} días. Para que funcione, la venta debe llevar el cliente.</p></div>`}`;
+};
+ACC.recAvisar = async el => {
+  const x = (S.recL.lista || []).find(y => y.clienteId === el.dataset.c && y.productoId === el.dataset.p); if (!x) return;
+  window.open(waLink(x.telefono, textoRecompra(x)), '_blank');
+  S.recL = await api('recompraAvisado', { clienteId: x.clienteId, productoId: x.productoId, ventaId: x.ventaId }, true); S.inicio = null; R.recompra();
+};
+ACC.recQuitar = async el => { S.recL = await api('recompraAvisado', { clienteId: el.dataset.c, productoId: el.dataset.p, quitar: 1 }); S.inicio = null; R.recompra(); };
+ACC.recMensaje = () => {
+  const c = S.config, ej = { cliente: 'María', producto: 'Multivitamínico adulto', negocio: c.nombre || 'Mi negocio', dias: '3' };
+  const h = hoja({ titulo: 'Recompra', ancho: 1, html: `<div class="fld"><span>Mostrar clientes a quienes se les termina en los próximos</span><div class="chips" id="rc-d">${[3, 5, 7, 10, 15].map(n => `<button type="button" class="chip ${recDias() === n ? 'on' : ''}" data-d="${n}">${n} días</button>`).join('')}</div></div>
+    <p class="xs mut">En el mensaje puedes usar {cliente}, {producto}, {dias} y {negocio}.</p>
+    <label class="fld"><span>Mensaje de WhatsApp</span><textarea id="rc-m" rows="3" maxlength="400">${esc(c.msjRecompra || MSJ_RECOMPRA)}</textarea></label><div class="msg-prev" id="rc-p"></div>` });
+  let dias = recDias();
+  $('#rc-d', h.el).addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; dias = Number(b.dataset.d); $$('#rc-d .chip', h.el).forEach(x => x.classList.toggle('on', x === b)); });
+  const prev = () => { $('#rc-p', h.el).textContent = plantilla($('#rc-m', h.el).value, ej); }; $('#rc-m', h.el).addEventListener('input', prev); prev();
+  h.botones([{ t: 'Restablecer', fn: () => { $('#rc-m', h.el).value = MSJ_RECOMPRA; prev(); } }, { t: 'Guardar', cls: 'pri', fn: async () => {
+    const t = $('#rc-m', h.el).value.trim(); if (!t) throw new Error('Escribe el mensaje');
+    S.config = await api('guardar', { entidad: 'Config', registro: { recAviso: String(dias), msjRecompra: t } });
+    guardarCache(); S.recL = null; S.inicio = null; h.cerrar(); toast('Guardado', 'ok'); if (S.vista === 'recompra') R.recompra();
+  } }]);
+};
 
 /* ---- Vencimientos ---- */
 R.vencimientos = async () => {
@@ -8860,7 +8994,7 @@ function confirmarGiro(id) {
   const fila = (av, t, s) => `<div class="li"><div class="av ${av}">${av === 't-verde' ? '+' : av === 't-pri' ? '↻' : '−'}</div><div class="tx"><b>${t}</b><small>${s}</small></div></div>`;
   const h = hoja({ titulo: 'Confirmar cambio', html: `<div style="text-align:center;padding:6px 0 10px"><div style="font-size:44px;display:flex;align-items:center;justify-content:center;gap:12px">${giroImg(ant.id)} → ${giroImg(id)}</div><h3 style="margin-top:6px">De ${esc(ant.n)} a ${esc(g.n)}</h3></div>
     <div class="aviso info sm">${ic('info', 18)}<div><b>Tus datos se conservan.</b> Productos, clientes, ventas, caja y reportes siguen igual; solo cambia lo que la app te muestra.</div></div>
-    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'floristeria' ? fila('t-verde', 'Arma tu ramo en tu tienda', 'Tu cliente elige flores, cantidad y presupuesto; tú le mandas el precio y lo acepta en la tienda') : ''}${id === 'joyeria' ? fila('t-verde', 'Código o certificado y garantía', 'Al cobrar, el comprobante sale con el código de la pieza y su garantía') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
+    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'vitaminas' ? fila('t-verde', 'Se activan Lotes y Recompra', 'Lotes con su vencimiento (sale primero el que vence antes) y aviso por WhatsApp cuando al cliente se le termina su producto') : ''}${id === 'floristeria' ? fila('t-verde', 'Arma tu ramo en tu tienda', 'Tu cliente elige flores, cantidad y presupuesto; tú le mandas el precio y lo acepta en la tienda') : ''}${id === 'joyeria' ? fila('t-verde', 'Código o certificado y garantía', 'Al cobrar, el comprobante sale con el código de la pieza y su garantía') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
     ${fila('t-pri', 'Categorías nuevas', esc(g.cats.slice(0, 6).join(' · ')))}${opcGiro(id).g.length ? fila('t-pri', 'Opción en productos: ' + esc(opcGiro(id).g[0]), esc(opcGiro(id).ej[0] || '')) : ''}
     ${nAnt ? fila('t-mut', `Se pueden ocultar ${nAnt} productos de ${esc(ant.n)}`, 'Quedan guardados; abajo eliges si desactivarlos') : ''}</div>
     <label class="chk" style="margin-top:12px"><input type="checkbox" id="cg-ej" checked> Cargar productos de ejemplo del nuevo tipo</label>
@@ -8897,6 +9031,10 @@ const GUIA = {
   farmacia: { n: 'tu farmacia', d: 'Tu programa ya viene listo para vender. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus productos y precios', s: 'Presentación y caducidad', h: 'Tus productos: presentación y caducidad', p: 'Ejemplo: Vitamina C. Así se configura cada producto.', img: 'p_farmacia', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Vitamina C en Vitaminas.', '<b>Opciones:</b> las presentaciones.', '<b>Costo y precio:</b> por cada unidad que vendes.', '<b>Caducidad:</b> la fecha que avisa en Inicio.'] },
     { ic: 'clock', t: 'Revisa lo que está por caducar', s: 'En Inicio y en Productos', h: 'Lo que está por caducar', p: 'El programa te muestra lo que se acerca a su fecha de caducidad.', img: 'caducan', ir: 'productos', par: { filtro: 'caducan' }, b: 'Ver por caducar', l: ['Anota la fecha en cada producto.', 'En Inicio ves los que están por vencer.', 'En Productos usa el filtro <b>Por caducar</b>.'] }, 'vender', 'compras', 'caja'] },
+  vitaminas: { n: 'tu tienda de vitaminas', d: 'Tu programa ya viene listo para vender vitaminas y suplementos. Estos son tus primeros pasos:', p: [
+    { ic: 'box', t: 'Revisa tus productos y precios', s: 'Presentación, precio por cantidad y cuánto rinde', h: 'Tus productos: presentación y cuánto rinde', p: 'Ejemplo: Multivitamínico adulto. Así se configura cada producto.', img: 'p_vitaminas', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Categoría:</b> el objetivo (Energía, Defensas…). Así se arman las secciones de tu tienda.', '<b>Presentación:</b> 60 o 120 cápsulas, cada una con su precio.', '<b>Precio especial:</b> desde cuántos frascos baja el precio.', '<b>Rinde (días):</b> cuánto le dura una unidad al cliente.'] },
+    { ic: 'alert', t: 'Agrega tus lotes', s: 'Con su fecha de vencimiento', h: 'Lotes y vencimientos', p: 'Cada lote que te llega, con su código, cantidad y fecha de vencimiento.', img: 'lotes', ir: 'lotes', b: 'Ver mis lotes', l: ['Al vender sale primero el lote que vence antes.', 'Ves lo que vence en 30 y 90 días.', 'Los vencidos o dañados los das de baja con un toque.'] },
+    { ic: 'refresh', t: 'Avisa la recompra', s: 'Por WhatsApp, a tiempo', h: 'Recompra', p: 'La app te dice a qué clientes se les está terminando lo que compraron.', img: 'recompra', ir: 'recompra', b: 'Ver recompra', l: ['Vende con el cliente elegido para que cuente.', 'Toca <b>Avisar</b> y se abre WhatsApp con el mensaje listo.', 'El mensaje lo cambias en <b>Mensaje y días</b>.'] }, 'vender', 'tienda', 'caja'] },
   boutique: { n: 'tu boutique', d: 'Tu programa ya viene listo para vender. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus productos y precios', s: 'Talla, color y existencia', h: 'Tu ropa: talla y color', p: 'Ejemplo: Jeans. Así se configura cada prenda.', img: 'p_boutique', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Jeans en Caballeros.', '<b>Opciones:</b> las tallas y colores, separados por comas.', '<b>Costo y precio:</b> el costo es opcional.', '<b>Por separado:</b> enciéndelo para llevar cuántas hay de cada talla.'] }, 'vender', 'tienda', 'clientes', 'caja'] },
   tecnologia: { n: 'tu negocio de tecnología', d: 'Tu programa ya viene listo para vender. Estos son tus primeros pasos:', p: [
@@ -8998,6 +9136,11 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.58', fecha: '2026-11-06', items: [
+    { i: 'sparkle', t: 'Nuevo tipo de negocio: Vitaminas y suplementos', d: 'Tienda por objetivo (Energía, Defensas, Articulaciones…), presentaciones con su precio y precio especial por cantidad.' },
+    { i: 'alert', t: 'Lotes y vencimientos', d: 'Cada producto puede llevar sus lotes con fecha de vencimiento; al vender sale primero el que vence antes. Se enciende en Ajustes › Funciones (útil también para farmacias).' },
+    { i: 'refresh', t: 'Recompra', d: 'Anota cuántos días rinde cada producto y la app te dice a qué clientes se les está terminando, para avisarles por WhatsApp.' }
+  ] },
   { v: '1.9.57', fecha: '2026-11-06', items: [
     { i: 'store', t: 'Tienda sin productos', d: 'Si tu tienda todavía no tiene productos, tus clientes ven «Pronto verás aquí nuestros productos» y un botón para escribirte por WhatsApp.' }
   ] },
@@ -9498,6 +9641,7 @@ const OPC_GIRO = {
   variedades: { g: ['Talla', 'Color'], ej: ['S, M, L, XL', 'Negro, Blanco'], filtro: 'Talla' },
   tecnologia: { g: ['Capacidad', 'Color'], ej: ['128 GB, 256 GB', 'Negro, Azul'] },
   farmacia:   { g: ['Presentación'], ej: ['Tabletas, Jarabe'] },
+  vitaminas:  { g: ['Presentación', 'Sabor'], ej: ['60 cápsulas, 120 cápsulas', 'Vainilla, Chocolate'] },
   ferreteria: { g: ['Medida', 'Color'], ej: ['1/2", 3/4"', 'Negro, Rojo'] },
   repuestos:  { g: ['Vehículo', 'Marca'], ej: ['Toyota, Nissan', 'Bosch, NGK'] },
   belleza:    { g: ['Tono', 'Tamaño'], ej: ['Claro, Medio, Oscuro', '50 ml, 100 ml'] },
@@ -9547,7 +9691,7 @@ const T = { info: null, id: '', cat: '', sub: '', q: '', f: '', cart: {}, entreg
 // Cómo se ve cada giro como sección (módulo) en la portada de la tienda
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
   boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Maquillaje y moda', 'Maquillaje, ropa y lociones', '#13a58b'],
-  tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
+  tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], vitaminas: ['Vitaminas y suplementos', 'Para tu energía y bienestar', '#0f6e56'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
   ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], joyeria: ['Joyería', 'Anillos, cadenas y relojes', '#a8741a'], floristeria: ['Floristería', 'Arreglos y ramos a domicilio', '#c2416b'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;
 const tGiros = () => (T.info && T.info.negocio.giros) || [];
@@ -9635,7 +9779,7 @@ const catT = () => !!(T.info && T.info.negocio.catalogo) && (tGiros().length <= 
 // Tienda por secciones (bloques por categoría): catálogo, Recargas, Streaming o cualquier giro con el módulo encendido
 const secT = () => !!(T.info && T.info.negocio.porSecciones) && (tGiros().length <= 1 || (T.info.negocio.girosSec || []).includes(T.giro));
 const secFab = c => { const k = SEC_FAB[norm(c)]; return k ? { f: 'iconos/sec_' + k[0] + '.webp', t: k[1] } : null; };
-const secDe = (c, i) => { const x = (T.info.negocio.secciones || {})[c] || {}, fab = secFab(c); return { c: /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : CAT_COL[i % CAT_COL.length], f: x.f || (!x.c && fab ? fab.f : ''), t: x.t || (fab ? fab.t : '') }; };
+const secDe = (c, i) => { const x = (T.info.negocio.secciones || {})[c] || {}, fab = secFab(c); return { c: /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : colSec(c, i), f: x.f || (!x.c && fab ? fab.f : ''), t: x.t || (fab ? fab.t : '') }; };
 const secEstilo = (c, i) => { const x = secDe(c, i); return `--sc:${x.c}${x.f ? `;--sf:url('${esc(fotoAncha(x.f))}')` : ''}`; };
 function guardarCarrito() { LS.set(tKey('carrito'), JSON.stringify(T.cart)); }
 // ¿Está abierto ahora? (según horario y días de Ajustes)
@@ -9830,7 +9974,7 @@ function tProducto(id, ed) {
     return tieneHex(o) ? `<button type="button" class="tono ${sel[o.n] === v ? 'on' : ''} ${ag ? 'ag' : ''}" data-v="${esc(v)}" ${ag ? 'disabled' : ''}>${ag ? '<i>Agotado</i>' : ''}<u style="background:${o.hex[v] || '#ddd'}"></u>${esc(v)}</button>`
       : `<button type="button" class="chip ${pr ? 'pres' : ''} ${sel[o.n] === v ? 'on' : ''} ${ag ? 'ag' : ''}" data-v="${esc(v)}" ${ag ? 'disabled' : ''}>${esc(v)}${pr ? `<small>${money(pr)}</small>` : ''}${ag ? '<small>agotado</small>' : ''}</button>`; }).join('')}</div>`).join('') + (p.vars ? '<div class="stk-v" id="tp-sv"></div>' : '');
   const puntos = String(p.puntos || '').split('|').filter(Boolean);
-  const catHTML = `${p.sub ? `<span class="cat-tag">${esc(p.sub)}</span>` : ''}${p.lema ? `<div class="cat-lema">${esc(p.lema)}</div>` : ''}${puntos.length ? `<ul class="cat-pun">${puntos.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}`;
+  const catHTML = `${p.sub ? `<span class="cat-tag">${esc(p.sub)}</span>` : ''}${p.lema ? `<div class="cat-lema">${p.rinde ? 'Modo de uso: ' : ''}${esc(p.lema)}</div>` : ''}${puntos.length ? `<ul class="cat-pun">${puntos.map(x => `<li>${esc(x)}</li>`).join('')}</ul>` : ''}${p.rinde || p.vence ? `<div class="vit-inf">${p.rinde ? `<span>${ic('cal', 16)} Rinde ${p.rinde} ${p.rinde === 1 ? 'día' : 'días'}</span>` : ''}${p.vence ? `<span>${ic('clock', 16)} Vence ${esc(mesAnio(p.vence + '-01'))}</span>` : ''}</div>` : ''}`;
   const espHTML = p.precioEsp ? `<div class="esp-box" id="tp-esp"><div data-t="d">Detalle${p.minEsp > 2 ? ` (1–${p.minEsp - 1})` : ' (1)'}<b class="n">${money(p.precio)}</b></div><div data-t="e">Especial (desde ${p.minEsp})<b class="n">${money(p.precioEsp)}</b></div></div><div class="esp-falta" id="tp-falta"></div><div class="esp-ah" id="tp-ah" hidden></div>` : '';
   const citaHTML = cfg.cita && !ed ? `<label class="fld" style="margin-top:14px"><span>Fecha que prefieres</span><input type="date" id="tp-fe" min="${hoy()}"></label>
     <span class="op-l">Hora</span><div class="op-g" id="tp-tu">${['Mañana', 'Tarde'].map(v => `<button type="button" class="chip" data-t="${v}">${v}</button>`).join('')}</div>` : '';
