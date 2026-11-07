@@ -1563,7 +1563,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.55';
+const APP_VER = '1.9.56';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1921,6 +1921,13 @@ ACC.pickGiro = el => {
   const h = hoja({ titulo: 'Tipo de negocio', html: `<div class="gpick">${[...sel.options].map(o => `<button type="button" class="r ${o.value === sel.value ? 'on' : ''}" data-v="${esc(o.value)}">${giroImg(o.value)}<span>${esc(o.textContent)}${o.dataset.nuevo ? '<small>Nuevo</small>' : ''}</span><b></b></button>`).join('')}</div>` });
   h.b.addEventListener('click', e => { const r = e.target.closest('.r'); if (!r) return; sel.value = r.dataset.v; sel.dispatchEvent(new Event('change', { bubbles: true })); gselSync(sel); h.cerrar(); });
 };
+// En la app instalada (APK o acceso directo), un enlace a una tienda en ventana nueva vuelve a abrir la misma app
+// (Panel Molina o Negocio VM) en lugar de la tienda: ahí se abre en la misma ventana y «atrás» regresa
+const appInstalada = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || String(document.referrer).indexOf('android-app://') === 0 || navigator.standalone === true;
+document.addEventListener('click', e => {
+  const a = e.target.closest('a[target="_blank"][href*="?tienda="]');
+  if (a && appInstalada() && new URL(a.href, location.href).origin === location.origin) { e.preventDefault(); location.href = a.href; }
+}, true);
 document.addEventListener('click', e => {
   const el = e.target.closest('[data-a]');
   if (!el || el.disabled || el.dataset.ocupado) return;
@@ -8991,6 +8998,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.56', fecha: '2026-11-06', items: [
+    { i: 'store', t: '«Ver tienda» desde la app instalada', d: 'Si usas la app instalada, «Ver» tu tienda ahora la abre en la misma ventana (antes volvía a abrir la app). Con «atrás» regresas.' }
+  ] },
   { v: '1.9.55', fecha: '2026-11-06', items: [
     { i: 'image', t: 'Fotos de referencia en «Arma tu ramo»', d: 'Tu cliente puede mandarte hasta 2 fotos del ramo que quiere. Las ves en el pedido y se borran solas 7 días después de entregado o cancelado.' }
   ] },
