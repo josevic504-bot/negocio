@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.54';
+const VERSION = '1.9.55';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -4796,6 +4796,25 @@ function tiendaInfo_(d) {
 // Antes de esperar el candado: el negocio existe, la tienda está abierta y no hay una avalancha de pedidos
 /* ---- Comprobante de pago de un pedido en línea ---- */
 // Guarda la foto del comprobante (la manda el cliente desde la tienda) y devuelve su dirección
+function guardarFoto_(data, nombre, que) {
+  const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(data || ''));
+  if (!m) throw new Error(que + ' debe ser una foto');
+  if (m[2].length > 900000) throw new Error(que + ' es muy pesada. Prueba con otra.');
+  const f = carpetaFotos_().createFile(Utilities.newBlob(Utilities.base64Decode(m[2]), m[1], nombre + '-' + Date.now() + '.jpg'));
+  try { f.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (e) {}
+  return f.getId();
+}
+const DIAS_FOTOS_RAMO = 7;
+// Fotos de referencia de ramos ya entregados o cancelados hace más de 7 días: se borran y queda la fecha
+function limpiarFotosRamo_() {
+  const lim = diasAtras_(DIAS_FOTOS_RAMO); let n = 0;
+  rows_('Pedidos').forEach(p => {
+    if (['entregado', 'cancelado'].indexOf(p.estado) < 0 || String(p.actualizado).slice(0, 10) >= lim || String(p.cotiza).indexOf('"fotos"') < 0) return;
+    const c = parseJ_(p.cotiza, {}); (c.fotos || []).forEach(id => { borrarFoto_(id); n++; });
+    delete c.fotos; c.fotosBorradas = hoy_(); upsert_('Pedidos', { id: p.id, cotiza: JSON.stringify(c) });
+  });
+  return n;
+}
 function guardarComprobante_(data, numero) {
   const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(data || ''));
   if (!m) throw new Error('El comprobante debe ser una foto o captura');
@@ -4829,7 +4848,7 @@ function cotizarRamo_(u, d) {
   if (!(precio > 0) || precio > 1000000) throw new Error('Escribe el precio del ramo');
   const lineas = parseJ_(p.items, []).filter(i => i.tipo !== 'ramo').map(i => ({ productoId: i.productoId, nombre: i.nombre, cantidad: i.cantidad, precio: 0, total: 0, lista: Number(i.lista !== undefined ? i.lista : i.precio) || 0 }));
   lineas.push({ productoId: '', tipo: 'ramo', nombre: 'Ramo a tu gusto', cantidad: 1, precio: precio, total: precio });
-  const env = Number(p.envio) || 0, cot = { precio: precio, nota: txt_(d.nota, 300), el: ahora_() };
+  const env = Number(p.envio) || 0, cot = Object.assign(parseJ_(p.cotiza, {}), { precio: precio, nota: txt_(d.nota, 300), el: ahora_() });
   const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(lineas), subtotal: precio, total: r2_(precio + env), estado: 'cotizado', cotiza: JSON.stringify(cot), actualizado: ahora_() });
   g.items = parseJ_(g.items, []); g.anticipoPagado = 0;
   return g;
@@ -5023,8 +5042,10 @@ function pedir_(d) {
   if (cita) { const cupo = Math.max(1, Math.floor(Number(cfg.citaCupo) || 3));
     if ((citasOcupadas_()[cita + ' ' + hora] || 0) >= cupo) throw new Error('Esa hora ya se llenó. Elige otra, por favor.'); }
   const numP = siguiente_('P'), comp = d.comprobante ? guardarComprobante_(d.comprobante, numP) : '';
+  // «Arma tu ramo»: hasta 2 fotos de referencia; se borran solas 7 días después de entregado o cancelado
+  const fotosRef = ramo && Array.isArray(d.fotos) ? d.fotos.slice(0, 2).map((f, i) => guardarFoto_(f, 'ramo-' + numP + '-' + (i + 1), 'La foto de referencia')) : [];
   const p = upsert_('Pedidos', { comprobante: comp, pagoEstado: comp ? 'revisar' : '', numero: numP, fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
-    pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),
+    pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: fotosRef.length ? JSON.stringify({ fotos: fotosRef }) : '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),
     cita: cita, hora: hora, vehiculo: vehiculo, placa: placa, citaId: '' });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
@@ -5120,6 +5141,7 @@ function limpiarChats_(forzar) {
   const h = hoy_();
   if (!forzar && config_().sysChats === h) return 0;
   guardarConfig_({ sysChats: h });
+  try { limpiarFotosRamo_(); } catch (e) {}
   const lim = diasAtras_(DIAS_CHAT), chats = rows_('Chats');
   const viejos = new Set(chats.filter(c => String(c.ultimo).slice(0, 10) < lim).map(c => c.id));
   if (!viejos.size) return 0;

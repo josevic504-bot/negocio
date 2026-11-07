@@ -705,6 +705,8 @@ body.en-tienda{padding-bottom:110px}
 .mis-l.h{align-items:flex-start}.mis-l .fin{text-align:right;flex:none}.mis-l .fin b{display:block;font-weight:600;margin-bottom:4px}
 .ramo-b{display:flex;gap:14px;align-items:center;width:100%;margin:2px 0 14px;padding:16px;border:0;border-radius:20px;background:linear-gradient(135deg,#c2416b,#e8789a);color:#fff;text-align:left;font:inherit;cursor:pointer}.ramo-b .e{font-size:38px;line-height:1}.ramo-b b{display:block;font-family:var(--serif,'Cormorant Garamond'),serif;font-size:20px;font-weight:600;line-height:1.15;margin-bottom:3px}.ramo-b small{opacity:.92;font-size:13px}.ramo-b .go{background:#fff;color:#c2416b;border-radius:99px;padding:8px 14px;font-weight:600;font-size:13px;white-space:nowrap}
 .rf{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px dashed var(--line)}.rf .e{font-size:26px;width:30px;text-align:center}.rf .tx{flex:1;min-width:0}.rf .tx b{display:block;font-weight:500}.rf .tx small{color:var(--mut);font-size:12.5px}.rf .chips{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}.rf .chip{padding:3px 10px;font-size:12px}
+.rf-fotos{display:flex;gap:10px;margin-top:6px}.rf-foto{position:relative;width:86px;height:86px;border-radius:14px;border:1.5px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--mut);font-size:11.5px;cursor:pointer;overflow:hidden;background:var(--card)}.rf-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.rf-foto .x{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0;font-size:14px;line-height:22px;padding:0}
+.ramo-fotos{display:flex;gap:8px;margin:8px 0}.ramo-fotos img{width:72px;height:72px;object-fit:cover;border-radius:12px;cursor:pointer}
 .rf-sum{display:flex;justify-content:space-between;margin:10px 0 2px;font-size:14px;color:var(--mut)}.rf-sum b{color:var(--fg)}.rf-av{margin:10px 0 2px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 8%,transparent);font-size:13px;color:var(--mut)}
 .ramo-c{border:1.5px solid var(--pri);border-radius:16px;padding:12px 14px;margin:6px 0 8px}.ramo-c .pp{display:flex;justify-content:space-between;align-items:baseline}.ramo-c .pp b{font-size:22px;color:var(--pri)}.ramo-c .nt{margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 7%,transparent);font-size:13px}.ramo-c .row{display:flex;gap:8px;margin-top:10px}.ramo-c .row .btn{flex:1}.ramo-c .row .acc{flex:2}
 .t-expl{font-size:12.5px;color:var(--mut);margin:14px 2px 8px}.ed-ped{text-align:center;font-size:12.5px;font-weight:600;color:var(--pri);margin-bottom:8px}.btn.quitar{color:var(--bad);border:1.5px solid var(--bad);background:transparent}
@@ -1561,7 +1563,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.54';
+const APP_VER = '1.9.55';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -4802,14 +4804,14 @@ const enlaceSeguro = t => { t = String(t || '').trim(); return /^https?:\/\//i.t
 function cardPedido(p) {
   const e = EST_P[p.estado] || EST_P.nuevo;
   const accion = { cotizar: ['Poner precio', 'cotizar'], cotizado: ['Cambiar precio', 'cotizar'], nuevo: ['Confirmar', 'confirmado'], confirmado: ['Marcar listo', 'listo'], listo: ['Entregar y cobrar', 'cobrar'] }[p.estado];
-  const ramoP = ['cotizar', 'cotizado'].includes(p.estado), monto = i => ramoP && !i.tipo ? (i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : 'sin precio') : money(i.total);
+  const ramoP = ['cotizar', 'cotizado'].includes(p.estado), fotosR = (parseJ(p.cotiza, {}) || {}).fotos || [], monto = i => ramoP && !i.tipo ? (i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : 'sin precio') : money(i.total);
   return `<div class="ord ${p.estado === 'nuevo' ? 'new' : ''}"><div class="ord-h"><span class="oav ${colorDe(p.nombre)}">${esc(iniciales(p.nombre))}</span><div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.numero)} · ${hace(p.fecha)}</small></div><span class="badge ${e.c}">${e.t}</span></div>
     ${e.s >= 0 ? `<div class="steps">${[0, 1, 2, 3].map(i => `<i class="${i <= e.s ? 'on' : ''}"></i>`).join('')}</div>` : ''}
     <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${monto(i)}</span></div>`).join('')}${ramoP && p.presupuesto ? `<div style="color:var(--pri)"><span>Presupuesto del cliente</span><span class="n">${money(p.presupuesto)}</span></div>` : ''}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir${num(p.anticipoPagado) >= num(p.anticipo) ? ' · pagado ✓' : num(p.anticipoPagado) > 0 ? ' · pagó ' + money(p.anticipoPagado) : ''}</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
     <div class="ord-f"><span class="t n">${p.estado === 'cotizar' ? 'Por cotizar' : money(p.total)}</span><span class="badge b-mut">${ic(p.entrega === 'domicilio' ? 'truck' : 'store', 14)} ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge b-mut">${esc(p.pago)}</span></div>
     ${p.cita ? `<div class="ord-cw" style="margin-top:9px">${p.placa ? `<span class="placa">${esc(p.placa)}</span>` : ''}<span class="sm">${esc(p.vehiculo || '')}</span><span class="crono">${esc(diaTxt(p.cita))} · ${esc(fHoraC(p.hora))}</span></div>` : ''}
     ${p.entrega === 'domicilio' && p.direccion ? `<p class="xs mut" style="margin:8px 0 0">${ic('pin', 13)} ${esc(p.direccion)}</p>` : ''}${p.nota ? `<p class="xs mut" style="margin:6px 0 0">📝 ${esc(p.nota)}</p>` : ''}
-    ${compPedidoHTML(p)}
+    ${fotosR.length ? `<div class="ramo-fotos">${fotosR.map(f => `<img src="${esc(fotoSrc(f))}" alt="Foto de referencia" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}" loading="lazy">`).join('')}</div>` : ''}${compPedidoHTML(p)}
     <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a><button class="btn sm" data-a="verPedido" data-id="${p.id}">${ic('eye', 16)} Ver</button>
     ${accion ? `<button class="btn pri sm" style="margin-left:auto" data-a="pedAccion" data-id="${p.id}" data-e="${accion[1]}">${accion[0]} ${ic('arrow', 16)}</button>` : ''}</div></div>`;
 }
@@ -4842,7 +4844,7 @@ function cotizarRamo(p) {
   const h = hoja({ titulo: 'Ramo a tu gusto · ' + esc(p.numero), html: `<div class="mis-r"><span class="sm mut">${esc(p.nombre)} · ${esc(p.telefono)} · ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge ${EST_P[p.estado].c}">${EST_P[p.estado].t}</span></div>
     ${fl.map(i => `<div class="tk"><div class="tx"><b>${cant(i.cantidad)} × ${esc(i.nombre)}</b></div><b class="n tkt">${i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : '<span class="mut">sin precio</span>'}</b></div>`).join('')}
     <div class="tots"><div class="tot"><span>Flores a precio de lista${sinP ? ' (algunas sin precio)' : ''}</span><b class="n">${money(lista)}</b></div><div class="tot"><span>Presupuesto del cliente</span><b class="n">${money(p.presupuesto)}</b></div>${p.envio ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${money(p.envio)}</b></div>` : ''}</div>
-    ${p.nota ? `<p class="sm" style="margin:8px 0">📝 ${esc(p.nota)}</p>` : ''}
+    ${p.nota ? `<p class="sm" style="margin:8px 0">📝 ${esc(p.nota)}</p>` : ''}${(prev.fotos || []).length ? `<div class="sm mut">Fotos de referencia</div><div class="ramo-fotos">${prev.fotos.map(f => `<img src="${esc(fotoSrc(f))}" alt="" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}">`).join('')}</div>` : ''}
     <div class="f2"><label class="fld"><span>Precio del ramo</span><input id="cr-p" inputmode="decimal" value="${prev.precio || ''}" placeholder="0.00"></label><label class="fld"><span>Margen</span><input id="cr-m" disabled></label></div>
     <label class="fld"><span>Nota para el cliente (opcional)</span><input id="cr-n" maxlength="300" value="${esc(prev.nota || '')}" placeholder="Ej. El lirio va en botón para que dure más"></label>` });
   const pm = () => { const v = num($('#cr-p', h.el).value); $('#cr-m', h.el).value = v > 0 ? money(v - cost) + (v ? ' · ' + Math.round((v - cost) / v * 100) + '%' : '') : ''; };
@@ -4856,6 +4858,7 @@ function cotizarRamo(p) {
       const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp? (opcional)</p><div class="msg-prev">${esc(t)}</div>` });
       a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300)); } }]);
 }
+ACC.verFotoRamo = el => hoja({ titulo: 'Foto de referencia', html: `<img src="${esc(el.dataset.src)}" alt="" style="width:100%;border-radius:12px"><p class="xs mut">Se borra sola 7 días después de entregar o cancelar el pedido.</p>` });
 ACC.pest = el => { S.f.pest = el.dataset.k; S.f.pestAuto = 0; R.pedidos(); };
 ACC.pedAccion = async el => {
   const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
@@ -8988,6 +8991,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.55', fecha: '2026-11-06', items: [
+    { i: 'image', t: 'Fotos de referencia en «Arma tu ramo»', d: 'Tu cliente puede mandarte hasta 2 fotos del ramo que quiere. Las ves en el pedido y se borran solas 7 días después de entregado o cancelado.' }
+  ] },
   { v: '1.9.54', fecha: '2026-11-06', items: [
     { i: 'gift', t: 'Arma tu ramo sin precios', d: 'En Mi tienda en línea puedes apagar «Mostrar precios en Arma tu ramo»: tus clientes eligen sus flores sin ver precios y tú les mandas el precio del ramo.' }
   ] },
@@ -10074,7 +10080,7 @@ function volverAPedir(p) {
 // Floristería «Arma tu ramo»: flores y detalles que el cliente puede elegir; el precio lo manda el negocio
 const ramoFlores = () => (T.info.productos || []).filter(p => ['flores sueltas', 'globos y detalles'].includes(String(p.categoria).toLowerCase()));
 function armaRamo() {
-  const fl = ramoFlores(), q = {}, op = {}, cli = LS.json('cliente_tienda', {}) || {}, n = T.info.negocio;
+  const fl = ramoFlores(), q = {}, op = {}, fotos = [], cli = LS.json('cliente_tienda', {}) || {}, n = T.info.negocio;
   const ent = n.entrega || 'ambos'; let entrega = ent === 'recoger' ? 'recoger' : ent === 'domicilio' ? 'domicilio' : (cli.direccion ? 'domicilio' : 'recoger');
   const pr = p => n.ramoPrecios === false ? 0 : Number(p.precio) || 0, emo = p => p.icono || '🌸';
   const h = hoja({ titulo: 'Arma tu ramo', html: `<div class="sm mut" style="margin-bottom:4px">Elige las flores y cuántas. La tienda revisa tu ramo y te manda el precio aquí mismo.</div>
@@ -10083,9 +10089,12 @@ function armaRamo() {
     <div class="f2"><label class="fld"><span>Tu presupuesto</span><input id="rf-pre" inputmode="decimal" placeholder="Ej. 1000"></label><label class="fld"><span>¿Para cuándo?</span><input id="rf-fe" type="date" min="${hoy()}"></label></div>
     <label class="fld"><span>¿Algo más? (envoltura, colores, ocasión)</span><input id="rf-det" maxlength="150" placeholder="Ej. Papel kraft con listón rojo"></label>
     <label class="fld"><span>Mensaje para la tarjeta (opcional)</span><input id="rf-msj" maxlength="120" placeholder="Ej. Feliz aniversario"></label>
+    <div class="fld"><span>Fotos de referencia (opcional, hasta 2)</span><div class="rf-fotos" id="rf-fotos"></div><small class="mut xs">Una idea del ramo que quieres. Se borran 7 días después de entregado.</small></div>
     <div class="f2"><label class="fld"><span>Tu nombre</span><input id="rf-n" maxlength="60" value="${esc(cli.nombre || '')}"></label><label class="fld"><span>Tu WhatsApp</span><input id="rf-t" type="tel" inputmode="tel" value="${esc(cli.telefono || '')}" placeholder="9876-5432"></label></div>
     ${ent === 'ambos' ? `<div class="seg" id="rf-ent" style="margin-top:10px"><button type="button" data-e="recoger" class="${entrega === 'recoger' ? 'on' : ''}">${ic('store', 16)} Recoger</button><button type="button" data-e="domicilio" class="${entrega === 'domicilio' ? 'on' : ''}">${ic('truck', 16)} A domicilio</button></div>` : ''}
     <label class="fld" id="rf-dw" ${entrega === 'domicilio' ? '' : 'hidden'}><span>Dirección de entrega</span><input id="rf-d" maxlength="200" value="${esc(cli.direccion || '')}"></label>` });
+  const pintaFotos = () => { $('#rf-fotos', h.el).innerHTML = fotos.map((f, i) => `<div class="rf-foto"><img src="${f}" alt=""><button type="button" class="x" data-rfx="${i}" aria-label="Quitar">×</button></div>`).join('') + (fotos.length < 2 ? `<label class="rf-foto">${ic('image', 22)}<span>Agregar foto</span><input type="file" accept="image/*" id="rf-in" hidden></label>` : ''); };
+  h.el.addEventListener('change', async e => { if (e.target.id !== 'rf-in' || !e.target.files[0]) return; try { fotos.push(await comprimirImagen(e.target.files[0], 1200)); pintaFotos(); } catch (x) { err(x); } });
   const pinta = () => {
     fl.forEach(p => { const e = $('#rq-' + p.id, h.el); if (e) e.textContent = q[p.id] || 0; });
     const elegidas = fl.filter(p => q[p.id] > 0), con = elegidas.filter(p => pr(p)), sinP = elegidas.length > con.length, sum = con.reduce((a, p) => a + pr(p) * q[p.id], 0);
@@ -10101,18 +10110,19 @@ function armaRamo() {
     const nombre = $('#rf-n', h.el).value.trim(), telefono = $('#rf-t', h.el).value.trim(), direccion = ($('#rf-d', h.el) || {}).value || '';
     const det = $('#rf-det', h.el).value.trim(), msj = $('#rf-msj', h.el).value.trim();
     const nota = ['Para el ' + fFechaC(fe), det, msj ? 'Tarjeta: ' + msj : ''].filter(Boolean).join(' · ');
-    const r = await api('pedir', { negocio: T.id, ramo: true, presupuesto: pre, items, nombre, telefono, entrega, direccion: entrega === 'domicilio' ? direccion : '', pago: (n.pagos || ['Efectivo'])[0], nota });
+    const r = await api('pedir', { negocio: T.id, ramo: true, presupuesto: pre, fotos, items, nombre, telefono, entrega, direccion: entrega === 'domicilio' ? direccion : '', pago: (n.pagos || ['Efectivo'])[0], nota });
     LS.set('cliente_tienda', JSON.stringify(Object.assign(cli, { nombre, telefono, direccion: direccion || cli.direccion || '' })));
     const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
     h.cerrar(); toast('¡Listo! La tienda te mandará el precio aquí, en «Tus pedidos».', 'ok', 5000); misPedidosTienda();
     const b = $('#t-mis'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
   h.el.addEventListener('click', e => {
+    const fx = e.target.closest('[data-rfx]'); if (fx) { fotos.splice(Number(fx.dataset.rfx), 1); pintaFotos(); return; }
     const b = e.target.closest('[data-rq]'); if (b) { const id = b.dataset.rq; q[id] = Math.max(0, Math.min(999, (q[id] || 0) + Number(b.dataset.d))); pinta(); return; }
     const v = e.target.closest('[data-rv]'); if (v) { const g = v.parentNode; op[g.dataset.o + '|' + g.dataset.n] = v.dataset.rv; $$('.chip', g).forEach(c => c.classList.toggle('on', c === v)); return; }
     const en = e.target.closest('#rf-ent [data-e]'); if (en) { entrega = en.dataset.e; $$('#rf-ent button', h.el).forEach(x => x.classList.toggle('on', x === en)); $('#rf-dw', h.el).hidden = entrega !== 'domicilio'; }
   });
-  pinta();
+  pinta(); pintaFotos();
 }
 async function misPedidosTienda() {
   const ids = LS.json(tKey('pedidos'), []) || [], cli = LS.json('cliente_tienda', {}) || {};
