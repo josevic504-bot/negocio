@@ -3011,6 +3011,20 @@ async function panelResumen() {
   panelPinta();
   panelEspacio();
 }
+// El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
+// si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas.
+const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '');
+async function panelAuto() {
+  if (!S.enPanel || !P.tok || !P.d || P.auto || document.hidden || pnOcupado()) return;
+  P.auto = true;
+  try {
+    const d = await api('panelResumen', {}, true);
+    if (JSON.stringify(d) !== JSON.stringify(P.d) && !pnOcupado()) { const y = window.scrollY; P.d = d; P.pl = d.plantillas || P.pl; panelPinta(); const e = $('#pn-esp'); if (e && P.esp) e.innerHTML = pnEspacioHTML(P.esp); window.scrollTo(0, y); }
+  } catch (e) {}
+  P.auto = false;
+}
+setInterval(panelAuto, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) panelAuto(); });
 // Espacio usado en Supabase: se pide aparte para no atrasar el Panel; si falla, la tarjeta simplemente no sale
 async function panelEspacio() {
   try { P.esp = await api('panelEspacio', {}, true); const el = $('#pn-esp'); if (el) el.innerHTML = pnEspacioHTML(P.esp); } catch (e) { console.log('Espacio no disponible', e); }
