@@ -5,6 +5,7 @@
  * Manda al servidor de Negocio VM (Supabase) la página, de dónde vino (?src=tiktok, ?src=wa, …) y si es celular o PC.
  * No guarda nombres, teléfonos ni nada personal: solo un número al azar del navegador para contar personas distintas.
  * No cuenta: el navegador de Vic (marcado al abrir el Panel Molina) ni a quien ya usa un programa (marcado al iniciar sesión).
+ * La tienda en línea de cada negocio cuenta como página «t-código»: ahí no se cuenta al propio negocio (ni a Vic).
  * El mismo navegador cuenta una sola vez cada 30 minutos por página. */
 (function () {
   var API = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
@@ -46,7 +47,9 @@
 
   window.mvVisita = function (pagina) {
     try {
-      if (!pagina || get(L, 'mv_yo') || get(L, 'mv_cliente')) return;
+      if (!pagina || get(L, 'mv_yo')) return;
+      // Tienda en línea de un cliente (página «t-código»): no cuenta al propio negocio (mv_neg = códigos con sesión en este navegador)
+      if (/^t-/.test(pagina) ? (',' + get(L, 'mv_neg') + ',').indexOf(',' + pagina.slice(2) + ',') >= 0 : get(L, 'mv_cliente')) return;
       if (/^(localhost|127\.|192\.168\.)/.test(location.hostname) || location.protocol === 'file:') return;
       var k = 'mv_t_' + pagina, ult = Number(get(L, k) || 0);
       if (Date.now() - ult < 30 * 60000) return;

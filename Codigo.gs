@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.59';
+const VERSION = '1.9.60';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -319,6 +319,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'bootstrap':       return bootstrap_(u, d);
     case 'inicio':          return inicio_(u, d);
     case 'tiendas':         return tiendas_(u);
+    case 'tiendaVisitas':   return tiendaVisitas_(u, d);
     case 'pendientes':      return pendientes_(u, d);
     case 'guardar':         return lock_(() => guardar_(u, d));
     case 'eliminar':        return lock_(() => eliminar_(u, d));
@@ -2338,6 +2339,8 @@ function panelNegocio_(d) {
   f.grupo = grupoDe_(l).map(x => { const e = licNegocio_(x).estado; return { id: x.id, negocio: x.negocio, giro: x.giro, estado: e === 'completa' ? 'activa' : e, principal: x.id === (l.persona || l.id) || (!x.persona && !l.persona && x.id === l.id), yo: x.id === l.id }; });
   f.girosTodos = Object.keys(GIROS).map(k => ({ id: k, n: GIROS[k].n }));
   f.giroId = giroIdDe_(l.giro);
+  // Visitas a su tienda en línea en 7 días (para ver si está compartiendo su enlace)
+  try { const tv = visitasTienda_(l.id, 7); f.tiendaVis = { hoy: tv.hoyN, semana: tv.total, unicos: tv.unicos, origen: tv.origen.slice(0, 3) }; } catch (e) { f.tiendaVis = null; }
   // Uso (solo conteos, nunca sus datos): se lee la hoja del negocio
   f.uso = null;
   try {
@@ -6181,28 +6184,34 @@ function slug_(x, n) { return String(x || '').toLowerCase().normalize('NFD').rep
 function visita_(d) {
   if (!MULTI_NEGOCIO) return false;
   const pagina = slug_(d.p, 30); if (!pagina) return false;
+  // Tienda en línea de un cliente: la página es «t-» + el código del negocio (debe existir). Lleva sus propios frenos.
+  const esT = pagina.indexOf('t-') === 0, pre = esT ? 'VT' : 'VI';
+  if (esT && !negocioPorId_(pagina.slice(2).toUpperCase())) return false;
   let vid = String(d.v || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24);
   if (vid.length < 6) vid = ''; // el contador de la página siempre manda uno de 8 o más
   const c = CacheService.getScriptCache(), k = 'VI_' + vid + '_' + pagina;
   if (vid && c.get(k)) return true;
-  const ahoraV = new Date(), min = 'VIM_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), n = Number(c.get(min) || 0);
+  const ahoraV = new Date(), min = pre + 'M_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), n = Number(c.get(min) || 0);
   if (n >= 150) return false; // freno contra abusos: máximo 150 visitas por minuto
-  const dia = 'VID_' + Utilities.formatDate(ahoraV, TZ, 'yyyyMMdd'), nd = Number(c.get(dia) || 0);
+  const dia = pre + 'D_' + Utilities.formatDate(ahoraV, TZ, 'yyyyMMdd'), nd = Number(c.get(dia) || 0);
   if (nd >= 5000) return false; // y 5,000 por día: un abuso no puede llenar la hoja maestra
-  const sinV = 'VIS_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), ns = Number(c.get(sinV) || 0);
+  const sinV = pre + 'S_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), ns = Number(c.get(sinV) || 0);
   if (!vid && ns >= 20) return false; // sin número de navegador, máximo 20 por minuto
-  c.put(min, String(n + 1), 120); c.put(dia, String(nd + 1), 90000); if (!vid) c.put(sinV, String(ns + 1), 120);
+  const diaT = 'VTN_' + pagina + '_' + Utilities.formatDate(ahoraV, TZ, 'yyyyMMdd'), nt = esT ? Number(c.get(diaT) || 0) : 0;
+  if (esT && nt >= 1500) return false; // y cada tienda, máximo 1,500 por día
+  c.put(min, String(n + 1), 120); c.put(dia, String(nd + 1), 90000); if (!vid) c.put(sinV, String(ns + 1), 120); if (esT) c.put(diaT, String(nt + 1), 90000);
   if (vid) c.put(k, '1', 1800);
   mAppend_('Visitas', { id: mId_('VI'), fecha: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), pagina: pagina, origen: slug_(d.o, 20) || 'directo',
     disp: d.d === 'pc' ? 'pc' : 'cel', vid: vid, ref: String(d.r || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 60) });
   return true;
 }
 // Lee solo las columnas fecha, página, origen, disp, vid y ref de las últimas filas (rápido aunque la hoja crezca)
-function visitasFilas_(maxFilas) {
+// Sin «tiendas» devuelve las visitas a las páginas de Molina; con «tiendas» = true, solo las de las tiendas en línea de los clientes (página «t-…»)
+function visitasFilas_(maxFilas, tiendas) {
   const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 2) return [];
   const h = SCHEMA_M.Visitas, cuantas = Math.min(n - 1, maxFilas || 60000), ini = n - cuantas + 1;
   return s.getRange(ini, 2, cuantas, 6).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]), ref: String(r[5] || '') }))
-    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha));
+    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha) && (x.pagina.indexOf('t-') === 0) === !!tiendas);
 }
 function diaMenos_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
 // Para la tarjeta del resumen: hoy y últimos 7 días
@@ -6258,6 +6267,43 @@ function panelVisitas_(d) {
   const cel = f.filter(x => x.disp !== 'pc').length;
   return { dias: dias, desde: desde, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
     registros: regs, conversion: unicos(f) ? Math.round(regs * 1000 / unicos(f)) / 10 : 0, cel: f.length ? Math.round(cel * 100 / f.length) : 0,
-    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: diaMenos_(VISITA_DIAS - 1) };
+    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: diaMenos_(VISITA_DIAS - 1), tiendas: visitasTiendas_(desde) };
+}
+/* ----- Visitas a la tienda en línea de cada cliente -----
+ * La tienda (…/?tienda=CÓDIGO) manda la visita con página «t-código». El negocio las ve en «Mi tienda en línea» y Vic en el Panel. */
+function visTiendaPag_(id) { return 't-' + String(id || '').toLowerCase(); }
+// Panel: cada negocio con tienda (Plus, prueba o colaborador) y sus visitas desde un día; primero las más visitadas
+function visitasTiendas_(desde) {
+  const porPag = {};
+  try { visitasFilas_(60000, true).forEach(x => { if (x.fecha.slice(0, 10) >= desde) (porPag[x.pagina] = porPag[x.pagina] || []).push(x); }); } catch (e) {}
+  return mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada').map(l => {
+    const f = porPag[visTiendaPag_(l.id)] || [], u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
+    const est = licNegocio_(l).estado, plus = ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0 || esColab_(l) || est === 'prueba';
+    return { id: l.id, negocio: l.negocio, n: f.length, u: Object.keys(u).length, plus: plus, fuera: est === 'vencida' || est === 'bloqueada' };
+  }).filter(t => t.n > 0 || (t.plus && !t.fuera)).sort((a, b) => b.n - a.n || String(a.negocio).localeCompare(String(b.negocio)));
+}
+// Resumen de una tienda: hoy, ayer, el período y el anterior, por día, de dónde llegaron y celular/PC
+function visitasTienda_(id, dias) {
+  const pag = visTiendaPag_(id), hoy = hoy_(), ayer = diaMenos_(1), desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
+  const todas = visitasFilas_(60000, true).filter(x => x.pagina === pag);
+  const f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
+  const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha] = 1; }); return Object.keys(u).length; };
+  const o = {}; f.forEach(x => { const k = x.origen || 'directo'; o[k] = (o[k] || 0) + 1; });
+  const barras = [];
+  for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i); barras.push({ k: k, n: f.filter(x => x.fecha.slice(0, 10) === k).length }); }
+  return { dias: dias, desde: desde, hoy: hoy, hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, ayerN: todas.filter(x => x.fecha.slice(0, 10) === ayer).length,
+    total: f.length, unicos: unicos(f), anterior: prev.length, cel: f.length ? Math.round(f.filter(x => x.disp !== 'pc').length * 100 / f.length) : 0,
+    barras: barras, origen: Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n) };
+}
+// «Mi tienda en línea»: las visitas de la tienda de este negocio y los pedidos que entraron en el mismo período (solo el administrador)
+function tiendaVisitas_(u, d) {
+  if (u.rol !== 'admin') throw new Error('Solo el administrador ve las visitas de la tienda');
+  const per = String((d && d.dias) || '7'), hoy = hoy_(), dias = per === 'mes' ? Number(hoy.slice(8, 10)) : per === '30' ? 30 : 7;
+  const barras = []; if (!MULTI_NEGOCIO) for (let i = dias - 1; i >= 0; i--) barras.push({ k: diaMenos_(i), n: 0 });
+  const v = MULTI_NEGOCIO ? visitasTienda_(NEG.id, dias) // en una instalación de un solo negocio no hay contador: sale en cero
+    : { dias: dias, desde: diaMenos_(dias - 1), hoy: hoy, hoyN: 0, ayerN: 0, total: 0, unicos: 0, anterior: 0, cel: 0, barras: barras, origen: [] };
+  v.periodo = per === 'mes' ? 'mes' : String(dias);
+  v.pedidos = rows_('Pedidos').filter(p => String(p.fecha).slice(0, 10) >= v.desde).length;
+  return v;
 }
 
