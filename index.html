@@ -893,6 +893,11 @@ body.en-tienda{padding-bottom:110px}
 .comp-p{display:flex;gap:12px;align-items:flex-start;margin-top:10px;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--pri) 6%,transparent)}.comp-p img{width:64px;height:84px;object-fit:cover;border-radius:8px;cursor:pointer;flex:none;box-shadow:0 0 0 1px var(--line)}
 .comp-p .tx{display:flex;flex-direction:column;align-items:flex-start;gap:5px;font-size:13.5px}.ok-b{background:#e3f6ec;color:#0e8f5a;border-color:transparent}
 .comp-t{display:flex;gap:12px;align-items:center;border:2px dashed color-mix(in srgb,var(--pri) 35%,transparent);border-radius:14px;padding:10px 12px;margin:10px 0;cursor:pointer;background:color-mix(in srgb,var(--pri) 5%,transparent)}
+.tpays{display:flex;flex-direction:column;gap:8px;margin:2px 0 4px}.tpay{display:flex;align-items:center;gap:12px;width:100%;text-align:left;border:2px solid var(--line,#ead7e3);border-radius:16px;padding:10px 12px;background:var(--card,#fff);color:inherit;font:inherit;cursor:pointer}
+.tpay.on{border-color:var(--pri);background:color-mix(in srgb,var(--pri) 7%,transparent)}.tpay i{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:none;font-style:normal;font-size:19px;box-shadow:inset -5px -5px 0 rgba(0,0,0,.12)}
+.tpay .tx{display:flex;flex-direction:column;gap:1px}.tpay b{font-size:14.5px}.tpay small{color:var(--mut);font-size:12px}
+.tpg-pasos{text-align:left;margin:12px 0 4px;font-size:13.5px}.tpg-pasos div{display:flex;gap:10px;margin:7px 0;line-height:1.4}.tpg-pasos em{flex:none;width:22px;height:22px;border-radius:50%;background:var(--pri);color:#fff;font-style:normal;font-weight:800;font-size:12px;display:grid;place-items:center}
+.btn.tarj{background:linear-gradient(135deg,#3b82f6,#1b4fd8);color:#fff;border:0;width:100%;margin-top:6px}
 .comp-t.on{border-style:solid}.comp-t img{width:46px;height:60px;object-fit:cover;border-radius:6px;flex:none}.comp-t .ci{font-size:24px}.comp-t .tx{display:flex;flex-direction:column;gap:2px;font-size:13.5px}.comp-t small{color:var(--mut);font-size:12px}
 .mis-c{font-size:12.5px;margin:-2px 0 8px 2px;color:var(--mut)}.mis-c.ok{color:#0e8f5a;font-weight:600}.mis-c.bt{display:block;cursor:pointer;color:var(--txt)}.mis-c.bt b{color:var(--pri)}
 .anuncio-b{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:18px;margin-bottom:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--pri) 12%,var(--card,#fff)),var(--card,#fff));border:1px solid color-mix(in srgb,var(--pri) 25%,transparent)}
@@ -1563,7 +1568,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.58';
+const APP_VER = '1.9.59';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -4886,7 +4891,7 @@ async function cobrarPedido(p) {
   // E16: si hay otra venta a medias en el ticket, se pregunta antes de reemplazarla
   if (S.ticket.items.length && S.ticket.pedidoId !== p.id && !(await confirmar('Tienes otra venta a medias en el ticket. ¿La reemplazas por el pedido ' + esc(p.numero) + '?', { si: 'Reemplazar' }))) return;
   S.ticket = { items: p.items.map(i => ({ productoId: byId(S.productos, i.productoId) ? i.productoId : '', descripcion: i.nombre, cantidad: i.cantidad, precio: i.precio, precioMan: 1 })),
-    clienteId: p.clienteId || '', pedidoId: p.id, descuento: 0, metodo: ['Efectivo', 'Tarjeta', 'Transferencia'].includes(p.pago) ? p.pago : 'Efectivo', anticipo: num(p.anticipoPagado) }; // el anticipo que ya pagó se descuenta
+    clienteId: p.clienteId || '', pedidoId: p.id, descuento: 0, metodo: ['Efectivo', 'Tarjeta', 'Transferencia'].includes(p.pago) ? p.pago : p.pago === 'Tigo Money' ? 'Transferencia' : 'Efectivo', anticipo: num(p.anticipoPagado) }; // el anticipo que ya pagó se descuenta
   if (p.envio) S.ticket.items.push({ productoId: '', descripcion: 'Envío a domicilio', cantidad: 1, precio: p.envio });
   guardarTicket();
   cerrarHojas();
@@ -6417,8 +6422,11 @@ R.tienda = () => {
     <button class="btn pri" data-a="guardarAj" data-s="dueno">Guardar</button>`);
   h += sec('entregas', 'truck', 'Entregas y pagos', `<div class="f2"><label class="fld"><span>Entregas</span>${sel('tiendaEntrega', [['ambos', 'A domicilio y para recoger'], ['recoger', 'Solo para recoger'], ['domicilio', 'Solo a domicilio']])}</label><label class="fld"><span>Costo de envío a domicilio</span><input data-k="tiendaEnvio" inputmode="decimal" value="${v('tiendaEnvio')}"></label></div>
     <div class="f2"><label class="fld"><span>Pedido mínimo</span><input data-k="tiendaMinimo" inputmode="decimal" value="${v('tiendaMinimo')}" placeholder="0 = sin mínimo"></label><label class="fld"><span>Mostrar existencias</span>${sel('tiendaMostrarStock', [['no', 'No mostrar'], ['si', 'Mostrar cuántos hay']])}</label></div>
-    <div class="fld"><span>Formas de pago que aceptas</span><div class="row" id="aj-pagos">${['Efectivo', 'Transferencia', 'Tarjeta'].map(p => `<label class="chk"><input type="checkbox" value="${p}" ${String(c.tiendaPagos).split(',').includes(p) ? 'checked' : ''}> ${p}</label>`).join('')}</div></div>
+    <div class="fld"><span>Formas de pago que aceptas</span><div class="row" id="aj-pagos">${['Efectivo', 'Transferencia', 'Tigo Money', 'Tarjeta'].map(p => `<label class="chk"><input type="checkbox" value="${p}" ${String(c.tiendaPagos).split(',').includes(p) ? 'checked' : ''}> ${p}</label>`).join('')}</div></div>
     <label class="fld"><span>Datos para transferencia</span><input data-k="tiendaDatosPago" value="${v('tiendaDatosPago')}" placeholder="Banco · cuenta · a nombre de…"></label>
+    <label class="fld"><span>Número Tigo Money</span><input data-k="tiendaTigo" value="${v('tiendaTigo')}" maxlength="120" placeholder="9876-5432 · a nombre de…"></label>
+    <label class="fld"><span>Enlace de pago con tarjeta</span><input data-k="tiendaEnlacePago" value="${v('tiendaEnlacePago')}" inputmode="url" maxlength="400" placeholder="https://… (PixelPay, Fico-link, BAC, Promérica, PayPal)"></label>
+    <div class="aviso info sm" style="margin-bottom:12px">${ic('card', 18)}<div>Con <b>Tarjeta</b> marcada y tu enlace de pago, al enviar el pedido tu cliente ve el botón <b>Pagar con tarjeta</b> y luego sube la captura del pago aprobado. El dinero llega directo a tu cuenta: el programa no lo toca ni cobra comisión.</div></div>
     <label class="fld"><span>Productos agotados</span>${sel('tiendaSinStock', [['no', 'No se pueden pedir'], ['si', 'Se pueden pedir igual']])}</label>
     <button class="btn pri" data-a="guardarAj" data-s="entregas">Guardar</button>`);
   m.innerHTML = h;
@@ -9136,6 +9144,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.59', fecha: '2026-11-09', items: [
+    { i: 'card', t: 'Cobros en línea en tu tienda', d: 'En Mi tienda en línea › Entregas y pagos pega tu enlace de pago con tarjeta (PixelPay, Fico-link, BAC, Promérica o PayPal) y tu número Tigo Money. Tu cliente paga desde su pedido y sube la captura; tú lo confirmas con un toque. El dinero llega directo a tu cuenta.' }
+  ] },
   { v: '1.9.58', fecha: '2026-11-06', items: [
     { i: 'sparkle', t: 'Nuevo tipo de negocio: Vitaminas y suplementos', d: 'Tienda por objetivo (Energía, Defensas, Articulaciones…), presentaciones con su precio y precio especial por cantidad.' },
     { i: 'alert', t: 'Lotes y vencimientos', d: 'Cada producto puede llevar sus lotes con fecha de vencimiento; al vender sale primero el que vence antes. Se enciende en Ajustes › Funciones (útil también para farmacias).' },
@@ -10087,7 +10098,7 @@ function tCarrito() {
       ${n.entrega === 'ambos' ? `<div class="seg full" id="tc-e" style="margin-bottom:12px"><button class="${T.entrega === 'recoger' ? 'on' : ''}" data-e="recoger">${ic('store', 16)} Recoger</button><button class="${T.entrega === 'domicilio' ? 'on' : ''}" data-e="domicilio">${ic('truck', 16)} A domicilio</button></div>` : `<p class="sm mut">${n.entrega === 'domicilio' ? 'Te lo llevamos a domicilio' : 'Lo recoges en el negocio'}${n.direccion && n.entrega !== 'domicilio' ? ': ' + esc(n.direccion) : ''}</p>`}
       <div class="f2"><label class="fld"><span>Tu nombre</span><input id="tc-n" autocomplete="name" value="${esc(valores.nom !== undefined ? valores.nom : cli.nombre || '')}"></label><label class="fld"><span>Tu WhatsApp</span><input id="tc-t" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" value="${esc(valores.tel !== undefined ? valores.tel : cli.telefono || '')}"></label></div>
       ${T.entrega === 'domicilio' ? `<label class="fld"><span>Dirección de entrega</span><input id="tc-d" autocomplete="street-address" placeholder="Colonia, calle, casa, referencia" value="${esc(valores.dir !== undefined ? valores.dir : cli.direccion || '')}"></label>` : ''}
-      <label class="fld"><span>¿Cómo vas a pagar?</span><select id="tc-p">${n.pagos.map(x => `<option value="${esc(x)}" ${valores.pago === x ? 'selected' : ''}>${esc(x === 'Efectivo' && T.entrega === 'domicilio' ? 'Efectivo al recibir' : x)}</option>`).join('')}</select></label>
+      <div class="fld"><span>¿Cómo vas a pagar?</span><input type="hidden" id="tc-p" value="${esc(n.pagos.includes(valores.pago) ? valores.pago : n.pagos[0])}"><div class="tpays" id="tc-pp">${n.pagos.map(x => { const o = tPagoInfo(x, n); return `<button type="button" class="tpay ${(n.pagos.includes(valores.pago) ? valores.pago : n.pagos[0]) === x ? 'on' : ''}" data-pg="${esc(x)}"><i style="background:${o.c}">${o.e}</i><span class="tx"><b>${esc(o.t)}</b><small>${esc(o.s)}</small></span></button>`; }).join('')}</div></div>
       <div id="tc-dp"></div>
       ${citaOn() ? `<div class="t-cita"><div class="fld"><span>¿Qué día traes tu vehículo?</span><div class="pays" id="tc-dias">${[0, 1, 2].map(k => { const d = addDias(T.info.hoy || hoy(), k); return `<button type="button" class="pay ${T.cita === d ? 'on' : ''}" data-dia="${d}">${k === 0 ? 'Hoy' : k === 1 ? 'Mañana' : fFechaC(d)}</button>`; }).join('')}<input type="date" id="tc-dx" value="${esc(T.cita || '')}" min="${esc(T.info.hoy || hoy())}" style="width:auto"></div></div>
         <div class="fld"><span>¿A qué hora?</span><div class="pays" id="tc-horas">${horasTienda().map(x => { const q = cupoHora(T.cita, x); return `<button type="button" class="pay ${T.hora === x ? 'on' : ''} ${q.lleno ? 'lleno' : ''}" data-hora="${q.lleno ? '' : x}" ${q.lleno ? 'disabled' : ''}>${horaTxt(x)}${q.lleno ? ' · lleno' : q.quedan === 1 ? ' · 1 lugar' : ''}</button>`; }).join('')}</div></div>
@@ -10095,8 +10106,10 @@ function tCarrito() {
       <label class="fld"><span>Nota (opcional)</span><input id="tc-o" placeholder="Algo más que debamos saber" value="${esc(valores.nota || '')}"></label>`;
     const dp = () => { const pg = $('#tc-p', h.el).value;
       $('#tc-dp', h.el).innerHTML = (pg === 'Transferencia' && n.datosPago ? `<div class="aviso info sm">${ic('bank', 18)}<div>${esc(n.datosPago)}</div></div>` : '')
-        + (pg !== 'Efectivo' ? `<label class="comp-t ${T.comp ? 'on' : ''}">${T.comp ? `<img src="${T.comp}" alt="">` : '<span class="ci">📎</span>'}<span class="tx"><b>${T.comp ? 'Comprobante adjunto ✓' : 'Adjuntar comprobante de pago'}</b><small>${T.comp ? 'Toca para cambiarlo' : 'Opcional: la foto o captura de tu transferencia. También lo puedes mandar después.'}</small></span><input type="file" accept="image/*" id="tc-cf" hidden></label>` : ''); };
-    $('#tc-p', h.el).addEventListener('change', dp); dp();
+        + (pg === 'Tigo Money' && n.tigo ? `<div class="aviso info sm">${ic('phone', 18)}<div><b>Tigo Money</b><br>${esc(n.tigo)}</div></div>` : '')
+        + (pg === 'Tarjeta' && n.enlacePago ? `<div class="aviso info sm">${ic('card', 18)}<div>Al enviar el pedido te aparece el botón <b>Pagar con tarjeta</b>. Pagas en la página segura del banco.</div></div>` : '')
+        + (pg !== 'Efectivo' && !(pg === 'Tarjeta' && n.enlacePago) ? `<label class="comp-t ${T.comp ? 'on' : ''}">${T.comp ? `<img src="${T.comp}" alt="">` : '<span class="ci">📎</span>'}<span class="tx"><b>${T.comp ? 'Comprobante adjunto ✓' : 'Adjuntar comprobante de pago'}</b><small>${T.comp ? 'Toca para cambiarlo' : 'Opcional: la foto o captura de tu transferencia. También lo puedes mandar después.'}</small></span><input type="file" accept="image/*" id="tc-cf" hidden></label>` : ''); };
+    $('#tc-pp', h.el).addEventListener('click', e => { const b = e.target.closest('[data-pg]'); if (!b) return; $('#tc-p', h.el).value = b.dataset.pg; $$('#tc-pp .tpay', h.el).forEach(x => x.classList.toggle('on', x === b)); dp(); }); dp();
     $('#tc-dp', h.el).addEventListener('change', async e => { const f = e.target.closest('#tc-cf'); if (!f || !f.files[0]) return; try { T.comp = await comprimirImagen(f.files[0], 1200); dp(); } catch (x) { err(x); } });
     h.botones([{ t: `${ic('send', 18)} ${citaOn() ? 'Apartar mi lavado' : 'Enviar pedido'} · ${money(sub + env)}`, cls: 'wa big', fn: enviar }]);
   };
@@ -10122,17 +10135,29 @@ function tCarrito() {
       if (veh.trim().length < 2) throw new Error('Escribe qué vehículo traes');
     }
     LS.set('cliente_tienda', JSON.stringify({ nombre, telefono: tel, direccion: dir || cli.direccion || '' }));
-    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, cita: citaOn() ? T.cita : '', hora: citaOn() ? T.hora : '', vehiculo: veh.trim(), placa: pla.trim(), pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: $('#tc-p', h.el).value !== 'Efectivo' && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => ({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }))) });
+    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, cita: citaOn() ? T.cita : '', hora: citaOn() ? T.hora : '', vehiculo: veh.trim(), placa: pla.trim(), pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: $('#tc-p', h.el).value !== 'Efectivo' && !($('#tc-p', h.el).value === 'Tarjeta' && n.enlacePago) && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => ({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }))) });
     const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
     T.cart = {}; guardarCarrito(); T.compras = []; guardarCompras(); T.comp = ''; h.cerrar(); gridTienda(); pedidoEnviado(r, nombre, tel); misPedidosTienda();
   };
   pinta();
 }
+// Cómo se ve cada forma de pago en la tienda
+function tPagoInfo(x, n) {
+  if (x === 'Tarjeta') return n.enlacePago ? { e: '💳', c: 'linear-gradient(135deg,#3b82f6,#1b4fd8)', t: 'Tarjeta de crédito o débito', s: 'Pagas en la página segura del banco' } : { e: '💳', c: 'linear-gradient(135deg,#3b82f6,#1b4fd8)', t: 'Tarjeta', s: T.entrega === 'domicilio' ? 'Pagas con tarjeta al recibir' : 'Pagas con tarjeta en el negocio' };
+  if (x === 'Tigo Money') return { e: '📱', c: 'linear-gradient(135deg,#ff9f1a,#f25c05)', t: 'Tigo Money', s: 'Envías y subes la captura' };
+  if (x === 'Transferencia') return { e: '🏦', c: 'linear-gradient(135deg,#00c2d1,#0089a8)', t: 'Transferencia bancaria', s: 'Envías y subes la captura' };
+  return { e: '💵', c: 'linear-gradient(135deg,#22c55e,#0f9d58)', t: T.entrega === 'domicilio' ? 'Efectivo al recibir' : 'Efectivo', s: T.entrega === 'domicilio' ? 'Pago contra entrega' : 'Pagas al recoger' };
+}
 function pedidoEnviado(r, nombre, tel) {
   const n = T.info.negocio;
   const txt = [`Hola, soy ${nombre}. Acabo de hacer el pedido *${r.numero}* en línea:`, ...r.items.map(i => `• ${i.cantidad} × ${i.nombre} — ${money(i.total)}${i.enlace ? '\n  ' + i.enlace : ''}`), r.descuento ? `Descuento por cantidad incluido: ${money(r.descuento)}` : '', r.envio ? `Envío: ${money(r.envio)}` : '', `*Total: ${money(r.total)}*`, r.anticipo ? `Anticipo para pedir: ${money(r.anticipo)}` : '', r.cita ? `Lo llevo el ${fFechaC(r.cita)}${r.hora ? ' a las ' + horaTxt(r.hora) : ''}${r.vehiculo ? ' · ' + r.vehiculo : ''}${r.placa ? ' (' + r.placa + ')' : ''}` : '', r.cita ? '' : `${r.entrega === 'domicilio' ? 'A domicilio' : 'Para recoger'} · Pago: ${r.pago}`, r.cita ? `Pago: ${r.pago}` : ''].filter(Boolean).join('\n');
   const h = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic('check', 40)}</i><h2>¡Pedido enviado!</h2><p class="mut">Tu número de pedido es <b>${esc(r.numero)}</b></p><div class="ok-tot n">${money(r.total)}</div>
-    ${r.anticipo ? `<p class="sm" style="color:var(--pri)"><b>Anticipo para pedir tus compras en línea: ${money(r.anticipo)}</b>${r.diasCompra ? `<br><span class="mut">Llegan en ${esc(r.diasCompra)}.</span>` : ''}</p>` : ''}<p class="sm">${esc(n.nombre)} ya lo recibió y te confirmará por WhatsApp.</p>${r.datosPago ? `<div class="aviso info sm" style="text-align:left">${ic('bank', 18)}<div><b>Datos para transferir</b><br>${esc(r.datosPago)}</div></div>` : ''}</div>` });
+    ${r.anticipo ? `<p class="sm" style="color:var(--pri)"><b>Anticipo para pedir tus compras en línea: ${money(r.anticipo)}</b>${r.diasCompra ? `<br><span class="mut">Llegan en ${esc(r.diasCompra)}.</span>` : ''}</p>` : ''}<p class="sm">${esc(n.nombre)} ya lo recibió y te confirmará por WhatsApp.</p>${r.datosPago ? `<div class="aviso info sm" style="text-align:left">${ic(r.pago === 'Tigo Money' ? 'phone' : 'bank', 18)}<div><b>${r.pago === 'Tigo Money' ? 'Envía tu pago por Tigo Money' : 'Datos para transferir'}</b><br>${esc(r.datosPago)}</div></div>` : ''}
+    ${r.enlacePago ? `<div class="tpg-pasos"><div><em>1</em><span>Toca <b>Pagar con tarjeta</b>. Escribe <b>${money(r.total)}</b> y en la descripción <b>${esc(r.numero)}</b>.</span></div><div><em>2</em><span>Al terminar, sube la captura del pago aprobado.</span></div><div><em>3</em><span>La tienda confirma y tu pedido queda <b>pagado</b>.</span></div></div>
+    <a class="btn tarj" href="${esc(r.enlacePago)}" target="_blank" rel="noopener noreferrer">${ic('card', 18)} Pagar ${money(r.total)} con tarjeta</a>
+    <label class="comp-t" id="pe-comp"><span class="ci">📎</span><span class="tx"><b>Subir comprobante de pago</b><small>La captura del pago aprobado</small></span><input type="file" accept="image/*" hidden></label>` : ''}</div>` });
+  const pc = $('#pe-comp input', h.el);
+  if (pc) pc.addEventListener('change', async () => { if (!pc.files[0]) return; try { const foto = await comprimirImagen(pc.files[0], 1200); await api('pedidoComprobante', { negocio: T.id, id: r.id, telefono: tel, foto }); $('#pe-comp', h.el).outerHTML = '<div class="mis-c ok" style="margin:10px 0">📎 Comprobante enviado · la tienda lo está revisando</div>'; toast('Comprobante enviado. El negocio lo va a revisar.', 'ok', 4000); misPedidosTienda(); } catch (x) { err(x); } });
   const bs = [];
   if (n.telefono) bs.push({ t: `${ic('wa', 18)} Avisar por WhatsApp`, cls: 'wa', fn: () => { window.open(waLink(n.telefono, txt), '_blank'); } });
   bs.push({ t: 'Seguir viendo', cls: 'pri', fn: () => h.cerrar() });
@@ -10297,7 +10322,8 @@ async function misPedidosTienda() {
     const comp = p => { if (!p.pago || p.pago === 'Efectivo' || ['cancelado', 'entregado'].includes(p.estado)) return p.pagoEstado === 'ok' ? '<div class="mis-c ok">✓ Pago verificado</div>' : '';
       if (p.pagoEstado === 'ok') return '<div class="mis-c ok">✓ El negocio confirmó tu pago</div>';
       if (p.pagoEstado === 'revisar') return '<div class="mis-c">📎 Comprobante enviado · el negocio lo está revisando</div>';
-      return `<label class="mis-c bt">${p.pagoEstado === 'no' ? '<span class="neg">El negocio no pudo confirmar tu pago.</span> ' : '¿Ya pagaste? '}<b>📎 ${p.pagoEstado === 'no' ? 'Enviar otro comprobante' : 'Enviar comprobante'}</b><input type="file" accept="image/*" data-comp="${p.id}" hidden></label>`; };
+      const en = p.pago === 'Tarjeta' && T.info.negocio.enlacePago ? `<a class="mis-c bt" href="${esc(T.info.negocio.enlacePago)}" target="_blank" rel="noopener noreferrer"><b>💳 Pagar ${money(p.total)} con tarjeta</b> · escribe ${esc(p.numero)} en la descripción</a>` : '';
+      return en + `<label class="mis-c bt">${p.pagoEstado === 'no' ? '<span class="neg">El negocio no pudo confirmar tu pago.</span> ' : '¿Ya pagaste? '}<b>📎 ${p.pagoEstado === 'no' ? 'Enviar otro comprobante' : 'Enviar comprobante'}</b><input type="file" accept="image/*" data-comp="${p.id}" hidden></label>`; };
     const tel = T.info.negocio.telefono;
     if (!l.length) { box.innerHTML = ''; return; }
     const linea = (p, i) => { const x = p.lineas[i], ok = x.id && T.info.productos.some(y => y.id === x.id), nom = String(x.nombre).split(' (')[0], ah = x.normal > x.precio;

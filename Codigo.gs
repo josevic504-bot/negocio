@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.58';
+const VERSION = '1.9.59';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -117,7 +117,7 @@ const CONFIG_DEF = {
   moneda: 'L', isv: '0.15', preciosConISV: 'si', venderSinStock: 'no',
   mensajeRecibo: '¡Gracias por su compra!', tema: 'fucsia', logo: '', fondoCaja: '0', cajaTienda: 'si',
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
-  tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
+  tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaEnlacePago: '', tiendaTigo: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
   tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
@@ -2783,6 +2783,13 @@ function guardar_(u, d) {
       if (prev && prev !== reg.tiendaPortada) borrarFoto_(prev);
     }
     ['tiendaAbre', 'tiendaCierra'].forEach(k => { if (reg[k] && !/^([01]\d|2[0-3]):[0-5]\d$/.test(reg[k])) throw new Error('Escribe la hora con el formato 08:00'); });
+    // Cobros en línea: el enlace de pago es del banco o PixelPay del negocio (el dinero llega directo a su cuenta)
+    if (reg.tiendaEnlacePago !== undefined) { const t = reg.tiendaEnlacePago.trim();
+      if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de pago debe ser una dirección web (https://…)');
+      if (t && !/^https:\/\/[^\s"'<>]+$/i.test(/^https?:\/\//i.test(t) ? t.replace(/^http:/i, 'https:') : 'https://' + t)) throw new Error('El enlace de pago debe ser una dirección web (https://…)');
+      reg.tiendaEnlacePago = !t ? '' : (/^https?:\/\//i.test(t) ? t.replace(/^http:/i, 'https:') : 'https://' + t).slice(0, 400); }
+    if (reg.tiendaTigo !== undefined) reg.tiendaTigo = txt_(reg.tiendaTigo, 120);
+    if (reg.tiendaPagos !== undefined) reg.tiendaPagos = reg.tiendaPagos.split(',').filter(x => ['Efectivo', 'Transferencia', 'Tarjeta', 'Tigo Money'].indexOf(x) >= 0).join(',') || 'Efectivo';
     if (reg.tiendaMapa) { const t = reg.tiendaMapa.trim(); if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de Google Maps debe ser una dirección web (https://…)'); reg.tiendaMapa = /^https?:\/\//i.test(t) ? t : 'https://' + t; }
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
     if (reg.isv !== undefined && !(Number(reg.isv) >= 0 && Number(reg.isv) < 1)) throw new Error('ISV no válido');
@@ -4904,7 +4911,7 @@ function tiendaInfo_(d) {
   return {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
-      minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago,
+      minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago, enlacePago: cfg.tiendaEnlacePago || '', tigo: cfg.tiendaTigo || '',
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
       abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, ramoPrecios: cfg.ramoPrecios !== 'no', cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
@@ -5187,7 +5194,7 @@ function pedir_(d) {
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
   return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
-    negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : '' };
+    negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : pago === 'Tigo Money' ? cfg.tiendaTigo : '', enlacePago: pago === 'Tarjeta' ? cfg.tiendaEnlacePago || '' : '' };
 }
 
 /* ===================== MENSAJES DIRECTOS (tienda ↔ negocio) =====================
