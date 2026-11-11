@@ -711,6 +711,9 @@ body.en-tienda{padding-bottom:110px}
 .m-ref{font-size:12px;font-weight:600;padding:5px 8px;margin:-2px -4px 6px;border-radius:8px;border-left:3px solid currentColor;background:color-mix(in srgb,currentColor 9%,transparent);opacity:.9}
 .preg-b{display:flex;align-items:center;gap:6px;width:100%;margin:10px 0 2px;padding:10px 12px;border:1px dashed color-mix(in srgb,var(--pri) 45%,transparent);border-radius:12px;background:none;color:inherit;font:inherit;font-size:13px;text-align:left;cursor:pointer;text-decoration:none}
 .preg-b b{color:var(--pri)}
+.pers-box{margin-top:14px;padding:12px 14px 4px;border:1.5px solid color-mix(in srgb,var(--pri) 30%,transparent);border-radius:16px}
+.pers-box>b{display:block;margin-bottom:2px}
+.it-foto{display:block;width:64px;height:64px;object-fit:cover;border-radius:10px;margin:6px 0 2px;cursor:pointer}.pers-box .fld{margin-top:8px!important}
 .ramo-c{border:1.5px solid var(--pri);border-radius:16px;padding:12px 14px;margin:6px 0 8px;transition:box-shadow .3s}.ramo-c.brilla{box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 30%,transparent)}.ramo-c .pp{display:flex;justify-content:space-between;align-items:baseline}.ramo-c .pp b{font-size:22px;color:var(--pri)}.ramo-c .nt{margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 7%,transparent);font-size:13px}.ramo-c .row{display:flex;gap:8px;margin-top:10px}.ramo-c .row .btn{flex:1}.ramo-c .row .acc{flex:2}
 .t-expl{font-size:12.5px;color:var(--mut);margin:14px 2px 8px}.ed-ped{text-align:center;font-size:12.5px;font-weight:600;color:var(--pri);margin-bottom:8px}.btn.quitar{color:var(--bad);border:1.5px solid var(--bad);background:transparent}
 .prod-big .ph{aspect-ratio:4/3;border-radius:22px;overflow:hidden;display:grid;place-items:center;color:#fff;position:relative;background:linear-gradient(135deg,var(--t1),var(--t2))}
@@ -1428,7 +1431,7 @@ const ICP = {
 const ICI = { cart: 'vender', inbox: 'pedidos', chat: 'mensajes', store: 'tienda', box: 'productos', tag: 'precios', layers: 'proyectos', users: 'clientes', truck: 'proveedores', bag: 'compras', receipt: 'gastos', wallet: 'caja', doc: 'ventas', chart: 'reportes', user: 'usuarios', gear: 'ajustes', cal: 'agenda', paw: 'mascotas', syringe: 'vacunas', steth: 'mascotas', wrench: 'ordenes', bed: 'hospedaje', gift: 'encargos', clock: 'vencimientos', key: 'cuentas', coin: 'qa_cobrar', help: 'ayuda', sparkle: 'qa_resumen' };
 const ICI_QA = { receipt: 'qa_gasto', truck: 'qa_compra' };
 const icImg = k => `<img class="ici" src="iconos/${k}.webp" alt="" loading="lazy" decoding="async">`;
-const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'vitaminas', 'repuestos', 'carwash', 'joyeria', 'floristeria', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
+const GIROS_IMG = ['tienda', 'variedades', 'ferreteria', 'comida', 'boutique', 'farmacia', 'vitaminas', 'repuestos', 'carwash', 'joyeria', 'floristeria', 'manualidades', 'tecnologia', 'belleza', 'catalogo', 'panaderia', 'servicios', 'streaming', 'compras', 'recargas', 'veterinaria', 'otro'];
 const giroImg = (id, cls) => `<img class="gimg ${cls || ''}" src="iconos/g_${GIROS_IMG.includes(id) ? id : 'otro'}.webp" alt="" decoding="async">`;
 const ic = (n, sz = 22) => `<svg class="ic" width="${sz}" height="${sz}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICP[n] || ''}</svg>`;
 
@@ -1576,7 +1579,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.63';
+const APP_VER = '1.9.64';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2371,7 +2374,7 @@ function pintarLogin() {
     : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo. Sin tarjeta.</p><div class="in-mini"><span>Ventas</span><span>Inventario</span><span>Clientes</span><span>Caja</span><span>Tienda en línea</span><span>Reportes</span></div>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
-        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['carwash', 'joyeria', 'floristeria', 'vitaminas'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
+        <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['carwash', 'joyeria', 'floristeria', 'vitaminas', 'manualidades'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
@@ -2393,7 +2396,7 @@ function pintarLogin() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 const GIROS_LOCAL = [['tienda', 'Tienda / pulpería'], ['variedades', 'Tienda de variedades'], ['ferreteria', 'Ferretería'], ['comida', 'Restaurante / comida'], ['boutique', 'Boutique / ropa y calzado'],
-  ['farmacia', 'Farmacia'], ['vitaminas', 'Vitaminas y suplementos'], ['repuestos', 'Taller mecánico y repuestos'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['floristeria', 'Floristería'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Salón de belleza / estética'], ['catalogo', 'Maquillaje y moda por catálogo'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
+  ['farmacia', 'Farmacia'], ['vitaminas', 'Vitaminas y suplementos'], ['repuestos', 'Taller mecánico y repuestos'], ['carwash', 'Carwash / lavado de autos'], ['joyeria', 'Joyería'], ['floristeria', 'Floristería'], ['manualidades', 'Manualidades y detalles personalizados'], ['tecnologia', 'Tecnología / celulares'], ['belleza', 'Salón de belleza / estética'], ['catalogo', 'Maquillaje y moda por catálogo'], ['panaderia', 'Panadería / repostería'], ['servicios', 'Servicios'], ['streaming', 'Streaming y suscripciones'], ['compras', 'Compras en línea (Shein, Temu, Amazon…)'], ['recargas', 'Recargas de juegos'], ['veterinaria', 'Veterinaria y mascotas'], ['otro', 'Otro tipo de negocio']].map(x => ({ id: x[0], n: x[1] }));
 ACC.lmodo = el => { S.lmodo = el.dataset.m; S.lmodoElegido = 1; pintarLogin(); };
 
 /* Introducción al programa (antes del registro) */
@@ -4845,7 +4848,7 @@ R.pedidos = async () => {
   const l = S.pedidosL, cnt = k => l.filter(p => p.estado === k).length;
   S.pedidosNuevos = cnt('nuevo') + cnt('cotizar'); pintarNav();
   if (!S.f.pest || (S.f.pestAuto && !cnt(S.f.pest))) { S.f.pest = ['cotizar', 'cotizado', 'nuevo', 'confirmado', 'listo'].find(k => cnt(k)) || 'nuevo'; S.f.pestAuto = 1; }
-  const conRamo = girosOn().includes('floristeria') || cnt('cotizar') || cnt('cotizado');
+  const conRamo = girosOn().includes('floristeria') || girosOn().includes('manualidades') || cnt('cotizar') || cnt('cotizado');
   const vis = l.filter(p => p.estado === S.f.pest);
   m.innerHTML = tienda + `<div class="chips" style="margin:12px 0">${Object.keys(EST_P).filter(k => conRamo || !EST_P[k].ramo).map(k => `<button class="chip ${S.f.pest === k ? 'on' : ''}" data-a="pest" data-k="${k}">${EST_P[k].t}${['cotizar', 'cotizado', 'nuevo', 'confirmado', 'listo'].includes(k) ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
     <div class="ords">${vis.map(cardPedido).join('') || `<div class="empty">${S.f.pest === 'cotizado' ? 'No hay ramos esperando respuesta del cliente' : S.f.pest === 'nuevo' ? 'No hay pedidos nuevos. Comparte el enlace de tu tienda para recibir más 🛍️' : 'No hay pedidos aquí'}</div>`}</div>`;
@@ -4857,14 +4860,14 @@ const enlaceSeguro = t => { t = String(t || '').trim(); return /^https?:\/\//i.t
 function cardPedido(p) {
   const e = EST_P[p.estado] || EST_P.nuevo;
   const accion = { cotizar: ['Poner precio', 'cotizar'], cotizado: ['Cambiar precio', 'cotizar'], nuevo: ['Confirmar', 'confirmado'], confirmado: ['Marcar listo', 'listo'], listo: ['Entregar y cobrar', 'cobrar'] }[p.estado];
-  const ramoP = ['cotizar', 'cotizado'].includes(p.estado), fotosR = (parseJ(p.cotiza, {}) || {}).fotos || [], monto = i => ramoP && !i.tipo ? (i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : 'sin precio') : money(i.total);
+  const ramoP = ['cotizar', 'cotizado'].includes(p.estado), fotosR = ((parseJ(p.cotiza, {}) || {}).fotos || []).concat(p.items.filter(i => i.foto).map(i => i.foto)), monto = i => ramoP && i.tipo === 'diseno' ? 'a cotizar' : ramoP && !i.tipo ? (i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : 'sin precio') : money(i.total);
   return `<div class="ord ${p.estado === 'nuevo' ? 'new' : ''}"><div class="ord-h"><span class="oav ${colorDe(p.nombre)}">${esc(iniciales(p.nombre))}</span><div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.numero)} · ${hace(p.fecha)}</small></div><span class="badge ${e.c}">${e.t}</span></div>
     ${e.s >= 0 ? `<div class="steps">${[0, 1, 2, 3].map(i => `<i class="${i <= e.s ? 'on' : ''}"></i>`).join('')}</div>` : ''}
     <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${monto(i)}</span></div>`).join('')}${ramoP && p.presupuesto ? `<div style="color:var(--pri)"><span>Presupuesto del cliente</span><span class="n">${money(p.presupuesto)}</span></div>` : ''}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir${num(p.anticipoPagado) >= num(p.anticipo) ? ' · pagado ✓' : num(p.anticipoPagado) > 0 ? ' · pagó ' + money(p.anticipoPagado) : ''}</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
     <div class="ord-f"><span class="t n">${p.estado === 'cotizar' ? 'Por cotizar' : money(p.total)}</span><span class="badge b-mut">${ic(p.entrega === 'domicilio' ? 'truck' : 'store', 14)} ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge b-mut">${esc(p.pago)}</span></div>
     ${p.cita ? `<div class="ord-cw" style="margin-top:9px">${p.placa ? `<span class="placa">${esc(p.placa)}</span>` : ''}<span class="sm">${esc(p.vehiculo || '')}</span><span class="crono">${esc(diaTxt(p.cita))} · ${esc(fHoraC(p.hora))}</span></div>` : ''}
     ${p.entrega === 'domicilio' && p.direccion ? `<p class="xs mut" style="margin:8px 0 0">${ic('pin', 13)} ${esc(p.direccion)}</p>` : ''}${p.nota ? `<p class="xs mut" style="margin:6px 0 0">📝 ${esc(p.nota)}</p>` : ''}
-    ${fotosR.length ? `<div class="ramo-fotos">${fotosR.map(f => `<img src="${esc(fotoSrc(f))}" alt="Foto de referencia" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}" loading="lazy">`).join('')}</div>` : ''}${compPedidoHTML(p)}
+    ${fotosR.length ? `<div class="ramo-fotos">${fotosR.map(f => `<img src="${esc(fotoSrc(f))}" alt="Foto del cliente" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}" loading="lazy">`).join('')}</div>` : ''}${compPedidoHTML(p)}
     <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a><button class="btn sm" data-a="verPedido" data-id="${p.id}">${ic('eye', 16)} Ver</button>
     ${p.estado === 'cotizado' && puede('admin', 'cajero') ? `<button class="btn sm ok-b" style="margin-left:auto" data-a="ramoAcepto" data-id="${p.id}">${ic('check', 15)} Ya aceptó</button>` : ''}${accion ? `<button class="btn ${p.estado === 'cotizado' ? '' : 'pri '}sm" style="margin-left:${p.estado === 'cotizado' ? '0' : 'auto'}" data-a="pedAccion" data-id="${p.id}" data-e="${accion[1]}">${accion[0]} ${ic('arrow', 16)}</button>` : ''}</div></div>`;
 }
@@ -4892,25 +4895,27 @@ function msjPedido(p) {
 }
 // Floristería: el negocio pone el precio del ramo que armó el cliente (o rechaza la solicitud)
 function cotizarRamo(p) {
+  const pc0 = parseJ(p.cotiza, {}) || {}, pers = !!pc0.personal;
   const fl = p.items.filter(i => !i.tipo), lista = fl.reduce((a, i) => a + (i.lista || i.precio || 0) * i.cantidad, 0), sinP = fl.some(i => !(i.lista || i.precio));
   const cost = fl.reduce((a, i) => { const x = byId(S.productos, i.productoId); return a + (x ? num(x.costo) : 0) * i.cantidad; }, 0), prev = p.cotiza ? (parseJ(p.cotiza) || {}) : {};
-  const h = hoja({ titulo: 'Ramo a tu gusto · ' + esc(p.numero), html: `<div class="mis-r"><span class="sm mut">${esc(p.nombre)} · ${esc(p.telefono)} · ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge ${EST_P[p.estado].c}">${EST_P[p.estado].t}</span></div>
+  const h = hoja({ titulo: (pers ? 'Diseño personalizado · ' : 'Ramo a tu gusto · ') + esc(p.numero), html: `<div class="mis-r"><span class="sm mut">${esc(p.nombre)} · ${esc(p.telefono)} · ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge ${EST_P[p.estado].c}">${EST_P[p.estado].t}</span></div>
     ${fl.map(i => `<div class="tk"><div class="tx"><b>${cant(i.cantidad)} × ${esc(i.nombre)}</b></div><b class="n tkt">${i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : '<span class="mut">sin precio</span>'}</b></div>`).join('')}
-    <div class="tots"><div class="tot"><span>Flores a precio de lista${sinP ? ' (algunas sin precio)' : ''}</span><b class="n">${money(lista)}</b></div><div class="tot"><span>Presupuesto del cliente</span><b class="n">${money(p.presupuesto)}</b></div>${p.envio ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${money(p.envio)}</b></div>` : ''}</div>
-    <div class="row" style="margin:8px 0 2px"><button class="btn sm" id="cr-ed">${ic('edit', 15)} Editar flores</button>${puede('admin') ? `<button class="btn sm ghost bad" id="cr-del" style="margin-left:auto">${ic('trash', 15)} Eliminar</button>` : ''}</div>
+    ${pers ? `<div class="mis-h" style="margin:8px 0"><b>${esc(pc0.cat || '')}${pc0.cant > 1 ? ' · ' + pc0.cant + ' unidades' : ''}</b><br>${esc(pc0.desc || '')}</div>` : ''}
+    <div class="tots">${pers ? '' : `<div class="tot"><span>Flores a precio de lista${sinP ? ' (algunas sin precio)' : ''}</span><b class="n">${money(lista)}</b></div>`}<div class="tot"><span>Presupuesto del cliente</span><b class="n">${money(p.presupuesto)}</b></div>${p.envio ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${money(p.envio)}</b></div>` : ''}</div>
+    <div class="row" style="margin:8px 0 2px">${pers ? '' : `<button class="btn sm" id="cr-ed">${ic('edit', 15)} Editar flores</button>`}${puede('admin') ? `<button class="btn sm ghost bad" id="cr-del" style="margin-left:auto">${ic('trash', 15)} Eliminar</button>` : ''}</div>
     ${p.nota ? `<p class="sm" style="margin:8px 0">📝 ${esc(p.nota)}</p>` : ''}${(prev.fotos || []).length ? `<div class="sm mut">Fotos de referencia</div><div class="ramo-fotos">${prev.fotos.map(f => `<img src="${esc(fotoSrc(f))}" alt="" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}">`).join('')}</div>` : ''}
-    <div class="f2"><label class="fld"><span>Precio del ramo</span><input id="cr-p" inputmode="decimal" value="${prev.precio || ''}" placeholder="0.00"></label><label class="fld"><span>Margen</span><input id="cr-m" disabled></label></div>
+    <div class="f2"><label class="fld"><span>${pers ? 'Precio total' : 'Precio del ramo'}</span><input id="cr-p" inputmode="decimal" value="${prev.precio || ''}" placeholder="0.00"></label><label class="fld"><span>Margen</span><input id="cr-m" disabled></label></div>
     <label class="fld"><span>Nota para el cliente (opcional)</span><input id="cr-n" maxlength="300" value="${esc(prev.nota || '')}" placeholder="Ej. El lirio va en botón para que dure más"></label>` });
   const pm = () => { const v = num($('#cr-p', h.el).value); $('#cr-m', h.el).value = v > 0 ? money(v - cost) + (v ? ' · ' + Math.round((v - cost) / v * 100) + '%' : '') : ''; };
   $('#cr-p', h.el).addEventListener('input', pm); pm();
-  $('#cr-ed', h.el).onclick = () => { h.cerrar(); editarRamo(p); };
+  const ed = $('#cr-ed', h.el); if (ed) ed.onclick = () => { h.cerrar(); editarRamo(p); };
   const del = $('#cr-del', h.el); if (del) del.onclick = () => eliminarPedido(p, h);
   h.botones([{ t: 'Rechazar', fn: async () => { const m = await pedirTexto('Rechazar solicitud', { label: 'Motivo (lo verás en la nota)', msg: 'La solicitud se cancela.' }); if (m === null) return;
       await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m || 'No se pudo armar' }); h.cerrar(); S.pedidosL = null; toast('Solicitud rechazada', 'ok'); R.pedidos(); } },
     { t: p.estado === 'cotizado' ? 'Cambiar precio' : 'Enviar precio', cls: 'pri', fn: async () => {
       const v = num($('#cr-p', h.el).value); if (!(v > 0)) throw new Error('Escribe el precio del ramo');
       const g = await api('cotizarRamo', { id: p.id, precio: v, nota: $('#cr-n', h.el).value.trim() }); Object.assign(p, g); h.cerrar(); S.f.pest = 'cotizado'; S.f.pestAuto = 0; toast('Precio enviado. Queda en «Precio enviado» hasta que tu cliente lo acepte.', 'ok', 4500); R.pedidos();
-      const t = `Hola ${p.nombre.split(' ')[0]} 💐 Tu ramo a tu gusto queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Tócalo para aceptarlo: ${linkTienda()}&ramo=${encodeURIComponent(p.id)}`;
+      const t = `Hola ${p.nombre.split(' ')[0]} ${pers ? '✨ Tu diseño personalizado' : '💐 Tu ramo a tu gusto'} queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Tócalo para aceptarlo: ${linkTienda()}&ramo=${encodeURIComponent(p.id)}`;
       const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp? (opcional)</p><div class="msg-prev">${esc(t)}</div>` });
       a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300)); } }]);
 }
@@ -4961,7 +4966,7 @@ async function eliminarPedido(p, hoja0) {
 }
 ACC.ramoAcepto = async el => {
   const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
-  if (!(await confirmar(`¿<b>${esc(p.nombre)}</b> te dijo que acepta el ramo en <b>${money(p.total)}</b> (por WhatsApp o llamada)? El pedido pasa a <b>Nuevo</b> para confirmarlo y prepararlo.`, { si: 'Sí, aceptó' }))) return;
+  if (!(await confirmar(`¿<b>${esc(p.nombre)}</b> te dijo que acepta el precio de <b>${money(p.total)}</b> (por WhatsApp o llamada)? El pedido pasa a <b>Nuevo</b> para confirmarlo y prepararlo.`, { si: 'Sí, aceptó' }))) return;
   const g = await api('estadoPedido', { id: p.id, estado: 'nuevo' }); Object.assign(p, g);
   S.f.pest = 'nuevo'; S.f.pestAuto = 0; toast('Listo, el ramo pasó a pedidos nuevos', 'ok'); R.pedidos();
 };
@@ -5069,7 +5074,7 @@ ACC.verPedido = el => {
   const h = hoja({ titulo: 'Pedido ' + esc(p.numero), html: `<div class="kv"><div><small>Cliente</small>${esc(p.nombre)}</div><div><small>WhatsApp</small>${esc(fmtWA(p.telefono))}</div><div><small>Fecha</small>${esc(fFechaC(p.fecha))} · ${fHora(p.fecha)}</div><div><small>Estado</small><span class="badge ${e.c}">${e.t}</span></div>
     <div><small>Entrega</small>${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger en el negocio'}</div><div><small>Pago</small>${esc(p.pago)}</div></div>
     ${p.direccion ? `<p class="sm">${ic('pin', 15)} ${esc(p.direccion)} · <a href="https://www.google.com/maps/search/${encodeURIComponent(p.direccion)}" target="_blank" rel="noopener">Ver en mapa</a></p>` : ''}
-    <div class="tks">${p.items.map(i => `<div class="tk"><div class="tx"><b>${esc(i.nombre)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}${i.tipo === 'compra' ? ` · US$${Number(i.usd || 0).toFixed(2)} c/u` : ''}</small>${i.tipo === 'compra' ? `<small style="word-break:break-all"><a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">${ic('globe', 13)} ${esc(i.enlace)}</a></small>` : ''}</div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
+    <div class="tks">${p.items.map(i => `<div class="tk"><div class="tx"><b>${esc(i.nombre)}</b>${i.foto ? `<img class="it-foto" src="${esc(fotoSrc(i.foto))}" alt="Imagen del cliente" data-a="verFotoRamo" data-src="${esc(fotoAncha(i.foto))}">` : ''}<small>${cant(i.cantidad)} × ${money(i.precio)}${i.tipo === 'compra' ? ` · US$${Number(i.usd || 0).toFixed(2)} c/u` : ''}</small>${i.tipo === 'compra' ? `<small style="word-break:break-all"><a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">${ic('globe', 13)} ${esc(i.enlace)}</a></small>` : ''}</div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
     <div class="tots">${p.envio ? `<div class="tot"><span>Envío</span><b class="n">${money(p.envio)}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(p.total)}</b></div>${p.anticipo ? `<div class="tot"><span>Anticipo para pedir el artículo</span><b class="n" style="color:var(--pri)">${money(p.anticipo)}</b></div>` : ''}${num(p.anticipoPagado) > 0 ? `<div class="tot"><span>Anticipo pagado ✓</span><b class="n" style="color:var(--ok)">${money(p.anticipoPagado)}</b></div><div class="tot g"><span>Falta por pagar</span><b class="n">${money(p.total - p.anticipoPagado)}</b></div>` : ''}</div>${p.nota ? `<p class="sm mut">Nota: ${esc(p.nota)}</p>` : ''}` });
   const bs = [];
   if (['nuevo', 'confirmado', 'listo'].includes(p.estado)) bs.push({ t: 'Cancelar pedido', cls: 'bad', fn: async () => {
@@ -5078,8 +5083,8 @@ ACC.verPedido = el => {
     Object.assign(p, await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m }));
     h.cerrar(); toast('Pedido cancelado', 'ok'); R.pedidos();
   } });
-  const esRamo = ['cotizar', 'cotizado'].includes(p.estado) || !!p.cotiza;
-  if (['nuevo', 'confirmado', 'listo'].concat(esRamo ? ['cotizar', 'cotizado'] : []).includes(p.estado) && !p.ventaId) bs.push({ t: `${ic('edit', 18)} ${esRamo ? 'Editar flores' : 'Editar'}`, fn: () => { h.cerrar(); esRamo ? editarRamo(p) : editarPedido(p); } });
+  const esRamo = ['cotizar', 'cotizado'].includes(p.estado) || !!p.cotiza, esDis = !!(parseJ(p.cotiza, {}) || {}).personal;
+  if (!esDis && ['nuevo', 'confirmado', 'listo'].concat(esRamo ? ['cotizar', 'cotizado'] : []).includes(p.estado) && !p.ventaId) bs.push({ t: `${ic('edit', 18)} ${esRamo ? 'Editar flores' : 'Editar'}`, fn: () => { h.cerrar(); esRamo ? editarRamo(p) : editarPedido(p); } });
   if (puede('admin')) bs.push({ t: `${ic('trash', 18)} Eliminar`, cls: 'bad', fn: () => eliminarPedido(p, h) });
   if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !p.ventaId && num(p.anticipo) > 0 && num(p.anticipoPagado) < num(p.anticipo) - 0.004)
     bs.unshift({ t: `${ic('coin', 18)} Recibí el anticipo`, cls: 'pri', fn: () => { h.cerrar(); anticipoPedido(p); } });
@@ -7562,7 +7567,7 @@ ACC.cbPaqueteExcel = async () => {
 /* ===================== AYUDA, NOVEDADES Y ACTUALIZACIONES ===================== */
 const API_MIN = '1.9.20'; // versión mínima del Code.gs que necesita esta app
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], manualidades: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
 const MODULOS_INFO = {
   caducidad:     { n: 'Fechas de caducidad', d: 'Cada producto puede llevar su fecha de vencimiento; en Inicio ves los que están por vencer.', g: 'farmacia, pulpería' },
   lotes:         { n: 'Lotes y vencimientos', d: 'Cada producto lleva sus lotes con su fecha de vencimiento; al vender sale primero el que vence antes y ves qué vence en 30 y 90 días.', g: 'vitaminas, farmacia' },
@@ -8630,7 +8635,7 @@ function editarPagosCot(q, cb) {
 /* ===================== SUSCRIPCIONES: vencimientos, cuentas y perfiles ===================== */
 const PLAT = [['Netflix', '#e50914'], ['Disney+', '#113ccf'], ['HBO Max', '#5822b4'], ['Prime Video', '#00a8e1'], ['Spotify', '#1db954'], ['YouTube Premium', '#ff0000'], ['Crunchyroll', '#f47521'], ['Paramount+', '#0064ff'], ['IPTV', '#111111']];
 const susOn = () => modOn('suscripciones');
-const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', vitaminas: '🌿', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', joyeria: '💍', floristeria: '💐', otro: '📦' };
+const GIRO_EMO = { tienda: '🏪', variedades: '🛍️', ferreteria: '🔨', comida: '🍽️', boutique: '👗', farmacia: '💊', vitaminas: '🌿', repuestos: '🔧', tecnologia: '📱', belleza: '💄', panaderia: '🥐', servicios: '✂️', streaming: '📺', compras: '✈️', recargas: '🎮', veterinaria: '🐾', joyeria: '💍', floristeria: '💐', manualidades: '✂️', otro: '📦' };
 // Plataformas: las conocidas + las que el negocio agregó ("+ Otra") + las que ya usa en productos o cuentas
 function platsTodas() {
   const l = PLAT.map(x => x[0]), add = n => { n = String(n || '').trim(); if (n && !l.some(x => x.toLowerCase() === n.toLowerCase())) l.push(n); };
@@ -9131,7 +9136,7 @@ function confirmarGiro(id) {
   const fila = (av, t, s) => `<div class="li"><div class="av ${av}">${av === 't-verde' ? '+' : av === 't-pri' ? '↻' : '−'}</div><div class="tx"><b>${t}</b><small>${s}</small></div></div>`;
   const h = hoja({ titulo: 'Confirmar cambio', html: `<div style="text-align:center;padding:6px 0 10px"><div style="font-size:44px;display:flex;align-items:center;justify-content:center;gap:12px">${giroImg(ant.id)} → ${giroImg(id)}</div><h3 style="margin-top:6px">De ${esc(ant.n)} a ${esc(g.n)}</h3></div>
     <div class="aviso info sm">${ic('info', 18)}<div><b>Tus datos se conservan.</b> Productos, clientes, ventas, caja y reportes siguen igual; solo cambia lo que la app te muestra.</div></div>
-    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'vitaminas' ? fila('t-verde', 'Se activan Lotes y Recompra', 'Lotes con su vencimiento (sale primero el que vence antes) y aviso por WhatsApp cuando al cliente se le termina su producto') : ''}${id === 'floristeria' ? fila('t-verde', 'Arma tu ramo en tu tienda', 'Tu cliente elige flores, cantidad y presupuesto; tú le mandas el precio y lo acepta en la tienda') : ''}${id === 'joyeria' ? fila('t-verde', 'Código o certificado y garantía', 'Al cobrar, el comprobante sale con el código de la pieza y su garantía') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
+    <div class="list" style="margin-top:10px">${id === 'veterinaria' ? fila('t-verde', 'Se activa Mascotas', 'Expedientes, consultas con receta, carnet y recordatorios de vacunas') + fila('t-verde', 'Se activan Agenda y Hospedaje y estética', 'Citas por hora y mascotas que entran a baño, corte u hospedaje') : ''}${id === 'vitaminas' ? fila('t-verde', 'Se activan Lotes y Recompra', 'Lotes con su vencimiento (sale primero el que vence antes) y aviso por WhatsApp cuando al cliente se le termina su producto') : ''}${id === 'floristeria' ? fila('t-verde', 'Arma tu ramo en tu tienda', 'Tu cliente elige flores, cantidad y presupuesto; tú le mandas el precio y lo acepta en la tienda') : ''}${id === 'manualidades' ? fila('t-verde', 'Diseños personalizados en tu tienda', 'Tu cliente describe lo que quiere y manda fotos; tú le mandas el precio y lo acepta en la tienda. En cada producto puede subir su imagen') : ''}${id === 'joyeria' ? fila('t-verde', 'Código o certificado y garantía', 'Al cobrar, el comprobante sale con el código de la pieza y su garantía') : ''}${id === 'streaming' ? fila('t-verde', 'Se activa Vencimientos', 'Suscripciones por vencer, recordatorios y renovación') + fila('t-verde', 'Se activa Cuentas y perfiles', 'Cuentas madre y qué perfil tiene cada cliente') : S.config.giro === 'streaming' && S.config.suscripciones !== 'si' ? fila('t-mut', 'Se ocultan Vencimientos y Cuentas', 'Puedes volver a activarlos en Ajustes › Funciones por tipo de negocio') : ''}
     ${fila('t-pri', 'Categorías nuevas', esc(g.cats.slice(0, 6).join(' · ')))}${opcGiro(id).g.length ? fila('t-pri', 'Opción en productos: ' + esc(opcGiro(id).g[0]), esc(opcGiro(id).ej[0] || '')) : ''}
     ${nAnt ? fila('t-mut', `Se pueden ocultar ${nAnt} productos de ${esc(ant.n)}`, 'Quedan guardados; abajo eliges si desactivarlos') : ''}</div>
     <label class="chk" style="margin-top:12px"><input type="checkbox" id="cg-ej" checked> Cargar productos de ejemplo del nuevo tipo</label>
@@ -9201,6 +9206,9 @@ const GUIA = {
   floristeria: { n: 'tu floristería', d: 'Tu programa ya viene listo para vender arreglos y cotizar ramos. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus arreglos y precios', s: 'Tamaño, color y precio de cada uno', h: 'Tus arreglos: tamaño y precio', p: 'Ejemplo: Arreglo de rosas rojas. Así se configura cada arreglo.', img: 'p_floristeria', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Arreglo de rosas rojas en Arreglos.', '<b>Opciones:</b> tamaños o colores, separados por comas.', '<b>Por separado:</b> el precio de cada tamaño.', '<b>En la tienda:</b> tu cliente elige la fecha y escribe el mensaje de la tarjeta.'] },
     { ic: 'gift', t: 'Responde un «Arma tu ramo»', s: 'El cliente elige flores y presupuesto; tú mandas el precio', h: 'Ramos a tu gusto', p: 'Las flores que pones en «Flores sueltas» y «Globos y detalles» salen en «Arma tu ramo». Pueden ir sin precio.', img: 'pedidos', ir: 'pedidos', b: 'Ir a Pedidos', l: ['Te llega como <b>Por cotizar</b> con las flores, el presupuesto y la fecha.', 'Toca <b>Poner precio</b>, escribe el precio y una nota si quieres.', 'Tu cliente lo acepta en su tienda y queda como pedido normal.'] }, 'tienda', 'caja'] },
+  manualidades: { n: 'tu negocio de manualidades', d: 'Tu programa ya viene listo para vender tus detalles y cotizar diseños personalizados. Estos son tus primeros pasos:', p: [
+    { ic: 'box', t: 'Revisa tus productos y precios', s: 'Tipo, tamaño y precio de cada uno', h: 'Tus productos: tipo y precio', p: 'Ejemplo: Taza personalizada. Así se configura cada producto.', img: 'p_manualidades', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Taza personalizada en Tazas.', '<b>Opciones:</b> tipos o tamaños, separados por comas.', '<b>Por separado:</b> el precio de cada tipo.', '<b>En la tienda:</b> tu cliente escribe el texto o nombre y sube su imagen.'] },
+    { ic: 'gift', t: 'Responde un diseño personalizado', s: 'El cliente describe lo que quiere y su presupuesto; tú mandas el precio', h: 'Diseños personalizados', p: 'En tu tienda sale «Pide tu diseño personalizado»: tu cliente elige qué quiere, lo describe y manda hasta 3 fotos de ejemplo.', img: 'pedidos', ir: 'pedidos', b: 'Ir a Pedidos', l: ['Te llega como <b>Por cotizar</b> con la descripción, las fotos, la cantidad y el presupuesto.', 'Toca <b>Poner precio</b>, escribe el precio total y una nota si quieres.', 'Tu cliente lo acepta en su tienda y queda como pedido normal.'] }, 'tienda', 'caja'] },
   joyeria: { n: 'tu joyería', d: 'Tu programa ya viene listo para vender. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus joyas y precios', s: 'Talla, largo y existencia de cada una', h: 'Tus joyas: talla y largo', p: 'Ejemplo: Cadena de oro 14k. Así se configura cada pieza.', img: 'p_joyeria', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Cadena de oro 14k en Cadenas.', '<b>Opciones:</b> tallas de anillo o largos de cadena, separados por comas.', '<b>Por separado:</b> el precio y la existencia de cada largo o talla.', '<b>Garantía:</b> los días, y al cobrar anotas el código o certificado.'] },
     { ic: 'barcode', t: 'Vende una joya con su certificado', s: 'Código o certificado y garantía en el comprobante', h: 'Vende una joya con su certificado', p: 'Al cobrar anotas el código o certificado de cada pieza.', img: 'vender', ir: 'vender', b: 'Ir a Vender', l: ['Agrega la joya al ticket y toca cobrar.', 'Escribe el código o certificado (y el peso, si quieres).', 'El comprobante sale con el código y hasta cuándo tiene garantía.'] }, 'tienda', 'caja'] },
@@ -9273,6 +9281,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.64', fecha: '2026-11-11', items: [
+    { i: 'gift', t: 'Nuevo tipo de negocio: Manualidades y detalles personalizados', d: 'Tu cliente pide su diseño personalizado desde la tienda: dice qué quiere, lo describe, manda hasta 3 fotos de ejemplo y su presupuesto. Te llega como «Por cotizar», le mandas el precio y lo acepta en su tienda. En cada producto también puede escribir un texto y subir su imagen.' }
+  ] },
   { v: '1.9.63', fecha: '2026-11-11', items: [
     { i: 'chat', t: 'Tus clientes te preguntan por un producto o una cotización', d: 'En tu tienda en línea cada producto tiene «¿Tienes una pregunta sobre este producto? Escríbenos», y la cotización del ramo tiene «Pregúntale a la tienda». En Mensajes ves arriba de cada mensaje sobre qué te preguntan (el producto o la cotización con su precio).' }
   ] },
@@ -9809,6 +9820,7 @@ const OPC_GIRO = {
   recargas:   { g: ['Paquete'], ej: ['100, 310, 520'], nota: 'ID de jugador', notaEj: 'Ej. 123456789', notaReq: true },
   carwash:    { g: ['Tamaño'], ej: ['Sedán, Camioneta, Microbús'] },
   floristeria: { g: ['Tamaño', 'Color'], ej: ['Mediano, Grande', 'Roja, Blanca'], nota: 'Mensaje para la tarjeta', notaEj: 'Ej. Feliz aniversario, mi amor', cita: true },
+  manualidades: { g: ['Tipo', 'Tamaño'], ej: ['Blanca, Mágica', 'Mediana, Grande'], nota: 'Texto o nombre para personalizar', notaEj: 'Ej. Feliz día, mamá', cita: true, foto: true },
   joyeria:    { g: ['Talla', 'Largo'], ej: ['6, 7, 8, 9', '45 cm, 50 cm'], filtro: 'Talla', nota: 'Texto para grabar', notaEj: 'Ej. Ana & Luis · 14.02.2026' },
   veterinaria: { g: ['Tamaño'], ej: ['Pequeño, Mediano, Grande'], nota: 'Nombre y raza de tu mascota', notaEj: 'Ej. Toby, poodle', notaReq: true, cita: true, soloServ: true },
   otro:       { g: ['Opción', 'Color'], ej: ['Pequeño, Grande', 'Negro, Blanco'] }
@@ -9846,7 +9858,7 @@ const T = { info: null, id: '', cat: '', sub: '', q: '', f: '', cart: {}, entreg
 const MOD_T = { streaming: ['Streaming', 'Perfiles y cuentas por mes', '#5b3fd6'], compras: ['Compras en línea', 'Shein, Temu, Amazon y más', '#d63f86'], recargas: ['Recargas de juegos', 'Diamantes, UC, Robux y más', '#0e9f74'],
   boutique: ['Ropa y calzado', 'Lo nuevo de la semana', '#e07b00'], comida: ['Comida', 'Platos, combos y bebidas', '#e0452b'], tecnologia: ['Tecnología', 'Celulares y accesorios', '#1b6fd8'], belleza: ['Belleza', 'Maquillaje y cuidado', '#c2378b'], catalogo: ['Maquillaje y moda', 'Maquillaje, ropa y lociones', '#13a58b'],
   tienda: ['Abarrotes', 'Lo de todos los días', '#2f9e44'], variedades: ['Variedades', 'Un poco de todo', '#8a4fd8'], farmacia: ['Farmacia', 'Medicinas y cuidado', '#0f8f8a'], vitaminas: ['Vitaminas y suplementos', 'Para tu energía y bienestar', '#0f6e56'], panaderia: ['Panadería', 'Pan y repostería', '#b5651d'],
-  ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], joyeria: ['Joyería', 'Anillos, cadenas y relojes', '#a8741a'], floristeria: ['Floristería', 'Arreglos y ramos a domicilio', '#c2416b'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
+  ferreteria: ['Ferretería', 'Herramientas y materiales', '#5c6b7a'], repuestos: ['Repuestos', 'Para tu vehículo', '#46515e'], servicios: ['Servicios', 'Agenda tu cita', '#7a5af8'], veterinaria: ['Veterinaria', 'Citas, vacunas y todo para tu mascota', '#00879a'], joyeria: ['Joyería', 'Anillos, cadenas y relojes', '#a8741a'], floristeria: ['Floristería', 'Arreglos y ramos a domicilio', '#c2416b'], manualidades: ['Manualidades', 'Detalles hechos a mano, a tu gusto', '#8b5cf6'], otro: ['Productos', 'Nuestro catálogo', '#d10f6f'] };
 const modT = id => MOD_T[id] || MOD_T.otro;
 const tGiros = () => (T.info && T.info.negocio.giros) || [];
 // En veterinaria solo los servicios piden fecha y nombre de la mascota; el alimento o un collar se piden como cualquier producto
@@ -9907,6 +9919,8 @@ async function iniciarTienda(id) {
   if (T.giro && !gs.includes(T.giro)) T.giro = '';
   try { const q = new URLSearchParams(location.search).get('s'); if (q && gs.includes(q)) T.giro = q; } catch (e) {}
   T.cfg = opcGiro(T.giro || n.gid);
+  T.fotos = LS.json(tKey('cfotos'), {}) || {}; Object.keys(T.fotos).forEach(k => { if (!T.cart[k]) delete T.fotos[k]; });
+  T.nFoto = Object.keys(T.fotos).reduce((a, k) => Math.max(a, Number((/Imagen: (\d+)/.exec(k) || [])[1]) || 0), 0);
   T.entrega = n.entrega === 'domicilio' ? 'domicilio' : 'recoger';
   pintarTienda();
   let ramoUrl = ''; try { ramoUrl = new URLSearchParams(location.search).get('ramo') || ''; } catch (e) {}
@@ -9952,6 +9966,8 @@ const secFab = c => { const k = SEC_FAB[norm(c)]; return k ? { f: 'iconos/sec_' 
 const secDe = (c, i) => { const x = (T.info.negocio.secciones || {})[c] || {}, fab = secFab(c); return { c: /^#[0-9a-f]{6}$/i.test(x.c || '') ? x.c : colSec(c, i), f: x.f || (!x.c && fab ? fab.f : ''), t: x.t || (fab ? fab.t : '') }; };
 const secEstilo = (c, i) => { const x = secDe(c, i); return `--sc:${x.c}${x.f ? `;--sf:url('${esc(fotoAncha(x.f))}')` : ''}`; };
 function guardarCarrito() { LS.set(tKey('carrito'), JSON.stringify(T.cart)); }
+// Imágenes que el cliente puso en productos personalizados (por línea del carrito)
+function guardarFotosCart() { Object.keys(T.fotos || {}).forEach(k => { if (!T.cart[k] && !/Imagen: /.test(k)) delete T.fotos[k]; }); try { LS.set(tKey('cfotos'), JSON.stringify(T.fotos)); } catch (e) { toast('Tu imagen quedó lista, pero no se pudo guardar en este teléfono. Haz el pedido sin cerrar la página.', 'error', 4500); } }
 // ¿Está abierto ahora? (según horario y días de Ajustes)
 function abiertoAhora(n) {
   if (!n.abre || !n.cierra) return null;
@@ -10026,7 +10042,7 @@ function pintarTienda() {
       ${n.mensaje ? `<div class="shop-msg">${esc(n.mensaje)}</div>` : ''}<div id="t-mis"></div><div id="t-chatmis"></div>
       <div class="shop-two" id="t-sobre">${n.sobre ? `<div class="shop-about"><div class="shop-sec">Sobre nosotros</div><p>${esc(n.sobre)}</p></div>` : ''}${owner}</div>
       <div class="shop-h2" id="t-cat"><span>${portada ? '¿Qué deseas comprar hoy?' : 'Nuestro catálogo'}</span><small>${portada ? gs.length + ' secciones' : ps.length + ' ' + (ps.length === 1 ? 'producto' : 'productos')}</small></div>
-      ${n.ramo && ramoFlores().length && !portada ? `<button type="button" class="ramo-b" data-ramo="1"><span class="e">💐</span><span style="flex:1"><b>Arma tu ramo a tu gusto</b><small>Elige las flores, dinos tu presupuesto y te mandamos el precio.</small></span><span class="go">Armar</span></button>` : ''}${mods}${modH}${enl}
+      ${n.personal && !portada ? `<button type="button" class="ramo-b pers" data-pers="1"><span class="e">✨</span><span style="flex:1"><b>Pide tu diseño personalizado</b><small>Cuéntanos qué quieres, mándanos fotos de ejemplo y te mandamos el precio.</small></span><span class="go">Pedir</span></button>` : ''}${n.ramo && ramoFlores().length && !portada ? `<button type="button" class="ramo-b" data-ramo="1"><span class="e">💐</span><span style="flex:1"><b>Arma tu ramo a tu gusto</b><small>Elige las flores, dinos tu presupuesto y te mandamos el precio.</small></span><span class="go">Armar</span></button>` : ''}${mods}${modH}${enl}
       <div class="shop-srch" ${portada || (conEnlace && !ps.length) ? 'hidden' : ''}><div class="srch">${ic('search', 18)}<input id="t-q" placeholder="¿Qué estás buscando?" value="${esc(T.q)}"></div>
       ${cat ? '' : cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${cat ? '' : filtroTienda()}</div>
       ${portada ? '' : (secs ? '<div class="t-expl" id="t-expl" hidden>O explora por categoría</div>' : '') + secs + banda}${subs.length > 1 ? `<div class="chips" style="margin:0 0 12px" id="t-subs"><button class="chip ${!T.sub ? 'on' : ''}" data-sub="">Todo</button>${subs.map(c => `<button class="chip ${T.sub === c ? 'on' : ''}" data-sub="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${cat && !portada ? `<div style="margin:-2px 0 12px">${filtroTienda()}</div>` : ''}
@@ -10051,6 +10067,7 @@ function pintarTienda() {
     if (e.target.closest('[data-chat]')) return chatTienda('');
     if (e.target.closest('#t-chatbtn')) return chatTienda('');
     if (e.target.closest('[data-ramo]')) return armaRamo();
+    if (e.target.closest('[data-pers]')) return armaDiseno();
     if (e.target.closest('[data-cart]')) return tCant() ? tCarrito() : toast('Todavía no has agregado productos', 'ok', 1800);
     if (e.target.closest('[data-share]')) { const u = location.href.split('#')[0]; if (navigator.share) navigator.share({ title: n.nombre, text: 'Mira la tienda en línea de ' + n.nombre, url: u }).catch(() => {}); else { navigator.clipboard && navigator.clipboard.writeText(u); toast('Enlace copiado', 'ok', 1800); } }
   };
@@ -10148,10 +10165,12 @@ function tProducto(id, ed) {
   const espHTML = p.precioEsp ? `<div class="esp-box" id="tp-esp"><div data-t="d">Detalle${p.minEsp > 2 ? ` (1–${p.minEsp - 1})` : ' (1)'}<b class="n">${money(p.precio)}</b></div><div data-t="e">Especial (desde ${p.minEsp})<b class="n">${money(p.precioEsp)}</b></div></div><div class="esp-falta" id="tp-falta"></div><div class="esp-ah" id="tp-ah" hidden></div>` : '';
   const citaHTML = cfg.cita && !ed ? `<label class="fld" style="margin-top:14px"><span>Fecha que prefieres</span><input type="date" id="tp-fe" min="${hoy()}"></label>
     <span class="op-l">Hora</span><div class="op-g" id="tp-tu">${['Mañana', 'Tarde'].map(v => `<button type="button" class="chip" data-t="${v}">${v}</button>`).join('')}</div>` : '';
+  let fotoP = ''; // Manualidades: imagen que manda el cliente para su producto
+  const fotoHTML = cfg.foto && !ed ? `<div class="fld" style="margin-top:12px"><span>Tu imagen (opcional)</span><div class="rf-fotos" id="tp-fo"></div><small class="mut xs">Mándanos la foto o el diseño que quieres. La tienda la revisa antes de hacerlo.</small></div>` : '';
   const notaHTML = cfg.nota && !ed ? `<label class="fld" style="margin-top:14px"><span>${esc(cfg.nota)}${cfg.notaReq ? '' : ' (opcional)'}</span><input id="tp-no" maxlength="80" placeholder="${esc(cfg.notaEj || '')}" ${cfg.notaReq ? 'inputmode="text" autocomplete="off"' : ''}></label>` : '';
   const h = hoja({ titulo: '', cls: 'prod-h', html: `${ed ? `<div class="ed-ped">${ed.k ? 'Cambiando este producto' : 'Cambiando tu pedido ' + esc(ed.numero)}</div>` : ''}<div class="prod-big">${prodFoto(p)}</div><h2 class="prod-n">${esc(p.nombre)}</h2>${catHTML}${p.precioEsp ? '' : `<div class="prod-p n">${p.vars && desdeT(p) < Math.max(...Object.values(p.vars).map(x => x.p || p.precio), p.precio) ? '<small>desde </small>' : ''}${money(p.vars ? desdeT(p) : p.precio)}${p.unidad && p.unidad !== 'unidad' ? ` <small>por ${esc(p.unidad)}</small>` : ''}</div>`}
     ${p.descripcion ? `<p class="prod-d">${esc(p.descripcion)}</p>` : ''}${T.info.negocio.chat && !ed ? `<button type="button" class="preg-b" id="tp-preg">${ic('chat', 17)} ¿Tienes una pregunta sobre este producto? <b>Escríbenos</b></button>` : ''}${p.codigo ? `<div class="cat-cod">Cód.: ${esc(p.codigo)}</div>` : ''}${espHTML}${p.agotado ? '<p class="neg"><b>Agotado por ahora</b></p>' : p.stock !== undefined ? `<p class="sm mut">${cant(p.stock)} disponibles</p>` : ''}
-    ${p.agotado ? '' : `<div class="tp-ya" id="tp-ya" hidden></div>${opsHTML}${citaHTML}${notaHTML}<div class="row" style="justify-content:center;margin:16px 0 4px"><div class="qty big"><button data-d="-1">−</button><span id="tp-n">1</span><button data-d="1">+</button></div></div>`}` });
+    ${p.agotado ? '' : `<div class="tp-ya" id="tp-ya" hidden></div>${opsHTML}${citaHTML}${cfg.foto && !ed ? `<div class="pers-box"><b>✨ Personalízalo</b>${notaHTML}${fotoHTML}</div>` : notaHTML}<div class="row" style="justify-content:center;margin:16px 0 4px"><div class="qty big"><button data-d="-1">−</button><span id="tp-n">1</span><button data-d="1">+</button></div></div>`}` });
   const guardarEd = async cantidad => {
     if (ed.k) { // Aún en el carrito: la línea cambia de opción o cantidad y se une a otra igual
       delete T.cart[ed.k];
@@ -10179,8 +10198,14 @@ function tProducto(id, ed) {
     if (cfg.cita && !($('#tp-fe', h.el) || {}).value) throw new Error('Elige la fecha que prefieres');
     if (cfg.notaReq && !(($('#tp-no', h.el) || {}).value || '').trim()) { const i = $('#tp-no', h.el); if (i) i.focus(); throw new Error('Escribe tu ' + cfg.nota.toLowerCase()); }
     validarQ();
-    const op = opcion(); volarAlCarrito($('.prod-big .ph', h.el)); tAgregar(op ? p.id + SEP + op : p.id, n);
+    let op = opcion();
+    if (fotoP) { T.nFoto = (T.nFoto || 0) + 1; op += (op ? ', ' : '') + 'Imagen: ' + T.nFoto; T.fotos[p.id + SEP + op] = fotoP; guardarFotosCart(); fotoP = ''; pintaFotoP(); }
+    volarAlCarrito($('.prod-big .ph', h.el)); tAgregar(op ? p.id + SEP + op : p.id, n);
   };
+  const pintaFotoP = () => { const b = $('#tp-fo', h.el); if (b) b.innerHTML = fotoP ? `<div class="rf-foto"><img src="${fotoP}" alt=""><button type="button" class="x" data-tpfx="1" aria-label="Quitar">×</button></div>` : `<label class="rf-foto">${ic('image', 22)}<span>Subir imagen</span><input type="file" accept="image/*" id="tp-fi" hidden></label>`; };
+  h.el.addEventListener('change', async e => { if (e.target.id !== 'tp-fi' || !e.target.files[0]) return; try { fotoP = await comprimirImagen(e.target.files[0], 1200); pintaFotoP(); } catch (x) { err(x); } });
+  h.el.addEventListener('click', e => { if (e.target.closest('[data-tpfx]')) { fotoP = ''; pintaFotoP(); } });
+  pintaFotoP();
   const validarQ = () => {
     if (yaP() + n > maxDe(p)) throw new Error('Solo tenemos ' + maxDe(p) + ' disponibles');
     const x = tVar(p, vk()); if (x && x.n !== undefined && yaV(vk()) + n > x.n) throw new Error(x.n > 0 ? 'Solo tenemos ' + x.n + ' de ' + etiquetaVar(vk()) : etiquetaVar(vk()) + ' está agotado');
@@ -10295,9 +10320,9 @@ function tCarrito() {
       if (veh.trim().length < 2) throw new Error('Escribe qué vehículo traes');
     }
     LS.set('cliente_tienda', JSON.stringify({ nombre, telefono: tel, direccion: dir || cli.direccion || '' }));
-    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, cita: citaOn() ? T.cita : '', hora: citaOn() ? T.hora : '', vehiculo: veh.trim(), placa: pla.trim(), pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: $('#tc-p', h.el).value !== 'Efectivo' && !($('#tc-p', h.el).value === 'Tarjeta' && n.enlacePago) && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => ({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }))) });
+    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, direccion: dir, cita: citaOn() ? T.cita : '', hora: citaOn() ? T.hora : '', vehiculo: veh.trim(), placa: pla.trim(), pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: $('#tc-p', h.el).value !== 'Efectivo' && !($('#tc-p', h.el).value === 'Tarjeta' && n.enlacePago) && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => Object.assign({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }, T.fotos && T.fotos[k] ? { foto: T.fotos[k] } : {}))) });
     const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
-    T.cart = {}; guardarCarrito(); T.compras = []; guardarCompras(); T.comp = ''; h.cerrar(); gridTienda(); pedidoEnviado(r, nombre, tel); misPedidosTienda();
+    T.cart = {}; guardarCarrito(); T.fotos = {}; guardarFotosCart(); T.compras = []; guardarCompras(); T.comp = ''; h.cerrar(); gridTienda(); pedidoEnviado(r, nombre, tel); misPedidosTienda();
   };
   pinta();
 }
@@ -10343,7 +10368,7 @@ function chatTienda(productoId, ped) {
   const prod = productoId ? T.info.productos.find(x => x.id === productoId) : null;
   let chat = null, timer = null, enviando = false, refEnviada = false;
   const h = hoja({ titulo: '', cls: 'chat-h2', html: `<div class="chat-h"><div class="av">${d && d.foto ? `<img src="${esc(d.foto)}" alt="">` : n.logo ? `<img src="${esc(n.logo)}" alt="">` : esc(iniciales(d ? d.nombre : n.nombre))}</div><div><b>${esc(d ? d.nombre : n.nombre)}</b><small>${d && d.cargo ? esc(d.cargo) + ' · ' : ''}${esc(n.nombre)}</small></div></div>
-    ${prod ? `<div class="chat-ctx"><div class="ph">${prod.foto ? `<img src="${esc(fotoSrc(prod.foto))}" alt="">` : esc(prod.icono || iniciales(prod.nombre))}</div><div><small>Preguntas por</small><b>${esc(prod.nombre)} · ${money(prod.precio)}</b></div></div>` : ''}${ped ? `<div class="chat-ctx"><div class="ph">💐</div><div><small>Preguntas por tu cotización</small><b>Ramo ${esc(ped.numero)} · ${ped.estado === 'cotizar' ? 'esperando precio' : money(ped.total)}</b></div></div>` : ''}
+    ${prod ? `<div class="chat-ctx"><div class="ph">${prod.foto ? `<img src="${esc(fotoSrc(prod.foto))}" alt="">` : esc(prod.icono || iniciales(prod.nombre))}</div><div><small>Preguntas por</small><b>${esc(prod.nombre)} · ${money(prod.precio)}</b></div></div>` : ''}${ped ? `<div class="chat-ctx"><div class="ph">${ped.personal ? '✨' : '💐'}</div><div><small>Preguntas por tu cotización</small><b>${ped.personal ? 'Diseño' : 'Ramo'} ${esc(ped.numero)} · ${ped.estado === 'cotizar' ? 'esperando precio' : money(ped.total)}</b></div></div>` : ''}
     <div class="msgs" id="tch-m"><div class="empty">Cargando…</div></div>
     <div id="tch-datos" hidden><div class="f2"><label class="fld"><span>Tu nombre</span><input id="tch-n" autocomplete="name" value="${esc(cli.nombre || '')}"></label><label class="fld"><span>Tu WhatsApp</span><input id="tch-t" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" value="${esc(cli.telefono || '')}"></label></div></div>
     <div class="chat-nota">${ic('clock', 14)} Los mensajes se borran solos a los 2 meses.</div>
@@ -10474,6 +10499,42 @@ function armaRamo() {
   });
   pinta(); pintaFotos();
 }
+// Manualidades: el cliente describe lo que quiere, manda hasta 3 fotos de ejemplo y su presupuesto; la tienda le manda el precio
+function armaDiseno() {
+  const fotos = [], cli = LS.json('cliente_tienda', {}) || {}, n = T.info.negocio;
+  const cats = [...new Set(T.info.productos.filter(p => p.g === 'manualidades' || (!p.g && n.gid === 'manualidades')).map(p => p.categoria).filter(Boolean))].slice(0, 8).concat('Otro');
+  let cat = cats[0], entrega = (n.entrega || 'ambos') === 'domicilio' ? 'domicilio' : (n.entrega || 'ambos') === 'recoger' ? 'recoger' : (cli.direccion ? 'domicilio' : 'recoger');
+  const ent = n.entrega || 'ambos';
+  const h = hoja({ titulo: 'Tu diseño personalizado', html: `<div class="sm mut" style="margin-bottom:8px">Cuéntanos qué quieres. La tienda lo revisa y te manda el precio aquí mismo.</div>
+    <span class="op-l">¿Qué quieres que te hagamos?</span><div class="chips" id="rd-c" style="flex-wrap:wrap;margin:6px 0 10px">${cats.map(c => `<button type="button" class="chip ${c === cat ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
+    <label class="fld"><span>Descríbelo</span><textarea id="rd-d" rows="3" maxlength="500" placeholder="Ej. Caja de madera con 6 fotos por dentro, luces y un mensaje de cumpleaños. Colores rosado y dorado."></textarea></label>
+    <div class="fld"><span>Fotos de ejemplo (opcional, hasta 3)</span><div class="rf-fotos" id="rd-fotos"></div><small class="mut xs">Una idea de lo que quieres. Se borran 7 días después de entregado.</small></div>
+    <div class="f2"><label class="fld"><span>Cantidad</span><input id="rd-q" type="number" min="1" max="999" value="1" inputmode="numeric"></label><label class="fld"><span>Tu presupuesto</span><input id="rd-pre" inputmode="decimal" placeholder="Ej. 600"></label></div>
+    <label class="fld"><span>¿Para cuándo?</span><input id="rd-fe" type="date" min="${hoy()}"></label>
+    <div class="f2"><label class="fld"><span>Tu nombre</span><input id="rd-n" maxlength="60" value="${esc(cli.nombre || '')}"></label><label class="fld"><span>Tu WhatsApp</span><input id="rd-t" type="tel" inputmode="tel" value="${esc(cli.telefono || '')}" placeholder="9876-5432"></label></div>
+    ${ent === 'ambos' ? `<div class="seg" id="rd-ent" style="margin-top:10px"><button type="button" data-e="recoger" class="${entrega === 'recoger' ? 'on' : ''}">${ic('store', 16)} Recoger</button><button type="button" data-e="domicilio" class="${entrega === 'domicilio' ? 'on' : ''}">${ic('truck', 16)} A domicilio</button></div>` : ''}
+    <label class="fld" id="rd-dw" ${entrega === 'domicilio' ? '' : 'hidden'}><span>Dirección de entrega</span><input id="rd-dir" maxlength="200" value="${esc(cli.direccion || '')}"></label>` });
+  const pintaFotos = () => { $('#rd-fotos', h.el).innerHTML = fotos.map((f, i) => `<div class="rf-foto"><img src="${f}" alt=""><button type="button" class="x" data-rdx="${i}" aria-label="Quitar">×</button></div>`).join('') + (fotos.length < 3 ? `<label class="rf-foto">${ic('image', 22)}<span>Agregar foto</span><input type="file" accept="image/*" id="rd-in" hidden></label>` : ''); };
+  h.el.addEventListener('change', async e => { if (e.target.id !== 'rd-in' || !e.target.files[0]) return; try { fotos.push(await comprimirImagen(e.target.files[0], 1200)); pintaFotos(); } catch (x) { err(x); } });
+  h.el.addEventListener('click', e => {
+    const fx = e.target.closest('[data-rdx]'); if (fx) { fotos.splice(Number(fx.dataset.rdx), 1); pintaFotos(); return; }
+    const c = e.target.closest('#rd-c [data-c]'); if (c) { cat = c.dataset.c; $$('#rd-c .chip', h.el).forEach(x => x.classList.toggle('on', x === c)); return; }
+    const en = e.target.closest('#rd-ent [data-e]'); if (en) { entrega = en.dataset.e; $$('#rd-ent button', h.el).forEach(x => x.classList.toggle('on', x === en)); $('#rd-dw', h.el).hidden = entrega !== 'domicilio'; }
+  });
+  h.botones([{ t: '✨ Pedir precio', cls: 'acc big', fn: async () => {
+    const desc = $('#rd-d', h.el).value.trim(); if (desc.length < 5) { $('#rd-d', h.el).focus(); throw new Error('Describe lo que quieres que te hagamos'); }
+    const cantidad = Math.max(1, Math.min(999, parseInt($('#rd-q', h.el).value, 10) || 1));
+    const pre = num($('#rd-pre', h.el).value.replace(/[^\d.]/g, '')); if (!(pre > 0)) { $('#rd-pre', h.el).focus(); throw new Error('Escribe tu presupuesto'); }
+    const fe = $('#rd-fe', h.el).value; if (!fe) throw new Error('Elige para cuándo lo quieres');
+    const nombre = $('#rd-n', h.el).value.trim(), telefono = $('#rd-t', h.el).value.trim(), direccion = ($('#rd-dir', h.el) || {}).value || '';
+    const r = await api('pedir', { negocio: T.id, personal: true, categoria: cat, descripcion: desc, cantidad, presupuesto: pre, fotos, nombre, telefono, entrega, direccion: entrega === 'domicilio' ? direccion : '', pago: (n.pagos || ['Efectivo'])[0], nota: 'Para el ' + fFechaC(fe) + ' · ' + desc });
+    LS.set('cliente_tienda', JSON.stringify(Object.assign(cli, { nombre, telefono, direccion: direccion || cli.direccion || '' })));
+    const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
+    h.cerrar(); toast('¡Listo! La tienda te mandará el precio aquí, en «Tus pedidos».', 'ok', 5000); misPedidosTienda();
+    const b = $('#t-mis'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  } }]);
+  pintaFotos();
+}
 async function misPedidosTienda() {
   const ids = LS.json(tKey('pedidos'), []) || [], cli = LS.json('cliente_tienda', {}) || {};
   const box = $('#t-mis'); if (!box || !ids.length || !cli.telefono) return;
@@ -10491,18 +10552,19 @@ async function misPedidosTienda() {
     if (!l.length) { box.innerHTML = ''; return; }
     const linea = (p, i) => { const x = p.lineas[i], ok = x.id && T.info.productos.some(y => y.id === x.id), nom = String(x.nombre).split(' (')[0], ah = x.normal > x.precio;
       return `<button type="button" class="mis-l ${x.id ? '' : 'fija'}" ${x.id ? `data-pl="${esc(p.id)}" data-i="${i}"` : 'disabled'}><span class="tx"><b>${esc(x.opcion ? nom : x.nombre)}</b>${x.opcion ? `<small class="op">${esc(x.opcion)}</small>` : ''}<small>${cant(x.cantidad)} × ${ah ? `<s>${money(x.normal)}</s> ` : ''}${money(x.precio)}</small>${ah ? `<small class="ahorro">Ahorras ${money((x.normal - x.precio) * x.cantidad)}</small>` : ''}</span><b class="n">${money(x.total)}</b>${x.id ? ic('arrow', 16) : ''}</button>`; };
-    const preg = p => T.info.negocio.chat ? `<button type="button" class="preg-b" data-pq="${esc(p.id)}">${ic('chat', 16)} ¿Dudas sobre tu ramo? <b>Pregúntale a la tienda</b></button>` : tel ? `<a class="preg-b" href="${waLink(tel, 'Hola, tengo una pregunta sobre la cotización de mi ramo ' + p.numero)}" target="_blank" rel="noopener">${ic('wa', 16)} ¿Dudas sobre tu ramo? <b>Escríbele a la tienda</b></a>` : '';
-    const ramoC = p => !p.ramo ? '' : p.estado === 'cotizar' ? `<div class="mis-h">${esc((p.flores || []).join(' · '))}<br>Tu presupuesto: ${money(p.presupuesto)} · La tienda te mandará el precio aquí.</div>${preg(p)}`
-      : p.estado === 'cotizado' && p.cotiza ? `<div class="ramo-c"><div class="pp"><span class="sm mut">La tienda te propone</span><b class="n">${money(p.cotiza.precio)}</b></div><div class="sm" style="margin:6px 0 2px">${esc((p.flores || []).join(' · '))}</div><div class="sm mut">Tu presupuesto: ${money(p.presupuesto)}${p.envio ? ' · Envío ' + money(p.envio) : ''}</div>${p.cotiza.nota ? `<div class="nt">«${esc(p.cotiza.nota)}»</div>` : ''}<div class="row"><button type="button" class="btn" data-rr="${esc(p.id)}" data-si="">No, gracias</button><button type="button" class="btn acc" data-rr="${esc(p.id)}" data-si="1">Aceptar · ${money(p.total)}</button></div>${preg(p)}</div>` : '';
+    const que = p => p.personal ? 'tu diseño' : 'tu ramo', detR = p => p.personal ? (p.cat + (p.cant > 1 ? ' · ' + p.cant + ' unidades' : '') + ' · ' + (p.desc || '')) : (p.flores || []).join(' · ');
+    const preg = p => T.info.negocio.chat ? `<button type="button" class="preg-b" data-pq="${esc(p.id)}">${ic('chat', 16)} ¿Dudas sobre ${que(p)}? <b>Pregúntale a la tienda</b></button>` : tel ? `<a class="preg-b" href="${waLink(tel, 'Hola, tengo una pregunta sobre la cotización de ' + (p.personal ? 'mi diseño ' : 'mi ramo ') + p.numero)}" target="_blank" rel="noopener">${ic('wa', 16)} ¿Dudas sobre ${que(p)}? <b>Escríbele a la tienda</b></a>` : '';
+    const ramoC = p => !p.ramo ? '' : p.estado === 'cotizar' ? `<div class="mis-h">${esc(detR(p))}<br>Tu presupuesto: ${money(p.presupuesto)} · La tienda te mandará el precio aquí.</div>${preg(p)}`
+      : p.estado === 'cotizado' && p.cotiza ? `<div class="ramo-c"><div class="pp"><span class="sm mut">La tienda te propone</span><b class="n">${money(p.cotiza.precio)}</b></div><div class="sm" style="margin:6px 0 2px">${esc(detR(p))}</div><div class="sm mut">Tu presupuesto: ${money(p.presupuesto)}${p.envio ? ' · Envío ' + money(p.envio) : ''}</div>${p.cotiza.nota ? `<div class="nt">«${esc(p.cotiza.nota)}»</div>` : ''}<div class="row"><button type="button" class="btn" data-rr="${esc(p.id)}" data-si="">No, gracias</button><button type="button" class="btn acc" data-rr="${esc(p.id)}" data-si="1">Aceptar · ${money(p.total)}</button></div>${preg(p)}</div>` : '';
     const cambiar = p => p.ramo && ['cotizar', 'cotizado'].includes(p.estado) ? '' : p.editable ? `<div class="mis-h">Puedes cambiarlo mientras la tienda no lo confirme. Toca un producto.</div>${p.lineas.map((x, i) => linea(p, i)).join('')}`
       : ['nuevo', 'confirmado', 'listo'].includes(p.estado) ? (tel ? `<a class="mis-w" href="${waLink(tel, 'Hola, quiero cambiar mi pedido ' + p.numero)}" target="_blank" rel="noopener">¿Quieres cambiarlo? <b>Escríbele a la tienda</b></a>` : '<span class="mis-w">Para cambiarlo, escríbele a la tienda.</span>') : '';
-    box.innerHTML = vis.length ? `<div class="mis"><b>Tus pedidos</b>${vis.map(p => `<div class="mis-r"><span>${est[p.estado][2]} ${esc(p.numero)} · ${p.ramo && p.estado === 'cotizar' ? 'Ramo a tu gusto' : money(p.total)}</span><span class="badge ${est[p.estado][1]}">${est[p.estado][0]}</span></div>${p.ramo && ['cotizar', 'cotizado'].includes(p.estado) ? ramoC(p) : comp(p)}${cambiar(p)}`).join('')}<button type="button" class="btn hist" data-hist="1">Ver mi historial · ${l.length} ${l.length === 1 ? 'pedido' : 'pedidos'}</button></div>` : `<div class="mis"><button type="button" class="btn hist" style="margin:2px 0" data-hist="1">Ver mi historial · ${l.length} ${l.length === 1 ? 'pedido' : 'pedidos'}</button></div>`;
+    box.innerHTML = vis.length ? `<div class="mis"><b>Tus pedidos</b>${vis.map(p => `<div class="mis-r"><span>${p.personal ? '✨' : est[p.estado][2]} ${esc(p.numero)} · ${p.ramo && p.estado === 'cotizar' ? (p.personal ? 'Diseño personalizado' : 'Ramo a tu gusto') : money(p.total)}</span><span class="badge ${est[p.estado][1]}">${est[p.estado][0]}</span></div>${p.ramo && ['cotizar', 'cotizado'].includes(p.estado) ? ramoC(p) : comp(p)}${cambiar(p)}`).join('')}<button type="button" class="btn hist" data-hist="1">Ver mi historial · ${l.length} ${l.length === 1 ? 'pedido' : 'pedidos'}</button></div>` : `<div class="mis"><button type="button" class="btn hist" style="margin:2px 0" data-hist="1">Ver mi historial · ${l.length} ${l.length === 1 ? 'pedido' : 'pedidos'}</button></div>`;
     box.onclick = e => { if (e.target.closest('[data-hist]')) return tHistorial().catch(err);
-      const pq = e.target.closest('[data-pq]'); if (pq) { const p = vis.find(x => x.id === pq.dataset.pq); if (p) chatTienda('', { id: p.id, numero: p.numero, total: p.total, estado: p.estado }); return; }
+      const pq = e.target.closest('[data-pq]'); if (pq) { const p = vis.find(x => x.id === pq.dataset.pq); if (p) chatTienda('', { id: p.id, numero: p.numero, total: p.total, estado: p.estado, personal: p.personal }); return; }
       const rr = e.target.closest('[data-rr]'); if (rr) { const p = vis.find(x => x.id === rr.dataset.rr), si = !!rr.dataset.si;
-        (async () => { if (!si && !(await confirmar('¿No aceptas el precio de tu ramo? Se cancela la solicitud.', { si: 'No acepto' }))) return;
+        (async () => { if (!si && !(await confirmar(`¿No aceptas el precio de ${que(p)}? Se cancela la solicitud.`, { si: 'No acepto' }))) return;
           await api('respuestaRamo', { negocio: T.id, id: p.id, telefono: cli.telefono, acepta: si, precio: p.cotiza.precio });
-          toast(si ? '¡Tu ramo quedó pedido! La tienda ya lo tiene.' : 'Listo, cancelamos la solicitud.', 'ok', 4000); misPedidosTienda(); })().catch(err); return; }
+          toast(si ? (p.personal ? '¡Tu diseño quedó pedido! La tienda ya lo tiene.' : '¡Tu ramo quedó pedido! La tienda ya lo tiene.') : 'Listo, cancelamos la solicitud.', 'ok', 4000); misPedidosTienda(); })().catch(err); return; }
       const b = e.target.closest('[data-pl]'); if (!b) return;
       const p = vis.find(x => x.id === b.dataset.pl), i = Number(b.dataset.i), x = p.lineas[i], pr = T.info.productos.find(y => y.id === x.id);
       if (!pr) return toast('Ese producto ya no está en la tienda. Escríbele al negocio.', 'error', 3500);

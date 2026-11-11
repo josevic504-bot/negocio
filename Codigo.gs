@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.63';
+const VERSION = '1.9.64';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -232,6 +232,12 @@ const GIROS = {
       ['Rosa (unidad)','Flores sueltas','🌹',45,22,200,'Color: Roja, Blanca, Rosada, Amarilla'],['Girasol (unidad)','Flores sueltas','🌻',60,30,80],['Lirio (vara)','Flores sueltas','🤍',75,38,60,'Color: Blanco, Rosado'],
       ['Tulipán (unidad)','Flores sueltas','🌷',70,40,60,'Color: Rosado, Amarillo, Blanco'],['Margarita (manojo)','Flores sueltas','🌼',90,45,40],['Follaje y relleno','Flores sueltas','🌿',60,25,50],
       ['Globo metálico','Globos y detalles','🎈',120,60,30,'Diseño: Te amo, Feliz cumpleaños, Felicidades'],['Peluche mediano','Globos y detalles','🧸',350,190,12],['Orquídea en maceta','Plantas','🪴',850,480,8]] },
+  manualidades: { n: 'Manualidades y detalles personalizados', cats: ['Tazas','Cajas y regalos','Piñatas','Llaveros','Cuadros','Recuerdos'],
+    ej: [['Taza personalizada','Tazas','☕',180,85,0,'Tipo: Blanca, Mágica',{ vars: { 'Tipo: Blanca': { p: 180 }, 'Tipo: Mágica': { p: 260 } } }],
+      ['Caja sorpresa decorada','Cajas y regalos','🎁',450,210,0,'Tamaño: Mediana, Grande',{ vars: { 'Tamaño: Mediana': { p: 450 }, 'Tamaño: Grande': { p: 650 } } }],
+      ['Piñata temática','Piñatas','🪅',650,300,0,'Tamaño: Mediana, Grande',{ vars: { 'Tamaño: Mediana': { p: 650 }, 'Tamaño: Grande': { p: 950 } } }],
+      ['Llavero con nombre','Llaveros','🔑',90,35,0],['Cuadro con foto','Cuadros','🖼️',380,170,0,'Tamaño: 20x25 cm, 30x40 cm',{ vars: { 'Tamaño: 20x25 cm': { p: 380 }, 'Tamaño: 30x40 cm': { p: 560 } } }],
+      ['Recuerdos para fiesta (unidad)','Recuerdos','🎀',45,18,0,'',{ precioEsp: 38, minEsp: 24 }],['Tarjeta hecha a mano','Cajas y regalos','💌',60,20,25],['Lazo de regalo','Cajas y regalos','🎀',25,8,60]] },
   joyeria:    { n: 'Joyería', cats: ['Anillos','Cadenas','Pulseras','Aretes','Dijes','Relojes'],
     ej: [['Anillo solitario plata 925','Anillos','💍',1450,780,8,'Talla: 6, 7, 8, 9',{ vars: { 'Talla: 6': { s: 2 }, 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
       ['Argolla de matrimonio oro 10k','Anillos','💍',4800,3300,6,'Talla: 7, 8, 9',{ vars: { 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
@@ -1270,7 +1276,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], manualidades: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -4925,7 +4931,7 @@ function tiendaInfo_(d) {
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago, enlacePago: cfg.tiendaEnlacePago || '', tigo: cfg.tiendaTigo || '',
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
-      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, ramoPrecios: cfg.ramoPrecios !== 'no', cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
+      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, personal: activos.indexOf('manualidades') >= 0, ramoPrecios: cfg.ramoPrecios !== 'no', cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
         datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null,
       giros: activos.map(g => ({ id: g, n: GIROS[g].n })),
@@ -4965,7 +4971,9 @@ const DIAS_FOTOS_RAMO = 7;
 function limpiarFotosRamo_() {
   const lim = diasAtras_(DIAS_FOTOS_RAMO); let n = 0;
   rows_('Pedidos').forEach(p => {
-    if (['entregado', 'cancelado'].indexOf(p.estado) < 0 || String(p.actualizado).slice(0, 10) >= lim || String(p.cotiza).indexOf('"fotos"') < 0) return;
+    if (['entregado', 'cancelado'].indexOf(p.estado) < 0 || String(p.actualizado).slice(0, 10) >= lim) return;
+    if (String(p.items).indexOf('"foto"') >= 0) { const its = parseJ_(p.items, []); its.forEach(i => { if (i.foto) { borrarFoto_(i.foto); n++; delete i.foto; i.fotoBorrada = 1; } }); upsert_('Pedidos', { id: p.id, items: JSON.stringify(its) }); }
+    if (String(p.cotiza).indexOf('"fotos"') < 0) return;
     const c = parseJ_(p.cotiza, {}); (c.fotos || []).forEach(id => { borrarFoto_(id); n++; });
     delete c.fotos; c.fotosBorradas = hoy_(); upsert_('Pedidos', { id: p.id, cotiza: JSON.stringify(c) });
   });
@@ -5002,8 +5010,9 @@ function cotizarRamo_(u, d) {
   if (!p || EST_RAMO.indexOf(p.estado) < 0) throw new Error('Este pedido ya no espera precio');
   const precio = r2_(Number(d.precio) || 0);
   if (!(precio > 0) || precio > 1000000) throw new Error('Escribe el precio del ramo');
-  const lineas = parseJ_(p.items, []).filter(i => i.tipo !== 'ramo').map(i => ({ productoId: i.productoId, nombre: i.nombre, cantidad: i.cantidad, precio: 0, total: 0, lista: Number(i.lista !== undefined ? i.lista : i.precio) || 0 }));
-  lineas.push({ productoId: '', tipo: 'ramo', nombre: 'Ramo a tu gusto', cantidad: 1, precio: precio, total: precio });
+  const pc = parseJ_(p.cotiza, {}), its0 = parseJ_(p.items, []);
+  const lineas = pc.personal ? [] : its0.filter(i => i.tipo !== 'ramo').map(i => ({ productoId: i.productoId, nombre: i.nombre, cantidad: i.cantidad, precio: 0, total: 0, lista: Number(i.lista !== undefined ? i.lista : i.precio) || 0 }));
+  lineas.push({ productoId: '', tipo: 'ramo', nombre: pc.personal ? 'Diseño personalizado · ' + pc.cat + (pc.cant > 1 ? ' (' + pc.cant + ' unidades)' : '') : 'Ramo a tu gusto', cantidad: 1, precio: precio, total: precio });
   const env = Number(p.envio) || 0, cot = Object.assign(parseJ_(p.cotiza, {}), { precio: precio, nota: txt_(d.nota, 300), el: ahora_() });
   const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(lineas), subtotal: precio, total: r2_(precio + env), estado: 'cotizado', cotiza: JSON.stringify(cot), actualizado: ahora_() });
   g.items = parseJ_(g.items, []); g.anticipoPagado = 0;
@@ -5015,6 +5024,7 @@ function editarRamo_(u, d) {
   const p = rows_('Pedidos').find(x => x.id === d.id);
   if (!p) throw new Error('El pedido no existe');
   if (EST_RAMO.indexOf(p.estado) < 0 && !p.cotiza) throw new Error('Este pedido no es un ramo a tu gusto');
+  if (parseJ_(p.cotiza, {}).personal) throw new Error('Un diseño personalizado no tiene flores para editar');
   if (p.ventaId || ['cotizar','cotizado','nuevo','confirmado','listo'].indexOf(p.estado) < 0) throw new Error('Este ramo ya está ' + (p.estado === 'entregado' ? 'cobrado' : p.estado) + ' y no se puede editar');
   const antes = parseJ_(p.items, []), flA = antes.filter(i => i.tipo !== 'ramo'), ramoL = antes.filter(i => i.tipo === 'ramo');
   if (!Array.isArray(d.nombres) || d.nombres.join('|') !== flA.map(i => i.nombre + '×' + i.cantidad).join('|')) throw new Error('El ramo cambió mientras lo editabas. Ábrelo de nuevo.');
@@ -5058,6 +5068,7 @@ function eliminarPedido_(u, d) {
   if (pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de eliminarlo.');
   if (p.comprobante) borrarFoto_(p.comprobante);
   (parseJ_(p.cotiza, {}).fotos || []).forEach(borrarFoto_);
+  parseJ_(p.items, []).forEach(i => { if (i.foto) borrarFoto_(i.foto); });
   deleteRow_('Pedidos', p.id);
   return { id: p.id, eliminado: true };
 }
@@ -5102,7 +5113,7 @@ function pedidoClienteEditar_(d) {
   let detalle;
   if (!cant) {
     if (items.length === 1) throw new Error('Es el único producto del pedido. Si ya no lo quieres, escríbele a la tienda.');
-    items.splice(ix, 1); detalle = 'quitó ' + it.nombre;
+    items.splice(ix, 1); detalle = 'quitó ' + it.nombre; if (it.foto) borrarFoto_(it.foto);
   } else {
     const pr = pm[it.productoId];
     if (!pr || !pr.activo || !pr.tienda) throw new Error('Este producto ya no está en la tienda. Escríbele al negocio.');
@@ -5113,6 +5124,7 @@ function pedidoClienteEditar_(d) {
     if (nom !== it.nombre && opsDe_(pr).length && !op) throw new Error('Elige ' + opsDe_(pr).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + pr.nombre + '»');
     const precio = nom === it.nombre ? (Number(it.normal) > 0 ? it.normal : it.precio) : precioVar_(pr, vk);
     items[ix] = { productoId: pr.id, nombre: nom, cantidad: cant, precio: precio, total: r2_(cant * precio) };
+    if (it.foto) items[ix].foto = it.foto; // Manualidades: la imagen del cliente sigue con su línea
     const otra = items.findIndex((x, j) => j !== ix && x.productoId === pr.id && x.nombre === nom);
     if (otra >= 0) { items[ix].cantidad += items[otra].cantidad; items[ix].total = r2_(items[ix].cantidad * precio); items.splice(otra, 1); }
     // Existencia: se revisa lo que suma el pedido, como al pedir
@@ -5152,7 +5164,7 @@ function pedidoPago_(u, d) {
 
 function pedirLimites_(d) {
   tiendaNeg_(d);
-  if (!Array.isArray(d.items) || !d.items.length) throw new Error('Tu pedido está vacío');
+  if (!d.personal && (!Array.isArray(d.items) || !d.items.length)) throw new Error('Tu pedido está vacío');
   const c = CacheService.getScriptCache(), tel = String(d.telefono || '').replace(/\D/g, '');
   if (Number(c.get('PD_' + (NEG ? NEG.id : '') + tel.slice(-8)) || 0) >= 6) throw new Error('Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
   if (Number(c.get('PH_' + (NEG ? NEG.id : '')) || 0) >= 150) throw new Error('La tienda está recibiendo muchos pedidos. Intenta de nuevo en unos minutos.');
@@ -5181,15 +5193,20 @@ function pedir_(d) {
   if (n >= 6) throw new Error('Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
   const pm = porId_(rows_('Productos'));
   // «Arma tu ramo»: el cliente pide precio; la existencia y el precio los revisa el negocio al cotizar
-  const ramo = !!d.ramo;
-  if (ramo && girosActivos_(cfg).indexOf('floristeria') < 0) throw new Error('Esta tienda no arma ramos a tu gusto');
+  const personal = !!d.personal, ramo = !!d.ramo || personal;
+  if (d.ramo && girosActivos_(cfg).indexOf('floristeria') < 0) throw new Error('Esta tienda no arma ramos a tu gusto');
+  if (personal && girosActivos_(cfg).indexOf('manualidades') < 0) throw new Error('Esta tienda no hace diseños personalizados');
+  // «Pide tu diseño personalizado» (manualidades): qué quiere, cuántos, fotos de ejemplo; el negocio pone el precio total
+  const pers = personal ? { personal: 1, cat: txt_(d.categoria, 40) || 'Otro', desc: txt_(d.descripcion, 500), cant: Math.floor(Number(d.cantidad) || 1) } : null;
+  if (pers && pers.desc.length < 5) throw new Error('Describe lo que quieres que te hagamos');
+  if (pers && (pers.cant < 1 || pers.cant > 999)) throw new Error('Cantidad no válida');
   const presupuesto = ramo ? r2_(Math.max(0, Number(d.presupuesto) || 0)) : 0;
   if (ramo && !(presupuesto > 0)) throw new Error('Escribe tu presupuesto');
   const sin = ramo || cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
-  const lista = Array.isArray(d.items) ? d.items.slice(0, 40) : [];
+  const lista = personal ? [] : Array.isArray(d.items) ? d.items.slice(0, 40) : [];
   const items = [], suma = {}, sumaV = {};
   const conCompras = girosActivos_(cfg).indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0;
-  let anticipo = 0;
+  let anticipo = 0, fotos = 0;
   lista.forEach(i => {
     // Compras en línea: el cliente pega el enlace del artículo y su precio en dólares; el precio en lempiras se calcula aquí
     if (i && i.id === '_compra') {
@@ -5206,21 +5223,22 @@ function pedir_(d) {
     }
     const p = i && typeof i === 'object' ? pm[i.id] : null, cant = Math.floor(Number(i && i.cantidad) || 0);
     if (!p || !p.activo || !p.tienda) throw new Error('Uno de los productos ya no está disponible. Actualiza la página.');
-    if (ramo && RAMO_CATS.indexOf(String(p.categoria).toLowerCase()) < 0) throw new Error('«' + p.nombre + '» no se puede elegir para armar un ramo');
+    if (d.ramo && RAMO_CATS.indexOf(String(p.categoria).toLowerCase()) < 0) throw new Error('«' + p.nombre + '» no se puede elegir para armar un ramo');
     if (cant < 1 || cant > 999) throw new Error('Cantidad no válida en «' + p.nombre + '»');
     suma[p.id] = (suma[p.id] || 0) + cant;
     if (p.tipo === 'producto' && !sin && p.stock < suma[p.id]) throw new Error(p.stock > 0 ? 'Solo quedan ' + Math.floor(p.stock) + ' de «' + p.nombre + '»' : '«' + p.nombre + '» se agotó');
     const op = txt_(i.opcion, 160), nom = op ? txt_(p.nombre + ' (' + op + ')', 240) : p.nombre;
     const V = varsDe_(p), vk = V ? varKey_(p, op) : '';
-    if (V && !vk && !ramo) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
+    if (V && !vk && !d.ramo) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
     if (vk) { const kk = p.id + SEPV + vk; sumaV[kk] = (sumaV[kk] || 0) + cant; const hay = Math.floor(Number(V[vk] && V[vk].s) || 0);
       if (p.tipo === 'producto' && !sin && hay < sumaV[kk]) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + p.nombre + ' (' + vk + ')»' : '«' + p.nombre + ' (' + vk + ')» se agotó'); }
     const pu = precioVar_(p, vk);
     if (giroDeProd_(p, girosActivos_(cfg)) === 'recargas' && !/ID de jugador:\s*\S/i.test(op)) throw new Error('Escribe tu ID de jugador para «' + p.nombre + '»');
     const ya = items.find(x => x.productoId === p.id && x.nombre === nom);
     if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * ya.precio); }
-    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk) });
+    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk), _foto: i.foto && fotos < 5 ? (fotos++, i.foto) : '' });
   });
+  if (pers) items.push({ productoId: '', tipo: 'diseno', nombre: 'Diseño personalizado · ' + pers.cat, cantidad: pers.cant, precio: 0, total: 0 });
   if (!items.length) throw new Error('Tu pedido está vacío');
   items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p && !i._propio && !ramo ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.normal = i.precio; i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
@@ -5250,14 +5268,17 @@ function pedir_(d) {
   if (cita) { const cupo = Math.max(1, Math.floor(Number(cfg.citaCupo) || 3));
     if ((citasOcupadas_()[cita + ' ' + hora] || 0) >= cupo) throw new Error('Esa hora ya se llenó. Elige otra, por favor.'); }
   const numP = siguiente_('P'), comp = d.comprobante ? guardarComprobante_(d.comprobante, numP) : '';
-  // «Arma tu ramo»: hasta 2 fotos de referencia; se borran solas 7 días después de entregado o cancelado
-  const fotosRef = ramo && Array.isArray(d.fotos) ? d.fotos.slice(0, 2).map((f, i) => guardarFoto_(f, 'ramo-' + numP + '-' + (i + 1), 'La foto de referencia')) : [];
+  // «Arma tu ramo» (2 fotos) y diseño personalizado (3): fotos de referencia; se borran solas 7 días después de entregado o cancelado
+  const fotosRef = ramo && Array.isArray(d.fotos) ? d.fotos.slice(0, personal ? 3 : 2).map((f, i) => guardarFoto_(f, (personal ? 'diseno-' : 'ramo-') + numP + '-' + (i + 1), 'La foto de referencia')) : [];
+  // Manualidades: la imagen que el cliente sube en un producto («Personalízalo») va en esa línea del pedido
+  items.forEach((it, i) => { if (it._foto) it.foto = guardarFoto_(it._foto, 'pers-' + numP + '-' + (i + 1), 'Tu imagen'); delete it._foto; });
+  const cotizaIni = pers ? Object.assign(pers, { fotos: fotosRef }) : fotosRef.length ? { fotos: fotosRef } : null;
   const p = upsert_('Pedidos', { comprobante: comp, pagoEstado: comp ? 'revisar' : '', numero: numP, fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
-    pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: fotosRef.length ? JSON.stringify({ fotos: fotosRef }) : '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),
+    pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: cotizaIni ? JSON.stringify(cotizaIni) : '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),
     cita: cita, hora: hora, vehiculo: vehiculo, placa: placa, citaId: '' });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
-  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
+  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, personal: personal, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
     negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : pago === 'Tigo Money' ? cfg.tiendaTigo : '', enlacePago: pago === 'Tarjeta' ? cfg.tiendaEnlacePago || '' : '' };
 }
 
@@ -5300,11 +5321,12 @@ function chatEnviar_(d) {
   let ref = '';
   if (prod && d.ref) ref = '🛍️ ' + prod.nombre + ' · ' + money_(prod.precio, cfg);
   const ped = d.pedidoId ? rows_('Pedidos').find(x => x.id === d.pedidoId && tel8_(x.telefono) && tel8_(x.telefono) === tel8_(c.telefono)) : null;
-  if (ped && d.ref) ref = (ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? '💐 Cotización de ramo ' : '🧾 Pedido ') + ped.numero + (ped.estado === 'cotizar' ? ' · esperando precio' : ' · ' + money_(ped.total, cfg));
+  const esDis = ped && parseJ_(ped.cotiza, {}).personal;
+  if (ped && d.ref) ref = (esDis ? '✨ Cotización de diseño ' : ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? '💐 Cotización de ramo ' : '🧾 Pedido ') + ped.numero + (ped.estado === 'cotizar' ? ' · esperando precio' : ' · ' + money_(ped.total, cfg));
   upsert_('Mensajes', { chatId: c.id, de: 'cliente', texto: (ref ? '⟦' + ref + '⟧' : '') + texto, usuarioId: '', fecha: f });
   const upd = { id: c.id, ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: true, sinLeer: (Number(c.sinLeer) || 0) + 1 };
   if (prod) { upd.productoId = prod.id; upd.producto = prod.nombre; }
-  else if (ped) { upd.productoId = ''; upd.producto = (ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? 'Cotización ' : 'Pedido ') + ped.numero; }
+  else if (ped) { upd.productoId = ''; upd.producto = (esDis ? 'Diseño ' : ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? 'Cotización ' : 'Pedido ') + ped.numero; }
   c = upsert_('Chats', upd);
   const cs = CacheService.getScriptCache(), nid = NEG ? NEG.id : '', k1 = 'CM_' + nid + String(d.telefono || d.clave || '').replace(/[^0-9a-z]/gi, '').slice(-12), k2 = 'CN_' + nid;
   cs.put(k1, String(Number(cs.get(k1) || 0) + 1), 3600); cs.put(k2, String(Number(cs.get(k2) || 0) + 1), 3600);
@@ -5380,7 +5402,7 @@ function misPedidos_(d) {
   const pm = d.historial || l.some(p => p.estado === 'nuevo') ? porId_(rows_('Productos')) : {};
   return l.map(p => { const its = parseJ_(p.items, []), o = { id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega, pago: p.pago, pagoEstado: p.pagoEstado || '', items: its.length };
       // Solo un pedido que el cliente todavía puede cambiar lleva sus productos y su versión
-      if (EST_RAMO.indexOf(p.estado) >= 0 || p.cotiza) { o.ramo = true; o.presupuesto = Number(p.presupuesto) || 0; o.envio = p.envio; o.cotiza = parseJ_(p.cotiza, null); o.flores = its.filter(i => i.tipo !== 'ramo').map(i => cantTxt_(i.cantidad) + ' ' + String(i.nombre).replace(/ \(([^()]*)\)$/, (m, x) => ' ' + x.replace(/[^,:]+: /g, ''))); }
+      if (EST_RAMO.indexOf(p.estado) >= 0 || p.cotiza) { o.ramo = true; o.presupuesto = Number(p.presupuesto) || 0; o.envio = p.envio; o.cotiza = parseJ_(p.cotiza, null); if (o.cotiza && o.cotiza.personal) { o.personal = true; o.desc = o.cotiza.desc; o.cat = o.cotiza.cat; o.cant = o.cotiza.cant; } o.flores = o.personal ? [] : its.filter(i => i.tipo !== 'ramo').map(i => cantTxt_(i.cantidad) + ' ' + String(i.nombre).replace(/ \(([^()]*)\)$/, (m, x) => ' ' + x.replace(/[^,:]+: /g, ''))); }
       if (!bloqueoCliente_(p)) { o.editable = true; o.version = verPedido_(p); o.lineas = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
       // Historial: lo que el cliente pidió en cada pedido
       if (d.historial) { o.subtotal = p.subtotal; o.envio = p.envio; o.detalle = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
