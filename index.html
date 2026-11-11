@@ -3013,10 +3013,15 @@ async function panelResumen() {
 }
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
 // si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas.
-const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || /^(INPUT|TEXTAREA|SELECT)$/.test((document.activeElement || {}).tagName || '');
+// «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
+const PANEL_REV = 2; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+let pnTecleo = 0, pnAutoDesde = 0;
+document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
+const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
 async function panelAuto() {
+  if (P.auto && Date.now() - pnAutoDesde > 45000) P.auto = false; // una consulta que nunca respondió no deja trabada la actualización
   if (!S.enPanel || !P.tok || !P.d || P.auto || document.hidden || pnOcupado()) return;
-  P.auto = true;
+  P.auto = true; pnAutoDesde = Date.now();
   try {
     const d = await api('panelResumen', {}, true);
     if (JSON.stringify(d) !== JSON.stringify(P.d) && !pnOcupado()) { const y = window.scrollY; P.d = d; P.pl = d.plantillas || P.pl; panelPinta(); const e = $('#pn-esp'); if (e && P.esp) e.innerHTML = pnEspacioHTML(P.esp); window.scrollTo(0, y); }
@@ -9549,7 +9554,8 @@ async function buscarActualizacion(forzar) {
   try {
     const r = await fetch(location.pathname + '?v=' + Date.now(), { cache: 'no-store' });
     if (!r.ok) return;
-    const m = (await r.text()).match(/const APP_VER = '([\d.]+)'/);
+    const txt = await r.text(), m = txt.match(/const APP_VER = '([\d.]+)'/), pr = txt.match(/const PANEL_REV = (\d+)/);
+    if (S.enPanel && pr && Number(pr[1]) > PANEL_REV && !pnOcupado()) { location.reload(); return; } // el Panel toma su código nuevo sin que haya que recargarlo
     if (m && cmpVer(m[1], APP_VER) > 0) avisoActualizacion(m[1]);
   } catch (e) {}
 }
