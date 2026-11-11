@@ -3589,9 +3589,12 @@ function panelBienvenida(n) {
   const IMG = 'bienvenida.png?v=2'; // ?v= salta la copia guardada en el teléfono: al cambiar la imagen, sube el número
   const h = hoja({ titulo: 'Bienvenida para ' + esc(n.negocio), html: `<img src="${IMG}" alt="Imagen de bienvenida" style="width:100%;border-radius:14px;display:block;margin-bottom:12px">
     <div class="msg-prev" style="white-space:pre-line;max-height:180px;overflow:auto">${esc((P.pl.bienvenida || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio))}</div>
-    <p class="h" style="font-size:12px;margin:10px 0 0">1) Envía la imagen y elige el chat de ${esc(String(n.dueno || '').split(' ')[0])}. 2) Envía el mensaje (se abre su chat con el texto listo).</p>` });
-  h.botones([{ t: '1 · Enviar imagen', fn: async () => { const b = await (await fetch(IMG)).blob(); await compartirArchivo(b, 'Bienvenida-Gestion-de-Negocio-VM.png', ''); } },
-    { t: '2 · Enviar mensaje', cls: 'pri', fn: () => { window.open(waPlantilla(n, 'bienvenida'), '_blank', 'noopener'); api('panelContacto', { id: n.id, tipo: 'bienvenida', nota: 'WhatsApp · Bienvenida + imagen' }, true).catch(() => {}); } }]);
+    <p class="h" style="font-size:12px;margin:10px 0 0">Se abre WhatsApp: elige el chat de <b>${esc(String(n.dueno || '').split(' ')[0])}</b> (${esc(n.whatsapp || '')}) y la imagen se va con el mensaje abajo, en un solo envío.</p>
+    <button type="button" class="btn sm ghost" id="pb-solo" style="margin-top:6px">${ic('wa', 15)} ¿No lo tienes guardado? Abrir su chat solo con el mensaje</button>` });
+  const texto = (P.pl.bienvenida || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio);
+  const anota = () => api('panelContacto', { id: n.id, tipo: 'bienvenida', nota: 'WhatsApp · Bienvenida + imagen' }, true).catch(() => {});
+  $('#pb-solo', h.el).onclick = () => { window.open(waPlantilla(n, 'bienvenida'), '_blank', 'noopener'); anota(); };
+  h.botones([{ t: `${ic('wa', 18)} Enviar imagen + mensaje`, cls: 'pri', fn: async () => { const b = await (await fetch(IMG)).blob(); await compartirArchivo(b, 'Bienvenida-Gestion-de-Negocio-VM.png', texto); anota(); } }]);
 }
 /* ---- ¿Cómo llegó? Canal (WhatsApp, Facebook, TikTok…) y publicidad ---- */
 const CANAL_TX = { wa: 'Por WhatsApp', whatsapp: 'Por WhatsApp', estado: 'Por tu estado de WhatsApp', facebook: 'Por Facebook', fb: 'Por Facebook', instagram: 'Por Instagram', ig: 'Por Instagram', tiktok: 'Por TikTok', google: 'Por Google', youtube: 'Por YouTube', directo: 'Entró directo', 'mis-paginas': 'Desde tus páginas', 'otro-sitio': 'Desde otro sitio web' };
