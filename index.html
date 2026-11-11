@@ -3012,17 +3012,19 @@ async function panelResumen() {
   panelEspacio();
 }
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
-// si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas.
+// si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas. También la pantalla de Visitas.
 // «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
-const PANEL_REV = 3; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+const PANEL_REV = 4; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
 let pnTecleo = 0, pnAutoDesde = 0;
 document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
 const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
 async function panelAuto() {
   if (P.auto && Date.now() - pnAutoDesde > 45000) P.auto = false; // una consulta que nunca respondió no deja trabada la actualización
-  if (!S.enPanel || !P.tok || !P.d || P.auto || document.hidden || pnOcupado()) return;
+  const vis = !!$('#vis-dia'); // pantalla de Visitas (varios días o un día): también se actualiza sola
+  if (!S.enPanel || !P.tok || !P.d || P.auto || document.hidden || (vis ? PILA.length > 0 || Date.now() - pnTecleo < 15000 : pnOcupado())) return;
   P.auto = true; pnAutoDesde = Date.now();
   try {
+    if (vis) { await (P.visDia ? panelVisitasDia(P.visDia, true) : ACC.panelVisitas({ dataset: { k: String(P.visDias || 7) } }, true)); P.auto = false; return; }
     const d = await api('panelResumen', {}, true);
     if (JSON.stringify(d) !== JSON.stringify(P.d) && !pnOcupado()) { const y = window.scrollY; P.d = d; P.pl = d.plantillas || P.pl; panelPinta(); const e = $('#pn-esp'); if (e && P.esp) e.innerHTML = pnEspacioHTML(P.esp); window.scrollTo(0, y); }
   } catch (e) {}
@@ -3451,14 +3453,15 @@ function visChipsEventos() {
   i.addEventListener('click', () => { try { i.showPicker && i.showPicker(); } catch (e) {} });
   i.addEventListener('change', () => { if (i.value) panelVisitasDia(i.value).catch(err); });
 }
-ACC.panelVisitas = async el => {
+// quiet = actualización automática (panelAuto): sin «Cargando…», solo repinta si los números cambiaron y sigues en esta pantalla, y no te mueve de lugar
+ACC.panelVisitas = async (el, quiet) => {
   const ds = (el && el.dataset) || {};
   if (ds.dia) return panelVisitasDia(ds.dia);
-  P.visDia = '';
-  const dias = Number(ds.k || P.visDias || 7); P.visDias = dias;
-  panelCab('Visitas', true);
-  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
-  const v = await api('panelVisitas', { dias }); if (v.min) P.visMin = v.min;
+  const dias = Number(ds.k || P.visDias || 7), y = window.scrollY;
+  if (!quiet) { P.visDia = ''; P.visDias = dias; panelCab('Visitas', true); $('#main').innerHTML = '<div class="empty">Cargando…</div>'; }
+  const v = await api('panelVisitas', { dias }, !!quiet), vj = JSON.stringify(v);
+  if (quiet && (!$('#vis-dia') || PILA.length || P.visDia || P.visDias !== dias || vj === P.visJ)) return;
+  P.visJ = vj; if (v.min) P.visMin = v.min;
   const max = Math.max(1, ...v.barras.map(b => b.n)), maxH = Math.max(1, ...v.porHora);
   const camb = v.anterior ? Math.round((v.total - v.anterior) * 100 / v.anterior) : null;
   const barLbl = b => b.semana ? fFechaC(b.k).replace(/ \d{4}$/, '') : dias === 7 ? ['D', 'L', 'M', 'M', 'J', 'V', 'S'][new Date(b.k + 'T12:00').getDay()] : String(Number(b.k.slice(8)));
@@ -3476,14 +3479,15 @@ ACC.panelVisitas = async el => {
     <p class="h" style="margin:8px 2px 0;font-size:12px">Visitas a la tienda en línea de cada negocio (no se suman a tus visitas de arriba). Cada negocio ve las suyas en «Mi tienda en línea».</p>` : ''}
     <button class="btn" style="width:100%;margin-top:14px" data-a="panelEnlaces">${ic('link', 16)} Tus enlaces para compartir</button>
     <p class="credit" style="margin-top:14px">No se cuentan tus propias visitas (este teléfono queda marcado al abrir el Panel) ni las de clientes que ya iniciaron sesión. El mismo teléfono cuenta una vez cada 30 minutos. No se guarda ningún dato personal.</p>`;
-  visChipsEventos();
+  visChipsEventos(); if (quiet) window.scrollTo(0, y);
 };
 // Un solo día: de dónde vinieron, qué página vieron, a qué hora y cada visita
-async function panelVisitasDia(dia) {
-  P.visDia = dia; P.visOri = '';
-  panelCab('Visitas', true);
-  $('#main').innerHTML = '<div class="empty">Cargando…</div>';
-  const v = await api('panelVisitas', { dia });
+async function panelVisitasDia(dia, quiet) {
+  const y = window.scrollY;
+  if (!quiet) { P.visDia = dia; P.visOri = ''; panelCab('Visitas', true); $('#main').innerHTML = '<div class="empty">Cargando…</div>'; }
+  const v = await api('panelVisitas', { dia }, !!quiet), vj = JSON.stringify(v);
+  if (quiet && (!$('#vis-dia') || PILA.length || P.visDia !== dia || vj === P.visJ)) return;
+  P.visJ = vj;
   if (!v.dia) { toast('Para ver un día, pega el Codigo.gs nuevo en Apps Script y publica una versión nueva', 'error', 6000); return ACC.panelVisitas({ dataset: { k: String(P.visDias || 7) } }); }
   P.vd = v; if (v.min) P.visMin = v.min;
   const h = hoy(), maxB = Math.max(1, ...v.barras.map(b => b.n)), pico = v.total ? v.barras.reduce((a, b) => b.n > a.n ? b : a) : null;
@@ -3500,7 +3504,7 @@ async function panelVisitasDia(dia) {
     <div class="sec-t"><h3>Qué página vieron</h3></div>${visLista(v.paginas, v.total, x => [visPag(x.k), 'doc'])}
     <div class="sec-t"><h3>Cada visita del día</h3><a>${v.total} en total</a></div><div id="vis-cada"></div>
     <p class="credit" style="margin-top:14px">Hora de Honduras. No se cuentan tus propias visitas ni las de clientes que ya iniciaron sesión. No se guarda ningún dato personal.</p>`;
-  visCada(); visChipsEventos();
+  visCada(); visChipsEventos(); if (quiet) window.scrollTo(0, y);
 }
 // Lista de cada visita del día, con filtro por origen (TikTok, WhatsApp…)
 function visCada() {
