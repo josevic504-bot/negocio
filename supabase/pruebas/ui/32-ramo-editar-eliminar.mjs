@@ -1,0 +1,101 @@
+import { nuevaPagina, ok, cerrar, esperar, api, db, OUT } from './base.mjs';
+import fs from 'node:fs';
+const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src:url(data:font/woff2;base64,${fs.readFileSync('node_modules/@fontsource/'+p).toString('base64')})}`;
+const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
+const tiro = async (pg, n) => { await pg.waitForTimeout(450); await pg.screenshot({ path: `${OUT}/${n}.png` }); };
+const reg = await api('registrar', { negocio: 'Flores del Valle', nombre: 'Demo', giro: 'floristeria', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+await api('cargarEjemplos', {}, tok);
+await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tiendaEntrega: 'ambos', tiendaEnvio: '90', tiendaPagos: 'Efectivo,Transferencia' } }, tok);
+const N = db.T.Licencias[0].id, P = n => db.T.Productos.find(x => x.nombre.startsWith(n));
+const pedirRamo = async (nombre, tel) => {
+  const t = await nuevaPagina({}); await t.goto('http://localhost:8765/?tienda=' + N); await t.waitForTimeout(1500); await t.addStyleTag({ content: css });
+  await t.evaluate(() => document.querySelector('[data-ramo]').click()); await t.waitForTimeout(500);
+  for (let i = 0; i < 12; i++) await t.evaluate(id => document.querySelector(`[data-rq="${id}"][data-d="1"]`).click(), P('Rosa').id);
+  for (let i = 0; i < 3; i++) await t.evaluate(id => document.querySelector(`[data-rq="${id}"][data-d="1"]`).click(), P('Lirio').id);
+  await t.fill('#rf-pre', '900'); if (await t.$('#rf-fe')) await t.fill('#rf-fe', '2026-11-14');
+  await t.fill('#rf-n', nombre); await t.fill('#rf-t', tel);
+  await t.evaluate(() => [...document.querySelectorAll('.sheet-f button')].pop().click()); await t.waitForTimeout(900);
+  return t;
+};
+console.log('Flores del catálogo:', db.T.Productos.filter(p => /flores sueltas|globos/i.test(p.categoria)).map(p => p.nombre + ' [' + (p.opciones || '') + ']').join(' | '));
+const t1 = await pedirRamo('María López', '9876-5432');
+const id1 = db.T.Pedidos.find(p => p.nombre === 'María López').id;
+const pg = await nuevaPagina({ token: tok }); await pg.goto('http://localhost:8765/'); await esperar(pg, 8000); await pg.waitForTimeout(600); await pg.addStyleTag({ content: css });
+await pg.ir('pedidos');
+// 1) Por cotizar: abrir hoja del ramo → Editar flores
+await pg.evaluate(id => document.querySelector(`[data-a="pedAccion"][data-e="cotizar"][data-id="${id}"]`).click(), id1); await pg.waitForTimeout(500);
+await tiro(pg, '1-hoja-ramo-botones');
+await pg.evaluate(() => document.querySelector('#cr-ed').click()); await pg.waitForTimeout(500);
+// quitar lirio, bajar rosas a 10, agregar 2 girasoles (u otra flor distinta)
+const otra = db.T.Productos.find(p => /flores sueltas/i.test(p.categoria) && !/Rosa|Lirio/.test(p.nombre));
+const fl0 = JSON.parse(db.T.Pedidos.find(x => x.id === id1).items).filter(i => !i.tipo), iR = fl0.findIndex(i => /Rosa/.test(i.nombre)), iL = fl0.findIndex(i => /Lirio/.test(i.nombre));
+await pg.evaluate(i => document.querySelector(`[data-x="${i}"]`).click(), iL); await pg.waitForTimeout(150);
+for (let i = 0; i < 2; i++) await pg.evaluate(i => document.querySelector(`[data-i="${i}"][data-d="-1"]`).click(), iR);
+for (let i = 0; i < 2; i++) await pg.evaluate(id => document.querySelector(`[data-a2="${id}"][data-d="1"]`).click(), otra.id);
+await pg.evaluate(() => document.querySelector('.sheet-b').scrollTo(0, 0)); await tiro(pg, '2-editar-flores');
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button')].filter(b => /Guardar flores/.test(b.textContent)).pop().click()); await pg.waitForTimeout(900);
+let p = db.T.Pedidos.find(x => x.id === id1), its = JSON.parse(p.items);
+ok('Flores editadas (por cotizar)', its.length === 2 && its.find(i => /Rosa/.test(i.nombre)).cantidad === 10 && its.find(i => i.productoId === otra.id).cantidad === 2 && !its.some(i => /Lirio/.test(i.nombre)) && /Flores editadas/.test(p.nota), p.items);
+ok('Vuelve a la hoja de precio', /Precio del ramo/.test(await pg.hojaTxt()));
+await tiro(pg, '3-vuelve-a-precio');
+await pg.fill('#cr-p', '850');
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button')].filter(b => /Enviar precio/.test(b.textContent)).pop().click()); await pg.waitForTimeout(800);
+await pg.evaluate(() => cerrarHojas());
+// 2) Cotizado: agregar 1 rosa más → el precio se conserva, cliente ve flores nuevas
+await pg.evaluate(id => { S.f.pest = 'cotizado'; R.pedidos(); }); await pg.waitForTimeout(500);
+await pg.evaluate(id => document.querySelector(`[data-a="verPedido"][data-id="${id}"]`).click(), id1); await pg.waitForTimeout(500);
+await tiro(pg, '4-ver-pedido-botones');
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button')].filter(b => /Editar flores/.test(b.textContent)).pop().click()); await pg.waitForTimeout(500);
+const iR2 = JSON.parse(db.T.Pedidos.find(x => x.id === id1).items).filter(i => !i.tipo).findIndex(i => /Rosa/.test(i.nombre));
+await pg.evaluate(i => document.querySelector(`[data-i="${i}"][data-d="1"]`).click(), iR2);
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button')].filter(b => /Guardar flores/.test(b.textContent)).pop().click()); await pg.waitForTimeout(900);
+p = db.T.Pedidos.find(x => x.id === id1); its = JSON.parse(p.items);
+ok('Cotizado: precio se conserva', p.estado === 'cotizado' && Number(p.total) === 850 && its.find(i => /Rosa/.test(i.nombre)).cantidad === 11 && its.find(i => /Rosa/.test(i.nombre)).precio === 0, p.total + ' ' + p.items);
+await pg.evaluate(() => cerrarHojas());
+await t1.evaluate(() => misPedidosTienda()); await t1.waitForTimeout(700);
+const tw = (await t1.locator('#t-mis').innerText()).replace(/\s+/g, ' ');
+ok('Cliente ve las flores nuevas', /11 Rosa/.test(tw) && /2 /.test(tw) && !/Lirio/.test(tw), tw);
+// 3) Cliente acepta; ya en Nuevo se pueden editar flores y el precio no cambia
+await t1.evaluate(() => document.querySelector('[data-rr][data-si="1"]').click()); await t1.waitForTimeout(800);
+const e1 = await api('pedidos', {}, tok); const pp = e1.data.find(x => x.id === id1);
+const r1 = await api('editarRamo', { id: id1, nombres: pp.items.filter(i => !i.tipo).map(i => i.nombre + '×' + i.cantidad), cantidades: pp.items.filter(i => !i.tipo).map(i => i.cantidad + 1) }, tok);
+ok('Nuevo: edita flores sin cambiar precio', r1.ok && Number(r1.data.total) === 850, JSON.stringify(r1).slice(0, 200));
+const r2 = await api('editarRamo', { id: id1, nombres: ['x'], cantidades: [1] }, tok); ok('Cambios simultáneos detectados', !r2.ok && /cambió/.test(r2.error));
+const r3 = await api('editarRamo', { id: id1, nombres: r1.data.items.filter(i => !i.tipo).map(i => i.nombre + '×' + i.cantidad), cantidades: [], agregar: [{ productoId: db.T.Productos.find(x => !/flores sueltas|globos/i.test(x.categoria)).id, cantidad: 1 }] }, tok);
+ok('No deja agregar algo que no es flor', !r3.ok, JSON.stringify(r3));
+// 4) Eliminar desde varios estados
+for (const s of ['confirmado', 'listo']) await api('estadoPedido', { id: id1, estado: s }, tok);
+await pg.evaluate(() => { S.pedidosL = null; S.f.pest = 'listo'; R.pedidos(); }); await pg.waitForTimeout(700);
+await pg.evaluate(id => document.querySelector(`[data-a="verPedido"][data-id="${id}"]`).click(), id1); await pg.waitForTimeout(500);
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button')].filter(b => /Eliminar/.test(b.textContent)).pop().click()); await pg.waitForTimeout(500);
+await tiro(pg, '5-confirmar-eliminar');
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button, .sheet button')].filter(b => b.textContent.trim() === 'Eliminar').pop().click()); await pg.waitForTimeout(900);
+ok('Eliminado en estado Listo', !db.T.Pedidos.some(x => x.id === id1));
+await t1.evaluate(() => misPedidosTienda()); await t1.waitForTimeout(600);
+ok('Desaparece de la tienda del cliente', !/P-00001/.test(await t1.locator('#t-mis').innerText()));
+await tiro(pg, '6-tras-eliminar');
+// Eliminar por cotizar desde la hoja del ramo, entregado y cancelado
+const t2 = await pedirRamo('Carlos Díaz', '9911-2233'); const id2 = db.T.Pedidos.find(x => x.nombre === 'Carlos Díaz').id;
+await pg.evaluate(() => { S.pedidosL = null; S.f.pest = 'cotizar'; R.pedidos(); }); await pg.waitForTimeout(700);
+await pg.evaluate(id => document.querySelector(`[data-a="pedAccion"][data-e="cotizar"][data-id="${id}"]`).click(), id2); await pg.waitForTimeout(500);
+await pg.evaluate(() => document.querySelector('#cr-del').click()); await pg.waitForTimeout(400);
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button, .sheet button')].filter(b => b.textContent.trim() === 'Eliminar').pop().click()); await pg.waitForTimeout(900);
+ok('Eliminado desde Por cotizar', !db.T.Pedidos.some(x => x.id === id2));
+const t3 = await pedirRamo('Ana Ruiz', '9888-7766'); const id3 = db.T.Pedidos.find(x => x.nombre === 'Ana Ruiz').id;
+await api('estadoPedido', { id: id3, estado: 'cancelado', motivo: 'x' }, tok);
+ok('Eliminado cancelado', (await api('eliminarPedido', { id: id3 }, tok)).ok && !db.T.Pedidos.some(x => x.id === id3));
+// Pedido normal entregado y cobrado: se elimina y la venta queda
+const pr = db.T.Productos.find(x => !x.opciones && x.tipo === 'producto' && x.stock > 0 && !/flores sueltas|globos/i.test(x.categoria));
+const rp = await api('pedir', { negocio: N, items: [{ id: pr.id, cantidad: 1 }], nombre: 'Luis', telefono: '9777-1111', entrega: 'recoger', pago: 'Efectivo' }); const id4 = rp.data.id;
+const row = db.T.Pedidos.find(x => x.id === id4); row.estado = 'entregado'; row.ventaId = 'V-FALSA';
+await pg.evaluate(() => { S.pedidosL = null; S.f.pest = 'entregado'; R.pedidos(); }); await pg.waitForTimeout(700);
+await pg.evaluate(id => document.querySelector(`[data-a="verPedido"][data-id="${id}"]`).click(), id4); await pg.waitForTimeout(500);
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button')].filter(b => /Eliminar/.test(b.textContent)).pop().click()); await pg.waitForTimeout(500);
+ok('Entregado: avisa que la venta no se borra', /no se borra/.test(await pg.hojaTxt()));
+await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button, .sheet button')].filter(b => b.textContent.trim() === 'Eliminar').pop().click()); await pg.waitForTimeout(900);
+ok('Entregado eliminado', !db.T.Pedidos.some(x => x.id === id4));
+// Con anticipo pagado no se elimina; el cajero no puede eliminar
+const rp5 = await api('pedir', { negocio: N, items: [{ id: pr.id, cantidad: 1 }], nombre: 'Rita', telefono: '9666-2222', entrega: 'recoger', pago: 'Efectivo' }); const id5 = rp5.data.id;
+const ant = await api('anticipoPedido', { id: id5, monto: 10, metodo: 'Efectivo' }, tok);
+const r5 = await api('eliminarPedido', { id: id5 }, tok); ok('Con anticipo pagado no se elimina', !r5.ok && /anticipo/.test(r5.error), JSON.stringify(ant).slice(0, 100) + ' ' + JSON.stringify(r5));
+await cerrar();
