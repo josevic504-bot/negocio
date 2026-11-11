@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.62';
+const VERSION = '1.9.63';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -5283,7 +5283,7 @@ function chatLimites_(d) {
 function chatEnviar_(d) {
   const cfg = tiendaNeg_(d);
   if (cfg.tiendaChat === 'no') throw new Error('Este negocio no recibe mensajes por aquí. Escríbele por WhatsApp.');
-  const texto = String(d.texto || '').trim().replace(/\n{3,}/g, '\n\n').slice(0, 600);
+  const texto = String(d.texto || '').replace(/[⟦⟧]/g, '').trim().replace(/\n{3,}/g, '\n\n').slice(0, 600);
   if (!texto) throw new Error('Escribe tu mensaje');
   let c = d.clave ? rows_('Chats').find(x => x.clave === String(d.clave)) : null;
   const f = ahora_(), prod = d.productoId ? rows_('Productos').find(x => x.id === d.productoId && x.activo && x.tienda) : null;
@@ -5296,9 +5296,15 @@ function chatEnviar_(d) {
     c = upsert_('Chats', { telefono: tel, nombre: nombre, clienteId: cli ? cli.id : '', clave: Utilities.getUuid().replace(/-/g, ''), productoId: '', producto: '',
       ultimo: f, ultimoTexto: '', deCliente: true, sinLeer: 0, creado: f });
   }
-  upsert_('Mensajes', { chatId: c.id, de: 'cliente', texto: texto, usuarioId: '', fecha: f });
+  // Referencia de lo que pregunta (producto o cotización): va al inicio del mensaje entre ⟦ ⟧ y la app la muestra como etiqueta
+  let ref = '';
+  if (prod && d.ref) ref = '🛍️ ' + prod.nombre + ' · ' + money_(prod.precio, cfg);
+  const ped = d.pedidoId ? rows_('Pedidos').find(x => x.id === d.pedidoId && tel8_(x.telefono) && tel8_(x.telefono) === tel8_(c.telefono)) : null;
+  if (ped && d.ref) ref = (ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? '💐 Cotización de ramo ' : '🧾 Pedido ') + ped.numero + (ped.estado === 'cotizar' ? ' · esperando precio' : ' · ' + money_(ped.total, cfg));
+  upsert_('Mensajes', { chatId: c.id, de: 'cliente', texto: (ref ? '⟦' + ref + '⟧' : '') + texto, usuarioId: '', fecha: f });
   const upd = { id: c.id, ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: true, sinLeer: (Number(c.sinLeer) || 0) + 1 };
   if (prod) { upd.productoId = prod.id; upd.producto = prod.nombre; }
+  else if (ped) { upd.productoId = ''; upd.producto = (ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? 'Cotización ' : 'Pedido ') + ped.numero; }
   c = upsert_('Chats', upd);
   const cs = CacheService.getScriptCache(), nid = NEG ? NEG.id : '', k1 = 'CM_' + nid + String(d.telefono || d.clave || '').replace(/[^0-9a-z]/gi, '').slice(-12), k2 = 'CN_' + nid;
   cs.put(k1, String(Number(cs.get(k1) || 0) + 1), 3600); cs.put(k2, String(Number(cs.get(k2) || 0) + 1), 3600);
