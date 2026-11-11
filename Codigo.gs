@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.60';
+const VERSION = '1.9.61';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -3943,10 +3943,14 @@ function estadoPedido_(u, d) {
   if (!p) throw new Error('El pedido no existe');
   if (EST_PEDIDO.indexOf(d.estado) < 0 || d.estado === 'entregado') throw new Error('Estado no válido');
   if (p.estado === 'entregado' || p.estado === 'cancelado') throw new Error('Este pedido ya está ' + p.estado);
+  // Floristería: un ramo sin precio solo se rechaza; con precio enviado, la tienda puede anotar que el cliente aceptó (WhatsApp o llamada)
+  if (p.estado === 'cotizar' && d.estado !== 'cancelado') throw new Error('Primero ponle precio al ramo');
+  if (p.estado === 'cotizado' && ['nuevo', 'cancelado'].indexOf(d.estado) < 0) throw new Error('Primero marca que el cliente aceptó el precio');
   const pagado = anticipoDe_(p.id);
   if (d.estado === 'cancelado' && pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de cancelar.');
   const upd = { id: p.id, estado: d.estado, actualizado: ahora_() };
   if (d.estado === 'cancelado' && d.motivo) upd.nota = (p.nota ? p.nota + ' · ' : '') + 'Cancelado: ' + txt_(d.motivo, 120);
+  if (p.estado === 'cotizado' && d.estado === 'nuevo') upd.nota = ((p.nota ? p.nota + ' · ' : '') + 'Precio aceptado por el cliente (lo anotó la tienda)').slice(-1000);
   // Carwash: al confirmar un pedido que trae día y hora, la cita entra sola a la Agenda
   if (d.estado === 'confirmado' && p.cita && !p.citaId && modOn_('agenda')) {
     const items = parseJ_(p.items, []);

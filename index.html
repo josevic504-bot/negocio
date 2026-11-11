@@ -708,7 +708,7 @@ body.en-tienda{padding-bottom:110px}
 .rf-fotos{display:flex;gap:10px;margin-top:6px}.rf-foto{position:relative;width:86px;height:86px;border-radius:14px;border:1.5px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--mut);font-size:11.5px;cursor:pointer;overflow:hidden;background:var(--card)}.rf-foto img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.rf-foto .x{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:0;font-size:14px;line-height:22px;padding:0}
 .ramo-fotos{display:flex;gap:8px;margin:8px 0}.ramo-fotos img{width:72px;height:72px;object-fit:cover;border-radius:12px;cursor:pointer}
 .rf-sum{display:flex;justify-content:space-between;margin:10px 0 2px;font-size:14px;color:var(--mut)}.rf-sum b{color:var(--fg)}.rf-av{margin:10px 0 2px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 8%,transparent);font-size:13px;color:var(--mut)}
-.ramo-c{border:1.5px solid var(--pri);border-radius:16px;padding:12px 14px;margin:6px 0 8px}.ramo-c .pp{display:flex;justify-content:space-between;align-items:baseline}.ramo-c .pp b{font-size:22px;color:var(--pri)}.ramo-c .nt{margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 7%,transparent);font-size:13px}.ramo-c .row{display:flex;gap:8px;margin-top:10px}.ramo-c .row .btn{flex:1}.ramo-c .row .acc{flex:2}
+.ramo-c{border:1.5px solid var(--pri);border-radius:16px;padding:12px 14px;margin:6px 0 8px;transition:box-shadow .3s}.ramo-c.brilla{box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 30%,transparent)}.ramo-c .pp{display:flex;justify-content:space-between;align-items:baseline}.ramo-c .pp b{font-size:22px;color:var(--pri)}.ramo-c .nt{margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 7%,transparent);font-size:13px}.ramo-c .row{display:flex;gap:8px;margin-top:10px}.ramo-c .row .btn{flex:1}.ramo-c .row .acc{flex:2}
 .t-expl{font-size:12.5px;color:var(--mut);margin:14px 2px 8px}.ed-ped{text-align:center;font-size:12.5px;font-weight:600;color:var(--pri);margin-bottom:8px}.btn.quitar{color:var(--bad);border:1.5px solid var(--bad);background:transparent}
 .prod-big .ph{aspect-ratio:4/3;border-radius:22px;overflow:hidden;display:grid;place-items:center;color:#fff;position:relative;background:linear-gradient(135deg,var(--t1),var(--t2))}
 .prod-big .ph .emo{font-size:90px}.prod-big .ph .ini{font:600 60px var(--serif)}
@@ -1573,7 +1573,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.60';
+const APP_VER = '1.9.61';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -4841,11 +4841,11 @@ R.pedidos = async () => {
   S.pedidosL = lp;
   const l = S.pedidosL, cnt = k => l.filter(p => p.estado === k).length;
   S.pedidosNuevos = cnt('nuevo') + cnt('cotizar'); pintarNav();
-  if (!S.f.pest || (S.f.pestAuto && !cnt(S.f.pest))) { S.f.pest = ['cotizar', 'nuevo', 'confirmado', 'listo'].find(k => cnt(k)) || 'nuevo'; S.f.pestAuto = 1; }
+  if (!S.f.pest || (S.f.pestAuto && !cnt(S.f.pest))) { S.f.pest = ['cotizar', 'cotizado', 'nuevo', 'confirmado', 'listo'].find(k => cnt(k)) || 'nuevo'; S.f.pestAuto = 1; }
   const conRamo = girosOn().includes('floristeria') || cnt('cotizar') || cnt('cotizado');
   const vis = l.filter(p => p.estado === S.f.pest);
-  m.innerHTML = tienda + `<div class="chips" style="margin:12px 0">${Object.keys(EST_P).filter(k => conRamo || !EST_P[k].ramo).map(k => `<button class="chip ${S.f.pest === k ? 'on' : ''}" data-a="pest" data-k="${k}">${EST_P[k].t}${['cotizar', 'nuevo', 'confirmado', 'listo'].includes(k) ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
-    <div class="ords">${vis.map(cardPedido).join('') || `<div class="empty">${S.f.pest === 'nuevo' ? 'No hay pedidos nuevos. Comparte el enlace de tu tienda para recibir más 🛍️' : 'No hay pedidos aquí'}</div>`}</div>`;
+  m.innerHTML = tienda + `<div class="chips" style="margin:12px 0">${Object.keys(EST_P).filter(k => conRamo || !EST_P[k].ramo).map(k => `<button class="chip ${S.f.pest === k ? 'on' : ''}" data-a="pest" data-k="${k}">${EST_P[k].t}${['cotizar', 'cotizado', 'nuevo', 'confirmado', 'listo'].includes(k) ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
+    <div class="ords">${vis.map(cardPedido).join('') || `<div class="empty">${S.f.pest === 'cotizado' ? 'No hay ramos esperando respuesta del cliente' : S.f.pest === 'nuevo' ? 'No hay pedidos nuevos. Comparte el enlace de tu tienda para recibir más 🛍️' : 'No hay pedidos aquí'}</div>`}</div>`;
   clearTimeout(S.tPed);
   S.tPed = setTimeout(() => { if (S.vista === 'pedidos' && !PILA.length && !document.hidden) R.pedidos(); }, 30000);
 };
@@ -4863,7 +4863,7 @@ function cardPedido(p) {
     ${p.entrega === 'domicilio' && p.direccion ? `<p class="xs mut" style="margin:8px 0 0">${ic('pin', 13)} ${esc(p.direccion)}</p>` : ''}${p.nota ? `<p class="xs mut" style="margin:6px 0 0">📝 ${esc(p.nota)}</p>` : ''}
     ${fotosR.length ? `<div class="ramo-fotos">${fotosR.map(f => `<img src="${esc(fotoSrc(f))}" alt="Foto de referencia" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}" loading="lazy">`).join('')}</div>` : ''}${compPedidoHTML(p)}
     <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a><button class="btn sm" data-a="verPedido" data-id="${p.id}">${ic('eye', 16)} Ver</button>
-    ${accion ? `<button class="btn pri sm" style="margin-left:auto" data-a="pedAccion" data-id="${p.id}" data-e="${accion[1]}">${accion[0]} ${ic('arrow', 16)}</button>` : ''}</div></div>`;
+    ${p.estado === 'cotizado' && puede('admin', 'cajero') ? `<button class="btn sm ok-b" style="margin-left:auto" data-a="ramoAcepto" data-id="${p.id}">${ic('check', 15)} Ya aceptó</button>` : ''}${accion ? `<button class="btn ${p.estado === 'cotizado' ? '' : 'pri '}sm" style="margin-left:${p.estado === 'cotizado' ? '0' : 'auto'}" data-a="pedAccion" data-id="${p.id}" data-e="${accion[1]}">${accion[0]} ${ic('arrow', 16)}</button>` : ''}</div></div>`;
 }
 // Comprobante de pago que mandó el cliente desde la tienda
 const EST_COMP = { revisar: ['b-warn', 'Por revisar'], ok: ['b-ok', 'Pago recibido'], no: ['b-bad', 'No coincide'] };
@@ -4903,11 +4903,17 @@ function cotizarRamo(p) {
       await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m || 'No se pudo armar' }); h.cerrar(); S.pedidosL = null; toast('Solicitud rechazada', 'ok'); R.pedidos(); } },
     { t: p.estado === 'cotizado' ? 'Cambiar precio' : 'Enviar precio', cls: 'pri', fn: async () => {
       const v = num($('#cr-p', h.el).value); if (!(v > 0)) throw new Error('Escribe el precio del ramo');
-      const g = await api('cotizarRamo', { id: p.id, precio: v, nota: $('#cr-n', h.el).value.trim() }); Object.assign(p, g); h.cerrar(); toast('Precio enviado. Le llega a tu cliente en su tienda.', 'ok', 4000); R.pedidos();
-      const t = `Hola ${p.nombre.split(' ')[0]} 💐 Tu ramo a tu gusto queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Acéptalo en la tienda, en «Tus pedidos»: ${linkTienda()}`;
+      const g = await api('cotizarRamo', { id: p.id, precio: v, nota: $('#cr-n', h.el).value.trim() }); Object.assign(p, g); h.cerrar(); S.f.pest = 'cotizado'; S.f.pestAuto = 0; toast('Precio enviado. Queda en «Precio enviado» hasta que tu cliente lo acepte.', 'ok', 4500); R.pedidos();
+      const t = `Hola ${p.nombre.split(' ')[0]} 💐 Tu ramo a tu gusto queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Tócalo para aceptarlo: ${linkTienda()}&ramo=${encodeURIComponent(p.id)}`;
       const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp? (opcional)</p><div class="msg-prev">${esc(t)}</div>` });
       a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300)); } }]);
 }
+ACC.ramoAcepto = async el => {
+  const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
+  if (!(await confirmar(`¿<b>${esc(p.nombre)}</b> te dijo que acepta el ramo en <b>${money(p.total)}</b> (por WhatsApp o llamada)? El pedido pasa a <b>Nuevo</b> para confirmarlo y prepararlo.`, { si: 'Sí, aceptó' }))) return;
+  const g = await api('estadoPedido', { id: p.id, estado: 'nuevo' }); Object.assign(p, g);
+  S.f.pest = 'nuevo'; S.f.pestAuto = 0; toast('Listo, el ramo pasó a pedidos nuevos', 'ok'); R.pedidos();
+};
 ACC.verFotoRamo = el => hoja({ titulo: 'Foto de referencia', html: `<img src="${esc(el.dataset.src)}" alt="" style="width:100%;border-radius:12px"><p class="xs mut">Se borra sola 7 días después de entregar o cancelar el pedido.</p>` });
 ACC.pest = el => { S.f.pest = el.dataset.k; S.f.pestAuto = 0; R.pedidos(); };
 ACC.pedAccion = async el => {
@@ -9214,6 +9220,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.61', fecha: '2026-11-11', items: [
+    { i: 'check', t: 'Floristería: tus clientes ya aceptan el precio del ramo', d: 'El enlace que le mandas por WhatsApp abre directo su ramo con el precio y el botón «Aceptar», aunque lo abra en otro navegador. El ramo se queda en «Precio enviado» (con contador) hasta que te responda, y si te acepta por WhatsApp o llamada, tócale «Ya aceptó» para seguir con el pedido.' }
+  ] },
   { v: '1.9.60', fecha: '2026-11-10', items: [
     { i: 'eye', t: 'Mira cuántas personas visitan tu tienda', d: 'En Mi tienda en línea ahora ves las visitas de hoy, de la semana y del mes, cuántas personas distintas entraron, de dónde llegaron (WhatsApp, Facebook, TikTok…) y cuántos pedidos te hicieron. Usa el botón «Compartir»: da un enlace para cada red y así sabes cuál te trae más gente.' }
   ] },
@@ -9840,7 +9849,22 @@ async function iniciarTienda(id) {
   T.cfg = opcGiro(T.giro || n.gid);
   T.entrega = n.entrega === 'domicilio' ? 'domicilio' : 'recoger';
   pintarTienda();
-  misPedidosTienda();
+  let ramoUrl = ''; try { ramoUrl = new URLSearchParams(location.search).get('ramo') || ''; } catch (e) {}
+  if (ramoUrl) abrirRamoEnlace(ramoUrl).catch(err); else misPedidosTienda();
+}
+// Floristería: el cliente abre el enlace que le mandó la tienda (puede ser otro navegador, p. ej. el de WhatsApp)
+async function abrirRamoEnlace(id) {
+  id = String(id).slice(0, 40);
+  const mis = LS.json(tKey('pedidos'), []) || []; if (!mis.includes(id)) { mis.unshift(id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50))); }
+  const cli = LS.json('cliente_tienda', {}) || {};
+  const tel = cli.telefono || await pedirTexto('💐 El precio de tu ramo', { msg: 'Escribe el WhatsApp con el que pediste tu ramo para verlo.', label: 'Tu WhatsApp', tipo: 'tel', modo: 'tel', si: 'Ver mi ramo' });
+  if (!tel) return misPedidosTienda();
+  const l = await api('misPedidos', { negocio: T.id, telefono: tel, ids: [id] }, true);
+  if (!l.length) { toast('No encontramos tu ramo con ese número. Revisa que sea el mismo con el que lo pediste.', 'error', 5000); return misPedidosTienda(); }
+  if (!cli.telefono) LS.set('cliente_tienda', JSON.stringify(Object.assign(cli, { telefono: tel })));
+  try { history.replaceState(null, '', location.pathname + '?tienda=' + encodeURIComponent(T.id)); } catch (e) {}
+  await misPedidosTienda();
+  const b = $('#t-mis'); if (b) { b.scrollIntoView({ behavior: 'smooth', block: 'start' }); const c = $('.ramo-c', b); if (c) { c.classList.add('brilla'); setTimeout(() => c.classList.remove('brilla'), 2600); } }
 }
 function tiendaCerrada(x) {
   S.tiendaModo = x.modo || 'auto'; if (x.tema) aplicarTema(x.tema); if (x.fuente) aplicarFuenteTienda(x.fuente);
@@ -10394,6 +10418,7 @@ async function misPedidosTienda() {
     const l = await api('misPedidos', { negocio: T.id, telefono: cli.telefono, ids }, true);
     const est = { cotizar: ['Esperando precio', 'b-warn', '💐'], cotizado: ['Precio listo', 'b-info', '💐'], nuevo: ['Recibido', 'b-warn', '📨'], confirmado: ['Confirmado', 'b-info', '👍'], listo: ['¡Listo!', 'b-ok', '✅'], entregado: ['Entregado', 'b-mut', '🎉'], cancelado: ['Cancelado', 'b-bad', '✖️'] };
     const vis = l.filter(p => p.estado !== 'entregado' && p.estado !== 'cancelado' || (Date.now() - parseLocal(p.fecha).getTime()) < 86400000 * 2).slice(0, 3);
+    clearTimeout(T.tMis); if (vis.some(p => p.ramo && p.estado === 'cotizar')) T.tMis = setTimeout(() => { if (!document.hidden) misPedidosTienda(); else document.addEventListener('visibilitychange', () => misPedidosTienda(), { once: true }); }, 30000);
     const comp = p => { if (!p.pago || p.pago === 'Efectivo' || ['cancelado', 'entregado'].includes(p.estado)) return p.pagoEstado === 'ok' ? '<div class="mis-c ok">✓ Pago verificado</div>' : '';
       if (p.pagoEstado === 'ok') return '<div class="mis-c ok">✓ El negocio confirmó tu pago</div>';
       if (p.pagoEstado === 'revisar') return '<div class="mis-c">📎 Comprobante enviado · el negocio lo está revisando</div>';
