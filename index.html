@@ -3014,7 +3014,7 @@ async function panelResumen() {
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
 // si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas. También la pantalla de Visitas.
 // «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
-const PANEL_REV = 5; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+const PANEL_REV = 6; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
 let pnTecleo = 0, pnAutoDesde = 0;
 document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
 const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
@@ -3999,7 +3999,7 @@ async function panelChat(id) {
 ACC.panelPlantillas = async () => {
   const pl = await api('panelPlantillas', {}); P.pl = pl;
   const N = { dia3: 'Día 3 · ¿qué tal la prueba?', vence: 'Vence mañana', inactivo: 'Sin entrar hace días', vencida: 'Prueba vencida', activada: 'Licencia activada', bienvenida: 'Bienvenida' };
-  const h = hoja({ titulo: 'Mensajes y contrato', ancho: 1, html: `<p class="sm mut" style="margin-bottom:10px">Usa <b>{dueno}</b> y <b>{negocio}</b> y se rellenan solos.</p>${Object.keys(N).map(k => `<label class="fld"><span>${N[k]}</span><textarea data-k="${k}" rows="3" maxlength="600">${esc(pl[k] || '')}</textarea></label>`).join('')}
+  const h = hoja({ titulo: 'Mensajes y contrato', ancho: 1, html: `<p class="sm mut" style="margin-bottom:10px">Usa <b>{dueno}</b> y <b>{negocio}</b> y se rellenan solos.</p>${Object.keys(N).map(k => `<label class="fld"><span>${N[k]}</span><textarea data-k="${k}" rows="${k === 'bienvenida' ? 8 : 3}" maxlength="1200">${esc(pl[k] || '')}</textarea></label>`).join('')}
     <div class="sec-t" style="margin-top:14px"><h3>Texto base del contrato de licencia</h3></div><p class="xs mut" style="margin:-4px 2px 8px">Se usa al crear el contrato de cada cliente (en su ficha). Campos: {negocio}, {dueno}, {whatsapp}, {rtn}, {direccion}, {monto}, {cuotas}, {plan}, {desde}, {hasta}, {vigencia}, {fecha}. Si lo dejas vacío, vuelve al texto original.</p>
     <textarea data-k="contrato" rows="16" maxlength="9000" style="font-size:13px;line-height:1.45">${esc(pl.contrato || '')}</textarea>` });
   h.botones([{ t: 'Guardar', cls: 'pri', fn: async () => { const p = {}; $$('[data-k]', h.el).forEach(t => { p[t.dataset.k] = t.value; }); P.pl = await api('panelPlantillasGuardar', { plantillas: p }); h.cerrar(); toast('Mensajes guardados', 'ok'); if ($('#pn-list')) panelResumen(); } }]);
