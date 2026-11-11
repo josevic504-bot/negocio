@@ -3014,7 +3014,7 @@ async function panelResumen() {
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
 // si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas.
 // «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
-const PANEL_REV = 2; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+const PANEL_REV = 3; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
 let pnTecleo = 0, pnAutoDesde = 0;
 document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
 const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
@@ -3575,7 +3575,7 @@ ACC.panelGasto = el => {
 };
 // Bienvenida: imagen con los módulos y tipos de negocio + mensaje de la plantilla «Bienvenida»
 function panelBienvenida(n) {
-  const IMG = 'bienvenida.png';
+  const IMG = 'bienvenida.png?v=2'; // ?v= salta la copia guardada en el teléfono: al cambiar la imagen, sube el número
   const h = hoja({ titulo: 'Bienvenida para ' + esc(n.negocio), html: `<img src="${IMG}" alt="Imagen de bienvenida" style="width:100%;border-radius:14px;display:block;margin-bottom:12px">
     <div class="msg-prev" style="white-space:pre-line;max-height:180px;overflow:auto">${esc((P.pl.bienvenida || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio))}</div>
     <p class="h" style="font-size:12px;margin:10px 0 0">1) Envía la imagen y elige el chat de ${esc(String(n.dueno || '').split(' ')[0])}. 2) Envía el mensaje (se abre su chat con el texto listo).</p>` });
