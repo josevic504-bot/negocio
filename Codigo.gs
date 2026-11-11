@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.61';
+const VERSION = '1.9.62';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g4';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -354,6 +354,8 @@ function rutaUsuario_(a, u, d, req) {
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
     case 'cotizarRamo':     return lock_(() => cotizarRamo_(u, d));
     case 'editarPedido':    return lock_(() => editarPedido_(u, d));
+    case 'editarRamo':      return lock_(() => editarRamo_(u, d));
+    case 'eliminarPedido':  return lock_(() => eliminarPedido_(u, d));
     case 'anticipoPedido':  return lock_(() => anticipoPedido_(u, d));
     case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
     case 'cobroComprobante': return lock_(() => cobroComprobante_(u, d));
@@ -5006,6 +5008,58 @@ function cotizarRamo_(u, d) {
   const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(lineas), subtotal: precio, total: r2_(precio + env), estado: 'cotizado', cotiza: JSON.stringify(cot), actualizado: ahora_() });
   g.items = parseJ_(g.items, []); g.anticipoPagado = 0;
   return g;
+}
+// Floristería: el negocio cambia las flores del ramo (quitar, cambiar cantidad o agregar otras) mientras no esté cobrado
+function editarRamo_(u, d) {
+  req_(u, ['admin','cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('El pedido no existe');
+  if (EST_RAMO.indexOf(p.estado) < 0 && !p.cotiza) throw new Error('Este pedido no es un ramo a tu gusto');
+  if (p.ventaId || ['cotizar','cotizado','nuevo','confirmado','listo'].indexOf(p.estado) < 0) throw new Error('Este ramo ya está ' + (p.estado === 'entregado' ? 'cobrado' : p.estado) + ' y no se puede editar');
+  const antes = parseJ_(p.items, []), flA = antes.filter(i => i.tipo !== 'ramo'), ramoL = antes.filter(i => i.tipo === 'ramo');
+  if (!Array.isArray(d.nombres) || d.nombres.join('|') !== flA.map(i => i.nombre + '×' + i.cantidad).join('|')) throw new Error('El ramo cambió mientras lo editabas. Ábrelo de nuevo.');
+  const pm = porId_(rows_('Productos')), conPrecio = !!ramoL.length, nuevas = [], lineas = [];
+  const agrega = (pr, op, n, viejo) => {
+    if (n < 1) return; if (n > 999) throw new Error('Cantidad no válida en «' + pr.nombre + '»');
+    const nom = op ? txt_(pr.nombre + ' (' + op + ')', 240) : pr.nombre, ya = nuevas.find(x => x.productoId === pr.id && x.nombre === nom);
+    const lista = viejo ? Number(viejo.lista !== undefined ? viejo.lista : viejo.precio) || 0 : Number(pr.precio) || 0;
+    if (ya) { ya.cantidad += n; ya.total = r2_(ya.cantidad * ya.precio); return; }
+    nuevas.push(conPrecio ? { productoId: pr.id, nombre: nom, cantidad: n, precio: 0, total: 0, lista: lista } : { productoId: pr.id, nombre: nom, cantidad: n, precio: lista, total: r2_(n * lista) });
+  };
+  (Array.isArray(d.cantidades) ? d.cantidades : []).slice(0, flA.length).forEach((c, i) => {
+    const it = flA[i], n = Math.floor(Number(c) || 0); if (n < 0) throw new Error('Cantidad no válida');
+    if (n !== it.cantidad) lineas.push(it.nombre + ': ' + (n ? cantTxt_(it.cantidad) + ' → ' + n : 'quitado'));
+    if (!n) return;
+    const pr = pm[it.productoId];
+    if (pr) agrega(pr, opcionLinea_(it, pm), n, it); else nuevas.push(Object.assign({}, it, { cantidad: n, total: r2_(n * (Number(it.precio) || 0)) }));
+  });
+  (Array.isArray(d.agregar) ? d.agregar.slice(0, 30) : []).forEach(a => {
+    const pr = pm[a.productoId]; if (!pr) throw new Error('Esa flor ya no existe');
+    if (RAMO_CATS.indexOf(String(pr.categoria).toLowerCase()) < 0) throw new Error('«' + pr.nombre + '» no es una flor ni un detalle del ramo');
+    const n = Math.floor(Number(a.cantidad) || 0), op = txt_(a.opcion, 160);
+    if (n > 0) { lineas.push('agregado ' + n + ' ' + pr.nombre + (op ? ' (' + op + ')' : '')); agrega(pr, op, n); }
+  });
+  if (!lineas.length) throw new Error('No cambiaste nada');
+  if (!nuevas.length) throw new Error('El ramo necesita al menos una flor. Si ya no va, elimínalo o recházalo.');
+  const items = nuevas.concat(ramoL), subtotal = conPrecio ? r2_(ramoL.reduce((a, i) => a + i.total, 0)) : 0;
+  const nota = ((p.nota ? p.nota + ' · ' : '') + 'Flores editadas ' + ahora_().replace('T', ' ').slice(5, 16) + ' por ' + String(u.nombre || '').split(' ')[0] + ': ' + lineas.join('; ')).slice(-1000);
+  const upd = { id: p.id, items: JSON.stringify(items), nota: nota, actualizado: ahora_() };
+  if (conPrecio) { upd.subtotal = subtotal; upd.total = r2_(subtotal + (Number(p.envio) || 0)); }
+  const g = upsert_('Pedidos', upd);
+  g.items = parseJ_(g.items, []); g.anticipoPagado = anticipoDe_(p.id); g.cambios = lineas;
+  return g;
+}
+// Eliminar un pedido en línea en cualquier estado (solo el administrador). Si ya se cobró, la venta no se toca.
+function eliminarPedido_(u, d) {
+  req_(u, ['admin']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('Este pedido ya no existe');
+  const pagado = anticipoDe_(p.id);
+  if (pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de eliminarlo.');
+  if (p.comprobante) borrarFoto_(p.comprobante);
+  (parseJ_(p.cotiza, {}).fotos || []).forEach(borrarFoto_);
+  deleteRow_('Pedidos', p.id);
+  return { id: p.id, eliminado: true };
 }
 // El cliente acepta o no el precio desde «Tus pedidos» (se comprueba con su WhatsApp)
 function respuestaRamo_(d) {

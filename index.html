@@ -1573,7 +1573,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.61';
+const APP_VER = '1.9.62';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -4894,11 +4894,14 @@ function cotizarRamo(p) {
   const h = hoja({ titulo: 'Ramo a tu gusto · ' + esc(p.numero), html: `<div class="mis-r"><span class="sm mut">${esc(p.nombre)} · ${esc(p.telefono)} · ${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger'}</span><span class="badge ${EST_P[p.estado].c}">${EST_P[p.estado].t}</span></div>
     ${fl.map(i => `<div class="tk"><div class="tx"><b>${cant(i.cantidad)} × ${esc(i.nombre)}</b></div><b class="n tkt">${i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : '<span class="mut">sin precio</span>'}</b></div>`).join('')}
     <div class="tots"><div class="tot"><span>Flores a precio de lista${sinP ? ' (algunas sin precio)' : ''}</span><b class="n">${money(lista)}</b></div><div class="tot"><span>Presupuesto del cliente</span><b class="n">${money(p.presupuesto)}</b></div>${p.envio ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${money(p.envio)}</b></div>` : ''}</div>
+    <div class="row" style="margin:8px 0 2px"><button class="btn sm" id="cr-ed">${ic('edit', 15)} Editar flores</button>${puede('admin') ? `<button class="btn sm ghost bad" id="cr-del" style="margin-left:auto">${ic('trash', 15)} Eliminar</button>` : ''}</div>
     ${p.nota ? `<p class="sm" style="margin:8px 0">📝 ${esc(p.nota)}</p>` : ''}${(prev.fotos || []).length ? `<div class="sm mut">Fotos de referencia</div><div class="ramo-fotos">${prev.fotos.map(f => `<img src="${esc(fotoSrc(f))}" alt="" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}">`).join('')}</div>` : ''}
     <div class="f2"><label class="fld"><span>Precio del ramo</span><input id="cr-p" inputmode="decimal" value="${prev.precio || ''}" placeholder="0.00"></label><label class="fld"><span>Margen</span><input id="cr-m" disabled></label></div>
     <label class="fld"><span>Nota para el cliente (opcional)</span><input id="cr-n" maxlength="300" value="${esc(prev.nota || '')}" placeholder="Ej. El lirio va en botón para que dure más"></label>` });
   const pm = () => { const v = num($('#cr-p', h.el).value); $('#cr-m', h.el).value = v > 0 ? money(v - cost) + (v ? ' · ' + Math.round((v - cost) / v * 100) + '%' : '') : ''; };
   $('#cr-p', h.el).addEventListener('input', pm); pm();
+  $('#cr-ed', h.el).onclick = () => { h.cerrar(); editarRamo(p); };
+  const del = $('#cr-del', h.el); if (del) del.onclick = () => eliminarPedido(p, h);
   h.botones([{ t: 'Rechazar', fn: async () => { const m = await pedirTexto('Rechazar solicitud', { label: 'Motivo (lo verás en la nota)', msg: 'La solicitud se cancela.' }); if (m === null) return;
       await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m || 'No se pudo armar' }); h.cerrar(); S.pedidosL = null; toast('Solicitud rechazada', 'ok'); R.pedidos(); } },
     { t: p.estado === 'cotizado' ? 'Cambiar precio' : 'Enviar precio', cls: 'pri', fn: async () => {
@@ -4907,6 +4910,51 @@ function cotizarRamo(p) {
       const t = `Hola ${p.nombre.split(' ')[0]} 💐 Tu ramo a tu gusto queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Tócalo para aceptarlo: ${linkTienda()}&ramo=${encodeURIComponent(p.id)}`;
       const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp? (opcional)</p><div class="msg-prev">${esc(t)}</div>` });
       a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300)); } }]);
+}
+// Floristería: cambiar las flores del ramo (cantidades, quitar o agregar otras del catálogo)
+function editarRamo(p) {
+  const fl = p.items.filter(i => !i.tipo), q = fl.map(i => i.cantidad), add = {}, opA = {};
+  const cat = S.productos.filter(x => x.activo && ['flores sueltas', 'globos y detalles'].includes(String(x.categoria).toLowerCase()));
+  const conPrecio = !['cotizar'].includes(p.estado);
+  const h = hoja({ titulo: 'Flores del ramo · ' + esc(p.numero), html: '<div id="er"></div>' });
+  const ops = x => leerOpc(x.opciones).filter(o => o.v.length > 1);
+  const opDe = x => ops(x).map(o => o.n + ': ' + (opA[x.id + '|' + o.n] || o.v[0])).join(', ');
+  const nAdd = () => Object.values(add).reduce((a, n) => a + n, 0);
+  const cambio = () => q.some((n, i) => n !== fl[i].cantidad) || nAdd() > 0;
+  const pinta = () => {
+    $('#er', h.el).innerHTML = `<span class="op-l">Flores que pidió ${esc(String(p.nombre).split(' ')[0])}</span>
+      <div class="tks">${fl.map((it, i) => q[i] ? `<div class="tk"><div class="tx"><b>${esc(it.nombre)}</b>${q[i] !== it.cantidad ? `<small>pidió ${cant(it.cantidad)}</small>` : ''}</div><div class="qty"><button data-i="${i}" data-d="-1">−</button><span>${q[i]}</span><button data-i="${i}" data-d="1">+</button></div><button class="btn icon sm ghost" data-x="${i}" aria-label="Quitar">${ic('trash', 16)}</button></div>`
+        : `<div class="tk" style="opacity:.6"><div class="tx"><b style="text-decoration:line-through">${esc(it.nombre)}</b><small>Quitada del ramo</small></div><button class="btn sm ghost" data-u="${i}">Deshacer</button></div>`).join('')}</div>
+      <span class="op-l" style="margin-top:14px">Agregar otras flores</span>
+      ${cat.map(x => `<div class="rf"><span class="e">${esc(x.icono || '🌸')}</span><div class="tx"><b>${esc(x.nombre)}</b><small>${x.precio ? money(x.precio) + ' c/u' : 'Sin precio'}${x.tipo === 'producto' ? ' · hay ' + cant(x.stock) : ''}</small>${ops(x).map(o => `<div class="chips" data-o="${esc(x.id)}" data-n="${esc(o.n)}">${o.v.map((v, k) => `<button type="button" class="chip ${(opA[x.id + '|' + o.n] || o.v[0]) === v ? 'on' : ''}" data-rv="${esc(v)}">${esc(v)}</button>`).join('')}</div>`).join('')}</div><div class="qty"><button type="button" data-a2="${esc(x.id)}" data-d="-1">−</button><span>${add[x.id] || 0}</span><button type="button" data-a2="${esc(x.id)}" data-d="1">+</button></div></div>`).join('') || '<p class="sm mut">No tienes flores en las categorías «Flores sueltas» o «Globos y detalles».</p>'}
+      <div class="aviso sm" style="margin-top:12px">${ic('info', 18)}<div>${p.estado === 'cotizar' ? 'Después de guardar le pones el precio al ramo.' : p.estado === 'cotizado' ? 'Tu cliente verá las flores nuevas en su tienda. Después de guardar puedes ajustar el precio.' : 'El precio del ramo (' + money(p.total) + ') no cambia.'}</div></div>`;
+    h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Guardar flores`, cls: 'pri', fn: guardar }]);
+  };
+  h.el.addEventListener('click', e => {
+    const b = e.target.closest('[data-i]'); if (b) { const i = +b.dataset.i; q[i] = Math.max(0, Math.min(999, q[i] + Number(b.dataset.d))); return pinta(); }
+    const x = e.target.closest('[data-x]'); if (x) { q[+x.dataset.x] = 0; return pinta(); }
+    const u = e.target.closest('[data-u]'); if (u) { q[+u.dataset.u] = fl[+u.dataset.u].cantidad; return pinta(); }
+    const a = e.target.closest('[data-a2]'); if (a) { const id = a.dataset.a2; add[id] = Math.max(0, Math.min(999, (add[id] || 0) + Number(a.dataset.d))); return pinta(); }
+    const v = e.target.closest('[data-rv]'); if (v) { const g = v.parentNode; opA[g.dataset.o + '|' + g.dataset.n] = v.dataset.rv; return pinta(); }
+  });
+  const guardar = async () => {
+    if (!cambio()) throw new Error('No cambiaste nada');
+    if (!q.some(Boolean) && !nAdd()) throw new Error('El ramo necesita al menos una flor');
+    const g = await api('editarRamo', { id: p.id, nombres: fl.map(i => i.nombre + '×' + i.cantidad), cantidades: q, agregar: Object.keys(add).filter(id => add[id] > 0).map(id => ({ productoId: id, opcion: opDe(byId(S.productos, id)), cantidad: add[id] })) });
+    Object.assign(p, g); h.cerrar(); toast('Flores del ramo actualizadas', 'ok'); R.pedidos();
+    if (['cotizar', 'cotizado'].includes(p.estado)) return cotizarRamo(p);
+    const t = `Hola ${String(p.nombre).split(' ')[0]} 💐, hicimos un cambio en las flores de tu ramo ${p.numero}:\n${(g.cambios || []).map(x => '• ' + x).join('\n')}\nEl precio sigue en ${money(p.total)}. — ${S.config.nombre || ''}`;
+    const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp? (opcional)</p><div class="msg-prev" style="white-space:pre-line">${esc(t)}</div>` });
+    a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300));
+  };
+  pinta();
+}
+// Eliminar un pedido en cualquier estado (solo el administrador)
+async function eliminarPedido(p, hoja0) {
+  if (num(p.anticipoPagado) > 0) throw new Error(`Este pedido tiene un anticipo pagado de ${money(p.anticipoPagado)}. Devuélvelo y anúlalo en la cuenta del cliente antes de eliminarlo.`);
+  if (!(await confirmar(`¿Eliminar el pedido <b>${esc(p.numero)}</b> de <b>${esc(p.nombre)}</b>?<br><br>Se borra para siempre, también de «Tus pedidos» en la tienda del cliente, y no se puede deshacer.${p.ventaId ? '<br><br>La venta que ya cobraste <b>no se borra</b>.' : ''}`, { si: 'Eliminar', peligro: 1 }))) return;
+  await api('eliminarPedido', { id: p.id });
+  S.pedidosL = (S.pedidosL || []).filter(x => x.id !== p.id); if (hoja0) hoja0.cerrar(); toast('Pedido ' + p.numero + ' eliminado', 'ok'); R.pedidos();
 }
 ACC.ramoAcepto = async el => {
   const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
@@ -5027,7 +5075,9 @@ ACC.verPedido = el => {
     Object.assign(p, await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m }));
     h.cerrar(); toast('Pedido cancelado', 'ok'); R.pedidos();
   } });
-  if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !p.ventaId) bs.push({ t: `${ic('edit', 18)} Editar`, fn: () => { h.cerrar(); editarPedido(p); } });
+  const esRamo = ['cotizar', 'cotizado'].includes(p.estado) || !!p.cotiza;
+  if (['nuevo', 'confirmado', 'listo'].concat(esRamo ? ['cotizar', 'cotizado'] : []).includes(p.estado) && !p.ventaId) bs.push({ t: `${ic('edit', 18)} ${esRamo ? 'Editar flores' : 'Editar'}`, fn: () => { h.cerrar(); esRamo ? editarRamo(p) : editarPedido(p); } });
+  if (puede('admin')) bs.push({ t: `${ic('trash', 18)} Eliminar`, cls: 'bad', fn: () => eliminarPedido(p, h) });
   if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !p.ventaId && num(p.anticipo) > 0 && num(p.anticipoPagado) < num(p.anticipo) - 0.004)
     bs.unshift({ t: `${ic('coin', 18)} Recibí el anticipo`, cls: 'pri', fn: () => { h.cerrar(); anticipoPedido(p); } });
   bs.push({ t: `${ic('wa', 18)} WhatsApp`, cls: 'wa', fn: () => { window.open(waLink(p.telefono, msjPedido(p)), '_blank'); } });
@@ -9220,6 +9270,10 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.62', fecha: '2026-11-11', items: [
+    { i: 'edit', t: 'Floristería: edita las flores del ramo', d: 'En el ramo a tu gusto toca «Editar flores» para cambiar cantidades, quitar una flor o agregar otras de tu catálogo. Si aún no tiene precio, después le pones el precio; si tu cliente ya aceptó, el precio no cambia y le puedes avisar por WhatsApp.' },
+    { i: 'trash', t: 'Elimina un pedido en cualquier estado', d: 'En «Ver pedido» el administrador ya puede eliminar un pedido, aunque esté entregado o cancelado. Si ya lo cobraste, la venta no se borra. Si tiene anticipo pagado, primero devuélvelo y anúlalo.' }
+  ] },
   { v: '1.9.61', fecha: '2026-11-11', items: [
     { i: 'check', t: 'Floristería: tus clientes ya aceptan el precio del ramo', d: 'El enlace que le mandas por WhatsApp abre directo su ramo con el precio y el botón «Aceptar», aunque lo abra en otro navegador. El ramo se queda en «Precio enviado» (con contador) hasta que te responda, y si te acepta por WhatsApp o llamada, tócale «Ya aceptó» para seguir con el pedido.' }
   ] },
