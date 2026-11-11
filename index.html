@@ -3014,7 +3014,7 @@ async function panelResumen() {
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
 // si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas. También la pantalla de Visitas.
 // «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
-const PANEL_REV = 4; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+const PANEL_REV = 5; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
 let pnTecleo = 0, pnAutoDesde = 0;
 document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
 const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
@@ -3455,6 +3455,7 @@ function visChipsEventos() {
 }
 // quiet = actualización automática (panelAuto): sin «Cargando…», solo repinta si los números cambiaron y sigues en esta pantalla, y no te mueve de lugar
 ACC.panelVisitas = async (el, quiet) => {
+  quiet = quiet === true; // los botones mandan el evento del toque como segundo dato: eso no es «automática»
   const ds = (el && el.dataset) || {};
   if (ds.dia) return panelVisitasDia(ds.dia);
   const dias = Number(ds.k || P.visDias || 7), y = window.scrollY;
@@ -3483,7 +3484,7 @@ ACC.panelVisitas = async (el, quiet) => {
 };
 // Un solo día: de dónde vinieron, qué página vieron, a qué hora y cada visita
 async function panelVisitasDia(dia, quiet) {
-  const y = window.scrollY;
+  quiet = quiet === true; const y = window.scrollY;
   if (!quiet) { P.visDia = dia; P.visOri = ''; panelCab('Visitas', true); $('#main').innerHTML = '<div class="empty">Cargando…</div>'; }
   const v = await api('panelVisitas', { dia }, !!quiet), vj = JSON.stringify(v);
   if (quiet && (!$('#vis-dia') || PILA.length || P.visDia !== dia || vj === P.visJ)) return;
