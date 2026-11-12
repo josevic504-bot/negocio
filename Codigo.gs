@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.71';
+const VERSION = '1.9.72';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -3069,7 +3069,11 @@ function guardar_(u, d) {
       if (!prev && !r.giro) r.giro = fija;
     }
     if (r.codigo !== undefined) r.codigo = txt_(r.codigo, 40);
-    if (r.codigo && rows_('Productos').some(p => p.codigo && String(p.codigo).toLowerCase() === r.codigo.toLowerCase() && p.id !== r.id)) throw new Error('Ya existe un producto con ese código');
+    // El código repetido solo se revisa si el producto es nuevo o si le cambian el código (si dos ya lo comparten, igual se pueden editar)
+    if (r.codigo && (!prev || String(prev.codigo || '').toLowerCase() !== r.codigo.toLowerCase())) {
+      const dupC = rows_('Productos').find(p => p.codigo && String(p.codigo).toLowerCase() === r.codigo.toLowerCase() && p.id !== r.id);
+      if (dupC) throw new Error('El código ' + r.codigo + ' ya es de «' + dupC.nombre + '». Cámbialo o déjalo en blanco.');
+    }
     if (r.categoria !== undefined) r.categoria = txt_(r.categoria, 40) || 'General';
     if (!prev && !r.categoria) r.categoria = 'General';
     if (r.tipo !== undefined && ['producto','servicio'].indexOf(r.tipo) < 0) r.tipo = 'producto';
@@ -3182,10 +3186,14 @@ function cargarEjemplos_(u, d) {
   const gid = own_(GIROS, d.giro) ? d.giro : own_(GIROS, cfg.giro) ? cfg.giro : 'otro', g = GIROS[gid];
   if (gid !== cfg.giro && girosActivos_(cfg).indexOf(gid) < 0) throw new Error('Ese tipo de negocio no está activo en tu tienda');
   const existentes = rows_('Productos').map(p => p.nombre.toLowerCase());
+  // Códigos de ejemplo sin repetir: si ya hay EJ001… de otro giro, se sigue con el siguiente libre
+  const codsUsados = {}; rows_('Productos').forEach(p => { if (p.codigo) codsUsados[String(p.codigo).toUpperCase()] = 1; });
+  let sigEj = 0;
+  const codEj = () => { let c; do { sigEj++; c = 'EJ' + String(sigEj).padStart(3, '0'); } while (codsUsados[c]); codsUsados[c] = 1; return c; };
   let n = 0;
   g.ej.forEach((x, i) => {
     if (existentes.indexOf(x[0].toLowerCase()) >= 0) return;
-    const p = upsert_('Productos', { codigo: 'EJ' + String(i + 1).padStart(3, '0'), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
+    const p = upsert_('Productos', { codigo: codEj(), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
       tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid,
       sub: x[7] && x[7].sub || '', lema: x[7] && x[7].lema || '', puntos: x[7] && x[7].puntos || '', precioEsp: x[7] && x[7].precioEsp || 0, minEsp: x[7] && x[7].minEsp || 0,
