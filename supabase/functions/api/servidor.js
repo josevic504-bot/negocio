@@ -694,8 +694,8 @@ function RECORDATORIOS_(ids) {
     if (body.importar) return importar(body.importar, Rq);
     if (/^push(Guardar|Quitar|Probar)$/.test(accion)) return avisosPush(body, Rq);
     if (HERR.indexOf(accion) >= 0 || body.tarea === 'respaldosDia') return herramientas(body, Rq);
-    // El cliente va a borrar sus datos o eliminar su cuenta: antes se guarda una copia (Vic la puede restaurar 30 días)
-    if ((accion === 'borrarDatos' || accion === 'eliminarCuenta') && Rq.sesionNeg) { try { await hacerRespaldo(Rq.sesionNeg, 'antes', true, Rq, true); } catch (e) { log('copia previa ' + Rq.sesionNeg + ': ' + e); } }
+    // El cliente va a borrar sus datos, limpiar lo de la prueba o eliminar su cuenta: antes se guarda una copia (Vic la puede restaurar 30 días)
+    if ((accion === 'borrarDatos' || accion === 'eliminarCuenta' || accion === 'limpiarPrueba') && Rq.sesionNeg) { try { await hacerRespaldo(Rq.sesionNeg, 'antes', true, Rq, true); } catch (e) { log('copia previa ' + Rq.sesionNeg + ': ' + e); } }
     let negsRec = null;
     if (body.tarea === 'recordatoriosDia') {
       if (!Rq.props.TAREAS_CLAVE || body.clave !== Rq.props.TAREAS_CLAVE || !db.push) return { ok: false, error: 'Tarea no permitida' };

@@ -63,6 +63,7 @@ await pg.route(/^https?:\/\/(?!localhost).*/, async rt => {
   const b = JSON.parse(rt.request().postData() || '{}'); const r = await api(b.action, b.data, b.token, { panel: b.panel });
   rt.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(r) });
 });
+await api('limpiezaOmitir', {}, tok); // desde 1.9.73 un negocio recién activado ve el aviso de limpiar la prueba
 await pg.addInitScript(t => { localStorage.setItem('gnvm@/|token', t); localStorage.setItem('gnvm@/|verVisto', '1.9.71'); }, tok);
 await pg.goto('http://localhost:8771/'); await pg.waitForTimeout(3000);
 console.log('  hojas abiertas al entrar:', JSON.stringify(await pg.evaluate(() => [...document.querySelectorAll('.sheet h2, .sheet h3')].map(x => x.textContent.trim()).filter(Boolean))));

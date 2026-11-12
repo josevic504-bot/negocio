@@ -82,7 +82,7 @@ r = await G('Productos', { nombre: 'Malo', precio: -5 }); ok('precio negativo �
 r = await G('Productos', { nombre: 'Malo', precio: 5, costo: -1 }); ok('costo negativo → rechazado', !r.ok && /negativos/.test(r.error), err(r));
 r = await G('Productos', { nombre: 'Sin categoría', precio: 5 }); ok('sin categoría → queda «General» (no es obligatoria)', r.ok && r.data.categoria === 'General', err(r));
 const PSIN = r.data.id;
-r = await G('Productos', { nombre: 'Otro café', precio: 5, codigo: 'caf1' }); ok('código repetido (sin importar mayúsculas) → rechazado', !r.ok && /ese código/.test(r.error), err(r));
+r = await G('Productos', { nombre: 'Otro café', precio: 5, codigo: 'caf1' }); ok('código repetido (sin importar mayúsculas) → rechazado', !r.ok && /ya es de «/.test(r.error), err(r));
 r = await G('Productos', { nombre: 'Azúcar', categoria: 'abarrotes', precio: 20 }); ok('categoría se unifica con la existente («Abarrotes»)', r.ok && r.data.categoria === 'Abarrotes', err(r));
 const PAZU = r.data.id;
 r = await G('Productos', { id: PCAFE, precio: 99, stock: 500 }); ok('editar producto: precio cambia, stock NO cambia por guardar', r.ok && r.data.precio === 99 && r.data.stock === 12, err(r));
