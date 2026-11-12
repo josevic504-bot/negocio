@@ -1663,7 +1663,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.73';
+const APP_VER = '1.9.74';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -5511,6 +5511,15 @@ const catsSugeridas = () => { const cats = []; girosOn().forEach(id => { const g
 // Varios giros en la misma tienda (los activa Vic desde el Panel): el principal primero
 const girosOn = () => (S.girosActivos && S.girosActivos.length ? S.girosActivos : [S.config.giro || 'otro']);
 const giroN = id => { const g = (S.giros.length ? S.giros : GIROS_LOCAL).find(x => x.id === id); return g ? g.n : id; };
+// Códigos automáticos por giro (igual que PREFIJO_GIRO en Codigo.gs): FAR-0001, FAR-0002…
+const PREFIJO_GIRO = { tienda: 'TDA', variedades: 'VAR', ferreteria: 'FER', comida: 'RES', boutique: 'BOU', farmacia: 'FAR', vitaminas: 'VIT', repuestos: 'REP',
+  carwash: 'LAV', joyeria: 'JOY', floristeria: 'FLO', manualidades: 'MAN', tecnologia: 'TEC', belleza: 'BEL', catalogo: 'CAT', panaderia: 'PAN',
+  servicios: 'SER', streaming: 'STR', compras: 'CPL', recargas: 'REC', veterinaria: 'VET', otro: 'PRD' };
+function codAuto(giro) {
+  const pf = PREFIJO_GIRO[giro] || 'PRD', re = new RegExp('^' + pf + '-(\\d+)$', 'i'); let mx = 0;
+  (S.productos || []).forEach(x => { const m = re.exec(String(x.codigo || '')); if (m) mx = Math.max(mx, Number(m[1])); });
+  return pf + '-' + String(mx + 1).padStart(4, '0');
+}
 function giroDeP(p) {
   const on = girosOn();
   if (p && p.giro && on.includes(p.giro)) return p.giro;
@@ -5607,7 +5616,7 @@ function formProducto(p, onSave, pre) {
     <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. Camiseta básica"></label>
     <div class="fld"><span>Categoría *</span>${elegirHTML('pf-cat', p.categoria || '', catsSugeridas(), 'Escribe la categoría nueva')}</div>
     ${modOn('catalogo') ? `<div class="fld"><span>Subcategoría</span><div id="pf-subw">${elegirHTML('pf-sub', p.sub || '', subsDe(p.categoria), girosOn().includes('vitaminas') ? 'Ej. Multivitamínicos, Proteínas' : 'Ej. Dama, Base, Gloss')}</div></div>` : ''}
-    <label class="fld"><span>Código de barras</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="Opcional"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div></label>
+    <label class="fld"><span>Código</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="${nuevo ? 'Se pone solo: ' + codAuto(giroDeP(p)) : 'Opcional'}"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div>${nuevo ? '<small class="hint" id="pf-codh">Déjalo vacío y se pone solo con las letras de tu giro. Si el producto trae código de barras, escanéalo.</small>' : ''}</label>
     ${girosOn().length > 1 ? `<span class="op-l" style="margin-top:4px">Sección de la tienda</span><div class="chips" id="pf-giro" style="flex-wrap:wrap;margin-bottom:10px">${girosOn().map(id => `<button type="button" class="chip ${(p.id ? giroDeP(p) : S.tienda || giroDeP(p)) === id ? 'on' : ''}" data-g="${id}">${giroImg(id)} ${esc(giroN(id).replace(/ \(.*\)$/, ''))}</button>`).join('')}</div>` : ''}
     ${susOn() ? susFormProducto(p) : ''}
     ${opcArriba() ? opcForm(p) : ''}
@@ -5655,7 +5664,10 @@ function formProducto(p, onSave, pre) {
   $('#pf-nom', h.el).addEventListener('input', img);
   // Al cambiar la categoría: color del dibujo y subcategorías de esa categoría
   $('#pf-cat', h.el).addEventListener('input', () => { img(); const w = $('#pf-subw', h.el); if (w) { const l = subsDe($('#pf-cat', h.el).value.trim()), v0 = $('#pf-sub', h.el).value; w.innerHTML = elegirHTML('pf-sub', l.includes(v0) ? v0 : '', l, girosOn().includes('vitaminas') ? 'Ej. Multivitamínicos, Proteínas' : 'Ej. Dama, Base, Gloss'); } });
-  const pg = $('#pf-giro', h.el); if (pg) pg.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; $$('.chip', pg).forEach(c => c.classList.toggle('on', c === b)); });
+  // Código automático: el ejemplo cambia con la sección o la categoría (el servidor pone el definitivo)
+  const codPh = () => { if (!nuevo) return; const gS = $('#pf-giro .chip.on', h.el); $('#pf-cod', h.el).placeholder = 'Se pone solo: ' + codAuto(gS ? gS.dataset.g : giroDeP({ categoria: $('#pf-cat', h.el).value.trim() })); };
+  $('#pf-cat', h.el).addEventListener('input', codPh);
+  const pg = $('#pf-giro', h.el); if (pg) pg.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; $$('.chip', pg).forEach(c => c.classList.toggle('on', c === b)); codPh(); });
   const file = $('#pf-file', h.el);
   if (file) file.addEventListener('change', async () => { if (!file.files[0]) return; try { st.fotoNueva = await comprimirImagen(file.files[0], DEMO.on ? 360 : 800); img(); } catch (e) { err(e); } });
   ACC.pfQuitarFoto = () => { st.foto = ''; st.fotoNueva = null; img(); };
@@ -6184,7 +6196,7 @@ function formCompra(provId) {
         const n = l.nuevo;
         return `<div class="cl cl-new"><div class="cl-h"><span class="av sm cl-ico">${ic('plus', 18)}</span><b>Producto nuevo</b><span class="badge b-info">se crea al guardar</span><button class="btn icon ghost" data-q="${i}" aria-label="Quitar">${ic('x', 18)}</button></div>
         <label class="fld"><span>Nombre del producto *</span><input data-i="${i}" data-k="nombre" maxlength="80" value="${esc(n.nombre)}" placeholder="Ej. Camiseta polo azul"></label>
-        <div class="f3"><label class="fld"><span>Categoría</span><input data-i="${i}" data-k="categoria" list="dl-cat-c" maxlength="40" value="${esc(n.categoria)}" placeholder="General"></label><label class="fld"><span>Código</span><input data-i="${i}" data-k="codigo" maxlength="40" value="${esc(n.codigo)}" placeholder="Opcional"></label><label class="fld"><span>ISV</span><select data-i="${i}" data-k="tasaIsv"><option value="">${isvG}%</option><option value="0">Exento</option><option value="15">15%</option><option value="18">18%</option></select></label></div>
+        <div class="f3"><label class="fld"><span>Categoría</span><input data-i="${i}" data-k="categoria" list="dl-cat-c" maxlength="40" value="${esc(n.categoria)}" placeholder="General"></label><label class="fld"><span>Código</span><input data-i="${i}" data-k="codigo" maxlength="40" value="${esc(n.codigo)}" placeholder="Se pone solo"></label><label class="fld"><span>ISV</span><select data-i="${i}" data-k="tasaIsv"><option value="">${isvG}%</option><option value="0">Exento</option><option value="15">15%</option><option value="18">18%</option></select></label></div>
         ${numeros(l, i)}
         <div class="chips cl-pct">${[20, 30, 40, 50, 100].map(x => `<button type="button" class="chip ${num(l.pct) === x && l.pctFijo ? 'on' : ''}" data-chip="${i}" data-v="${x}">${x}%</button>`).join('')}</div>
         <small class="hint" id="fc-h${i}">${hintL(i)}</small></div>`;
@@ -9963,6 +9975,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.74', fecha: '2026-11-12', items: [
+    { i: 'tag', t: 'Códigos que se ponen solos', d: 'Al crear un producto sin código, el programa le pone uno con las letras de tu tipo de negocio y el número que sigue (por ejemplo FAR-0001, FAR-0002). Si tienes varias secciones, cada una lleva sus propias letras. Si el producto trae código de barras, escanéalo y se queda ese.' }
+  ] },
   { v: '1.9.73', fecha: '2026-11-12', items: [
     { i: 'sparkle', t: 'Limpiar los datos de la prueba', d: 'Cuando tu licencia queda activa puedes borrar los productos de ejemplo y lo que hiciste para practicar (ventas, compras, gastos, pedidos…), eligiendo uno por uno qué se va y qué se queda. Está en Ajustes › Mi cuenta.', si: () => puede('admin') && S.limpieza && S.limpieza.ver }
   ] },

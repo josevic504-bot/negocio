@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.73';
+const VERSION = '1.9.74';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -3205,6 +3205,7 @@ function guardar_(u, d) {
       const dupC = rows_('Productos').find(p => p.codigo && String(p.codigo).toLowerCase() === r.codigo.toLowerCase() && p.id !== r.id);
       if (dupC) throw new Error('El código ' + r.codigo + ' ya es de «' + dupC.nombre + '». Cámbialo o déjalo en blanco.');
     }
+    if (!prev && !r.codigo) r.codigo = codigoAuto_(r.giro && actP.indexOf(r.giro) >= 0 ? r.giro : giroDeProd_(r, actP)); // sin código → prefijo del giro + número
     if (r.categoria !== undefined) r.categoria = txt_(r.categoria, 40) || 'General';
     if (!prev && !r.categoria) r.categoria = 'General';
     if (r.tipo !== undefined && ['producto','servicio'].indexOf(r.tipo) < 0) r.tipo = 'producto';
@@ -4050,7 +4051,8 @@ function compra_(u, d) {
       const tasa = ['', '0', '15', '18'].indexOf(String(n.tasaIsv === undefined ? '' : n.tasaIsv)) >= 0 ? String(n.tasaIsv === undefined ? '' : n.tasaIsv) : '';
       const actC = girosActivos_(), gN = tiendaReq_(u, d) || String(n.giro || ''); // en una tienda que no es la principal, el producto queda en esa tienda
       p = { _nuevo: true, nombre: nombre, codigo: codigo, categoria: txt_(n.categoria, 40) || 'General', unidad: txt_(n.unidad, 20) || 'unidad', tasaIsv: tasa, tipo: 'producto', stock: 0, costo: 0, giro: actC.indexOf(gN) > 0 ? gN : '' };
-      nombres[clave] = p; if (codigo) codigos[codigo.toLowerCase()] = p;
+      if (!p.codigo) p.codigo = codigoAuto_(p.giro || giroDeProd_(p, actC), codigos); // sin código → prefijo del giro + número
+      nombres[clave] = p; codigos[p.codigo.toLowerCase()] = p;
     } else {
       p = pm[i.productoId];
       if (!p) throw new Error('Un producto de la compra ya no existe');
@@ -5300,9 +5302,10 @@ function proyectoAInventario_(u, d) {
       if (it.cambiarPrecio && precio > 0) upd.precio = precio;
       upsert_('Productos', upd);
     } else {
-      prod = upsert_('Productos', { codigo: '', nombre: x.nombre, categoria: txt_(it.categoria, 40) || 'Producción', tipo: 'producto', unidad: x.unidad || 'unidad',
+      const gPr = actP.indexOf(String(it.giro || gP)) > 0 ? String(it.giro || gP) : '';
+      prod = upsert_('Productos', { codigo: codigoAuto_(gPr || giroDeProd_({ categoria: txt_(it.categoria, 40) || 'Producción' }, actP)), nombre: x.nombre, categoria: txt_(it.categoria, 40) || 'Producción', tipo: 'producto', unidad: x.unidad || 'unidad',
         precio: precio, costo: cu, margen: det.r.margen, stock: 0, stockMin: 0, tasaIsv: '', icono: txt_(it.icono, 4), foto: '', fotoFecha: '', descripcion: '',
-        tienda: false, activo: true, creado: ahora_(), giro: actP.indexOf(String(it.giro || gP)) > 0 ? String(it.giro || gP) : '' });
+        tienda: false, activo: true, creado: ahora_(), giro: gPr });
     }
     moverStock_({ [prod.id]: x.cantidad }, 'producción', p.id, u, p.nombre, undefined, { [prod.id]: cu });
     upsert_('ProyectoProductos', { id: x.id, productoId: prod.id, inventario: hoy_() });
@@ -6072,6 +6075,20 @@ function girosActivos_(cfg) {
   const p = own_(GIROS, cfg.giro) ? cfg.giro : 'otro', l = [p];
   girosExtra_().forEach(g => { if (l.indexOf(g) < 0) l.push(g); });
   return l;
+}
+/* ===== Códigos automáticos por giro (1.9.74) =====
+ * Un producto nuevo sin código recibe el prefijo de su giro (sección) y el siguiente número: FAR-0001, FAR-0002…
+ * Si trae su propio código (escrito o escaneado) se respeta. Los de ejemplo (EJ…) no cambian. */
+const PREFIJO_GIRO = { tienda: 'TDA', variedades: 'VAR', ferreteria: 'FER', comida: 'RES', boutique: 'BOU', farmacia: 'FAR', vitaminas: 'VIT', repuestos: 'REP',
+  carwash: 'LAV', joyeria: 'JOY', floristeria: 'FLO', manualidades: 'MAN', tecnologia: 'TEC', belleza: 'BEL', catalogo: 'CAT', panaderia: 'PAN',
+  servicios: 'SER', streaming: 'STR', compras: 'CPL', recargas: 'REC', veterinaria: 'VET', otro: 'PRD' };
+// cods: { 'far-0001': … } con los códigos ya usados en minúscula; si no se pasa, se leen los productos
+function codigoAuto_(giro, cods) {
+  if (!cods) { cods = {}; rows_('Productos').forEach(p => { if (p.codigo) cods[String(p.codigo).toLowerCase()] = 1; }); }
+  const pf = PREFIJO_GIRO[giro] || 'PRD', re = new RegExp('^' + pf + '-(\\d+)$', 'i');
+  let mx = 0; Object.keys(cods).forEach(k => { const m = re.exec(k); if (m) mx = Math.max(mx, Number(m[1])); });
+  let c; do { mx++; c = pf + '-' + String(mx).padStart(4, '0'); } while (cods[c.toLowerCase()]);
+  return c;
 }
 // A qué giro pertenece un producto: el que tenga anotado; si no, el giro activo que tenga su categoría; si no, el principal
 function giroDeProd_(p, activos) {
