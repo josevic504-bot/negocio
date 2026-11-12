@@ -7887,7 +7887,7 @@ function tileMesa(m, z, c, verZona) {
 ACC.mesaPedidos = el => {
   const mesa = el.dataset.m, l = pedidosMesa(mesa); if (!l.length) return;
   const c = ((S.mesasD && S.mesasD.cuentas) || []).find(x => x.mesa === mesa && (!x.tipo || x.tipo === 'mesa') && x.estado !== 'pagada');
-  const h = hoja({ titulo: 'Mesa ' + esc(mesa) + ' · pidieron desde el celular', html: l.map(p => `<div class="ms-pc"><div class="row sp"><b>${esc(p.nombre)}</b><small class="mut">${esc(p.numero)} · ${hace(p.fecha)}</small></div>
+  const h = hoja({ titulo: 'Mesa ' + esc(mesa) + ' · desde el celular', html: l.map(p => `<div class="ms-pc"><div class="row sp"><b>${esc(p.nombre)}</b><small class="mut">${esc(p.numero)} · ${hace(p.fecha)}</small></div>
       ${p.items.map(i => `<div class="row sp sm"><span>${cant(i.cantidad)} × ${esc(i.nombre)}</span><span class="n">${money(i.cantidad * i.precio)}</span></div>`).join('')}${p.nota ? `<p class="xs mut" style="margin:4px 0 0">📝 ${esc(p.nota)}</p>` : ''}
       <div class="row" style="margin-top:10px;gap:8px"><button class="btn sm" data-pno="${p.id}">${ic('x', 15)} No aceptar</button><button class="btn sm pri" style="flex:1" data-psi="${p.id}">${ic('chef', 15)} Aceptar y mandar a cocina</button></div></div>`).join('')
       + (c ? `<button class="btn ghost sm" style="margin-top:6px" data-pver="1">${ic('eye', 15)} Ver la cuenta de la mesa</button>` : '') });
