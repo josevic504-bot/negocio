@@ -3613,7 +3613,7 @@ ACC.panelGasto = el => {
 };
 // Bienvenida: imagen con los módulos y tipos de negocio + mensaje de la plantilla «Bienvenida»
 function panelBienvenida(n) {
-  const IMG = 'bienvenida.png?v=2'; // ?v= salta la copia guardada en el teléfono: al cambiar la imagen, sube el número
+  const IMG = 'bienvenida.png?v=3'; // ?v= salta la copia guardada en el teléfono: al cambiar la imagen, sube el número
   const h = hoja({ titulo: 'Bienvenida para ' + esc(n.negocio), html: `<img src="${IMG}" alt="Imagen de bienvenida" style="width:100%;border-radius:14px;display:block;margin-bottom:12px">
     <div class="msg-prev" style="white-space:pre-line;max-height:180px;overflow:auto">${esc((P.pl.bienvenida || '').replace(/\{dueno\}/g, String(n.dueno || '').split(' ')[0]).replace(/\{negocio\}/g, n.negocio))}</div>
     <p class="h" style="font-size:12px;margin:10px 0 0">Se abre WhatsApp: elige el chat de <b>${esc(String(n.dueno || '').split(' ')[0])}</b> (${esc(n.whatsapp || '')}) y la imagen se va con el mensaje abajo, en un solo envío.</p>
