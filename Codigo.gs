@@ -24,9 +24,9 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.58';
+const VERSION = '1.9.71';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
-const ESQUEMA = VERSION + '-g4';
+const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -47,7 +47,7 @@ const SCHEMA_M = {
   // Mensajes de Vic a los negocios (aviso al teléfono y/o banner en la app). destinos y vistos: ids de negocio separados por coma
   Anuncios:    ['id','fecha','titulo','texto','filtro','destinos','canales','vence','vistos','creado'],
   // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
-  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado'],
+  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado','vendedor'],
   // Contratos de licencia: Vic los crea desde el Panel y el dueño los firma desde su celular (la firma es una imagen pequeña)
   Contratos:   ['id','negocioId','fecha','titulo','texto','monto','desde','hasta','estado','firma','firmadoEl','firmadoPor','huella','pdfId','creado'],
   // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
@@ -73,7 +73,7 @@ const SCHEMA = {
   Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado','renueva'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal','cotizacionId'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal','cotizacionId','mesero'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
   Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','lavador','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado','mascotaId','mascota'],
@@ -97,16 +97,20 @@ const SCHEMA = {
   ProyectoProductos: ['id','proyectoId','nombre','cantidad','unidad','peso','precio','productoId','inventario','creado','estado','entregado'],
   Chats:          ['id','telefono','nombre','clienteId','clave','productoId','producto','ultimo','ultimoTexto','deCliente','sinLeer','creado'],
   Mensajes:       ['id','chatId','de','texto','usuarioId','fecha'],
+  // Mesas (restaurante): la cuenta abierta de cada mesa. items en JSON: lo que pidió la mesa, cuánto ya salió a cocina y quién lo pidió
+  MesaCuentas:    ['id','mesa','zona','estado','personas','meseroId','items','total','nota','abierta','actualizado','cerrada','ventaIds','usuarioId','tipo','cliente','telefono','pedidoId'],
+  // Cocina: cada envío a cocina es una comanda (nueva → preparando → lista → entregada). items en JSON: { descripcion, cantidad, nota, quien }
+  Comandas:       ['id','cuentaId','tipo','mesa','zona','cliente','items','estado','meseroId','creada','actualizado','lista','usuarioId','pedidoId'],
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z' };
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z', MesaCuentas:'MC', Comandas:'CM' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
-  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp','rinde']);
+  'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp','rinde','personas']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
-const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','cita','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta','lotes']);
-const ROLES = ['admin','cajero','bodega'];
+const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','cita','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta','lotes','mesero','zona','abierta','cerrada','ventaIds','creada','lista','pedidoId']);
+const ROLES = ['admin','cajero','bodega','mesero','cocina'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
 // Floristería «Arma tu ramo»: cotizar (el cliente pidió precio) → cotizado (el negocio mandó el precio) → nuevo (el cliente aceptó)
@@ -117,9 +121,9 @@ const CONFIG_DEF = {
   moneda: 'L', isv: '0.15', preciosConISV: 'si', venderSinStock: 'no',
   mensajeRecibo: '¡Gracias por su compra!', tema: 'fucsia', logo: '', fondoCaja: '0', cajaTienda: 'si',
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
-  tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
+  tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaEnlacePago: '', tiendaTigo: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', mesas: '', mesasZonas: '', tiempoPrep: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
   // Cotizaciones y contratos (servicios)
@@ -232,6 +236,12 @@ const GIROS = {
       ['Rosa (unidad)','Flores sueltas','🌹',45,22,200,'Color: Roja, Blanca, Rosada, Amarilla'],['Girasol (unidad)','Flores sueltas','🌻',60,30,80],['Lirio (vara)','Flores sueltas','🤍',75,38,60,'Color: Blanco, Rosado'],
       ['Tulipán (unidad)','Flores sueltas','🌷',70,40,60,'Color: Rosado, Amarillo, Blanco'],['Margarita (manojo)','Flores sueltas','🌼',90,45,40],['Follaje y relleno','Flores sueltas','🌿',60,25,50],
       ['Globo metálico','Globos y detalles','🎈',120,60,30,'Diseño: Te amo, Feliz cumpleaños, Felicidades'],['Peluche mediano','Globos y detalles','🧸',350,190,12],['Orquídea en maceta','Plantas','🪴',850,480,8]] },
+  manualidades: { n: 'Manualidades y detalles personalizados', cats: ['Tazas','Cajas y regalos','Piñatas','Llaveros','Cuadros','Recuerdos'],
+    ej: [['Taza personalizada','Tazas','☕',180,85,0,'Tipo: Blanca, Mágica',{ vars: { 'Tipo: Blanca': { p: 180 }, 'Tipo: Mágica': { p: 260 } } }],
+      ['Caja sorpresa decorada','Cajas y regalos','🎁',450,210,0,'Tamaño: Mediana, Grande',{ vars: { 'Tamaño: Mediana': { p: 450 }, 'Tamaño: Grande': { p: 650 } } }],
+      ['Piñata temática','Piñatas','🪅',650,300,0,'Tamaño: Mediana, Grande',{ vars: { 'Tamaño: Mediana': { p: 650 }, 'Tamaño: Grande': { p: 950 } } }],
+      ['Llavero con nombre','Llaveros','🔑',90,35,0],['Cuadro con foto','Cuadros','🖼️',380,170,0,'Tamaño: 20x25 cm, 30x40 cm',{ vars: { 'Tamaño: 20x25 cm': { p: 380 }, 'Tamaño: 30x40 cm': { p: 560 } } }],
+      ['Recuerdos para fiesta (unidad)','Recuerdos','🎀',45,18,0,'',{ precioEsp: 38, minEsp: 24 }],['Tarjeta hecha a mano','Cajas y regalos','💌',60,20,25],['Lazo de regalo','Cajas y regalos','🎀',25,8,60]] },
   joyeria:    { n: 'Joyería', cats: ['Anillos','Cadenas','Pulseras','Aretes','Dijes','Relojes'],
     ej: [['Anillo solitario plata 925','Anillos','💍',1450,780,8,'Talla: 6, 7, 8, 9',{ vars: { 'Talla: 6': { s: 2 }, 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
       ['Argolla de matrimonio oro 10k','Anillos','💍',4800,3300,6,'Talla: 7, 8, 9',{ vars: { 'Talla: 7': { s: 2 }, 'Talla: 8': { s: 2 }, 'Talla: 9': { s: 2 } } }],
@@ -300,7 +310,7 @@ function route_(req) {
   if (a.indexOf('panel') === 0) { panelAuth_(req); if (a === 'panelSalir') d._tok = String(req.panel || ''); return PANEL_LECTURA.indexOf(a) >= 0 ? rutaPanel_(a, d) : lock_(() => rutaPanel_(a, d)); }
   const u = auth_(req.token);
   const res = rutaUsuario_(a, u, d, req);
-  return u.rol === 'cajero' ? sinCostos_(res) : res;
+  return ['cajero', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? sinCostos_(res) : res;
 }
 
 // Acciones del Panel que solo leen: no esperan ni frenan el candado que usan las ventas de todos los negocios
@@ -319,6 +329,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'bootstrap':       return bootstrap_(u, d);
     case 'inicio':          return inicio_(u, d);
     case 'tiendas':         return tiendas_(u);
+    case 'tiendaVisitas':   return tiendaVisitas_(u, d);
     case 'pendientes':      return pendientes_(u, d);
     case 'guardar':         return lock_(() => guardar_(u, d));
     case 'eliminar':        return lock_(() => eliminar_(u, d));
@@ -332,6 +343,10 @@ function rutaUsuario_(a, u, d, req) {
     case 'precios':         return lock_(() => precios_(u, d));
     case 'activarPlus':     return lock_(() => activarPlus_(u, d));
     case 'venta':           return lock_(() => venta_(u, d));
+    case 'mesas':           return mesas_(u, d);
+    case 'mesaAccion':      return lock_(() => mesaAccion_(u, d));
+    case 'cocina':          return cocina_(u, d);
+    case 'comandaAccion':   return lock_(() => comandaAccion_(u, d));
     case 'ventas':          return ventas_(u, d);
     case 'anularVenta':     return lock_(() => anularVenta_(u, d));
     case 'editarVenta':     return lock_(() => editarVenta_(u, d));
@@ -353,6 +368,8 @@ function rutaUsuario_(a, u, d, req) {
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
     case 'cotizarRamo':     return lock_(() => cotizarRamo_(u, d));
     case 'editarPedido':    return lock_(() => editarPedido_(u, d));
+    case 'editarRamo':      return lock_(() => editarRamo_(u, d));
+    case 'eliminarPedido':  return lock_(() => eliminarPedido_(u, d));
     case 'anticipoPedido':  return lock_(() => anticipoPedido_(u, d));
     case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
     case 'cobroComprobante': return lock_(() => cobroComprobante_(u, d));
@@ -913,15 +930,15 @@ function bootstrap_(u, d) {
   if (u.rol === 'admin' && config_().sysLimpieza !== hoy_()) { try { lock_(() => limpiarFotos_()); } catch (e) {} }
   // Después de actualizar el sistema: agrega las columnas nuevas a las hojas de este negocio
   if (config_().sysVer !== ESQUEMA) { try { lock_(() => asegurarEncabezados_()); } catch (e) {} }
-  const sc = u.rol === 'bodega' ? {} : saldosClientes_();
-  const sp = u.rol === 'cajero' ? {} : saldosProveedores_();
+  const sc = ['bodega', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? {} : saldosClientes_();
+  const sp = ['cajero', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? {} : saldosProveedores_();
   const r = {
     usuario: publico_(u),
     config: config_(),
     usuarios: rows_('Usuarios').map(publico_),
     productos: rows_('Productos'),
-    clientes: u.rol === 'bodega' ? [] : rows_('Clientes').map(c => { c.saldo = sc[c.id] || 0; return c; }),
-    proveedores: u.rol === 'cajero' ? [] : rows_('Proveedores').map(p => { p.saldo = sp[p.id] || 0; return p; }),
+    clientes: ['bodega', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? [] : rows_('Clientes').map(c => { c.saldo = sc[c.id] || 0; return c; }),
+    proveedores: ['cajero', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? [] : rows_('Proveedores').map(p => { p.saldo = sp[p.id] || 0; return p; }),
     gastoCats: ['admin','cajero'].indexOf(u.rol) >= 0 ? catalogoGastos_() : [],
     giros: Object.keys(GIROS).map(k => ({ id: k, n: GIROS[k].n, cats: GIROS[k].cats })),
     licencia: licencia_(),
@@ -1267,7 +1284,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda', 'mesas'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], manualidades: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
@@ -1793,6 +1810,223 @@ function cerrarLigados_(d, venta) {
   }
 }
 
+/* ===================== MESAS (restaurante) ===================== */
+/* Cada mesa ocupada tiene su cuenta abierta: el mesero (o el cajero) va agregando platos durante la comida, los manda a cocina
+ * y al final la cuenta se cobra en caja como una venta normal (queda a nombre del mesero que atendió la mesa).
+ * Estados: abierta (ocupada) → cuenta (pidió la cuenta) → pagada (por limpiar) → cerrada (mesa libre). También: cancelada.
+ * items: [{ k, productoId, descripcion, variante, cantidad, precio, env (cuánto ya salió a cocina), nota, quien (la persona de la mesa: vacío = toda la mesa), por (usuario que lo anotó), hora }] */
+const EST_MESA_ACT = ['abierta', 'cuenta', 'pagada'];
+// Zonas del local: [{ z: 'Salón', n: 8 }, { z: 'Terraza', n: 4 }] → mesas 1 a 8 en Salón y 9 a 12 en Terraza
+function zonasMesa_(cfg) {
+  const z = parseJ_((cfg || config_()).mesasZonas, null);
+  const l = Array.isArray(z) ? z.map(x => ({ z: txt_(x && x.z, 30), n: Math.max(0, Math.min(60, parseInt(x && x.n, 10) || 0)) })).filter(x => x.z && x.n) : [];
+  return l.length ? l.slice(0, 8) : [{ z: 'Salón', n: 10 }];
+}
+function cuentaMesa_(c) { const o = Object.assign({}, c); o.items = parseJ_(c.items, []); o.ventaIds = String(c.ventaIds || '').split(',').filter(Boolean); if (c.pedidoId) { try { o.anticipo = anticipoDe_(c.pedidoId); } catch (e) {} } return o; }
+function cuentasMesaActivas_() { return rows_('MesaCuentas').filter(c => EST_MESA_ACT.indexOf(c.estado) >= 0); }
+function guardarCuentaMesa_(c, items, extra) {
+  const l = items.filter(i => i.cantidad > 0.0004);
+  const rec = Object.assign({ id: c.id, items: JSON.stringify(l), total: r2_(l.reduce((a, i) => a + r2_(i.cantidad * i.precio), 0)), actualizado: ahora_() }, extra || {});
+  return cuentaMesa_(upsert_('MesaCuentas', rec));
+}
+// Lo vendido hoy por cada mesero (las ventas de mesa quedan a su nombre aunque las cobre el cajero)
+function meserosHoy_(soloId) {
+  const h = hoy_(), m = {};
+  rowsDesde_('Ventas', ventanaMs_()).forEach(v => {
+    if (v.anulada || !v.mesero || String(v.fecha).slice(0, 10) !== h || (soloId && v.mesero !== soloId)) return;
+    const x = m[v.mesero] || (m[v.mesero] = { meseroId: v.mesero, total: 0, n: 0 }); x.total += v.total; x.n++;
+  });
+  return Object.keys(m).map(k => { m[k].total = r2_(m[k].total); return m[k]; }).sort((a, b) => b.total - a.total);
+}
+// Cuántas comandas de cada cuenta están en cocina (nueva o preparando) y cuántas ya están listas para llevar a la mesa
+function conCocina_(l) {
+  const m = {}; rows_('Comandas').forEach(k => { if (['nueva', 'preparando', 'lista'].indexOf(k.estado) < 0) return; const x = m[k.cuentaId] || (m[k.cuentaId] = { enCocina: 0, listas: 0, listo: [] }); if (k.estado === 'lista') { x.listas++; parseJ_(k.items, []).forEach(i => x.listo.push(i)); } else x.enCocina++; });
+  l.forEach(c => { c.cocina = m[c.id] || { enCocina: 0, listas: 0, listo: [] }; });
+  return l;
+}
+function mesasResumen_() {
+  const todas = cuentasMesaActivas_(), l = todas.filter(c => !c.tipo || c.tipo === 'mesa'), ab = l.filter(c => c.estado !== 'pagada');
+  return { ocupadas: ab.length, cuenta: l.filter(c => c.estado === 'cuenta').length, porLimpiar: l.filter(c => c.estado === 'pagada').length, abierto: r2_(ab.reduce((a, c) => a + (Number(c.total) || 0), 0)), total: zonasMesa_().reduce((a, z) => a + z.n, 0) };
+}
+function mesas_(u, d) {
+  req_(u, ['admin', 'cajero', 'mesero']);
+  if (!modOn_('mesas')) throw new Error('Las mesas no están activadas en este negocio');
+  const out = { zonas: zonasMesa_(), cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)), ahora: ahora_() };
+  out.meseros = meserosHoy_(u.rol === 'mesero' ? u.id : '');
+  out.pedidos = rows_('Pedidos').filter(p => p.estado === 'nuevo' && p.entrega === 'mesa').map(p => ({ id: p.id, numero: p.numero, mesa: String(p.direccion || ''), nombre: p.nombre, fecha: p.fecha, total: p.total, nota: p.nota, items: parseJ_(p.items, []).map(i => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precio })) }));
+  return out;
+}
+function mesaAccion_(u, d) {
+  req_(u, ['admin', 'cajero', 'mesero']);
+  if (!modOn_('mesas')) throw new Error('Las mesas no están activadas en este negocio');
+  const op = String(d.op || ''), caja = u.rol === 'admin' || u.rol === 'cajero';
+  const ocupada = (mesa, menos) => cuentasMesaActivas_().find(c => c.mesa === mesa && c.id !== menos);
+  const meseroValido = id => { const x = id ? rows_('Usuarios').find(y => y.id === id && y.activo) : null; return x ? x.id : ''; };
+  let c = null;
+  if (op === 'pedido') { // pedido hecho desde el celular en la mesa (QR): el mesero lo acepta (va a cocina) o no
+    const p = rows_('Pedidos').find(x => x.id === d.pedidoId);
+    if (!p || p.entrega !== 'mesa') throw new Error('Ese pedido ya no existe');
+    if (p.estado !== 'nuevo') throw new Error('Este pedido ya se atendió');
+    if (d.ok) { const c2 = pedidoACocina_(u, p); upsert_('Pedidos', { id: p.id, estado: 'confirmado', actualizado: ahora_() }); return { cuenta: cuentaMesa_(rows_('MesaCuentas').find(x => x.id === c2.id)), cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) }; }
+    upsert_('Pedidos', { id: p.id, estado: 'cancelado', actualizado: ahora_(), nota: ((p.nota ? p.nota + ' · ' : '') + 'No aceptado en la mesa por ' + u.nombre + (d.motivo ? ': ' + txt_(d.motivo, 100) : '')).slice(-1000) });
+    return { cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) };
+  }
+  if (op === 'abrir' && (d.tipo === 'llevar' || d.tipo === 'domicilio')) { // pedido para llevar o a domicilio: una cuenta como la de una mesa, con el nombre del cliente
+    const cliente = txt_(d.cliente, 60); if (!cliente) throw new Error('Escribe el nombre del cliente');
+    const base = d.tipo === 'llevar' ? 'Llevar ' : 'Domicilio ', usados = cuentasMesaActivas_().filter(x => x.tipo === d.tipo).map(x => parseInt(String(x.mesa).replace(base, ''), 10) || 0);
+    let n = 1; while (usados.indexOf(n) >= 0) n++;
+    c = cuentaMesa_(upsert_('MesaCuentas', { mesa: base + n, zona: '', tipo: d.tipo, cliente: cliente, telefono: txt_(d.telefono, 20), estado: 'abierta', personas: 1, meseroId: u.rol === 'mesero' ? u.id : meseroValido(d.meseroId) || u.id,
+      items: '[]', total: 0, nota: txt_(d.nota, 160), abierta: ahora_(), actualizado: ahora_(), cerrada: '', ventaIds: '', usuarioId: u.id, pedidoId: '' }));
+    return { cuenta: c, cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) };
+  }
+  if (op === 'abrir') {
+    const mesa = txt_(d.mesa, 20); if (!mesa) throw new Error('Elige la mesa');
+    const ya = ocupada(mesa);
+    if (ya && ya.estado !== 'pagada') throw new Error('La mesa ' + mesa + ' ya tiene una cuenta abierta');
+    if (ya) upsert_('MesaCuentas', { id: ya.id, estado: 'cerrada', cerrada: ahora_(), actualizado: ahora_() }); // pagada y sin limpiar: se da por limpia
+    const personas = Math.max(1, Math.min(99, parseInt(d.personas, 10) || 1));
+    c = cuentaMesa_(upsert_('MesaCuentas', { mesa: mesa, zona: txt_(d.zona, 30), estado: 'abierta', personas: personas,
+      meseroId: u.rol === 'mesero' ? u.id : meseroValido(d.meseroId) || u.id, items: '[]', total: 0, nota: txt_(d.nota, 120), abierta: ahora_(), actualizado: ahora_(), cerrada: '', ventaIds: '', usuarioId: u.id }));
+    if (Array.isArray(d.items) && d.items.length) { d = { id: c.id, items: d.items }; return mesaAgregar_(u, c, d); }
+    return { cuenta: c, cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) };
+  }
+  const r = rows_('MesaCuentas').find(x => x.id === d.id);
+  if (!r || EST_MESA_ACT.indexOf(r.estado) < 0) throw new Error('Esta cuenta ya no está abierta. Actualiza la pantalla de Mesas.');
+  c = cuentaMesa_(r);
+  const abierta = () => { if (c.estado === 'pagada') throw new Error('Esta mesa ya se cobró'); };
+  const listo = x => ({ cuenta: x, cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) });
+  switch (op) {
+    case 'agregar': abierta(); return mesaAgregar_(u, c, d);
+    case 'cantidad': {
+      abierta();
+      const it = c.items.find(i => i.k === d.k); if (!it) throw new Error('Ese plato ya no está en la cuenta');
+      if (!esNum_(d.cantidad)) throw new Error('Cantidad no válida');
+      const n = Math.max(0, r3_(d.cantidad));
+      if (n < (Number(it.env) || 0) && !caja) throw new Error('«' + it.descripcion + '» ya salió a cocina. Para quitarlo pídeselo al cajero.');
+      it.cantidad = n; it.env = Math.min(Number(it.env) || 0, n);
+      return listo(guardarCuentaMesa_(c, c.items));
+    }
+    case 'quien': { // a qué persona de la mesa le toca ese plato (vacío = toda la mesa)
+      abierta();
+      const it = c.items.find(i => i.k === d.k); if (!it) throw new Error('Ese plato ya no está en la cuenta');
+      it.quien = txt_(d.quien, 30);
+      return listo(guardarCuentaMesa_(c, c.items));
+    }
+    case 'nota': {
+      abierta();
+      const it = c.items.find(i => i.k === d.k); if (!it) throw new Error('Ese plato ya no está en la cuenta');
+      it.nota = txt_(d.nota, 80);
+      return listo(guardarCuentaMesa_(c, c.items));
+    }
+    case 'cocina': {
+      abierta();
+      const sale = c.items.filter(i => i.cantidad - (Number(i.env) || 0) > 0.0004).map(i => ({ descripcion: i.descripcion, cantidad: r3_(i.cantidad - (Number(i.env) || 0)), nota: i.nota || '', quien: i.quien || '' }));
+      if (!sale.length) throw new Error('Todo lo de esta mesa ya salió a cocina');
+      c.items.forEach(i => { i.env = i.cantidad; });
+      const x = guardarCuentaMesa_(c, c.items, c.estado === 'cuenta' ? {} : { estado: 'abierta' });
+      appendRows_('Comandas', [{ id: newId_('Comandas'), cuentaId: c.id, tipo: c.tipo || 'mesa', mesa: c.mesa, zona: c.zona || '', cliente: c.cliente || '', items: JSON.stringify(sale), estado: 'nueva', meseroId: c.meseroId, creada: ahora_(), actualizado: ahora_(), lista: '', usuarioId: u.id }]);
+      return { cuenta: x, cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)), comanda: sale, hora: ahora_() };
+    }
+    case 'estado': {
+      abierta();
+      const e = d.estado === 'cuenta' ? 'cuenta' : 'abierta';
+      if (e === 'cuenta' && !c.items.length) throw new Error('La mesa todavía no ha pedido nada');
+      return listo(guardarCuentaMesa_(c, c.items, { estado: e }));
+    }
+    case 'mover': {
+      const mesa = txt_(d.mesa, 20); if (!mesa) throw new Error('Elige la mesa');
+      if (c.tipo === 'llevar' || c.tipo === 'domicilio') throw new Error('Un pedido para llevar no se cambia de mesa');
+      if (mesa === c.mesa) return listo(c);
+      const ya = ocupada(mesa, c.id);
+      if (ya && ya.estado !== 'pagada') throw new Error('La mesa ' + mesa + ' está ocupada');
+      if (ya) upsert_('MesaCuentas', { id: ya.id, estado: 'cerrada', cerrada: ahora_(), actualizado: ahora_() });
+      return listo(guardarCuentaMesa_(c, c.items, { mesa: mesa, zona: txt_(d.zona, 30) }));
+    }
+    case 'datos': {
+      const ex = {};
+      if (d.personas !== undefined) ex.personas = Math.max(1, Math.min(99, parseInt(d.personas, 10) || 1));
+      if (d.nota !== undefined) ex.nota = txt_(d.nota, 160);
+      if (d.cliente !== undefined && (c.tipo === 'llevar' || c.tipo === 'domicilio')) { ex.cliente = txt_(d.cliente, 60); if (!ex.cliente) throw new Error('Escribe el nombre del cliente'); }
+      if (d.telefono !== undefined) ex.telefono = txt_(d.telefono, 20);
+      if (d.meseroId !== undefined) { if (!caja) throw new Error('Solo el cajero o el administrador cambian el mesero de la mesa'); ex.meseroId = meseroValido(d.meseroId) || c.meseroId; }
+      return listo(guardarCuentaMesa_(c, c.items, ex));
+    }
+    case 'limpiar': {
+      if (c.estado !== 'pagada') throw new Error('Esta mesa todavía no se ha cobrado');
+      return listo(cuentaMesa_(upsert_('MesaCuentas', { id: c.id, estado: 'cerrada', cerrada: ahora_(), actualizado: ahora_() })));
+    }
+    case 'cancelar': {
+      if (!caja) throw new Error('Solo el cajero o el administrador cancelan una mesa');
+      abierta();
+      if (c.ventaIds.length) throw new Error('Esta mesa ya tiene una parte cobrada: cobra lo que falta o quita los platos que no se consumieron');
+      if (c.items.some(i => Number(i.env) > 0) && u.rol !== 'admin') throw new Error('Esta mesa ya mandó platos a cocina. Solo el administrador puede cancelarla.');
+      rows_('Comandas').filter(k => k.cuentaId === c.id && ['nueva', 'preparando', 'lista'].indexOf(k.estado) >= 0).forEach(k => upsert_('Comandas', { id: k.id, estado: 'cancelada', actualizado: ahora_() }));
+      return listo(cuentaMesa_(upsert_('MesaCuentas', { id: c.id, estado: 'cancelada', cerrada: ahora_(), actualizado: ahora_(), nota: (c.nota ? c.nota + ' · ' : '') + 'Cancelada por ' + u.nombre + (d.motivo ? ': ' + txt_(d.motivo, 100) : '') })));
+    }
+  }
+  throw new Error('Acción no válida');
+}
+function mesaAgregar_(u, c, d) {
+  if (!Array.isArray(d.items) || !d.items.length) throw new Error('Elige qué pidió la mesa');
+  const pm = porId_(rows_('Productos')), hora = ahora_();
+  d.items.slice(0, 60).forEach(i => {
+    const p = i && pm[i.productoId];
+    if (!p || !p.activo) throw new Error('Un producto ya no existe o está desactivado');
+    if (!esNum_(i.cantidad) || !(Number(i.cantidad) > 0)) throw new Error('Cantidad no válida');
+    const vk = varsDe_(p) || opsDe_(p).length ? varKey_(p, i.variante) : '';
+    if (varsDe_(p) && !vk && p.tipo === 'producto') throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
+    const variante = txt_(i.variante, 60), nota = txt_(i.nota, 80), quien = txt_(i.quien, 30), n = r3_(i.cantidad);
+    // Lo mismo, para la misma persona, con la misma nota y que aún no sale a cocina, se suma a la misma línea
+    const ya = c.items.find(x => x.productoId === p.id && (x.variante || '') === variante && (x.nota || '') === nota && (x.quien || '') === quien && !(Number(x.env) > 0));
+    if (ya) ya.cantidad = r3_(ya.cantidad + n);
+    else c.items.push({ k: 'L' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36), productoId: p.id, descripcion: p.nombre + (variante ? ' · ' + variante : ''), variante: variante,
+      cantidad: n, precio: precioVar_(p, vk), env: 0, nota: nota, quien: quien, por: u.id, hora: hora });
+  });
+  const x = guardarCuentaMesa_(c, c.items, c.estado === 'cuenta' ? { estado: 'abierta' } : {}); // si ya había pedido la cuenta y pide más, vuelve a ocupada
+  return { cuenta: x, cuentas: cuentasMesaActivas_().map(cuentaMesa_) };
+}
+// Al cobrar: la mesa queda pagada (por limpiar). Si se cobró solo una parte (cuenta dividida), se descuenta lo cobrado y la mesa sigue abierta.
+function mesaCobrada_(cta, d, venta) {
+  const c = cuentaMesa_(cta);
+  c.ventaIds.push(venta.id);
+  if (d.cuentaParte) {
+    const pag = {}; (d.items || []).forEach(i => { if (i && i.mk) pag[i.mk] = (pag[i.mk] || 0) + (Number(i.cantidad) || 0); });
+    c.items.forEach(i => { if (pag[i.k]) { i.cantidad = r3_(Math.max(0, i.cantidad - pag[i.k])); i.env = Math.min(Number(i.env) || 0, i.cantidad); } });
+  }
+  const queda = d.cuentaParte ? c.items.filter(i => i.cantidad > 0.0004) : [];
+  const llevar = c.tipo === 'llevar' || c.tipo === 'domicilio';
+  guardarCuentaMesa_(c, queda, queda.length ? { ventaIds: c.ventaIds.join(',') } : llevar ? { ventaIds: c.ventaIds.join(','), estado: 'cerrada', cerrada: ahora_() } : { ventaIds: c.ventaIds.join(','), estado: 'pagada' });
+  // Lo que ya estaba listo en cocina se da por entregado al cobrar todo; los pedidos en línea de esta cuenta quedan entregados
+  if (!queda.length) {
+    const ks = rows_('Comandas').filter(k => k.cuentaId === c.id);
+    ks.filter(k => k.estado === 'lista').forEach(k => upsert_('Comandas', { id: k.id, estado: 'entregada', actualizado: ahora_() }));
+    const peds = [...new Set(ks.map(k => k.pedidoId).concat([c.pedidoId]).filter(Boolean))];
+    rows_('Pedidos').filter(p => peds.indexOf(p.id) >= 0 && ['confirmado', 'listo', 'nuevo'].indexOf(p.estado) >= 0).forEach(p => upsert_('Pedidos', { id: p.id, estado: 'entregado', ventaId: p.ventaId || venta.id, actualizado: ahora_() }));
+  }
+}
+// Pantalla de Cocina: lo que está por preparar y lo que se terminó hace poco
+function cocina_(u, d) {
+  req_(u, ['admin', 'cajero', 'cocina', 'mesero']);
+  if (!modOn_('mesas')) throw new Error('Las mesas no están activadas en este negocio');
+  const lim = ahora_().slice(0, 10), l = rows_('Comandas').filter(k => ['nueva', 'preparando'].indexOf(k.estado) >= 0 || (k.estado === 'lista' && String(k.lista).slice(0, 10) >= lim));
+  return { comandas: l.map(k => Object.assign({}, k, { items: parseJ_(k.items, []) })), ahora: ahora_() };
+}
+function comandaAccion_(u, d) {
+  req_(u, ['admin', 'cajero', 'cocina', 'mesero']);
+  if (!modOn_('mesas')) throw new Error('Las mesas no están activadas en este negocio');
+  if (d.op === 'entregada') { // el mesero llevó a la mesa lo que estaba listo
+    rows_('Comandas').filter(k => k.cuentaId === d.cuentaId && k.estado === 'lista').forEach(k => upsert_('Comandas', { id: k.id, estado: 'entregada', actualizado: ahora_() }));
+    return { cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) };
+  }
+  if (u.rol === 'mesero') throw new Error('Solo la cocina, el cajero o el administrador cambian el estado de una comanda');
+  const k = rows_('Comandas').find(x => x.id === d.id); if (!k) throw new Error('La comanda ya no existe');
+  const e = { preparando: 'preparando', lista: 'lista', nueva: 'nueva' }[d.estado]; if (!e) throw new Error('Estado no válido');
+  if (['entregada', 'cancelada'].indexOf(k.estado) >= 0) throw new Error('Esta comanda ya se entregó o se canceló');
+  upsert_('Comandas', { id: k.id, estado: e, actualizado: ahora_(), lista: e === 'lista' ? ahora_() : '' });
+  if (e === 'lista' && k.pedidoId) { const p = rows_('Pedidos').find(x => x.id === k.pedidoId); if (p && p.estado === 'confirmado') upsert_('Pedidos', { id: p.id, estado: 'listo', actualizado: ahora_() }); } // al cliente le sale «¡Listo!»
+  return cocina_(u, d);
+}
+
 /* ===================== SUSCRIPCIONES (streaming, mensualidades) ===================== */
 /* Para negocios que venden Netflix, Disney+, IPTV, gimnasio, internet…: cada venta de una suscripción queda con fecha de vencimiento,
  * la cuenta/perfil que se entregó y los datos de acceso. Las cuentas madre viven en la hoja «Cuentas». */
@@ -2040,6 +2274,7 @@ function rutaPanel_(a, d) {
     case 'panelVendedores':        return panelVendedores_();
     case 'panelVendedorGuardar':   return panelVendedorGuardar_(d);
     case 'panelVendedorQuitar':    return panelVendedorQuitar_(d);
+    case 'panelVendedorLigar':     return panelVendedorLigar_(d);
     case 'panelSalir':             { try { if (d && d._tok) CacheService.getScriptCache().remove('P_' + d._tok); } catch (e) {} return true; }
   }
   throw new Error('Acción no válida: ' + a);
@@ -2050,7 +2285,7 @@ const PLANTILLAS_DEF = {
   inactivo: 'Hola {dueno}, vi que no has vuelto a entrar a Gestión de Negocio VM. ¿Te trabó algo? Te ayudo por acá.',
   vencida: 'Hola {dueno}, tu prueba de Gestión de Negocio VM ya terminó, pero tus datos de {negocio} siguen guardados. Cuando querás, activamos tu licencia y seguís donde lo dejaste.',
   activada: '¡Listo {dueno}! Tu licencia de Gestión de Negocio VM para {negocio} ya está activa. Gracias por confiar 🙌 Cualquier duda, me escribís.',
-  bienvenida: '¡Hola {dueno}! 👋 Bienvenido a *Gestión de Negocio VM* 🎉\n\nGracias por confiar en nosotros para llevar el control de *{negocio}*. Desde hoy tenés en un solo lugar tus ventas, inventario, clientes, compras, gastos, caja y reportes, desde el teléfono o la computadora.\n\nPara empezar te recomiendo:\n1️⃣ Cargá tus productos con su costo y precio.\n2️⃣ Registrá tus ventas del día.\n3️⃣ Al cerrar, revisá tu caja y tus reportes.\n\nTe dejo la imagen con todo lo que incluye. Si tenés cualquier duda, escribime por aquí o desde *Ayuda* dentro de la app; con gusto te acompaño.\n\n_Molina Soluciones Digitales_'
+  bienvenida: '¡Hola {dueno}! 👋 Bienvenido a *Gestión de Negocio VM* 🎉\n\nGracias por confiar en nosotros para llevar el control de *{negocio}*. Desde hoy tenés en un solo lugar tus ventas, inventario, clientes, compras, gastos, caja y reportes, desde el teléfono o la computadora.\n\n🔗 Tu enlace de acceso:\nhttps://bit.ly/negociovm\nEntrá con tu número de WhatsApp y tu PIN. Guardalo en favoritos o instalalo en tu teléfono.\n\nPara empezar te recomiendo:\n1️⃣ Cargá tus productos con su costo y precio.\n2️⃣ Registrá tus ventas del día.\n3️⃣ Al cerrar, revisá tu caja y tus reportes.\n\nTe dejo la imagen con todo lo que incluye. Si tenés cualquier duda, escribime por aquí o desde *Ayuda* dentro de la app; con gusto te acompaño.\n\n_Molina Soluciones Digitales_'
 };
 // Texto del contrato de licencia. Se edita desde Panel › Mensajes; los {campos} se rellenan al crear cada contrato.
 const CONTRATO_DEF = `Entre MOLINA SOLUCIONES DIGITALES, representada por José Vicdonio Molina Izaguirre, en adelante «el Licenciante», y {dueno}, en representación del negocio {negocio}{rtn}{direccion}, con WhatsApp {whatsapp}, en adelante «el Cliente», se celebra el presente contrato bajo las siguientes cláusulas:
@@ -2077,8 +2312,9 @@ function plantillas_() {
   r.contrato = PropertiesService.getScriptProperties().getProperty('PANEL_CONTRATO') || CONTRATO_DEF; // va en su propia propiedad: es largo y conserva los saltos de línea
   return r;
 }
+// Se guardan con sus saltos de línea (la bienvenida lleva el enlace en su propio renglón)
 function plantillasGuardar_(d) {
-  const p = {}; Object.keys(PLANTILLAS_DEF).forEach(k => { if (d.plantillas && d.plantillas[k] !== undefined) p[k] = txt_(d.plantillas[k], 600); });
+  const p = {}; Object.keys(PLANTILLAS_DEF).forEach(k => { if (d.plantillas && d.plantillas[k] !== undefined) p[k] = textoLargo_(d.plantillas[k], 1200); });
   const ps = PropertiesService.getScriptProperties();
   ps.setProperty('PANEL_PLANTILLAS', JSON.stringify(p));
   if (d.plantillas && d.plantillas.contrato !== undefined) { const c = textoLargo_(d.plantillas.contrato, 9000); if (c && c !== CONTRATO_DEF) ps.setProperty('PANEL_CONTRATO', c); else ps.deleteProperty('PANEL_CONTRATO'); }
@@ -2092,7 +2328,8 @@ function panelFicha_(l, segs) {
   const est = esColab_(l) ? 'colaborador' : lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
     usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, contab: ['sí', 'si'].indexOf(String(l.contab).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
-    ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: Number(l.ventas7) || 0, version: l.version || '', etiqueta: l.etiqueta || '',
+    ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: diasDesde_(l.ultimaVenta) >= 7 ? 0 : Number(l.ventas7) || 0, // ventas7 se anota cuando el negocio usa la app: si su última venta ya tiene 7 días o más, esta semana no vendió
+    version: l.version || '', etiqueta: l.etiqueta || '',
     giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l), colab: esColab_(l) };
   if (o.colab) { o.plus = true; o.contab = true; }
   o.salud = saludDe_(o, l.nProductos, l.nClientes); o.respaldo = l.respaldo || '';
@@ -2209,7 +2446,8 @@ function panelAnunciar_(d) {
 }
 function panelAnuncios_() {
   return mRows_('Anuncios').slice().reverse().slice(0, 30).map(a => { const ds = String(a.destinos || '').split(',').filter(Boolean), vs = String(a.vistos || '').split(',').filter(Boolean);
-    return { id: a.id, fecha: a.fecha, titulo: a.titulo, texto: a.texto, filtro: a.filtro, canales: a.canales, vence: a.vence, enviados: ds.length, vistos: vs.length, activo: String(a.vence) >= hoy_() }; });
+    const uno = String(a.filtro) === 'ids' && ds.length === 1 ? mRows_('Licencias').find(l => l.id === ds[0]) : null;
+    return { id: a.id, fecha: a.fecha, titulo: a.titulo, texto: a.texto, filtro: a.filtro, canales: a.canales, vence: a.vence, enviados: ds.length, vistos: vs.length, activo: String(a.vence) >= hoy_(), paraId: uno ? uno.id : '', para: uno ? uno.negocio : '' }; });
 }
 function panelAnuncioQuitar_(d) { const a = mRows_('Anuncios').find(x => x.id === d.id); if (!a) throw new Error('Ese mensaje ya no existe'); mSet_('Anuncios', a, { vence: addDiasIso_(hoy_(), -1) }); return panelAnuncios_(); }
 // Banner para este negocio: el mensaje vigente más reciente que no ha marcado como visto
@@ -2217,7 +2455,7 @@ function anuncioPara_() {
   if (!MULTI_NEGOCIO || !NEG) return null;
   try {
     const h = hoy_(), a = mRows_('Anuncios').slice().reverse().find(x => String(x.vence) >= h && String(x.canales).indexOf('banner') >= 0 && (',' + x.destinos + ',').indexOf(',' + NEG.id + ',') >= 0 && (',' + x.vistos + ',').indexOf(',' + NEG.id + ',') < 0);
-    return a ? { id: a.id, titulo: a.titulo, texto: a.texto, fecha: String(a.fecha).slice(0, 10) } : null;
+    return a ? { id: a.id, titulo: a.titulo, texto: a.texto, fecha: String(a.fecha).slice(0, 10), directo: String(a.filtro) === 'ids' } : null; // directo = mensaje solo para este negocio: puede responder
   } catch (e) { return null; }
 }
 function anuncioVisto_(u, d) {
@@ -2338,6 +2576,8 @@ function panelNegocio_(d) {
   f.grupo = grupoDe_(l).map(x => { const e = licNegocio_(x).estado; return { id: x.id, negocio: x.negocio, giro: x.giro, estado: e === 'completa' ? 'activa' : e, principal: x.id === (l.persona || l.id) || (!x.persona && !l.persona && x.id === l.id), yo: x.id === l.id }; });
   f.girosTodos = Object.keys(GIROS).map(k => ({ id: k, n: GIROS[k].n }));
   f.giroId = giroIdDe_(l.giro);
+  // Visitas a su tienda en línea en 7 días (para ver si está compartiendo su enlace)
+  try { const tv = visitasTienda_(l.id, 7); f.tiendaVis = { hoy: tv.hoyN, semana: tv.total, unicos: tv.unicos, origen: tv.origen.slice(0, 3) }; } catch (e) { f.tiendaVis = null; }
   // Uso (solo conteos, nunca sus datos): se lee la hoja del negocio
   f.uso = null;
   try {
@@ -2349,6 +2589,7 @@ function panelNegocio_(d) {
     f.datos = { rtn: cfg.sarRtn || cfg.rtn || '', direccion: cfg.sarDireccion || cfg.direccion || '', razon: cfg.sarRazon || '', telefono: cfg.telefono || '', correo: cfg.correo || '' }; // para rellenar el contrato
     f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
       pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+    const lim7 = Date.now() - 7 * 86400000; f.ventas7 = v30.filter(v => msDeLocal_(v.fecha) >= lim7).length; // en la ficha, las ventas de 7 días se cuentan al momento
     f.salud = saludDe_(f, f.uso.productos, f.uso.clientes); // en la ficha, con los conteos de hoy
     // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
     const dsf = licDesfase_(cfg);
@@ -2783,6 +3024,13 @@ function guardar_(u, d) {
       if (prev && prev !== reg.tiendaPortada) borrarFoto_(prev);
     }
     ['tiendaAbre', 'tiendaCierra'].forEach(k => { if (reg[k] && !/^([01]\d|2[0-3]):[0-5]\d$/.test(reg[k])) throw new Error('Escribe la hora con el formato 08:00'); });
+    // Cobros en línea: el enlace de pago es del banco o PixelPay del negocio (el dinero llega directo a su cuenta)
+    if (reg.tiendaEnlacePago !== undefined) { const t = reg.tiendaEnlacePago.trim();
+      if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de pago debe ser una dirección web (https://…)');
+      if (t && !/^https:\/\/[^\s"'<>]+$/i.test(/^https?:\/\//i.test(t) ? t.replace(/^http:/i, 'https:') : 'https://' + t)) throw new Error('El enlace de pago debe ser una dirección web (https://…)');
+      reg.tiendaEnlacePago = !t ? '' : (/^https?:\/\//i.test(t) ? t.replace(/^http:/i, 'https:') : 'https://' + t).slice(0, 400); }
+    if (reg.tiendaTigo !== undefined) reg.tiendaTigo = txt_(reg.tiendaTigo, 120);
+    if (reg.tiendaPagos !== undefined) reg.tiendaPagos = reg.tiendaPagos.split(',').filter(x => ['Efectivo', 'Transferencia', 'Tarjeta', 'Tigo Money'].indexOf(x) >= 0).join(',') || 'Efectivo';
     if (reg.tiendaMapa) { const t = reg.tiendaMapa.trim(); if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de Google Maps debe ser una dirección web (https://…)'); reg.tiendaMapa = /^https?:\/\//i.test(t) ? t : 'https://' + t; }
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
     if (reg.isv !== undefined && !(Number(reg.isv) >= 0 && Number(reg.isv) < 1)) throw new Error('ISV no válido');
@@ -3320,10 +3568,14 @@ function venta_(u, d, interno) {
   if (d.pedidoId) {
     const pe = rows_('Pedidos').find(x => x.id === d.pedidoId);
     if (!pe) throw new Error('El pedido en línea ya no existe');
+    if (!d.cuentaId && !ed && modOn_('mesas') && (cuentasMesaActivas_().some(x => x.pedidoId === pe.id) || rows_('Comandas').some(k => k.pedidoId === pe.id && k.estado !== 'cancelada'))) throw new Error('Este pedido ya está en Mesas: cóbralo desde ahí');
     if ((pe.ventaId || pe.estado === 'entregado') && !(ed && (!pe.ventaId || pe.ventaId === ed.de))) throw new Error('Este pedido ya se cobró');
     if (pe.estado === 'cancelado') throw new Error('Este pedido está cancelado');
     parseJ_(pe.items, []).forEach(x => { if (x && x.productoId) preciosPedido[x.productoId] = r2_(x.precio); });
   }
+  // Cuenta de una mesa (restaurante): debe seguir abierta; la venta queda a nombre del mesero que atendió la mesa
+  const cta = d.cuentaId && !ed ? rows_('MesaCuentas').find(x => x.id === d.cuentaId) : null;
+  if (d.cuentaId && !ed && (!cta || ['abierta', 'cuenta'].indexOf(cta.estado) < 0)) throw new Error('La cuenta de esta mesa ya se cobró o se cerró. Revisa en Mesas.');
   const pm = porId_(rows_('Productos'));
   if (!Array.isArray(d.items)) throw new Error('El ticket está vacío');
   if (Array.isArray(d.sus)) { // las fechas se validan antes de escribir nada
@@ -3442,8 +3694,10 @@ function venta_(u, d, interno) {
     id: newId_('Ventas'), numero: ed ? ed.numero : siguiente_('V'), fecha: ed && !factura && !mesCerrado_(ed.fecha) ? ed.fecha : fecha, clienteId: clienteId, usuarioId: ed ? ed.usuarioId : u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
     recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', cotizacionId: txt_(d.cotizacionId, 24), anulada: false, nota: txt_(d.nota, 200),
-    factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo
+    factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo,
+    mesero: ed ? ed.mesero || '' : cta ? cta.meseroId || '' : ''
   };
+  if (cta) { const ll = cta.tipo === 'llevar' || cta.tipo === 'domicilio'; venta.servicio = ll ? cta.tipo : 'mesa'; venta.mesa = ll ? '' : txt_(cta.mesa, 20); }
   // Sección (giro) de cada línea: queda guardada para que los reportes por sección no cambien si después mueves el producto
   const activos = girosActivos_(cfg), gl = items.map(i => giroLinea_(i, pm, activos)), mg = {};
   items.forEach((i, k) => { if (gl[k]) mg[gl[k]] = (mg[gl[k]] || 0) + i.cantidad * i.precio; });
@@ -3461,6 +3715,7 @@ function venta_(u, d, interno) {
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   const nuevasSus = susRegistrar_(u, planSus, venta);
   cerrarLigados_(d, venta);
+  if (cta) mesaCobrada_(cta, d, venta);
   if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} } // la venta quedó completa: un reintento la devuelve
   if (MULTI_NEGOCIO && NEG && !ed) { try { mSet_('Licencias', NEG.lic, usoLic_(1)); } catch (e) {} }
   return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
@@ -3549,7 +3804,7 @@ function editarVenta_(u, d) {
   const pmE = porId_(rows_('Productos')), yaEstaban = new Set(det.map(i => i.productoId).filter(Boolean));
   const susNueva = (d.items || []).map(i => i && pmE[i.productoId]).find(p => p && !yaEstaban.has(p.id) && susDeProducto_(p).length);
   if (susNueva) throw new Error('«' + susNueva.nombre + '» es una suscripción: para venderla usa Vender (ahí eliges la cuenta y el perfil).');
-  const ed = { de: v.id, devuelto: devuelto, costos: costos, saldoAnt: v.saldo, pagado: pagado, cliente: v.clienteId, fecha: v.fecha, numero: v.numero, usuarioId: v.usuarioId, listo: false, tienda: v.sucursal || '' };
+  const ed = { de: v.id, devuelto: devuelto, costos: costos, saldoAnt: v.saldo, pagado: pagado, cliente: v.clienteId, fecha: v.fecha, numero: v.numero, usuarioId: v.usuarioId, mesero: v.mesero || '', listo: false, tienda: v.sucursal || '' };
   // Datos fiscales de la factura anterior (si el cliente no cambió, se conservan)
   const fzA = parseJ_(v.fiscal, null), fd = d.fiscal || (fzA && d.clienteId === v.clienteId ? { rtn: fzA.rtn, nombre: fzA.nombre, exonerado: !!(fzA.oce || fzA.cre || fzA.sag), oce: fzA.oce, cre: fzA.cre, sag: fzA.sag } : undefined);
   const nd = { items: d.items, clienteId: d.clienteId, metodo: d.metodo, descuento: d.descuento, recibido: d.recibido, nota: d.nota === undefined ? v.nota : d.nota, pedidoId: v.pedidoId,
@@ -3894,7 +4149,8 @@ function pedidos_(u, d) {
   let l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo','cotizar','cotizado'].indexOf(p.estado) >= 0 || p.fecha >= lim);
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); l = l.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   const pagos = {}; rows_('Abonos').forEach(a => { if (a.ref && !a.anulado) pagos[a.ref] = r2_((pagos[a.ref] || 0) + (Number(a.monto) || 0)); });
-  return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); return p; });
+  const enMesas = {}; if (modOn_('mesas')) { cuentasMesaActivas_().forEach(c => { if (c.pedidoId) enMesas[c.pedidoId] = c.id; }); rows_('Comandas').forEach(k => { if (k.pedidoId && !enMesas[k.pedidoId]) enMesas[k.pedidoId] = k.cuentaId; }); }
+  return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); if (enMesas[p.id]) p.cuentaId = enMesas[p.id]; return p; });
 }
 
 function pendientes_(u, d) {
@@ -3930,10 +4186,14 @@ function estadoPedido_(u, d) {
   if (!p) throw new Error('El pedido no existe');
   if (EST_PEDIDO.indexOf(d.estado) < 0 || d.estado === 'entregado') throw new Error('Estado no válido');
   if (p.estado === 'entregado' || p.estado === 'cancelado') throw new Error('Este pedido ya está ' + p.estado);
+  // Floristería: un ramo sin precio solo se rechaza; con precio enviado, la tienda puede anotar que el cliente aceptó (WhatsApp o llamada)
+  if (p.estado === 'cotizar' && d.estado !== 'cancelado') throw new Error('Primero ponle precio al ramo');
+  if (p.estado === 'cotizado' && ['nuevo', 'cancelado'].indexOf(d.estado) < 0) throw new Error('Primero marca que el cliente aceptó el precio');
   const pagado = anticipoDe_(p.id);
   if (d.estado === 'cancelado' && pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de cancelar.');
   const upd = { id: p.id, estado: d.estado, actualizado: ahora_() };
   if (d.estado === 'cancelado' && d.motivo) upd.nota = (p.nota ? p.nota + ' · ' : '') + 'Cancelado: ' + txt_(d.motivo, 120);
+  if (p.estado === 'cotizado' && d.estado === 'nuevo') upd.nota = ((p.nota ? p.nota + ' · ' : '') + 'Precio aceptado por el cliente (lo anotó la tienda)').slice(-1000);
   // Carwash: al confirmar un pedido que trae día y hora, la cita entra sola a la Agenda
   if (d.estado === 'confirmado' && p.cita && !p.citaId && modOn_('agenda')) {
     const items = parseJ_(p.items, []);
@@ -3943,10 +4203,45 @@ function estadoPedido_(u, d) {
       nota: 'Apartado desde la tienda en línea · pedido ' + p.numero, usuarioId: u.id, creado: ahora_(), actualizado: ahora_() });
     upd.citaId = a.id;
   }
+  if (modOn_('mesas') && !p.cotiza && EST_RAMO.indexOf(p.estado) < 0) {
+    if (d.estado === 'confirmado' && p.estado === 'nuevo') pedidoACocina_(u, p);
+    if (d.estado === 'cancelado') cancelarPedidoMesa_(p);
+  }
   if (d.estado === 'cancelado' && p.citaId) { const a = rows_('Agenda').find(x => x.id === p.citaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'cancelado', actualizado: ahora_() }); }
   const g = upsert_('Pedidos', upd);
   g.items = parseJ_(g.items, []); g.anticipoPagado = pagado;
   return g;
+}
+/* Restaurante: un pedido de la tienda en línea confirmado pasa a Mesas y a Cocina.
+ * Para llevar / a domicilio: una cuenta propia con el nombre del cliente. Comer aquí: se suma a la cuenta de su mesa (se abre si estaba libre). */
+function pedidoACocina_(u, p) {
+  const items = parseJ_(p.items, []), pm = porId_(rows_('Productos')), hora = ahora_();
+  const lineas = items.filter(i => i && i.cantidad > 0).map((i, k) => ({ k: 'P' + Date.now().toString(36) + k, productoId: i.productoId && pm[i.productoId] ? i.productoId : '', descripcion: txt_(i.nombre, 120), variante: '',
+    cantidad: r3_(i.cantidad), precio: r2_(i.precio), env: 0, nota: '', quien: p.entrega === 'mesa' ? txt_(p.nombre, 30) : '', por: u.id, hora: hora }));
+  let c;
+  if (p.entrega === 'mesa') {
+    const mesa = String(p.direccion || ''), ya = cuentasMesaActivas_().find(x => x.mesa === mesa && (!x.tipo || x.tipo === 'mesa'));
+    if (ya && ya.estado === 'pagada') upsert_('MesaCuentas', { id: ya.id, estado: 'cerrada', cerrada: ahora_(), actualizado: ahora_() });
+    const zona = (() => { let n = 0, z = ''; zonasMesa_().some(x => { n += x.n; if (Number(mesa) <= n) { z = x.z; return true; } return false; }); return z; })();
+    c = ya && ya.estado !== 'pagada' ? cuentaMesa_(ya) : cuentaMesa_(upsert_('MesaCuentas', { mesa: mesa, zona: zona, tipo: 'mesa', estado: 'abierta', personas: 1, meseroId: u.id, items: '[]', total: 0, nota: '', abierta: ahora_(), actualizado: ahora_(), cerrada: '', ventaIds: '', usuarioId: u.id, cliente: '', telefono: '', pedidoId: '' }));
+  } else {
+    const tipo = p.entrega === 'domicilio' ? 'domicilio' : 'llevar', base = tipo === 'llevar' ? 'Llevar ' : 'Domicilio ';
+    const usados = cuentasMesaActivas_().filter(x => x.tipo === tipo).map(x => parseInt(String(x.mesa).replace(base, ''), 10) || 0); let n = 1; while (usados.indexOf(n) >= 0) n++;
+    c = cuentaMesa_(upsert_('MesaCuentas', { mesa: base + n, zona: '', tipo: tipo, cliente: txt_(p.nombre, 60), telefono: txt_(p.telefono, 20), estado: 'abierta', personas: 1, meseroId: u.id, items: '[]', total: 0,
+      nota: txt_((tipo === 'domicilio' ? p.direccion : '') + ' · en línea ' + p.numero, 160).replace(/^ · /, ''), abierta: ahora_(), actualizado: ahora_(), cerrada: '', ventaIds: '', usuarioId: u.id, pedidoId: p.id }));
+    if (Number(p.envio) > 0) lineas.push({ k: 'P' + Date.now().toString(36) + 'e', productoId: '', descripcion: 'Envío a domicilio', variante: '', cantidad: 1, precio: r2_(p.envio), env: 1, nota: '', quien: '', por: u.id, hora: hora });
+  }
+  lineas.forEach(l => c.items.push(l));
+  const sale = lineas.filter(l => l.productoId || !l.env).map(l => ({ descripcion: l.descripcion, cantidad: l.cantidad, nota: l.nota, quien: l.quien }));
+  c.items.forEach(i => { if (lineas.indexOf(i) >= 0) i.env = i.cantidad; });
+  guardarCuentaMesa_(c, c.items, c.estado === 'cuenta' ? { estado: 'abierta' } : {});
+  if (sale.length) appendRows_('Comandas', [{ id: newId_('Comandas'), cuentaId: c.id, tipo: c.tipo || 'mesa', mesa: c.mesa, zona: c.zona || '', cliente: c.cliente || (p.entrega === 'mesa' ? 'En línea · ' + txt_(p.nombre, 40) : ''), items: JSON.stringify(sale), estado: 'nueva', meseroId: c.meseroId, creada: ahora_(), actualizado: ahora_(), lista: '', usuarioId: u.id, pedidoId: p.id }]);
+  return c;
+}
+function cancelarPedidoMesa_(p) {
+  rows_('Comandas').filter(k => k.pedidoId === p.id && ['nueva', 'preparando', 'lista'].indexOf(k.estado) >= 0).forEach(k => upsert_('Comandas', { id: k.id, estado: 'cancelada', actualizado: ahora_() }));
+  const c = cuentasMesaActivas_().find(x => x.pedidoId === p.id);
+  if (c && !String(c.ventaIds || '')) upsert_('MesaCuentas', { id: c.id, estado: 'cancelada', cerrada: ahora_(), actualizado: ahora_(), nota: (c.nota ? c.nota + ' · ' : '') + 'Pedido en línea cancelado' });
 }
 // Anticipo de un pedido (compras en línea): entra a caja como abono ligado al pedido y se descuenta solo al cobrarlo
 function anticipoPedido_(u, d) {
@@ -4144,6 +4439,7 @@ function inicio_(u, d) {
     if (modOn_('encargos')) out.encargos = agendaResumen_('encargo');
     if (modOn_('mascotas') && u.rol !== 'bodega') out.vet = vetResumen_();
     if (modOn_('cotizaciones') && u.rol !== 'bodega') out.cot = cotResumen_();
+    if (modOn_('mesas') && (u.rol === 'admin' || u.rol === 'cajero')) out.mesas = mesasResumen_();
   } catch (e) {}
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && deT(v, 'Ventas'));
@@ -4232,7 +4528,7 @@ function reporte_(u, d) {
   const ds = giro ? det.filter(x => sec.lin[x.id] === giro) : det;
   const k = { ventas: 0, n: vs.length, ticket: 0, isv: 0, descuentos: 0, costo: 0, bruta: 0, gastos: 0, neta: 0, margen: 0,
     credito: 0, cobros: 0, compras: 0, pagos: 0, anuladas: 0, clientesNuevos: 0, articulos: 0 };
-  const porDia = {}, gastosDia = {}, porMetodo = {}, porCat = {}, top = {}, porUsuario = {}, porHora = {};
+  const porDia = {}, gastosDia = {}, porMetodo = {}, porCat = {}, top = {}, porUsuario = {}, porHora = {}, porMesero = {};
   vs.forEach(v => {
     const p = w(v);
     k.ventas += v.total * p; k.isv += v.isv * wi(v); k.descuentos += v.descuento * p;
@@ -4245,6 +4541,7 @@ function reporte_(u, d) {
     porHora[hr] = (porHora[hr] || 0) + 1;
     const x = porUsuario[v.usuarioId] || (porUsuario[v.usuarioId] = { nombre: us[v.usuarioId] ? us[v.usuarioId].nombre : '—', ventas: 0, n: 0 });
     x.ventas += v.total * p; x.n++;
+    if (v.mesero) { const y = porMesero[v.mesero] || (porMesero[v.mesero] = { nombre: us[v.mesero] ? us[v.mesero].nombre : '—', ventas: 0, n: 0 }); y.ventas += v.total * p; y.n++; }
   });
   ds.forEach(i => {
     k.articulos += i.cantidad;
@@ -4301,6 +4598,7 @@ function reporte_(u, d) {
     kpi: k, porDia: porDia, gastosDia: gastosDia, porMetodo: listaO(porMetodo), porCategoria: listaO(porCat), gastosCategoria: listaO(gastosCat),
     top: Object.keys(top).map(x => { const t = top[x]; t.total = r2_(t.total); t.ganancia = r2_(t.ganancia); t.cantidad = r3_(t.cantidad); return t; }).sort((a, b) => b.total - a.total).slice(0, 15),
     usuarios: Object.keys(porUsuario).map(x => { const o = porUsuario[x]; o.ventas = r2_(o.ventas); return o; }).sort((a, b) => b.ventas - a.ventas),
+    meseros: Object.keys(porMesero).map(x => { const o = porMesero[x]; o.ventas = r2_(o.ventas); return o; }).sort((a, b) => b.ventas - a.ventas),
     porHora: porHora, giro: giro
   };
   if ((activos.length > 1 && lista.length > 1) || giro) { // con un solo giro activo no hay secciones (aunque haya ventas de un giro de antes)
@@ -4904,9 +5202,12 @@ function tiendaInfo_(d) {
   return {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
-      minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago,
+      mesas: modOn_('mesas') ? zonasMesa_(cfg).reduce((a, z) => a + z.n, 0) : 0, tiempo: modOn_('mesas') ? Math.max(0, parseInt(cfg.tiempoPrep, 10) || 0) : 0,
+      // Restaurante: zonas y qué mesas están ocupadas (solo los números), para que el cliente toque la suya
+      zonasMesa: modOn_('mesas') ? zonasMesa_(cfg) : [], ocupadas: modOn_('mesas') ? cuentasMesaActivas_().filter(c => (!c.tipo || c.tipo === 'mesa') && c.estado !== 'pagada').map(c => String(c.mesa)) : [],
+      minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago, enlacePago: cfg.tiendaEnlacePago || '', tigo: cfg.tiendaTigo || '',
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
-      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, ramoPrecios: cfg.ramoPrecios !== 'no', cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
+      abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, personal: activos.indexOf('manualidades') >= 0, ramoPrecios: cfg.ramoPrecios !== 'no', cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
       dueno: cfg.duenoNombre ? { nombre: cfg.duenoNombre, cargo: cfg.duenoCargo, mensaje: cfg.duenoMensaje, foto: cfg.duenoFoto,
         datos: String(cfg.duenoDatos || '').split('|').map(x => x.trim()).filter(Boolean).slice(0, 3), whatsapp: cfg.duenoWhatsapp } : null,
       giros: activos.map(g => ({ id: g, n: GIROS[g].n })),
@@ -4946,7 +5247,9 @@ const DIAS_FOTOS_RAMO = 7;
 function limpiarFotosRamo_() {
   const lim = diasAtras_(DIAS_FOTOS_RAMO); let n = 0;
   rows_('Pedidos').forEach(p => {
-    if (['entregado', 'cancelado'].indexOf(p.estado) < 0 || String(p.actualizado).slice(0, 10) >= lim || String(p.cotiza).indexOf('"fotos"') < 0) return;
+    if (['entregado', 'cancelado'].indexOf(p.estado) < 0 || String(p.actualizado).slice(0, 10) >= lim) return;
+    if (String(p.items).indexOf('"foto"') >= 0) { const its = parseJ_(p.items, []); its.forEach(i => { if (i.foto) { borrarFoto_(i.foto); n++; delete i.foto; i.fotoBorrada = 1; } }); upsert_('Pedidos', { id: p.id, items: JSON.stringify(its) }); }
+    if (String(p.cotiza).indexOf('"fotos"') < 0) return;
     const c = parseJ_(p.cotiza, {}); (c.fotos || []).forEach(id => { borrarFoto_(id); n++; });
     delete c.fotos; c.fotosBorradas = hoy_(); upsert_('Pedidos', { id: p.id, cotiza: JSON.stringify(c) });
   });
@@ -4983,12 +5286,67 @@ function cotizarRamo_(u, d) {
   if (!p || EST_RAMO.indexOf(p.estado) < 0) throw new Error('Este pedido ya no espera precio');
   const precio = r2_(Number(d.precio) || 0);
   if (!(precio > 0) || precio > 1000000) throw new Error('Escribe el precio del ramo');
-  const lineas = parseJ_(p.items, []).filter(i => i.tipo !== 'ramo').map(i => ({ productoId: i.productoId, nombre: i.nombre, cantidad: i.cantidad, precio: 0, total: 0, lista: Number(i.lista !== undefined ? i.lista : i.precio) || 0 }));
-  lineas.push({ productoId: '', tipo: 'ramo', nombre: 'Ramo a tu gusto', cantidad: 1, precio: precio, total: precio });
+  const pc = parseJ_(p.cotiza, {}), its0 = parseJ_(p.items, []);
+  const lineas = pc.personal ? [] : its0.filter(i => i.tipo !== 'ramo').map(i => ({ productoId: i.productoId, nombre: i.nombre, cantidad: i.cantidad, precio: 0, total: 0, lista: Number(i.lista !== undefined ? i.lista : i.precio) || 0 }));
+  lineas.push({ productoId: '', tipo: 'ramo', nombre: pc.personal ? 'Diseño personalizado · ' + pc.cat + (pc.cant > 1 ? ' (' + pc.cant + ' unidades)' : '') : 'Ramo a tu gusto', cantidad: 1, precio: precio, total: precio });
   const env = Number(p.envio) || 0, cot = Object.assign(parseJ_(p.cotiza, {}), { precio: precio, nota: txt_(d.nota, 300), el: ahora_() });
   const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(lineas), subtotal: precio, total: r2_(precio + env), estado: 'cotizado', cotiza: JSON.stringify(cot), actualizado: ahora_() });
   g.items = parseJ_(g.items, []); g.anticipoPagado = 0;
   return g;
+}
+// Floristería: el negocio cambia las flores del ramo (quitar, cambiar cantidad o agregar otras) mientras no esté cobrado
+function editarRamo_(u, d) {
+  req_(u, ['admin','cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('El pedido no existe');
+  if (EST_RAMO.indexOf(p.estado) < 0 && !p.cotiza) throw new Error('Este pedido no es un ramo a tu gusto');
+  if (parseJ_(p.cotiza, {}).personal) throw new Error('Un diseño personalizado no tiene flores para editar');
+  if (p.ventaId || ['cotizar','cotizado','nuevo','confirmado','listo'].indexOf(p.estado) < 0) throw new Error('Este ramo ya está ' + (p.estado === 'entregado' ? 'cobrado' : p.estado) + ' y no se puede editar');
+  const antes = parseJ_(p.items, []), flA = antes.filter(i => i.tipo !== 'ramo'), ramoL = antes.filter(i => i.tipo === 'ramo');
+  if (!Array.isArray(d.nombres) || d.nombres.join('|') !== flA.map(i => i.nombre + '×' + i.cantidad).join('|')) throw new Error('El ramo cambió mientras lo editabas. Ábrelo de nuevo.');
+  const pm = porId_(rows_('Productos')), conPrecio = !!ramoL.length, nuevas = [], lineas = [];
+  const agrega = (pr, op, n, viejo) => {
+    if (n < 1) return; if (n > 999) throw new Error('Cantidad no válida en «' + pr.nombre + '»');
+    const nom = op ? txt_(pr.nombre + ' (' + op + ')', 240) : pr.nombre, ya = nuevas.find(x => x.productoId === pr.id && x.nombre === nom);
+    const lista = viejo ? Number(viejo.lista !== undefined ? viejo.lista : viejo.precio) || 0 : Number(pr.precio) || 0;
+    if (ya) { ya.cantidad += n; ya.total = r2_(ya.cantidad * ya.precio); return; }
+    nuevas.push(conPrecio ? { productoId: pr.id, nombre: nom, cantidad: n, precio: 0, total: 0, lista: lista } : { productoId: pr.id, nombre: nom, cantidad: n, precio: lista, total: r2_(n * lista) });
+  };
+  (Array.isArray(d.cantidades) ? d.cantidades : []).slice(0, flA.length).forEach((c, i) => {
+    const it = flA[i], n = Math.floor(Number(c) || 0); if (n < 0) throw new Error('Cantidad no válida');
+    if (n !== it.cantidad) lineas.push(it.nombre + ': ' + (n ? cantTxt_(it.cantidad) + ' → ' + n : 'quitado'));
+    if (!n) return;
+    const pr = pm[it.productoId];
+    if (pr) agrega(pr, opcionLinea_(it, pm), n, it); else nuevas.push(Object.assign({}, it, { cantidad: n, total: r2_(n * (Number(it.precio) || 0)) }));
+  });
+  (Array.isArray(d.agregar) ? d.agregar.slice(0, 30) : []).forEach(a => {
+    const pr = pm[a.productoId]; if (!pr) throw new Error('Esa flor ya no existe');
+    if (RAMO_CATS.indexOf(String(pr.categoria).toLowerCase()) < 0) throw new Error('«' + pr.nombre + '» no es una flor ni un detalle del ramo');
+    const n = Math.floor(Number(a.cantidad) || 0), op = txt_(a.opcion, 160);
+    if (n > 0) { lineas.push('agregado ' + n + ' ' + pr.nombre + (op ? ' (' + op + ')' : '')); agrega(pr, op, n); }
+  });
+  if (!lineas.length) throw new Error('No cambiaste nada');
+  if (!nuevas.length) throw new Error('El ramo necesita al menos una flor. Si ya no va, elimínalo o recházalo.');
+  const items = nuevas.concat(ramoL), subtotal = conPrecio ? r2_(ramoL.reduce((a, i) => a + i.total, 0)) : 0;
+  const nota = ((p.nota ? p.nota + ' · ' : '') + 'Flores editadas ' + ahora_().replace('T', ' ').slice(5, 16) + ' por ' + String(u.nombre || '').split(' ')[0] + ': ' + lineas.join('; ')).slice(-1000);
+  const upd = { id: p.id, items: JSON.stringify(items), nota: nota, actualizado: ahora_() };
+  if (conPrecio) { upd.subtotal = subtotal; upd.total = r2_(subtotal + (Number(p.envio) || 0)); }
+  const g = upsert_('Pedidos', upd);
+  g.items = parseJ_(g.items, []); g.anticipoPagado = anticipoDe_(p.id); g.cambios = lineas;
+  return g;
+}
+// Eliminar un pedido en línea en cualquier estado (solo el administrador). Si ya se cobró, la venta no se toca.
+function eliminarPedido_(u, d) {
+  req_(u, ['admin']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('Este pedido ya no existe');
+  const pagado = anticipoDe_(p.id);
+  if (pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de eliminarlo.');
+  if (p.comprobante) borrarFoto_(p.comprobante);
+  (parseJ_(p.cotiza, {}).fotos || []).forEach(borrarFoto_);
+  parseJ_(p.items, []).forEach(i => { if (i.foto) borrarFoto_(i.foto); });
+  deleteRow_('Pedidos', p.id);
+  return { id: p.id, eliminado: true };
 }
 // El cliente acepta o no el precio desde «Tus pedidos» (se comprueba con su WhatsApp)
 function respuestaRamo_(d) {
@@ -5031,7 +5389,7 @@ function pedidoClienteEditar_(d) {
   let detalle;
   if (!cant) {
     if (items.length === 1) throw new Error('Es el único producto del pedido. Si ya no lo quieres, escríbele a la tienda.');
-    items.splice(ix, 1); detalle = 'quitó ' + it.nombre;
+    items.splice(ix, 1); detalle = 'quitó ' + it.nombre; if (it.foto) borrarFoto_(it.foto);
   } else {
     const pr = pm[it.productoId];
     if (!pr || !pr.activo || !pr.tienda) throw new Error('Este producto ya no está en la tienda. Escríbele al negocio.');
@@ -5042,6 +5400,7 @@ function pedidoClienteEditar_(d) {
     if (nom !== it.nombre && opsDe_(pr).length && !op) throw new Error('Elige ' + opsDe_(pr).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + pr.nombre + '»');
     const precio = nom === it.nombre ? (Number(it.normal) > 0 ? it.normal : it.precio) : precioVar_(pr, vk);
     items[ix] = { productoId: pr.id, nombre: nom, cantidad: cant, precio: precio, total: r2_(cant * precio) };
+    if (it.foto) items[ix].foto = it.foto; // Manualidades: la imagen del cliente sigue con su línea
     const otra = items.findIndex((x, j) => j !== ix && x.productoId === pr.id && x.nombre === nom);
     if (otra >= 0) { items[ix].cantidad += items[otra].cantidad; items[ix].total = r2_(items[ix].cantidad * precio); items.splice(otra, 1); }
     // Existencia: se revisa lo que suma el pedido, como al pedir
@@ -5081,7 +5440,7 @@ function pedidoPago_(u, d) {
 
 function pedirLimites_(d) {
   tiendaNeg_(d);
-  if (!Array.isArray(d.items) || !d.items.length) throw new Error('Tu pedido está vacío');
+  if (!d.personal && (!Array.isArray(d.items) || !d.items.length)) throw new Error('Tu pedido está vacío');
   const c = CacheService.getScriptCache(), tel = String(d.telefono || '').replace(/\D/g, '');
   if (Number(c.get('PD_' + (NEG ? NEG.id : '') + tel.slice(-8)) || 0) >= 6) throw new Error('Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
   if (Number(c.get('PH_' + (NEG ? NEG.id : '')) || 0) >= 150) throw new Error('La tienda está recibiendo muchos pedidos. Intenta de nuevo en unos minutos.');
@@ -5099,26 +5458,36 @@ function citasOcupadas_() {
 function pedir_(d) {
   const cfg = tiendaNeg_(d);
   const nombre = txt_(d.nombre, 60), tel = String(d.telefono || '').replace(/\D/g, '');
-  if (nombre.length < 3) throw new Error('Escribe tu nombre');
-  if (tel.length < 8) throw new Error('Escribe tu número de WhatsApp');
+  // Restaurante: «Comer aquí» desde el QR de la mesa (o escribiendo su número); el WhatsApp es opcional porque está en el local
+  const enMesa = d.entrega === 'mesa' && modOn_('mesas');
+  if (d.entrega === 'mesa' && !enMesa) throw new Error('Este negocio no recibe pedidos en la mesa');
+  const nMesas = enMesa ? zonasMesa_(cfg).reduce((a, z) => a + z.n, 0) : 0, mesaN = enMesa ? String(parseInt(d.mesa, 10) || '') : '';
+  if (enMesa && (!mesaN || Number(mesaN) < 1 || Number(mesaN) > nMesas)) throw new Error('Escribe el número de tu mesa (de 1 a ' + nMesas + ')');
+  if (nombre.length < (enMesa ? 2 : 3)) throw new Error('Escribe tu nombre');
+  if (tel.length < 8 && !(enMesa && !tel)) throw new Error('Escribe tu número de WhatsApp');
   const ent = cfg.tiendaEntrega || 'ambos';
-  const entrega = d.entrega === 'domicilio' ? 'domicilio' : 'recoger';
-  if (ent !== 'ambos' && ent !== entrega) throw new Error(entrega === 'domicilio' ? 'Este negocio no hace entregas a domicilio' : 'Este negocio solo hace entregas a domicilio');
-  const direccion = txt_(d.direccion, 200);
+  const entrega = enMesa ? 'mesa' : d.entrega === 'domicilio' ? 'domicilio' : 'recoger';
+  if (!enMesa && ent !== 'ambos' && ent !== entrega) throw new Error(entrega === 'domicilio' ? 'Este negocio no hace entregas a domicilio' : 'Este negocio solo hace entregas a domicilio');
+  const direccion = enMesa ? mesaN : txt_(d.direccion, 200);
   if (entrega === 'domicilio' && direccion.length < 5) throw new Error('Escribe la dirección de entrega');
-  const c = CacheService.getScriptCache(), k = 'PD_' + (NEG ? NEG.id : '') + tel.slice(-8), n = Number(c.get(k) || 0);
-  if (n >= 6) throw new Error('Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
+  const c = CacheService.getScriptCache(), k = 'PD_' + (NEG ? NEG.id : '') + (tel ? tel.slice(-8) : 'm' + mesaN), n = Number(c.get(k) || 0);
+  if (n >= (enMesa ? 15 : 6)) throw new Error(enMesa ? 'Esta mesa ya hizo muchos pedidos. Pídele lo que falte al mesero.' : 'Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
   const pm = porId_(rows_('Productos'));
   // «Arma tu ramo»: el cliente pide precio; la existencia y el precio los revisa el negocio al cotizar
-  const ramo = !!d.ramo;
-  if (ramo && girosActivos_(cfg).indexOf('floristeria') < 0) throw new Error('Esta tienda no arma ramos a tu gusto');
+  const personal = !!d.personal, ramo = !!d.ramo || personal;
+  if (d.ramo && girosActivos_(cfg).indexOf('floristeria') < 0) throw new Error('Esta tienda no arma ramos a tu gusto');
+  if (personal && girosActivos_(cfg).indexOf('manualidades') < 0) throw new Error('Esta tienda no hace diseños personalizados');
+  // «Pide tu diseño personalizado» (manualidades): qué quiere, cuántos, fotos de ejemplo; el negocio pone el precio total
+  const pers = personal ? { personal: 1, cat: txt_(d.categoria, 40) || 'Otro', desc: txt_(d.descripcion, 500), cant: Math.floor(Number(d.cantidad) || 1) } : null;
+  if (pers && pers.desc.length < 5) throw new Error('Describe lo que quieres que te hagamos');
+  if (pers && (pers.cant < 1 || pers.cant > 999)) throw new Error('Cantidad no válida');
   const presupuesto = ramo ? r2_(Math.max(0, Number(d.presupuesto) || 0)) : 0;
   if (ramo && !(presupuesto > 0)) throw new Error('Escribe tu presupuesto');
   const sin = ramo || cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
-  const lista = Array.isArray(d.items) ? d.items.slice(0, 40) : [];
+  const lista = personal ? [] : Array.isArray(d.items) ? d.items.slice(0, 40) : [];
   const items = [], suma = {}, sumaV = {};
   const conCompras = girosActivos_(cfg).indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0;
-  let anticipo = 0;
+  let anticipo = 0, fotos = 0;
   lista.forEach(i => {
     // Compras en línea: el cliente pega el enlace del artículo y su precio en dólares; el precio en lempiras se calcula aquí
     if (i && i.id === '_compra') {
@@ -5135,21 +5504,22 @@ function pedir_(d) {
     }
     const p = i && typeof i === 'object' ? pm[i.id] : null, cant = Math.floor(Number(i && i.cantidad) || 0);
     if (!p || !p.activo || !p.tienda) throw new Error('Uno de los productos ya no está disponible. Actualiza la página.');
-    if (ramo && RAMO_CATS.indexOf(String(p.categoria).toLowerCase()) < 0) throw new Error('«' + p.nombre + '» no se puede elegir para armar un ramo');
+    if (d.ramo && RAMO_CATS.indexOf(String(p.categoria).toLowerCase()) < 0) throw new Error('«' + p.nombre + '» no se puede elegir para armar un ramo');
     if (cant < 1 || cant > 999) throw new Error('Cantidad no válida en «' + p.nombre + '»');
     suma[p.id] = (suma[p.id] || 0) + cant;
     if (p.tipo === 'producto' && !sin && p.stock < suma[p.id]) throw new Error(p.stock > 0 ? 'Solo quedan ' + Math.floor(p.stock) + ' de «' + p.nombre + '»' : '«' + p.nombre + '» se agotó');
     const op = txt_(i.opcion, 160), nom = op ? txt_(p.nombre + ' (' + op + ')', 240) : p.nombre;
     const V = varsDe_(p), vk = V ? varKey_(p, op) : '';
-    if (V && !vk && !ramo) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
+    if (V && !vk && !d.ramo) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
     if (vk) { const kk = p.id + SEPV + vk; sumaV[kk] = (sumaV[kk] || 0) + cant; const hay = Math.floor(Number(V[vk] && V[vk].s) || 0);
       if (p.tipo === 'producto' && !sin && hay < sumaV[kk]) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + p.nombre + ' (' + vk + ')»' : '«' + p.nombre + ' (' + vk + ')» se agotó'); }
     const pu = precioVar_(p, vk);
     if (giroDeProd_(p, girosActivos_(cfg)) === 'recargas' && !/ID de jugador:\s*\S/i.test(op)) throw new Error('Escribe tu ID de jugador para «' + p.nombre + '»');
     const ya = items.find(x => x.productoId === p.id && x.nombre === nom);
     if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * ya.precio); }
-    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk) });
+    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk), _foto: i.foto && fotos < 5 ? (fotos++, i.foto) : '' });
   });
+  if (pers) items.push({ productoId: '', tipo: 'diseno', nombre: 'Diseño personalizado · ' + pers.cat, cantidad: pers.cant, precio: 0, total: 0 });
   if (!items.length) throw new Error('Tu pedido está vacío');
   items.forEach(i => { const p = i.productoId ? pm[i.productoId] : null; const pe = p && !i._propio && !ramo ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.normal = i.precio; i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
@@ -5157,13 +5527,13 @@ function pedir_(d) {
   if (min > 0 && !ramo && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
   const envio = entrega === 'domicilio' ? r2_(Number(cfg.tiendaEnvio) || 0) : 0;
   const pagos = String(cfg.tiendaPagos || 'Efectivo').split(',');
-  const pago = pagos.indexOf(d.pago) >= 0 ? d.pago : pagos[0];
-  let cli = rows_('Clientes').find(x => tel8_(x.telefono) && tel8_(x.telefono) === tel.slice(-8));
+  const pago = enMesa ? 'En la mesa' : pagos.indexOf(d.pago) >= 0 ? d.pago : pagos[0];
+  let cli = tel ? rows_('Clientes').find(x => tel8_(x.telefono) && tel8_(x.telefono) === tel.slice(-8)) : { id: '' };
   if (!cli) {
     const t8 = tel.slice(-8);
     cli = upsert_('Clientes', { nombre: nombre, telefono: tel.length === 8 || (tel.length === 11 && tel.indexOf('504') === 0) ? t8.slice(0, 4) + '-' + t8.slice(4) : '+' + tel,
       direccion: direccion, notas: 'Se registró en la tienda en línea', activo: true, limite: 0, creado: ahora_() });
-  } else if (entrega === 'domicilio' && direccion && !cli.direccion) {
+  } else if (entrega === 'domicilio' && direccion && !cli.direccion && cli.id) {
     upsert_('Clientes', { id: cli.id, direccion: direccion });
   }
   // Carwash: el cliente aparta día y hora y dice qué vehículo trae
@@ -5179,15 +5549,18 @@ function pedir_(d) {
   if (cita) { const cupo = Math.max(1, Math.floor(Number(cfg.citaCupo) || 3));
     if ((citasOcupadas_()[cita + ' ' + hora] || 0) >= cupo) throw new Error('Esa hora ya se llenó. Elige otra, por favor.'); }
   const numP = siguiente_('P'), comp = d.comprobante ? guardarComprobante_(d.comprobante, numP) : '';
-  // «Arma tu ramo»: hasta 2 fotos de referencia; se borran solas 7 días después de entregado o cancelado
-  const fotosRef = ramo && Array.isArray(d.fotos) ? d.fotos.slice(0, 2).map((f, i) => guardarFoto_(f, 'ramo-' + numP + '-' + (i + 1), 'La foto de referencia')) : [];
+  // «Arma tu ramo» (2 fotos) y diseño personalizado (3): fotos de referencia; se borran solas 7 días después de entregado o cancelado
+  const fotosRef = ramo && Array.isArray(d.fotos) ? d.fotos.slice(0, personal ? 3 : 2).map((f, i) => guardarFoto_(f, (personal ? 'diseno-' : 'ramo-') + numP + '-' + (i + 1), 'La foto de referencia')) : [];
+  // Manualidades: la imagen que el cliente sube en un producto («Personalízalo») va en esa línea del pedido
+  items.forEach((it, i) => { if (it._foto) it.foto = guardarFoto_(it._foto, 'pers-' + numP + '-' + (i + 1), 'Tu imagen'); delete it._foto; });
+  const cotizaIni = pers ? Object.assign(pers, { fotos: fotosRef }) : fotosRef.length ? { fotos: fotosRef } : null;
   const p = upsert_('Pedidos', { comprobante: comp, pagoEstado: comp ? 'revisar' : '', numero: numP, fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
-    pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: fotosRef.length ? JSON.stringify({ fotos: fotosRef }) : '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),
+    pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: cotizaIni ? JSON.stringify(cotizaIni) : '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),
     cita: cita, hora: hora, vehiculo: vehiculo, placa: placa, citaId: '' });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
-  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
-    negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : '' };
+  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, personal: personal, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
+    negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : pago === 'Tigo Money' ? cfg.tiendaTigo : '', enlacePago: pago === 'Tarjeta' ? cfg.tiendaEnlacePago || '' : '' };
 }
 
 /* ===================== MENSAJES DIRECTOS (tienda ↔ negocio) =====================
@@ -5212,7 +5585,7 @@ function chatLimites_(d) {
 function chatEnviar_(d) {
   const cfg = tiendaNeg_(d);
   if (cfg.tiendaChat === 'no') throw new Error('Este negocio no recibe mensajes por aquí. Escríbele por WhatsApp.');
-  const texto = String(d.texto || '').trim().replace(/\n{3,}/g, '\n\n').slice(0, 600);
+  const texto = String(d.texto || '').replace(/[⟦⟧]/g, '').trim().replace(/\n{3,}/g, '\n\n').slice(0, 600);
   if (!texto) throw new Error('Escribe tu mensaje');
   let c = d.clave ? rows_('Chats').find(x => x.clave === String(d.clave)) : null;
   const f = ahora_(), prod = d.productoId ? rows_('Productos').find(x => x.id === d.productoId && x.activo && x.tienda) : null;
@@ -5225,9 +5598,16 @@ function chatEnviar_(d) {
     c = upsert_('Chats', { telefono: tel, nombre: nombre, clienteId: cli ? cli.id : '', clave: Utilities.getUuid().replace(/-/g, ''), productoId: '', producto: '',
       ultimo: f, ultimoTexto: '', deCliente: true, sinLeer: 0, creado: f });
   }
-  upsert_('Mensajes', { chatId: c.id, de: 'cliente', texto: texto, usuarioId: '', fecha: f });
+  // Referencia de lo que pregunta (producto o cotización): va al inicio del mensaje entre ⟦ ⟧ y la app la muestra como etiqueta
+  let ref = '';
+  if (prod && d.ref) ref = '🛍️ ' + prod.nombre + ' · ' + money_(prod.precio, cfg);
+  const ped = d.pedidoId ? rows_('Pedidos').find(x => x.id === d.pedidoId && tel8_(x.telefono) && tel8_(x.telefono) === tel8_(c.telefono)) : null;
+  const esDis = ped && parseJ_(ped.cotiza, {}).personal;
+  if (ped && d.ref) ref = (esDis ? '✨ Cotización de diseño ' : ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? '💐 Cotización de ramo ' : '🧾 Pedido ') + ped.numero + (ped.estado === 'cotizar' ? ' · esperando precio' : ' · ' + money_(ped.total, cfg));
+  upsert_('Mensajes', { chatId: c.id, de: 'cliente', texto: (ref ? '⟦' + ref + '⟧' : '') + texto, usuarioId: '', fecha: f });
   const upd = { id: c.id, ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: true, sinLeer: (Number(c.sinLeer) || 0) + 1 };
   if (prod) { upd.productoId = prod.id; upd.producto = prod.nombre; }
+  else if (ped) { upd.productoId = ''; upd.producto = (esDis ? 'Diseño ' : ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? 'Cotización ' : 'Pedido ') + ped.numero; }
   c = upsert_('Chats', upd);
   const cs = CacheService.getScriptCache(), nid = NEG ? NEG.id : '', k1 = 'CM_' + nid + String(d.telefono || d.clave || '').replace(/[^0-9a-z]/gi, '').slice(-12), k2 = 'CN_' + nid;
   cs.put(k1, String(Number(cs.get(k1) || 0) + 1), 3600); cs.put(k2, String(Number(cs.get(k2) || 0) + 1), 3600);
@@ -5303,7 +5683,7 @@ function misPedidos_(d) {
   const pm = d.historial || l.some(p => p.estado === 'nuevo') ? porId_(rows_('Productos')) : {};
   return l.map(p => { const its = parseJ_(p.items, []), o = { id: p.id, numero: p.numero, fecha: p.fecha, estado: p.estado, total: p.total, entrega: p.entrega, pago: p.pago, pagoEstado: p.pagoEstado || '', items: its.length };
       // Solo un pedido que el cliente todavía puede cambiar lleva sus productos y su versión
-      if (EST_RAMO.indexOf(p.estado) >= 0 || p.cotiza) { o.ramo = true; o.presupuesto = Number(p.presupuesto) || 0; o.envio = p.envio; o.cotiza = parseJ_(p.cotiza, null); o.flores = its.filter(i => i.tipo !== 'ramo').map(i => cantTxt_(i.cantidad) + ' ' + String(i.nombre).replace(/ \(([^()]*)\)$/, (m, x) => ' ' + x.replace(/[^,:]+: /g, ''))); }
+      if (EST_RAMO.indexOf(p.estado) >= 0 || p.cotiza) { o.ramo = true; o.presupuesto = Number(p.presupuesto) || 0; o.envio = p.envio; o.cotiza = parseJ_(p.cotiza, null); if (o.cotiza && o.cotiza.personal) { o.personal = true; o.desc = o.cotiza.desc; o.cat = o.cotiza.cat; o.cant = o.cotiza.cant; } o.flores = o.personal ? [] : its.filter(i => i.tipo !== 'ramo').map(i => cantTxt_(i.cantidad) + ' ' + String(i.nombre).replace(/ \(([^()]*)\)$/, (m, x) => ' ' + x.replace(/[^,:]+: /g, ''))); }
       if (!bloqueoCliente_(p)) { o.editable = true; o.version = verPedido_(p); o.lineas = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
       // Historial: lo que el cliente pidió en cada pedido
       if (d.historial) { o.subtotal = p.subtotal; o.envio = p.envio; o.detalle = its.map(i => ({ id: i.productoId || '', nombre: i.nombre, opcion: opcionLinea_(i, pm), cantidad: i.cantidad, precio: i.precio, normal: Number(i.normal) || 0, total: i.total })); }
@@ -6004,6 +6384,8 @@ function fecha10_(v) {
   return '';
 }
 const esPub_ = g => String(g.tipo || '').trim().toLowerCase() === 'publicidad';
+// Vendedores a los que se aplica una publicidad (códigos v-… separados por coma); su costo se reparte entre ellos
+const vendsDe_ = g => String(g.vendedor || '').split(',').map(x => x.trim()).filter(Boolean);
 function campanas_() {
   // Antes se exigía «2026-10-25» exacto: si Sheets guardaba la fecha con hora, la publicidad no aparecía en ninguna parte
   // Ninguna publicidad se pierde: si no se entiende su fecha de inicio, se usa la del gasto, la de registro o la de hoy
@@ -6026,15 +6408,33 @@ function panelVendedores_() {
   let filas = []; try { filas = visitasFilas_(60000); } catch (e) {}
   const dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)), org = origenesLic_(lics), pagos = mRows_('PagosLic');
   const pagoDe = {}; pagos.forEach(p => { pagoDe[p.negocioId] = r2_((pagoDe[p.negocioId] || 0) + (Number(p.monto) || 0)); });
-  return { vendedores: vs.map(v => {
+  const camps = campanas_();
+  return { campanas: camps.map(c => ({ id: c.id, nombre: c.nombre, plataforma: c.plataforma, desde: c.desde, hasta: c.hasta, monto: Number(c.monto) || 0, vendedores: vendsDe_(c) })),
+    vendedores: vs.map(v => {
     const f = filas.filter(x => x.origen === v.codigo), u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
     const negs = lics.filter(l => (org[l.id] || {}).canal === v.codigo).map(l => {
-      const ln = licNegocio_(l), e = esColab_(l) ? 'colaborador' : ln.estado === 'completa' ? 'activa' : ln.estado;
-      return { id: l.id, negocio: l.negocio, giro: l.giro, estado: e, dia: diaPrueba_(l), registro: String(l.registro).slice(0, 10), pagado: pagoDe[l.id] || 0 };
+      const ln = licNegocio_(l), e = esColab_(l) ? 'colaborador' : ln.estado === 'completa' ? 'activa' : ln.estado, c = campanaDe_(l, camps, v.codigo);
+      return { id: l.id, negocio: l.negocio, giro: l.giro, estado: e, dia: diaPrueba_(l), registro: String(l.registro).slice(0, 10), pagado: pagoDe[l.id] || 0, pub: c ? c.id : '' };
     }).sort((a, b) => a.registro < b.registro ? 1 : -1);
+    // Publicidad aplicada a este vendedor: su parte del costo (repartido entre los vendedores ligados) y lo que pagaron los clientes que trajo con ella
+    const pubs = camps.filter(c => vendsDe_(c).indexOf(v.codigo) >= 0).map(c => {
+      const n = vendsDe_(c).length, ns = negs.filter(x => x.pub === c.id);
+      return { id: c.id, nombre: c.nombre, plataforma: c.plataforma, desde: c.desde, hasta: c.hasta, monto: Number(c.monto) || 0, entre: n, parte: r2_((Number(c.monto) || 0) / n),
+        registros: ns.length, pagado: r2_(ns.reduce((a, x) => a + x.pagado, 0)), enCurso: !c.hasta || c.hasta >= hoy_() };
+    });
+    const pagado = r2_(negs.reduce((a, n) => a + n.pagado, 0)), invertido = r2_(pubs.reduce((a, p) => a + p.parte, 0));
     return { codigo: v.codigo, nombre: v.nombre, whatsapp: v.whatsapp || '', creado: v.creado || '', visitas: f.length, personas: Object.keys(u).length, registros: negs.length,
-      compraron: negs.filter(n => n.pagado > 0 || n.estado === 'activa').length, pagado: r2_(negs.reduce((a, n) => a + n.pagado, 0)), negocios: negs };
+      compraron: negs.filter(n => n.pagado > 0 || n.estado === 'activa').length, pagado: pagado, negocios: negs,
+      publicidad: pubs, invertido: invertido, recuperado: r2_(pubs.reduce((a, p) => a + p.pagado, 0)), neto: r2_(pagado - invertido) };
   }) };
+}
+// Liga o quita un vendedor de una publicidad ya registrada (la misma publicidad puede ser de varios vendedores)
+function panelVendedorLigar_(d) {
+  if (!vendedores_().some(v => v.codigo === d.codigo)) throw new Error('Ese vendedor no existe');
+  const g = mRows_('GastosPanel').find(x => x.id === d.id && esPub_(x) && !esSi_(x.anulado)); if (!g) throw new Error('Esa publicidad no existe');
+  const l = vendsDe_(g).filter(c => c !== d.codigo); if (d.ligar) l.push(d.codigo);
+  mSet_('GastosPanel', g, { vendedor: l.join(',') });
+  return panelVendedores_();
 }
 function panelVendedorGuardar_(d) {
   const l = vendedores_(), nombre = txt_(d.nombre, 60), wa = String(d.whatsapp || '').replace(/\D/g, '').slice(0, 15);
@@ -6075,8 +6475,11 @@ function campanaDe_(l, camps, canal) {
   if (l.llegoPor === 'directo') return null;
   if (l.llegoPor) { const c = camps.find(x => x.id === l.llegoPor); if (c) return c; }
   const dia = fecha10_(l.registro), hoy = hoy_(), act = camps.filter(c => dia >= c.desde && dia <= (c.hasta || hoy));
-  if (canal && SIN_CANAL.indexOf(canal) < 0) return act.find(c => canalDePub_(c.plataforma, canal)) || null;
-  return act[0] || null;
+  // Publicidad ligada a vendedores: solo cuenta a quien llegó por el enlace de uno de ellos (y la de ellos va primero)
+  if (/^v-/.test(String(canal || ''))) return act.find(c => vendsDe_(c).indexOf(canal) >= 0) || null;
+  const gen = act.filter(c => !vendsDe_(c).length);
+  if (canal && SIN_CANAL.indexOf(canal) < 0) return gen.find(c => canalDePub_(c.plataforma, canal)) || null;
+  return gen[0] || null;
 }
 function resumenCampanas_() {
   const camps = campanas_(), lics = mRows_('Licencias').filter(l => String(l.estado).toLowerCase() !== 'duplicada'), pagos = mRows_('PagosLic');
@@ -6108,8 +6511,8 @@ function panelGastos_() {
   const porMes = {}; todos.forEach(g => { const m = fecha10_(g.fecha).slice(0, 7); porMes[m] = r2_((porMes[m] || 0) + (Number(g.monto) || 0)); });
   return { campanas: rc.lista.map(c => ({ id: c.id, fecha: c.fecha, plataforma: c.plataforma, nombre: c.nombre, desde: c.desde, hasta: c.hasta, nota: c.nota, moneda: c.moneda,
       montoOrig: Number(c.montoOrig) || 0, tasa: Number(c.tasa) || 0, monto: c.monto, registros: c.registros, activaron: c.activaron, pagado: c.pagado, recuperacion: c.recuperacion,
-      costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso })),
-    otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_(), version: VERSION };
+      costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso, vendedores: vendsDe_(c) })),
+    vendLista: vendedores_().map(v => ({ codigo: v.codigo, nombre: v.nombre })), otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_(), version: VERSION };
 }
 function panelGastoGuardar_(d) {
   const tipo = d.tipo === 'publicidad' ? 'publicidad' : 'otro';
@@ -6124,7 +6527,8 @@ function panelGastoGuardar_(d) {
   const desde = tipo === 'publicidad' ? (/^\d{4}-\d{2}-\d{2}$/.test(String(d.desde || '')) ? d.desde : fecha) : '';
   const hasta = tipo === 'publicidad' && /^\d{4}-\d{2}-\d{2}$/.test(String(d.hasta || '')) ? d.hasta : '';
   if (hasta && hasta < desde) throw new Error('La fecha final no puede ser antes del inicio');
-  const rec = { id: d.id || mId_('P'), fecha: fecha, tipo: tipo, plataforma: tipo === 'publicidad' ? txt_(d.plataforma, 30) || 'Otra' : '', nombre: nombre, desde: desde, hasta: hasta,
+  const vcod = vendedores_().map(v => v.codigo), vend = tipo === 'publicidad' ? [...new Set([].concat(d.vendedores || []).map(String))].filter(c => vcod.indexOf(c) >= 0).join(',') : '';
+  const rec = { id: d.id || mId_('P'), fecha: fecha, tipo: tipo, vendedor: vend, plataforma: tipo === 'publicidad' ? txt_(d.plataforma, 30) || 'Otra' : '', nombre: nombre, desde: desde, hasta: hasta,
     moneda: moneda, montoOrig: orig, tasa: Math.round(tasa * 10000) / 10000, monto: r2_(orig * tasa), nota: txt_(d.nota, 120), anulado: '', creado: ahora_().replace('T', ' ') };
   const prev = d.id ? mRows_('GastosPanel').find(g => g.id === d.id) : null;
   if (prev) { delete rec.creado; mSet_('GastosPanel', prev, rec); } else mAppend_('GastosPanel', rec);
@@ -6174,28 +6578,34 @@ function slug_(x, n) { return String(x || '').toLowerCase().normalize('NFD').rep
 function visita_(d) {
   if (!MULTI_NEGOCIO) return false;
   const pagina = slug_(d.p, 30); if (!pagina) return false;
+  // Tienda en línea de un cliente: la página es «t-» + el código del negocio (debe existir). Lleva sus propios frenos.
+  const esT = pagina.indexOf('t-') === 0, pre = esT ? 'VT' : 'VI';
+  if (esT && !negocioPorId_(pagina.slice(2).toUpperCase())) return false;
   let vid = String(d.v || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24);
   if (vid.length < 6) vid = ''; // el contador de la página siempre manda uno de 8 o más
   const c = CacheService.getScriptCache(), k = 'VI_' + vid + '_' + pagina;
   if (vid && c.get(k)) return true;
-  const ahoraV = new Date(), min = 'VIM_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), n = Number(c.get(min) || 0);
+  const ahoraV = new Date(), min = pre + 'M_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), n = Number(c.get(min) || 0);
   if (n >= 150) return false; // freno contra abusos: máximo 150 visitas por minuto
-  const dia = 'VID_' + Utilities.formatDate(ahoraV, TZ, 'yyyyMMdd'), nd = Number(c.get(dia) || 0);
+  const dia = pre + 'D_' + Utilities.formatDate(ahoraV, TZ, 'yyyyMMdd'), nd = Number(c.get(dia) || 0);
   if (nd >= 5000) return false; // y 5,000 por día: un abuso no puede llenar la hoja maestra
-  const sinV = 'VIS_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), ns = Number(c.get(sinV) || 0);
+  const sinV = pre + 'S_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), ns = Number(c.get(sinV) || 0);
   if (!vid && ns >= 20) return false; // sin número de navegador, máximo 20 por minuto
-  c.put(min, String(n + 1), 120); c.put(dia, String(nd + 1), 90000); if (!vid) c.put(sinV, String(ns + 1), 120);
+  const diaT = 'VTN_' + pagina + '_' + Utilities.formatDate(ahoraV, TZ, 'yyyyMMdd'), nt = esT ? Number(c.get(diaT) || 0) : 0;
+  if (esT && nt >= 1500) return false; // y cada tienda, máximo 1,500 por día
+  c.put(min, String(n + 1), 120); c.put(dia, String(nd + 1), 90000); if (!vid) c.put(sinV, String(ns + 1), 120); if (esT) c.put(diaT, String(nt + 1), 90000);
   if (vid) c.put(k, '1', 1800);
   mAppend_('Visitas', { id: mId_('VI'), fecha: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), pagina: pagina, origen: slug_(d.o, 20) || 'directo',
     disp: d.d === 'pc' ? 'pc' : 'cel', vid: vid, ref: String(d.r || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 60) });
   return true;
 }
 // Lee solo las columnas fecha, página, origen, disp, vid y ref de las últimas filas (rápido aunque la hoja crezca)
-function visitasFilas_(maxFilas) {
+// Sin «tiendas» devuelve las visitas a las páginas de Molina; con «tiendas» = true, solo las de las tiendas en línea de los clientes (página «t-…»)
+function visitasFilas_(maxFilas, tiendas) {
   const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 2) return [];
   const h = SCHEMA_M.Visitas, cuantas = Math.min(n - 1, maxFilas || 60000), ini = n - cuantas + 1;
   return s.getRange(ini, 2, cuantas, 6).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]), ref: String(r[5] || '') }))
-    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha));
+    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha) && (x.pagina.indexOf('t-') === 0) === !!tiendas);
 }
 function diaMenos_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
 // Para la tarjeta del resumen: hoy y últimos 7 días
@@ -6237,20 +6647,68 @@ function panelVisitas_(d) {
   try { lock_(() => borrarVisitasViejas_()); } catch (e) {} // borra con candado (la pantalla de visitas ya no lo toma)
   const dia = String((d && d.dia) || '');
   if (/^\d{4}-\d{2}-\d{2}$/.test(dia) && dia <= hoy_() && dia >= diaMenos_(VISITA_DIAS - 1)) return panelVisitasDia_(dia);
-  const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
-  const hoy = hoy_(), desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
-  const todas = visitasFilas_(), f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
+  // Rango de fechas a elección (desde–hasta, dentro de los 180 días que se guardan); si no, los últimos 7, 30 o 90 días
+  const hoy = hoy_(), F = /^\d{4}-\d{2}-\d{2}$/, minimo = diaMenos_(VISITA_DIAS - 1);
+  let rango = null;
+  if (d && F.test(String(d.desde || '')) && F.test(String(d.hasta || ''))) {
+    let a = String(d.desde), b = String(d.hasta); if (a > b) { const t = a; a = b; b = t; }
+    if (a < minimo) a = minimo; if (b > hoy) b = hoy;
+    if (a <= b) rango = { a: a, b: b };
+  }
+  const diasEntre = (a, b) => { const p = a.split('-').map(Number), q = b.split('-').map(Number); return Math.round((Date.UTC(q[0], q[1] - 1, q[2]) - Date.UTC(p[0], p[1] - 1, p[2])) / 86400000); };
+  const dias = rango ? diasEntre(rango.a, rango.b) + 1 : [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
+  const hasta = rango ? rango.b : hoy, desde = rango ? rango.a : diaMenos_(dias - 1), antes = diaMas_(desde, -dias);
+  const todas = visitasFilas_(), f = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= desde && k <= hasta; }), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
   const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
   const contar = (l, campo) => { const o = {}; l.forEach(x => { const k = x[campo] || 'directo'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n); };
   // Barras: por día (7 y 30 días) o por semana (90 días)
   const barras = [];
-  if (dias <= 30) { for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i), l = f.filter(x => x.fecha.slice(0, 10) === k); barras.push({ k: k, n: l.length, u: unicos(l) }); } }
+  if (rango && dias <= 31) { for (let i = 0; i < dias; i++) { const k = diaMas_(desde, i), l = f.filter(x => x.fecha.slice(0, 10) === k); barras.push({ k: k, n: l.length, u: unicos(l) }); } }
+  else if (rango) { for (let a = desde; a <= hasta; a = diaMas_(a, 7)) { const b = diaMas_(a, 6) > hasta ? hasta : diaMas_(a, 6), l = f.filter(x => { const k = x.fecha.slice(0, 10); return k >= a && k <= b; }); barras.push({ k: a, n: l.length, u: unicos(l), semana: true }); } }
+  else if (dias <= 30) { for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i), l = f.filter(x => x.fecha.slice(0, 10) === k); barras.push({ k: k, n: l.length, u: unicos(l) }); } }
   else { for (let w = 12; w >= 0; w--) { const a = diaMenos_(w * 7 + 6), b = diaMenos_(w * 7), l = f.filter(x => { const k = x.fecha.slice(0, 10); return k >= a && k <= b; }); if (b >= desde) barras.push({ k: a < desde ? desde : a, n: l.length, u: unicos(l), semana: true }); } }
   const porHora = new Array(24).fill(0); f.forEach(x => { const h = Number(x.fecha.slice(11, 13)); if (h >= 0 && h < 24) porHora[h]++; });
-  const regs = mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada' && String(l.registro).slice(0, 10) >= desde).length;
+  const regs = mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada' && String(l.registro).slice(0, 10) >= desde && String(l.registro).slice(0, 10) <= hasta).length;
   const cel = f.filter(x => x.disp !== 'pc').length;
-  return { dias: dias, desde: desde, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
+  return { dias: dias, desde: desde, hasta: hasta, rango: !!rango, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
     registros: regs, conversion: unicos(f) ? Math.round(regs * 1000 / unicos(f)) / 10 : 0, cel: f.length ? Math.round(cel * 100 / f.length) : 0,
-    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: diaMenos_(VISITA_DIAS - 1) };
+    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: minimo, tiendas: visitasTiendas_(desde, hasta) };
+}
+/* ----- Visitas a la tienda en línea de cada cliente -----
+ * La tienda (…/?tienda=CÓDIGO) manda la visita con página «t-código». El negocio las ve en «Mi tienda en línea» y Vic en el Panel. */
+function visTiendaPag_(id) { return 't-' + String(id || '').toLowerCase(); }
+// Panel: cada negocio con tienda (Plus, prueba o colaborador) y sus visitas desde un día; primero las más visitadas
+function visitasTiendas_(desde, hasta) {
+  const porPag = {};
+  try { visitasFilas_(60000, true).forEach(x => { const k = x.fecha.slice(0, 10); if (k >= desde && (!hasta || k <= hasta)) (porPag[x.pagina] = porPag[x.pagina] || []).push(x); }); } catch (e) {}
+  return mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada').map(l => {
+    const f = porPag[visTiendaPag_(l.id)] || [], u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
+    const est = licNegocio_(l).estado, plus = ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0 || esColab_(l) || est === 'prueba';
+    return { id: l.id, negocio: l.negocio, n: f.length, u: Object.keys(u).length, plus: plus, fuera: est === 'vencida' || est === 'bloqueada' };
+  }).filter(t => t.n > 0 || (t.plus && !t.fuera)).sort((a, b) => b.n - a.n || String(a.negocio).localeCompare(String(b.negocio)));
+}
+// Resumen de una tienda: hoy, ayer, el período y el anterior, por día, de dónde llegaron y celular/PC
+function visitasTienda_(id, dias) {
+  const pag = visTiendaPag_(id), hoy = hoy_(), ayer = diaMenos_(1), desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
+  const todas = visitasFilas_(60000, true).filter(x => x.pagina === pag);
+  const f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
+  const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha] = 1; }); return Object.keys(u).length; };
+  const o = {}; f.forEach(x => { const k = x.origen || 'directo'; o[k] = (o[k] || 0) + 1; });
+  const barras = [];
+  for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i); barras.push({ k: k, n: f.filter(x => x.fecha.slice(0, 10) === k).length }); }
+  return { dias: dias, desde: desde, hoy: hoy, hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, ayerN: todas.filter(x => x.fecha.slice(0, 10) === ayer).length,
+    total: f.length, unicos: unicos(f), anterior: prev.length, cel: f.length ? Math.round(f.filter(x => x.disp !== 'pc').length * 100 / f.length) : 0,
+    barras: barras, origen: Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n) };
+}
+// «Mi tienda en línea»: las visitas de la tienda de este negocio y los pedidos que entraron en el mismo período (solo el administrador)
+function tiendaVisitas_(u, d) {
+  if (u.rol !== 'admin') throw new Error('Solo el administrador ve las visitas de la tienda');
+  const per = String((d && d.dias) || '7'), hoy = hoy_(), dias = per === 'mes' ? Number(hoy.slice(8, 10)) : per === '30' ? 30 : 7;
+  const barras = []; if (!MULTI_NEGOCIO) for (let i = dias - 1; i >= 0; i--) barras.push({ k: diaMenos_(i), n: 0 });
+  const v = MULTI_NEGOCIO ? visitasTienda_(NEG.id, dias) // en una instalación de un solo negocio no hay contador: sale en cero
+    : { dias: dias, desde: diaMenos_(dias - 1), hoy: hoy, hoyN: 0, ayerN: 0, total: 0, unicos: 0, anterior: 0, cel: 0, barras: barras, origen: [] };
+  v.periodo = per === 'mes' ? 'mes' : String(dias);
+  v.pedidos = rows_('Pedidos').filter(p => String(p.fecha).slice(0, 10) >= v.desde).length;
+  return v;
 }
 
