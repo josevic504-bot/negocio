@@ -3030,7 +3030,7 @@ async function panelAuto() {
   if (!S.enPanel || !P.tok || !P.d || P.auto || document.hidden || (vis ? PILA.length > 0 || Date.now() - pnTecleo < 15000 : pnOcupado())) return;
   P.auto = true; pnAutoDesde = Date.now();
   try {
-    if (vis) { await (P.visDia ? panelVisitasDia(P.visDia, true) : ACC.panelVisitas({ dataset: { k: String(P.visDias || 7) } }, true)); P.auto = false; return; }
+    if (vis) { await (P.visDia ? panelVisitasDia(P.visDia, true) : ACC.panelVisitas({ dataset: P.visRango ? { desde: P.visRango.desde, hasta: P.visRango.hasta } : { k: String(P.visDias || 7) } }, true)); P.auto = false; return; }
     const d = await api('panelResumen', {}, true);
     if (JSON.stringify(d) !== JSON.stringify(P.d) && !pnOcupado()) { const y = window.scrollY; P.d = d; P.pl = d.plantillas || P.pl; panelPinta(); const e = $('#pn-esp'); if (e && P.esp) e.innerHTML = pnEspacioHTML(P.esp); window.scrollTo(0, y); }
   } catch (e) {}
@@ -3450,9 +3450,31 @@ const h12 = hhmm => { const h = Number(String(hhmm).slice(0, 2)), m = String(hhm
 const visLista = (l, total, fn) => l.length ? `<div class="list">${l.map(x => { const t = fn(x); return `<div class="li"><div class="av ${colorDe(t[0])}">${ic(t[1], 18)}</div><div class="tx"><b>${esc(t[0])}</b><small>${Math.round(x.n * 100 / total)} % de las visitas</small><div style="height:6px;border-radius:6px;background:var(--line);margin-top:6px;overflow:hidden"><i style="display:block;height:100%;width:${Math.max(3, Math.round(x.n * 100 / l[0].n))}%;background:var(--pri)"></i></div></div><div class="am n"><b>${x.n}</b></div></div>`; }).join('')}</div>` : '<div class="empty">Todavía no hay visitas en este período</div>';
 // Filtros de arriba: Hoy, Ayer, 7/30/90 días o un día del calendario
 const visChips = sel => {
-  const h = hoy(), a = addDias(h, -1), otro = typeof sel === 'string' && sel !== h && sel !== a;
+  const h = hoy(), a = addDias(h, -1), otro = typeof sel === 'string' && sel !== h && sel !== a, rg = sel && typeof sel === 'object' ? sel : null;
   const ch = [[`data-dia="${h}"`, 'Hoy', sel === h], [`data-dia="${a}"`, 'Ayer', sel === a], ...[7, 30, 90].map(n => [`data-k="${n}"`, n + ' días', sel === n])];
-  return `<div class="chips wrap" style="margin-bottom:10px">${ch.map(x => `<button class="chip ${x[2] ? 'on' : ''}" data-a="panelVisitas" ${x[0]}>${x[1]}</button>`).join('')}<label class="chip ${otro ? 'on' : ''}" style="position:relative">${ic('cal', 16)} ${otro ? esc(fFechaC(sel).replace(/ (de )?\d{4}$/, '')) : 'Elegir día'}<input type="date" id="vis-dia" min="${esc(P.visMin || '')}" max="${h}" value="${typeof sel === 'string' ? sel : ''}" aria-label="Elegir un día" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0"></label></div>`;
+  return `<div class="chips wrap" style="margin-bottom:10px">${ch.map(x => `<button class="chip ${x[2] ? 'on' : ''}" data-a="panelVisitas" ${x[0]}>${x[1]}</button>`).join('')}<button class="chip ${rg ? 'on' : ''}" data-a="panelVisRango">${ic('cal', 16)} ${rg ? esc(visRangoTxt(rg.desde, rg.hasta)) : 'Rango de fechas'}</button><label class="chip ${otro ? 'on' : ''}" style="position:relative">${ic('cal', 16)} ${otro ? esc(fFechaC(sel).replace(/ (de )?\d{4}$/, '')) : 'Elegir día'}<input type="date" id="vis-dia" min="${esc(P.visMin || '')}" max="${h}" value="${typeof sel === 'string' ? sel : ''}" aria-label="Elegir un día" style="position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;border:0;padding:0"></label></div>`;
+};
+// «3 – 9 nov» · «28 oct – 9 nov» (sin el año)
+const visRangoTxt = (a, b) => { const f = d => fFechaC(d).replace(/ (de )?\d{4}$/, '').replace(/\.$/, ''), A = f(a), B = f(b); return a === b ? A : a.slice(0, 7) === b.slice(0, 7) ? Number(a.slice(8)) + ' – ' + B : A + ' – ' + B; };
+// Elegir un rango de fechas (desde–hasta) para las visitas
+ACC.panelVisRango = () => {
+  const h = hoy(), min = P.visMin || addDias(h, -179), r = P.visRango || { desde: addDias(h, -6), hasta: h };
+  const mes1 = h.slice(0, 8) + '01', pm = addDias(mes1, -1), pm1 = pm.slice(0, 8) + '01', dow = (parseLocal(h).getDay() + 6) % 7, lun = addDias(h, -dow);
+  const rap = [['Esta semana', lun, h], ['Semana pasada', addDias(lun, -7), addDias(lun, -1)], ['Este mes', mes1, h], ['Mes pasado', pm1, pm]].filter(x => x[2] >= min);
+  const hj = hoja({ titulo: 'Rango de fechas', cls: 'chica', html: `<p class="h" style="margin:0 0 10px">Elige desde qué día hasta qué día quieres ver las visitas. Se guardan los últimos 180 días.</p>
+    <div class="chips wrap" style="margin-bottom:12px">${rap.map((x, i) => `<button type="button" class="chip" data-rr="${i}">${x[0]}</button>`).join('')}</div>
+    <div class="f2"><label class="fld"><span>Desde</span><input type="date" id="vr-a" min="${esc(min)}" max="${h}" value="${esc(r.desde)}"></label><label class="fld"><span>Hasta</span><input type="date" id="vr-b" min="${esc(min)}" max="${h}" value="${esc(r.hasta)}"></label></div>
+    <p class="h" id="vr-n" style="margin:8px 0 0;font-size:12.5px"></p>` });
+  const A = $('#vr-a', hj.el), B = $('#vr-b', hj.el);
+  const cuenta = () => { const a = A.value, b = B.value; $('#vr-n', hj.el).textContent = a && b ? (a > b ? 'La fecha «Desde» va antes que «Hasta»: las intercambio al ver.' : (Math.round((parseLocal(b) - parseLocal(a)) / 86400000) + 1) + ' día(s): ' + visRangoTxt(a, b)) : ''; };
+  A.addEventListener('change', cuenta); B.addEventListener('change', cuenta); cuenta();
+  hj.el.addEventListener('click', e => { const q = e.target.closest('[data-rr]'); if (!q) return; const x = rap[+q.dataset.rr]; A.value = x[1] < min ? min : x[1]; B.value = x[2]; cuenta(); });
+  hj.botones([{ t: 'Cancelar', fn: () => hj.cerrar() }, { t: 'Ver visitas', cls: 'pri', fn: async () => {
+    let a = A.value, b = B.value; if (!a || !b) throw new Error('Elige las dos fechas');
+    if (a > b) { const t = a; a = b; b = t; }
+    hj.cerrar(); if (a === b) return panelVisitasDia(a);
+    return ACC.panelVisitas({ dataset: { desde: a, hasta: b } });
+  } }]);
 };
 function visChipsEventos() {
   const i = $('#vis-dia'); if (!i) return;
@@ -3464,24 +3486,29 @@ ACC.panelVisitas = async (el, quiet) => {
   quiet = quiet === true; // los botones mandan el evento del toque como segundo dato: eso no es «automática»
   const ds = (el && el.dataset) || {};
   if (ds.dia) return panelVisitasDia(ds.dia);
-  const dias = Number(ds.k || P.visDias || 7), y = window.scrollY;
-  if (!quiet) { P.visDia = ''; P.visDias = dias; panelCab('Visitas', true); $('#main').innerHTML = '<div class="empty">Cargando…</div>'; }
-  const v = await api('panelVisitas', { dias }, !!quiet), vj = JSON.stringify(v);
-  if (quiet && (!$('#vis-dia') || PILA.length || P.visDia || P.visDias !== dias || vj === P.visJ)) return;
+  const rg = ds.desde && ds.hasta ? { desde: ds.desde, hasta: ds.hasta } : !ds.k && P.visRango ? P.visRango : null; // rango elegido (desde–hasta) o los últimos N días
+  const y = window.scrollY, clave = rg ? rg.desde + '_' + rg.hasta : '';
+  let dias = rg ? 0 : Number(ds.k || P.visDias || 7);
+  if (!quiet) { P.visDia = ''; P.visRango = rg; if (!rg) P.visDias = dias; panelCab('Visitas', true); $('#main').innerHTML = '<div class="empty">Cargando…</div>'; }
+  const v = await api('panelVisitas', rg ? rg : { dias }, !!quiet), vj = JSON.stringify(v);
+  if (quiet && (!$('#vis-dia') || PILA.length || P.visDia || (P.visRango ? P.visRango.desde + '_' + P.visRango.hasta : '') !== clave || (!rg && P.visDias !== dias) || vj === P.visJ)) return;
+  if (rg && !v.rango) { P.visRango = null; toast('El servidor todavía se está actualizando. Prueba el rango de fechas en unos minutos.', 'error', 5000); return ACC.panelVisitas({ dataset: { k: String(P.visDias || 7) } }); }
   P.visJ = vj; if (v.min) P.visMin = v.min;
+  if (rg) dias = v.dias;
+  const nb = v.barras.length, junto = nb > 14, per = rg ? visRangoTxt(v.desde, v.hasta) : dias + ' días';
   const max = Math.max(1, ...v.barras.map(b => b.n)), maxH = Math.max(1, ...v.porHora);
   const camb = v.anterior ? Math.round((v.total - v.anterior) * 100 / v.anterior) : null;
-  const barLbl = b => b.semana ? fFechaC(b.k).replace(/ \d{4}$/, '') : dias === 7 ? ['D', 'L', 'M', 'M', 'J', 'V', 'S'][new Date(b.k + 'T12:00').getDay()] : String(Number(b.k.slice(8)));
-  const pico = v.porHora.indexOf(maxH), porDia = dias <= 30;
-  $('#main').innerHTML = `${visChips(dias)}
-    <div class="kpis k4"><div class="kpi" style="--k:var(--pri)"><small>Hoy</small><b>${v.hoyN}</b><i>visitas</i></div><div class="kpi" style="--k:var(--info)"><small>${dias} días</small><b>${v.total}</b><i>${camb === null ? 'sin período anterior' : (camb >= 0 ? '▲ ' : '▼ ') + Math.abs(camb) + ' % vs. ' + dias + ' días antes'}</i></div><div class="kpi" style="--k:#00b56e"><small>Personas distintas</small><b>${v.unicos}</b><i>celular ${v.cel} % · PC ${100 - v.cel} %</i></div><div class="kpi" style="--k:var(--warn)"><small>Se registraron</small><b>${v.registros}</b><i>${v.unicos ? v.conversion + ' % de las personas' : 'pruebas gratis nuevas'}</i></div></div>
+  const barLbl = b => b.semana ? fFechaC(b.k).replace(/ \d{4}$/, '') : nb <= 7 ? ['D', 'L', 'M', 'M', 'J', 'V', 'S'][new Date(b.k + 'T12:00').getDay()] + (rg ? ' ' + Number(b.k.slice(8)) : '') : String(Number(b.k.slice(8)));
+  const pico = v.porHora.indexOf(maxH), porDia = !(v.barras[0] || {}).semana;
+  $('#main').innerHTML = `${visChips(rg || dias)}
+    <div class="kpis k4">${rg ? `<div class="kpi" style="--k:var(--pri)"><small>Promedio por día</small><b>${Math.round(v.total * 10 / Math.max(1, dias)) / 10}</b><i>en ${dias} días</i></div>` : `<div class="kpi" style="--k:var(--pri)"><small>Hoy</small><b>${v.hoyN}</b><i>visitas</i></div>`}<div class="kpi" style="--k:var(--info)"><small>${esc(per)}</small><b>${v.total}</b><i>${camb === null ? 'sin período anterior' : (camb >= 0 ? '▲ ' : '▼ ') + Math.abs(camb) + ' % vs. ' + dias + ' días antes'}</i></div><div class="kpi" style="--k:#00b56e"><small>Personas distintas</small><b>${v.unicos}</b><i>celular ${v.cel} % · PC ${100 - v.cel} %</i></div><div class="kpi" style="--k:var(--warn)"><small>Se registraron</small><b>${v.registros}</b><i>${v.unicos ? v.conversion + ' % de las personas' : 'pruebas gratis nuevas'}</i></div></div>
     <div class="sec-t"><h3>${porDia ? 'Por día' : 'Por semana'}</h3><a>${v.total ? 'más visitas a las ' + (pico % 12 || 12) + (pico < 12 ? ' a. m.' : ' p. m.') : ''}</a></div>
-    <div class="panel" style="padding:14px 12px 10px"><div style="display:flex;align-items:flex-end;gap:${dias === 30 ? 2 : 6}px;height:110px">${v.barras.map(b => `<div ${porDia ? `data-a="panelVisitas" data-dia="${esc(b.k)}" role="button" aria-label="Ver el ${esc(fFechaL(b.k))}"` : ''} title="${esc(b.k)}: ${b.n} visitas, ${b.u} personas" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;${porDia ? 'cursor:pointer' : ''}">${dias !== 30 && b.n ? `<small style="font-size:10px;color:var(--mut)">${b.n}</small>` : ''}<i style="display:block;width:100%;height:${b.n ? Math.max(4, Math.round(b.n * 100 / max)) : 2}%;border-radius:6px 6px 2px 2px;background:${b.k === v.hoy ? 'var(--pri)' : 'color-mix(in srgb, var(--pri) 45%, transparent)'}"></i></div>`).join('')}</div>
-      <div style="display:flex;gap:${dias === 30 ? 2 : 6}px;margin-top:4px">${v.barras.map((b, i) => `<small style="flex:1;text-align:center;font-size:10px;color:var(--mut)">${dias === 30 && i % 5 ? '' : barLbl(b)}</small>`).join('')}</div>
+    <div class="panel" style="padding:14px 12px 10px"><div style="display:flex;align-items:flex-end;gap:${junto ? 2 : 6}px;height:110px">${v.barras.map(b => `<div ${porDia ? `data-a="panelVisitas" data-dia="${esc(b.k)}" role="button" aria-label="Ver el ${esc(fFechaL(b.k))}"` : ''} title="${esc(b.k)}: ${b.n} visitas, ${b.u} personas" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;${porDia ? 'cursor:pointer' : ''}">${!junto && b.n ? `<small style="font-size:10px;color:var(--mut)">${b.n}</small>` : ''}<i style="display:block;width:100%;height:${b.n ? Math.max(4, Math.round(b.n * 100 / max)) : 2}%;border-radius:6px 6px 2px 2px;background:${b.k === v.hoy ? 'var(--pri)' : 'color-mix(in srgb, var(--pri) 45%, transparent)'}"></i></div>`).join('')}</div>
+      <div style="display:flex;gap:${junto ? 2 : 6}px;margin-top:4px">${v.barras.map((b, i) => `<small style="flex:1;text-align:center;font-size:10px;color:var(--mut);white-space:nowrap">${junto && i % 5 ? '' : barLbl(b)}</small>`).join('')}</div>
       ${porDia ? `<p class="h" style="margin:8px 0 0;font-size:12px">${ic('info', 14)} Toca una barra para ver ese día: de dónde vinieron y cada visita.</p>` : ''}</div>
     <div class="sec-t"><h3>De dónde vienen</h3></div>${visLista(v.origen, v.total, x => visOri(x.k))}
     <div class="sec-t"><h3>Qué página vieron</h3></div>${visLista(v.paginas, v.total, x => [visPag(x.k), 'doc'])}
-    ${v.tiendas ? `<div class="sec-t"><h3>Tiendas de tus clientes</h3><a>${v.tiendas.filter(t => !t.n).length ? v.tiendas.filter(t => !t.n).length + ' sin visitas' : dias + ' días'}</a></div>
+    ${v.tiendas ? `<div class="sec-t"><h3>Tiendas de tus clientes</h3><a>${v.tiendas.filter(t => !t.n).length ? v.tiendas.filter(t => !t.n).length + ' sin visitas' : esc(per)}</a></div>
     ${v.tiendas.length ? `<div class="list">${v.tiendas.map(t => `<div class="li" data-a="panelVer" data-id="${esc(t.id)}"><div class="av ${colorDe(t.negocio)}">${esc(iniciales(t.negocio))}</div><div class="tx"><b>${esc(t.negocio)}</b><small>${t.n ? t.u + ' persona' + (t.u === 1 ? '' : 's') + ' distinta' + (t.u === 1 ? '' : 's') : '<span style="color:var(--bad)">Nadie entró a su tienda en estos días</span>'}</small></div><div class="am n"><b>${t.n}</b></div></div>`).join('')}</div>` : '<div class="empty">Ningún cliente tiene tienda en línea todavía</div>'}
     <p class="h" style="margin:8px 2px 0;font-size:12px">Visitas a la tienda en línea de cada negocio (no se suman a tus visitas de arriba). Cada negocio ve las suyas en «Mi tienda en línea».</p>` : ''}
     <button class="btn" style="width:100%;margin-top:14px" data-a="panelEnlaces">${ic('link', 16)} Tus enlaces para compartir</button>
@@ -3504,7 +3531,7 @@ async function panelVisitasDia(dia, quiet) {
   $('#main').innerHTML = `${visChips(dia)}
     <div class="panel" style="display:flex;align-items:center;gap:6px;padding:8px;margin-bottom:12px"><button class="btn icon ghost" data-a="panelVisitas" data-dia="${addDias(dia, -1)}" ${P.visMin && dia <= P.visMin ? 'disabled' : ''} aria-label="Día anterior">${ic('left')}</button><div style="flex:1;text-align:center;line-height:1.25"><b style="font-size:16px">${esc(cap(fFechaL(dia)))}</b><small class="mut" style="display:block">${cuando}</small></div><button class="btn icon ghost" data-a="panelVisitas" data-dia="${addDias(dia, 1)}" ${dia >= h ? 'disabled' : ''} aria-label="Día siguiente">${ic('right')}</button></div>
     <div class="kpis k4"><div class="kpi" style="--k:var(--pri)"><small>Visitas</small><b>${v.total}</b><i>${camb === null ? (v.total ? 'el día anterior no hubo' : 'ninguna este día') : (camb >= 0 ? '▲ ' : '▼ ') + Math.abs(camb) + ' % vs. el día anterior'}</i></div><div class="kpi" style="--k:#00b56e"><small>Personas distintas</small><b>${v.unicos}</b><i>${v.total ? 'celular ' + v.cel + ' % · PC ' + (100 - v.cel) + ' %' : '—'}</i></div><div class="kpi" style="--k:var(--warn)"><small>Se registraron</small><b>${v.registros}</b><i>${v.unicos ? v.conversion + ' % de las personas' : 'pruebas gratis nuevas'}</i></div><div class="kpi" style="--k:var(--info)"><small>Hora pico</small><b>${pico ? h12(pico.k + ':00').replace(':00', '') : '—'}</b><i>${pico ? pico.n + ' visita' + (pico.n === 1 ? '' : 's') + ' en esa hora' : 'sin visitas'}</i></div></div>
-    <div class="sec-t"><h3>Por hora</h3><a data-a="panelVisitas" data-k="${P.visDias || 7}">Ver ${P.visDias || 7} días</a></div>
+    <div class="sec-t"><h3>Por hora</h3>${P.visRango ? `<a data-a="panelVisitas" data-desde="${esc(P.visRango.desde)}" data-hasta="${esc(P.visRango.hasta)}">Ver ${esc(visRangoTxt(P.visRango.desde, P.visRango.hasta))}</a>` : `<a data-a="panelVisitas" data-k="${P.visDias || 7}">Ver ${P.visDias || 7} días</a>`}</div>
     <div class="panel" style="padding:14px 12px 10px"><div style="display:flex;align-items:flex-end;gap:2px;height:100px">${v.barras.map(b => `<div title="${h12(b.k + ':00')}: ${b.n} visitas, ${b.u} personas" style="flex:1;display:flex;flex-direction:column;justify-content:flex-end;height:100%"><i style="display:block;width:100%;height:${b.n ? Math.max(5, Math.round(b.n * 100 / maxB)) : 2}%;border-radius:4px 4px 1px 1px;background:${pico && b.k === pico.k ? 'var(--pri)' : 'color-mix(in srgb, var(--pri) 45%, transparent)'}"></i></div>`).join('')}</div>
       <div style="display:flex;gap:2px;margin-top:4px">${v.barras.map(b => `<small style="flex:1;text-align:center;font-size:10px;color:var(--mut);white-space:nowrap;overflow:visible">${hLbl(b.k)}</small>`).join('')}</div></div>
     <div class="sec-t"><h3>De dónde vienen</h3></div>${visLista(v.origen, v.total, x => visOri(x.k))}

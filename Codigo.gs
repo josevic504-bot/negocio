@@ -6342,29 +6342,40 @@ function panelVisitas_(d) {
   try { lock_(() => borrarVisitasViejas_()); } catch (e) {} // borra con candado (la pantalla de visitas ya no lo toma)
   const dia = String((d && d.dia) || '');
   if (/^\d{4}-\d{2}-\d{2}$/.test(dia) && dia <= hoy_() && dia >= diaMenos_(VISITA_DIAS - 1)) return panelVisitasDia_(dia);
-  const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
-  const hoy = hoy_(), desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
-  const todas = visitasFilas_(), f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
+  // Rango de fechas a elección (desde–hasta, dentro de los 180 días que se guardan); si no, los últimos 7, 30 o 90 días
+  const hoy = hoy_(), F = /^\d{4}-\d{2}-\d{2}$/, minimo = diaMenos_(VISITA_DIAS - 1);
+  let rango = null;
+  if (d && F.test(String(d.desde || '')) && F.test(String(d.hasta || ''))) {
+    let a = String(d.desde), b = String(d.hasta); if (a > b) { const t = a; a = b; b = t; }
+    if (a < minimo) a = minimo; if (b > hoy) b = hoy;
+    if (a <= b) rango = { a: a, b: b };
+  }
+  const diasEntre = (a, b) => { const p = a.split('-').map(Number), q = b.split('-').map(Number); return Math.round((Date.UTC(q[0], q[1] - 1, q[2]) - Date.UTC(p[0], p[1] - 1, p[2])) / 86400000); };
+  const dias = rango ? diasEntre(rango.a, rango.b) + 1 : [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 7;
+  const hasta = rango ? rango.b : hoy, desde = rango ? rango.a : diaMenos_(dias - 1), antes = diaMas_(desde, -dias);
+  const todas = visitasFilas_(), f = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= desde && k <= hasta; }), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
   const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
   const contar = (l, campo) => { const o = {}; l.forEach(x => { const k = x[campo] || 'directo'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n); };
   // Barras: por día (7 y 30 días) o por semana (90 días)
   const barras = [];
-  if (dias <= 30) { for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i), l = f.filter(x => x.fecha.slice(0, 10) === k); barras.push({ k: k, n: l.length, u: unicos(l) }); } }
+  if (rango && dias <= 31) { for (let i = 0; i < dias; i++) { const k = diaMas_(desde, i), l = f.filter(x => x.fecha.slice(0, 10) === k); barras.push({ k: k, n: l.length, u: unicos(l) }); } }
+  else if (rango) { for (let a = desde; a <= hasta; a = diaMas_(a, 7)) { const b = diaMas_(a, 6) > hasta ? hasta : diaMas_(a, 6), l = f.filter(x => { const k = x.fecha.slice(0, 10); return k >= a && k <= b; }); barras.push({ k: a, n: l.length, u: unicos(l), semana: true }); } }
+  else if (dias <= 30) { for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i), l = f.filter(x => x.fecha.slice(0, 10) === k); barras.push({ k: k, n: l.length, u: unicos(l) }); } }
   else { for (let w = 12; w >= 0; w--) { const a = diaMenos_(w * 7 + 6), b = diaMenos_(w * 7), l = f.filter(x => { const k = x.fecha.slice(0, 10); return k >= a && k <= b; }); if (b >= desde) barras.push({ k: a < desde ? desde : a, n: l.length, u: unicos(l), semana: true }); } }
   const porHora = new Array(24).fill(0); f.forEach(x => { const h = Number(x.fecha.slice(11, 13)); if (h >= 0 && h < 24) porHora[h]++; });
-  const regs = mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada' && String(l.registro).slice(0, 10) >= desde).length;
+  const regs = mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada' && String(l.registro).slice(0, 10) >= desde && String(l.registro).slice(0, 10) <= hasta).length;
   const cel = f.filter(x => x.disp !== 'pc').length;
-  return { dias: dias, desde: desde, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
+  return { dias: dias, desde: desde, hasta: hasta, rango: !!rango, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
     registros: regs, conversion: unicos(f) ? Math.round(regs * 1000 / unicos(f)) / 10 : 0, cel: f.length ? Math.round(cel * 100 / f.length) : 0,
-    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: diaMenos_(VISITA_DIAS - 1), tiendas: visitasTiendas_(desde) };
+    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: minimo, tiendas: visitasTiendas_(desde, hasta) };
 }
 /* ----- Visitas a la tienda en línea de cada cliente -----
  * La tienda (…/?tienda=CÓDIGO) manda la visita con página «t-código». El negocio las ve en «Mi tienda en línea» y Vic en el Panel. */
 function visTiendaPag_(id) { return 't-' + String(id || '').toLowerCase(); }
 // Panel: cada negocio con tienda (Plus, prueba o colaborador) y sus visitas desde un día; primero las más visitadas
-function visitasTiendas_(desde) {
+function visitasTiendas_(desde, hasta) {
   const porPag = {};
-  try { visitasFilas_(60000, true).forEach(x => { if (x.fecha.slice(0, 10) >= desde) (porPag[x.pagina] = porPag[x.pagina] || []).push(x); }); } catch (e) {}
+  try { visitasFilas_(60000, true).forEach(x => { const k = x.fecha.slice(0, 10); if (k >= desde && (!hasta || k <= hasta)) (porPag[x.pagina] = porPag[x.pagina] || []).push(x); }); } catch (e) {}
   return mRows_('Licencias').filter(l => !esEliminada_(l) && String(l.estado).toLowerCase() !== 'duplicada').map(l => {
     const f = porPag[visTiendaPag_(l.id)] || [], u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
     const est = licNegocio_(l).estado, plus = ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0 || esColab_(l) || est === 'prueba';
