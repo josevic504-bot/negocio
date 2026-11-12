@@ -494,12 +494,17 @@ function RECORDATORIOS_(ids) {
     const r = await db.cargar({ n: { [de]: ['Productos'], [a]: ['Productos'] } });
     const cats = Array.isArray(d.cats) ? d.cats.map(String) : null;
     const src = ((r.n[de] || {}).Productos || []).filter(p => activoP(p) && (!cats || cats.indexOf(String(p.categoria || '')) >= 0));
-    const ya = {}; ((r.n[a] || {}).Productos || []).forEach(p => { ya[String(p.nombre).trim().toLowerCase()] = 1; });
+    const ya = {}, cods = {}; ((r.n[a] || {}).Productos || []).forEach(p => { ya[String(p.nombre).trim().toLowerCase()] = 1; if (p.codigo) cods[String(p.codigo).toLowerCase()] = 1; });
     const nuevos = src.filter(p => !ya[String(p.nombre).trim().toLowerCase()]).slice(0, 1500), hoy = ahoraHN().replace(' ', 'T');
     const filas = [];
     for (let i = 0; i < nuevos.length; i += 6) {
       await Promise.all(nuevos.slice(i, i + 6).map(async p => {
-        const o = sinFila(p); o.id = rid('P'); o.creado = hoy; o.codigo = p.codigo || '';
+        // El código se copia solo si el destino no lo tiene ya (así no quedan dos productos con el mismo código)
+        const o = sinFila(p); o.id = rid('P'); o.creado = hoy; const cod = String(p.codigo || ''), ck = cod.toLowerCase();
+        // (los de ejemplo toman el siguiente EJ libre, para que el Panel los siga contando como ejemplo)
+        o.codigo = cod && !cods[ck] ? cod : '';
+        if (cod && !o.codigo && /^EJ\d/i.test(cod)) { let k = 0, c; do { k++; c = 'EJ' + String(k).padStart(3, '0'); } while (cods[c.toLowerCase()]); o.codigo = c; }
+        if (o.codigo) cods[o.codigo.toLowerCase()] = 1;
         if (!d.costos) { o.costo = 0; o.margen = 0; }
         if (!d.existencias) {
           o.stock = 0;
