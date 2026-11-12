@@ -24,9 +24,9 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.66';
+const VERSION = '1.9.67';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
-const ESQUEMA = VERSION + '-g5';
+const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
 /* PLAN PLUS (tienda en línea + fotos de productos)
  * Se activa aparte de la licencia: en la hoja «Licencias» pon «Sí» en la columna «plus»,
@@ -98,17 +98,19 @@ const SCHEMA = {
   Chats:          ['id','telefono','nombre','clienteId','clave','productoId','producto','ultimo','ultimoTexto','deCliente','sinLeer','creado'],
   Mensajes:       ['id','chatId','de','texto','usuarioId','fecha'],
   // Mesas (restaurante): la cuenta abierta de cada mesa. items en JSON: lo que pidió la mesa, cuánto ya salió a cocina y quién lo pidió
-  MesaCuentas:    ['id','mesa','zona','estado','personas','meseroId','items','total','nota','abierta','actualizado','cerrada','ventaIds','usuarioId'],
+  MesaCuentas:    ['id','mesa','zona','estado','personas','meseroId','items','total','nota','abierta','actualizado','cerrada','ventaIds','usuarioId','tipo','cliente','telefono','pedidoId'],
+  // Cocina: cada envío a cocina es una comanda (nueva → preparando → lista → entregada). items en JSON: { descripcion, cantidad, nota, quien }
+  Comandas:       ['id','cuentaId','tipo','mesa','zona','cliente','items','estado','meseroId','creada','actualizado','lista','usuarioId','pedidoId'],
   Config:         ['clave','valor']
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
-  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z', MesaCuentas:'MC' };
+  Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z', MesaCuentas:'MC', Comandas:'CM' };
 const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp','rinde','personas']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
-const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','cita','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta','lotes','mesero','zona','abierta','cerrada','ventaIds']);
-const ROLES = ['admin','cajero','bodega','mesero'];
+const TEXTO = new Set(['variantes','variante','marcados','lineas','padre','naturaleza','fotoFecha','tasaIsv','codigo','telefono','rtn','fecha','fechaGasto','creado','valor','mes','desde','hasta','actualizado','isv','numero','factura','usuario','clave','dia','inicio','fin','inventario','factura','fiscal','anulacion','marca','opciones','clave','ultimo','vence','pin','perfil','correo','incluye','caduca','promesa','cita','hora','serie','placa','equipo','mesa','cocina','servicio','nacimiento','control','proxima','avisado','chip','lote','entrega','aceptadaEl','contratoEl','actaEl','items','planPagos','condiciones','contrato','acta','lotes','mesero','zona','abierta','cerrada','ventaIds','creada','lista','pedidoId']);
+const ROLES = ['admin','cajero','bodega','mesero','cocina'];
 const METODOS = ['Efectivo','Tarjeta','Transferencia','Crédito'];
 const EST_PEDIDO = ['nuevo','confirmado','listo','entregado','cancelado'];
 // Floristería «Arma tu ramo»: cotizar (el cliente pidió precio) → cotizado (el negocio mandó el precio) → nuevo (el cliente aceptó)
@@ -121,7 +123,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaEnlacePago: '', tiendaTigo: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', mesas: '', mesasZonas: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', mesas: '', mesasZonas: '', tiempoPrep: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
   // Cotizaciones y contratos (servicios)
@@ -308,7 +310,7 @@ function route_(req) {
   if (a.indexOf('panel') === 0) { panelAuth_(req); if (a === 'panelSalir') d._tok = String(req.panel || ''); return PANEL_LECTURA.indexOf(a) >= 0 ? rutaPanel_(a, d) : lock_(() => rutaPanel_(a, d)); }
   const u = auth_(req.token);
   const res = rutaUsuario_(a, u, d, req);
-  return u.rol === 'cajero' || u.rol === 'mesero' ? sinCostos_(res) : res;
+  return ['cajero', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? sinCostos_(res) : res;
 }
 
 // Acciones del Panel que solo leen: no esperan ni frenan el candado que usan las ventas de todos los negocios
@@ -343,6 +345,8 @@ function rutaUsuario_(a, u, d, req) {
     case 'venta':           return lock_(() => venta_(u, d));
     case 'mesas':           return mesas_(u, d);
     case 'mesaAccion':      return lock_(() => mesaAccion_(u, d));
+    case 'cocina':          return cocina_(u, d);
+    case 'comandaAccion':   return lock_(() => comandaAccion_(u, d));
     case 'ventas':          return ventas_(u, d);
     case 'anularVenta':     return lock_(() => anularVenta_(u, d));
     case 'editarVenta':     return lock_(() => editarVenta_(u, d));
@@ -926,15 +930,15 @@ function bootstrap_(u, d) {
   if (u.rol === 'admin' && config_().sysLimpieza !== hoy_()) { try { lock_(() => limpiarFotos_()); } catch (e) {} }
   // Después de actualizar el sistema: agrega las columnas nuevas a las hojas de este negocio
   if (config_().sysVer !== ESQUEMA) { try { lock_(() => asegurarEncabezados_()); } catch (e) {} }
-  const sc = u.rol === 'bodega' || u.rol === 'mesero' ? {} : saldosClientes_();
-  const sp = u.rol === 'cajero' || u.rol === 'mesero' ? {} : saldosProveedores_();
+  const sc = ['bodega', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? {} : saldosClientes_();
+  const sp = ['cajero', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? {} : saldosProveedores_();
   const r = {
     usuario: publico_(u),
     config: config_(),
     usuarios: rows_('Usuarios').map(publico_),
     productos: rows_('Productos'),
-    clientes: u.rol === 'bodega' || u.rol === 'mesero' ? [] : rows_('Clientes').map(c => { c.saldo = sc[c.id] || 0; return c; }),
-    proveedores: u.rol === 'cajero' || u.rol === 'mesero' ? [] : rows_('Proveedores').map(p => { p.saldo = sp[p.id] || 0; return p; }),
+    clientes: ['bodega', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? [] : rows_('Clientes').map(c => { c.saldo = sc[c.id] || 0; return c; }),
+    proveedores: ['cajero', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? [] : rows_('Proveedores').map(p => { p.saldo = sp[p.id] || 0; return p; }),
     gastoCats: ['admin','cajero'].indexOf(u.rol) >= 0 ? catalogoGastos_() : [],
     giros: Object.keys(GIROS).map(k => ({ id: k, n: GIROS[k].n, cats: GIROS[k].cats })),
     licencia: licencia_(),
@@ -1818,7 +1822,7 @@ function zonasMesa_(cfg) {
   const l = Array.isArray(z) ? z.map(x => ({ z: txt_(x && x.z, 30), n: Math.max(0, Math.min(60, parseInt(x && x.n, 10) || 0)) })).filter(x => x.z && x.n) : [];
   return l.length ? l.slice(0, 8) : [{ z: 'Salón', n: 10 }];
 }
-function cuentaMesa_(c) { const o = Object.assign({}, c); o.items = parseJ_(c.items, []); o.ventaIds = String(c.ventaIds || '').split(',').filter(Boolean); return o; }
+function cuentaMesa_(c) { const o = Object.assign({}, c); o.items = parseJ_(c.items, []); o.ventaIds = String(c.ventaIds || '').split(',').filter(Boolean); if (c.pedidoId) { try { o.anticipo = anticipoDe_(c.pedidoId); } catch (e) {} } return o; }
 function cuentasMesaActivas_() { return rows_('MesaCuentas').filter(c => EST_MESA_ACT.indexOf(c.estado) >= 0); }
 function guardarCuentaMesa_(c, items, extra) {
   const l = items.filter(i => i.cantidad > 0.0004);
@@ -1834,15 +1838,22 @@ function meserosHoy_(soloId) {
   });
   return Object.keys(m).map(k => { m[k].total = r2_(m[k].total); return m[k]; }).sort((a, b) => b.total - a.total);
 }
+// Cuántas comandas de cada cuenta están en cocina (nueva o preparando) y cuántas ya están listas para llevar a la mesa
+function conCocina_(l) {
+  const m = {}; rows_('Comandas').forEach(k => { if (['nueva', 'preparando', 'lista'].indexOf(k.estado) < 0) return; const x = m[k.cuentaId] || (m[k.cuentaId] = { enCocina: 0, listas: 0, listo: [] }); if (k.estado === 'lista') { x.listas++; parseJ_(k.items, []).forEach(i => x.listo.push(i)); } else x.enCocina++; });
+  l.forEach(c => { c.cocina = m[c.id] || { enCocina: 0, listas: 0, listo: [] }; });
+  return l;
+}
 function mesasResumen_() {
-  const l = cuentasMesaActivas_(), ab = l.filter(c => c.estado !== 'pagada');
+  const todas = cuentasMesaActivas_(), l = todas.filter(c => !c.tipo || c.tipo === 'mesa'), ab = l.filter(c => c.estado !== 'pagada');
   return { ocupadas: ab.length, cuenta: l.filter(c => c.estado === 'cuenta').length, porLimpiar: l.filter(c => c.estado === 'pagada').length, abierto: r2_(ab.reduce((a, c) => a + (Number(c.total) || 0), 0)), total: zonasMesa_().reduce((a, z) => a + z.n, 0) };
 }
 function mesas_(u, d) {
   req_(u, ['admin', 'cajero', 'mesero']);
   if (!modOn_('mesas')) throw new Error('Las mesas no están activadas en este negocio');
-  const out = { zonas: zonasMesa_(), cuentas: cuentasMesaActivas_().map(cuentaMesa_), ahora: ahora_() };
+  const out = { zonas: zonasMesa_(), cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)), ahora: ahora_() };
   out.meseros = meserosHoy_(u.rol === 'mesero' ? u.id : '');
+  out.pedidos = rows_('Pedidos').filter(p => p.estado === 'nuevo' && p.entrega === 'mesa').map(p => ({ id: p.id, numero: p.numero, mesa: String(p.direccion || ''), nombre: p.nombre, fecha: p.fecha, total: p.total, nota: p.nota, items: parseJ_(p.items, []).map(i => ({ nombre: i.nombre, cantidad: i.cantidad, precio: i.precio })) }));
   return out;
 }
 function mesaAccion_(u, d) {
@@ -1852,6 +1863,22 @@ function mesaAccion_(u, d) {
   const ocupada = (mesa, menos) => cuentasMesaActivas_().find(c => c.mesa === mesa && c.id !== menos);
   const meseroValido = id => { const x = id ? rows_('Usuarios').find(y => y.id === id && y.activo) : null; return x ? x.id : ''; };
   let c = null;
+  if (op === 'pedido') { // pedido hecho desde el celular en la mesa (QR): el mesero lo acepta (va a cocina) o no
+    const p = rows_('Pedidos').find(x => x.id === d.pedidoId);
+    if (!p || p.entrega !== 'mesa') throw new Error('Ese pedido ya no existe');
+    if (p.estado !== 'nuevo') throw new Error('Este pedido ya se atendió');
+    if (d.ok) { const c2 = pedidoACocina_(u, p); upsert_('Pedidos', { id: p.id, estado: 'confirmado', actualizado: ahora_() }); return { cuenta: cuentaMesa_(rows_('MesaCuentas').find(x => x.id === c2.id)), cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) }; }
+    upsert_('Pedidos', { id: p.id, estado: 'cancelado', actualizado: ahora_(), nota: ((p.nota ? p.nota + ' · ' : '') + 'No aceptado en la mesa por ' + u.nombre + (d.motivo ? ': ' + txt_(d.motivo, 100) : '')).slice(-1000) });
+    return { cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) };
+  }
+  if (op === 'abrir' && (d.tipo === 'llevar' || d.tipo === 'domicilio')) { // pedido para llevar o a domicilio: una cuenta como la de una mesa, con el nombre del cliente
+    const cliente = txt_(d.cliente, 60); if (!cliente) throw new Error('Escribe el nombre del cliente');
+    const base = d.tipo === 'llevar' ? 'Llevar ' : 'Domicilio ', usados = cuentasMesaActivas_().filter(x => x.tipo === d.tipo).map(x => parseInt(String(x.mesa).replace(base, ''), 10) || 0);
+    let n = 1; while (usados.indexOf(n) >= 0) n++;
+    c = cuentaMesa_(upsert_('MesaCuentas', { mesa: base + n, zona: '', tipo: d.tipo, cliente: cliente, telefono: txt_(d.telefono, 20), estado: 'abierta', personas: 1, meseroId: u.rol === 'mesero' ? u.id : meseroValido(d.meseroId) || u.id,
+      items: '[]', total: 0, nota: txt_(d.nota, 160), abierta: ahora_(), actualizado: ahora_(), cerrada: '', ventaIds: '', usuarioId: u.id, pedidoId: '' }));
+    return { cuenta: c, cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) };
+  }
   if (op === 'abrir') {
     const mesa = txt_(d.mesa, 20); if (!mesa) throw new Error('Elige la mesa');
     const ya = ocupada(mesa);
@@ -1861,13 +1888,13 @@ function mesaAccion_(u, d) {
     c = cuentaMesa_(upsert_('MesaCuentas', { mesa: mesa, zona: txt_(d.zona, 30), estado: 'abierta', personas: personas,
       meseroId: u.rol === 'mesero' ? u.id : meseroValido(d.meseroId) || u.id, items: '[]', total: 0, nota: txt_(d.nota, 120), abierta: ahora_(), actualizado: ahora_(), cerrada: '', ventaIds: '', usuarioId: u.id }));
     if (Array.isArray(d.items) && d.items.length) { d = { id: c.id, items: d.items }; return mesaAgregar_(u, c, d); }
-    return { cuenta: c, cuentas: cuentasMesaActivas_().map(cuentaMesa_) };
+    return { cuenta: c, cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) };
   }
   const r = rows_('MesaCuentas').find(x => x.id === d.id);
   if (!r || EST_MESA_ACT.indexOf(r.estado) < 0) throw new Error('Esta cuenta ya no está abierta. Actualiza la pantalla de Mesas.');
   c = cuentaMesa_(r);
   const abierta = () => { if (c.estado === 'pagada') throw new Error('Esta mesa ya se cobró'); };
-  const listo = x => ({ cuenta: x, cuentas: cuentasMesaActivas_().map(cuentaMesa_) });
+  const listo = x => ({ cuenta: x, cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) });
   switch (op) {
     case 'agregar': abierta(); return mesaAgregar_(u, c, d);
     case 'cantidad': {
@@ -1897,7 +1924,8 @@ function mesaAccion_(u, d) {
       if (!sale.length) throw new Error('Todo lo de esta mesa ya salió a cocina');
       c.items.forEach(i => { i.env = i.cantidad; });
       const x = guardarCuentaMesa_(c, c.items, c.estado === 'cuenta' ? {} : { estado: 'abierta' });
-      return { cuenta: x, cuentas: cuentasMesaActivas_().map(cuentaMesa_), comanda: sale, hora: ahora_() };
+      appendRows_('Comandas', [{ id: newId_('Comandas'), cuentaId: c.id, tipo: c.tipo || 'mesa', mesa: c.mesa, zona: c.zona || '', cliente: c.cliente || '', items: JSON.stringify(sale), estado: 'nueva', meseroId: c.meseroId, creada: ahora_(), actualizado: ahora_(), lista: '', usuarioId: u.id }]);
+      return { cuenta: x, cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)), comanda: sale, hora: ahora_() };
     }
     case 'estado': {
       abierta();
@@ -1907,6 +1935,7 @@ function mesaAccion_(u, d) {
     }
     case 'mover': {
       const mesa = txt_(d.mesa, 20); if (!mesa) throw new Error('Elige la mesa');
+      if (c.tipo === 'llevar' || c.tipo === 'domicilio') throw new Error('Un pedido para llevar no se cambia de mesa');
       if (mesa === c.mesa) return listo(c);
       const ya = ocupada(mesa, c.id);
       if (ya && ya.estado !== 'pagada') throw new Error('La mesa ' + mesa + ' está ocupada');
@@ -1916,7 +1945,9 @@ function mesaAccion_(u, d) {
     case 'datos': {
       const ex = {};
       if (d.personas !== undefined) ex.personas = Math.max(1, Math.min(99, parseInt(d.personas, 10) || 1));
-      if (d.nota !== undefined) ex.nota = txt_(d.nota, 120);
+      if (d.nota !== undefined) ex.nota = txt_(d.nota, 160);
+      if (d.cliente !== undefined && (c.tipo === 'llevar' || c.tipo === 'domicilio')) { ex.cliente = txt_(d.cliente, 60); if (!ex.cliente) throw new Error('Escribe el nombre del cliente'); }
+      if (d.telefono !== undefined) ex.telefono = txt_(d.telefono, 20);
       if (d.meseroId !== undefined) { if (!caja) throw new Error('Solo el cajero o el administrador cambian el mesero de la mesa'); ex.meseroId = meseroValido(d.meseroId) || c.meseroId; }
       return listo(guardarCuentaMesa_(c, c.items, ex));
     }
@@ -1929,6 +1960,7 @@ function mesaAccion_(u, d) {
       abierta();
       if (c.ventaIds.length) throw new Error('Esta mesa ya tiene una parte cobrada: cobra lo que falta o quita los platos que no se consumieron');
       if (c.items.some(i => Number(i.env) > 0) && u.rol !== 'admin') throw new Error('Esta mesa ya mandó platos a cocina. Solo el administrador puede cancelarla.');
+      rows_('Comandas').filter(k => k.cuentaId === c.id && ['nueva', 'preparando', 'lista'].indexOf(k.estado) >= 0).forEach(k => upsert_('Comandas', { id: k.id, estado: 'cancelada', actualizado: ahora_() }));
       return listo(cuentaMesa_(upsert_('MesaCuentas', { id: c.id, estado: 'cancelada', cerrada: ahora_(), actualizado: ahora_(), nota: (c.nota ? c.nota + ' · ' : '') + 'Cancelada por ' + u.nombre + (d.motivo ? ': ' + txt_(d.motivo, 100) : '') })));
     }
   }
@@ -1962,7 +1994,37 @@ function mesaCobrada_(cta, d, venta) {
     c.items.forEach(i => { if (pag[i.k]) { i.cantidad = r3_(Math.max(0, i.cantidad - pag[i.k])); i.env = Math.min(Number(i.env) || 0, i.cantidad); } });
   }
   const queda = d.cuentaParte ? c.items.filter(i => i.cantidad > 0.0004) : [];
-  guardarCuentaMesa_(c, queda, queda.length ? { ventaIds: c.ventaIds.join(',') } : { ventaIds: c.ventaIds.join(','), estado: 'pagada' });
+  const llevar = c.tipo === 'llevar' || c.tipo === 'domicilio';
+  guardarCuentaMesa_(c, queda, queda.length ? { ventaIds: c.ventaIds.join(',') } : llevar ? { ventaIds: c.ventaIds.join(','), estado: 'cerrada', cerrada: ahora_() } : { ventaIds: c.ventaIds.join(','), estado: 'pagada' });
+  // Lo que ya estaba listo en cocina se da por entregado al cobrar todo; los pedidos en línea de esta cuenta quedan entregados
+  if (!queda.length) {
+    const ks = rows_('Comandas').filter(k => k.cuentaId === c.id);
+    ks.filter(k => k.estado === 'lista').forEach(k => upsert_('Comandas', { id: k.id, estado: 'entregada', actualizado: ahora_() }));
+    const peds = [...new Set(ks.map(k => k.pedidoId).concat([c.pedidoId]).filter(Boolean))];
+    rows_('Pedidos').filter(p => peds.indexOf(p.id) >= 0 && ['confirmado', 'listo', 'nuevo'].indexOf(p.estado) >= 0).forEach(p => upsert_('Pedidos', { id: p.id, estado: 'entregado', ventaId: p.ventaId || venta.id, actualizado: ahora_() }));
+  }
+}
+// Pantalla de Cocina: lo que está por preparar y lo que se terminó hace poco
+function cocina_(u, d) {
+  req_(u, ['admin', 'cajero', 'cocina', 'mesero']);
+  if (!modOn_('mesas')) throw new Error('Las mesas no están activadas en este negocio');
+  const lim = ahora_().slice(0, 10), l = rows_('Comandas').filter(k => ['nueva', 'preparando'].indexOf(k.estado) >= 0 || (k.estado === 'lista' && String(k.lista).slice(0, 10) >= lim));
+  return { comandas: l.map(k => Object.assign({}, k, { items: parseJ_(k.items, []) })), ahora: ahora_() };
+}
+function comandaAccion_(u, d) {
+  req_(u, ['admin', 'cajero', 'cocina', 'mesero']);
+  if (!modOn_('mesas')) throw new Error('Las mesas no están activadas en este negocio');
+  if (d.op === 'entregada') { // el mesero llevó a la mesa lo que estaba listo
+    rows_('Comandas').filter(k => k.cuentaId === d.cuentaId && k.estado === 'lista').forEach(k => upsert_('Comandas', { id: k.id, estado: 'entregada', actualizado: ahora_() }));
+    return { cuentas: conCocina_(cuentasMesaActivas_().map(cuentaMesa_)) };
+  }
+  if (u.rol === 'mesero') throw new Error('Solo la cocina, el cajero o el administrador cambian el estado de una comanda');
+  const k = rows_('Comandas').find(x => x.id === d.id); if (!k) throw new Error('La comanda ya no existe');
+  const e = { preparando: 'preparando', lista: 'lista', nueva: 'nueva' }[d.estado]; if (!e) throw new Error('Estado no válido');
+  if (['entregada', 'cancelada'].indexOf(k.estado) >= 0) throw new Error('Esta comanda ya se entregó o se canceló');
+  upsert_('Comandas', { id: k.id, estado: e, actualizado: ahora_(), lista: e === 'lista' ? ahora_() : '' });
+  if (e === 'lista' && k.pedidoId) { const p = rows_('Pedidos').find(x => x.id === k.pedidoId); if (p && p.estado === 'confirmado') upsert_('Pedidos', { id: p.id, estado: 'listo', actualizado: ahora_() }); } // al cliente le sale «¡Listo!»
+  return cocina_(u, d);
 }
 
 /* ===================== SUSCRIPCIONES (streaming, mensualidades) ===================== */
@@ -3505,6 +3567,7 @@ function venta_(u, d, interno) {
   if (d.pedidoId) {
     const pe = rows_('Pedidos').find(x => x.id === d.pedidoId);
     if (!pe) throw new Error('El pedido en línea ya no existe');
+    if (!d.cuentaId && !ed && modOn_('mesas') && (cuentasMesaActivas_().some(x => x.pedidoId === pe.id) || rows_('Comandas').some(k => k.pedidoId === pe.id && k.estado !== 'cancelada'))) throw new Error('Este pedido ya está en Mesas: cóbralo desde ahí');
     if ((pe.ventaId || pe.estado === 'entregado') && !(ed && (!pe.ventaId || pe.ventaId === ed.de))) throw new Error('Este pedido ya se cobró');
     if (pe.estado === 'cancelado') throw new Error('Este pedido está cancelado');
     parseJ_(pe.items, []).forEach(x => { if (x && x.productoId) preciosPedido[x.productoId] = r2_(x.precio); });
@@ -3633,7 +3696,7 @@ function venta_(u, d, interno) {
     factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo,
     mesero: ed ? ed.mesero || '' : cta ? cta.meseroId || '' : ''
   };
-  if (cta) { venta.servicio = 'mesa'; venta.mesa = txt_(cta.mesa, 20); }
+  if (cta) { const ll = cta.tipo === 'llevar' || cta.tipo === 'domicilio'; venta.servicio = ll ? cta.tipo : 'mesa'; venta.mesa = ll ? '' : txt_(cta.mesa, 20); }
   // Sección (giro) de cada línea: queda guardada para que los reportes por sección no cambien si después mueves el producto
   const activos = girosActivos_(cfg), gl = items.map(i => giroLinea_(i, pm, activos)), mg = {};
   items.forEach((i, k) => { if (gl[k]) mg[gl[k]] = (mg[gl[k]] || 0) + i.cantidad * i.precio; });
@@ -4085,7 +4148,8 @@ function pedidos_(u, d) {
   let l = rows_('Pedidos').filter(p => ['nuevo','confirmado','listo','cotizar','cotizado'].indexOf(p.estado) >= 0 || p.fecha >= lim);
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); l = l.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   const pagos = {}; rows_('Abonos').forEach(a => { if (a.ref && !a.anulado) pagos[a.ref] = r2_((pagos[a.ref] || 0) + (Number(a.monto) || 0)); });
-  return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); return p; });
+  const enMesas = {}; if (modOn_('mesas')) { cuentasMesaActivas_().forEach(c => { if (c.pedidoId) enMesas[c.pedidoId] = c.id; }); rows_('Comandas').forEach(k => { if (k.pedidoId && !enMesas[k.pedidoId]) enMesas[k.pedidoId] = k.cuentaId; }); }
+  return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); if (enMesas[p.id]) p.cuentaId = enMesas[p.id]; return p; });
 }
 
 function pendientes_(u, d) {
@@ -4138,10 +4202,45 @@ function estadoPedido_(u, d) {
       nota: 'Apartado desde la tienda en línea · pedido ' + p.numero, usuarioId: u.id, creado: ahora_(), actualizado: ahora_() });
     upd.citaId = a.id;
   }
+  if (modOn_('mesas') && !p.cotiza && EST_RAMO.indexOf(p.estado) < 0) {
+    if (d.estado === 'confirmado' && p.estado === 'nuevo') pedidoACocina_(u, p);
+    if (d.estado === 'cancelado') cancelarPedidoMesa_(p);
+  }
   if (d.estado === 'cancelado' && p.citaId) { const a = rows_('Agenda').find(x => x.id === p.citaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'cancelado', actualizado: ahora_() }); }
   const g = upsert_('Pedidos', upd);
   g.items = parseJ_(g.items, []); g.anticipoPagado = pagado;
   return g;
+}
+/* Restaurante: un pedido de la tienda en línea confirmado pasa a Mesas y a Cocina.
+ * Para llevar / a domicilio: una cuenta propia con el nombre del cliente. Comer aquí: se suma a la cuenta de su mesa (se abre si estaba libre). */
+function pedidoACocina_(u, p) {
+  const items = parseJ_(p.items, []), pm = porId_(rows_('Productos')), hora = ahora_();
+  const lineas = items.filter(i => i && i.cantidad > 0).map((i, k) => ({ k: 'P' + Date.now().toString(36) + k, productoId: i.productoId && pm[i.productoId] ? i.productoId : '', descripcion: txt_(i.nombre, 120), variante: '',
+    cantidad: r3_(i.cantidad), precio: r2_(i.precio), env: 0, nota: '', quien: p.entrega === 'mesa' ? txt_(p.nombre, 30) : '', por: u.id, hora: hora }));
+  let c;
+  if (p.entrega === 'mesa') {
+    const mesa = String(p.direccion || ''), ya = cuentasMesaActivas_().find(x => x.mesa === mesa && (!x.tipo || x.tipo === 'mesa'));
+    if (ya && ya.estado === 'pagada') upsert_('MesaCuentas', { id: ya.id, estado: 'cerrada', cerrada: ahora_(), actualizado: ahora_() });
+    const zona = (() => { let n = 0, z = ''; zonasMesa_().some(x => { n += x.n; if (Number(mesa) <= n) { z = x.z; return true; } return false; }); return z; })();
+    c = ya && ya.estado !== 'pagada' ? cuentaMesa_(ya) : cuentaMesa_(upsert_('MesaCuentas', { mesa: mesa, zona: zona, tipo: 'mesa', estado: 'abierta', personas: 1, meseroId: u.id, items: '[]', total: 0, nota: '', abierta: ahora_(), actualizado: ahora_(), cerrada: '', ventaIds: '', usuarioId: u.id, cliente: '', telefono: '', pedidoId: '' }));
+  } else {
+    const tipo = p.entrega === 'domicilio' ? 'domicilio' : 'llevar', base = tipo === 'llevar' ? 'Llevar ' : 'Domicilio ';
+    const usados = cuentasMesaActivas_().filter(x => x.tipo === tipo).map(x => parseInt(String(x.mesa).replace(base, ''), 10) || 0); let n = 1; while (usados.indexOf(n) >= 0) n++;
+    c = cuentaMesa_(upsert_('MesaCuentas', { mesa: base + n, zona: '', tipo: tipo, cliente: txt_(p.nombre, 60), telefono: txt_(p.telefono, 20), estado: 'abierta', personas: 1, meseroId: u.id, items: '[]', total: 0,
+      nota: txt_((tipo === 'domicilio' ? p.direccion : '') + ' · en línea ' + p.numero, 160).replace(/^ · /, ''), abierta: ahora_(), actualizado: ahora_(), cerrada: '', ventaIds: '', usuarioId: u.id, pedidoId: p.id }));
+    if (Number(p.envio) > 0) lineas.push({ k: 'P' + Date.now().toString(36) + 'e', productoId: '', descripcion: 'Envío a domicilio', variante: '', cantidad: 1, precio: r2_(p.envio), env: 1, nota: '', quien: '', por: u.id, hora: hora });
+  }
+  lineas.forEach(l => c.items.push(l));
+  const sale = lineas.filter(l => l.productoId || !l.env).map(l => ({ descripcion: l.descripcion, cantidad: l.cantidad, nota: l.nota, quien: l.quien }));
+  c.items.forEach(i => { if (lineas.indexOf(i) >= 0) i.env = i.cantidad; });
+  guardarCuentaMesa_(c, c.items, c.estado === 'cuenta' ? { estado: 'abierta' } : {});
+  if (sale.length) appendRows_('Comandas', [{ id: newId_('Comandas'), cuentaId: c.id, tipo: c.tipo || 'mesa', mesa: c.mesa, zona: c.zona || '', cliente: c.cliente || (p.entrega === 'mesa' ? 'En línea · ' + txt_(p.nombre, 40) : ''), items: JSON.stringify(sale), estado: 'nueva', meseroId: c.meseroId, creada: ahora_(), actualizado: ahora_(), lista: '', usuarioId: u.id, pedidoId: p.id }]);
+  return c;
+}
+function cancelarPedidoMesa_(p) {
+  rows_('Comandas').filter(k => k.pedidoId === p.id && ['nueva', 'preparando', 'lista'].indexOf(k.estado) >= 0).forEach(k => upsert_('Comandas', { id: k.id, estado: 'cancelada', actualizado: ahora_() }));
+  const c = cuentasMesaActivas_().find(x => x.pedidoId === p.id);
+  if (c && !String(c.ventaIds || '')) upsert_('MesaCuentas', { id: c.id, estado: 'cancelada', cerrada: ahora_(), actualizado: ahora_(), nota: (c.nota ? c.nota + ' · ' : '') + 'Pedido en línea cancelado' });
 }
 // Anticipo de un pedido (compras en línea): entra a caja como abono ligado al pedido y se descuenta solo al cobrarlo
 function anticipoPedido_(u, d) {
@@ -5102,6 +5201,7 @@ function tiendaInfo_(d) {
   return {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
+      mesas: modOn_('mesas') ? zonasMesa_(cfg).reduce((a, z) => a + z.n, 0) : 0, tiempo: modOn_('mesas') ? Math.max(0, parseInt(cfg.tiempoPrep, 10) || 0) : 0,
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago, enlacePago: cfg.tiendaEnlacePago || '', tigo: cfg.tiendaTigo || '',
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
       abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, personal: activos.indexOf('manualidades') >= 0, ramoPrecios: cfg.ramoPrecios !== 'no', cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
@@ -5355,15 +5455,20 @@ function citasOcupadas_() {
 function pedir_(d) {
   const cfg = tiendaNeg_(d);
   const nombre = txt_(d.nombre, 60), tel = String(d.telefono || '').replace(/\D/g, '');
-  if (nombre.length < 3) throw new Error('Escribe tu nombre');
-  if (tel.length < 8) throw new Error('Escribe tu número de WhatsApp');
+  // Restaurante: «Comer aquí» desde el QR de la mesa (o escribiendo su número); el WhatsApp es opcional porque está en el local
+  const enMesa = d.entrega === 'mesa' && modOn_('mesas');
+  if (d.entrega === 'mesa' && !enMesa) throw new Error('Este negocio no recibe pedidos en la mesa');
+  const nMesas = enMesa ? zonasMesa_(cfg).reduce((a, z) => a + z.n, 0) : 0, mesaN = enMesa ? String(parseInt(d.mesa, 10) || '') : '';
+  if (enMesa && (!mesaN || Number(mesaN) < 1 || Number(mesaN) > nMesas)) throw new Error('Escribe el número de tu mesa (de 1 a ' + nMesas + ')');
+  if (nombre.length < (enMesa ? 2 : 3)) throw new Error('Escribe tu nombre');
+  if (tel.length < 8 && !(enMesa && !tel)) throw new Error('Escribe tu número de WhatsApp');
   const ent = cfg.tiendaEntrega || 'ambos';
-  const entrega = d.entrega === 'domicilio' ? 'domicilio' : 'recoger';
-  if (ent !== 'ambos' && ent !== entrega) throw new Error(entrega === 'domicilio' ? 'Este negocio no hace entregas a domicilio' : 'Este negocio solo hace entregas a domicilio');
-  const direccion = txt_(d.direccion, 200);
+  const entrega = enMesa ? 'mesa' : d.entrega === 'domicilio' ? 'domicilio' : 'recoger';
+  if (!enMesa && ent !== 'ambos' && ent !== entrega) throw new Error(entrega === 'domicilio' ? 'Este negocio no hace entregas a domicilio' : 'Este negocio solo hace entregas a domicilio');
+  const direccion = enMesa ? mesaN : txt_(d.direccion, 200);
   if (entrega === 'domicilio' && direccion.length < 5) throw new Error('Escribe la dirección de entrega');
-  const c = CacheService.getScriptCache(), k = 'PD_' + (NEG ? NEG.id : '') + tel.slice(-8), n = Number(c.get(k) || 0);
-  if (n >= 6) throw new Error('Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
+  const c = CacheService.getScriptCache(), k = 'PD_' + (NEG ? NEG.id : '') + (tel ? tel.slice(-8) : 'm' + mesaN), n = Number(c.get(k) || 0);
+  if (n >= (enMesa ? 15 : 6)) throw new Error(enMesa ? 'Esta mesa ya hizo muchos pedidos. Pídele lo que falte al mesero.' : 'Ya hiciste varios pedidos. Si necesitas otro, escríbele al negocio por WhatsApp.');
   const pm = porId_(rows_('Productos'));
   // «Arma tu ramo»: el cliente pide precio; la existencia y el precio los revisa el negocio al cotizar
   const personal = !!d.personal, ramo = !!d.ramo || personal;
@@ -5419,13 +5524,13 @@ function pedir_(d) {
   if (min > 0 && !ramo && subtotal < min) throw new Error('El pedido mínimo es de ' + money_(min, cfg));
   const envio = entrega === 'domicilio' ? r2_(Number(cfg.tiendaEnvio) || 0) : 0;
   const pagos = String(cfg.tiendaPagos || 'Efectivo').split(',');
-  const pago = pagos.indexOf(d.pago) >= 0 ? d.pago : pagos[0];
-  let cli = rows_('Clientes').find(x => tel8_(x.telefono) && tel8_(x.telefono) === tel.slice(-8));
+  const pago = enMesa ? 'En la mesa' : pagos.indexOf(d.pago) >= 0 ? d.pago : pagos[0];
+  let cli = tel ? rows_('Clientes').find(x => tel8_(x.telefono) && tel8_(x.telefono) === tel.slice(-8)) : { id: '' };
   if (!cli) {
     const t8 = tel.slice(-8);
     cli = upsert_('Clientes', { nombre: nombre, telefono: tel.length === 8 || (tel.length === 11 && tel.indexOf('504') === 0) ? t8.slice(0, 4) + '-' + t8.slice(4) : '+' + tel,
       direccion: direccion, notas: 'Se registró en la tienda en línea', activo: true, limite: 0, creado: ahora_() });
-  } else if (entrega === 'domicilio' && direccion && !cli.direccion) {
+  } else if (entrega === 'domicilio' && direccion && !cli.direccion && cli.id) {
     upsert_('Clientes', { id: cli.id, direccion: direccion });
   }
   // Carwash: el cliente aparta día y hora y dice qué vehículo trae
