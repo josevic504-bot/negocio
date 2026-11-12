@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.65';
+const VERSION = '1.9.66';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g5';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -1810,7 +1810,7 @@ function cerrarLigados_(d, venta) {
 /* Cada mesa ocupada tiene su cuenta abierta: el mesero (o el cajero) va agregando platos durante la comida, los manda a cocina
  * y al final la cuenta se cobra en caja como una venta normal (queda a nombre del mesero que atendió la mesa).
  * Estados: abierta (ocupada) → cuenta (pidió la cuenta) → pagada (por limpiar) → cerrada (mesa libre). También: cancelada.
- * items: [{ k, productoId, descripcion, variante, cantidad, precio, env (cuánto ya salió a cocina), nota, por (quién lo pidió), hora }] */
+ * items: [{ k, productoId, descripcion, variante, cantidad, precio, env (cuánto ya salió a cocina), nota, quien (la persona de la mesa: vacío = toda la mesa), por (usuario que lo anotó), hora }] */
 const EST_MESA_ACT = ['abierta', 'cuenta', 'pagada'];
 // Zonas del local: [{ z: 'Salón', n: 8 }, { z: 'Terraza', n: 4 }] → mesas 1 a 8 en Salón y 9 a 12 en Terraza
 function zonasMesa_(cfg) {
@@ -1879,6 +1879,12 @@ function mesaAccion_(u, d) {
       it.cantidad = n; it.env = Math.min(Number(it.env) || 0, n);
       return listo(guardarCuentaMesa_(c, c.items));
     }
+    case 'quien': { // a qué persona de la mesa le toca ese plato (vacío = toda la mesa)
+      abierta();
+      const it = c.items.find(i => i.k === d.k); if (!it) throw new Error('Ese plato ya no está en la cuenta');
+      it.quien = txt_(d.quien, 30);
+      return listo(guardarCuentaMesa_(c, c.items));
+    }
     case 'nota': {
       abierta();
       const it = c.items.find(i => i.k === d.k); if (!it) throw new Error('Ese plato ya no está en la cuenta');
@@ -1887,7 +1893,7 @@ function mesaAccion_(u, d) {
     }
     case 'cocina': {
       abierta();
-      const sale = c.items.filter(i => i.cantidad - (Number(i.env) || 0) > 0.0004).map(i => ({ descripcion: i.descripcion, cantidad: r3_(i.cantidad - (Number(i.env) || 0)), nota: i.nota || '' }));
+      const sale = c.items.filter(i => i.cantidad - (Number(i.env) || 0) > 0.0004).map(i => ({ descripcion: i.descripcion, cantidad: r3_(i.cantidad - (Number(i.env) || 0)), nota: i.nota || '', quien: i.quien || '' }));
       if (!sale.length) throw new Error('Todo lo de esta mesa ya salió a cocina');
       c.items.forEach(i => { i.env = i.cantidad; });
       const x = guardarCuentaMesa_(c, c.items, c.estado === 'cuenta' ? {} : { estado: 'abierta' });
@@ -1937,12 +1943,12 @@ function mesaAgregar_(u, c, d) {
     if (!esNum_(i.cantidad) || !(Number(i.cantidad) > 0)) throw new Error('Cantidad no válida');
     const vk = varsDe_(p) || opsDe_(p).length ? varKey_(p, i.variante) : '';
     if (varsDe_(p) && !vk && p.tipo === 'producto') throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
-    const variante = txt_(i.variante, 60), nota = txt_(i.nota, 80), n = r3_(i.cantidad);
-    // Lo mismo, con la misma nota y que aún no sale a cocina, se suma a la misma línea
-    const ya = c.items.find(x => x.productoId === p.id && (x.variante || '') === variante && (x.nota || '') === nota && !(Number(x.env) > 0));
+    const variante = txt_(i.variante, 60), nota = txt_(i.nota, 80), quien = txt_(i.quien, 30), n = r3_(i.cantidad);
+    // Lo mismo, para la misma persona, con la misma nota y que aún no sale a cocina, se suma a la misma línea
+    const ya = c.items.find(x => x.productoId === p.id && (x.variante || '') === variante && (x.nota || '') === nota && (x.quien || '') === quien && !(Number(x.env) > 0));
     if (ya) ya.cantidad = r3_(ya.cantidad + n);
     else c.items.push({ k: 'L' + Date.now().toString(36) + Math.floor(Math.random() * 1296).toString(36), productoId: p.id, descripcion: p.nombre + (variante ? ' · ' + variante : ''), variante: variante,
-      cantidad: n, precio: precioVar_(p, vk), env: 0, nota: nota, por: u.id, hora: hora });
+      cantidad: n, precio: precioVar_(p, vk), env: 0, nota: nota, quien: quien, por: u.id, hora: hora });
   });
   const x = guardarCuentaMesa_(c, c.items, c.estado === 'cuenta' ? { estado: 'abierta' } : {}); // si ya había pedido la cuenta y pide más, vuelve a ocupada
   return { cuenta: x, cuentas: cuentasMesaActivas_().map(cuentaMesa_) };

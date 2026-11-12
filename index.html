@@ -1294,7 +1294,7 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .ms-gs{grid-template-columns:repeat(auto-fill,minmax(78px,1fr))}.ms-gs .ms-t{min-height:70px}
 .ms-h{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:0 2px 10px}.ms-h small{display:flex;align-items:center;gap:4px;color:var(--mut);font-size:12.5px;flex:1;min-width:0}.ms-h a{font-size:13px;color:var(--pri);font-weight:600;cursor:pointer}
 .ms-bd{font-size:12px;font-weight:700;border-radius:9px;padding:3px 9px;border:1.5px solid}.ms-bd.ms-ocu{color:var(--info)}.ms-bd.ms-cue{color:var(--warn)}
-.ms-env{font-size:11px;font-weight:700;border-radius:7px;padding:1px 6px}.ms-env.ok{background:var(--okb);color:var(--ok)}.ms-env.p{background:var(--warnb);color:var(--warn)}
+.ms-env{white-space:nowrap;font-size:11px;font-weight:700;border-radius:7px;padding:1px 6px}.ms-env.ok{background:var(--okb);color:var(--ok)}.ms-env.p{background:var(--warnb);color:var(--warn)}
 .tk .tx small a{color:var(--pri);cursor:pointer}
 .ms-acc{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
 .ms-acc .btn{white-space:normal;flex-direction:column;gap:4px;font-size:12.5px;padding:10px 4px;height:auto;min-height:64px;justify-content:center;text-align:center;line-height:1.2}
@@ -1305,6 +1305,13 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 #pp-l .li .am{display:flex;align-items:center}
 .ms-com>div{padding:9px 2px;border-bottom:1px dashed var(--line)}.ms-com b{font-size:16px}.ms-com small{display:block;color:var(--warn);font-weight:600;margin-top:2px}
 .ms-zf{align-items:end}
+.ms-per{border:1px solid var(--line);border-radius:16px;padding:8px 12px 2px;margin-bottom:10px}
+.ms-ph{display:flex;align-items:center;gap:8px;padding:2px 0 4px}.ms-ph b{flex:1;font-size:15px}.ms-ph .av{width:30px;height:30px;font-size:12px;flex:none;border-radius:50%;display:grid;place-items:center;font-weight:600;color:#fff;background:linear-gradient(135deg,var(--t1,var(--h1)),var(--t2,var(--h2)))}.ms-ph .n{font-weight:700}
+.ms-ph .av.t-mut{background:var(--line);color:var(--mut)}
+.ms-per .tks .tk:last-child{border-bottom:0}
+.ms-pq{margin-bottom:10px}.ms-pq>small{display:block;color:var(--mut);font-size:12.5px;margin:0 2px 5px}
+.chip.ms-nuevo{border-style:dashed;color:var(--pri)}
+.ms-pn{display:inline-block;background:var(--pri2);color:var(--pri);border-radius:7px;padding:0 6px;font-size:11.5px;font-weight:700;font-style:normal}
 </style>
 <script src="visitas.js?v=3" defer></script>
 </head>
@@ -1618,7 +1625,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.65';
+const APP_VER = '1.9.66';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -7790,6 +7797,9 @@ const minMesa = c => { const t = parseLocal(c.abierta).getTime(); return isFinit
 const minTxt = m => m < 60 ? m + ' min' : Math.floor(m / 60) + ' h ' + String(m % 60).padStart(2, '0');
 const pendCocina = c => (c.items || []).reduce((a, i) => a + Math.max(0, num(i.cantidad) - num(i.env)), 0);
 const cuentaDe = id => ((S.mesasD && S.mesasD.cuentas) || []).find(c => c.id === id);
+// Personas de la mesa: los nombres que ya tienen platos (en el orden en que pidieron)
+const nombresMesa = c => [...new Set(((c && c.items) || []).map(i => i.quien || '').filter(Boolean))];
+const quienTxt = q => q || 'Toda la mesa';
 R.mesas_bar = () => puede('admin') ? `<button class="hbtn" data-a="mesasConfig" aria-label="Configurar mesas">${ic('gear', 20)}</button>` : '';
 R.mesas = async silencioso => {
   const m = $('#main');
@@ -7868,9 +7878,15 @@ function verCuentaMesa(id) {
     $('.sheet-h h3', h.el).textContent = 'Mesa ' + c.mesa + (c.zona ? ' · ' + c.zona : '');
     $('#mc', h.el).innerHTML = `<div class="ms-h"><span class="ms-bd ${e[1]}">${e[0]}</span><small>${ic('users', 14)} ${c.personas} ${c.personas === 1 ? 'persona' : 'personas'} · ${ic('clock', 14)} ${minTxt(minMesa(c))} · ${esc(nomUsuario(c.meseroId))}</small><a data-a="mesaDatos">Cambiar</a></div>
       ${c.nota ? `<p class="sm mut" style="margin:0 2px 8px">${esc(c.nota)}</p>` : ''}
-      ${c.items.length ? `<div class="tks">${c.items.map(i => { const pe = r2(num(i.cantidad) - num(i.env));
-        return `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${money(i.precio)} c/u · ${pe > 0 ? `<span class="ms-env p">${cant(pe)} por enviar</span>` : `<span class="ms-env ok">En cocina</span>`}${i.nota ? ` · <i>${esc(i.nota)}</i>` : ''} · <a data-a="msNota" data-k="${esc(i.k)}">${i.nota ? 'nota ✎' : '+ nota'}</a></small></div>
-          <div class="qty"><button data-a="msQ" data-k="${esc(i.k)}" data-d="-1" aria-label="Quitar uno">−</button><span>${cant(i.cantidad)}</span><button data-a="msQ" data-k="${esc(i.k)}" data-d="1" aria-label="Agregar uno">+</button></div><b class="n tkt">${money(num(i.cantidad) * num(i.precio))}</b></div>`; }).join('')}</div>
+      ${c.items.length ? (() => {
+        const linea = i => { const pe = r2(num(i.cantidad) - num(i.env));
+          return `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${money(i.precio)} c/u · ${pe > 0 ? `<span class="ms-env p">${cant(pe)} por enviar</span>` : `<span class="ms-env ok">En cocina</span>`}${i.nota ? ` · <i>${esc(i.nota)}</i>` : ''} · <a data-a="msNota" data-k="${esc(i.k)}">${i.nota ? 'nota ✎' : '+ nota'}</a> · <a data-a="msQuien" data-k="${esc(i.k)}">${ic('users', 12)} persona</a></small></div>
+            <div class="qty"><button data-a="msQ" data-k="${esc(i.k)}" data-d="-1" aria-label="Quitar uno">−</button><span>${cant(i.cantidad)}</span><button data-a="msQ" data-k="${esc(i.k)}" data-d="1" aria-label="Agregar uno">+</button></div><b class="n tkt">${money(num(i.cantidad) * num(i.precio))}</b></div>`; };
+        const nom = nombresMesa(c);
+        if (!nom.length) return `<div class="tks">${c.items.map(linea).join('')}</div>`;
+        return nom.concat(c.items.some(i => !i.quien) ? [''] : []).map(q => { const l = c.items.filter(i => (i.quien || '') === q), st = l.reduce((a, i) => a + num(i.cantidad) * num(i.precio), 0);
+          return `<div class="ms-per"><div class="ms-ph"><span class="av ${q ? colorDe(q) : 't-mut'}">${q ? esc(iniciales(q)) : ic('mesa', 15)}</span><b>${esc(quienTxt(q))}</b><span class="n">${money(st)}</span>${q && caja ? `<button class="btn sm" data-a="msCobrarA" data-q="${esc(q)}">Cobrar a ${esc(q)}</button>` : ''}</div><div class="tks">${l.map(linea).join('')}</div></div>`; }).join('');
+      })() + `
         <div class="tots"><div class="tot g"><span>Total de la mesa</span><b class="n">${money(c.total)}</b></div>${c.personas > 1 ? `<div class="tot"><span>Entre ${c.personas} personas</span><b class="n">${money(c.total / c.personas)} c/u</b></div>` : ''}${c.ventaIds.length ? `<div class="tot"><span>Ya se cobró una parte</span><b class="n">${c.ventaIds.length === 1 ? '1 pago' : c.ventaIds.length + ' pagos'}</b></div>` : ''}</div>`
         : `<div class="empty">${ic('mesa', 34)}<p>La mesa todavía no ha pedido nada.</p></div>`}
       <div class="ms-acc"><button class="btn" data-a="msAgregar">${ic('plus', 20)}<span>Agregar</span></button>
@@ -7886,6 +7902,24 @@ function verCuentaMesa(id) {
   h.pinta();
 }
 const mesaAbierta = () => S.hMesa && cuentaDe(S.hMesa.id);
+ACC.msCobrarA = el => { const c = mesaAbierta(); if (!c) return; const q = el.dataset.q, l = c.items.filter(i => (i.quien || '') === q); if (!l.length) return; cobrarMesa(c, l, l.length < c.items.length, q); };
+// Elegir la persona: los nombres de la mesa, «Toda la mesa» o uno nuevo. Devuelve el nombre ('' = toda la mesa) o null si se cierra
+function elegirPersona(c, actual, extra) {
+  const nom = [...new Set(nombresMesa(c).concat(extra || []))];
+  return new Promise(res => {
+    let r = null;
+    const h = hoja({ titulo: '¿Para quién es?', cls: 'chica', html: `<div class="chips wrap">${[''].concat(nom).map(q => `<button type="button" class="chip ${q === (actual || '') ? 'on' : ''}" data-q="${esc(q)}">${esc(quienTxt(q))}</button>`).join('')}<button type="button" class="chip ms-nuevo" data-nuevo="1">${ic('plus', 15)} Nombre</button></div>`, onClose: () => res(r) });
+    h.b.addEventListener('click', async e => {
+      const b = e.target.closest('[data-q]'); if (b) { r = b.dataset.q; h.cerrar(); return; }
+      if (e.target.closest('[data-nuevo]')) { const v = await pedirTexto('Nombre de la persona', { label: 'Nombre', si: 'Listo' }); if (v && v.trim()) { r = v.trim().slice(0, 30); h.cerrar(); } }
+    });
+  });
+}
+ACC.msQuien = async el => {
+  const c = mesaAbierta(); if (!c) return; const it = c.items.find(i => i.k === el.dataset.k); if (!it) return;
+  const q = await elegirPersona(c, it.quien); if (q === null || q === (it.quien || '')) return;
+  await mesaApi('quien', { id: c.id, k: it.k, quien: q });
+};
 ACC.msQ = async el => {
   const c = mesaAbierta(); if (!c) return; const it = c.items.find(i => i.k === el.dataset.k); if (!it) return;
   const n = r2(num(it.cantidad) + Number(el.dataset.d));
@@ -7933,15 +7967,17 @@ function stockMesaOk(p, n, c, extra) {
 }
 function pedirPlatos(id) {
   const c0 = cuentaDe(id); if (!c0) return;
-  const sel = []; let cat = '';
+  const sel = []; let cat = '', quien = '', nuevos = [];
   const prods = S.productos.filter(p => p.activo && enTiendaP(p)).sort((a, b) => a.nombre.localeCompare(b.nombre));
   const cats = [...new Set(prods.map(p => p.categoria).filter(Boolean))].sort();
-  const h = hoja({ titulo: 'Agregar a la mesa ' + esc(c0.mesa), ancho: 1, html: `<div id="pp-sel"></div><div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="pp-q" placeholder="Buscar plato o bebida…" autocomplete="off"></div>
+  const h = hoja({ titulo: 'Agregar a la mesa ' + esc(c0.mesa), ancho: 1, html: `<div id="pp-sel"></div><div class="ms-pq"><small>¿Para quién es?</small><div class="chips" id="pp-p"></div></div><div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="pp-q" placeholder="Buscar plato o bebida…" autocomplete="off"></div>
     <div class="chips" id="pp-c"><button class="chip on" data-c="">Todo</button>${cats.map(x => `<button class="chip" data-c="${esc(x)}">${esc(x)}</button>`).join('')}</div><div class="list" id="pp-l"></div>` });
   const enSel = pid => sel.filter(s => s.p.id === pid).reduce((a, s) => a + s.cantidad, 0);
+  const pintaP = () => { const nom = [...new Set(nombresMesa(cuentaDe(id)).concat(nuevos))];
+    $('#pp-p', h.el).innerHTML = [''].concat(nom).map(q => `<button type="button" class="chip ${q === quien ? 'on' : ''}" data-pq="${esc(q)}">${esc(quienTxt(q))}</button>`).join('') + `<button type="button" class="chip ms-nuevo" data-pnuevo="1">${ic('plus', 15)} Nombre</button>`; };
   const pintaSel = () => {
     const tot = sel.reduce((a, s) => a + s.cantidad * s.precio, 0), n = sel.reduce((a, s) => a + s.cantidad, 0);
-    $('#pp-sel', h.el).innerHTML = sel.length ? `<div class="ms-sel"><div class="row sp"><b>Pedido de la mesa</b><span class="n">${money(tot)}</span></div>${sel.map((s, k) => `<div class="tk"><div class="tx"><b>${esc(s.p.nombre + (s.variante ? ' · ' + s.variante : ''))}</b><small>${s.nota ? `<i>${esc(s.nota)}</i> · ` : ''}<a data-sn="${k}">${s.nota ? 'nota ✎' : '+ nota para cocina'}</a></small></div><div class="qty"><button data-sq="${k}" data-d="-1">−</button><span>${cant(s.cantidad)}</span><button data-sq="${k}" data-d="1">+</button></div></div>`).join('')}</div>` : '';
+    $('#pp-sel', h.el).innerHTML = sel.length ? `<div class="ms-sel"><div class="row sp"><b>Pedido de la mesa</b><span class="n">${money(tot)}</span></div>${sel.map((s, k) => `<div class="tk"><div class="tx"><b>${esc(s.p.nombre + (s.variante ? ' · ' + s.variante : ''))}</b><small>${s.quien ? `<span class="ms-pn">${esc(s.quien)}</span> · ` : ''}${s.nota ? `<i>${esc(s.nota)}</i> · ` : ''}<a data-sn="${k}">${s.nota ? 'nota ✎' : '+ nota para cocina'}</a></small></div><div class="qty"><button data-sq="${k}" data-d="-1">−</button><span>${cant(s.cantidad)}</span><button data-sq="${k}" data-d="1">+</button></div></div>`).join('')}</div>` : '';
     h.botones(n ? [{ t: `Agregar ${cant(n)}`, fn: () => enviar(false) }, { t: `${ic('chef', 18)} Agregar y mandar a cocina`, cls: 'pri', fn: () => enviar(true) }] : []);
   };
   const pintaL = () => {
@@ -7952,37 +7988,40 @@ function pedirPlatos(id) {
   const elegir = async p => {
     let v = ''; if ((modOn('variantes') || varsDe(p)) && p.opciones) { v = await elegirVariante(p); if (v === null) return; }
     if (!stockMesaOk(p, 1, cuentaDe(id), enSel(p.id))) return;
-    const ya = sel.find(s => s.p.id === p.id && s.variante === v && !s.nota);
-    if (ya) ya.cantidad++; else sel.push({ p, variante: v, cantidad: 1, nota: '', precio: precioVar(p, varsDe(p) ? varKey(p, v) : '') });
+    const ya = sel.find(s => s.p.id === p.id && s.variante === v && !s.nota && s.quien === quien);
+    if (ya) ya.cantidad++; else sel.push({ p, variante: v, cantidad: 1, nota: '', quien, precio: precioVar(p, varsDe(p) ? varKey(p, v) : '') });
     try { navigator.vibrate && navigator.vibrate(12); } catch (e) {}
     pintaSel(); pintaL();
   };
   const enviar = async cocina => {
-    const r = await mesaApi('agregar', { id, items: sel.map(s => ({ productoId: s.p.id, variante: s.variante, cantidad: s.cantidad, nota: s.nota })) });
+    const r = await mesaApi('agregar', { id, items: sel.map(s => ({ productoId: s.p.id, variante: s.variante, cantidad: s.cantidad, nota: s.nota, quien: s.quien })) });
     h.onClose = null; h.cerrar();
+    if (!S.hMesa || S.hMesa.id !== id) verCuentaMesa(id); // la cuenta abajo y la comanda encima
     if (cocina) { const r2_ = await mesaApi('cocina', { id }); comandaMesa(r2_.cuenta, r2_.comanda, r2_.hora); }
     else toast('Agregado a la mesa ' + r.cuenta.mesa, 'ok', 1500);
-    if (!S.hMesa || S.hMesa.id !== id) verCuentaMesa(id);
   };
   h.b.addEventListener('click', async e => {
     const pp = e.target.closest('[data-pp]'); if (pp) return elegir(byId(S.productos, pp.dataset.pp));
+    const pq = e.target.closest('[data-pq]'); if (pq) { quien = pq.dataset.pq; return pintaP(); }
+    if (e.target.closest('[data-pnuevo]')) { const v = await pedirTexto('Nombre de la persona', { label: 'Nombre', si: 'Listo' }); if (v && v.trim()) { quien = v.trim().slice(0, 30); if (!nuevos.includes(quien)) nuevos.push(quien); pintaP(); } return; }
     const ch = e.target.closest('[data-c]'); if (ch) { cat = ch.dataset.c; $$('#pp-c .chip', h.el).forEach(x => x.classList.toggle('on', x === ch)); return pintaL(); }
     const sq = e.target.closest('[data-sq]'); if (sq) { const s = sel[sq.dataset.sq]; if (Number(sq.dataset.d) > 0 && !stockMesaOk(s.p, 1, cuentaDe(id), enSel(s.p.id))) return; s.cantidad += Number(sq.dataset.d); if (s.cantidad <= 0) sel.splice(sq.dataset.sq, 1); pintaSel(); return pintaL(); }
     const sn = e.target.closest('[data-sn]'); if (sn) { const s = sel[sn.dataset.sn]; const v = await pedirTexto('Nota para la cocina', { label: esc(s.p.nombre), valor: s.nota, si: 'Guardar' }); if (v !== null) { s.nota = v.trim(); pintaSel(); } }
   });
   h.onClose = async () => { if (sel.length && !(await confirmar('No agregaste lo que elegiste. ¿Lo agregas a la mesa?', { si: 'Agregar', no: 'Descartar' }))) return; if (sel.length) { try { await enviar(false); } catch (e) { err(e); } } };
   $('#pp-q', h.el).addEventListener('input', debounce(pintaL, 100));
-  pintaSel(); pintaL();
+  pintaP(); pintaSel(); pintaL();
 }
 function comandaMesa(c, lineas, hora) {
-  const h = hoja({ titulo: 'Comanda · Mesa ' + esc(c.mesa), cls: 'chica', html: `<p class="sm mut" style="margin:0 2px 10px">${ic('check', 15)} Enviado a cocina ${fHora(hora)} · ${esc(nomUsuario(c.meseroId))}</p><div class="ms-com">${lineas.map(i => `<div><b>${cant(i.cantidad)} × ${esc(i.descripcion)}</b>${i.nota ? `<small>${esc(i.nota)}</small>` : ''}</div>`).join('')}</div>` });
+  const h = hoja({ titulo: 'Comanda · Mesa ' + esc(c.mesa), cls: 'chica', html: `<p class="sm mut" style="margin:0 2px 10px">${ic('check', 15)} Enviado a cocina ${fHora(hora)} · ${esc(nomUsuario(c.meseroId))}</p><div class="ms-com">${lineas.map(i => `<div><b>${cant(i.cantidad)} × ${esc(i.descripcion)}</b>${i.quien ? ` <span class="ms-pn">${esc(i.quien)}</span>` : ''}${i.nota ? `<small>${esc(i.nota)}</small>` : ''}</div>`).join('')}</div>` });
   h.botones([{ t: `${ic('print', 18)} Imprimir comanda`, fn: () => imprimirMesa(c, lineas, 'comanda', hora) }, { t: 'Listo', cls: 'pri', fn: () => h.cerrar() }]);
 }
 function imprimirMesa(c, lineas, tipo, hora) {
   const L = (a, b) => `<div class="pl"><span>${a}</span><span>${b}</span></div>`, pre = tipo === 'pre';
   $('#print-area').innerHTML = `<div class="ticket"><div class="pc"><b style="font-size:16px">${pre ? esc(S.config.nombre || '') : 'COMANDA'}</b><div style="font-size:15px;font-weight:700">MESA ${esc(c.mesa)}${c.zona ? ' · ' + esc(c.zona.toUpperCase()) : ''}</div>${pre ? '<div>PRECUENTA · no es factura</div>' : ''}</div>
     <div class="ps">${L('Hora', fHora(hora || ahoraLocal()))}${L('Mesero', esc(nomUsuario(c.meseroId)))}${L('Personas', c.personas)}</div>
-    <div class="ps">${lineas.map(i => pre ? `<div>${esc(i.descripcion)}</div>${L('&nbsp;&nbsp;' + cant(i.cantidad) + ' × ' + money(i.precio), money(num(i.cantidad) * num(i.precio)))}` : `<div style="font-size:14px;font-weight:700">${cant(i.cantidad)} × ${esc(i.descripcion)}</div>${i.nota ? `<div>&nbsp;&nbsp;» ${esc(i.nota)}</div>` : ''}`).join('')}</div>
+    <div class="ps">${lineas.map(i => pre ? `<div>${esc(i.descripcion)}${i.quien ? ' (' + esc(i.quien) + ')' : ''}</div>${L('&nbsp;&nbsp;' + cant(i.cantidad) + ' × ' + money(i.precio), money(num(i.cantidad) * num(i.precio)))}` : `<div style="font-size:14px;font-weight:700">${cant(i.cantidad)} × ${esc(i.descripcion)}${i.quien ? ' — ' + esc(i.quien) : ''}</div>${i.nota ? `<div>&nbsp;&nbsp;» ${esc(i.nota)}</div>` : ''}`).join('')}</div>
+    ${pre && nombresMesa(c).length ? `<div class="ps">${nombresMesa(c).concat(c.items.some(i => !i.quien) ? [''] : []).map(q => L(esc(quienTxt(q)), money(c.items.filter(i => (i.quien || '') === q).reduce((a, i) => a + num(i.cantidad) * num(i.precio), 0)))).join('')}</div>` : ''}
     ${pre ? `<div class="ps">${L('<b>TOTAL</b>', '<b>' + money(c.total) + '</b>')}${c.personas > 1 ? L('Entre ' + c.personas, money(c.total / c.personas) + ' c/u') : ''}</div>` : ''}</div>`;
   if (window.AndroidApp && AndroidApp.imprimir) { AndroidApp.imprimir(); return; }
   setTimeout(() => window.print(), 80);
@@ -7993,7 +8032,7 @@ function dividirMesa(c) {
   const h = hoja({ titulo: 'Dividir la cuenta · Mesa ' + esc(c.mesa), ancho: 1, html: `<p class="sm mut" style="margin:0 2px 10px">Marca lo que paga esta persona. Lo demás sigue en la mesa para cobrarlo después.</p><div id="dv"></div>` });
   const pinta = () => {
     const t = c.items.reduce((a, i) => a + paga[i.k] * num(i.precio), 0);
-    $('#dv', h.el).innerHTML = `<div class="tks">${c.items.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${money(i.precio)} c/u · hay ${cant(i.cantidad)} · <a data-dt="${esc(i.k)}">${paga[i.k] < num(i.cantidad) ? 'todo' : 'ninguno'}</a></small></div><div class="qty"><button data-dq="${esc(i.k)}" data-d="-1">−</button><span>${cant(paga[i.k])}</span><button data-dq="${esc(i.k)}" data-d="1">+</button></div><b class="n tkt">${money(paga[i.k] * num(i.precio))}</b></div>`).join('')}</div>
+    $('#dv', h.el).innerHTML = `<div class="tks">${c.items.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${i.quien ? `<span class="ms-pn">${esc(i.quien)}</span> · ` : ''}${money(i.precio)} c/u · hay ${cant(i.cantidad)} · <a data-dt="${esc(i.k)}">${paga[i.k] < num(i.cantidad) ? 'todo' : 'ninguno'}</a></small></div><div class="qty"><button data-dq="${esc(i.k)}" data-d="-1">−</button><span>${cant(paga[i.k])}</span><button data-dq="${esc(i.k)}" data-d="1">+</button></div><b class="n tkt">${money(paga[i.k] * num(i.precio))}</b></div>`).join('')}</div>
       <div class="tots"><div class="tot g"><span>Paga ahora</span><b class="n">${money(t)}</b></div><div class="tot"><span>Queda en la mesa</span><b class="n">${money(c.total - t)}</b></div></div>`;
     h.botones([{ t: `${ic('cash')} Cobrar ${money(t)}`, cls: 'pri big', fn: () => {
       const items = c.items.filter(i => paga[i.k] > 0).map(i => Object.assign({}, i, { cantidad: paga[i.k] }));
@@ -8015,10 +8054,10 @@ function moverMesa(c) {
   h.b.addEventListener('click', async e => { const b = e.target.closest('[data-mv]'); if (!b) return; try { await mesaApi('mover', { id: c.id, mesa: b.dataset.mv, zona: b.dataset.z }); h.cerrar(); toast('La cuenta pasó a la mesa ' + b.dataset.mv, 'ok'); } catch (x) { err(x); } });
 }
 // Cobrar en caja: la cuenta (o la parte elegida) pasa al cobro de siempre; si había una factura a medias en Vender, vuelve después
-function cobrarMesa(c, items, parte) {
+function cobrarMesa(c, items, parte, quien) {
   if (!S.ticket.cuentaId && S.ticket.items.length) S.ticketPrev = S.ticket;
   S.ticket = { items: items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, variante: i.variante || '', cantidad: num(i.cantidad), precio: num(i.precio), precioMan: true, mk: i.k })),
-    clienteId: '', pedidoId: '', descuento: 0, cuentaId: c.id, cuentaParte: !!parte, servicio: 'mesa', mesa: c.mesa, nota: 'Mesa ' + c.mesa + (parte ? ' · pago parcial' : '') };
+    clienteId: '', pedidoId: '', descuento: 0, cuentaId: c.id, cuentaParte: !!parte, servicio: 'mesa', mesa: c.mesa, nota: 'Mesa ' + c.mesa + (quien ? ' · ' + quien : parte ? ' · pago parcial' : '') };
   guardarTicket();
   abrirCobro();
 }
@@ -9650,6 +9689,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.66', fecha: '2026-11-12', items: [
+    { i: 'users', t: 'Mesas: lo que pidió cada persona', d: 'Al agregar platos eliges para quién es (Ana, Luis… o toda la mesa). La cuenta sale agrupada por persona con su subtotal, la comanda dice de quién es cada plato y puedes cobrarle a cada quien lo suyo con «Cobrar a…».' }
+  ] },
   { v: '1.9.65', fecha: '2026-11-12', items: [
     { i: 'mesa', t: 'Restaurantes: tablero de mesas', d: 'En «Mesas» ves cada mesa por color: libre, ocupada, pidió la cuenta o por limpiar, con cuántas personas, cuánto tiempo llevan y cuánto van consumiendo. Tomas el pedido entrando a la mesa, lo mandas a cocina y la cobras completa o dividida.' },
     { i: 'users', t: 'Nuevo rol: Mesero', d: 'Tus meseros entran directo a Mesas: abren mesas, toman pedidos y los mandan a cocina, sin poder cobrar. Lo cobrado de sus mesas queda a su nombre aunque lo cobre el cajero, y en Reportes ves las ventas por mesero.' }
@@ -9877,7 +9919,7 @@ const NOVEDADES = [
 /* ---------- Guías por pantalla ---------- */
 const AYUDA = {
   mesas: { d: 'El tablero de tu restaurante: cada mesa con su cuenta abierta, lo que ya salió a cocina y lo que falta por cobrar.',
-    p: ['<b>Toca una mesa libre</b>: eliges cuántas personas son (y el mesero que atiende) y tomas el pedido.', '<b>Agregar y mandar a cocina</b>: los platos quedan en la cuenta de la mesa y sale la comanda sin precios. El número rojo en la mesa es lo que aún no se ha mandado.', '<b>Pidió la cuenta</b>: la mesa se pone amarilla; puedes imprimir la precuenta.', '<b>Cobrar</b> (cajero o administrador): la cuenta completa, o <b>Dividir</b> para cobrar a cada quien lo suyo. La mesa queda verde, «por limpiar».', 'Cuando la mesa esté limpia, tócala y queda libre.'],
+    p: ['<b>Toca una mesa libre</b>: eliges cuántas personas son (y el mesero que atiende) y tomas el pedido.', '<b>Agregar y mandar a cocina</b>: los platos quedan en la cuenta de la mesa y sale la comanda sin precios. El número rojo en la mesa es lo que aún no se ha mandado.', '<b>¿Para quién es?</b>: al agregar platos elige el nombre de la persona (o «Toda la mesa»). La cuenta sale por persona y puedes cobrarle a cada quien con «Cobrar a…».', '<b>Pidió la cuenta</b>: la mesa se pone amarilla; puedes imprimir la precuenta.', '<b>Cobrar</b> (cajero o administrador): la cuenta completa, o <b>Dividir</b> para cobrar a cada quien lo suyo. La mesa queda verde, «por limpiar».', 'Cuando la mesa esté limpia, tócala y queda libre.'],
     t: ['El mesero no cobra: toma pedidos y manda a cocina. Lo que se cobre de sus mesas queda a su nombre aunque lo cobre el cajero (Reportes › Ventas por mesero).', 'Si los clientes se cambian de lugar usa <b>Cambiar mesa</b>: toda la cuenta pasa a la nueva.', 'Las zonas (Salón, Terraza…) y cuántas mesas tiene cada una se cambian con el engranaje ⚙ arriba.'] },
   proyectos: { d: 'Cotizaciones de servicios y proyectos: cuánto cotizaste, cuánto has gastado y cuánto has cobrado.',
     p: ['<b>Nueva cotización</b>: cliente, servicios de tu catálogo (o escritos), descuento, ISV y plan de pagos con fechas. Envíala por WhatsApp o imprímela.', '<b>Aceptada → proyecto</b>: confirmas las fechas de pago, marcas si ya recibiste el anticipo y todo queda agendado.', 'En el proyecto: cobras cada pago, recuerdas por WhatsApp, marcas los entregables y registras los gastos.', '<b>Contrato</b> de aceptación y <b>acta</b> de proyecto terminado: el cliente firma con el dedo en tu teléfono.'],
