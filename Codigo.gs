@@ -2587,7 +2587,9 @@ function panelNegocio_(d) {
     const cfg = config_();
     f.giroId = own_(GIROS, cfg.giro) ? cfg.giro : f.giroId;
     f.datos = { rtn: cfg.sarRtn || cfg.rtn || '', direccion: cfg.sarDireccion || cfg.direccion || '', razon: cfg.sarRazon || '', telefono: cfg.telefono || '', correo: cfg.correo || '' }; // para rellenar el contrato
-    f.uso = { ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
+    // ¿Ya creó productos propios o solo tiene los de ejemplo? (los de ejemplo llevan código EJ001, EJ002…; solo conteos y la fecha del último)
+    const prodsAct = rows_('Productos').filter(p => p.activo), propios = prodsAct.filter(p => !/^EJ\d/.test(String(p.codigo || '')));
+    f.uso = { propios: propios.length, ejemplos: prodsAct.length - propios.length, ultimoPropio: propios.map(p => String(p.creado || '')).sort().pop() || '', ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
       pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
     const lim7 = Date.now() - 7 * 86400000; f.ventas7 = v30.filter(v => msDeLocal_(v.fecha) >= lim7).length; // en la ficha, las ventas de 7 días se cuentan al momento
     f.salud = saludDe_(f, f.uso.productos, f.uso.clientes); // en la ficha, con los conteos de hoy
