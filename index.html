@@ -47,7 +47,7 @@ body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{paddin
 .sal-h{display:flex;align-items:center;gap:12px;margin-bottom:6px}.sal-h b{display:block;font-size:15px}.sal-h small{color:var(--mut);font-size:12.5px}
 .sal-r{width:46px;height:46px;border-radius:50%;background:conic-gradient(var(--c) calc(var(--p)*1%),var(--line) 0);display:grid;place-items:center;flex:none}.sal-r span{width:36px;height:36px;border-radius:50%;background:var(--card);display:grid;place-items:center;font-weight:700;font-size:14px}
 .sal-f{display:flex;align-items:center;gap:10px;font-size:13px;padding:5px 0}.sal-f em{flex:1;font-style:normal}.sal-f i{width:110px;height:7px;border-radius:4px;background:var(--line);overflow:hidden}.sal-f s{display:block;height:100%}.sal-f b{min-width:52px;text-align:right;font-weight:600}
-.resp-li,#rs-a .li,#cp-o .li,#cp-c .li{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}#rs-a .li .tx,#cp-o .li .tx,#cp-c .li .tx{flex:1;text-align:left}
+.resp-li,#rs-a .li,#cp-o .li,#cp-c .li,#bd-a .li{width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}#rs-a .li .tx,#cp-o .li .tx,#cp-c .li .tx,#bd-a .li .tx{flex:1;text-align:left}#bd-a .li .tx small{white-space:normal;overflow:visible}
 .ck{width:22px;height:22px;border-radius:7px;border:2px solid var(--line);display:grid;place-items:center;color:transparent;flex:none}.ck.on{background:var(--pri);border-color:var(--pri);color:#fff}
 .sel-f{border:1px solid var(--line);border-radius:12px;padding:11px 12px;font-size:14px;background:var(--bg)}
 .pn-st{display:flex;gap:12px;align-items:center;border-radius:16px;padding:13px 14px;margin-top:4px}.pn-st b{display:block;font-size:14.5px}.pn-st small{font-size:12.5px;opacity:.85}
@@ -1646,7 +1646,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.68';
+const APP_VER = '1.9.69';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -3263,8 +3263,12 @@ ACC.borrarDatos = () => {
   const h = hoja({ titulo: 'Borrar los datos de mi negocio', html: `<span class="op-l" style="margin-top:0">¿Qué quieres borrar?</span>
     <div class="list" id="bd-a">${[['movimientos', 'Solo movimientos', 'Ventas, compras, gastos, caja y pedidos. Se conservan productos, clientes y proveedores.'], ['todo', 'Todo, empezar de cero', 'También productos, clientes, proveedores y fotos.']].map(([k, t, s]) => `<button type="button" class="li" data-k="${k}"><span class="ck ${k === st.alc ? 'on' : ''}">${ic('check', 14)}</span><div class="tx"><b>${t}</b><small>${s}</small></div></button>`).join('')}</div>
     <div class="aviso warn" style="margin-top:12px">${ic('save', 20)}<div><b>Antes se guarda una copia</b><small>Si te arrepientes, tienes 30 días para pedir a soporte que lo recupere.</small></div></div>
-    <label class="fld"><span>Escribe el nombre de tu negocio para confirmar</span><input id="bd-n" autocomplete="off" placeholder="${esc(nombre)}"></label>
-    <label class="fld"><span>Tu PIN</span>${pw('id="bd-p" inputmode="numeric" autocomplete="current-password"')}</label>` });
+    <label class="fld"><span>Para confirmar, escribe el nombre de tu negocio: <b>${esc(nombre)}</b></span><input id="bd-n" name="bd-confirmar" autocomplete="one-time-code" autocapitalize="off" spellcheck="false" readonly placeholder="${esc(nombre)}"></label>
+    <label class="fld"><span>Tu PIN</span>${pw('id="bd-p" name="bd-pin" inputmode="numeric" autocomplete="new-password"')}</label>` });
+  // Chrome toma este campo como «usuario» y lo llena con el WhatsApp guardado: se deja vacío y se habilita al tocarlo
+  const bdn = $('#bd-n', h.el), bdp = $('#bd-p', h.el);
+  bdn.addEventListener('focus', () => { bdn.readOnly = false; });
+  setTimeout(() => { if (bdn.value && norm(bdn.value) !== norm(nombre)) bdn.value = ''; if (bdp && document.activeElement !== bdp) bdp.value = ''; }, 400);
   h.b.addEventListener('click', e => { const b = e.target.closest('[data-k]'); if (!b) return; st.alc = b.dataset.k; $$('#bd-a .ck', h.el).forEach(x => x.classList.toggle('on', x.closest('[data-k]') === b)); const bt = $('.sheet-f .bad', h.el); if (bt) bt.textContent = st.alc === 'todo' ? 'Borrar todo' : 'Borrar movimientos'; });
   h.botones([{ t: 'Borrar movimientos', cls: 'bad', fn: async () => {
     if (norm($('#bd-n', h.el).value) !== norm(nombre)) throw new Error('El nombre no coincide. Escríbelo tal como aparece en Ajustes.');
