@@ -2220,7 +2220,8 @@ function panelAnunciar_(d) {
 }
 function panelAnuncios_() {
   return mRows_('Anuncios').slice().reverse().slice(0, 30).map(a => { const ds = String(a.destinos || '').split(',').filter(Boolean), vs = String(a.vistos || '').split(',').filter(Boolean);
-    return { id: a.id, fecha: a.fecha, titulo: a.titulo, texto: a.texto, filtro: a.filtro, canales: a.canales, vence: a.vence, enviados: ds.length, vistos: vs.length, activo: String(a.vence) >= hoy_() }; });
+    const uno = String(a.filtro) === 'ids' && ds.length === 1 ? mRows_('Licencias').find(l => l.id === ds[0]) : null;
+    return { id: a.id, fecha: a.fecha, titulo: a.titulo, texto: a.texto, filtro: a.filtro, canales: a.canales, vence: a.vence, enviados: ds.length, vistos: vs.length, activo: String(a.vence) >= hoy_(), paraId: uno ? uno.id : '', para: uno ? uno.negocio : '' }; });
 }
 function panelAnuncioQuitar_(d) { const a = mRows_('Anuncios').find(x => x.id === d.id); if (!a) throw new Error('Ese mensaje ya no existe'); mSet_('Anuncios', a, { vence: addDiasIso_(hoy_(), -1) }); return panelAnuncios_(); }
 // Banner para este negocio: el mensaje vigente más reciente que no ha marcado como visto
@@ -2228,7 +2229,7 @@ function anuncioPara_() {
   if (!MULTI_NEGOCIO || !NEG) return null;
   try {
     const h = hoy_(), a = mRows_('Anuncios').slice().reverse().find(x => String(x.vence) >= h && String(x.canales).indexOf('banner') >= 0 && (',' + x.destinos + ',').indexOf(',' + NEG.id + ',') >= 0 && (',' + x.vistos + ',').indexOf(',' + NEG.id + ',') < 0);
-    return a ? { id: a.id, titulo: a.titulo, texto: a.texto, fecha: String(a.fecha).slice(0, 10) } : null;
+    return a ? { id: a.id, titulo: a.titulo, texto: a.texto, fecha: String(a.fecha).slice(0, 10), directo: String(a.filtro) === 'ids' } : null; // directo = mensaje solo para este negocio: puede responder
   } catch (e) { return null; }
 }
 function anuncioVisto_(u, d) {

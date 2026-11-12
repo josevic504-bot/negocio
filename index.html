@@ -911,6 +911,8 @@ body.en-tienda{padding-bottom:110px}
 .btn.tarj{background:linear-gradient(135deg,#3b82f6,#1b4fd8);color:#fff;border:0;width:100%;margin-top:6px}
 .comp-t.on{border-style:solid}.comp-t img{width:46px;height:60px;object-fit:cover;border-radius:6px;flex:none}.comp-t .ci{font-size:24px}.comp-t .tx{display:flex;flex-direction:column;gap:2px;font-size:13.5px}.comp-t small{color:var(--mut);font-size:12px}
 .mis-c{font-size:12.5px;margin:-2px 0 8px 2px;color:var(--mut)}.mis-c.ok{color:#0e8f5a;font-weight:600}.mis-c.bt{display:block;cursor:pointer;color:var(--txt)}.mis-c.bt b{color:var(--pri)}
+.anuncio-b+.today{margin-top:0}
+.anuncio-b:has(+.today){margin-top:-52px;position:relative;z-index:1;box-shadow:0 6px 18px rgba(0,0,0,.08)}
 .anuncio-b{display:flex;gap:12px;align-items:flex-start;padding:14px;border-radius:18px;margin-bottom:12px;background:linear-gradient(135deg,color-mix(in srgb,var(--pri) 12%,var(--card,#fff)),var(--card,#fff));border:1px solid color-mix(in srgb,var(--pri) 25%,transparent)}
 .anuncio-b .ai{font-size:24px}.anuncio-b .tx{flex:1;min-width:0}.anuncio-b p{margin:3px 0 4px;font-size:14px;line-height:1.4}.anuncio-b small{color:var(--mut);font-size:11.5px}
 .sop-b{background:#3a2a10!important;color:#ffd98a!important}.sop-b b{color:#fff}.cobro-b.prox{background:color-mix(in srgb,var(--pri) 10%,transparent)}
@@ -2087,7 +2089,7 @@ function pintarBanner() {
 // Mensaje de Molina Soluciones Digitales (se envía desde el Panel); se quita con «Entendido»
 function anuncioHTML() {
   const a = S.anuncio; if (!a || LS.get('anv_' + a.id, '') === '1') return '';
-  return `<div class="anuncio-b"><span class="ai">📣</span><div class="tx"><b>${esc(a.titulo)}</b><p>${esc(a.texto)}</p><small>Molina Soluciones Digitales · ${esc(fFechaC(a.fecha))}</small></div><button class="btn sm" data-a="anuncioOk">Entendido</button></div>`;
+  return `<div class="anuncio-b"><span class="ai">📣</span><div class="tx"><b>${esc(a.titulo)}</b><p>${esc(a.texto)}</p><small>Molina Soluciones Digitales · ${esc(fFechaC(a.fecha))}</small>${a.directo && !SOPORTE ? `<div class="row" style="margin-top:8px"><button class="btn sm pri" data-a="soporteNuevo">${ic('chat', 15)} Responder</button><button class="btn sm" data-a="anuncioOk">Entendido</button></div>` : ''}</div>${a.directo && !SOPORTE ? '' : '<button class="btn sm" data-a="anuncioOk">Entendido</button>'}</div>`;
 }
 ACC.anuncioOk = () => { const a = S.anuncio; if (!a) return; LS.set('anv_' + a.id, '1'); if (!SOPORTE) api('anuncioVisto', { id: a.id }, true).catch(() => {}); S.anuncio = null; R.inicio(); };
 function bannerCobro() {
@@ -2977,6 +2979,29 @@ ACC.panelDatosPago = async () => { const t = await pedirTexto('Datos para que te
 ACC.panelCompVer = el => hoja({ titulo: 'Comprobante', html: `<img src="${esc(fotoAncha(el.dataset.u))}" alt="" style="width:100%;border-radius:12px">` });
 ACC.panelCompOk = async el => { if (!(await confirmar('¿Marcas este pago como recibido? Se anota el pago y el cliente ve que quedó confirmado.', { si: 'Pago recibido' }))) return; await api('panelCuotas', { id: el.dataset.n, accion: 'pagar', cuotaId: el.dataset.id }); toast('Pago anotado', 'ok'); panelResumen(); };
 ACC.panelCompNo = async el => { const nota = await pedirTexto('Rechazar comprobante', { label: 'Motivo (opcional, queda en el historial)', ph: 'Ej. el monto no coincide' }); if (nota === null) return; await api('panelCuotas', { id: el.dataset.n, accion: 'rechazar', cuotaId: el.dataset.id, nota }); toast('Rechazado: el cliente verá que debe mandar otro', 'ok'); panelResumen(); };
+/* ---- Panel: mensaje dentro de la app para un solo negocio (banner en su Inicio + aviso al teléfono) ---- */
+function panelMensajeA(id, n) {
+  const st = { push: true, banner: true }, nom = String(n.dueno || '').split(' ')[0] || 'tu cliente';
+  const h = hoja({ titulo: 'Mensaje para ' + esc(n.negocio), html: `<p class="h" style="margin:0 0 10px">Le sale a <b>${esc(nom)}</b> al abrir su programa, con un botón para responderte por el chat de soporte. No depende de su número de WhatsApp.</p>
+    <span class="op-l" style="margin-top:0">¿Cómo?</span><div class="chips" style="flex-wrap:wrap" id="ma-c"><button type="button" class="chip on" data-c="banner">📣 Mensaje en su app</button><button type="button" class="chip on" data-c="push">${ic('bell', 14)} Aviso al teléfono</button></div>
+    <label class="fld" style="margin-top:12px"><span>Título</span><input id="ma-t" maxlength="60" value="Mensaje de Molina Soluciones Digitales"></label>
+    <label class="fld"><span>Mensaje</span><textarea id="ma-x" rows="4" maxlength="400" placeholder="Ej. Hola, no logro contactarte al número con el que te registraste. ¿Me confirmas tu WhatsApp para ayudarte con tu programa?"></textarea></label>
+    <label class="fld"><span>Se le muestra durante</span><select id="ma-d"><option value="3">3 días</option><option value="7" selected>7 días</option><option value="15">15 días</option><option value="30">30 días</option></select></label>
+    <small class="hint">El aviso al teléfono solo le llega si activó los avisos. El mensaje en la app le sale siempre, hasta que toque «Entendido».</small>
+    <div class="sec-t"><h3>Enviados a este negocio</h3></div><div class="list" id="ma-l"><div class="empty">Cargando…</div></div>` });
+  const lista = l => { const m = l.filter(a => a.paraId === id); $('#ma-l', h.el).innerHTML = m.map(a => `<div class="li"><div class="tx"><b>${esc(a.titulo)}</b><small>${esc(a.texto.slice(0, 120))}</small><small>${esc(String(a.fecha).slice(0, 16))} · ${String(a.canales).indexOf('banner') < 0 ? 'solo aviso al teléfono' : a.vistos ? '<span style="color:var(--ok)">✓ Ya lo vio</span>' : a.activo ? 'Todavía no lo ha visto' : 'Terminó sin que lo viera'}</small></div>${a.activo && String(a.canales).indexOf('banner') >= 0 && !a.vistos ? `<button class="btn sm ghost" data-q="${esc(a.id)}">Quitar</button>` : ''}</div>`).join('') || '<div class="empty">Todavía no le has enviado mensajes</div>'; };
+  api('panelAnuncios', {}, true).then(lista).catch(() => {});
+  h.el.addEventListener('click', async e => {
+    const cb = e.target.closest('[data-c]'); if (cb) { st[cb.dataset.c] = !st[cb.dataset.c]; cb.classList.toggle('on', st[cb.dataset.c]); return; }
+    const q = e.target.closest('[data-q]'); if (q) { lista(await api('panelAnuncioQuitar', { id: q.dataset.q })); toast('El mensaje ya no se le muestra', 'ok'); }
+  });
+  h.botones([{ t: `${ic('send', 18)} Enviar`, cls: 'pri big', fn: async () => {
+    const texto = $('#ma-x', h.el).value.trim(); if (texto.length < 3) throw new Error('Escribe el mensaje');
+    if (!st.push && !st.banner) throw new Error('Elige cómo enviarlo');
+    lista(await api('panelAnunciar', { filtro: 'ids', ids: [id], push: st.push, banner: st.banner, titulo: $('#ma-t', h.el).value.trim(), texto, dias: $('#ma-d', h.el).value }));
+    $('#ma-x', h.el).value = ''; toast('Mensaje enviado a ' + n.negocio, 'ok');
+  } }]);
+}
 /* ---- Panel: mensajes a los negocios ---- */
 ACC.panelMensajes = async () => {
   const st = { filtro: 'todos', push: true, banner: true, giro: '' };
@@ -2988,7 +3013,7 @@ ACC.panelMensajes = async () => {
     <label class="fld"><span>Mensaje</span><textarea id="an-x" rows="3" maxlength="400" placeholder="Ej. Nueva función: tus clientes ya pueden mandarte el comprobante de pago con su pedido."></textarea></label>
     <label class="fld"><span>El banner se ve durante</span><select id="an-d"><option value="3">3 días</option><option value="7" selected>7 días</option><option value="15">15 días</option><option value="30">30 días</option></select></label>
     <div class="sec-t"><h3>Enviados</h3></div><div class="list" id="an-l"><div class="empty">Cargando…</div></div>` });
-  const lista = l => { $('#an-l', h.el).innerHTML = l.map(a => `<div class="li"><div class="tx"><b>${esc(a.titulo)}</b><small>${esc(a.texto.slice(0, 90))}</small><small>${esc(String(a.fecha).slice(0, 16))} · ${a.enviados} negocio${a.enviados === 1 ? '' : 's'}${String(a.canales).indexOf('banner') >= 0 ? ` · ${a.vistos} lo vi${a.vistos === 1 ? 'o' : 'eron'}` : ''}${a.activo ? '' : ' · terminado'}</small></div>${a.activo && String(a.canales).indexOf('banner') >= 0 ? `<button class="btn sm ghost" data-q="${esc(a.id)}">Quitar</button>` : ''}</div>`).join('') || '<div class="empty">Todavía no has enviado mensajes</div>'; };
+  const lista = l => { $('#an-l', h.el).innerHTML = l.map(a => `<div class="li"><div class="tx"><b>${esc(a.titulo)}</b><small>${esc(a.texto.slice(0, 90))}</small><small>${esc(String(a.fecha).slice(0, 16))} · ${a.para ? 'solo ' + esc(a.para) : a.enviados + ' negocio' + (a.enviados === 1 ? '' : 's')}${String(a.canales).indexOf('banner') >= 0 ? ` · ${a.vistos} lo vi${a.vistos === 1 ? 'o' : 'eron'}` : ''}${a.activo ? '' : ' · terminado'}</small></div>${a.activo && String(a.canales).indexOf('banner') >= 0 ? `<button class="btn sm ghost" data-q="${esc(a.id)}">Quitar</button>` : ''}</div>`).join('') || '<div class="empty">Todavía no has enviado mensajes</div>'; };
   api('panelAnuncios', {}, true).then(lista).catch(() => {});
   h.el.addEventListener('click', async e => {
     const fb = e.target.closest('[data-f]'); if (fb) { st.filtro = fb.dataset.f; $$('#an-f .chip', h.el).forEach(x => x.classList.toggle('on', x === fb)); $('#an-g', h.el).hidden = st.filtro !== 'giro'; return; }
@@ -3928,7 +3953,7 @@ async function panelFicha(id) {
       <div class="acciones">${n.colab ? `<button class="btn bad" data-x="quitarColab">${ic('x', 16)} Quitar colaborador</button>` : `${n.estado === 'bloqueada' ? `<button class="btn pri" data-x="reanudar">▶ Reanudar acceso</button>` : n.estado === 'activa' ? '' : `<button class="btn pri" data-x="activar">✓ Activar licencia</button>`}${n.plus ? `<button class="btn ghost" data-x="quitarPlus">Quitar Plus</button>` : `<button class="btn acc" data-x="plus">Activar Plus</button>`}${n.contab ? `<button class="btn ghost" data-x="quitarContab">Quitar Contabilidad</button>` : `<button class="btn" data-x="contab">${ic('chart', 16)} Activar Contabilidad</button>`}${n.estado === 'activa' ? '' : `<button class="btn" data-x="extender">+7 días de prueba</button>`}${n.estado === 'bloqueada' ? '' : `<button class="btn ghost" data-x="pausar">⏸ Pausar</button>`}<button class="btn ghost" data-x="colaborador" style="color:#6a3df0">${ic('star', 16)} Marcar colaborador</button>`}</div>
       ${panelSecGiros(n)}${panelSecGrupo(n)}
       <div class="sec-t"><h3>Soporte</h3></div>
-      <div class="row"><button class="btn" data-x="verApp">${ic('eye', 16)} Ver su app (solo ver)</button></div>
+      <div class="row"><button class="btn" data-x="verApp">${ic('eye', 16)} Ver su app (solo ver)</button><button class="btn" data-x="mensaje">${ic('chat', 16)} Enviarle un mensaje en la app</button></div>
       <small class="hint">Ves lo mismo que el cliente para ayudarlo, sin su PIN. No se puede guardar nada; vence en 2 horas y queda anotado.</small>
       <div class="sec-t"><h3>Productos</h3></div>
       <div class="row"><button class="btn pri" data-x="importar">${ic('doc', 16)} Cargar productos desde Excel</button><button class="btn" data-x="copiar">${ic('copy', 16)} Copiar de otro negocio</button></div>
@@ -3962,6 +3987,7 @@ async function panelFicha(id) {
         if (x === 'copiar') { await panelCopiar(id, n); return; }
         if (x === 'respHacer') { b.disabled = true; try { await respHacer(id); await panelRespCargar(id, h); } finally { b.disabled = false; } return; }
         if (x === 'resp') { const r = (h.resp || []).find(k => k.id === b.dataset.r); if (r) panelRespAbrir(id, n, r, h); return; }
+        if (x === 'mensaje') return panelMensajeA(id, n);
         if (x === 'verApp') { const r = await api('panelVerApp', { id }); window.open(new URL('./?soporte=' + r.token, document.baseURI).href, '_blank'); toast('Se abrió su app en modo soporte (solo ver, 2 horas)', 'ok', 4000); return; }
         if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
         else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }
