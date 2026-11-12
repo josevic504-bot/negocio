@@ -1308,6 +1308,15 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .ms-zona{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:10px 10px 12px;margin-bottom:12px}
 .ms-zh{display:flex;align-items:baseline;justify-content:space-between;gap:8px;margin:2px 4px 10px;padding-bottom:8px;border-bottom:2px solid var(--pri2)}.ms-zh b{font-size:16px}.ms-zh span{font-size:12.5px;color:var(--mut)}
 .t-ent3 button{font-size:13px;padding-left:4px;padding-right:4px}
+.t-rmodo{background:color-mix(in srgb,var(--mc) 10%,var(--card));border:1.5px solid color-mix(in srgb,var(--mc) 45%,transparent);border-radius:16px;padding:9px 12px}.t-rmodo .mi{color:var(--mc);display:flex}.t-rmodo b{flex:1;font:600 15px var(--font)}.t-rmodo b small{font-weight:400;color:var(--mut)}
+.t-mok a{color:var(--pri);font-weight:600;cursor:pointer;white-space:nowrap}
+.t-mz{font-size:13px;font-weight:600;margin:8px 2px 6px;color:var(--ink)}
+.t-mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:7px}
+.t-m{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 2px 6px;font:600 17px var(--font);cursor:pointer;line-height:1.1}
+.t-m small{display:block;font-size:11px;font-weight:400;color:var(--mut);margin-top:2px}
+.t-m.oc{border-style:dashed;background:var(--bg);color:var(--mut)}
+.t-m.on{background:var(--pri);border-color:var(--pri);color:var(--onpri)}.t-m.on small{color:var(--onpri);opacity:.9}
+.t-mok{display:flex;gap:6px;align-items:flex-start;background:var(--pri2);color:var(--ink);border-radius:12px;padding:9px 11px;font-size:13px;margin:0 0 12px}.t-mok .ic{color:var(--pri);flex:none;margin-top:1px}
 .ms-t .pend.cel{background:#7F77DD}.ms-t.ms-cel{box-shadow:0 0 0 3px color-mix(in srgb,#7F77DD 35%,transparent)}
 .ms-pc{border:1.5px solid #7F77DD;border-radius:16px;padding:10px 12px;margin-bottom:10px}.ms-pc .row.sp{display:flex;justify-content:space-between;gap:8px;padding:2px 0}
 #print-area .qr-mesas{display:grid;grid-template-columns:1fr 1fr;gap:10px}#print-area .qr-m{border:1px dashed #999;border-radius:10px;padding:10px;text-align:center;break-inside:avoid}#print-area .qr-m svg{width:150px;height:150px}#print-area .qr-n{font-size:22px;font-weight:700}
@@ -1646,7 +1655,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.69';
+const APP_VER = '1.9.70';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2047,7 +2056,7 @@ function cargarLib(k) {
 const TODOS = ['admin', 'cajero', 'bodega'];
 const VISTAS = {
   inicio:      { t: 'Inicio', i: 'home', roles: TODOS },
-  vender:      { t: 'Vender', i: 'cart', roles: ['admin', 'cajero'] },
+  vender:      { t: 'Vender', i: 'cart', roles: ['admin', 'cajero'], si: () => !modOn('mesas') }, // en un restaurante todo se vende desde Mesas
   mesas:       { t: 'Mesas', i: 'mesa', roles: ['admin', 'cajero', 'mesero'], si: () => modOn('mesas') },
   cocina:      { t: 'Cocina', i: 'chef', roles: ['admin', 'cajero', 'cocina'], si: () => modOn('mesas') },
   pedidos:     { t: 'Pedidos en línea', c: 'Pedidos', i: 'inbox', roles: ['admin', 'cajero'] },
@@ -2082,6 +2091,7 @@ const puedeVer = v => VISTAS[v] && VISTAS[v].roles.includes(S.user.rol) && (!VIS
 function ir(v, params, sinHist) {
   const solo = S.user && { mesero: 'mesas', cocina: 'cocina' }[S.user.rol]; // el mesero solo trabaja en Mesas y la cocina en Cocina
   if (solo) { if (!VISTAS[v] || !puedeVer(v) || v === 'inicio') v = solo; }
+  else if (v === 'vender' && S.user && modOn('mesas')) v = 'mesas';
   else if (!VISTAS[v] || !puedeVer(v)) v = 'inicio';
   Object.values(S.charts).forEach(c => { try { c.destroy(); } catch (e) {} });
   S.charts = {};
@@ -4194,7 +4204,7 @@ R.inicio = () => {
       <div class="sub">${d.hoy.n === 1 ? '1 venta' : d.hoy.n + ' ventas'}</div></div>${sparkSVG(d.spark || [0, 0])}</div>
       <div class="tstats">${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Ganancia hoy</small><b class="n ${d.hoy.ganancia < 0 ? 'neg' : 'ok'}">${money(d.hoy.ganancia)}</b></button>` : ''}<button data-a="ir" data-v="caja"><small>Caja ahora</small><b class="n">${money(d.caja)}</b></button>${rol === 'admin' ? `<button data-a="ir" data-v="reportes"><small>Ganancia mes</small><b class="n ${d.mes.ganancia < 0 ? 'neg' : 'ok'}">${money(d.mes.ganancia)}</b></button>` : `<button data-a="ir" data-v="pedidos"><small>Pedidos</small><b class="n">${S.plus ? (d.pedidos.nuevos ? d.pedidos.nuevos + ' nuevos' : 'Al día') : '—'}</b></button>`}</div>
       <div class="qa">${modOn('mascotas') ? qa('ir', 'cart', 'Vender', 'var(--h1)', 'var(--h2)', 'data-v="vender"') + qa('vetConsultaRapida', 'steth', 'Consulta', '#00915a', '#2fd58b') + (modOn('agenda') ? qa('nuevaAgenda', 'cal', 'Cita', '#1b4fd8', '#3d9bff', 'data-t="cita"') : qa('cobrarCliente', 'coin', 'Cobrar', '#1b4fd8', '#3d9bff')) + qa('nuevoGasto', 'receipt', 'Gasto', '#f25c05', '#ffa83a')
-        : `${qa('ir', 'cart', 'Vender', 'var(--h1)', 'var(--h2)', 'data-v="vender"')}${qa('nuevoGasto', 'receipt', 'Gasto', '#f25c05', '#ffa83a')}
+        : `${modOn('mesas') ? qa('ir', 'mesa', 'Mesas', 'var(--h1)', 'var(--h2)', 'data-v="mesas"') : qa('ir', 'cart', 'Vender', 'var(--h1)', 'var(--h2)', 'data-v="vender"')}${qa('nuevoGasto', 'receipt', 'Gasto', '#f25c05', '#ffa83a')}
       ${rol === 'admin' ? qa('nuevaCompra', 'truck', 'Compra', '#1b4fd8', '#3d9bff') : qa('ir', 'wallet', 'Caja', '#6a1fe0', '#b06cff', 'data-v="caja"')}${qa('cobrarCliente', 'coin', 'Cobrar', '#00915a', '#2fd58b')}`}</div></div>`;
     const vetT = !!(d.vet && modOn('mascotas'));
     if (vetT) { // veterinaria: primero citas, vacunas, hospedaje y mascotas
@@ -5133,6 +5143,7 @@ async function cobrarPedido(p) {
   if (p.envio) S.ticket.items.push({ productoId: '', descripcion: 'Envío a domicilio', cantidad: 1, precio: p.envio });
   guardarTicket();
   cerrarHojas();
+  if (!puedeVer('vender')) return abrirCobro(); // restaurante: no hay Vender, se cobra aquí mismo
   ir('vender', { cobrar: 1 });
 }
 /* ===================== MENSAJES (chat con los clientes de la tienda) ===================== */
@@ -9723,7 +9734,7 @@ const GUIA = {
   comida: { n: 'tu restaurante', d: 'Tu programa ya viene listo para tomar pedidos. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tu menú y precios', s: 'Opciones y existencias', h: 'Tu menú: platos y opciones', p: 'Ejemplo: Plato típico. Así se configura cada plato.', img: 'p_comida', n: 1, ir: 'productos', b: 'Ver mi menú', l: ['<b>Nombre y categoría:</b> Plato típico en Platos.', '<b>Opciones:</b> lo que elige el cliente, como la carne.', '<b>Costo y precio:</b> lo que te cuesta y lo que cobras.', '<b>Existencias:</b> apágalas si no llevas inventario del plato.'] },
     { ic: 'mesa', t: 'Abre tu primera mesa', s: 'Pedido, cocina y cobro', h: 'Tus mesas', p: 'En Mesas ves de un vistazo qué mesa está libre, ocupada, cuál pidió la cuenta y cuál ya pagó.', img: 'mesas', ir: 'mesas', b: 'Ir a Mesas', l: ['Toca una mesa libre, elige cuántas personas son y toma el pedido.', '<b>Agregar y mandar a cocina</b> te da la comanda sin precios para imprimir.', 'Cuando pidan la cuenta, cóbrala completa o dividida.', 'Para tus meseros, crea un usuario con el rol <b>Mesero</b> en Usuarios.'] },
-    { ic: 'cart', t: 'Para llevar o a domicilio', s: 'Desde Vender', h: 'Pedidos para llevar', p: 'Lo que no es de mesa se cobra en Vender, con nota para la cocina.', img: 'vender', ir: 'vender', b: 'Ir a Vender', l: ['Agrega los platos al ticket.', 'Al cobrar elige para llevar o domicilio.', 'Escribe la nota para la cocina e imprime la comanda sin precios.'] }, 'tienda', 'caja'] },
+    { ic: 'bag', t: 'Para llevar o a domicilio', s: 'Desde Mesas', h: 'Pedidos para llevar', p: 'Arriba en Mesas tocas «Para llevar» o «A domicilio» y escribes el nombre del cliente.', img: 'mesas', ir: 'mesas', b: 'Ir a Mesas', l: ['Toca «Para llevar» o «A domicilio».', 'Agrega los platos y mándalos a cocina.', 'Cuando esté listo, cóbralo desde su tarjeta.'] }, 'tienda', 'caja'] },
   panaderia: { n: 'tu panadería', d: 'Tu programa ya viene listo para vender y anotar encargos. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Revisa tus productos y precios', s: 'Sabor, tamaño y existencias', h: 'Tus productos: sabor y tamaño', p: 'Ejemplo: Pastel de cumpleaños. Así se configura cada producto.', img: 'p_panaderia', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre y categoría:</b> Pastel de cumpleaños en Pasteles.', '<b>Opciones:</b> sabores o tamaños, separados por comas.', '<b>Costo y precio:</b> el costo es opcional.', '<b>Existencias:</b> apágalas si lo haces por encargo.'] },
     { ic: 'gift', t: 'Anota tu primer encargo', s: 'Día, hora, precio y anticipo', h: 'Anota tu primer encargo', p: 'En Encargos ves lo que debes entregar y cuándo.', img: 'encargos', ir: 'encargos', b: 'Ir a Encargos', l: ['Toca <b>Nuevo encargo</b> y escribe cliente, entrega, precio y anticipo.', 'Confírmale al cliente por WhatsApp.', 'Al cobrar, el anticipo se descuenta.'] },
@@ -9816,6 +9827,10 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.70', fecha: '2026-11-12', items: [
+    { i: 'mesa', t: 'Tienda del restaurante: 3 entradas', d: 'Tu tienda abre con «Comer aquí», «Para llevar» y «A domicilio». En «Comer aquí» el cliente toca su mesa (separadas por zona, con las libres y las ocupadas) y luego ve el menú. Con el QR de la mesa entra directo.' },
+    { i: 'mesa', t: 'Restaurantes: todo desde Mesas', d: 'Se quitó «Vender»: las mesas, lo para llevar y lo a domicilio se toman y se cobran desde Mesas. En Inicio, el botón grande ahora te lleva a Mesas.' }
+  ] },
   { v: '1.9.68', fecha: '2026-11-12', items: [
     { i: 'mesa', t: 'Mesas divididas por zona', d: 'Cuando tu restaurante tiene varias zonas (Salón, Terraza…), el tablero muestra cada zona en su propio bloque con cuántas mesas están ocupadas.' }
   ] },
@@ -10478,7 +10493,7 @@ async function iniciarTienda(id) {
   T.nFoto = Object.keys(T.fotos).reduce((a, k) => Math.max(a, Number((/Imagen: (\d+)/.exec(k) || [])[1]) || 0), 0);
   T.entrega = n.entrega === 'domicilio' ? 'domicilio' : 'recoger';
   // Restaurante: el QR de la mesa trae ?mesa=N → «Comer aquí» en esa mesa
-  { const qm = parseInt(new URLSearchParams(location.search).get('mesa'), 10); if (n.mesas && qm >= 1 && qm <= n.mesas) { T.mesaQR = String(qm); T.mesa = String(qm); T.entrega = 'mesa'; } }
+  { const qm = parseInt(new URLSearchParams(location.search).get('mesa'), 10); if (n.mesas && qm >= 1 && qm <= n.mesas) { T.mesaQR = String(qm); T.mesa = String(qm); T.entrega = 'mesa'; T.modoElegido = 1; } }
   pintarTienda();
   let ramoUrl = ''; try { ramoUrl = new URLSearchParams(location.search).get('ramo') || ''; } catch (e) {}
   if (ramoUrl) abrirRamoEnlace(ramoUrl).catch(err); else misPedidosTienda();
@@ -10539,8 +10554,22 @@ function abiertoAhora(n) {
   return { on: false, t: '' };
 }
 const redSocial = (v, base) => { v = String(v || '').trim(); if (!v) return ''; return /^https?:\/\//i.test(v) ? v : base + v.replace(/^@/, '').replace(/^.*\//, ''); };
+// Restaurante: la tienda abre con 3 módulos (Comer aquí · Para llevar · A domicilio); «Comer aquí» pide la mesa antes del menú
+const restoModos = n => [['mesa', 'Comer aquí', 'Elige tu mesa y pide desde tu celular', 'mesa', '#0F6E56'], ['recoger', 'Para llevar', (n.tiempo ? 'Listo aprox. en ' + n.tiempo + ' min · ' : '') + 'lo recoges', 'bag', '#993C1D'], ['domicilio', 'A domicilio', (n.envio ? 'Envío ' + money(n.envio) : 'Envío gratis') + ' · te lo llevamos', 'truck', '#185FA5']]
+  .filter(m => m[0] === 'mesa' || (n.entrega || 'ambos') === 'ambos' || n.entrega === m[0]);
+const zonaDeMesa = (n, m) => { const zs = n.zonasMesa || []; let c = 0, z = ''; zs.some(x => { c += x.n; if (Number(m) <= c) { z = x.z; return true; } return false; }); return zs.length > 1 ? z : ''; };
+function gridMesasT(n) {
+  const zs = (n.zonasMesa && n.zonasMesa.length ? n.zonasMesa : [{ z: '', n: n.mesas }]), oc = new Set((n.ocupadas || []).map(String)); let k = 0;
+  return zs.map(z => `${zs.length > 1 ? `<div class="t-mz">${esc(z.z)}</div>` : ''}<div class="t-mg">${Array.from({ length: z.n }, () => { const m = String(++k), on = T.mesa === m; return `<button type="button" class="t-m ${on ? 'on' : oc.has(m) ? 'oc' : ''}" data-mesa="${m}">${m}<small>${on ? 'tu mesa' : oc.has(m) ? 'ocupada' : 'libre'}</small></button>`; }).join('')}</div>`).join('');
+}
+function elegirMesaT(listo) {
+  const n = T.info.negocio;
+  const h = hoja({ titulo: '¿En qué mesa estás?', html: `<p class="sm mut" style="margin:0 2px 10px">Toca tu mesa. Tu pedido le llega al mesero y lo pagas en la mesa.</p><div id="em-g">${gridMesasT(n)}</div>` });
+  h.b.addEventListener('click', e => { const b = e.target.closest('[data-mesa]'); if (!b) return; T.mesa = b.dataset.mesa; T.entrega = 'mesa'; T.modoElegido = 1; h.cerrar(); listo && listo(); });
+}
 function pintarTienda() {
-  const n = T.info.negocio, gs = tGiros(), multi = gs.length > 1, portada = multi && !T.giro;
+  const n = T.info.negocio, gs = tGiros(), multi = gs.length > 1, portada = (multi && !T.giro) || (!!n.mesas && !T.modoElegido);
+  const resto = !!n.mesas, entradaR = resto && !T.modoElegido;
   const ps = T.info.productos.filter(p => !T.giro || p.g === T.giro);
   const ord = n.ordenCats || [], pos = c => { const i = ord.indexOf(c); return i < 0 ? 999 : i; };
   const cats = [...new Set(ps.map(p => p.categoria))].sort((a, b) => pos(a) - pos(b) || a.localeCompare(b));
@@ -10559,6 +10588,9 @@ function pintarTienda() {
   const mods = portada ? `<div class="t-mods" id="t-mods">${gs.map(g => { const m = modT(g.id), c = T.info.productos.filter(p => p.g === g.id).length;
       return `<button class="t-mod" data-mod="${g.id}" style="--mc:${m[2]}"><span class="mi">${giroImg(g.id)}</span><span><b>${esc(m[0])}</b><small>${esc(g.id === 'compras' && n.compras && n.compras.tiendas ? n.compras.tiendas + ' y más' : m[1])}${c ? ' · ' + c + (c === 1 ? ' producto' : ' productos') : ''}</small></span><span class="go">${ic('right', 22)}</span></button>`; }).join('')}</div>` : '';
   const modH = multi && T.giro ? `<div class="t-modh"><button data-mod="">${ic('left', 16)} Secciones</button><b>${giroImg(T.giro)} ${esc(modT(T.giro)[0])}</b></div>` : '';
+  const rMods = entradaR ? `<div class="t-mods">${restoModos(n).map(m => `<button class="t-mod" data-rmodo="${m[0]}" style="--mc:${m[4]}"><span class="mi">${ic(m[3], 28)}</span><span><b>${m[1]}</b><small>${esc(m[2])}</small></span><span class="go">${ic('right', 22)}</span></button>`).join('')}</div>` : '';
+  const rModo = resto && T.modoElegido ? (() => { const m = restoModos(n).find(x => x[0] === T.entrega) || restoModos(n)[0]; const z = T.entrega === 'mesa' && T.mesa ? zonaDeMesa(n, T.mesa) : '';
+      return `<div class="t-modh t-rmodo" style="--mc:${m[4]}"><span class="mi">${ic(m[3], 18)}</span><b>${m[1]}${T.entrega === 'mesa' && T.mesa ? ' · Mesa ' + esc(T.mesa) + (z ? ' <small>' + esc(z) + '</small>' : '') : ''}</b><button data-rcambiar="1">Cambiar</button></div>`; })() : '';
   const enl = conEnlace ? `<div class="t-enl"><span class="mi">🔗</span><div style="flex:1"><b>¿Lo viste en ${esc(n.compras.tiendas || 'otra tienda')}?</b><small>Pega el enlace y te decimos cuánto te sale en lempiras.</small></div><button class="btn pri sm" data-compra="1">Pedir por enlace</button></div>` : '';
   const entTxt = n.entrega === 'ambos' ? `A domicilio <b>${n.envio ? money(n.envio) : 'gratis'}</b> · o recoges en el negocio` : n.entrega === 'domicilio' ? `Entrega a domicilio <b>${n.envio ? money(n.envio) : 'gratis'}</b>` : 'Para recoger en el negocio';
   const ab = abiertoAhora(n);
@@ -10595,11 +10627,11 @@ function pintarTienda() {
       <div class="hero-cta"><a class="btn big" href="#t-cat">${ic('bag', 18)} Ver catálogo</a>${n.telefono ? `<a class="btn big wa" href="${waLink(n.telefono, 'Hola, quiero hacer un pedido')}" target="_blank" rel="noopener">${ic('wa', 18)} Pedir por WhatsApp</a>` : ''}</div></div></div>
     <div class="shop-box v2">
       <div class="shop-info">${ab ? `<div class="shop-open ${ab.on ? '' : 'off'}"><i></i><b>${ab.on ? 'Abierto ahora' : 'Cerrado'}</b>${ab.t ? `<span>· ${esc(ab.t)}</span>` : ''}</div>` : n.horario ? `<div class="shop-open"><i></i><span>${esc(n.horario)}</span></div>` : ''}
-        ${portada || ps.length ? `<a class="btn pri big shop-vercat" href="#t-cat">${ic('bag', 18)} ${portada ? 'Ver secciones' : 'Ver catálogo · ' + ps.length + ' ' + (ps.length === 1 ? 'producto' : 'productos')}</a>` : ''}${acts.length ? `<div class="shop-acts">${acts.join('')}</div>` : ''}<div class="shop-rows">${rows.join('')}</div></div>
+        ${portada || ps.length ? `<a class="btn pri big shop-vercat" href="#t-cat">${ic('bag', 18)} ${entradaR ? 'Hacer mi pedido' : portada ? 'Ver secciones' : 'Ver catálogo · ' + ps.length + ' ' + (ps.length === 1 ? 'producto' : 'productos')}</a>` : ''}${acts.length ? `<div class="shop-acts">${acts.join('')}</div>` : ''}<div class="shop-rows">${rows.join('')}</div></div>
       ${n.mensaje ? `<div class="shop-msg">${esc(n.mensaje)}</div>` : ''}<div id="t-mis"></div><div id="t-chatmis"></div>
       <div class="shop-two" id="t-sobre">${n.sobre ? `<div class="shop-about"><div class="shop-sec">Sobre nosotros</div><p>${esc(n.sobre)}</p></div>` : ''}${owner}</div>
-      <div class="shop-h2" id="t-cat"><span>${portada ? '¿Qué deseas comprar hoy?' : 'Nuestro catálogo'}</span><small>${portada ? gs.length + ' secciones' : ps.length + ' ' + (ps.length === 1 ? 'producto' : 'productos')}</small></div>
-      ${n.personal && !portada ? `<button type="button" class="ramo-b pers" data-pers="1"><span class="e">✨</span><span style="flex:1"><b>Pide tu diseño personalizado</b><small>Cuéntanos qué quieres, mándanos fotos de ejemplo y te mandamos el precio.</small></span><span class="go">Pedir</span></button>` : ''}${n.ramo && ramoFlores().length && !portada ? `<button type="button" class="ramo-b" data-ramo="1"><span class="e">💐</span><span style="flex:1"><b>Arma tu ramo a tu gusto</b><small>Elige las flores, dinos tu presupuesto y te mandamos el precio.</small></span><span class="go">Armar</span></button>` : ''}${mods}${modH}${enl}
+      <div class="shop-h2" id="t-cat"><span>${entradaR ? '¿Cómo quieres tu pedido hoy?' : portada ? '¿Qué deseas comprar hoy?' : resto ? 'Nuestro menú' : 'Nuestro catálogo'}</span><small>${entradaR ? '' : portada ? gs.length + ' secciones' : ps.length + ' ' + (ps.length === 1 ? 'producto' : 'productos')}</small></div>
+      ${n.personal && !portada ? `<button type="button" class="ramo-b pers" data-pers="1"><span class="e">✨</span><span style="flex:1"><b>Pide tu diseño personalizado</b><small>Cuéntanos qué quieres, mándanos fotos de ejemplo y te mandamos el precio.</small></span><span class="go">Pedir</span></button>` : ''}${n.ramo && ramoFlores().length && !portada ? `<button type="button" class="ramo-b" data-ramo="1"><span class="e">💐</span><span style="flex:1"><b>Arma tu ramo a tu gusto</b><small>Elige las flores, dinos tu presupuesto y te mandamos el precio.</small></span><span class="go">Armar</span></button>` : ''}${entradaR ? rMods : mods}${modH}${rModo}${enl}
       <div class="shop-srch" ${portada || (conEnlace && !ps.length) ? 'hidden' : ''}><div class="srch">${ic('search', 18)}<input id="t-q" placeholder="¿Qué estás buscando?" value="${esc(T.q)}"></div>
       ${cat ? '' : cats.length > 1 ? `<div class="chips" style="margin-top:10px" id="t-cats"><button class="chip ${!T.cat ? 'on' : ''}" data-c="">Todo</button>${cats.map(c => `<button class="chip ${T.cat === c ? 'on' : ''}" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${cat ? '' : filtroTienda()}</div>
       ${portada ? '' : (secs ? '<div class="t-expl" id="t-expl" hidden>O explora por categoría</div>' : '') + secs + banda}${subs.length > 1 ? `<div class="chips" style="margin:0 0 12px" id="t-subs"><button class="chip ${!T.sub ? 'on' : ''}" data-sub="">Todo</button>${subs.map(c => `<button class="chip ${T.sub === c ? 'on' : ''}" data-sub="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}${cat && !portada ? `<div style="margin:-2px 0 12px">${filtroTienda()}</div>` : ''}
@@ -10619,6 +10651,8 @@ function pintarTienda() {
   $('#tienda').onclick = e => {
     const sc = e.target.closest('[data-sec]'); if (sc) { T.cat = sc.dataset.sec; T.sub = ''; pintarTienda(); const c = $('#t-cat'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     const sb = e.target.closest('[data-sub]'); if (sb) { T.sub = sb.dataset.sub; $$('#t-subs .chip').forEach(x => x.classList.toggle('on', x === sb)); gridTienda(); return; }
+    const rm = e.target.closest('[data-rmodo]'); if (rm) { const ir = () => { pintarTienda(); const c = $('#t-cat'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); barTienda(); }; if (rm.dataset.rmodo === 'mesa') return elegirMesaT(ir); T.entrega = rm.dataset.rmodo; T.modoElegido = 1; return ir(); }
+    if (e.target.closest('[data-rcambiar]')) { T.modoElegido = 0; pintarTienda(); const c = $('#t-cat'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     const md = e.target.closest('[data-mod]'); if (md) { T.giro = md.dataset.mod; T.cat = ''; T.f = ''; T.q = ''; T.cfg = opcGiro(T.giro || n.gid); pintarTienda(); const c = $('#t-cat'); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
     if (e.target.closest('[data-compra]')) return tCompra();
     if (e.target.closest('[data-chat]')) return chatTienda('');
@@ -10655,7 +10689,7 @@ function gridTienda() {
   const enCat = secT() && T.cat === '*' ? '' : T.cat;
   const l = T.info.productos.filter(p => (!T.giro || p.g === T.giro) && (!enCat || p.categoria === enCat) && (!T.sub || p.sub === T.sub) && (!T.f || tieneValor(p, T.cfg.filtro, T.f)) && (!q || norm(p.nombre).includes(q) || norm(p.categoria).includes(q) || norm(p.sub || '').includes(q) || norm(p.descripcion).includes(q) || norm(p.opciones).includes(q)));
   // Catálogo: con las secciones a la vista, los productos salen al elegir una (o al buscar)
-  const g = $('#t-grid'), oculto = !!$('#t-secs') && !q; g.hidden = oculto || (tGiros().length > 1 && !T.giro);
+  const g = $('#t-grid'), oculto = !!$('#t-secs') && !q; g.hidden = oculto || (tGiros().length > 1 && !T.giro) || (!!T.info.negocio.mesas && !T.modoElegido);
   // Al buscar, los resultados van primero y las categorías debajo (sin búsqueda la lista está oculta)
   const expl = $('#t-expl'); if (expl) { expl.hidden = !q || g.hidden; if (q) expl.parentNode.insertBefore(g, expl); }
   const tonos = p => { const o = p.ops.find(tieneHex); if (!o) return ''; return `<div class="sp-dots">${o.v.slice(0, 7).map(v => `<u style="background:${o.hex[v] || '#ddd'}" title="${esc(v)}"></u>`).join('')}${o.v.length > 7 ? `<i>+${o.v.length - 7}</i>` : ''}</div>`; };
@@ -10840,7 +10874,12 @@ function tCarrito() {
       ${anticipo && n.compras.dias ? `<p class="xs mut" style="margin:-4px 2px 10px">Las compras en línea llegan en ${esc(n.compras.dias)}. El precio final te lo confirmamos por mensaje.</p>` : ''}
       ${n.minimo && sub < n.minimo ? `<div class="aviso warn sm">${ic('alert', 18)}<div>El pedido mínimo es de ${money(n.minimo)}</div></div>` : ''}
       ${resto ? `<div class="fld"><span>¿Cómo quieres tu pedido?</span><div class="seg full t-ent3" id="tc-e" style="margin-bottom:12px"><button class="${enMesa ? 'on' : ''}" data-e="mesa">${ic('mesa', 16)} Comer aquí</button>${n.entrega !== 'domicilio' ? `<button class="${T.entrega === 'recoger' ? 'on' : ''}" data-e="recoger">${ic('bag', 16)} Para llevar</button>` : ''}${n.entrega !== 'recoger' ? `<button class="${T.entrega === 'domicilio' ? 'on' : ''}" data-e="domicilio">${ic('truck', 16)} A domicilio</button>` : ''}</div></div>
-        ${enMesa ? `<label class="fld"><span>Número de tu mesa</span><input id="tc-m" inputmode="numeric" maxlength="3" placeholder="Ej. 4" value="${esc(valores.mesa !== undefined ? valores.mesa : T.mesa || '')}" ${T.mesaQR ? 'readonly' : ''}></label>${T.mesaQR ? `<p class="xs mut" style="margin:-6px 2px 10px">Estás en la mesa ${esc(T.mesaQR)}. Tu pedido le llega al mesero y lo pagas en la mesa.</p>` : '<p class="xs mut" style="margin:-6px 2px 10px">Lo ves en la mesa. Tu pedido le llega al mesero y lo pagas en la mesa.</p>'}` : n.tiempo ? `<p class="sm" style="margin:-4px 2px 12px">${ic('clock', 15)} Listo aprox. en <b>${n.tiempo} min</b></p>` : ''}`
+        ${enMesa ? (() => { // el cliente toca su mesa (separadas por zona); las ocupadas también se pueden elegir: puede que ya esté sentado ahí
+          const zs = (n.zonasMesa && n.zonasMesa.length ? n.zonasMesa : [{ z: '', n: n.mesas }]), oc = new Set((n.ocupadas || []).map(String)); let k = 0;
+          const zMesa = m => { let c = 0, z = ''; zs.some(x => { c += x.n; if (Number(m) <= c) { z = x.z; return true; } return false; }); return z; };
+          if (T.mesa && !T.verMesas) return `<input type="hidden" id="tc-m" value="${esc(T.mesa)}"><p class="t-mok">${ic('check', 15)} <span style="flex:1">Mesa ${esc(T.mesa)}${zMesa(T.mesa) && zs.length > 1 ? ' · ' + esc(zMesa(T.mesa)) : ''}. Tu pedido le llega al mesero y lo pagas en la mesa.</span><a data-vermesas="1">Cambiar</a></p>`;
+          return `<div class="fld"><span>¿En qué mesa estás?</span><input type="hidden" id="tc-m" value="${esc(T.mesa || '')}">${zs.map(z => `${zs.length > 1 ? `<div class="t-mz">${esc(z.z)}</div>` : ''}<div class="t-mg">${Array.from({ length: z.n }, () => { const m = String(++k), on = T.mesa === m; return `<button type="button" class="t-m ${on ? 'on' : oc.has(m) ? 'oc' : ''}" data-mesa="${m}">${m}<small>${on ? 'tu mesa' : oc.has(m) ? 'ocupada' : 'libre'}</small></button>`; }).join('')}</div>`).join('')}</div>
+            ${T.mesa ? `<p class="t-mok">${ic('check', 15)} Mesa ${esc(T.mesa)}${zMesa(T.mesa) && zs.length > 1 ? ' · ' + esc(zMesa(T.mesa)) : ''}. Tu pedido le llega al mesero y lo pagas en la mesa.</p>` : '<p class="xs mut" style="margin:-4px 2px 10px">Toca tu mesa. Tu pedido le llega al mesero y lo pagas en la mesa.</p>'}`; })() : n.tiempo ? `<p class="sm" style="margin:-4px 2px 12px">${ic('clock', 15)} Listo aprox. en <b>${n.tiempo} min</b></p>` : ''}`
       : n.entrega === 'ambos' ? `<div class="seg full" id="tc-e" style="margin-bottom:12px"><button class="${T.entrega === 'recoger' ? 'on' : ''}" data-e="recoger">${ic('store', 16)} Recoger</button><button class="${T.entrega === 'domicilio' ? 'on' : ''}" data-e="domicilio">${ic('truck', 16)} A domicilio</button></div>` : `<p class="sm mut">${n.entrega === 'domicilio' ? 'Te lo llevamos a domicilio' : 'Lo recoges en el negocio'}${n.direccion && n.entrega !== 'domicilio' ? ': ' + esc(n.direccion) : ''}</p>`}
       <div class="f2"><label class="fld"><span>Tu nombre</span><input id="tc-n" autocomplete="name" value="${esc(valores.nom !== undefined ? valores.nom : cli.nombre || '')}"></label><label class="fld"><span>Tu WhatsApp${enMesa ? ' (opcional)' : ''}</span><input id="tc-t" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" value="${esc(valores.tel !== undefined ? valores.tel : cli.telefono || '')}"></label></div>
       ${T.entrega === 'domicilio' ? `<label class="fld"><span>Dirección de entrega</span><input id="tc-d" autocomplete="street-address" placeholder="Colonia, calle, casa, referencia" value="${esc(valores.dir !== undefined ? valores.dir : cli.direccion || '')}"></label>` : ''}
@@ -10864,7 +10903,9 @@ function tCarrito() {
     const q = e.target.closest('[data-d]'); if (q) { tAgregar(q.dataset.id, Number(q.dataset.d)); pinta(); return; }
     const ca = e.target.closest('[data-cam]'); if (ca) { const k = ca.dataset.cam, pr = T.info.productos.find(x => x.id === kId(k)), vkL = tVk(pr, kOp(k));
       tProducto(pr.id, { k, opcion: kOp(k), cantidad: T.cart[k], otros: () => enCarrito(pr.id) - T.cart[k], otrosV: vk => enCarritoV(pr, vk) - (vk === vkL ? T.cart[k] : 0), listo: () => { barTienda(); pinta(); } }); return; }
-    const en = e.target.closest('[data-e]'); if (en) { T.entrega = en.dataset.e; pinta(); return; }
+    const en = e.target.closest('[data-e]'); if (en) { T.entrega = en.dataset.e; if (T.info.negocio.mesas) T.modoElegido = 1; pinta(); return; }
+    const tm = e.target.closest('[data-mesa]'); if (tm) { T.mesa = tm.dataset.mesa; T.verMesas = 0; pinta(); return; }
+    if (e.target.closest('[data-vermesas]')) { T.verMesas = 1; pinta(); return; }
     const dd = e.target.closest('[data-dia]'); if (dd) { T.cita = dd.dataset.dia; pinta(); return; }
     const hh = e.target.closest('[data-hora]'); if (hh) { T.hora = hh.dataset.hora; pinta(); }
   });
@@ -10872,7 +10913,7 @@ function tCarrito() {
   const enviar = async () => {
     const nombre = $('#tc-n', h.el).value.trim(), tel = $('#tc-t', h.el).value.trim(), dir = ($('#tc-d', h.el) || {}).value || '', enMesa = T.entrega === 'mesa', mesa = (($('#tc-m', h.el) || {}).value || '').trim();
     if (nombre.length < (enMesa ? 2 : 3)) throw new Error('Escribe tu nombre');
-    if (enMesa && !(parseInt(mesa, 10) >= 1 && parseInt(mesa, 10) <= n.mesas)) throw new Error('Escribe el número de tu mesa (de 1 a ' + n.mesas + ')');
+    if (enMesa && !(parseInt(mesa, 10) >= 1 && parseInt(mesa, 10) <= n.mesas)) throw new Error('Toca la mesa en la que estás');
     if (tel.replace(/\D/g, '').length < 8 && !(enMesa && !tel.replace(/\D/g, ''))) throw new Error('Escribe tu número de WhatsApp');
     if (enMesa) T.mesa = mesa;
     if (T.entrega === 'domicilio' && dir.trim().length < 5) throw new Error('Escribe la dirección de entrega');

@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.69';
+const VERSION = '1.9.70';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -5202,6 +5202,8 @@ function tiendaInfo_(d) {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       mesas: modOn_('mesas') ? zonasMesa_(cfg).reduce((a, z) => a + z.n, 0) : 0, tiempo: modOn_('mesas') ? Math.max(0, parseInt(cfg.tiempoPrep, 10) || 0) : 0,
+      // Restaurante: zonas y qué mesas están ocupadas (solo los números), para que el cliente toque la suya
+      zonasMesa: modOn_('mesas') ? zonasMesa_(cfg) : [], ocupadas: modOn_('mesas') ? cuentasMesaActivas_().filter(c => (!c.tipo || c.tipo === 'mesa') && c.estado !== 'pagada').map(c => String(c.mesa)) : [],
       minimo: Number(cfg.tiendaMinimo) || 0, pagos: String(cfg.tiendaPagos || 'Efectivo').split(',').filter(Boolean), datosPago: cfg.tiendaDatosPago, enlacePago: cfg.tiendaEnlacePago || '', tigo: cfg.tiendaTigo || '',
       sobre: cfg.tiendaSobre, instagram: cfg.tiendaInstagram, facebook: cfg.tiendaFacebook, mapa: cfg.tiendaMapa,
       abre: cfg.tiendaAbre, cierra: cfg.tiendaCierra, dias: cfg.tiendaDias, ramo: activos.indexOf('floristeria') >= 0, personal: activos.indexOf('manualidades') >= 0, ramoPrecios: cfg.ramoPrecios !== 'no', cita: activos.indexOf('carwash') >= 0 ? { cupo: Math.max(1, Math.floor(Number(cfg.citaCupo) || 3)), ocupadas: citasOcupadas_() } : null, chat: cfg.tiendaChat !== 'no', fuente: cfg.tiendaFuente || 'elegante', modo: cfg.tiendaModo || 'auto', portada: cfg.tiendaPortada || '',
