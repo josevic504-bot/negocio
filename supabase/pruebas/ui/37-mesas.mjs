@@ -24,7 +24,7 @@ const c10 = await ab(N.token, '10', 'Terraza', 5, [{ productoId: P[0].id, cantid
 /* ---- Administrador ---- */
 const pg = await nuevaPagina({ token: A }); await pg.goto('http://localhost:8765/'); await esperar(pg, 8000); await pg.waitForTimeout(1200);
 await paso(pg, 'Inicio · tarjeta Mesas con ocupadas', async () => { await pg.evaluate(() => { const t = [...document.querySelectorAll('.tile')].find(x => /Mesas/.test(x.innerText)); t && t.scrollIntoView({ block: 'center' }); }); await pg.waitForTimeout(300); await pg.cap('inicio-tarjeta-mesas'); return tiene(pg, /Mesas.*3 de 12 ocupadas/); });
-await paso(pg, 'Barra de abajo: Inicio · Mesas · Vender · Pedidos · Más', async () => /Inicio Mesas Vender Pedidos Más/.test((await pg.locator('#bnav').innerText()).replace(/\s+/g, ' ')));
+await paso(pg, 'Barra de abajo: Inicio · Cocina · Mesas · Pedidos · Más', async () => /Inicio Cocina Mesas Pedidos Más/.test((await pg.locator('#bnav').innerText()).replace(/\s+/g, ' ')));
 await pg.ir('mesas'); await pg.waitForTimeout(800);
 await paso(pg, 'Tablero · 12 mesas con colores, zonas y meseros', async () => { await pg.cap('tablero-admin'); return (await pg.locator('.ms-t').count()) === 12 && (await pg.locator('.ms-t.ms-ocu').count()) === 2 && (await pg.locator('.ms-t.ms-cue').count()) === 1 && (await pg.locator('.ms-t.ms-pag').count()) === 1 && tiene(pg, /Vendido hoy por mesero.*Karla/); });
 await paso(pg, 'Tablero · mesa 10 con número rojo de platos sin mandar a cocina', async () => (await pg.locator('.ms-t[data-m="10"] .pend').innerText()).trim() === '7');
