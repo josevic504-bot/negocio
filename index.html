@@ -82,6 +82,7 @@ body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{paddin
 .pn-bars>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--mut)}.pn-bars em{font-style:normal;font-size:11px}
 .pn-bars span{width:100%;border-radius:6px 6px 0 0;background:var(--pri2);display:flex;flex-direction:column;justify-content:flex-end;overflow:hidden}.pn-bars s{display:block;background:color-mix(in srgb,var(--pri) 55%,transparent)}
 .pn-bars .on s{background:var(--pri)}.pn-bars .on{color:var(--ink);font-weight:600}
+.pv-de{margin:6px 0 0 54px;font-size:12.5px;color:var(--pri);font-weight:600;display:flex;align-items:center;gap:5px}.pv-l{margin-top:8px;padding-top:8px;border-top:1px dashed var(--line);font-size:12.5px;color:var(--mut);display:flex;align-items:center;gap:5px}.pv-c{border:1px solid var(--line);border-radius:14px;padding:11px 12px;margin-bottom:8px;background:var(--card)}.pv-c small{display:block;color:var(--mut);font-size:12px;margin-top:3px}.pv-h{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}.pv-h b{min-width:0}.pv-c .lnk{flex:none;background:none;border:0;color:var(--bad);font:600 12.5px var(--font);cursor:pointer;padding:0}
 .pn-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-bottom:9px}.pn-chips .chip{flex:0 0 auto}
 .pn-cta{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:18px;padding:14px 16px;background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;text-align:left;font:inherit;cursor:pointer;box-shadow:var(--sh);margin-top:4px}
 .pn-cta b{display:block;font-size:15px}.pn-cta small{display:block;opacity:.88;font-size:12px}
@@ -3396,18 +3397,18 @@ ACC.panelRespZip = async () => {
 
 /* ---- Panel · Tus enlaces: por canal y de cada vendedor (apoyo en ventas), con lo que trajo cada uno ---- */
 const waCorto = w => { const d = String(w || '').replace(/\D/g, ''); return d.length === 8 ? d.slice(0, 4) + '-' + d.slice(4) : fmtWA(d); };
-const nombreVend = k => { const v = ((P.d && P.d.vendedores) || []).find(x => x.codigo === k); return v ? v.nombre : k.slice(2); };
+const nombreVend = k => { const v = [].concat((P.d && P.d.vendedores) || [], P.vend || [], (P.g && P.g.vendLista) || []).find(x => x.codigo === k); return v ? v.nombre : k.slice(2); };
 const VEND_URL = c => visLink(VIS_LINKS[0][1], c);
 ACC.panelEnlaces = async () => {
   panelCab('Tus enlaces', true);
   $('#main').innerHTML = '<div class="empty">Cargando…</div>';
-  const r = await api('panelVendedores', {}); P.vend = r.vendedores;
+  const r = await api('panelVendedores', {}); P.vend = r.vendedores; P.vcamps = r.campanas || [];
   P.enlProg = P.enlProg || VIS_LINKS[0][0];
   const u = (VIS_LINKS.find(x => x[0] === P.enlProg) || VIS_LINKS[0])[1];
   $('#main').innerHTML = `<div class="pn">
     <div class="pn-h" style="margin-top:4px">Enlaces de vendedores <a data-a="panelVendNuevo">+ Nuevo</a></div>
     ${P.vend.map(v => `<button class="pn-card pn-vend" data-a="panelVendVer" data-k="${esc(v.codigo)}"><div class="t"><div class="av ${colorDe(v.nombre)}">${esc(iniciales(v.nombre))}</div><div><b>${esc(v.nombre)}</b><small>Apoyo en ventas${v.whatsapp ? ' · ' + esc(waCorto(v.whatsapp)) : ''}</small></div>${ic('right', 16)}</div>
-      <div class="nums"><div><b>${v.visitas}</b><small>visitas</small></div><div><b>${v.personas}</b><small>personas</small></div><div><b>${v.registros}</b><small>registros</small></div><div><b style="color:var(--ok, #00a865)">${v.compraron}</b><small>compraron</small></div></div></button>`).join('')
+      <div class="nums"><div><b>${v.visitas}</b><small>visitas</small></div><div><b>${v.personas}</b><small>personas</small></div><div><b>${v.registros}</b><small>registros</small></div><div><b style="color:var(--ok, #00a865)">${v.compraron}</b><small>compraron</small></div></div>${v.invertido ? `<div class="pv-l">${ic('sparkle', 14)} Publicidad ${money(v.invertido)} · recuperó ${Math.round(v.recuperado * 100 / v.invertido)} %</div>` : ''}</button>`).join('')
       || `<button class="pn-card pn-vacio" data-a="panelVendNuevo" style="width:100%">${ic('userplus', 18)} Crea un enlace para cada persona que te ayude a vender y mira cuántos llegan por él</button>`}
     <div class="pn-h">Enlaces por canal</div>
     <div class="pn-card" style="padding:12px"><select id="en-p">${VIS_LINKS.map(([k]) => `<option value="${k}" ${k === P.enlProg ? 'selected' : ''}>${esc(visPag(k))}</option>`).join('')}</select>
@@ -3438,12 +3439,37 @@ ACC.panelVendVer = el => {
   const h = hoja({ titulo: esc(v.nombre), html: `<div class="url-b">${esc(url.replace(/^https:\/\//, ''))}</div>
     <div class="row" style="margin-top:8px"><button class="btn" data-a="panelCopiarLink" data-u="${esc(url)}">${ic('copy', 15)} Copiar</button>${v.whatsapp ? `<a class="btn wa" href="${waLink(v.whatsapp, 'Tu enlace: ' + url)}" target="_blank" rel="noopener">${ic('wa', 15)} Enviar por WhatsApp</a>` : ''}</div>
     <div class="pn-g2" style="margin-top:14px"><div class="pn-k"><small>Visitas</small><b>${v.visitas}</b><i>${v.personas} persona${v.personas === 1 ? '' : 's'}</i></div><div class="pn-k"><small>Se registraron</small><b>${v.registros}</b><i>${v.personas ? Math.round(v.registros * 100 / v.personas) + ' % de las personas' : 'todavía nadie'}</i></div>
-      <div class="pn-k"><small>Compraron</small><b style="color:var(--ok, #00a865)">${v.compraron}</b><i>${v.registros ? pct + ' % de los registros' : '—'}</i></div><div class="pn-k"><small>Te pagaron</small><b>${money(v.pagado)}</b><i>para calcular su comisión</i></div></div>
+      <div class="pn-k"><small>Compraron</small><b style="color:var(--ok, #00a865)">${v.compraron}</b><i>${v.registros ? pct + ' % de los registros' : '—'}</i></div><div class="pn-k"><small>Te pagaron</small><b>${money(v.pagado)}</b><i>${v.invertido ? 'neto ' + money(v.neto) + ' tras publicidad' : 'para calcular su comisión'}</i></div></div>
+    <div class="sec-t"><h3>Publicidad</h3>${v.publicidad.length ? `<a>${money(v.invertido)}</a>` : ''}</div>
+    ${v.publicidad.map(p => `<div class="pv-c"><div class="pv-h"><b>${esc(p.plataforma)} · «${esc(p.nombre)}»</b><button class="lnk" data-x="desligar" data-id="${esc(p.id)}">Quitar</button></div>
+      <small>${esc(fFechaC(p.desde))} – ${p.hasta ? esc(fFechaC(p.hasta)) : 'en curso'} · ${p.entre > 1 ? `su parte ${money(p.parte)} de ${money(p.monto)} (entre ${p.entre})` : money(p.monto)}</small>
+      <div class="pn-prog" style="margin-top:7px"><span style="width:${Math.min(100, p.parte ? p.pagado * 100 / p.parte : 0)}%;background:${p.pagado >= p.parte ? 'var(--ok, #00a865)' : 'var(--warn)'}"></span></div>
+      <small>${p.registros} registro${p.registros === 1 ? '' : 's'} con esta publicidad · pagaron ${money(p.pagado)} (${p.parte ? Math.round(p.pagado * 100 / p.parte) : 0} %)</small></div>`).join('')
+      || '<p class="h" style="margin:0 0 6px">Todavía no tiene publicidad. Si pagas un anuncio para su enlace, aplícaselo aquí y verás si lo recupera.</p>'}
+    ${v.invertido ? `<div class="aviso info" style="margin-top:8px">${ic('info', 18)}<div><b>Para su comisión: ${money(v.pagado)} − ${money(v.invertido)} = ${money(v.neto)}</b><small>Lo que te pagaron sus clientes menos la publicidad que le aplicaste.</small></div></div>` : ''}
+    <div class="row" style="margin-top:10px;gap:8px"><button class="btn" style="flex:1" data-x="aplicar">${ic('plus', 15)} Aplicar gasto</button><button class="btn" style="flex:1" data-x="ligar">${ic('link', 15)} Ligar a publicidad</button></div>
     <div class="sec-t"><h3>Negocios que trajo</h3></div>
     <div class="list">${v.negocios.map(n => { const e = EST_L[n.estado] || ['b-mut', n.estado]; return `<button class="li" style="width:100%;text-align:left;font:inherit;color:inherit" data-a="panelVer" data-id="${n.id}"><div class="av ${colorDe(n.negocio)}">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.negocio)}</b><small>${esc(n.giro)} · se registró ${esc(fCorta(n.registro))}${n.pagado ? ' · pagó ' + money(n.pagado) : n.estado === 'prueba' ? ' · día ' + n.dia : ''}</small></div><span class="badge ${e[0]}">${e[1]}</span></button>`; }).join('') || '<div class="empty">Todavía nadie se registró por su enlace</div>'}</div>
     <p class="credit" style="margin-top:12px">Las visitas son de los últimos 180 días. Cuenta como registro si su último enlace antes de registrarse fue el de ${esc(v.nombre.split(' ')[0])}.</p>` });
+  const reabrir = () => ACC.panelEnlaces().then(() => ACC.panelVendVer({ dataset: { k: v.codigo } }));
+  h.el.addEventListener('click', async e => {
+    const b = e.target.closest('[data-x]'); if (!b) return;
+    try {
+      if (b.dataset.x === 'aplicar') { if (!P.g) P.g = await api('panelGastos', {}); h.cerrar(); panelGastoForm(null, { vend: [v.codigo], listo: reabrir }); }
+      if (b.dataset.x === 'ligar') { h.cerrar(); panelVendLigar(v, reabrir); }
+      if (b.dataset.x === 'desligar') { if (!(await confirmar(`¿Quitar esta publicidad de ${esc(v.nombre.split(' ')[0])}? El gasto no se borra, solo deja de aplicársele.`, { si: 'Quitar' }))) return; await api('panelVendedorLigar', { codigo: v.codigo, id: b.dataset.id, ligar: false }); h.cerrar(); reabrir(); }
+    } catch (er) { err(er); }
+  });
   h.botones([{ t: 'Quitar', cls: 'ghost', fn: async () => { if (!(await confirmar(`¿Quitar a ${esc(v.nombre)}? Su enlace sigue funcionando, pero ya no aparece aquí.`, { si: 'Quitar', peligro: true }))) return; await api('panelVendedorQuitar', { codigo: v.codigo }); h.cerrar(); ACC.panelEnlaces(); } }, { t: 'Editar', fn: () => { h.cerrar(); panelVendForm(v); } }]);
 };
+// Elegir una publicidad ya registrada para ligarla al vendedor (una publicidad puede ser de varios vendedores)
+function panelVendLigar(v, listo) {
+  const l = (P.vcamps || []).filter(c => c.vendedores.indexOf(v.codigo) < 0);
+  const h = hoja({ titulo: 'Ligar a una publicidad', html: `<p class="h" style="margin:0 0 10px">Elige la publicidad que también fue para ${esc(v.nombre.split(' ')[0])}. Si ya es de otro vendedor, el costo se reparte entre los dos.</p>
+    <div class="list">${l.map(c => `<button class="li" style="width:100%;text-align:left;font:inherit;color:inherit" data-id="${esc(c.id)}"><div class="av ${colorDe(c.plataforma)}">${ic('sparkle', 18)}</div><div class="tx"><b>${esc(c.plataforma)} · «${esc(c.nombre)}»</b><small>${esc(fFechaC(c.desde))} – ${c.hasta ? esc(fFechaC(c.hasta)) : 'en curso'}${c.vendedores.length ? ' · de ' + c.vendedores.map(k => esc(nombreVend(k).split(' ')[0])).join(' y ') : ' · general'}</small></div><div class="am n">${money(c.monto)}</div></button>`).join('')
+      || '<div class="empty">No hay otra publicidad registrada. Usa «Aplicar gasto».</div>'}</div>` });
+  h.el.addEventListener('click', async e => { const b = e.target.closest('.li[data-id]'); if (!b) return; try { await api('panelVendedorLigar', { codigo: v.codigo, id: b.dataset.id, ligar: true }); toast('Publicidad ligada', 'ok'); h.cerrar(); listo(); } catch (er) { err(er); } });
+}
 /* ---- Panel: salud del negocio, respaldos y copiar productos ---- */
 const salCls = n => n >= 70 ? 'v' : n >= 40 ? 'a' : 'r';
 const salTxt = n => n >= 85 ? 'Muy bien' : n >= 70 ? 'Bien' : n >= 40 ? 'Regular' : 'En riesgo';
@@ -3677,6 +3703,7 @@ ACC.panelGastosLista = async () => {
   const camp = c => {
     const est = c.monto && c.pagado >= c.monto ? ['b-ok', 'Recuperada'] : c.enCurso ? ['b-warn', 'En curso'] : ['b-mut', 'Terminada'];
     return `<div class="cc" data-a="panelGasto" data-id="${c.id}"><div class="cc-h"><div class="av ${colorDe(c.plataforma)}">${ic('sparkle', 20)}</div><div class="tx"><b>${esc(c.plataforma)} · «${esc(c.nombre)}»</b><small>${esc(fFechaC(c.desde))} – ${c.hasta ? esc(fFechaC(c.hasta)) : 'en curso'} · ${monTxt(c)}</small></div><span class="badge ${est[0]}">${est[1]}</span></div>
+      ${(c.vendedores || []).length ? `<div class="pv-de">${ic('userplus', 14)} De ${c.vendedores.map(k => esc(nombreVend(k))).join(' y ')}${c.vendedores.length > 1 ? ` · ${money(r2(c.monto / c.vendedores.length))} c/u` : ''}</div>` : ''}
       <div class="cc-l"><span>${ic('users', 14)} <b>${c.registros}</b> registro${c.registros === 1 ? '' : 's'}</span><span><b>${c.activaron}</b> activaron</span>${c.registros ? `<span>${money(c.costoRegistro)} por registro</span>` : ''}</div>
       ${c.pagado > 0 ? `<div class="cc-a ${c.pagado >= c.monto ? 'i' : 'w'}"><span style="color:${c.pagado >= c.monto ? 'var(--info)' : 'var(--warn)'}">${ic('trend', 20)}</span><div class="tx"><b>Recuperación ${c.recuperacion} %</b><small>Pagos de clientes que llegaron en esta publicidad: ${money(c.pagado)}</small></div></div>` : ''}
       ${c.enPrueba ? `<div class="cc-a w"><span style="color:var(--warn)">${ic('clock', 20)}</span><div class="tx"><b>Posible recuperación: ${money(c.posible)}</b><small>${c.enPrueba} en prueba · estimado con tu conversión (${g.conversion} %) y pago promedio (${money(g.ticket)})</small></div></div>` : ''}
@@ -3686,16 +3713,20 @@ ACC.panelGastosLista = async () => {
     <button class="btn pri big" style="width:100%;margin:12px 0" data-a="panelGasto">${ic('plus', 18)} Registrar gasto</button>
     <div class="sec-t"><h3>Publicidad</h3><a>${g.campanas.length}</a></div>${g.campanas.map(camp).join('') || '<div class="empty">Aún no has registrado publicidad</div>'}
     <div class="sec-t"><h3>Otros gastos</h3><a>${g.otros.length}</a></div><div class="list">${g.otros.map(x => `<div class="li" data-a="panelGasto" data-id="${x.id}"><div class="av t-azul">${ic('receipt', 20)}</div><div class="tx"><b>${esc(x.nombre)}</b><small>${esc(fFechaC(x.fecha))}${x.moneda === 'USD' ? ' · US$ ' + fmtN(x.montoOrig) + ' × L ' + fmtN(x.tasa, 2) : ''}${x.nota ? ' · ' + esc(x.nota) : ''}</small></div><div class="am n">${money(x.monto)}</div></div>`).join('') || '<div class="empty">Sin otros gastos</div>'}</div>
-    <p class="h" style="text-align:center;font-size:12px;margin-top:14px">Solo tú ves esto. Los clientes que se registran durante las fechas de una publicidad se le asignan solos; lo cambias en su ficha.</p>`;
+    <p class="h" style="text-align:center;font-size:12px;margin-top:14px">Solo tú ves esto. Los clientes que se registran durante las fechas de una publicidad se le asignan solos; lo cambias en su ficha. La publicidad de un vendedor solo cuenta a quien llega por su enlace.</p>`;
 };
-ACC.panelGasto = el => {
-  const x = el.dataset.id ? (P.g.campanas.concat(P.g.otros)).find(y => y.id === el.dataset.id) : null;
-  const pub = x ? !!x.plataforma : true;
+ACC.panelGasto = el => panelGastoForm(el.dataset.id ? (P.g.campanas.concat(P.g.otros)).find(y => y.id === el.dataset.id) : null);
+// pre: { vend: [códigos], listo: fn } cuando se abre desde la ficha de un vendedor
+function panelGastoForm(x, pre) {
+  pre = pre || {};
+  const pub = x ? !!x.plataforma : true, vl = P.g.vendLista || [];
+  let vsel = x ? (x.vendedores || []).slice() : (pre.vend || []).slice();
   let tipo = pub ? 'publicidad' : 'otro', moneda = x ? x.moneda : 'HNL';
   const h = hoja({ titulo: x ? 'Editar gasto' : 'Registrar gasto', html: `
     <div class="seg" id="g-tipo" style="margin-bottom:12px"><button data-t="publicidad" class="${tipo === 'publicidad' ? 'on' : ''}">Publicidad</button><button data-t="otro" class="${tipo === 'otro' ? 'on' : ''}">Otro gasto</button></div>
     <div id="g-pub"><div class="f2"><label class="fld"><span>Plataforma</span><select id="g-pl">${PLATAFORMAS.map(p => `<option ${x && x.plataforma === p ? 'selected' : ''}>${p}</option>`).join('')}</select></label><label class="fld"><span>Nombre de la publicidad</span><input id="g-n1" maxlength="60" value="${esc(x && pub ? x.nombre : '')}" placeholder="Ej.: Prueba gratis 7 días"></label></div>
-      <div class="f2"><label class="fld"><span>Desde</span><input type="date" id="g-d" value="${esc(x && x.desde || hoy())}"></label><label class="fld"><span>Hasta (vacío = en curso)</span><input type="date" id="g-h" value="${esc(x && x.hasta || '')}"></label></div></div>
+      <div class="f2"><label class="fld"><span>Desde</span><input type="date" id="g-d" value="${esc(x && x.desde || hoy())}"></label><label class="fld"><span>Hasta (vacío = en curso)</span><input type="date" id="g-h" value="${esc(x && x.hasta || '')}"></label></div>
+      ${vl.length ? `<span class="op-l">¿De qué vendedor es? <i style="font-style:normal;color:var(--mut)">(opcional)</i></span><div class="pick-l" id="g-vd"><button type="button" class="chip" data-v="">Mía (general)</button>${vl.map(v => `<button type="button" class="chip" data-v="${esc(v.codigo)}">${esc(v.nombre)}</button>`).join('')}</div><p class="h" id="g-vdt" style="font-size:12px;margin:-2px 0 10px"></p>` : ''}</div>
     <div id="g-otro"><div class="f2"><label class="fld"><span>¿En qué fue?</span><input id="g-n2" maxlength="60" value="${esc(x && !pub ? x.nombre : '')}" placeholder="Ej.: Dominio y hosting"></label><label class="fld"><span>Fecha</span><input type="date" id="g-f" value="${esc(x && x.fecha || hoy())}"></label></div></div>
     <div class="sec-t" style="margin-top:6px"><h3>Monto</h3></div>
     <div class="seg" id="g-mon" style="margin-bottom:10px"><button data-m="HNL" class="${moneda === 'HNL' ? 'on' : ''}">Lempiras</button><button data-m="USD" class="${moneda === 'USD' ? 'on' : ''}">Dólares</button></div>
@@ -3707,9 +3738,13 @@ ACC.panelGasto = el => {
     $('#g-pub', B).hidden = tipo !== 'publicidad'; $('#g-otro', B).hidden = tipo === 'publicidad';
     $('#g-tw', B).style.visibility = moneda === 'USD' ? '' : 'hidden'; $('#g-ml', B).textContent = moneda === 'USD' ? 'Monto en dólares' : 'Monto en lempiras';
     const m = num($('#g-m', B).value), t = moneda === 'USD' ? num($('#g-t', B).value) : 1;
+    if ($('#g-vd', B)) {
+      $$('#g-vd [data-v]', B).forEach(b => b.classList.toggle('on', b.dataset.v ? vsel.indexOf(b.dataset.v) >= 0 : !vsel.length));
+      $('#g-vdt', B).textContent = !vsel.length ? 'Cuenta a todos los que lleguen en esas fechas por el canal de la plataforma.' : vsel.length === 1 ? `Solo cuenta a quien llegue por el enlace de ${nombreVend(vsel[0]).split(' ')[0]} y sale en su ficha.` : `Se reparte en partes iguales: ${money(r2(r2(m * t) / vsel.length))} a cada uno. Solo cuenta a quien llegue por sus enlaces.`;
+    }
     $('#g-res', B).innerHTML = `${ic('info', 18)}<div><b>Se registra: ${money(r2(m * t))}</b><small>${moneda === 'USD' ? (P.g.tasa ? 'Cambio de hoy consultado automáticamente. Corrígelo si tu banco te cobró otro.' : 'No se pudo consultar el cambio de hoy; escríbelo tú.') : 'Monto en lempiras.'}</small></div>`;
   };
-  B.addEventListener('click', e => { const t = e.target.closest('[data-t]'), m = e.target.closest('[data-m]'); if (t) { tipo = t.dataset.t; $$('#g-tipo button', B).forEach(b => b.classList.toggle('on', b === t)); pinta(); } if (m) { moneda = m.dataset.m; $$('#g-mon button', B).forEach(b => b.classList.toggle('on', b === m)); pinta(); } });
+  B.addEventListener('click', e => { const t = e.target.closest('[data-t]'), m = e.target.closest('[data-m]'), v = e.target.closest('#g-vd [data-v]'); if (v) { const k = v.dataset.v; vsel = !k ? [] : vsel.indexOf(k) >= 0 ? vsel.filter(y => y !== k) : vsel.concat([k]); pinta(); } if (t) { tipo = t.dataset.t; $$('#g-tipo button', B).forEach(b => b.classList.toggle('on', b === t)); pinta(); } if (m) { moneda = m.dataset.m; $$('#g-mon button', B).forEach(b => b.classList.toggle('on', b === m)); pinta(); } });
   B.addEventListener('input', pinta); pinta();
   // Si el servidor no trajo el cambio del día, el teléfono lo consulta directo
   if (!(P.g.tasa > 0)) fetch('https://open.er-api.com/v6/latest/USD').then(r => r.json()).then(j => {
@@ -3718,13 +3753,13 @@ ACC.panelGasto = el => {
   }).catch(() => {});
   const bt = [{ t: 'Guardar gasto', cls: 'pri', fn: async () => {
     const d = { id: x ? x.id : '', tipo, moneda, montoOrig: num($('#g-m', B).value), tasa: num($('#g-t', B).value), nota: $('#g-no', B).value };
-    if (tipo === 'publicidad') Object.assign(d, { plataforma: $('#g-pl', B).value, nombre: $('#g-n1', B).value, desde: $('#g-d', B).value, hasta: $('#g-h', B).value, fecha: $('#g-d', B).value });
+    if (tipo === 'publicidad') Object.assign(d, { plataforma: $('#g-pl', B).value, nombre: $('#g-n1', B).value, desde: $('#g-d', B).value, hasta: $('#g-h', B).value, fecha: $('#g-d', B).value, vendedores: vsel });
     else Object.assign(d, { nombre: $('#g-n2', B).value, fecha: $('#g-f', B).value });
-    await api('panelGastoGuardar', d); toast('Gasto guardado', 'ok'); h.cerrar(); ACC.panelGastosLista();
+    P.g = await api('panelGastoGuardar', d); toast('Gasto guardado', 'ok'); h.cerrar(); pre.listo ? pre.listo() : ACC.panelGastosLista();
   } }];
   if (x) bt.unshift({ t: 'Anular', cls: 'bad', fn: async () => { if (!await confirmar('¿Anular este gasto? Deja de contar en el mes y en la publicidad.', { si: 'Anular', peligro: true })) return; await api('panelGastoAnular', { id: x.id }); toast('Gasto anulado', 'ok'); h.cerrar(); ACC.panelGastosLista(); } });
   h.botones(bt);
-};
+}
 // Bienvenida: imagen con los módulos y tipos de negocio + mensaje de la plantilla «Bienvenida»
 function panelBienvenida(n) {
   const IMG = 'bienvenida.png?v=3'; // ?v= salta la copia guardada en el teléfono: al cambiar la imagen, sube el número

@@ -47,7 +47,7 @@ const SCHEMA_M = {
   // Mensajes de Vic a los negocios (aviso al teléfono y/o banner en la app). destinos y vistos: ids de negocio separados por coma
   Anuncios:    ['id','fecha','titulo','texto','filtro','destinos','canales','vence','vistos','creado'],
   // Gastos del negocio de Vic (publicidad y otros). Solo los ve el Panel.
-  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado'],
+  GastosPanel: ['id','fecha','tipo','plataforma','nombre','desde','hasta','moneda','montoOrig','tasa','monto','nota','anulado','creado','vendedor'],
   // Contratos de licencia: Vic los crea desde el Panel y el dueño los firma desde su celular (la firma es una imagen pequeña)
   Contratos:   ['id','negocioId','fecha','titulo','texto','monto','desde','hasta','estado','firma','firmadoEl','firmadoPor','huella','pdfId','creado'],
   // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
@@ -2274,6 +2274,7 @@ function rutaPanel_(a, d) {
     case 'panelVendedores':        return panelVendedores_();
     case 'panelVendedorGuardar':   return panelVendedorGuardar_(d);
     case 'panelVendedorQuitar':    return panelVendedorQuitar_(d);
+    case 'panelVendedorLigar':     return panelVendedorLigar_(d);
     case 'panelSalir':             { try { if (d && d._tok) CacheService.getScriptCache().remove('P_' + d._tok); } catch (e) {} return true; }
   }
   throw new Error('Acción no válida: ' + a);
@@ -6383,6 +6384,8 @@ function fecha10_(v) {
   return '';
 }
 const esPub_ = g => String(g.tipo || '').trim().toLowerCase() === 'publicidad';
+// Vendedores a los que se aplica una publicidad (códigos v-… separados por coma); su costo se reparte entre ellos
+const vendsDe_ = g => String(g.vendedor || '').split(',').map(x => x.trim()).filter(Boolean);
 function campanas_() {
   // Antes se exigía «2026-10-25» exacto: si Sheets guardaba la fecha con hora, la publicidad no aparecía en ninguna parte
   // Ninguna publicidad se pierde: si no se entiende su fecha de inicio, se usa la del gasto, la de registro o la de hoy
@@ -6405,15 +6408,33 @@ function panelVendedores_() {
   let filas = []; try { filas = visitasFilas_(60000); } catch (e) {}
   const dup = licsDuplicadas_(), lics = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && !esEliminada_(l)), org = origenesLic_(lics), pagos = mRows_('PagosLic');
   const pagoDe = {}; pagos.forEach(p => { pagoDe[p.negocioId] = r2_((pagoDe[p.negocioId] || 0) + (Number(p.monto) || 0)); });
-  return { vendedores: vs.map(v => {
+  const camps = campanas_();
+  return { campanas: camps.map(c => ({ id: c.id, nombre: c.nombre, plataforma: c.plataforma, desde: c.desde, hasta: c.hasta, monto: Number(c.monto) || 0, vendedores: vendsDe_(c) })),
+    vendedores: vs.map(v => {
     const f = filas.filter(x => x.origen === v.codigo), u = {}; f.forEach(x => { u[x.vid || x.fecha] = 1; });
     const negs = lics.filter(l => (org[l.id] || {}).canal === v.codigo).map(l => {
-      const ln = licNegocio_(l), e = esColab_(l) ? 'colaborador' : ln.estado === 'completa' ? 'activa' : ln.estado;
-      return { id: l.id, negocio: l.negocio, giro: l.giro, estado: e, dia: diaPrueba_(l), registro: String(l.registro).slice(0, 10), pagado: pagoDe[l.id] || 0 };
+      const ln = licNegocio_(l), e = esColab_(l) ? 'colaborador' : ln.estado === 'completa' ? 'activa' : ln.estado, c = campanaDe_(l, camps, v.codigo);
+      return { id: l.id, negocio: l.negocio, giro: l.giro, estado: e, dia: diaPrueba_(l), registro: String(l.registro).slice(0, 10), pagado: pagoDe[l.id] || 0, pub: c ? c.id : '' };
     }).sort((a, b) => a.registro < b.registro ? 1 : -1);
+    // Publicidad aplicada a este vendedor: su parte del costo (repartido entre los vendedores ligados) y lo que pagaron los clientes que trajo con ella
+    const pubs = camps.filter(c => vendsDe_(c).indexOf(v.codigo) >= 0).map(c => {
+      const n = vendsDe_(c).length, ns = negs.filter(x => x.pub === c.id);
+      return { id: c.id, nombre: c.nombre, plataforma: c.plataforma, desde: c.desde, hasta: c.hasta, monto: Number(c.monto) || 0, entre: n, parte: r2_((Number(c.monto) || 0) / n),
+        registros: ns.length, pagado: r2_(ns.reduce((a, x) => a + x.pagado, 0)), enCurso: !c.hasta || c.hasta >= hoy_() };
+    });
+    const pagado = r2_(negs.reduce((a, n) => a + n.pagado, 0)), invertido = r2_(pubs.reduce((a, p) => a + p.parte, 0));
     return { codigo: v.codigo, nombre: v.nombre, whatsapp: v.whatsapp || '', creado: v.creado || '', visitas: f.length, personas: Object.keys(u).length, registros: negs.length,
-      compraron: negs.filter(n => n.pagado > 0 || n.estado === 'activa').length, pagado: r2_(negs.reduce((a, n) => a + n.pagado, 0)), negocios: negs };
+      compraron: negs.filter(n => n.pagado > 0 || n.estado === 'activa').length, pagado: pagado, negocios: negs,
+      publicidad: pubs, invertido: invertido, recuperado: r2_(pubs.reduce((a, p) => a + p.pagado, 0)), neto: r2_(pagado - invertido) };
   }) };
+}
+// Liga o quita un vendedor de una publicidad ya registrada (la misma publicidad puede ser de varios vendedores)
+function panelVendedorLigar_(d) {
+  if (!vendedores_().some(v => v.codigo === d.codigo)) throw new Error('Ese vendedor no existe');
+  const g = mRows_('GastosPanel').find(x => x.id === d.id && esPub_(x) && !esSi_(x.anulado)); if (!g) throw new Error('Esa publicidad no existe');
+  const l = vendsDe_(g).filter(c => c !== d.codigo); if (d.ligar) l.push(d.codigo);
+  mSet_('GastosPanel', g, { vendedor: l.join(',') });
+  return panelVendedores_();
 }
 function panelVendedorGuardar_(d) {
   const l = vendedores_(), nombre = txt_(d.nombre, 60), wa = String(d.whatsapp || '').replace(/\D/g, '').slice(0, 15);
@@ -6454,8 +6475,11 @@ function campanaDe_(l, camps, canal) {
   if (l.llegoPor === 'directo') return null;
   if (l.llegoPor) { const c = camps.find(x => x.id === l.llegoPor); if (c) return c; }
   const dia = fecha10_(l.registro), hoy = hoy_(), act = camps.filter(c => dia >= c.desde && dia <= (c.hasta || hoy));
-  if (canal && SIN_CANAL.indexOf(canal) < 0) return act.find(c => canalDePub_(c.plataforma, canal)) || null;
-  return act[0] || null;
+  // Publicidad ligada a vendedores: solo cuenta a quien llegó por el enlace de uno de ellos (y la de ellos va primero)
+  if (/^v-/.test(String(canal || ''))) return act.find(c => vendsDe_(c).indexOf(canal) >= 0) || null;
+  const gen = act.filter(c => !vendsDe_(c).length);
+  if (canal && SIN_CANAL.indexOf(canal) < 0) return gen.find(c => canalDePub_(c.plataforma, canal)) || null;
+  return gen[0] || null;
 }
 function resumenCampanas_() {
   const camps = campanas_(), lics = mRows_('Licencias').filter(l => String(l.estado).toLowerCase() !== 'duplicada'), pagos = mRows_('PagosLic');
@@ -6487,8 +6511,8 @@ function panelGastos_() {
   const porMes = {}; todos.forEach(g => { const m = fecha10_(g.fecha).slice(0, 7); porMes[m] = r2_((porMes[m] || 0) + (Number(g.monto) || 0)); });
   return { campanas: rc.lista.map(c => ({ id: c.id, fecha: c.fecha, plataforma: c.plataforma, nombre: c.nombre, desde: c.desde, hasta: c.hasta, nota: c.nota, moneda: c.moneda,
       montoOrig: Number(c.montoOrig) || 0, tasa: Number(c.tasa) || 0, monto: c.monto, registros: c.registros, activaron: c.activaron, pagado: c.pagado, recuperacion: c.recuperacion,
-      costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso })),
-    otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_(), version: VERSION };
+      costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso, vendedores: vendsDe_(c) })),
+    vendLista: vendedores_().map(v => ({ codigo: v.codigo, nombre: v.nombre })), otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_(), version: VERSION };
 }
 function panelGastoGuardar_(d) {
   const tipo = d.tipo === 'publicidad' ? 'publicidad' : 'otro';
@@ -6503,7 +6527,8 @@ function panelGastoGuardar_(d) {
   const desde = tipo === 'publicidad' ? (/^\d{4}-\d{2}-\d{2}$/.test(String(d.desde || '')) ? d.desde : fecha) : '';
   const hasta = tipo === 'publicidad' && /^\d{4}-\d{2}-\d{2}$/.test(String(d.hasta || '')) ? d.hasta : '';
   if (hasta && hasta < desde) throw new Error('La fecha final no puede ser antes del inicio');
-  const rec = { id: d.id || mId_('P'), fecha: fecha, tipo: tipo, plataforma: tipo === 'publicidad' ? txt_(d.plataforma, 30) || 'Otra' : '', nombre: nombre, desde: desde, hasta: hasta,
+  const vcod = vendedores_().map(v => v.codigo), vend = tipo === 'publicidad' ? [...new Set([].concat(d.vendedores || []).map(String))].filter(c => vcod.indexOf(c) >= 0).join(',') : '';
+  const rec = { id: d.id || mId_('P'), fecha: fecha, tipo: tipo, vendedor: vend, plataforma: tipo === 'publicidad' ? txt_(d.plataforma, 30) || 'Otra' : '', nombre: nombre, desde: desde, hasta: hasta,
     moneda: moneda, montoOrig: orig, tasa: Math.round(tasa * 10000) / 10000, monto: r2_(orig * tasa), nota: txt_(d.nota, 120), anulado: '', creado: ahora_().replace('T', ' ') };
   const prev = d.id ? mRows_('GastosPanel').find(g => g.id === d.id) : null;
   if (prev) { delete rec.creado; mSet_('GastosPanel', prev, rec); } else mAppend_('GastosPanel', rec);
