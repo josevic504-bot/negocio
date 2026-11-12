@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.72';
+const VERSION = '1.9.73';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -337,6 +337,9 @@ function rutaUsuario_(a, u, d, req) {
     case 'cambiarClave':    d._token = req.token; return lock_(() => cambiarClave_(u, d));
     case 'misDatos':        return misDatos_(u);
     case 'borrarDatos':     return lock_(() => borrarDatos_(u, d));
+    case 'limpiezaVer':     return limpiezaVer_(u);
+    case 'limpiezaOmitir':  return lock_(() => limpiezaOmitir_(u));
+    case 'limpiarPrueba':   return lock_(() => limpiarPrueba_(u, d));
     case 'eliminarCuenta':  return lock_(() => eliminarCuenta_(u, d));
     case 'subirFoto':       return subirFoto_(u, d);
     case 'cargarEjemplos':  return lock_(() => cargarEjemplos_(u, d));
@@ -804,6 +807,133 @@ function borrarDatos_(u, d) {
   mAppend_('Seguimiento', { id: mId_('SG'), negocioId: NEG.id, tipo: 'cliente', fecha: ahora_().replace('T', ' '), nota: 'El cliente borró ' + (todo ? 'todos sus datos y empezó de cero' : 'sus movimientos (ventas, compras, gastos, caja y pedidos)') + ' · ' + txt_(u.nombre, 40) });
   return { tablas: tablas.length, todo: todo };
 }
+/* ---- Limpiar los datos de la prueba (Ajustes › Mi cuenta y aviso al activar la licencia; solo el administrador) ----
+ * «De la prueba» = lo creado antes de que se activara la licencia (la fecha va dentro del id de cada registro).
+ * Productos: solo los de ejemplo (código EJ…); lo que el cliente creó no se ofrece. Clientes, proveedores y productos
+ * solo se borran si todo lo que los usa también se borra. El servidor guarda una copia antes (30 días). */
+function cortePrueba_(cfg) {
+  if (cfg.sysActivaDesde) return msDeLocal_(cfg.sysActivaDesde);
+  const v = NEG && NEG.lic ? String(NEG.lic.vencePrueba || '').slice(0, 10) : '';
+  return /^\d{4}-\d{2}-\d{2}$/.test(v) ? Math.min(msDeLocal_(v + 'T00:00'), Date.now()) : 0;
+}
+// En el bootstrap (sin leer tablas grandes): anota cuándo pasó de prueba a licencia y si toca el aviso
+function limpiezaEstado_(lic) {
+  if (!MULTI_NEGOCIO || !NEG || SOLO_VER) return null;
+  let cfg = config_();
+  if (lic.estado === 'prueba' || lic.estado === 'vencida') { if (cfg.sysPrueba !== 'si') try { lock_(() => guardarConfig_({ sysPrueba: 'si' })); } catch (e) {} return null; }
+  if (lic.estado !== 'completa') return null;
+  if (cfg.sysPrueba === 'si' && !cfg.sysActivaDesde) { try { lock_(() => guardarConfig_({ sysActivaDesde: Utilities.formatDate(new Date(), TZ, "yyyy-MM-dd'T'HH:mm:ss") })); cfg = config_(); } catch (e) {} }
+  const corte = cortePrueba_(cfg); if (!corte) return null;
+  const dias = (Date.now() - corte) / 86400000;
+  const aviso = !cfg.sysLimpiezaPrueba && (cfg.sysPrueba === 'si' || dias <= 15);
+  return aviso || dias <= 90 ? { aviso: aviso, ver: true, desde: Utilities.formatDate(new Date(corte), TZ, 'yyyy-MM-dd') } : null;
+}
+function limpiezaOmitir_(u) { req_(u, ['admin']); guardarConfig_({ sysLimpiezaPrueba: 'vista' }); return true; }
+// Lo que hay de la prueba, con lo que usa cada cliente, proveedor y producto (dep: 'v:id' venta, 'k:id' compra, 'p:id' pedido, 'o:Tabla', 'x' = algo que no se borra)
+function limpiezaDatos_() {
+  const corte = cortePrueba_(config_());
+  const en = r => { const ms = idMs_(r.id); return ms > 0 && ms < corte; };
+  const T = {}; ['Ventas', 'Compras', 'Gastos', 'Pedidos', 'Cierres', 'Clientes', 'Proveedores'].forEach(t => { T[t] = corte ? rows_(t).filter(en) : []; });
+  const OTROS = { 'Agenda': 'Citas y agenda', 'Ordenes': 'Órdenes de trabajo', 'Cotizaciones': 'Cotizaciones', 'Proyectos': 'Proyectos', 'Consultas': 'Consultas', 'Vacunas': 'Vacunas',
+    'MesaCuentas': 'Cuentas de mesas', 'Comandas': 'Comandas de cocina', 'Chats': 'Chats con clientes', 'Distribuciones': 'Reparto de ganancias', 'Suscripciones': 'Suscripciones sin venta' };
+  const otros = {}; Object.keys(OTROS).forEach(t => { otros[t] = corte ? rows_(t).filter(r => en(r) && !(t === 'Suscripciones' && r.ventaId)) : []; });
+  const sV = new Set(T.Ventas.map(x => x.id)), sK = new Set(T.Compras.map(x => x.id)), sP = new Set(T.Pedidos.map(x => x.id));
+  const sO = {}; Object.keys(otros).forEach(t => { sO[t] = new Set(otros[t].map(x => x.id)); });
+  const kV = id => sV.has(id) ? 'v:' + id : 'x', kK = id => sK.has(id) ? 'k:' + id : 'x', kP = id => sP.has(id) ? 'p:' + id : 'x', kO = (t, id) => sO[t] && sO[t].has(id) ? 'o:' + t : 'x';
+  const dep = {}, pon = (id, k) => { if (!id) return; (dep[id] = dep[id] || new Set()).add(k); };
+  const apl = (lista, kf) => { const a = parseJ_(lista, []); return Array.isArray(a) && a.length ? a.map(x => kf(x && x.id)) : ['x']; };
+  // Clientes
+  rows_('Ventas').forEach(v => pon(v.clienteId, kV(v.id)));
+  rows_('Pedidos').forEach(p => pon(p.clienteId, kP(p.id)));
+  rows_('Abonos').forEach(a => apl(a.aplicado, kV).forEach(k => pon(a.clienteId, k)));
+  rows_('Mascotas').forEach(m => pon(m.clienteId, 'x'));
+  ['Agenda', 'Ordenes', 'Cotizaciones', 'Consultas', 'Proyectos', 'Chats'].forEach(t => rows_(t).forEach(r => pon(r.clienteId, kO(t, r.id))));
+  rows_('Suscripciones').forEach(s => pon(s.clienteId, s.ventaId ? kV(s.ventaId) : kO('Suscripciones', s.id)));
+  // Proveedores
+  rows_('Compras').forEach(c => pon(c.proveedorId, kK(c.id)));
+  rows_('Pagos').forEach(p => apl(p.aplicado, kK).forEach(k => pon(p.proveedorId, k)));
+  // Productos de ejemplo
+  const ej = rows_('Productos').filter(p => /^EJ\d/.test(String(p.codigo || '')));
+  const sEj = new Set(ej.map(p => p.id)), ponP = (id, k) => { if (sEj.has(id)) pon(id, k); };
+  rows_('VentaDetalle').forEach(x => ponP(x.productoId, kV(x.ventaId)));
+  rows_('CompraDetalle').forEach(x => ponP(x.productoId, kK(x.compraId)));
+  rows_('Pedidos').forEach(p => parseJ_(p.items, []).forEach(x => { if (x) ponP(x.productoId, kP(p.id)); }));
+  rows_('Suscripciones').forEach(s => ponP(s.productoId, s.ventaId ? kV(s.ventaId) : kO('Suscripciones', s.id)));
+  rows_('Agenda').forEach(a => ponP(a.productoId, kO('Agenda', a.id)));
+  rows_('Vacunas').forEach(a => ponP(a.productoId, kO('Vacunas', a.id)));
+  rows_('ProyectoGastos').forEach(g => ponP(g.productoId, kO('Proyectos', g.proyectoId)));
+  rows_('ProyectoProductos').forEach(g => ponP(g.productoId, kO('Proyectos', g.proyectoId)));
+  rows_('MesaCuentas').forEach(m => parseJ_(m.items, []).forEach(x => { if (x) ponP(x.productoId, kO('MesaCuentas', m.id)); }));
+  const deps = id => dep[id] ? [...dep[id]].slice(0, 300) : [];
+  const cli = porId_(rows_('Clientes')), prov = porId_(rows_('Proveedores'));
+  return { corte: corte, T: T, otros: otros, OTROS: OTROS, ej: ej, deps: deps, cli: cli, prov: prov };
+}
+function limpiezaVer_(u) {
+  req_(u, ['admin']);
+  const D = limpiezaDatos_(), T = D.T;
+  return {
+    desde: D.corte ? Utilities.formatDate(new Date(D.corte), TZ, 'yyyy-MM-dd') : '',
+    productos: D.ej.map(p => ({ id: p.id, n: p.nombre, i: p.icono || '', dep: D.deps(p.id) })),
+    ventas: T.Ventas.map(v => ({ id: v.id, n: v.numero, f: v.fecha, c: D.cli[v.clienteId] ? D.cli[v.clienteId].nombre : '', t: r2_(v.total), a: !!v.anulada })),
+    compras: T.Compras.map(c => ({ id: c.id, n: c.numero, f: c.fecha, c: D.prov[c.proveedorId] ? D.prov[c.proveedorId].nombre : '', t: r2_(c.total), a: !!c.anulada })),
+    gastos: T.Gastos.map(g => ({ id: g.id, n: [g.categoria, g.detalle].filter(Boolean).join(' · '), f: g.fechaGasto || g.creado, t: r2_(g.monto), a: !!g.anulado })),
+    pedidos: T.Pedidos.map(p => ({ id: p.id, n: p.numero, f: p.fecha, c: p.nombre, t: r2_(p.total), e: p.estado })),
+    cierres: T.Cierres.map(c => ({ id: c.id, f: c.hasta || c.desde, t: r2_(c.contado) })),
+    clientes: T.Clientes.map(c => ({ id: c.id, n: c.nombre, tel: c.telefono || '', dep: D.deps(c.id) })),
+    proveedores: T.Proveedores.map(p => ({ id: p.id, n: p.nombre, dep: D.deps(p.id) })),
+    otros: Object.keys(D.otros).filter(t => D.otros[t].length).map(t => ({ t: t, n: D.OTROS[t], c: D.otros[t].length }))
+  };
+}
+function limpiarPrueba_(u, d) {
+  req_(u, ['admin']); noVer_();
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('Esta opción no está disponible aquí');
+  pinOk_(u, d.pin);
+  const D = limpiezaDatos_(), T = D.T, b = d.borrar || {};
+  const elige = (lista, ids) => { const s = new Set(Array.isArray(ids) ? ids.map(String) : []); return new Set(lista.filter(x => s.has(x.id)).map(x => x.id)); };
+  const V = elige(T.Ventas, b.ventas), K = elige(T.Compras, b.compras), G = elige(T.Gastos, b.gastos), P = elige(T.Pedidos, b.pedidos), Z = elige(T.Cierres, b.cierres);
+  const O = new Set((Array.isArray(b.otros) ? b.otros : []).filter(t => D.otros[t] && D.otros[t].length));
+  const ok = k => k === 'x' ? false : k.indexOf('v:') === 0 ? V.has(k.slice(2)) : k.indexOf('k:') === 0 ? K.has(k.slice(2)) : k.indexOf('p:') === 0 ? P.has(k.slice(2)) : k.indexOf('o:') === 0 ? O.has(k.slice(2)) : false;
+  const conservados = [];
+  const libres = (lista, ids) => { const s = elige(lista, ids), out = new Set(); lista.forEach(x => { if (!s.has(x.id)) return; if (D.deps(x.id).every(ok)) out.add(x.id); else conservados.push(x.nombre); }); return out; };
+  const R = libres(D.ej, b.productos), C = libres(T.Clientes, b.clientes), B = libres(T.Proveedores, b.proveedores);
+  // Lo que se va con cada venta, compra y proyecto
+  const del = { Ventas: V, Compras: K, Gastos: G, Pedidos: P, Cierres: Z, Clientes: C, Proveedores: B, Productos: R };
+  const sub = (t, campo, set) => new Set(rows_(t).filter(x => set.has(x[campo])).map(x => x.id));
+  del.VentaDetalle = sub('VentaDetalle', 'ventaId', V); del.CompraDetalle = sub('CompraDetalle', 'compraId', K);
+  const susV = sub('Suscripciones', 'ventaId', V);
+  const todosEn = (a, set) => { const x = parseJ_(a, []); return Array.isArray(x) && x.length > 0 && x.every(y => y && set.has(y.id)); };
+  del.Abonos = new Set(rows_('Abonos').filter(a => todosEn(a.aplicado, V)).map(a => a.id));
+  del.Pagos = new Set(rows_('Pagos').filter(p => todosEn(p.aplicado, K)).map(p => p.id));
+  ['Agenda', 'Ordenes', 'Cotizaciones', 'Proyectos', 'Consultas', 'Vacunas', 'MesaCuentas', 'Comandas', 'Chats', 'Distribuciones', 'Suscripciones'].forEach(t => { del[t] = new Set(O.has(t) ? D.otros[t].map(x => x.id) : []); });
+  susV.forEach(id => del.Suscripciones.add(id));
+  del.ProyectoGastos = sub('ProyectoGastos', 'proyectoId', del.Proyectos); del.ProyectoProductos = sub('ProyectoProductos', 'proyectoId', del.Proyectos);
+  del.Mensajes = sub('Mensajes', 'chatId', del.Chats);
+  // Existencias: lo que movieron las ventas, compras y proyectos que se borran (se deshace si así lo eligió)
+  const devV = d.devolver !== false, devK = d.quitarCompras !== false;
+  const refs = {}; V.forEach(id => { refs[id] = devV; }); K.forEach(id => { refs[id] = devK; });
+  del.Proyectos.forEach(id => { refs[id] = devV; }); del.ProyectoGastos.forEach(id => { refs[id] = devV; });
+  const invDel = new Set(), neto = {};
+  rows_('Inventario').forEach(m => {
+    if (R.has(m.productoId)) { invDel.add(m.id); return; }
+    if (!m.refId || refs[m.refId] === undefined) return;
+    if (refs[m.refId]) { const k = m.productoId + (m.variante ? SEPV + m.variante : ''); neto[k] = r3_((neto[k] || 0) - (Number(m.cantidad) || 0)); invDel.add(m.id); }
+  });
+  Object.keys(neto).forEach(k => { if (!neto[k]) delete neto[k]; });
+  del.Inventario = invDel;
+  // Fotos de los productos y comprobantes que se van
+  rows_('Productos').forEach(p => { if (R.has(p.id) && p.foto) try { borrarFoto_(p.foto); } catch (e) {} });
+  rows_('Pedidos').forEach(p => { if (P.has(p.id) && p.comprobante) try { borrarFoto_(p.comprobante); } catch (e) {} });
+  // Lo que se conserva y apuntaba a una venta borrada queda sin venta
+  ['Pedidos', 'Ordenes', 'Agenda', 'Consultas'].forEach(t => rows_(t).forEach(r => { if (r.ventaId && V.has(r.ventaId) && !del[t].has(r.id)) upsert_(t, { id: r.id, ventaId: '' }); }));
+  let n = 0;
+  Object.keys(del).forEach(t => { if (!del[t].size) return; rows_(t).filter(x => del[t].has(x.id)).forEach(x => { deleteRow_(t, x.id); n++; }); });
+  if (Object.keys(neto).length) moverStock_(neto, 'ajuste', '', u, 'Limpieza de la prueba: se deshizo lo que movieron las ventas y compras borradas');
+  guardarConfig_({ sysLimpiezaPrueba: 'hecha' });
+  try { mSet_('Licencias', NEG.lic, Object.assign({ ultimaVenta: '', ventas7: '0' }, usoLic_(false))); CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {}
+  const res = { productos: R.size, ventas: V.size, compras: K.size, gastos: G.size, pedidos: P.size, cierres: Z.size, clientes: C.size, proveedores: B.size, otros: [...O].length, registros: n, conservados: conservados.slice(0, 20), existencias: Object.keys(neto).length };
+  mAppend_('Seguimiento', { id: mId_('SG'), negocioId: NEG.id, tipo: 'cliente', fecha: ahora_().replace('T', ' '), nota: ('Limpió los datos de la prueba: ' + [[R.size, 'productos de ejemplo'], [V.size, 'ventas'], [K.size, 'compras'], [G.size, 'gastos'], [P.size, 'pedidos'], [C.size, 'clientes'], [B.size, 'proveedores'], [Z.size, 'cierres']].filter(x => x[0]).map(x => x[0] + ' ' + x[1]).join(', ') + ' · ' + txt_(u.nombre, 40)).slice(0, 300) });
+  return res;
+}
 function eliminarCuenta_(u, d) {
   req_(u, ['admin']); noVer_();
   if (!MULTI_NEGOCIO || !NEG) throw new Error('Esta opción no está disponible aquí');
@@ -954,6 +1084,7 @@ function bootstrap_(u, d) {
   };
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); if (d && d.vid && !NEG.lic.vid && u.rol === 'admin') upd.vid = String(d.vid).replace(/[^A-Za-z0-9]/g, '').slice(0, 24); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  if (u.rol === 'admin') { try { const lz = limpiezaEstado_(r.licencia); if (lz) r.limpieza = lz; } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u, d);
   if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && (cb.vencidas.length || (cb.proxima && cb.proxima.f <= addDiasIso_(hoy_(), 5)))) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
   if (r.cobroVM) r.cobroVM.datosPago = PropertiesService.getScriptProperties().getProperty('DATOS_PAGO_LIC') || '';
