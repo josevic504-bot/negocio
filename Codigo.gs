@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.77';
+const VERSION = '1.9.78';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -149,6 +149,8 @@ const CONFIG_DEF = {
   msjAutoCerrado: 'Hola 👋 Ahora estamos cerrados. {abre} y te respondemos en cuanto podamos.',
   msjAutoBienvenida: 'Hola {cliente} 👋 Gracias por escribirnos. En un momento te atendemos.',
   msjCobro: 'Hola {cliente} 👋, te saluda {negocio}. Te recordamos tu saldo pendiente de {saldo}. ¡Gracias por tu preferencia!',
+  // Varias tiendas (1.9.78): tiendas que NO salen en la tienda en línea (ids separados por coma) y funciones por tienda { módulo: [tiendas] }
+  tiendaOff: '', modTiendas: '',
   // Facturación SAR (autoimpresor): apagada por defecto
   sarActivo: 'no', sarRazon: '', sarRtn: '', sarDireccion: '', sarCai: '', sarEst: '000', sarPunto: '001', sarDesde: '', sarHasta: '', sarLimite: '',
   seqL: '0', contabInventario: 'perpetuo', contabIsvCompras: 'si', contabCerrado: '', contabMapeo: '', contabConcil: '', seqV: '0', seqC: '0', seqP: '0', seqO: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
@@ -320,6 +322,11 @@ function route_(req) {
   if (a === 'panelLogin') return panelLogin_(d, ipDe_(req));
   if (a.indexOf('panel') === 0) { panelAuth_(req); if (a === 'panelSalir') d._tok = String(req.panel || ''); return PANEL_LECTURA.indexOf(a) >= 0 ? rutaPanel_(a, d) : lock_(() => rutaPanel_(a, d)); }
   const u = auth_(req.token);
+  const enc = encargado_(u);
+  if (enc) {
+    if (SOLO_DUENO.indexOf(a) >= 0) throw new Error('Esto solo lo puede hacer el dueño del negocio');
+    if (['reporte', 'inventario', 'cuentas'].indexOf(a) >= 0) d.giro = enc; // sus reportes siempre son de su tienda
+  }
   const res = rutaUsuario_(a, u, d, req);
   return ['cajero', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? sinCostos_(res) : res;
 }
@@ -992,10 +999,20 @@ function guardarUsuario_(u, d) {
   if (todos.some(x => x.usuario === r.usuario && x.id !== r.id)) throw new Error('Ese usuario ya existe');
   if (ROLES.indexOf(r.rol) < 0) throw new Error('Rol no válido');
   if (r.id === u.id && (r.rol !== 'admin' || r.activo === false)) throw new Error('No puedes quitarte el rol de administrador ni desactivarte');
-  // Tienda asignada (con varios giros): el cajero o bodega solo ve la suya; el administrador ve todas
+  // Tienda asignada (con varios giros): quien tiene tienda solo ve la suya. Un administrador con tienda es el encargado
+  // de esa tienda; el administrador sin tienda es el dueño y ve todas
+  const actU = girosActivos_(), encU = tiendaAsignada_(u, actU), prevU = r.id ? todos.find(x => x.id === r.id) : null;
+  if (r.id && !prevU) throw new Error('El usuario ya no existe');
+  if (encU && prevU && prevU.id !== u.id && tiendaAsignada_(prevU, actU) !== encU) throw new Error('Ese usuario es de otra tienda');
   const suc = r.tienda !== undefined ? r.tienda : r.sucursal; delete r.tienda; delete r.sucursal;
-  if (suc !== undefined) r.sucursal = r.rol !== 'admin' && girosActivos_().indexOf(String(suc)) >= 0 ? String(suc) : '';
-  if (r.rol === 'admin') r.sucursal = ''; // el administrador ve todas las tiendas
+  if (suc !== undefined) r.sucursal = actU.length > 1 && actU.indexOf(String(suc)) >= 0 ? String(suc) : '';
+  if (encU) r.sucursal = encU; // el encargado solo crea y edita usuarios de su tienda
+  else if (r.id === u.id) r.sucursal = ''; // el dueño no se asigna una tienda a sí mismo
+  // Siempre debe quedar al menos un administrador de todo el negocio (el dueño)
+  if (prevU && prevU.rol === 'admin' && !prevU.sucursal) {
+    const sigue = (r.rol || prevU.rol) === 'admin' && !(r.sucursal !== undefined ? r.sucursal : prevU.sucursal) && r.activo !== false;
+    if (!sigue && !todos.some(x => x.id !== prevU.id && x.rol === 'admin' && !x.sucursal && x.activo)) throw new Error('Debe quedar al menos un administrador de todo el negocio (sin tienda asignada)');
+  }
   delete r.hash; delete r.salt;
   if (d.clave) {
     if (MULTI_NEGOCIO && !/^\d{4,6}$/.test(String(d.clave))) throw new Error('El PIN debe tener de 4 a 6 números');
@@ -1076,7 +1093,7 @@ function bootstrap_(u, d) {
   const r = {
     usuario: publico_(u),
     config: config_(),
-    usuarios: rows_('Usuarios').map(publico_),
+    usuarios: rows_('Usuarios').map(publico_).map(x => { const e = encargado_(u); if (e && tiendaAsignada_(x, girosActivos_()) !== e) { delete x.usuario; x.ajeno = true; } return x; }),
     productos: rows_('Productos'),
     clientes: ['bodega', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? [] : rows_('Clientes').map(c => { c.saldo = sc[c.id] || 0; return c; }),
     proveedores: ['cajero', 'mesero', 'cocina'].indexOf(u.rol) >= 0 ? [] : rows_('Proveedores').map(p => { p.saldo = sp[p.id] || 0; return p; }),
@@ -1095,9 +1112,9 @@ function bootstrap_(u, d) {
   };
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); if (d && d.vid && !NEG.lic.vid && u.rol === 'admin') upd.vid = String(d.vid).replace(/[^A-Za-z0-9]/g, '').slice(0, 24); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
-  if (u.rol === 'admin') { try { const lz = limpiezaEstado_(r.licencia); if (lz) r.limpieza = lz; } catch (e) {} }
+  if (u.rol === 'admin' && !encargado_(u)) { try { const lz = limpiezaEstado_(r.licencia); if (lz) r.limpieza = lz; } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u, d);
-  if (MULTI_NEGOCIO && NEG && u.rol === 'admin') { const cb = cobroDe_(NEG.lic); if (cb && (cb.vencidas.length || (cb.proxima && cb.proxima.f <= addDiasIso_(hoy_(), 5)))) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG && u.rol === 'admin' && !encargado_(u)) { const cb = cobroDe_(NEG.lic); if (cb && (cb.vencidas.length || (cb.proxima && cb.proxima.f <= addDiasIso_(hoy_(), 5)))) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
   if (r.cobroVM) r.cobroVM.datosPago = PropertiesService.getScriptProperties().getProperty('DATOS_PAGO_LIC') || '';
   if (MULTI_NEGOCIO && NEG && ['admin', 'cajero'].indexOf(u.rol) >= 0) { const an = anuncioPara_(); if (an) r.anuncio = an; }
   if (SOLO_VER) r.soporte = { negocio: NEG ? NEG.lic.negocio : '' };
@@ -1428,6 +1445,8 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
 const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda', 'mesas'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], manualidades: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
+// Funciones que se encienden por negocio o por tienda (las mismas de «Funciones» en la app)
+const MODULOS_SRV = ['caducidad', 'lotes', 'recompra', 'mesas', 'comanda', 'ordenes', 'series', 'variantes', 'encargos', 'agenda', 'suscripciones', 'mascotas', 'secciones', 'catalogo', 'cotizaciones'];
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
 const EST_AGENDA = ['pendiente', 'atendido', 'cancelado'];
 
@@ -2558,7 +2577,7 @@ function panelVerApp_(d) {
   const l = licDe_(d.id);
   if (!l.hojaId || esEliminada_(l)) throw new Error('Ese negocio no está activo');
   setNegocio_(l);
-  const us = rows_('Usuarios'), adm = us.find(x => x.rol === 'admin' && x.activo) || us.find(x => x.rol === 'admin');
+  const us = rows_('Usuarios'), adm = us.find(x => x.rol === 'admin' && x.activo && !x.sucursal) || us.find(x => x.rol === 'admin' && x.activo) || us.find(x => x.rol === 'admin');
   if (!adm) throw new Error('El negocio no tiene administrador');
   const tok = Utilities.getUuid().replace(/-/g, '') + Utilities.getUuid().replace(/-/g, '');
   CacheService.getScriptCache().put('S_' + tok, l.id + '|' + adm.id + '|' + String(adm.salt).slice(0, 8) + '|ver', 7200);
@@ -2685,7 +2704,7 @@ function panelImportar_(d) {
     return { fila: x.fila, nombre: r.nombre, categoria: r.categoria, precio: r.precio, existencia: ex, nuevo: !x.ex,
       det: [ops.map(o => o.v.length + ' ' + o.n.toLowerCase()).join(' · '), r.precioEsp ? 'esp. ' + r.precioEsp + ' desde ' + r.minEsp : '', V && Object.keys(V).some(k => V[k].p > 0) ? 'precio por opción' : ''].filter(Boolean).join(' · ') }; });
   if (d.revisar) return res;
-  const adm = rows_('Usuarios').find(x => x.rol === 'admin' && x.activo) || rows_('Usuarios').find(x => x.rol === 'admin');
+  const adm = rows_('Usuarios').find(x => x.rol === 'admin' && x.activo && !x.sucursal) || rows_('Usuarios').find(x => x.rol === 'admin' && x.activo) || rows_('Usuarios').find(x => x.rol === 'admin');
   if (!adm) throw new Error('El negocio no tiene administrador');
   let hechos = 0;
   plan.forEach(x => {
@@ -3155,6 +3174,30 @@ function guardar_(u, d) {
     req_(u, ['admin']);
     const reg = {};
     Object.keys(d.registro || {}).forEach(k => { if (CONFIG_EDITABLE.indexOf(k) >= 0) reg[k] = String(d.registro[k]); });
+    { const actC = girosActivos_(), cfg0 = config_(), enc = tiendaAsignada_(u, actC);
+      if (enc) { // encargado: solo enciende o apaga su tienda en la página y sus funciones
+        Object.keys(reg).forEach(k => { if (k !== 'tiendaOff' && k !== 'modTiendas') delete reg[k]; });
+        if (!Object.keys(reg).length) throw new Error('Esto solo lo puede cambiar el dueño del negocio');
+      }
+      if (reg.tiendaOff !== undefined) {
+        const quiere = reg.tiendaOff.split(',').filter(g => actC.indexOf(g) >= 0);
+        let off = String(cfg0.tiendaOff || '').split(',').filter(g => actC.indexOf(g) >= 0);
+        if (enc) { off = off.filter(g => g !== enc); if (quiere.indexOf(enc) >= 0) off.push(enc); } else off = quiere;
+        if (actC.length > 1 && off.length >= actC.length) throw new Error('Deja al menos una tienda en tu página. Para no recibir pedidos apaga «Tienda abierta».');
+        reg.tiendaOff = off.join(',');
+      }
+      if (reg.modTiendas !== undefined) { // { módulo: [tiendas] }; la casilla general queda encendida si está en alguna tienda
+        const q = parseJ_(reg.modTiendas, {}) || {}, mt = parseJ_(cfg0.modTiendas, {}) || {}, out = {};
+        MODULOS_SRV.forEach(k => {
+          const antes = Array.isArray(mt[k]) ? mt[k].filter(g => actC.indexOf(g) >= 0) : cfg0[k] === 'si' ? actC.slice() : [];
+          let l = antes;
+          if (Array.isArray(q[k])) { const pide = q[k].filter(g => actC.indexOf(g) >= 0); l = enc ? antes.filter(g => g !== enc).concat(pide.indexOf(enc) >= 0 ? [enc] : []) : pide; }
+          out[k] = l.filter((g, i) => l.indexOf(g) === i);
+          if (Array.isArray(q[k]) || Array.isArray(mt[k])) reg[k] = out[k].length ? 'si' : '';
+        });
+        reg.modTiendas = JSON.stringify(out);
+      }
+    }
     if (reg.tiendaSecciones !== undefined) { // catálogo: { categoría: { c: color, f: foto } }
       const o = parseJ_(reg.tiendaSecciones, {}), out = {};
       Object.keys(o || {}).slice(0, 40).forEach(k => { const x = o[k] || {}, c = /^#[0-9a-f]{6}$/i.test(String(x.c || '')) ? String(x.c) : '', f = x.f && (String(x.f).indexOf('data:image/') === 0 ? String(x.f).length <= 160000 : fotoPropia_(String(x.f))) ? String(x.f) : '', t = txt_(x.t, 60); if (c || f || t) out[txt_(k, 40)] = { c: c, f: f, t: t }; });
@@ -4629,7 +4672,7 @@ function inicio_(u, d) {
     const gastosMes = rowsDesde_('Gastos', vent).filter(g => !g.anulado && g.fechaGasto.slice(0, 7) === mes && deT(g));
     const vs = ventasMes.reduce((a, v) => a + v.total, 0), gb = ventasMes.reduce((a, v) => a + v.total - v.isv - v.costo, 0), gs = gastosMes.reduce((a, g) => a + g.monto, 0);
     out.mes = { ventas: r2_(vs), ganancia: r2_(gb - gs), gastos: r2_(gs), n: ventasMes.length };
-    const sp = saldosProveedores_();
+    const sp = encargado_(u) ? {} : saldosProveedores_();
     out.porPagar = { total: r2_(Object.keys(sp).reduce((a, k) => a + sp[k], 0)), proveedores: Object.keys(sp).length };
     if (!t) out.aviso = resumenMeses_().find(m => !m.enCurso && m.pendiente > 0.009) || null;
   }
@@ -4767,6 +4810,8 @@ function reporte_(u, d) {
         pct: r2_(totV > 0 ? s.ventas / totV * 100 : 0), parte: r2_(parte[g] * 100), top: t ? t.nombre : '' };
     });
   }
+  // Encargado: solo su tienda, sin cuánto vende el resto del negocio
+  if (tiendaAsignada_(u, activos)) { if (res.secciones) res.secciones = res.secciones.filter(x => x.id === giro).map(x => { delete x.pct; return x; }); if (res.kpi) delete res.kpi.pct; }
   return res;
 }
 
@@ -4882,7 +4927,7 @@ function inventario_(u, d) {
   const pm = porId_(prods), us = porId_(rows_('Usuarios')), activos = girosActivos_();
   const gp = {}; prods.forEach(p => { gp[p.id] = giroDeProd_(p, activos); });
   return {
-    productos: prods.map(p => ({ id: p.id, codigo: p.codigo, nombre: p.nombre, categoria: p.categoria, stock: p.stock, stockMin: p.stockMin, costo: p.costo, precio: p.precio, activo: p.activo,
+    productos: prods.filter(p => { const f = tiendaAsignada_(u, activos); return !f || gp[p.id] === f; }).map(p => ({ id: p.id, codigo: p.codigo, nombre: p.nombre, categoria: p.categoria, stock: p.stock, stockMin: p.stockMin, costo: p.costo, precio: p.precio, activo: p.activo,
       icono: p.icono, foto: p.foto, valorCosto: r2_(Math.max(0, p.stock) * p.costo), valorVenta: r2_(Math.max(0, p.stock) * p.precio), vendidos30: vend[p.id] || 0, giro: gp[p.id] })),
     movimientos: desc_(rows_('Inventario'), 'fecha').filter(m => !d.giro || gp[m.productoId] === d.giro).slice(0, 150)
       .map(m => ({ fecha: m.fecha, tipo: m.tipo, cantidad: m.cantidad, stock: m.stock, nombre: pm[m.productoId] ? pm[m.productoId].nombre : '—', nota: m.nota, usuario: us[m.usuarioId] ? us[m.usuarioId].nombre : '' }))
@@ -5354,9 +5399,10 @@ function tiendaNeg_(d) {
 function tiendaInfo_(d) {
   const cfg = tiendaNeg_(d);
   const ver = cfg.tiendaMostrarStock === 'si', sin = cfg.tiendaSinStock === 'si', nuevoDesde = diasAtras_(15);
-  const activos = girosActivos_(cfg), catOn = modOn_('catalogo');
+  // Varias tiendas: la página muestra solo las tiendas encendidas en «Mi tienda en línea» (con una sola, abre directo en ella)
+  const todosG = girosActivos_(cfg), activos = girosLinea_(cfg), catOn = activos.some(g => modEnGiro_('catalogo', g, cfg));
   // Tienda por secciones (un bloque por categoría): Beauty & Moda (catálogo), Recargas y Streaming de fábrica, o cualquier giro con el módulo encendido
-  const secGiros = activos.filter(g => cfg.secciones === 'si' || g === 'catalogo' || (MODULOS_GIRO[g] || []).indexOf('secciones') >= 0), secOn = secGiros.length > 0;
+  const secGiros = activos.filter(g => g === 'catalogo' || modEnGiro_('secciones', g, cfg)), secOn = secGiros.length > 0;
   return {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
@@ -5372,8 +5418,8 @@ function tiendaInfo_(d) {
       catalogo: catOn, secciones: secOn ? parseJ_(cfg.tiendaSecciones, {}) : {}, ordenCats: secOn ? [].concat.apply([], secGiros.map(g => GIROS[g].cats)) : [], porSecciones: secOn, girosSec: secGiros,
       compras: activos.indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0 ? { cambio: Number(cfg.comprasCambio) || 0, recargo: Math.max(0, Number(cfg.comprasRecargo) || 0), envio: Math.max(0, Number(cfg.comprasEnvio) || 0),
         anticipo: Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0)), dias: cfg.comprasDias, tiendas: cfg.comprasTiendas } : null },
-    productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
-      const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '', g: giroDeProd_(p, activos) };
+    productos: rows_('Productos').filter(p => p.activo && p.tienda && activos.indexOf(giroDeProd_(p, todosG)) >= 0).map(p => {
+      const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '', g: giroDeProd_(p, todosG) };
       if (p.sub) o.sub = p.sub; if (p.lema) o.lema = p.lema; if (p.puntos) o.puntos = p.puntos; if (p.codigo && catOn && !/^EJ\d/.test(p.codigo) && !esCodAuto_(p.codigo)) o.codigo = p.codigo; // el comprador solo ve el código que el negocio escribió, no el automático
       if (p.precioEsp > 0 && p.minEsp > 1) { o.precioEsp = p.precioEsp; o.minEsp = p.minEsp; }
       const V = varsDe_(p);
@@ -5635,8 +5681,9 @@ function pedir_(d) {
   const pm = porId_(rows_('Productos'));
   // «Arma tu ramo»: el cliente pide precio; la existencia y el precio los revisa el negocio al cotizar
   const personal = !!d.personal, ramo = !!d.ramo || personal;
-  if (d.ramo && girosActivos_(cfg).indexOf('floristeria') < 0) throw new Error('Esta tienda no arma ramos a tu gusto');
-  if (personal && girosActivos_(cfg).indexOf('manualidades') < 0) throw new Error('Esta tienda no hace diseños personalizados');
+  const linP = girosLinea_(cfg), todosP = girosActivos_(cfg);
+  if (d.ramo && linP.indexOf('floristeria') < 0) throw new Error('Esta tienda no arma ramos a tu gusto');
+  if (personal && linP.indexOf('manualidades') < 0) throw new Error('Esta tienda no hace diseños personalizados');
   // «Pide tu diseño personalizado» (manualidades): qué quiere, cuántos, fotos de ejemplo; el negocio pone el precio total
   const pers = personal ? { personal: 1, cat: txt_(d.categoria, 40) || 'Otro', desc: txt_(d.descripcion, 500), cant: Math.floor(Number(d.cantidad) || 1) } : null;
   if (pers && pers.desc.length < 5) throw new Error('Describe lo que quieres que te hagamos');
@@ -5646,7 +5693,7 @@ function pedir_(d) {
   const sin = ramo || cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
   const lista = personal ? [] : Array.isArray(d.items) ? d.items.slice(0, 40) : [];
   const items = [], suma = {}, sumaV = {};
-  const conCompras = girosActivos_(cfg).indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0;
+  const conCompras = linP.indexOf('compras') >= 0 && Number(cfg.comprasCambio) > 0;
   let anticipo = 0, fotos = 0;
   lista.forEach(i => {
     // Compras en línea: el cliente pega el enlace del artículo y su precio en dólares; el precio en lempiras se calcula aquí
@@ -5663,7 +5710,7 @@ function pedir_(d) {
       return;
     }
     const p = i && typeof i === 'object' ? pm[i.id] : null, cant = Math.floor(Number(i && i.cantidad) || 0);
-    if (!p || !p.activo || !p.tienda) throw new Error('Uno de los productos ya no está disponible. Actualiza la página.');
+    if (!p || !p.activo || !p.tienda || linP.indexOf(giroDeProd_(p, todosP)) < 0) throw new Error('Uno de los productos ya no está disponible. Actualiza la página.');
     if (d.ramo && RAMO_CATS.indexOf(String(p.categoria).toLowerCase()) < 0) throw new Error('«' + p.nombre + '» no se puede elegir para armar un ramo');
     if (cant < 1 || cant > 999) throw new Error('Cantidad no válida en «' + p.nombre + '»');
     suma[p.id] = (suma[p.id] || 0) + cant;
@@ -6242,10 +6289,31 @@ function tiendaReq_(u, d) {
   const fija = tiendaAsignada_(u, act); if (fija) return fija;
   const t = String((d && d.tienda) || ''); return act.indexOf(t) >= 0 ? t : '';
 }
-// Tienda fija del usuario: el administrador no tiene (ve todas). Si su tienda se apagó, trabaja en la principal (nunca en todas)
+// Tienda fija del usuario. El dueño (administrador sin tienda) ve todas; el encargado (administrador con tienda) y los
+// demás roles con tienda solo la suya. Si su tienda se apagó, trabaja en la principal (nunca en todas)
 function tiendaAsignada_(u, act) {
-  if (!u || u.rol === 'admin' || !u.sucursal) return '';
+  if (!u || !u.sucursal || act.length < 2) return '';
   return act.indexOf(u.sucursal) >= 0 ? u.sucursal : act[0];
+}
+// Encargado de tienda: administrador con una tienda asignada. Administra solo esa tienda ('' = no es encargado)
+function encargado_(u) { return u && u.rol === 'admin' ? tiendaAsignada_(u, girosActivos_()) : ''; }
+// Lo que solo hace el dueño del negocio (afecta a todo el negocio, a la licencia o a la contabilidad)
+const SOLO_DUENO = ['borrarDatos', 'limpiezaVer', 'limpiezaOmitir', 'limpiarPrueba', 'eliminarCuenta', 'misDatos', 'activarPlus', 'cambiarGiro', 'cambiarNegocio', 'cargarEjemplos',
+  'contratoVer', 'contratoFirmar', 'diario', 'historial', 'guardarDistribucion', 'anularDistribucion', 'guardarSAR', 'libroSAR',
+  'contabilidad', 'contabPlan', 'guardarCuenta', 'guardarMapeo', 'guardarAsiento', 'anularAsiento', 'cerrarPeriodo', 'guardarConcil'];
+// Tiendas que salen en la tienda en línea: las activas menos las apagadas (si se apagaron todas, salen todas)
+function girosLinea_(cfg) {
+  cfg = cfg || config_();
+  const act = girosActivos_(cfg); if (act.length < 2) return act;
+  const off = String(cfg.tiendaOff || '').split(',').filter(Boolean), l = act.filter(g => off.indexOf(g) < 0);
+  return l.length ? l : act;
+}
+// ¿La función k está encendida en la tienda g? La de su tipo de negocio siempre; las demás según «Funciones por tienda»
+function modEnGiro_(k, g, cfg) {
+  cfg = cfg || config_();
+  if ((MODULOS_GIRO[g] || []).indexOf(k) >= 0) return true;
+  const mt = girosActivos_(cfg).length > 1 ? parseJ_(cfg.modTiendas, {}) || {} : {};
+  return Array.isArray(mt[k]) ? mt[k].indexOf(g) >= 0 : cfg[k] === 'si';
 }
 function cajaPorTienda_() { return girosActivos_().length > 1 && config_().cajaTienda !== 'no'; }
 // Tienda de un movimiento: la que tiene anotada; si no, la de su giro (gastos) o la principal

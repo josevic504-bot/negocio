@@ -1353,6 +1353,13 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .ms-pq{margin-bottom:10px}.ms-pq>small{display:block;color:var(--mut);font-size:12.5px;margin:0 2px 5px}
 .chip.ms-nuevo{border-style:dashed;color:var(--pri)}
 .ms-pn{display:inline-block;background:var(--pri2);color:var(--pri);border-radius:7px;padding:0 6px;font-size:11.5px;font-weight:700;font-style:normal}
+/* Varias tiendas (1.9.78): usuarios por tienda, tiendas en la página y funciones por tienda */
+.u-grp{display:flex;align-items:center;gap:10px;margin:16px 2px 8px}.u-grp .gimg{width:30px;height:30px;vertical-align:0;flex:none}.u-grp b{font-size:15px}.u-grp small{display:block;color:var(--mut);font-size:12px}
+.u-grp .av.u-all{width:30px;height:30px;min-width:30px;background:var(--pri);color:var(--onpri)}
+.sw-row.tl-r{padding:12px 0}.sw-row.tl-r .gimg{width:42px;height:42px;vertical-align:0;flex:none}.sw-row.tl-r .tx{flex:1;min-width:0}.sw-row.tl-r .tx b{display:block;font-size:15px}.sw-row.tl-r .tx small{color:var(--mut);font-size:12.5px}
+.tl-on{font-weight:600;color:#00965c}.tl-off{font-weight:600;color:var(--mut)}
+.ft-tabs{display:flex;gap:8px;overflow-x:auto;margin:4px 0 12px;scrollbar-width:none}.ft-tabs button{display:flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:7px 12px;font:500 13.5px var(--font);color:var(--ink);white-space:nowrap;cursor:pointer}
+.ft-tabs button .gimg{width:22px;height:22px;vertical-align:0}.ft-tabs button.on{border-color:var(--pri);background:var(--pri2);color:var(--pri);font-weight:600}
 </style>
 <script src="visitas.js?v=3" defer></script>
 </head>
@@ -1666,7 +1673,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.77';
+const APP_VER = '1.9.78';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1739,7 +1746,7 @@ const byId = (arr, id) => arr.find(x => x.id === id);
 const iniciales = n => String(n || '?').split(' ').filter(Boolean).slice(0, 2).map(x => x[0]).join('').toUpperCase();
 const puede = (...roles) => !!S.user && roles.includes(S.user.rol);
 const ROLES = { admin: 'Administrador', cajero: 'Cajero', bodega: 'Bodega', mesero: 'Mesero', cocina: 'Cocina' };
-const ROL_DESC = { admin: 'Todo el sistema: precios, reportes, usuarios y ajustes', cajero: 'Vende, cobra, atiende pedidos, registra gastos y cierra caja', bodega: 'Productos, precios, compras, proveedores e inventario', mesero: 'Abre mesas, toma los pedidos y los manda a cocina; no cobra. Ve cuánto ha vendido', cocina: 'Solo ve la pantalla de Cocina: las comandas que llegan y las marca como listas' };
+const ROL_DESC = { get admin() { return S.user && repMulti() ? 'Todo el sistema. Si le asignas una tienda, es el encargado de esa tienda y solo la administra a ella.' : 'Todo el sistema: precios, reportes, usuarios y ajustes'; }, cajero: 'Vende, cobra, atiende pedidos, registra gastos y cierra caja', bodega: 'Productos, precios, compras, proveedores e inventario', mesero: 'Abre mesas, toma los pedidos y los manda a cocina; no cobra. Ve cuánto ha vendido', cocina: 'Solo ve la pantalla de Cocina: las comandas que llegan y las marca como listas' };
 const nomCliente = id => (byId(S.clientes, id) || {}).nombre || 'Consumidor final';
 const nomUsuario = id => (byId(S.usuarios, id) || {}).nombre || '—';
 const fmtWA = w => { const d = String(w || '').replace(/\D/g, ''); if (d.length === 11 && d.indexOf('504') === 0) return '+504 ' + d.slice(3, 7) + '-' + d.slice(7); return d ? '+' + d : ''; };
@@ -2306,9 +2313,9 @@ ACC.mas = () => {
   const items = Object.keys(VISTAS).filter(k => k !== 'inicio' && puedeVer(k));
   const h = hoja({ titulo: 'Menú', cls: 'menu', html: `<div class="mgrid">${items.map(k => `<button class="mi ${k === S.vista ? 'on' : ''}" data-a="ir" data-v="${k}">${(img => img ? `<i class="ci-img">${icImg(img)}</i>` : `<i class="${colorDe(k)}">${ic(VISTAS[k].i)}</i>`)(k === 'proyectos' && modOn('cotizaciones') ? 'cotizaciones' : k === 'ordenes' && VISTAS.ordenes.i === 'bed' ? 'hospedaje' : ICI[VISTAS[k].i] === k || ['pedidos', 'mensajes', 'tienda', 'productos', 'precios', 'proyectos', 'clientes', 'proveedores', 'compras', 'gastos', 'caja', 'ventas', 'reportes', 'usuarios', 'ajustes', 'agenda', 'mascotas', 'vacunas', 'ordenes', 'encargos', 'vencimientos', 'cuentas', 'vender', 'lotes', 'recompra'].includes(k) ? k : '')}<span>${esc(VISTAS[k].c || VISTAS[k].t)}</span>${k === 'pedidos' && S.pedidosNuevos ? `<b class="cnt">${S.pedidosNuevos}</b>` : k === 'mensajes' && S.chatsNuevos ? `<b class="cnt">${S.chatsNuevos}</b>` : ''}</button>`).join('')}</div>
     ${modoTienda() && !tiendaFija() ? `<button class="me-ay" data-a="cambiarTienda">${ic('store', 20)}<span><b>Cambiar de tienda</b><small>Estás en ${S.tienda ? esc(secNom(S.tienda)) : 'todas las tiendas'}</small></span>${ic('right', 18)}</button>` : ''}
-    ${(S.negocios || []).length > 1 ? `<button class="me-ay" data-a="cambiarNegocio">${ic('refresh', 20)}<span><b>Cambiar de negocio</b><small>Estás en ${esc(S.config.nombre || '')} · tienes ${S.negocios.length} negocios</small></span>${ic('right', 18)}</button>` : ''}
+    ${(S.negocios || []).length > 1 && !encargado() ? `<button class="me-ay" data-a="cambiarNegocio">${ic('refresh', 20)}<span><b>Cambiar de negocio</b><small>Estás en ${esc(S.config.nombre || '')} · tienes ${S.negocios.length} negocios</small></span>${ic('right', 18)}</button>` : ''}
     <button class="me-ay" data-a="ayuda">${ic('help', 20)}<span><b>Ayuda y novedades</b><small>Cómo se usa cada pantalla · versión ${APP_VER}</small></span>${ic('right', 18)}</button>
-    <div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.config.nombre || '')}</small></div><button class="btn sm bad" data-a="logout">${ic('logout', 16)} Salir</button></div>` });
+    <div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${rolTxt()} · ${esc(S.config.nombre || '')}</small></div><button class="btn sm bad" data-a="logout">${ic('logout', 16)} Salir</button></div>` });
   return h;
 };
 ACC.soporteSalir = () => { LS.del('token_soporte'); try { window.close(); } catch (e) {} setTimeout(() => { location.href = './?panel'; }, 200); };
@@ -2588,8 +2595,12 @@ ACC.cambiarNegocio = () => {
 const TIENDA_ACC = new Set(['bootstrap', 'inicio', 'ventas', 'venta', 'gastos', 'guardarGasto', 'abono', 'compra', 'compras', 'pago', 'caja', 'cerrarCaja', 'pedidos', 'pendientes',
   'ordenGuardar', 'agendaGuardar', 'gastoProyecto', 'anticipoPedido', 'proyectoAInventario']); // también anticipos y gastos de proyecto: entran o salen de la caja de la tienda
 const modoTienda = () => !!(S.user && S.config) && girosOn().length > 1;
-// «sucursal»: tienda asignada al usuario. El administrador ve todas; si la tienda de un usuario se apagó, trabaja en la principal (como el servidor)
-const tiendaFija = () => !modoTienda() || S.user.rol === 'admin' || !S.user.sucursal ? '' : girosOn().includes(S.user.sucursal) ? S.user.sucursal : girosOn()[0];
+// «sucursal»: tienda asignada al usuario. El dueño (administrador sin tienda) ve todas; el encargado (administrador con tienda)
+// y los demás roles con tienda solo la suya. Si su tienda se apagó, trabaja en la principal (como el servidor)
+const tiendaFija = () => !modoTienda() || !S.user.sucursal ? '' : girosOn().includes(S.user.sucursal) ? S.user.sucursal : girosOn()[0];
+const encargado = () => puede('admin') && !!tiendaFija(); // administra solo su tienda
+const rolTxt = () => encargado() ? 'Encargado de ' + secNom(tiendaFija()) : ROLES[S.user.rol];
+const dueno = () => puede('admin') && !tiendaFija(); // administra todo el negocio
 const tiendaKey = () => 'tienda_' + (S.negocioId || '') + '_' + (S.user ? S.user.id : '');
 const enTiendaP = p => !S.tienda || giroDeP(p) === S.tienda;
 // Decide la tienda al cargar los datos: la asignada, la que se recordó en este equipo o se pregunta al entrar
@@ -5580,7 +5591,7 @@ function listaProductos() {
     const cad = modOn('caducidad') && p.caduca && p.caduca <= mesesSumarDia(30) ? `<span class="badge ${p.caduca < hoy() ? 'b-bad' : 'b-warn'}">${p.caduca < hoy() ? 'Vencido' : 'Vence ' + fFechaC(p.caduca).replace(/ de \d{4}| \d{4}/, '')}</span> ` : '';
     return `<div class="li" data-a="verProducto" data-id="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${[esc(p.categoria), p.codigo ? esc(p.codigo) : '', S.plus && p.tienda ? ic('store', 13).replace('class="ic"', 'class="ic" style="display:inline;vertical-align:-2px"') + ' tienda' : ''].filter(Boolean).join(' · ')}</small></div><div class="am"><span class="n">${money(p.precio)}</span><small>${cad}${st}</small></div></div>`;
   }).join('') || (vacio ? `<div class="empty-big">${ic('box', 40)}<h3>Agrega tus productos</h3><p>Puedes empezar con productos de ejemplo de tu tipo de negocio y luego editarlos.</p>
-      ${puede('admin') ? `<button class="btn acc" data-a="cargarEjemplos">${ic('sparkle', 18)} Cargar productos de ejemplo</button>` : ''}${puede('admin', 'bodega') ? `<button class="btn pri" data-a="nuevoProducto">${ic('plus', 18)} Agregar el primero</button>` : ''}</div>` : '<div class="empty">No hay productos con ese filtro</div>');
+      ${dueno() ? `<button class="btn acc" data-a="cargarEjemplos">${ic('sparkle', 18)} Cargar productos de ejemplo</button>` : ''}${puede('admin', 'bodega') ? `<button class="btn pri" data-a="nuevoProducto">${ic('plus', 18)} Agregar el primero</button>` : ''}</div>` : '<div class="empty">No hay productos con ese filtro</div>');
 }
 ACC.pfil = el => { S.f.pfil = el.dataset.k; R.productos(); };
 ACC.avFotoOff = () => { S.f.avFotoOff = true; R.productos(); };
@@ -6505,12 +6516,15 @@ R.reportes = () => {
   if (S.params.tab) { S.f.rtab = S.params.tab; S.params.tab = ''; }
   if (S.params.giro !== undefined) { S.f.rgiro = S.params.giro; delete S.params.giro; }
   if ((S.tienda || '') !== (S.f.rgiroT || '')) { S.f.rgiro = S.tienda || ''; S.f.rgiroT = S.tienda || ''; }
-  const multi = repMulti();
-  if (!multi) S.f.rgiro = '';
+  const fija = tiendaFija(), multi = repMulti() && !fija; // el encargado ve los reportes de su tienda (el servidor lo cumple)
+  if (fija) S.f.rgiro = fija;
+  else if (!multi) S.f.rgiro = '';
   else if (S.f.rgiro && !girosOn().includes(S.f.rgiro)) S.f.rgiro = '';
   if (!multi && S.f.rtab === 'secciones') S.f.rtab = 'resumen';
+  if (fija && !['resumen', 'inventario', 'cuentas'].includes(S.f.rtab || 'resumen')) S.f.rtab = 'resumen';
   const tab = S.f.rtab || 'resumen';
-  const tabs = [['resumen', 'Resumen']].concat(multi ? [['secciones', 'Por sección']] : [], [['diario', 'Diario'], ['ganancias', 'Ganancias'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']], sarOn() || (S.sar && S.sar.estado !== 'incompleto') ? [['sar', 'Libro SAR']] : []);
+  const tabs = fija ? [['resumen', 'Resumen'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']]
+    : [['resumen', 'Resumen']].concat(multi ? [['secciones', 'Por tienda']] : [], [['diario', 'Diario'], ['ganancias', 'Ganancias'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']], sarOn() || (S.sar && S.sar.estado !== 'incompleto') ? [['sar', 'Libro SAR']] : []);
   $('#main').innerHTML = `<div class="seg tabs">${tabs.map(([k, t]) => `<button class="${tab === k ? 'on' : ''}" data-a="rtab" data-k="${k}">${t}</button>`).join('')}</div>${multi && REP_CON_SECCION.includes(tab) ? secSelector() : ''}<div id="rp"></div>`;
   S.repCSV = null; // la descarga siempre es de la pestaña que se ve
   if (multi) secALaVista();
@@ -6567,7 +6581,7 @@ async function repResumen() {
     for (let f = desde; f <= hasta; f = addDias(f, 1)) { etiquetas.push(parseLocal(f).getDate() + (largo <= 7 ? ' ' + parseLocal(f).toLocaleDateString('es-HN', { weekday: 'short' }) : '')); dias.push(r2(d.porDia[f] || 0)); gastos.push(r2(d.gastosDia[f] || 0)); }
   }
   const esHora = per === 'hoy' || (per === 'otro' && desde === hasta);
-  const secAv = giro ? `<div class="sec-av" style="--sc:${secColor(giro)}"><div class="sec-av-h"><b>${esc(secNom(giro))}</b><span class="n">${fmtN(k.pct, 0)} % de lo vendido</span></div>
+  const secAv = giro ? `<div class="sec-av" style="--sc:${secColor(giro)}"><div class="sec-av-h"><b>${esc(secNom(giro))}</b>${k.pct !== undefined ? `<span class="n">${fmtN(k.pct, 0)} % de lo vendido</span>` : ''}</div>
       <p>Solo cuenta lo que se vendió de esta sección (si una factura trae productos de varias, se reparte por línea). ${k.general > 0 ? `Gastos propios <b class="n">${money(k.propios)}</b> + su parte de los gastos generales <b class="n">${money(k.general)}</b> (${fmtN(k.parteGeneral, 0)} %, según lo que vende).` : k.propios > 0 ? `Gastos propios <b class="n">${money(k.propios)}</b>.` : 'No hay gastos anotados para esta sección en el período.'}</p></div>` : '';
   $('#rp-b').innerHTML = secAv + `<div class="kpis k4">${kp('Ventas', money(k.ventas), k.n + (giro ? ' facturas con esta sección' : ' ventas'), serie(0))}${kp('Ganancia neta', money(k.neta), fmtN(k.margen, 1) + '% de margen', '#00b56e', k.neta >= 0 ? 'pos' : 'neg')}
       ${kp('Ganancia bruta', money(k.bruta), 'Ventas sin ISV − costo', '#6a1fe0')}${kp('Costo de lo vendido', money(k.costo), fmtN(k.articulos, 0) + ' artículos', '#8a8296')}
@@ -6585,7 +6599,7 @@ async function repResumen() {
   S.repCSV = () => csv(`reporte-${giro ? secSlug(giro) + '-' : ''}${desde}-a-${hasta}.csv`, [['Reporte', S.config.nombre, desde + ' a ' + hasta]].concat(giro ? [['Sección', giroCorto(giro)]] : [], [[], ['Indicador', 'Valor'],
     ['Ventas', k.ventas], ['Número de ventas', k.n], ['Ticket promedio', k.ticket], ['ISV', k.isv], ['Descuentos', k.descuentos], ['Costo de lo vendido', k.costo], ['Ganancia bruta', k.bruta]],
     giro ? [['Gastos propios', k.propios], ['Parte de gastos generales', k.general]] : [], [['Gastos', k.gastos], ['Ganancia neta', k.neta], ['Margen %', k.margen], ['Vendido al crédito', k.credito]],
-    giro ? [['% de lo vendido', k.pct]] : [['Cobros', k.cobros], ['Compras', k.compras]],
+    giro ? (k.pct !== undefined ? [['% de lo vendido', k.pct]] : []) : [['Cobros', k.cobros], ['Compras', k.compras]],
     [[], ['Producto', 'Cantidad', 'Vendido', 'Ganancia'], ...d.top.map(t => [t.nombre, t.cantidad, t.total, t.ganancia])]));
 }
 ACC.rper = el => { S.f.rper = el.dataset.k; return repResumen(); };
@@ -6709,28 +6723,47 @@ async function repCuentas() {
 /* ===================== USUARIOS ===================== */
 R.usuarios_bar = () => `<button class="hbtn" data-a="nuevoUsuario" aria-label="Nuevo usuario">${ic('userplus', 22)}</button>`;
 R.usuarios = () => {
-  $('#main').innerHTML = `<p class="sm mut" style="margin:0 2px 12px">Cada persona entra con ${S.multi ? 'su WhatsApp y su PIN' : 'su usuario y contraseña'}. El rol define lo que puede hacer.</p>
-    <div class="list">${S.usuarios.map(u => `<div class="li ${u.activo ? '' : 'anul'}" data-a="editUsuario" data-id="${u.id}"><div class="av" style="background:${esc(u.color || 'var(--pri)')}">${esc(iniciales(u.nombre))}</div><div class="tx"><b>${esc(u.nombre)}${u.id === S.user.id ? ' (tú)' : ''}</b><small>${esc(S.multi ? fmtWA(u.usuario) : u.usuario)}${repMulti() && u.rol !== 'admin' ? ` · <span class="u-td">${u.sucursal && girosOn().includes(u.sucursal) ? esc(secNom(u.sucursal)) : 'cualquier tienda'}</span>` : ''}${u.activo ? '' : ' · inactivo'}</small></div><div class="am"><span class="badge">${ROLES[u.rol]}</span></div></div>`).join('')}</div>
-    <div class="panel" style="margin-top:14px"><h3>Roles</h3>${Object.keys(ROLES).filter(r => !['mesero', 'cocina'].includes(r) || modOn('mesas')).map(r => `<p class="sm" style="margin:6px 0"><b>${ROLES[r]}:</b> <span class="mut">${ROL_DESC[r]}</span></p>`).join('')}</div>`;
+  const fila = u => `<div class="li ${u.activo ? '' : 'anul'}" data-a="editUsuario" data-id="${u.id}"><div class="av" style="background:${esc(u.color || 'var(--pri)')}">${esc(iniciales(u.nombre))}</div><div class="tx"><b>${esc(u.nombre)}${u.id === S.user.id ? ' (tú)' : ''}</b><small>${esc(S.multi ? fmtWA(u.usuario) : u.usuario)}${u.activo ? '' : ' · inactivo'}</small></div><div class="am"><span class="badge">${repMulti() && u.rol === 'admin' && tiendaDe(u) ? 'Encargado' : ROLES[u.rol]}</span></div></div>`;
+  const roles = `<div class="panel" style="margin-top:14px"><h3>Roles</h3>${Object.keys(ROLES).filter(r => !['mesero', 'cocina'].includes(r) || modOn('mesas')).map(r => `<p class="sm" style="margin:6px 0"><b>${ROLES[r]}:</b> <span class="mut">${ROL_DESC[r]}</span></p>`).join('')}${repMulti() ? `<p class="sm" style="margin:6px 0"><b>Encargado:</b> <span class="mut">Administrador con una tienda asignada: maneja sus productos, precios, caja, gastos, usuarios, su tienda en línea y sus funciones. No ve las otras tiendas.</span></p>` : ''}</div>`;
+  if (!repMulti()) { // una sola tienda: la lista de siempre
+    $('#main').innerHTML = `<p class="sm mut" style="margin:0 2px 12px">Cada persona entra con ${S.multi ? 'su WhatsApp y su PIN' : 'su usuario y contraseña'}. El rol define lo que puede hacer.</p>
+    <div class="list">${S.usuarios.map(fila).join('')}</div>${roles}`;
+    return;
+  }
+  // Varias tiendas: el dueño arriba y cada tienda con su gente (el encargado solo ve la suya)
+  const fija = tiendaFija(), us = S.usuarios.filter(u => !u.ajeno);
+  const grp = (g, l) => `<div class="u-grp">${giroImg(g)}<div><b>${esc(secNom(g))}</b><small>${l.length === 1 ? '1 usuario' : l.length + ' usuarios'} · solo ve su tienda</small></div></div>${l.length ? `<div class="list">${l.map(fila).join('')}</div>` : `<div class="empty sm" style="padding:10px">Nadie asignado todavía${fija ? '' : '. Al crear un usuario elige esta tienda.'}</div>`}`;
+  const todos = us.filter(u => !tiendaDe(u));
+  $('#main').innerHTML = `<p class="sm mut" style="margin:0 2px 4px">Cada persona entra con ${S.multi ? 'su WhatsApp y su PIN' : 'su usuario y contraseña'}. ${fija ? `Aquí ves a la gente de ${esc(secNom(fija))}.` : 'Cada tienda puede tener su propio <b>encargado</b>, que la administra aparte.'}</p>
+    ${fija ? '' : `<div class="u-grp"><span class="av u-all">${ic('store', 16)}</span><div><b>Todo el negocio</b><small>Ve todas las tiendas y los reportes juntos</small></div></div><div class="list">${todos.map(fila).join('')}</div>`}
+    ${(fija ? [fija] : girosOn()).map(g => grp(g, us.filter(u => tiendaDe(u) === g))).join('')}${roles}`;
 };
+// Tienda asignada a un usuario ('' = todas)
+const tiendaDe = u => u && u.sucursal && girosOn().includes(u.sucursal) ? u.sucursal : '';
 ACC.nuevoUsuario = () => formUsuario(null);
 ACC.editUsuario = el => formUsuario(byId(S.usuarios, el.dataset.id));
 function formUsuario(u) {
   const nuevo = !u; u = u || { rol: 'cajero', activo: true, color: '#1f7cff' };
   const cols = ['#d10f6f', '#1f7cff', '#00b56e', '#ff9500', '#8a3ffc', '#00b3bf', '#f2234b', '#4c22d0'];
-  let rol = u.rol, color = u.color, tienda = u.sucursal || '';
+  let rol = u.rol, color = u.color, tienda = tiendaFija() || tiendaDe(u);
   const h = hoja({ titulo: nuevo ? 'Nuevo usuario' : 'Editar usuario', html: `<label class="fld"><span>Nombre</span><input id="uf-n" value="${esc(u.nombre || '')}"></label>
     <label class="fld"><span>${S.multi ? 'WhatsApp (con este entra)' : 'Usuario'}</span><input id="uf-u" ${S.multi ? 'type="tel" inputmode="tel" placeholder="9876-5432"' : 'autocapitalize="none"'} value="${esc(S.multi && u.usuario ? fmtWA(u.usuario).replace('+504 ', '') : u.usuario || '')}"></label>
     <div class="fld"><span>Rol</span><div class="roles" id="uf-r">${Object.keys(ROLES).filter(r => !['mesero', 'cocina'].includes(r) || modOn('mesas') || rol === r).map(r => `<button type="button" class="rol ${rol === r ? 'on' : ''}" data-r="${r}"><b>${ROLES[r]}</b><small>${ROL_DESC[r]}</small></button>`).join('')}</div></div>
-    ${repMulti() ? `<div class="fld" id="uf-tw" ${rol === 'admin' ? 'hidden' : ''}><span>Tienda</span><div class="chips wrap" id="uf-t">${[''].concat(girosOn()).map(id => `<button type="button" class="chip ${tienda === id ? 'on' : ''}" data-t="${id}">${id ? `<i class="sd" style="background:${secColor(id)}"></i>${esc(secNom(id))}` : 'Cualquier tienda'}</button>`).join('')}</div><small class="hint">Con una tienda asignada entra directo a ella y solo ve lo suyo: ventas, caja, pedidos y productos.</small></div>` : ''}
+    ${repMulti() ? (tiendaFija() ? `<div class="fld"><span>Tienda</span><div class="chips"><span class="chip on"><i class="sd" style="background:${secColor(tiendaFija())}"></i>${esc(secNom(tiendaFija()))}</span></div><small class="hint">Los usuarios que creas quedan en tu tienda.</small></div>`
+      : `<div class="fld" id="uf-tw" ${u.id === S.user.id ? 'hidden' : ''}><span>Tienda</span><div class="chips wrap" id="uf-t">${[''].concat(girosOn()).map(id => `<button type="button" class="chip ${tienda === id ? 'on' : ''}" data-t="${id}">${id ? `<i class="sd" style="background:${secColor(id)}"></i>${esc(secNom(id))}` : 'Todas las tiendas'}</button>`).join('')}</div><small class="hint" id="uf-th"></small></div>`) : ''}
     <div class="fld"><span>Color</span><div class="cols" id="uf-c">${cols.map(c => `<button type="button" style="background:${c}" class="${c === color ? 'on' : ''}" data-c="${c}"></button>`).join('')}</div></div>
     <label class="fld"><span>${nuevo ? (S.multi ? 'PIN (4 a 6 números)' : 'Contraseña') : (S.multi ? 'Nuevo PIN (déjalo vacío para no cambiarlo)' : 'Nueva contraseña (opcional)')}</span>${pw(`id="uf-p" ${S.multi ? 'inputmode="numeric" maxlength="6"' : ''} autocomplete="new-password"`)}</label>
     ${!nuevo ? `<label class="sw-row"><input type="checkbox" id="uf-a" ${u.activo ? 'checked' : ''}><span class="sw"></span><div><b>Puede entrar al sistema</b></div></label>` : ''}` });
-  $('#uf-r', h.el).addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (!b) return; rol = b.dataset.r; $$('#uf-r .rol', h.el).forEach(x => x.classList.toggle('on', x === b)); const tw = $('#uf-tw', h.el); if (tw) tw.hidden = rol === 'admin'; });
-  const ut = $('#uf-t', h.el); if (ut) ut.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; tienda = b.dataset.t; $$('.chip', ut).forEach(x => x.classList.toggle('on', x === b)); });
+  // Qué significa la tienda elegida con este rol (el administrador con tienda es el encargado de esa tienda)
+  const pista = () => { const th = $('#uf-th', h.el); if (!th) return; th.innerHTML = !tienda ? (rol === 'admin' ? 'Administra todo el negocio y ve todas las tiendas.' : 'Puede trabajar en cualquier tienda.')
+    : rol === 'admin' ? `<b style="color:var(--pri)">Encargado de ${esc(secNom(tienda))}</b><br>Maneja sus productos, precios, caja, gastos, usuarios, su tienda en línea y sus funciones. No ve las otras tiendas.`
+    : `Entra directo a ${esc(secNom(tienda))} y solo ve lo suyo: ventas, caja, pedidos y productos.`; };
+  $('#uf-r', h.el).addEventListener('click', e => { const b = e.target.closest('[data-r]'); if (!b) return; rol = b.dataset.r; $$('#uf-r .rol', h.el).forEach(x => x.classList.toggle('on', x === b)); pista(); });
+  const ut = $('#uf-t', h.el); if (ut) ut.addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; tienda = b.dataset.t; $$('.chip', ut).forEach(x => x.classList.toggle('on', x === b)); pista(); });
+  pista();
   $('#uf-c', h.el).addEventListener('click', e => { const b = e.target.closest('[data-c]'); if (!b) return; color = b.dataset.c; $$('#uf-c button', h.el).forEach(x => x.classList.toggle('on', x === b)); });
   h.botones([{ t: 'Guardar', cls: 'pri', fn: async () => {
-    const g = await api('guardarUsuario', { registro: { id: u.id, nombre: $('#uf-n', h.el).value, usuario: $('#uf-u', h.el).value, rol, color, activo: $('#uf-a', h.el) ? $('#uf-a', h.el).checked : true, tienda: repMulti() ? (rol === 'admin' ? '' : tienda) : undefined }, clave: $('#uf-p', h.el).value.trim() });
+    const g = await api('guardarUsuario', { registro: { id: u.id, nombre: $('#uf-n', h.el).value, usuario: $('#uf-u', h.el).value, rol, color, activo: $('#uf-a', h.el) ? $('#uf-a', h.el).checked : true, tienda: repMulti() ? (tiendaFija() || (u.id === S.user.id ? '' : tienda)) : undefined }, clave: $('#uf-p', h.el).value.trim() });
     const i = S.usuarios.findIndex(x => x.id === g.id); if (i >= 0) S.usuarios[i] = g; else S.usuarios.push(g);
     if (g.id === S.user.id) Object.assign(S.user, g);
     guardarCache(); h.cerrar(); toast('Usuario guardado', 'ok'); R.usuarios();
@@ -6740,7 +6773,7 @@ function formUsuario(u) {
 
 /* ===================== AJUSTES ===================== */
 R.ajustes = () => {
-  const c = S.config, adm = puede('admin'), modo = LS.get('modoColor', 'auto');
+  const c = S.config, adm = dueno(), modo = LS.get('modoColor', 'auto'); // el encargado de una tienda no cambia lo del negocio completo
   const sec = (id, icn, t, html, sub) => `<section class="panel aj" id="aj-${id}"><div class="aj-h"><i class="${colorDe(id)}">${ic(icn, 20)}</i><div><h3>${t}</h3>${sub ? `<small>${sub}</small>` : ''}</div></div>${html}</section>`;
   const v = k => esc(c[k] === undefined ? '' : c[k]);
   const sel = (k, opts) => `<select data-k="${k}">${opts.map(([val, t]) => `<option value="${val}" ${String(c[k]) === String(val) ? 'selected' : ''}>${t}</option>`).join('')}</select>`;
@@ -6771,7 +6804,8 @@ R.ajustes = () => {
     <label class="fld"><span>Contrato de aceptación de servicios</span><textarea data-k="cotContrato" rows="6" maxlength="3000">${v('cotContrato')}</textarea></label>
     <label class="fld"><span>Acta de proyecto terminado</span><textarea data-k="cotActa" rows="5" maxlength="3000">${v('cotActa')}</textarea></label>
     <button class="btn pri" data-a="guardarAj" data-s="cot">Guardar</button>`);
-  if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
+  if (puede('admin') && repMulti()) { const ft = ftTienda(); h += sec('modulos', 'sparkle', 'Funciones por tienda', funcionesTiendaHTML(), Object.keys(MODULOS_INFO).filter(k => modEnGiro(k, ft)).length + ' activas en ' + esc(secNom(ft))); }
+  else if (adm) h += sec('modulos', 'sparkle', 'Funciones por tipo de negocio', modulosAjustesHTML(), Object.keys(MODULOS_INFO).filter(modOn).length + ' activas');
   if (puede('admin', 'cajero')) h += sec('avisos', 'bell', 'Avisos en el teléfono', avisosAjustesHTML(), avisosOn() ? '<span class="badge b-ok">Activos</span>' : '');
   h += sec('apariencia', 'palette', 'Apariencia', `${adm ? `${[['Vivos', k => !TEMAS[k].pro], ['Profesionales', k => TEMAS[k].pro]].map(([tt, f]) => `<p class="sm mut" style="margin:${tt === 'Vivos' ? 0 : 14}px 0 8px">${tt}</p><div class="temas">${Object.keys(TEMAS).filter(f).map(k => { const t = TEMAS[k]; return `<button class="tema ${k === S.tema ? 'on' : ''}" data-a="tema" data-t="${k}" style="--x1:${t.h1};--x2:${t.h2};--xa1:${t.a1};--xa2:${t.a2}"><span class="sw"><i></i></span>${esc(t.n)}</button>`; }).join('')}</div>`).join('')}<p class="xs mut">El color cambia el sistema, la tienda en línea y los comprobantes para todo el equipo.</p>` : ''}
     <div class="fld" style="margin-top:12px"><span>Modo (solo en este equipo)</span><div class="modos">${[['auto', 'auto', 'Automático'], ['claro', 'sun', 'Claro'], ['oscuro', 'moon', 'Oscuro']].map(([k, i, t]) => `<button class="pay ${modo === k ? 'on' : ''}" data-a="modoColor" data-m="${k}">${ic(i)}${t}</button>`).join('')}</div></div>
@@ -6784,7 +6818,7 @@ R.ajustes = () => {
     <button class="btn pri" data-a="guardarAj" data-s="mensajes">Guardar</button>`);
   if (adm) h += sec('sar', 'doc', 'Facturación SAR', sarAjustesHTML(), sarOn() ? '<span class="badge b-ok">Activa</span>' : 'Apagada · tus ventas salen como comprobante');
   if (adm) h += sec('plus', 'sparkle', 'Plan Plus', S.plus ? (S.plusIncluido ? `<p class="sm"><span class="plus-b">PLUS</span> Incluido en tu prueba gratis: tienda en línea y fotos de productos.</p><p class="xs mut">Cuando actives tu licencia, el plan Plus se activa por separado. Escríbenos y lo dejamos listo.</p>${plusCard(1)}` : `<p class="sm"><span class="plus-b">PLUS</span> Activo: tienda en línea y fotos de productos.</p>`) : plusCard(1));
-  h += sec('cuenta', 'user', 'Mi cuenta', `<div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${ROLES[S.user.rol]} · ${esc(S.multi ? fmtWA(S.user.usuario) : S.user.usuario)}</small></div></div>
+  h += sec('cuenta', 'user', 'Mi cuenta', `<div class="me-row"><div class="av t-pri">${esc(iniciales(S.user.nombre))}</div><div class="tx"><b>${esc(S.user.nombre)}</b><small>${rolTxt()} · ${esc(S.multi ? fmtWA(S.user.usuario) : S.user.usuario)}</small></div></div>
     ${adm && L.estado ? `<p class="sm">${L.estado === 'prueba' ? `Prueba gratis: ${L.diasRestantes === 1 ? 'queda 1 día' : 'quedan ' + L.diasRestantes + ' días'} (vence ${esc(fFechaC(L.vence))}).` : 'Licencia activa de por vida ✓'}</p>` : ''}
     ${adm && S.contratoVM ? `<p class="sm" style="margin:6px 0 4px"><b>Mi contrato</b> <span class="mut">· con Molina Soluciones Digitales</span></p><div class="list" style="margin:2px 0 10px">${[S.contratoVM.pendiente].concat(S.contratoVM.firmados || []).filter(Boolean).map(k => `<div class="li" data-a="verContrato" data-id="${esc(k.id)}"><div class="av ${k.estado === 'firmado' ? 't-verde' : 't-naranja'}">${ic('doc', 18)}</div><div class="tx"><b>${esc(k.titulo)}</b><small>${k.estado === 'firmado' ? 'Firmado el ' + esc(fFechaC(String(k.firmadoEl).slice(0, 10))) : 'Pendiente de firma · ' + esc(fFechaC(k.fecha))}</small></div><span class="badge ${k.estado === 'firmado' ? 'b-ok' : 'b-warn'}">${k.estado === 'firmado' ? 'Firmado' : 'Firmar'}</span></div>`).join('')}</div>` : ''}
     <div class="row"><button class="btn" data-a="cambiarClave">${ic('key', 18)} Cambiar ${S.multi ? 'PIN' : 'contraseña'}</button><button class="btn bad" data-a="logout">${ic('logout', 18)} Cerrar sesión</button></div>${adm ? limpiezaAjustesHTML() + zonaPeligroHTML() : ''}`);
@@ -6794,10 +6828,31 @@ R.ajustes = () => {
   const df = $('#aj-dfoto'); if (df) df.addEventListener('change', subirDuenoFoto);
   const fi = $('#aj-firma'); if (fi) fi.addEventListener('change', subirFirma);
   initSarAjustes();
+  { const ft = $('.ft-tabs .on'); if (ft) ft.parentNode.scrollLeft = Math.max(0, ft.offsetLeft - ft.parentNode.offsetLeft - 16); }
   if (S.params.sec) { const el = $('#aj-' + S.params.sec); S.params.sec = ''; if (el) setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80); }
 };
 /* ===================== MI TIENDA EN LÍNEA (módulo) ===================== */
 R.tienda_bar = () => S.plus && S.config.tienda === 'si' ? `<button class="hbtn" data-a="compartirTienda" aria-label="Compartir tienda">${ic('share', 20)}</button>` : '';
+/* ----- Tiendas en tu página (varias tiendas, 1.9.78) -----
+ * Cada tienda se enciende o apaga en la tienda en línea por separado. Las apagadas siguen trabajando normal en el programa.
+ * El encargado de una tienda solo ve y cambia la suya (el servidor lo cumple). */
+const tiendasOff = () => String(S.config.tiendaOff || '').split(',').filter(g => girosOn().includes(g));
+function tiendasLineaHTML() {
+  const off = tiendasOff(), fija = tiendaFija(), lista = fija ? [fija] : girosOn(), cuenta = id => S.productos.filter(p => p.activo && p.tienda !== false && giroDeP(p) === id).length;
+  const on = girosOn().filter(g => !off.includes(g));
+  return `<p class="xs mut" style="margin-top:0">${fija ? 'Decide si tu tienda sale en el enlace de la tienda en línea. Si la apagas, sigue trabajando normal en el programa.' : 'Enciende solo las tiendas que quieres vender por internet. Las apagadas siguen trabajando normal en el programa; solo no salen en tu enlace.'}</p>
+    ${lista.map(id => { const n = cuenta(id), en = !off.includes(id); return `<label class="sw-row tl-r">${giroImg(id)}<div class="tx"><b>${esc(secNom(id))}</b><small>${n === 1 ? '1 producto' : n + ' productos'} · ${en ? '<span class="tl-on">● En tu tienda en línea</span>' : '<span class="tl-off">Solo en el programa</span>'}</small></div><input type="checkbox" data-tl="${id}" ${en ? 'checked' : ''}><span class="sw"></span></label>`; }).join('')}
+    ${!fija && on.length === 1 ? `<div class="aviso info sm" style="margin-top:8px">${ic('info', 18)}<div>Con una sola tienda encendida, tu enlace abre <b>directo en ${esc(secNom(on[0]))}</b>, sin la pantalla de «¿Qué deseas comprar hoy?».</div></div>` : ''}
+    ${!fija ? `<small class="hint">El encargado de cada tienda también puede encender o apagar la suya. Al crear o editar un producto eliges en qué tienda aparece.</small>
+      <a class="btn wa sm" style="margin-top:10px" href="${waLink(CONTACTO_WA, 'Hola, quiero activar otra sección (giro) en la tienda de ' + (S.config.nombre || 'mi negocio'))}" target="_blank" rel="noopener">${ic('wa', 16)} Pedir otra tienda</a>` : ''}
+    <button class="btn pri" style="margin-top:10px" data-a="guardarTiendasLinea">Guardar</button>`;
+}
+ACC.guardarTiendasLinea = async () => {
+  const off = $$('[data-tl]').filter(x => !x.checked).map(x => x.dataset.tl);
+  if (!tiendaFija() && off.length >= girosOn().length) throw new Error('Deja al menos una tienda en tu página. Para no recibir pedidos apaga «Tienda abierta».');
+  const c = await api('guardar', { entidad: 'Config', registro: { tiendaOff: off.join(',') } });
+  S.config = c; guardarCache(); toast('Listo: tu tienda en línea ya muestra solo las tiendas encendidas', 'ok', 4000); render();
+};
 R.tienda = () => {
   const c = S.config, m = $('#main');
   if (!S.plus) { m.innerHTML = plusCard() + '<div class="empty">Con Plus, tus clientes ven tu catálogo con fotos, te hacen pedidos y te escriben desde un enlace propio.</div>'; return; }
@@ -6809,6 +6864,7 @@ R.tienda = () => {
   let h = `${S.plusIncluido ? `<div class="aviso info" style="margin-bottom:12px">${ic('sparkle', 20)}<div><b>Plus incluido en tu prueba gratis</b><small>Al activar tu licencia, la tienda en línea se activa por separado.</small></div></div>` : ''}<div class="td-head"><div class="st ${abierta ? '' : 'off'}"><i></i>${abierta ? 'Tu tienda está abierta' : 'Tu tienda está apagada'}</div><div class="lnk">${esc(linkTienda())}</div>
       <div class="row">${abierta ? `<button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a><button class="btn sm" data-a="compartirTienda">${ic('share', 16)} Compartir</button>` : ''}</div></div>`;
   if (abierta && S.user && S.user.rol === 'admin') h += `<section class="panel td-vis" id="td-vis" hidden></section>`;
+  if (encargado()) { m.innerHTML = h + sec('giros', 'grid', 'Tu tienda en la página', tiendasLineaHTML()) + `<p class="xs mut" style="margin:10px 4px">El resto de la tienda en línea (nombre, colores, pagos y entregas) lo maneja el dueño del negocio.</p>`; tiendaVisitas().catch(() => {}); return; }
   h += sec('estado', 'globe', 'Recibir pedidos', `<label class="sw-row"><input type="checkbox" data-k="tienda" data-on="si" data-off="no" ${abierta ? 'checked' : ''}><span class="sw"></span><div><b>Tienda abierta</b><small>Tus clientes ven tu catálogo y te hacen pedidos desde el enlace</small></div></label>
     <label class="sw-row"><input type="checkbox" data-k="tiendaChat" data-on="si" data-off="no" ${c.tiendaChat !== 'no' ? 'checked' : ''}><span class="sw"></span><div><b>Recibir mensajes directos</b><small>Te escriben desde la tienda y respondes en Mensajes. Se borran solos a los 2 meses.</small></div></label>
     <label class="fld"><span>Mensaje de bienvenida</span><input data-k="tiendaMensaje" value="${v('tiendaMensaje')}" maxlength="160" placeholder="¡Bienvenido! Haz tu pedido…"></label>
@@ -6833,7 +6889,8 @@ R.tienda = () => {
       <div class="var-t">Puedes usar <code>{cliente}</code> <code>{numero}</code> <code>{total}</code> <code>{negocio}</code></div>
       <button class="btn pri" data-a="guardarAj" data-s="auto">Guardar</button>`, c.tiendaChat === 'no' ? 'Apagados' : 'Encendidos');
   }
-  { // Secciones (giros) de la tienda: cada giro activo es un módulo en la portada
+  if (repMulti()) h += sec('giros', 'grid', 'Tiendas en tu página', tiendasLineaHTML(), (girosOn().length - tiendasOff().length) + ' de ' + girosOn().length + ' en línea');
+  else { // Secciones (giros) de la tienda: cada giro activo es un módulo en la portada
     const on = girosOn(), cuenta = id => S.productos.filter(p => p.activo && giroDeP(p) === id).length;
     h += sec('giros', 'grid', 'Secciones de tu tienda', `<p class="xs mut" style="margin-top:0">${on.length > 1 ? 'Tu tienda abre con un botón por cada sección y el cliente entra a la que quiera.' : 'Tu tienda tiene una sola sección. Si también vendes otra cosa (por ejemplo streaming y recargas), puedes activar más secciones.'}</p>
       <div class="list">${on.map((id, i) => { const n = cuenta(id); return `<div class="li"><div class="av gav">${giroImg(id)}</div><div class="tx"><b>${esc(giroN(id))}</b><small>${i ? 'Sección extra' : 'Principal'} · ${n} ${n === 1 ? 'producto' : 'productos'}</small></div>${n ? '' : `<button class="btn sm" data-a="cargarEjGiro" data-g="${id}">${ic('sparkle', 14)} Productos de ejemplo</button>`}</div>`; }).join('')}</div>
@@ -7472,7 +7529,7 @@ ACC.lbVer = async el => {
  * ----------------------------------------------------------------------- */
 
 // Solo aparece (menú «Más», mosaico de Inicio, vista) cuando el negocio tiene Contabilidad activada desde el Panel.
-VISTAS.contabilidad = { t: 'Contabilidad', c: 'Contab.', i: 'chart', roles: ['admin'], si: () => !!S.contab };
+VISTAS.contabilidad = { t: 'Contabilidad', c: 'Contab.', i: 'chart', roles: ['admin'], si: () => !!S.contab && !tiendaFija() };
 LIBS.xlsx = ['https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'];
 document.head.insertAdjacentHTML('beforeend', '<style>.cb-lin .tr{grid-template-columns:minmax(0,2fr) 1fr 1fr}.cb2 .tr{grid-template-columns:minmax(0,2fr) 1fr}.seg.tabs.cbt{display:flex;overflow-x:auto;white-space:nowrap;scrollbar-width:none}.seg.tabs.cbt button{flex:0 0 auto}</style>');
 S.cb = null;  // datos del período cargado { desde, hasta, plan, mapeo, config, asientos, saldosIniciales, cobrar, pagar, concil, cerrado }
@@ -7913,7 +7970,13 @@ const MODULOS_INFO = {
   catalogo:      { n: 'Tienda estilo catálogo', d: 'Tu tienda abre con secciones grandes (como las páginas de un catálogo), cada producto lleva subcategoría, frase y beneficios, los tonos se eligen por color y hay precio especial desde cierta cantidad de piezas.', g: 'Beauty & Moda' },
   cotizaciones:  { n: 'Cotizaciones y contratos', d: 'Cotizaciones elegantes con plan de pagos; al aceptarlas se vuelven proyecto, los pagos quedan agendados y el cliente firma el contrato y el acta de entrega.', g: 'servicios' }
 };
-const modOn = k => !!S.config && (S.config[k] === 'si' || girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k)));
+// Funciones por tienda (1.9.78): con varias tiendas, cada una tiene las suyas ({ módulo: [tiendas] } en modTiendas).
+// La de su tipo de negocio siempre va incluida. En «Todas las tiendas» cuenta si está en alguna.
+let MT_C = ['', {}];
+const modTiendas = () => { const t = S.config.modTiendas || ''; if (MT_C[0] !== t) { let o = {}; try { o = t ? JSON.parse(t) || {} : {}; } catch (e) {} MT_C = [t, o]; } return MT_C[1]; };
+const modDeGiro = (k, g) => (MODULOS_GIRO[g] || []).includes(k);
+const modEnGiro = (k, g) => { if (modDeGiro(k, g)) return true; const mt = girosOn().length > 1 ? modTiendas() : {}; return Array.isArray(mt[k]) ? mt[k].includes(g) : S.config[k] === 'si'; };
+const modOn = k => !!S.config && (S.tienda && girosOn().includes(S.tienda) ? [S.tienda] : girosOn()).some(g => modEnGiro(k, g));
 const modDelGiro = k => !!S.config && girosOn().some(g => (MODULOS_GIRO[g] || []).includes(k));
 // Órdenes de trabajo en veterinaria: «Hospedaje y estética» (la mascota entra, se atiende y se entrega)
 const vetOrd = () => !!S.config && girosOn().includes('veterinaria') && !girosOn().some(g => ['repuestos', 'servicios', 'carwash'].includes(g));
@@ -8568,6 +8631,30 @@ function formAgenda(a, tipo, pre) {
 }
 
 /* ---- Ajustes: funciones por tipo de negocio ---- */
+/* ----- Funciones por tienda (varias tiendas, 1.9.78) -----
+ * Cada tienda enciende las funciones que le sirven; solo aparecen cuando se trabaja en esa tienda.
+ * Las de su tipo de negocio vienen incluidas. El encargado solo ve y cambia las de su tienda. */
+const ftTienda = () => tiendaFija() || (S.f.ftT && girosOn().includes(S.f.ftT) ? S.f.ftT : S.tienda && girosOn().includes(S.tienda) ? S.tienda : girosOn()[0]);
+function funcionesTiendaHTML() {
+  const t = ftTienda(), fija = tiendaFija();
+  return `<p class="sm mut" style="margin:0 0 6px">${fija ? `Enciende lo que le sirve a ${esc(secNom(t))}.` : 'Elige la tienda y enciende lo que le sirve.'} Lo que actives aquí <b>solo aparece cuando trabajas en esa tienda</b>.</p>
+    ${fija ? '' : `<div class="ft-tabs">${girosOn().map(g => `<button type="button" class="${g === t ? 'on' : ''}" data-a="ftTab" data-t="${g}">${giroImg(g)} ${esc(secNom(g))}</button>`).join('')}</div>`}
+    ${Object.keys(MODULOS_INFO).sort((a, b) => (modDeGiro(b, t) - modDeGiro(a, t)) || (modEnGiro(b, t) - modEnGiro(a, t))).map(k => { const i = MODULOS_INFO[k], inc = modDeGiro(k, t); return `<label class="sw-row"><input type="checkbox" data-ft="${k}" ${inc || modEnGiro(k, t) ? 'checked' : ''} ${inc ? 'disabled' : ''}><span class="sw"></span><div><b>${i.n}${inc ? ' <span class="badge b-ok">Incluida</span>' : ''}</b><small>${i.d}</small></div></label>`; }).join('')}
+    <button class="btn pri" data-a="guardarFunciones" data-t="${t}">Guardar funciones de ${esc(secNom(t))}</button>`;
+}
+ACC.ftTab = el => { S.f.ftT = el.dataset.t; render(); const s = $('#aj-modulos'); if (s) s.scrollIntoView({ block: 'start' }); };
+ACC.guardarFunciones = async el => {
+  const t = el.dataset.t, mt = modTiendas(), out = {};
+  $$('[data-ft]').forEach(x => {
+    if (x.disabled) return; const k = x.dataset.ft;
+    let l = Array.isArray(mt[k]) ? mt[k].filter(g => girosOn().includes(g)) : S.config[k] === 'si' ? girosOn().slice() : [];
+    l = l.filter(g => g !== t); if (x.checked) l.push(t);
+    out[k] = l;
+  });
+  const c = await api('guardar', { entidad: 'Config', registro: { modTiendas: JSON.stringify(out) } });
+  S.config = c; guardarCache(); toast('Funciones de ' + secNom(t) + ' guardadas', 'ok'); pintarNav(); render();
+  const s = $('#aj-modulos'); if (s) s.scrollIntoView({ block: 'start' });
+};
 function modulosAjustesHTML() {
   return `<p class="sm mut" style="margin:0 0 10px">Tu tipo de negocio (<b>${esc(giroNombre())}</b>) ya trae encendidas las que le sirven. Puedes activar cualquier otra.</p>
     ${Object.keys(MODULOS_INFO).map(k => { const i = MODULOS_INFO[k], del = modDelGiro(k); return `<label class="sw-row"><input type="checkbox" data-k="${k}" data-on="si" data-off="" ${del || S.config[k] === 'si' ? 'checked' : ''} ${del ? 'disabled' : ''}><span class="sw"></span><div><b>${i.n}${del ? ' <span class="badge b-ok">Incluida</span>' : ''}</b><small>${i.d} <i class="mut">(${i.g})</i></small></div></label>`; }).join('')}
@@ -10000,6 +10087,12 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.78', fecha: '2026-11-13', items: [
+    { i: 'user', t: 'Un encargado para cada tienda', d: 'En Usuarios, crea un Administrador y asígnale una tienda: será el encargado y la administra aparte (productos, precios, caja, gastos, usuarios, su tienda en línea y sus funciones) sin ver las otras. Tú sigues viendo todo.', si: () => repMulti() && dueno() },
+    { i: 'store', t: 'Cada tienda decide si sale en tu página', d: 'En Mi tienda en línea › Tiendas en tu página enciende solo las que vendes por internet. Con una sola encendida, tu enlace abre directo en ella.', si: () => repMulti() && puede('admin') },
+    { i: 'sparkle', t: 'Funciones por tienda', d: 'En Ajustes › Funciones por tienda elige la tienda y enciende lo que le sirve. Cada función aparece solo cuando trabajas en esa tienda.', si: () => repMulti() && puede('admin') },
+    { i: 'chart', t: 'Reportes por tienda o todo junto', d: 'En Reportes elige «Todo el negocio» o una tienda, y en «Por tienda» compáralas lado a lado.', si: () => repMulti() && dueno() }
+  ] },
   { v: '1.9.77', fecha: '2026-11-12', items: [
     { i: 'chat', t: 'Mensajes automáticos en tu tienda', d: 'Cuando confirmas, terminas, cobras o cancelas un pedido, tu tienda le avisa sola a tu cliente en el chat (sin abrir WhatsApp). También puede contestar sola cuando estás cerrado. Enciende o apaga cada aviso y cambia los textos en Mi tienda en línea › Mensajes automáticos.', si: () => S.plus, ir: 'tienda' }
   ] },
