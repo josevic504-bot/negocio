@@ -3,6 +3,7 @@ import { ok } from './base.mjs';
 export async function paso(pg, nombre, fn) {
   try { const r = await fn(); if (r === false) throw new Error('condición no cumplida'); ok(nombre, true); return true; }
   catch (e) {
+    if (!pg) { ok(nombre, false, e.message.split('\n')[0].slice(0, 300)); return false; }
     const txt = (await pg.locator('body').innerText().catch(() => '')).replace(/\s+/g, ' ');
     const d = await dump(pg).catch(() => '');
     ok(nombre, false, e.message.split('\n')[0].slice(0, 160) + ' | pantalla: ' + txt.slice(0, 200));
