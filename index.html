@@ -1674,7 +1674,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.79';
+const APP_VER = '1.9.80';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2390,7 +2390,7 @@ function mostrarApp() {
   document.body.classList.add('app');
   const h = location.hash.slice(1);
   ir(VISTAS[h] ? h : 'inicio', {}, true);
-  const tiendaLuego = () => { if (S.elegirTienda) { S.elegirTienda = false; setTimeout(() => elegirTienda(true), 300); } };
+  const tiendaLuego = () => { if (S.elegirTienda) { S.elegirTienda = false; setTimeout(() => { if (modoTienda()) elegirTienda(true); }, 300); } };
   if (debeAvisarCobro()) setTimeout(() => avisoCobro(tiendaLuego), 400); else tiendaLuego();
   avisoContratoLuego();
   vigilarPedidos();
@@ -2606,7 +2606,7 @@ const tiendaKey = () => 'tienda_' + (S.negocioId || '') + '_' + (S.user ? S.user
 const enTiendaP = p => !S.tienda || giroDeP(p) === S.tienda;
 // Decide la tienda al cargar los datos: la asignada, la que se recordó en este equipo o se pregunta al entrar
 function prepararTienda() {
-  if (!modoTienda()) { S.tienda = undefined; return; } // sin decidir: si luego se activa otro giro, se usa la tienda recordada o se pregunta
+  if (!modoTienda()) { S.tienda = undefined; S.elegirTienda = false; return; } // sin decidir: si luego se activa otro giro, se usa la tienda recordada o se pregunta
   const fija = tiendaFija();
   if (fija) { S.tienda = fija; return; }
   if (S.tienda !== undefined && (!S.tienda || girosOn().includes(S.tienda))) { if (!S.tienda && !puede('admin')) { S.tienda = girosOn()[0]; } return; }
@@ -2622,10 +2622,12 @@ function pillTienda() {
 }
 ACC.cambiarTienda = () => elegirTienda(false);
 async function elegirTienda(alEntrar) {
-  if (!S.user || S.vencidaVista || tiendaFija()) return;
+  if (!S.user || S.vencidaVista || tiendaFija() || !modoTienda()) return; // solo con 2 o más tiendas (giros)
   const h = hoja({ titulo: '¿A qué tienda entras?', html: '<div id="tdas"><div class="empty">Cargando tus tiendas…</div></div>' });
   let d = null; try { d = await api('tiendas', {}, true); } catch (e) {}
   const l = d && d.tiendas && d.tiendas.length ? d.tiendas : girosOn().map(id => ({ id, nombre: giroN(id) }));
+  // Con una sola tienda (por ejemplo, si le quitaron un giro mientras tanto) no hay nada que elegir
+  if (l.length < 2 || !modoTienda()) { h.cerrar(); if (!modoTienda()) { S.tienda = undefined; pintarHeader(); } return; }
   const rec = LS.get(tiendaKey(), '');
   const card = t => `<button class="td-c ${S.tienda === t.id ? 'on' : ''}" data-t="${t.id}" style="--sc:${secColor(t.id)}"><span class="td-emo">${giroImg(t.id)}</span><span class="td-tx"><b>${esc(giroCorto(t.id))}</b>
       ${t.hoy !== undefined ? `<small>Hoy <b class="n">${money(t.hoy)}</b> · ${t.n === 1 ? '1 venta' : t.n + ' ventas'}</small>` : ''}${t.caja !== undefined ? `<small>En caja <b class="n">${money(t.caja)}</b></small>` : ''}</span>
