@@ -5360,7 +5360,7 @@ function tiendaInfo_(d) {
         anticipo: Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0)), dias: cfg.comprasDias, tiendas: cfg.comprasTiendas } : null },
     productos: rows_('Productos').filter(p => p.activo && p.tienda).map(p => {
       const o = { id: p.id, nombre: p.nombre, categoria: p.categoria, precio: p.precio, icono: p.icono, foto: p.foto, descripcion: p.descripcion, unidad: p.unidad, opciones: p.opciones || '', g: giroDeProd_(p, activos) };
-      if (p.sub) o.sub = p.sub; if (p.lema) o.lema = p.lema; if (p.puntos) o.puntos = p.puntos; if (p.codigo && catOn && !/^EJ\d/.test(p.codigo)) o.codigo = p.codigo;
+      if (p.sub) o.sub = p.sub; if (p.lema) o.lema = p.lema; if (p.puntos) o.puntos = p.puntos; if (p.codigo && catOn && !/^EJ\d/.test(p.codigo) && !esCodAuto_(p.codigo)) o.codigo = p.codigo; // el comprador solo ve el código que el negocio escribió, no el automático
       if (p.precioEsp > 0 && p.minEsp > 1) { o.precioEsp = p.precioEsp; o.minEsp = p.minEsp; }
       const V = varsDe_(p);
       if (V) { o.vars = {}; Object.keys(V).forEach(k => { const x = {}; if (Number(V[k].p) > 0) x.p = r2_(V[k].p); if (p.tipo === 'producto' && !sin) x.n = Math.max(0, Math.floor(Number(V[k].s) || 0)); o.vars[k] = x; }); }
@@ -6082,6 +6082,8 @@ function girosActivos_(cfg) {
 const PREFIJO_GIRO = { tienda: 'TDA', variedades: 'VAR', ferreteria: 'FER', comida: 'RES', boutique: 'BOU', farmacia: 'FAR', vitaminas: 'VIT', repuestos: 'REP',
   carwash: 'LAV', joyeria: 'JOY', floristeria: 'FLO', manualidades: 'MAN', tecnologia: 'TEC', belleza: 'BEL', catalogo: 'CAT', panaderia: 'PAN',
   servicios: 'SER', streaming: 'STR', compras: 'CPL', recargas: 'REC', veterinaria: 'VET', otro: 'PRD' };
+// ¿Es un código de los que pone el programa (letras de un giro + número)? En la tienda en línea no se le muestra al comprador
+function esCodAuto_(c) { const m = /^([A-Z]{3})-\d{4,}$/i.exec(String(c || '')); return !!m && Object.keys(PREFIJO_GIRO).some(g => PREFIJO_GIRO[g] === m[1].toUpperCase()); }
 // cods: { 'far-0001': … } con los códigos ya usados en minúscula; si no se pasa, se leen los productos
 function codigoAuto_(giro, cods) {
   if (!cods) { cods = {}; rows_('Productos').forEach(p => { if (p.codigo) cods[String(p.codigo).toLowerCase()] = 1; }); }
