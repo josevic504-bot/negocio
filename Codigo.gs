@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.79';
+const VERSION = '1.9.81';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -89,7 +89,7 @@ const SCHEMA = {
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo','variante'],
-  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId','presupuesto','cotiza','chatId'],
+  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId','presupuesto','cotiza','chatId','recibo'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
@@ -133,12 +133,12 @@ const CONFIG_DEF = {
   msjVacuna: 'Hola {cliente} 👋 Te escribimos de *{negocio}*. A *{mascota}* le toca su *{vacuna}* el *{fecha}* 💉 ¿Te reservamos un espacio? Responde con la hora que te queda mejor.',
   msjVacunaVencida: 'Hola {cliente} 👋 Te escribimos de *{negocio}*. A *{mascota}* ya le tocaba su *{vacuna}* desde el {fecha}. Para tenerla protegida, ¿te reservamos un espacio esta semana?',
   // Compras en línea (giro «compras»): cómo se calcula lo que el cliente pide desde un enlace
-  comprasCambio: '25', comprasRecargo: '15', comprasEnvio: '0', comprasAnticipo: '50', comprasDias: '15 a 20 días', comprasTiendas: 'Shein, Temu, Amazon',
+  comprasPlazo: '8', comprasCambio: '25', comprasRecargo: '15', comprasEnvio: '0', comprasAnticipo: '50', comprasDias: '15 a 20 días', comprasTiendas: 'Shein, Temu, Amazon',
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
   // Mensajes automáticos: la tienda le escribe sola al comprador en el chat cuando cambia su pedido (cada uno se apaga aparte)
-  autoRecibido: 'si', autoCotizado: 'si', autoConfirmado: 'si', autoListo: 'si', autoPago: 'si', autoCancelado: 'si', autoCerrado: 'si', autoBienvenida: 'no',
+  autoRecibido: 'si', autoCotizado: 'si', autoConfirmado: 'si', autoListo: 'si', autoPago: 'si', autoCancelado: 'si', autoCerrado: 'si', autoBienvenida: 'no', autoCamino: 'si', autoLlego: 'si', autoApartado: 'si',
   msjAutoRecibido: '¡Gracias {cliente}! Recibimos tu pedido {numero} por {total}. Te avisamos por aquí en cuanto lo confirmemos.',
   msjAutoCotizado: 'Hola {cliente} 👋 Ya tenemos el precio de tu pedido {numero}: {total}. Puedes aceptarlo en «Tus pedidos».',
   msjAutoConfirmado: 'Confirmamos tu pedido {numero} 👍 Ya lo estamos preparando.',
@@ -146,6 +146,10 @@ const CONFIG_DEF = {
   msjAutoPagoOk: 'Recibimos tu pago del pedido {numero}. ¡Muchas gracias! 🙌',
   msjAutoPagoNo: 'Revisamos el comprobante de tu pedido {numero} y no coincide con el pago. ¿Nos ayudas enviando otro desde «Tus pedidos»?',
   msjAutoCancelado: 'Tu pedido {numero} fue cancelado.{motivo} Si tienes dudas, escríbenos por aquí.',
+  // Compras en línea (Shein, Temu…): ya se compró, llegó y quedó apartado, y recordatorio un día antes de que venza el apartado
+  msjAutoCamino: 'Ya compramos tu pedido {numero} 🛍️ Va en camino y te avisamos por aquí en cuanto llegue.',
+  msjAutoLlego: '¡Llegó tu pedido {numero}! 📦 Ya está apartado a tu nombre. Puedes retirarlo hasta el {vence}. Te falta pagar {saldo}.',
+  msjAutoApartado: 'Hola {cliente} 👋 Te recordamos que tu pedido {numero} sigue apartado y puedes retirarlo hasta mañana, {vence}. Te falta pagar {saldo}.',
   msjAutoCerrado: 'Hola 👋 Ahora estamos cerrados. {abre} y te respondemos en cuanto podamos.',
   msjAutoBienvenida: 'Hola {cliente} 👋 Gracias por escribirnos. En un momento te atendemos.',
   msjCobro: 'Hola {cliente} 👋, te saluda {negocio}. Te recordamos tu saldo pendiente de {saldo}. ¡Gracias por tu preferencia!',
@@ -153,7 +157,7 @@ const CONFIG_DEF = {
   tiendaOff: '', modTiendas: '',
   // Facturación SAR (autoimpresor): apagada por defecto
   sarActivo: 'no', sarRazon: '', sarRtn: '', sarDireccion: '', sarCai: '', sarEst: '000', sarPunto: '001', sarDesde: '', sarHasta: '', sarLimite: '',
-  seqL: '0', contabInventario: 'perpetuo', contabIsvCompras: 'si', contabCerrado: '', contabMapeo: '', contabConcil: '', seqV: '0', seqC: '0', seqP: '0', seqO: '0', seqF: '', sysLimpieza: '', sysChats: '', sysVer: ''
+  seqL: '0', contabInventario: 'perpetuo', contabIsvCompras: 'si', contabCerrado: '', contabMapeo: '', contabConcil: '', seqV: '0', seqC: '0', seqP: '0', seqO: '0', seqF: '', sysLimpieza: '', sysChats: '', sysApartados: '', sysVer: ''
 };
 // Ajustes que el administrador puede cambiar desde la app
 const CONFIG_EDITABLE = Object.keys(CONFIG_DEF).filter(k => k.indexOf('seq') !== 0 && k.indexOf('sys') !== 0 && k.indexOf('sar') !== 0);
@@ -392,6 +396,9 @@ function rutaUsuario_(a, u, d, req) {
     case 'editarRamo':      return lock_(() => editarRamo_(u, d));
     case 'eliminarPedido':  return lock_(() => eliminarPedido_(u, d));
     case 'anticipoPedido':  return lock_(() => anticipoPedido_(u, d));
+    case 'compraFactura':   return lock_(() => compraFactura_(u, d));
+    case 'compraLlego':     return lock_(() => compraLlego_(u, d));
+    case 'liberarApartado': return lock_(() => liberarApartado_(u, d));
     case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
     case 'cobroComprobante': return lock_(() => cobroComprobante_(u, d));
     case 'pedidoPago':      return lock_(() => pedidoPago_(u, d));
@@ -3759,7 +3766,7 @@ function venta_(u, d, interno) {
       saldoCliente: ya.clienteId ? (saldosClientes_()[ya.clienteId] || 0) : 0, sar: cfg.sarActivo === 'si' ? estadoSAR_() : null };
   }
   // Pedido en línea: debe estar pendiente; sus precios son los que vio el cliente
-  const preciosPedido = Object.create(null);
+  const preciosPedido = Object.create(null), costosPedido = Object.create(null);
   // Venta ligada a una cita/encargo: vale el precio acordado en la cita (lo puso quien la agendó)
   const agLig = d.agendaId ? rows_('Agenda').find(x => x.id === d.agendaId && x.estado === 'pendiente') : null;
   const precioLigado = p => !!agLig && (!agLig.productoId || agLig.productoId === p.id); // solo la línea de la cita
@@ -3770,6 +3777,12 @@ function venta_(u, d, interno) {
     if ((pe.ventaId || pe.estado === 'entregado') && !(ed && (!pe.ventaId || pe.ventaId === ed.de))) throw new Error('Este pedido ya se cobró');
     if (pe.estado === 'cancelado') throw new Error('Este pedido está cancelado');
     parseJ_(pe.items, []).forEach(x => { if (x && x.productoId) preciosPedido[x.productoId] = r2_(x.precio); });
+    // Compras en línea: lo apartado sale con el costo real de la factura; si todavía viene en camino no se puede entregar
+    const rb = reciboDe_(pe);
+    if (rb && !rb.liberado) {
+      if (!rb.llego && !ed) throw new Error('El pedido ' + pe.numero + ' todavía viene en camino: toca «Ya llegó» cuando lo tengas para entregarlo');
+      parseJ_(pe.items, []).forEach((x, k) => { if (esCompraLinea_(x) && rb.costos[k] !== null && rb.costos[k] !== undefined) costosPedido[txt_(x.nombre, 80)] = Number(rb.costos[k]) || 0; });
+    }
   }
   // Cuenta de una mesa (restaurante): debe seguir abierta; la venta queda a nombre del mesero que atendió la mesa
   const cta = d.cuentaId && !ed ? rows_('MesaCuentas').find(x => x.id === d.cuentaId) : null;
@@ -3803,7 +3816,7 @@ function venta_(u, d, interno) {
     if (!desc) throw new Error('Escribe la descripción del artículo');
     if (!p && !(i.costo === undefined || i.costo === '' || i.costo === null) && !(Number(i.costo) >= 0)) throw new Error('El costo de «' + desc + '» no es válido');
     const costoP = p ? (ed && ed.costos && ed.costos[p.id] !== undefined ? ed.costos[p.id] : p.costo) : 0; // al editar, lo ya vendido conserva su costo
-    return { p: p, vk: vk, productoId: p ? p.id : '', descripcion: vk && i.variante === undefined && p ? p.nombre + ' · ' + vk.split(', ').map(x => x.split(': ')[1]).join(' · ') : desc, cantidad: cant, precio: precio, costo: p ? costoP : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
+    return { p: p, vk: vk, productoId: p ? p.id : '', descripcion: vk && i.variante === undefined && p ? p.nombre + ' · ' + vk.split(', ').map(x => x.split(': ')[1]).join(' · ') : desc, cantidad: cant, precio: precio, costo: p ? costoP : costosPedido[desc] !== undefined ? r4_(costosPedido[desc]) : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
   });
   if (!items.length) throw new Error('El ticket está vacío');
   // Existencias
@@ -3962,7 +3975,8 @@ function anularVenta_(u, d) {
   noMuyViejo_(v, v.metodo === 'Efectivo' || (v.metodo === 'Crédito' && Number(v.recibido) > 0), 'Esta venta');
   moverStock_(salidoDe_(v), 'anulación', v.id, u, 'Anulación ' + v.numero);
   upsert_('Ventas', { id: v.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (v.nota ? v.nota + ' · ' : '') + 'Anulada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') + (d.motivo ? ': ' + txt_(d.motivo, 120) : '') });
-  if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
+  if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); const rl = pe ? reciboDe_(pe) : null; // liberado: no vuelve a apartado
+    if (pe) upsert_('Pedidos', rl && rl.liberado ? { id: pe.id, ventaId: '', actualizado: ahora_() } : { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
   try { susDeshacer_(rows_('Suscripciones').filter(x => x.ventaId === d.id), 'Venta anulada'); } catch (e) {}
   // La orden o cita que se cobró con esta venta vuelve a quedar por cobrar (con su anticipo)
   rows_('Ordenes').filter(o => o.ventaId === v.id).forEach(o => upsert_('Ordenes', { id: o.id, estado: 'listo', ventaId: '', actualizado: ahora_() }));
@@ -4014,7 +4028,8 @@ function editarVenta_(u, d) {
   const subs = (() => { try { return rows_('Suscripciones').filter(x => x.ventaId === v.id); } catch (e) { return []; } })();
   moverStock_(devuelto, 'anulación', v.id, u, 'Edición ' + v.numero + ' (antes)');
   upsert_('Ventas', { id: v.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (v.nota ? v.nota + ' · ' : '') + 'Editada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') + ': ' + motivo });
-  if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); if (pe) upsert_('Pedidos', { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
+  if (v.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === v.pedidoId && x.ventaId === v.id); const rl = pe ? reciboDe_(pe) : null; // liberado: no vuelve a apartado
+    if (pe) upsert_('Pedidos', rl && rl.liberado ? { id: pe.id, ventaId: '', actualizado: ahora_() } : { id: pe.id, estado: 'listo', ventaId: '', actualizado: ahora_() }); }
   // 3) La versión corregida
   ed.listo = true;
   const r = venta_(u, nd, { ed: ed });
@@ -4191,6 +4206,10 @@ function anularCompra_(u, d) {
   if (!c) throw new Error('La compra no existe');
   if (c.anulada) throw new Error('La compra ya está anulada');
   if (rows_('Pagos').some(p => !p.anulado && parseJ_(p.aplicado, []).some(x => x.id === c.id))) throw new Error('Esta compra tiene pagos. Anula primero los pagos al proveedor.');
+  // Factura de compras en línea: si ningún pedido se entregó ni se liberó, los pedidos vuelven a «por pedir» y se anula el gasto de envío
+  const pedF = rows_('Pedidos').filter(x => { const r = reciboDe_(x); return r && r.compraId === c.id; });
+  const usado = pedF.find(x => x.ventaId || reciboDe_(x).liberado);
+  if (usado) throw new Error('El pedido ' + usado.numero + ' de esta factura ya se ' + (reciboDe_(usado).liberado ? 'liberó' : 'entregó') + ': la compra ya no se puede anular.');
   const det = rows_('CompraDetalle').filter(x => x.compraId === c.id), pm = porId_(rows_('Productos')), cambios = {}, agr = {};
   det.forEach(i => {
     const x = agr[i.productoId] || (agr[i.productoId] = { cant: 0, valor: 0, precioAnt: null, precio: null });
@@ -4212,6 +4231,9 @@ function anularCompra_(u, d) {
     if (Object.keys(upd).length > 1) upsert_('Productos', upd);
   });
   moverStock_(cambios, 'anulación', c.id, u, 'Anulación ' + c.numero);
+  const gIds = {};
+  pedF.forEach(x => { const r = reciboDe_(x); if (r.gastoId) gIds[r.gastoId] = 1; upsert_('Pedidos', { id: x.id, recibo: '', estado: ['listo', 'confirmado'].indexOf(x.estado) >= 0 ? 'confirmado' : x.estado, actualizado: ahora_(), nota: ((x.nota ? x.nota + ' · ' : '') + 'Factura anulada (' + c.numero + ')').slice(-1000) }); });
+  rows_('Gastos').filter(g => gIds[g.id] && !g.anulado).forEach(g => upsert_('Gastos', { id: g.id, anulado: true, anulacion: marca_(), nota: (g.nota ? g.nota + ' · ' : '') + 'Anulado con la compra ' + c.numero }));
   upsert_('Compras', { id: c.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (c.nota ? c.nota + ' · ' : '') + 'Anulada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') });
   return { productos: rows_('Productos'), proveedores: proveedoresConSaldo_() };
 }
@@ -4349,12 +4371,13 @@ function pedidos_(u, d) {
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); l = l.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   const pagos = {}; rows_('Abonos').forEach(a => { if (a.ref && !a.anulado) pagos[a.ref] = r2_((pagos[a.ref] || 0) + (Number(a.monto) || 0)); });
   const enMesas = {}; if (modOn_('mesas')) { cuentasMesaActivas_().forEach(c => { if (c.pedidoId) enMesas[c.pedidoId] = c.id; }); rows_('Comandas').forEach(k => { if (k.pedidoId && !enMesas[k.pedidoId]) enMesas[k.pedidoId] = k.cuentaId; }); }
-  return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); if (enMesas[p.id]) p.cuentaId = enMesas[p.id]; return p; });
+  return desc_(l, 'fecha').map(p => { p.items = parseJ_(p.items, []); p.recibo = parseJ_(p.recibo, null); p.anticipoPagado = p.ventaId ? 0 : (pagos[p.id] || 0); if (enMesas[p.id]) p.cuentaId = enMesas[p.id]; return p; });
 }
 
 function pendientes_(u, d) {
   if (u.rol === 'bodega') return { nuevos: 0, mensajes: 0 };
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
+  if (config_().sysApartados !== hoy_()) { try { lock_(() => recordarApartados_()); } catch (e) {} }
   let n = rows_('Pedidos').filter(p => p.estado === 'nuevo' || p.estado === 'cotizar');
   const t = tiendaReq_(u, d); if (t) { const act = girosActivos_(), pm = porId_(rows_('Productos')); n = n.filter(p => girosPedido_(p, pm, act).indexOf(t) >= 0); }
   let sop = 0; try { if (MULTI_NEGOCIO && NEG) sop = mRows_('Soporte').filter(c => c.negocioId === NEG.id && Number(c.sinLeerCli) > 0).length; } catch (e) {}
@@ -4376,6 +4399,7 @@ function avisosDia_() {
   if (modOn_('ordenes')) a.ordAtras = rows_('Ordenes').filter(o => ['recibido', 'proceso'].indexOf(o.estado) >= 0 && o.promesa && o.promesa < h).length;
   if (modOn_('mascotas')) a.vacHoy = vetResumen_().hoy;
   if (modOn_('cotizaciones')) { const c = cotResumen_(); a.cotHoy = c.hoy; a.cotAtras = c.atrasados; }
+  if (girosActivos_().indexOf('compras') >= 0) a.apVenc = apartadosResumen_().vencidos;
   return a;
 }
 
@@ -4388,6 +4412,9 @@ function estadoPedido_(u, d) {
   // Floristería: un ramo sin precio solo se rechaza; con precio enviado, la tienda puede anotar que el cliente aceptó (WhatsApp o llamada)
   if (p.estado === 'cotizar' && d.estado !== 'cancelado') throw new Error('Primero ponle precio al ramo');
   if (p.estado === 'cotizado' && ['nuevo', 'cancelado'].indexOf(d.estado) < 0) throw new Error('Primero marca que el cliente aceptó el precio');
+  const rb = reciboDe_(p);
+  if (rb && d.estado === 'cancelado') throw new Error('Ya registraste la factura de este pedido. Si el cliente no lo quiere, cuando llegue toca «Liberar» para pasarlo a tu existencia.');
+  if (rb && !rb.llego && d.estado === 'listo') throw new Error('Toca «Ya llegó» cuando tengas el pedido: así queda apartado con su plazo.');
   const pagado = anticipoDe_(p.id);
   if (d.estado === 'cancelado' && pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de cancelar.');
   const upd = { id: p.id, estado: d.estado, actualizado: ahora_() };
@@ -4458,6 +4485,215 @@ function anticipoPedido_(u, d) {
   return g;
 }
 
+/* ===================== COMPRAS EN LÍNEA: FACTURA, LLEGADA Y APARTADOS (1.9.81) =====================
+ * 1) «Registrar factura»: una factura de Shein, Temu… puede traer artículos de varios pedidos. Se registra la compra (proveedor,
+ *    número y foto de la factura) y el envío o courier, como gasto aparte o sumado al costo de cada artículo. El pedido queda «En camino».
+ * 2) «Ya llegó»: queda apartado a nombre del cliente, con plazo para retirarlo (comprasPlazo días). Lo apartado NO es existencia
+ *    del catálogo: no sale en la tienda en línea ni en Vender.
+ * 3) Al entregar, la venta registra la salida con el costo real de la factura y cobra el segundo pago (el anticipo se descuenta solo).
+ * 4) «Liberar» (no lo reclamó o no lo pagó): pasa a existencia normal con el costo de la factura; el anticipo queda como ingreso o se devuelve.
+ * recibo (JSON en Pedidos): { compraId, gastoId, prov, factura, foto, fecha, envio, modo, costos: [costo unitario por línea; null = no es compra],
+ *   llego, vence, recordado, liberado: { fecha, motivo, anticipo, monto, ventaId, productos } }
+ */
+const esCompraLinea_ = i => !!i && i.tipo === 'compra';
+function reciboDe_(p) { const r = parseJ_(p && p.recibo, null); return r && r.compraId ? r : null; }
+function plazoApartado_(cfg) { return Math.max(1, Math.min(90, parseInt((cfg || config_()).comprasPlazo, 10) || 8)); }
+const MESES_TXT_ = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+function fechaTxt_(ymd) { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(ymd || '')); return m ? Number(m[3]) + ' de ' + MESES_TXT_[Number(m[2]) - 1] : ''; }
+// Lo que falta por pagar de un pedido (total − anticipo pagado)
+function saldoPedido_(p) { return r2_(Math.max(0, (Number(p.total) || 0) - anticipoDe_(p.id))); }
+
+function compraFactura_(u, d) {
+  req_(u, ['admin']);
+  const cfg = config_(), lista = Array.isArray(d.pedidos) ? d.pedidos : [];
+  if (!lista.length) throw new Error('Elige al menos un pedido');
+  if (lista.length > 30) throw new Error('Son demasiados pedidos para una sola factura');
+  const todos = rows_('Pedidos'), vistos = {};
+  const sel = lista.map(x => {
+    const p = todos.find(y => y.id === (x && x.id));
+    if (!p) throw new Error('Un pedido de la factura ya no existe');
+    if (vistos[p.id]) throw new Error('El pedido ' + p.numero + ' está dos veces'); vistos[p.id] = 1;
+    if (p.ventaId || ['nuevo', 'confirmado', 'listo'].indexOf(p.estado) < 0) throw new Error('El pedido ' + p.numero + ' ya está ' + p.estado);
+    if (reciboDe_(p)) throw new Error('El pedido ' + p.numero + ' ya tiene su factura registrada');
+    const items = parseJ_(p.items, []);
+    if (!items.some(esCompraLinea_)) throw new Error('El pedido ' + p.numero + ' no trae compras en línea');
+    const cs = Array.isArray(x.costos) ? x.costos : [];
+    if (cs.length !== items.length) throw new Error('El pedido ' + p.numero + ' cambió mientras registrabas la factura. Ábrela de nuevo.');
+    const costos = items.map((i, k) => {
+      if (!esCompraLinea_(i)) return null;
+      if (!esNum_(cs[k]) || Number(cs[k]) < 0) throw new Error('Escribe el costo de «' + i.nombre + '» (' + p.numero + ')');
+      return r4_(cs[k]);
+    });
+    return { p: p, items: items, costos: costos };
+  });
+  if (!(d.envio === undefined || d.envio === '' || d.envio === null) && !esNum_(d.envio)) throw new Error('El envío no es válido');
+  const envio = esNum_(d.envio) ? r2_(d.envio) : 0;
+  if (envio < 0) throw new Error('El envío no puede ser negativo');
+  const modo = d.modo === 'costo' ? 'costo' : 'gasto';
+  const metodo = METODOS.indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
+  const provN = txt_(d.proveedor, 60) || String(cfg.comprasTiendas || '').split(',')[0].trim() || 'Compras en línea';
+  const fecha = /^\d{4}-\d{2}-\d{2}$/.test(String(d.fecha || '')) && d.fecha <= hoy_() ? (d.fecha === hoy_() ? ahora_() : d.fecha + 'T12:00') : ahora_();
+  if (mesCerrado_(fecha)) throw new Error('Ese mes ya está cerrado en Contabilidad: registra la factura con fecha del mes abierto.');
+  const lineas = [];
+  sel.forEach(s => s.items.forEach((i, k) => { if (s.costos[k] !== null) lineas.push({ s: s, k: k, i: i, cant: r3_(Number(i.cantidad) || 0) }); }));
+  // Envío sumado al costo: se reparte según el valor de cada artículo (por unidades si todo vale cero)
+  if (modo === 'costo' && envio > 0) {
+    const valor = lineas.reduce((a, l) => a + l.cant * l.s.costos[l.k], 0), uds = lineas.reduce((a, l) => a + l.cant, 0);
+    lineas.forEach(l => { if (!(l.cant > 0)) return; const parte = valor > 0 ? envio * l.cant * l.s.costos[l.k] / valor : envio * l.cant / uds; l.s.costos[l.k] = r4_(l.s.costos[l.k] + parte / l.cant); });
+  }
+  const total = r2_(lineas.reduce((a, l) => a + r2_(l.cant * l.s.costos[l.k]), 0));
+  if (!(total > 0)) throw new Error('Escribe el costo de los artículos de la factura');
+  // Proveedor (Shein, Temu…): si no existe se crea
+  let prov = rows_('Proveedores').find(x => String(x.nombre).trim().toLowerCase() === provN.toLowerCase());
+  if (!prov) prov = upsert_('Proveedores', { nombre: provN, telefono: '', contacto: '', rtn: '', direccion: '', notas: 'Compras en línea', activo: true, creado: ahora_() });
+  const nums = sel.map(s => s.p.numero).join(', ');
+  const act = girosActivos_(), tienda = act.length > 1 ? (tiendaReq_(u, d) || (act.indexOf('compras') >= 0 ? 'compras' : act[0])) : '';
+  const c = { id: newId_('Compras'), numero: siguiente_('C'), fecha: fecha, proveedorId: prov.id, factura: txt_(d.factura, 40), total: total, saldo: metodo === 'Crédito' ? total : 0,
+    metodo: metodo, usuarioId: u.id, anulada: false, nota: txt_('Compras en línea · ' + nums + (modo === 'costo' && envio > 0 ? ' · incluye envío ' + money_(envio, cfg) : ''), 200) };
+  if (tienda) c.sucursal = tienda;
+  appendRows_('Compras', [c]);
+  appendRows_('CompraDetalle', lineas.map((l, n) => ({ id: newId_('CompraDetalle') + n, compraId: c.id, productoId: '', descripcion: txt_(l.s.p.numero + ' · ' + l.i.nombre, 120),
+    cantidad: l.cant, costo: l.s.costos[l.k], total: r2_(l.cant * l.s.costos[l.k]), precioAnt: '', precio: '' })));
+  // Envío o courier como gasto aparte (sale de la caja si se pagó en efectivo)
+  let gasto = null;
+  if (modo === 'gasto' && envio > 0) {
+    const mg = ['Efectivo', 'Tarjeta', 'Transferencia'].indexOf(d.metodoEnvio) >= 0 ? d.metodoEnvio : metodo === 'Crédito' ? 'Efectivo' : metodo;
+    gasto = { id: newId_('Gastos'), fechaGasto: fecha.slice(0, 10), categoria: 'Envíos de compras en línea', detalle: txt_('Envío ' + provN + (c.factura ? ' · Fact. ' + c.factura : ''), 120), proveedor: provN, monto: envio,
+      metodo: mg, usuarioId: u.id, nota: txt_('Compra ' + c.numero + ' · ' + nums, 120), anulado: false, creado: ahora_() };
+    if (tienda) gasto.sucursal = tienda;
+    appendRows_('Gastos', [gasto]);
+  }
+  const llego = !!d.llego, vence = llego ? diasAtras_(-plazoApartado_(cfg)) : '', foto = txt_(d.foto, 300);
+  const out = sel.map(s => {
+    const r = { compraId: c.id, gastoId: gasto ? gasto.id : '', prov: provN, factura: c.factura, foto: foto, fecha: fecha, envio: envio, modo: modo, costos: s.costos, llego: llego ? ahora_() : '', vence: vence };
+    const g = upsert_('Pedidos', { id: s.p.id, recibo: JSON.stringify(r), estado: llego ? 'listo' : 'confirmado', actualizado: ahora_(),
+      nota: ((s.p.nota ? s.p.nota + ' · ' : '') + 'Factura ' + provN + (c.factura ? ' ' + c.factura : '') + ' registrada (' + c.numero + ')' + (llego ? ' · ya llegó' : ' · en camino')).slice(-1000) });
+    g.avisado = autoPedido_(g, llego ? 'llego' : 'camino', { vence: vence, saldo: saldoPedido_(g) });
+    g.items = parseJ_(g.items, []); g.recibo = r; g.anticipoPagado = anticipoDe_(g.id);
+    return g;
+  });
+  return { compra: c, gasto: gasto, pedidos: out, proveedores: proveedoresConSaldo_() };
+}
+
+// Llegó la mercadería: queda apartada para el cliente con su plazo para retirarla
+function compraLlego_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  const ids = (Array.isArray(d.ids) ? d.ids : [d.id]).slice(0, 30), cfg = config_(), vence = diasAtras_(-plazoApartado_(cfg)), todos = rows_('Pedidos');
+  const sel = ids.map(id => {
+    const p = todos.find(x => x.id === id);
+    if (!p) throw new Error('El pedido ya no existe');
+    const r = reciboDe_(p);
+    if (!r) throw new Error('Primero registra la factura del pedido ' + p.numero);
+    if (r.llego) throw new Error('El pedido ' + p.numero + ' ya está marcado como llegado');
+    if (p.ventaId || ['nuevo', 'confirmado', 'listo'].indexOf(p.estado) < 0) throw new Error('El pedido ' + p.numero + ' ya está ' + p.estado);
+    return { p: p, r: r };
+  });
+  return sel.map(s => {
+    s.r.llego = ahora_(); s.r.vence = vence;
+    const g = upsert_('Pedidos', { id: s.p.id, recibo: JSON.stringify(s.r), estado: 'listo', actualizado: ahora_(),
+      nota: ((s.p.nota ? s.p.nota + ' · ' : '') + 'Llegó ' + ahora_().slice(5, 16).replace('T', ' ') + ' · apartado hasta el ' + fechaTxt_(vence)).slice(-1000) });
+    g.avisado = autoPedido_(g, 'llego', { vence: vence, saldo: saldoPedido_(g) });
+    g.items = parseJ_(g.items, []); g.recibo = s.r; g.anticipoPagado = anticipoDe_(g.id);
+    return g;
+  });
+}
+
+// No lo reclamó o no lo pagó: la mercadería pasa a existencia normal y el anticipo queda como ingreso o se devuelve
+function liberarApartado_(u, d) {
+  req_(u, ['admin']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  if (!p) throw new Error('El pedido no existe');
+  const r = reciboDe_(p);
+  if (!r) throw new Error('Este pedido no tiene factura registrada');
+  if (r.liberado) throw new Error('Este pedido ya se liberó');
+  if (!r.llego) throw new Error('El pedido todavía está en camino: libéralo cuando llegue');
+  if (p.ventaId || p.estado !== 'listo') throw new Error('Este pedido ya está ' + p.estado);
+  const motivo = d.motivo === 'noPago' ? 'noPago' : 'noReclamo', txtMot = motivo === 'noPago' ? 'no lo pagó' : 'no lo reclamó';
+  const items = parseJ_(p.items, []), pr = Array.isArray(d.productos) ? d.productos : [];
+  const pagado = anticipoDe_(p.id), anticipo = pagado > 0 ? (d.anticipo === 'devolver' ? 'devolver' : 'ingreso') : '';
+  const abonos = rows_('Abonos').filter(a => a.ref === p.id && !a.anulado);
+  if (anticipo === 'devolver') abonos.forEach(a => noMuyViejo_(a, a.metodo === 'Efectivo', 'El anticipo de este pedido'));
+  // Todo se valida antes de escribir
+  const porNombre = {}, codigos = {};
+  rows_('Productos').forEach(x => { porNombre[String(x.nombre).trim().toLowerCase()] = x; if (x.codigo) codigos[String(x.codigo).toLowerCase()] = x; });
+  const lineas = [];
+  items.forEach((i, k) => {
+    if (!esCompraLinea_(i) || r.costos[k] === null || r.costos[k] === undefined || !(Number(i.cantidad) > 0)) return;
+    const x = pr[k] || {}, base = String(i.nombre || '').replace(/^Compra en línea\s*/i, '').replace(/^\((.*)\)$/, '$1');
+    const nombre = txt_(x.nombre, 80) || txt_(base, 80) || 'Artículo ' + p.numero;
+    if (!(x.precio === undefined || x.precio === '' || x.precio === null) && !esNum_(x.precio)) throw new Error('Precio no válido en «' + nombre + '»');
+    const precio = esNum_(x.precio) ? r2_(x.precio) : r2_(i.precio);
+    if (!(precio >= 0)) throw new Error('Precio no válido en «' + nombre + '»');
+    const ya = porNombre[nombre.toLowerCase()];
+    if (ya && ya.tipo !== 'producto') throw new Error('«' + ya.nombre + '» ya existe y no controla existencias. Ponle otro nombre.');
+    if (ya && varsDe_(ya)) throw new Error('«' + ya.nombre + '» ya existe con tallas o tonos. Ponle otro nombre.');
+    lineas.push({ nombre: nombre, precio: precio, cant: r3_(i.cantidad), costo: Number(r.costos[k]) || 0 });
+  });
+  if (!lineas.length) throw new Error('Este pedido no tiene artículos para liberar');
+  // Mercadería → existencia normal con el costo de la factura (si ya hay un producto con ese nombre, se suma a él)
+  const act = girosActivos_(), giro = act.indexOf('compras') > 0 ? 'compras' : '', agr = {}, nuevos = [];
+  lineas.forEach(l => {
+    let x = porNombre[l.nombre.toLowerCase()];
+    if (!x) {
+      const codigo = codigoAuto_(giro || act[0], codigos);
+      x = upsert_('Productos', { codigo: codigo, nombre: l.nombre, categoria: 'Compras en línea', tipo: 'producto', unidad: 'unidad', precio: l.precio, costo: 0, margen: 0, stock: 0, stockMin: 0,
+        tasaIsv: '', icono: '', foto: '', fotoFecha: '', descripcion: '', tienda: !!d.tienda, activo: true, creado: ahora_(), giro: giro });
+      codigos[String(codigo).toLowerCase()] = x; porNombre[l.nombre.toLowerCase()] = x; nuevos.push(x.id);
+    }
+    const a = agr[x.id] || (agr[x.id] = { p: x, cant: 0, valor: 0, precio: l.precio });
+    a.cant = r3_(a.cant + l.cant); a.valor += l.cant * l.costo;
+  });
+  const cambios = {}, costos = {};
+  Object.keys(agr).forEach(id => {
+    const a = agr[id], st = Math.max(0, Number(a.p.stock) || 0), unit = a.cant > 0 ? a.valor / a.cant : 0;
+    const upd = { id: id, costo: r4_(st + a.cant > 0 ? (st * (Number(a.p.costo) || 0) + a.valor) / (st + a.cant) : unit) };
+    if (d.tienda) upd.tienda = true;
+    if (nuevos.indexOf(id) < 0 && !(Number(a.p.precio) > 0) && a.precio > 0) upd.precio = a.precio;
+    upsert_('Productos', upd);
+    cambios[id] = a.cant; costos[id] = r4_(unit);
+  });
+  moverStock_(cambios, 'apartado', p.id, u, 'Liberado ' + p.numero + ' · ' + txtMot, ahora_(), costos);
+  // Anticipo: como ingreso (una venta por el anticipo retenido) o se devuelve (se anulan los anticipos)
+  let venta = null;
+  if (anticipo === 'ingreso') {
+    const cfg = config_(), t = Number(cfg.isv) || 0; // con precios sin ISV, el precio se calcula para que el total sea justo el anticipo
+    const precioA = cfg.preciosConISV !== 'no' || !t ? pagado : Math.ceil(pagado / (1 + t) * 100) / 100;
+    venta = venta_(u, { pedidoId: p.id, clienteId: p.clienteId || '', metodo: 'Efectivo',
+      items: [{ descripcion: 'Anticipo retenido · ' + p.numero + ' (' + txtMot + ')', cantidad: 1, precio: precioA, costo: 0 }], nota: 'Anticipo del pedido ' + p.numero + ' que ' + txtMot }).venta;
+  } else if (anticipo === 'devolver') abonos.forEach(a => anularAbono_(u, { id: a.id }));
+  r.liberado = { fecha: ahora_(), motivo: motivo, anticipo: anticipo, monto: pagado, ventaId: venta ? venta.id : '', productos: Object.keys(agr) };
+  const nota = 'Liberado: ' + txtMot + (anticipo === 'ingreso' ? ' · anticipo ' + money_(pagado, config_()) + ' como ingreso (' + venta.numero + ')' : anticipo === 'devolver' ? ' · anticipo ' + money_(pagado, config_()) + ' devuelto' : '') + ' · ' + lineas.length + (lineas.length === 1 ? ' artículo pasó' : ' artículos pasaron') + ' a existencia';
+  const g = upsert_('Pedidos', { id: p.id, recibo: JSON.stringify(r), estado: 'cancelado', actualizado: ahora_(), nota: ((p.nota ? p.nota + ' · ' : '') + nota).slice(-1000) });
+  g.items = parseJ_(g.items, []); g.recibo = r; g.anticipoPagado = 0;
+  return { pedido: g, productos: rows_('Productos'), nuevos: nuevos, venta: venta };
+}
+
+// Una vez al día: recordatorio en el chat de la tienda a quien tiene un apartado que vence mañana
+function recordarApartados_() {
+  const cfg = config_(); if (cfg.sysApartados === hoy_()) return 0;
+  guardarConfig_({ sysApartados: hoy_() });
+  const man = diasAtras_(-1); let n = 0;
+  rows_('Pedidos').forEach(p => {
+    if (p.estado !== 'listo' || p.ventaId) return;
+    const r = reciboDe_(p); if (!r || !r.llego || r.liberado || r.recordado || r.vence !== man) return;
+    if (autoPedido_(p, 'apartado', { vence: r.vence, saldo: saldoPedido_(p) })) { r.recordado = ahora_(); upsert_('Pedidos', { id: p.id, recibo: JSON.stringify(r) }); n++; }
+  });
+  return n;
+}
+// Resumen para Inicio y avisos del teléfono
+function apartadosResumen_() {
+  const h = hoy_(), o = { camino: 0, apartados: 0, vencidos: 0, valor: 0 };
+  rows_('Pedidos').forEach(p => {
+    if (p.ventaId || ['nuevo', 'confirmado', 'listo'].indexOf(p.estado) < 0) return;
+    const r = reciboDe_(p); if (!r || r.liberado) return;
+    if (!r.llego) { o.camino++; return; }
+    o.apartados++; if (r.vence && r.vence < h) o.vencidos++;
+    parseJ_(p.items, []).forEach((i, k) => { if (r.costos[k] !== null && r.costos[k] !== undefined) o.valor += (Number(i.cantidad) || 0) * (Number(r.costos[k]) || 0); });
+  });
+  o.valor = r2_(o.valor);
+  return o;
+}
+
 // Precio por cantidad en un pedido ya hecho: al cambiar lo que lleva, pasa del precio normal al especial o regresa.
 // No toca el precio propio de una opción ni un precio distinto al de hoy (el que se acordó al pedir).
 function repreciarPedido_(items, pm) {
@@ -4479,6 +4715,7 @@ function editarPedido_(u, d) {
   const p = rows_('Pedidos').find(x => x.id === d.id);
   if (!p) throw new Error('El pedido no existe');
   if (p.ventaId || ['nuevo','confirmado','listo'].indexOf(p.estado) < 0) throw new Error('Este pedido ya está ' + (p.estado === 'entregado' ? 'cobrado' : p.estado) + ' y no se puede editar');
+  if (reciboDe_(p)) throw new Error('Ya registraste la factura de este pedido: no se puede cambiar lo que lleva. Si algo no llegó, anula la compra y vuelve a registrarla.');
   const antes = parseJ_(p.items, []), cambios = Array.isArray(d.cantidades) ? d.cantidades : [];
   if (cambios.length !== antes.length) throw new Error('El pedido cambió mientras lo editabas. Ábrelo de nuevo.');
   const cfg = config_(), pm = porId_(rows_('Productos')), sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
@@ -4640,6 +4877,7 @@ function inicio_(u, d) {
     if (modOn_('mascotas') && u.rol !== 'bodega') out.vet = vetResumen_();
     if (modOn_('cotizaciones') && u.rol !== 'bodega') out.cot = cotResumen_();
     if (modOn_('mesas') && (u.rol === 'admin' || u.rol === 'cajero')) out.mesas = mesasResumen_();
+    if (girosActivos_().indexOf('compras') >= 0 && (u.rol === 'admin' || u.rol === 'cajero')) out.apartados = apartadosResumen_();
   } catch (e) {}
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && deT(v, 'Ventas'));
@@ -5545,8 +5783,9 @@ function eliminarPedido_(u, d) {
   req_(u, ['admin']);
   const p = rows_('Pedidos').find(x => x.id === d.id);
   if (!p) throw new Error('Este pedido ya no existe');
-  const pagado = anticipoDe_(p.id);
+  const pagado = anticipoDe_(p.id), rb = reciboDe_(p);
   if (pagado > 0) throw new Error('Este pedido tiene un anticipo pagado de ' + money_(pagado, config_()) + '. Devuélvelo y anúlalo (en la cuenta del cliente) antes de eliminarlo.');
+  if (rb && !rb.liberado && !p.ventaId) throw new Error('Este pedido tiene su factura registrada. Entrégalo o libéralo; o anula primero la compra.');
   if (p.comprobante) borrarFoto_(p.comprobante);
   (parseJ_(p.cotiza, {}).fotos || []).forEach(borrarFoto_);
   parseJ_(p.items, []).forEach(i => { if (i.foto) borrarFoto_(i.foto); });
@@ -5882,7 +6121,8 @@ function chatBorrar_(u, d) {
  */
 const AUTO_ID = 'auto';
 const AUTO_TIPOS = { recibido: ['autoRecibido', 'msjAutoRecibido'], cotizado: ['autoCotizado', 'msjAutoCotizado'], confirmado: ['autoConfirmado', 'msjAutoConfirmado'],
-  listo: ['autoListo', 'msjAutoListo'], pagoOk: ['autoPago', 'msjAutoPagoOk'], pagoNo: ['autoPago', 'msjAutoPagoNo'], cancelado: ['autoCancelado', 'msjAutoCancelado'] };
+  listo: ['autoListo', 'msjAutoListo'], pagoOk: ['autoPago', 'msjAutoPagoOk'], pagoNo: ['autoPago', 'msjAutoPagoNo'], cancelado: ['autoCancelado', 'msjAutoCancelado'],
+  camino: ['autoCamino', 'msjAutoCamino'], llego: ['autoLlego', 'msjAutoLlego'], apartado: ['autoApartado', 'msjAutoApartado'] };
 function plantilla_(t, o) { return String(t || '').replace(/\{(\w+)\}/g, (m, k) => o[k] !== undefined ? o[k] : m); }
 function autoTexto_(t) { return String(t || '').replace(/[⟦⟧]/g, '').replace(/\s+([.,!?])/g, '$1').replace(/ {2,}/g, ' ').trim().slice(0, 600); }
 // Escribe un mensaje del negocio (automático) en una conversación y la pone de primera en la lista
@@ -5913,7 +6153,8 @@ function autoPedido_(p, tipo, extra) {
     const c = chatDePedido_(p); if (!c) return false;
     const listoTxt = p.entrega === 'domicilio' ? 'Va en camino 🛵' : 'Puedes pasar a recogerlo.';
     const o = { cliente: String(p.nombre || '').split(' ')[0], numero: p.numero, total: money_(p.total, cfg), negocio: cfg.nombre || '', entrega: listoTxt,
-      motivo: extra && extra.motivo ? ' Motivo: ' + txt_(extra.motivo, 120) + '.' : '' };
+      motivo: extra && extra.motivo ? ' Motivo: ' + txt_(extra.motivo, 120) + '.' : '',
+      vence: extra && extra.vence ? fechaTxt_(extra.vence) : '', saldo: money_(extra && extra.saldo !== undefined ? extra.saldo : p.total, cfg) };
     return !!autoMensaje_(c, plantilla_(cfg[t[1]] || CONFIG_DEF[t[1]], o));
   } catch (e) { return false; }
 }

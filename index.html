@@ -260,6 +260,20 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .ord-h{display:flex;align-items:center;gap:10px}
 .ord-h .tx{flex:1;min-width:0}.ord-h b{font-weight:600}.ord-h small{display:block;color:var(--mut);font-size:12.5px}
 .ord-cw{display:flex;align-items:center;gap:9px;margin-top:9px;flex-wrap:wrap}
+/* Compras en línea: factura, en camino, apartados (1.9.81) */
+.seg-c{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px;font-size:12.5px;color:var(--mut)}.seg-c .badge{display:inline-flex;align-items:center;gap:4px}.seg-c.venc small{color:var(--bad);font-weight:600}
+.rf-foto,.rc-f{display:flex;align-items:center;gap:12px;margin:8px 0;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--pri) 6%,transparent)}.rf-foto img,.rc-f img{width:52px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;flex:none;box-shadow:0 0 0 1px var(--line)}
+.rf-foto .ph,.rc-f .ph{width:52px;height:52px;border-radius:10px;border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);flex:none}.rf-foto .tx,.rc-f .tx{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13.5px}.rf-foto small,.rc-f small{color:var(--mut);font-size:12px}
+.rf-p{border:1.5px solid var(--line);border-radius:14px;padding:4px 12px;margin:8px 0}.rf-p.on{border-color:color-mix(in srgb,var(--pri) 55%,transparent);background:color-mix(in srgb,var(--pri) 4%,transparent)}
+.rf-ph{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer}.rf-ph input{width:20px;height:20px;accent-color:var(--pri);flex:none}.rf-ph .tx{display:flex;flex-direction:column;font-size:14px}.rf-ph small{color:var(--mut);font-size:12px}
+.rf-l{display:grid;grid-template-columns:1fr 104px;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}.rf-l .tx{display:flex;flex-direction:column;min-width:0;font-size:13.5px}.rf-l small{color:var(--mut);font-size:12px;word-break:break-all}
+.rf-u{display:flex;align-items:center;gap:4px;border:1.5px solid var(--line);border-radius:10px;padding:0 8px;background:var(--card)}.rf-u span{font-size:12px;color:var(--mut)}.rf-u input{border:0;background:none;width:100%;padding:8px 0;font:inherit;color:inherit;outline:none;text-align:right}
+.rf-lv{grid-column:2;text-align:right;font-size:11.5px;color:var(--mut)}
+.rf-r{background:color-mix(in srgb,var(--pri) 7%,var(--card));border-radius:14px;padding:10px 14px;font-size:13.5px;margin-top:12px;display:flex;flex-direction:column;gap:4px}.rf-r div{line-height:1.5}.rf-r div>svg{vertical-align:-3px;margin-right:5px}.rf-r .ok-t{color:var(--ok)}.rf-r .mut{color:var(--mut)}
+.la-op{display:flex;flex-direction:column;gap:6px}.la-o{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1.5px solid var(--line);border-radius:12px;padding:9px 12px;background:var(--card);color:inherit;font:inherit;cursor:pointer}.la-o i{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex:none}
+.la-o.on{border-color:var(--pri)}.la-o.on i{border:5px solid var(--pri)}.la-o span{display:flex;flex-direction:column;font-size:14px}.la-o small{color:var(--mut);font-size:12px}
+.la-p{border-top:1px dashed var(--line);padding-top:6px;margin-top:6px}
+.rc-box{margin-top:12px;padding-top:4px;border-top:1px solid var(--line)}
 .ord-cw .placa{display:inline-flex;align-items:center;border:1.5px solid var(--ink);border-radius:6px;background:var(--card);padding:3px 8px;font:700 12.5px/1 var(--font);letter-spacing:.06em}
 .ord-cw .crono{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;font-size:12.5px;color:var(--mut)}
 .ord-cw .crono.tarde{color:var(--warn)}
@@ -1674,7 +1688,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.80';
+const APP_VER = '1.9.81';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2825,6 +2839,7 @@ function avisosDelDia(a) {
   if (a.cotHoy) una('cot:hoy', a.cotHoy === 1 ? 'Hoy toca cobrar 1 pago de proyecto' : 'Hoy tocan ' + a.cotHoy + ' pagos de proyectos', 'Ábrelos en Proyectos.', 'proyectos');
   if (a.cotAtras) una('cot:atras', a.cotAtras === 1 ? '1 pago de proyecto atrasado' : a.cotAtras + ' pagos de proyectos atrasados', 'Recuérdalos por WhatsApp desde el proyecto.', 'proyectos');
   if (a.vacHoy) una('vacunas:hoy', a.vacHoy === 1 ? 'Hoy toca vacunar a 1 mascota' : 'Hoy toca vacunar a ' + a.vacHoy + ' mascotas', 'Mándales el recordatorio desde Vacunas.', 'vacunas');
+  if (a.apVenc) una('apartados:venc', a.apVenc === 1 ? '1 apartado vencido sin retirar' : a.apVenc + ' apartados vencidos sin retirar', 'Recuérdale al cliente o libéralo a tu existencia.', 'pedidos');
   if (a.ordAtras) una('ordenes:atras', a.ordAtras === 1 ? '1 orden de trabajo atrasada' : a.ordAtras + ' órdenes de trabajo atrasadas', 'Pasó la fecha de entrega prometida.', 'ordenes');
 }
 ACC.avisosActivar = async el => { if (await activarAvisos()) { toast('Avisos activados', 'ok'); render(); } };
@@ -4371,6 +4386,9 @@ R.inicio = () => {
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
+    if (d.apartados && S.plus && (d.apartados.camino || d.apartados.apartados)) { const ap = d.apartados; // compras en línea: en camino y apartados para clientes
+      tiles += tile(ap.vencidos ? 't-rojo' : 't-azul', 'bag', 'Compras en línea', ap.apartados ? (ap.apartados === 1 ? '1 apartado' : ap.apartados + ' apartados') : (ap.camino === 1 ? '1 en camino' : ap.camino + ' en camino'),
+        ap.vencidos ? (ap.vencidos === 1 ? '1 vencido sin retirar' : ap.vencidos + ' vencidos sin retirar') : ap.apartados && ap.camino ? ap.camino + ' más en camino' : ap.apartados ? 'Esperan que los retiren' : 'Compradas a la tienda', ['ir', 'pedidos', { pest: ap.apartados ? 'apartado' : 'camino' }]); }
     if (d.ordenes && modOn('ordenes') && !vetT && cwOrd()) { const dentro = d.ordenes.recibido + d.ordenes.proceso + d.ordenes.listo;
       tiles += tile('t-azul', 'wrench', 'En el patio', dentro + (dentro === 1 ? ' vehículo' : ' vehículos'), d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' listo para entregar' : ' listos para entregar') : d.ordenes.proceso + ' en lavado · ' + d.ordenes.recibido + ' en espera', ['ir', 'ordenes']); }
     else if (d.ordenes && modOn('ordenes') && !vetT) tiles += tile('t-azul', 'wrench', 'Órdenes de trabajo', d.ordenes.listo ? d.ordenes.listo + (d.ordenes.listo === 1 ? ' lista' : ' listas') : (d.ordenes.recibido + d.ordenes.proceso) + ' abiertas', d.ordenes.atrasadas ? d.ordenes.atrasadas + ' atrasadas' : d.ordenes.proceso + ' en proceso · ' + d.ordenes.recibido + ' recibidas', ['ir', 'ordenes']);
@@ -5147,13 +5165,16 @@ R.pedidos = async () => {
   try { lp = await api('pedidos', {}, !!S.pedidosL); } catch (e) { if (S.pedidosL && m.querySelector('.ords')) return err(e); throw e; }
   if (S.vista !== 'pedidos' || (S.tienda || '') !== t0) return;
   S.pedidosL = lp;
-  const l = S.pedidosL, cnt = k => l.filter(p => p.estado === k).length;
+  const l = S.pedidosL, cnt = k => k === 'camino' || k === 'apartado' ? l.filter(p => (segCompra(p) || {}).k === k).length : l.filter(p => p.estado === k).length;
+  if (S.params && S.params.pest) { S.f.pest = S.params.pest; S.f.pestAuto = 0; S.params.pest = ''; } // desde Inicio
+  const conCompra = girosOn().includes('compras') || l.some(esCompraP);
   S.pedidosNuevos = cnt('nuevo') + cnt('cotizar'); pintarNav();
   if (!S.f.pest || (S.f.pestAuto && !cnt(S.f.pest))) { S.f.pest = ['cotizar', 'cotizado', 'nuevo', 'confirmado', 'listo'].find(k => cnt(k)) || 'nuevo'; S.f.pestAuto = 1; }
   const conRamo = girosOn().includes('floristeria') || girosOn().includes('manualidades') || cnt('cotizar') || cnt('cotizado');
-  const vis = l.filter(p => p.estado === S.f.pest);
-  m.innerHTML = tienda + `<div class="chips" style="margin:12px 0">${Object.keys(EST_P).filter(k => conRamo || !EST_P[k].ramo).map(k => `<button class="chip ${S.f.pest === k ? 'on' : ''}" data-a="pest" data-k="${k}">${EST_P[k].t}${['cotizar', 'cotizado', 'nuevo', 'confirmado', 'listo'].includes(k) ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
-    <div class="ords">${vis.map(cardPedido).join('') || `<div class="empty">${S.f.pest === 'cotizado' ? 'No hay ramos esperando respuesta del cliente' : S.f.pest === 'nuevo' ? 'No hay pedidos nuevos. Comparte el enlace de tu tienda para recibir más 🛍️' : 'No hay pedidos aquí'}</div>`}</div>`;
+  const vis = S.f.pest === 'camino' || S.f.pest === 'apartado' ? l.filter(p => (segCompra(p) || {}).k === S.f.pest) : l.filter(p => p.estado === S.f.pest);
+  const PEST = Object.assign({}, EST_P); if (conCompra) { delete PEST.entregado; delete PEST.cancelado; Object.assign(PEST, { camino: { t: 'En camino' }, apartado: { t: 'Apartados' }, entregado: EST_P.entregado, cancelado: EST_P.cancelado }); }
+  m.innerHTML = tienda + `<div class="chips" style="margin:12px 0">${Object.keys(PEST).filter(k => conRamo || !PEST[k].ramo).map(k => `<button class="chip ${S.f.pest === k ? 'on' : ''}" data-a="pest" data-k="${k}">${PEST[k].t}${['cotizar', 'cotizado', 'nuevo', 'confirmado', 'listo', 'camino', 'apartado'].includes(k) ? ` <span class="c">${cnt(k)}</span>` : ''}</button>`).join('')}</div>
+    <div class="ords">${vis.map(cardPedido).join('') || `<div class="empty">${S.f.pest === 'cotizado' ? 'No hay ramos esperando respuesta del cliente' : S.f.pest === 'nuevo' ? 'No hay pedidos nuevos. Comparte el enlace de tu tienda para recibir más 🛍️' : S.f.pest === 'camino' ? 'No hay compras en camino. Al registrar la factura de un pedido aparece aquí.' : S.f.pest === 'apartado' ? 'No hay apartados. Cuando llegue un pedido toca «Ya llegó» y queda aquí hasta que lo entregues.' : 'No hay pedidos aquí'}</div>`}</div>`;
   clearTimeout(S.tPed);
   S.tPed = setTimeout(() => { if (S.vista === 'pedidos' && !PILA.length && !document.hidden) R.pedidos(); }, 30000);
 };
@@ -5161,17 +5182,19 @@ R.pedidos = async () => {
 const enlaceSeguro = t => { t = String(t || '').trim(); return /^https?:\/\//i.test(t) ? t : 'https://www.google.com/search?q=' + encodeURIComponent(t); };
 function cardPedido(p) {
   const e = EST_P[p.estado] || EST_P.nuevo;
-  const accion = p.cuentaId && ['confirmado', 'listo'].includes(p.estado) ? ['Ver en Mesas', 'mesas'] : { cotizar: ['Poner precio', 'cotizar'], cotizado: ['Cambiar precio', 'cotizar'], nuevo: [modOn('mesas') ? 'Confirmar y mandar a cocina' : 'Confirmar', 'confirmado'], confirmado: ['Marcar listo', 'listo'], listo: ['Entregar y cobrar', 'cobrar'] }[p.estado];
+  let accion = p.cuentaId && ['confirmado', 'listo'].includes(p.estado) ? ['Ver en Mesas', 'mesas'] : { cotizar: ['Poner precio', 'cotizar'], cotizado: ['Cambiar precio', 'cotizar'], nuevo: [modOn('mesas') ? 'Confirmar y mandar a cocina' : 'Confirmar', 'confirmado'], confirmado: ['Marcar listo', 'listo'], listo: ['Entregar y cobrar', 'cobrar'] }[p.estado];
+  const sg = segCompra(p); // compras en línea: registrar factura → ya llegó → entregar
+  if (sg && !p.cuentaId) { if (sg.k === 'pedir' && puede('admin')) accion = ['Registrar factura', 'factura']; else if (sg.k === 'camino') accion = ['Ya llegó', 'llego']; }
   const ramoP = ['cotizar', 'cotizado'].includes(p.estado), fotosR = ((parseJ(p.cotiza, {}) || {}).fotos || []).concat(p.items.filter(i => i.foto).map(i => i.foto)), monto = i => ramoP && i.tipo === 'diseno' ? 'a cotizar' : ramoP && !i.tipo ? (i.lista || i.precio ? money((i.lista || i.precio) * i.cantidad) : 'sin precio') : money(i.total);
   return `<div class="ord ${p.estado === 'nuevo' ? 'new' : ''}"><div class="ord-h"><span class="oav ${colorDe(p.nombre)}">${esc(iniciales(p.nombre))}</span><div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.numero)} · ${hace(p.fecha)}</small></div><span class="badge ${e.c}">${e.t}</span></div>
-    ${e.s >= 0 ? `<div class="steps">${[0, 1, 2, 3].map(i => `<i class="${i <= e.s ? 'on' : ''}"></i>`).join('')}</div>` : ''}
+    ${e.s >= 0 ? `<div class="steps">${[0, 1, 2, 3].map(i => `<i class="${i <= e.s ? 'on' : ''}"></i>`).join('')}</div>` : ''}${segCompraHTML(p)}
     <div class="ord-i">${p.items.map(i => `<div><span>${cant(i.cantidad)} × ${esc(i.nombre)}${i.tipo === 'compra' ? ` · <a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">ver artículo</a>` : ''}</span><span class="n">${monto(i)}</span></div>`).join('')}${ramoP && p.presupuesto ? `<div style="color:var(--pri)"><span>Presupuesto del cliente</span><span class="n">${money(p.presupuesto)}</span></div>` : ''}${p.envio ? `<div><span>Envío</span><span class="n">${money(p.envio)}</span></div>` : ''}${p.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir${num(p.anticipoPagado) >= num(p.anticipo) ? ' · pagado ✓' : num(p.anticipoPagado) > 0 ? ' · pagó ' + money(p.anticipoPagado) : ''}</span><span class="n">${money(p.anticipo)}</span></div>` : ''}</div>
     <div class="ord-f"><span class="t n">${p.estado === 'cotizar' ? 'Por cotizar' : money(p.total)}</span><span class="badge b-mut">${ic(p.entrega === 'domicilio' ? 'truck' : p.entrega === 'mesa' ? 'mesa' : 'store', 14)} ${p.entrega === 'domicilio' ? 'A domicilio' : p.entrega === 'mesa' ? 'Comer aquí · mesa ' + esc(p.direccion) : modOn('mesas') ? 'Para llevar' : 'Recoger'}</span><span class="badge b-mut">${esc(p.pago)}</span></div>
     ${p.cita ? `<div class="ord-cw" style="margin-top:9px">${p.placa ? `<span class="placa">${esc(p.placa)}</span>` : ''}<span class="sm">${esc(p.vehiculo || '')}</span><span class="crono">${esc(diaTxt(p.cita))} · ${esc(fHoraC(p.hora))}</span></div>` : ''}
     ${p.entrega === 'domicilio' && p.direccion ? `<p class="xs mut" style="margin:8px 0 0">${ic('pin', 13)} ${esc(p.direccion)}</p>` : ''}${p.nota ? `<p class="xs mut" style="margin:6px 0 0">📝 ${esc(p.nota)}</p>` : ''}
     ${fotosR.length ? `<div class="ramo-fotos">${fotosR.map(f => `<img src="${esc(fotoSrc(f))}" alt="Foto del cliente" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}" loading="lazy">`).join('')}</div>` : ''}${compPedidoHTML(p)}
     <div class="row" style="margin-top:10px"><a class="btn wa sm" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa', 16)} WhatsApp</a><button class="btn sm" data-a="verPedido" data-id="${p.id}">${ic('eye', 16)} Ver</button>
-    ${p.estado === 'cotizado' && puede('admin', 'cajero') ? `<button class="btn sm ok-b" style="margin-left:auto" data-a="ramoAcepto" data-id="${p.id}">${ic('check', 15)} Ya aceptó</button>` : ''}${accion ? `<button class="btn ${p.estado === 'cotizado' ? '' : 'pri '}sm" style="margin-left:${p.estado === 'cotizado' ? '0' : 'auto'}" data-a="pedAccion" data-id="${p.id}" data-e="${accion[1]}">${accion[0]} ${ic('arrow', 16)}</button>` : ''}</div></div>`;
+    ${sg && sg.venc && puede('admin') ? `<button class="btn sm ghost" data-a="liberarAp" data-id="${p.id}">${ic('box', 15)} Liberar</button>` : ''}${p.estado === 'cotizado' && puede('admin', 'cajero') ? `<button class="btn sm ok-b" style="margin-left:auto" data-a="ramoAcepto" data-id="${p.id}">${ic('check', 15)} Ya aceptó</button>` : ''}${accion ? `<button class="btn ${p.estado === 'cotizado' ? '' : 'pri '}sm" style="margin-left:${p.estado === 'cotizado' ? '0' : 'auto'}" data-a="pedAccion" data-id="${p.id}" data-e="${accion[1]}">${accion[0]} ${ic('arrow', 16)}</button>` : ''}</div></div>`;
 }
 // Comprobante de pago que mandó el cliente desde la tienda
 const EST_COMP = { revisar: ['b-warn', 'Por revisar'], ok: ['b-ok', 'Pago recibido'], no: ['b-bad', 'No coincide'] };
@@ -5192,6 +5215,9 @@ ACC.pedPago = async el => {
 };
 function msjPedido(p) {
   const o = { cliente: p.nombre.split(' ')[0], numero: p.numero, total: money(p.total), negocio: S.config.nombre || '' };
+  const sg = segCompra(p), r = reciboP(p), falta = r2(num(p.total) - num(p.anticipoPagado));
+  if (sg && sg.k === 'apartado') return `Hola ${o.cliente} 👋 Tu pedido ${p.numero} ya llegó y está apartado a tu nombre${sg.venc ? '' : ' hasta el ' + fFechaC(r.vence)}. ${falta > 0 ? 'Te falta pagar ' + money(falta) + '. ' : ''}¿Cuándo pasas por él? — ${o.negocio}`;
+  if (sg && sg.k === 'camino') return `Hola ${o.cliente} 👋 Ya compramos tu pedido ${p.numero} y va en camino. Te avisamos en cuanto llegue. — ${o.negocio}`;
   if (p.estado === 'listo') return plantilla(S.config.msjListo, o) + (p.entrega === 'domicilio' ? ' Va en camino 🛵' : ' Puedes pasar a recogerlo.');
   return plantilla(S.config.msjPedido, o);
 }
@@ -5278,6 +5304,8 @@ ACC.pest = el => { S.f.pest = el.dataset.k; S.f.pestAuto = 0; R.pedidos(); };
 ACC.pedAccion = async el => {
   const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
   if (el.dataset.e === 'cobrar') return cobrarPedido(p);
+  if (el.dataset.e === 'factura') return registrarFactura(p);
+  if (el.dataset.e === 'llego') return marcarLlego(p);
   if (el.dataset.e === 'cotizar') return cotizarRamo(p);
   if (el.dataset.e === 'mesas') { S.verCuenta = p.cuentaId; return ir('mesas'); }
   const g = await api('estadoPedido', { id: p.id, estado: el.dataset.e });
@@ -5374,6 +5402,15 @@ async function verChat(id) {
   timer = setInterval(async () => { if (document.hidden || enviando) return; try { const n = await api('chat', { id }, true); if (n.mensajes.length !== d.mensajes.length) { d = n; pintaMsgs(); } } catch (e) {} }, 20000);
   h.botones([]);
 }
+// Factura de la compra en línea dentro del pedido: proveedor, foto, costo real y ganancia
+function facturaPedHTML(p) {
+  const r = reciboP(p); if (!r) return '';
+  const c = costoReciboP(p), env = r.modo === 'gasto' ? num(r.envio) : 0, L = r.liberado;
+  return `<div class="rc-box">${segCompraHTML(p)}
+    <div class="rc-f">${r.foto ? `<img src="${esc(fotoSrc(r.foto))}" alt="Factura" data-a="verFotoRamo" data-src="${esc(fotoAncha(r.foto))}">` : `<span class="ph">${ic('receipt', 20)}</span>`}<div class="tx"><b>Factura ${esc(r.prov || '')}${r.factura ? ' · ' + esc(r.factura) : ''}</b><small>Comprada el ${esc(fFechaC(r.fecha))}${r.llego ? ' · llegó el ' + esc(fFechaC(r.llego)) : ''}</small></div></div>
+    <div class="tots"><div class="tot"><span>Costo real${r.modo === 'costo' && num(r.envio) ? ' (con envío)' : ''}</span><b class="n">${money(c.costo)}</b></div>${env ? `<div class="tot"><span>Envío de la factura (gasto aparte)</span><b class="n">${money(env)}</b></div>` : ''}<div class="tot g"><span>Ganancia${env ? ' antes del envío' : ''}</span><b class="n" style="color:var(--ok)">${money(c.venta - c.costo)}</b></div></div>
+    ${L ? `<p class="xs mut" style="margin:6px 0 0">Liberado el ${esc(fFechaC(L.fecha))}: ${L.motivo === 'noPago' ? 'no lo pagó' : 'no lo reclamó'}${L.anticipo === 'ingreso' ? ' · anticipo ' + money(L.monto) + ' como ingreso' : L.anticipo === 'devolver' ? ' · anticipo devuelto' : ''}.</p>` : ''}</div>`;
+}
 ACC.verPedido = el => {
   const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
   const e = EST_P[p.estado];
@@ -5381,17 +5418,20 @@ ACC.verPedido = el => {
     <div><small>Entrega</small>${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger en el negocio'}</div><div><small>Pago</small>${esc(p.pago)}</div></div>
     ${p.direccion ? `<p class="sm">${ic('pin', 15)} ${esc(p.direccion)} · <a href="https://www.google.com/maps/search/${encodeURIComponent(p.direccion)}" target="_blank" rel="noopener">Ver en mapa</a></p>` : ''}
     <div class="tks">${p.items.map(i => `<div class="tk"><div class="tx"><b>${esc(i.nombre)}</b>${i.foto ? `<img class="it-foto" src="${esc(fotoSrc(i.foto))}" alt="Imagen del cliente" data-a="verFotoRamo" data-src="${esc(fotoAncha(i.foto))}">` : ''}<small>${cant(i.cantidad)} × ${money(i.precio)}${i.tipo === 'compra' ? ` · US$${Number(i.usd || 0).toFixed(2)} c/u` : ''}</small>${i.tipo === 'compra' ? `<small style="word-break:break-all"><a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">${ic('globe', 13)} ${esc(i.enlace)}</a></small>` : ''}</div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
-    <div class="tots">${p.envio ? `<div class="tot"><span>Envío</span><b class="n">${money(p.envio)}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(p.total)}</b></div>${p.anticipo ? `<div class="tot"><span>Anticipo para pedir el artículo</span><b class="n" style="color:var(--pri)">${money(p.anticipo)}</b></div>` : ''}${num(p.anticipoPagado) > 0 ? `<div class="tot"><span>Anticipo pagado ✓</span><b class="n" style="color:var(--ok)">${money(p.anticipoPagado)}</b></div><div class="tot g"><span>Falta por pagar</span><b class="n">${money(p.total - p.anticipoPagado)}</b></div>` : ''}</div>${p.nota ? `<p class="sm mut">Nota: ${esc(p.nota)}</p>` : ''}` });
-  const bs = [];
-  if (['nuevo', 'confirmado', 'listo'].includes(p.estado)) bs.push({ t: 'Cancelar pedido', cls: 'bad', fn: async () => {
+    <div class="tots">${p.envio ? `<div class="tot"><span>Envío</span><b class="n">${money(p.envio)}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(p.total)}</b></div>${p.anticipo ? `<div class="tot"><span>Anticipo para pedir el artículo</span><b class="n" style="color:var(--pri)">${money(p.anticipo)}</b></div>` : ''}${num(p.anticipoPagado) > 0 ? `<div class="tot"><span>Anticipo pagado ✓</span><b class="n" style="color:var(--ok)">${money(p.anticipoPagado)}</b></div><div class="tot g"><span>Falta por pagar</span><b class="n">${money(p.total - p.anticipoPagado)}</b></div>` : ''}</div>${facturaPedHTML(p)}${p.nota ? `<p class="sm mut">Nota: ${esc(p.nota)}</p>` : ''}` });
+  const bs = [], sg = segCompra(p), rb = reciboP(p);
+  if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !rb) bs.push({ t: 'Cancelar pedido', cls: 'bad', fn: async () => {
     const m = await pedirTexto('Cancelar ' + p.numero, { label: 'Motivo (se guarda en el pedido)', si: 'Cancelar pedido', peligro: 1 });
     if (m === null) return;
     Object.assign(p, await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m }));
     h.cerrar(); toast('Pedido cancelado', 'ok'); R.pedidos();
   } });
   const esRamo = ['cotizar', 'cotizado'].includes(p.estado) || !!p.cotiza, esDis = !!(parseJ(p.cotiza, {}) || {}).personal;
-  if (!esDis && ['nuevo', 'confirmado', 'listo'].concat(esRamo ? ['cotizar', 'cotizado'] : []).includes(p.estado) && !p.ventaId) bs.push({ t: `${ic('edit', 18)} ${esRamo ? 'Editar flores' : 'Editar'}`, fn: () => { h.cerrar(); esRamo ? editarRamo(p) : editarPedido(p); } });
-  if (puede('admin')) bs.push({ t: `${ic('trash', 18)} Eliminar`, cls: 'bad', fn: () => eliminarPedido(p, h) });
+  if (sg && sg.k === 'apartado' && puede('admin')) bs.push({ t: `${ic('box', 18)} Liberar`, fn: () => { h.cerrar(); liberarApartado(p); } });
+  if (sg && sg.k === 'camino') bs.unshift({ t: `${ic('check', 18)} Ya llegó`, cls: 'pri', fn: () => { h.cerrar(); marcarLlego(p); } });
+  if (sg && sg.k === 'pedir' && puede('admin')) bs.unshift({ t: `${ic('receipt', 18)} Registrar factura`, cls: 'pri', fn: () => { h.cerrar(); registrarFactura(p); } });
+  if (!rb && !esDis && ['nuevo', 'confirmado', 'listo'].concat(esRamo ? ['cotizar', 'cotizado'] : []).includes(p.estado) && !p.ventaId) bs.push({ t: `${ic('edit', 18)} ${esRamo ? 'Editar flores' : 'Editar'}`, fn: () => { h.cerrar(); esRamo ? editarRamo(p) : editarPedido(p); } });
+  if (puede('admin') && !(rb && !rb.liberado && !p.ventaId)) bs.push({ t: `${ic('trash', 18)} Eliminar`, cls: 'bad', fn: () => eliminarPedido(p, h) });
   if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !p.ventaId && num(p.anticipo) > 0 && num(p.anticipoPagado) < num(p.anticipo) - 0.004)
     bs.unshift({ t: `${ic('coin', 18)} Recibí el anticipo`, cls: 'pri', fn: () => { h.cerrar(); anticipoPedido(p); } });
   bs.push({ t: `${ic('wa', 18)} WhatsApp`, cls: 'wa', fn: () => { window.open(waLink(p.telefono, msjPedido(p)), '_blank'); } });
@@ -5410,6 +5450,154 @@ function anticipoPedido(p) {
     Object.assign(p, g); S.cajaD = null; S.inicio = null; h.cerrar(); toast('Anticipo registrado: ' + money(g.anticipoPagado), 'ok'); if (S.vista === 'pedidos') R.pedidos();
   } }]);
 }
+/* ===================== COMPRAS EN LÍNEA: FACTURA, LLEGADA Y APARTADOS (1.9.81) =====================
+ * Por pedir → «Registrar factura» (compra + envío) → En camino → «Ya llegó» → Apartado (con plazo) → Entregar y cobrar (salida + segundo pago)
+ * Si no lo reclama o no lo paga: «Liberar» lo pasa a existencia normal. Lo apartado no sale en la tienda en línea ni en Vender. */
+const esCompraP = p => (p.items || []).some(i => i && i.tipo === 'compra');
+const reciboP = p => p && p.recibo && p.recibo.compraId ? p.recibo : null;
+function segCompra(p) {
+  if (!esCompraP(p)) return null;
+  const r = reciboP(p);
+  if (r && r.liberado) return { k: 'liberado', t: 'Liberado a existencia', c: 'b-mut', ic: 'box' };
+  if (p.ventaId || ['entregado', 'cancelado'].includes(p.estado)) return null;
+  if (!r) return { k: 'pedir', t: 'Por pedir a la tienda', c: 'b-warn', ic: 'bag' };
+  if (!r.llego) return { k: 'camino', t: 'En camino', c: 'b-info', ic: 'truck' };
+  const d = r.vence ? diasHasta(r.vence) : null, venc = d !== null && d < 0;
+  return { k: 'apartado', t: venc ? 'Apartado vencido' : 'Apartado', c: venc ? 'b-bad' : 'b-ok', ic: 'lock', venc, dias: d };
+}
+function segCompraHTML(p) {
+  const s = segCompra(p); if (!s) return '';
+  const r = reciboP(p), fac = r ? esc(r.prov || '') + (r.factura ? ' · Fact. ' + esc(r.factura) : '') : '';
+  const det = s.k === 'pedir' ? 'Registra la factura cuando hagas la compra'
+    : s.k === 'camino' ? fac + ' · comprado el ' + esc(fFechaC(r.fecha))
+    : s.k === 'apartado' ? 'Llegó el ' + esc(fFechaC(r.llego)) + ' · ' + (s.venc ? 'venció hace ' + (-s.dias === 1 ? '1 día' : -s.dias + ' días') : s.dias === 0 ? 'retirar hoy' : 'retirar hasta el ' + esc(fFechaC(r.vence)) + (s.dias === 1 ? ' (mañana)' : ''))
+    : 'Pasó a tu existencia';
+  return `<div class="seg-c ${s.venc ? 'venc' : ''}"><span class="badge ${s.c}">${ic(s.ic, 13)} ${s.t}</span><small>${det}</small></div>`;
+}
+// Costo real de la factura y ganancia de un pedido ya registrado
+function costoReciboP(p) { const r = reciboP(p); if (!r) return null; let c = 0, v = 0; p.items.forEach((i, k) => { if (r.costos[k] !== null && r.costos[k] !== undefined) { c += num(i.cantidad) * num(r.costos[k]); v += num(i.total); } }); return { costo: r2(c), venta: r2(v) }; }
+
+function registrarFactura(p0) {
+  const cfg = S.config, abiertos = (S.pedidosL || []).filter(p => ['nuevo', 'confirmado'].includes(p.estado) && (segCompra(p) || {}).k === 'pedir');
+  const i0 = abiertos.findIndex(p => p.id === p0.id); if (i0 >= 0) abiertos.splice(i0, 1); abiertos.unshift(p0); // el pedido desde el que se abrió va primero
+  const tiendas = String(cfg.comprasTiendas || 'Shein').split(',').map(s => s.trim()).filter(Boolean);
+  const sel = new Set([p0.id]), usd = {};
+  abiertos.forEach(p => p.items.forEach((i, k) => { if (i.tipo === 'compra') usd[p.id + '|' + k] = i.usd ? String(i.usd) : ''; }));
+  const st = { prov: tiendas[0] || 'Shein', metodo: 'Tarjeta', modo: 'gasto', llego: false, foto: '', tasa: String(num(cfg.comprasCambio) || ''), envio: '', factura: '', fecha: hoy() };
+  const plazo = Math.max(1, Math.min(90, parseInt(cfg.comprasPlazo, 10) || 8));
+  const h = hoja({ titulo: 'Registrar factura', html: '<div id="rf"></div>' });
+  const chips = (k, ops) => `<div class="chips" data-ch="${k}">${ops.map(([v, t]) => `<button type="button" class="chip ${String(st[k]) === String(v) ? 'on' : ''}" data-v="${esc(String(v))}">${t}</button>`).join('')}</div>`;
+  const lineaL = (pid, k) => num(usd[pid + '|' + k]) * num(st.tasa);
+  const resumen = () => {
+    let costo = 0, venta = 0, n = 0, falta = 0;
+    abiertos.filter(p => sel.has(p.id)).forEach(p => p.items.forEach((i, k) => { if (i.tipo !== 'compra') return; n += num(i.cantidad); venta += num(i.total); const c = lineaL(p.id, k); if (!(c > 0)) falta++; costo += c * num(i.cantidad); }));
+    const env = num(st.envio), total = costo + (st.modo === 'costo' ? env : 0), gan = venta - costo - env;
+    const box = $('#rf-r', h.el); if (!box) return;
+    box.innerHTML = sel.size ? `<b>Al guardar se registra:</b>
+      <div>${ic('receipt', 15)} Compra a ${esc(st.prov)} · <b class="n">${money(total)}</b>${st.metodo === 'Crédito' ? ' al crédito' : ''}${st.factura ? ' · Fact. ' + esc(st.factura) : ''}</div>
+      ${env > 0 ? `<div>${ic('truck', 15)} ${st.modo === 'gasto' ? 'Gasto de envío · <b class="n">' + money(env) + '</b>' : 'Envío de ' + money(env) + ' repartido en el costo de cada artículo'}</div>` : ''}
+      <div>${ic(st.llego ? 'lock' : 'truck', 15)} ${n === 1 ? '1 artículo' : cant(n) + ' artículos'} de ${sel.size === 1 ? '1 pedido' : sel.size + ' pedidos'} · ${st.llego ? 'apartados hasta el ' + fFechaC(new Date(Date.now() + plazo * 864e5).toISOString().slice(0, 10)) : 'quedan «En camino»'}</div>
+      <div class="ok-t">${ic('eyeoff', 15)} No salen en la tienda en línea ni en Vender</div>
+      ${falta ? `<div class="mut">Falta el costo de ${falta === 1 ? '1 artículo' : falta + ' artículos'}</div>` : `<div class="mut">Ganancia estimada: <b class="n">${money(gan)}</b></div>`}` : '<div class="mut">Elige al menos un pedido</div>';
+    abiertos.forEach(p => p.items.forEach((i, k) => { const o = $(`[data-l="${p.id}|${k}"]`, h.el); if (o) o.textContent = lineaL(p.id, k) > 0 ? '= ' + money(lineaL(p.id, k)) + ' c/u' : ''; }));
+  };
+  const pinta = () => {
+    $('#rf', h.el).innerHTML = `<span class="op-l">Tienda donde compraste</span>${chips('prov', tiendas.map(t => [t, esc(t)]))}
+      <div class="f2"><label class="fld"><span>N.º de factura o pedido</span><input id="rf-f" maxlength="40" value="${esc(st.factura)}" placeholder="GSHN7X2K"></label><label class="fld"><span>Fecha de compra</span><input id="rf-d" type="date" max="${hoy()}" value="${st.fecha}"></label></div>
+      <div class="rf-foto">${st.foto ? `<img src="${esc(fotoSrc(st.foto))}" alt="Factura" data-a="verFotoRamo" data-src="${esc(fotoAncha(st.foto))}">` : `<span class="ph">${ic('cam', 22)}</span>`}<div class="tx"><b>Foto de la factura</b><small>${st.foto ? 'Lista. Queda guardada con la compra.' : 'Opcional: una captura o foto del pedido en la página'}</small></div><label class="btn sm">${st.foto ? 'Cambiar' : 'Subir'}<input type="file" accept="image/*" id="rf-ft" hidden></label></div>
+      <span class="op-l" style="margin-top:12px">Pedidos de clientes en esta factura</span>
+      ${abiertos.map(p => `<div class="rf-p ${sel.has(p.id) ? 'on' : ''}"><label class="rf-ph"><input type="checkbox" data-p="${p.id}" ${sel.has(p.id) ? 'checked' : ''}><div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.numero)} · ${hace(p.fecha)} · ${money(p.total)}${num(p.anticipoPagado) > 0 ? ' · anticipo ' + money(p.anticipoPagado) + ' ✓' : ''}</small></div></label>
+        ${sel.has(p.id) ? p.items.map((i, k) => i.tipo === 'compra' ? `<div class="rf-l"><div class="tx"><b>${cant(i.cantidad)} × ${esc(String(i.nombre).replace(/^Compra en línea\s*/i, '').replace(/^\((.*)\)$/, '$1') || 'Artículo')}</b><small><a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">${esc(String(i.enlace).slice(0, 34))}</a> · lo vendes en ${money(i.precio).replace(/\.00$/, '')}</small></div><label class="rf-u"><span>US$</span><input inputmode="decimal" data-u="${p.id}|${k}" value="${esc(usd[p.id + '|' + k])}" placeholder="0.00"></label><small class="rf-lv n" data-l="${p.id}|${k}"></small></div>` : '').join('') : ''}</div>`).join('')}
+      <div class="f2" style="margin-top:12px"><label class="fld"><span>Tipo de cambio (L por US$1)</span><input id="rf-t" inputmode="decimal" value="${esc(st.tasa)}"></label><label class="fld"><span>Envío o courier (L)</span><input id="rf-e" inputmode="decimal" value="${esc(st.envio)}" placeholder="0.00"></label></div>
+      ${chips('modo', [['gasto', 'Gasto aparte'], ['costo', 'Sumar al costo']])}
+      <span class="op-l" style="margin-top:12px">¿Cómo pagaste la compra?</span>
+      <div class="pays" data-ch="metodo">${[['Efectivo', 'cash'], ['Tarjeta', 'card'], ['Transferencia', 'transfer'], ['Crédito', 'bank']].map(([m, i]) => `<button type="button" class="pay ${st.metodo === m ? 'on' : ''}" data-v="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div>
+      <span class="op-l" style="margin-top:12px">¿Dónde está la mercadería?</span>${chips('llego', [['false', 'En camino'], ['true', 'Ya llegó']])}
+      <div class="rf-r" id="rf-r"></div>`;
+    resumen();
+  };
+  h.el.addEventListener('click', e => {
+    const c = e.target.closest('[data-ch] [data-v]'); if (!c) return;
+    const k = c.parentNode.dataset.ch, v = c.dataset.v; st[k] = k === 'llego' ? v === 'true' : v; pinta();
+  });
+  h.el.addEventListener('change', async e => {
+    const cb = e.target.closest('input[data-p]');
+    if (cb) { if (cb.checked) sel.add(cb.dataset.p); else sel.delete(cb.dataset.p); return pinta(); }
+    if (e.target.id === 'rf-ft' && e.target.files[0]) {
+      try { loader(true); const d = await comprimirImagen(e.target.files[0], DEMO.on ? 480 : 1200); st.foto = (await api('subirFoto', { data: d }, true)).foto; pinta(); }
+      catch (er) { err(er); } finally { loader(false); }
+    }
+  });
+  h.el.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.u) usd[t.dataset.u] = t.value;
+    else if (t.id === 'rf-t') st.tasa = t.value; else if (t.id === 'rf-e') st.envio = t.value; else if (t.id === 'rf-f') st.factura = t.value; else if (t.id === 'rf-d') st.fecha = t.value; else return;
+    resumen();
+  });
+  pinta();
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Registrar factura`, cls: 'pri', fn: async () => {
+    if (!sel.size) throw new Error('Elige al menos un pedido');
+    if (!(num(st.tasa) > 0)) throw new Error('Escribe el tipo de cambio');
+    const peds = abiertos.filter(p => sel.has(p.id)).map(p => ({ id: p.id, costos: p.items.map((i, k) => {
+      if (i.tipo !== 'compra') return null;
+      if (!(num(usd[p.id + '|' + k]) > 0)) throw new Error('Escribe el costo en dólares de cada artículo (' + p.numero + ')');
+      return Math.round(lineaL(p.id, k) * 10000) / 10000; }) }));
+    const g = await api('compraFactura', { pedidos: peds, proveedor: st.prov, factura: st.factura.trim(), fecha: st.fecha, foto: st.foto, metodo: st.metodo, envio: num(st.envio), modo: st.modo, llego: st.llego });
+    h.cerrar(); S.pedidosL = null; S.inicio = null; S.cajaD = null; if (g.proveedores) S.proveedores = g.proveedores;
+    S.f.pest = st.llego ? 'apartado' : 'camino'; S.f.pestAuto = 0;
+    toast(`Factura registrada: compra ${g.compra.numero}${g.gasto ? ' y gasto de envío' : ''}. ${st.llego ? 'Quedó apartado.' : 'Queda en camino.'}${g.pedidos.some(x => x.avisado) ? ' Le avisamos en el chat de tu tienda.' : ''}`, 'ok', 4500);
+    R.pedidos();
+  } }]);
+}
+async function marcarLlego(p) {
+  const plazo = Math.max(1, Math.min(90, parseInt(S.config.comprasPlazo, 10) || 8)), vence = new Date(Date.now() + plazo * 864e5).toISOString().slice(0, 10);
+  if (!(await confirmar(`¿Ya tienes el pedido <b>${esc(p.numero)}</b> de <b>${esc(p.nombre)}</b>?<br><br>Queda apartado a su nombre hasta el <b>${esc(fFechaC(vence))}</b> (${plazo} días). No sale en tu tienda en línea ni en Vender.`, { si: 'Ya llegó' }))) return;
+  const g = await api('compraLlego', { ids: [p.id] });
+  S.pedidosL = null; S.inicio = null; S.f.pest = 'apartado'; S.f.pestAuto = 0;
+  toast('Quedó apartado para ' + esc(String(p.nombre).split(' ')[0]) + (g[0] && g[0].avisado ? ' · le avisamos en el chat de tu tienda' : ''), 'ok', 3500); R.pedidos();
+  if (g[0] && !g[0].avisado) { const t = msjPedido(Object.assign({}, p, g[0])); const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp?</p><div class="msg-prev">${esc(t)}</div>` });
+    a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300)); }
+}
+function liberarApartado(p) {
+  const r = reciboP(p), pag = num(p.anticipoPagado), tiendaOn = S.config.tienda === 'si';
+  const st = { motivo: 'noReclamo', anticipo: 'ingreso', tienda: tiendaOn };
+  const lin = p.items.map((i, k) => ({ i, k })).filter(x => x.i.tipo === 'compra' && r.costos[x.k] !== null && r.costos[x.k] !== undefined);
+  const nom = {}, pre = {};
+  lin.forEach(({ i, k }) => { const det = String(i.nombre).replace(/^Compra en línea\s*/i, '').replace(/^\((.*)\)$/, '$1').replace(/Nota: [^,]*,?\s*/, '').trim(); nom[k] = ((r.prov || 'Artículo') + (det ? ' · ' + det : '')).slice(0, 80); pre[k] = String(i.precio); });
+  const h = hoja({ titulo: 'Liberar apartado · ' + esc(p.numero), html: '<div id="la"></div>' });
+  const chips = (k, ops) => `<div class="chips" data-ch="${k}">${ops.map(([v, t]) => `<button type="button" class="chip ${st[k] === v ? 'on' : ''}" data-v="${v}">${t}</button>`).join('')}</div>`;
+  const pinta = () => {
+    const cost = lin.reduce((a, { i, k }) => a + num(i.cantidad) * num(r.costos[k]), 0), n = lin.reduce((a, { i }) => a + num(i.cantidad), 0);
+    $('#la', h.el).innerHTML = `<p class="sm mut" style="margin:0 0 10px">${esc(p.nombre)} · ${esc(fmtWA(p.telefono))}</p>
+      <span class="op-l">¿Por qué se libera?</span>${chips('motivo', [['noReclamo', 'No lo reclamó'], ['noPago', 'No lo pagó']])}
+      ${pag > 0 ? `<span class="op-l" style="margin-top:12px">¿Qué pasa con el anticipo de ${money(pag)}?</span>
+        <div class="la-op">${[['ingreso', 'Queda para el negocio', 'Entra como ingreso (una venta por el anticipo)'], ['devolver', 'Se le devuelve', 'Se anula el anticipo: sale de tu caja']].map(([v, t, d]) => `<button type="button" class="la-o ${st.anticipo === v ? 'on' : ''}" data-an="${v}"><i></i><span><b>${t}</b><small>${d}</small></span></button>`).join('')}</div>` : ''}
+      <span class="op-l" style="margin-top:12px">Así entra a tu existencia</span>
+      ${lin.map(({ i, k }) => `<div class="la-p"><label class="fld"><span>${cant(i.cantidad)} × nombre del producto</span><input data-n="${k}" maxlength="80" value="${esc(nom[k])}"></label><div class="f2"><label class="fld"><span>Precio de venta</span><input data-pr="${k}" inputmode="decimal" value="${esc(pre[k])}"></label><label class="fld"><span>Costo (factura)</span><input disabled value="${money(r.costos[k])}"></label></div></div>`).join('')}
+      <small class="hint">Si ya tienes un producto con el mismo nombre, se suma a su existencia.</small>
+      ${tiendaOn ? `<label class="sw-row" style="margin-top:10px"><input type="checkbox" id="la-t" ${st.tienda ? 'checked' : ''}><span class="sw"></span><div><b>Mostrar en la tienda en línea</b><small>${girosOn().length > 1 || girosOn()[0] === 'compras' ? 'Sale con la etiqueta «Entrega inmediata»' : 'Tus clientes lo ven en tu catálogo'}</small></div></label>` : ''}
+      <div class="rf-r"><b>Al liberar:</b>
+        <div>${ic('box', 15)} +${cant(n)} en existencia · costo ${money(cost)}</div>
+        ${pag > 0 ? `<div>${ic('coin', 15)} Anticipo ${money(pag)} ${st.anticipo === 'ingreso' ? 'pasa a ingreso' : 'se devuelve (sale de caja)'}</div>` : ''}
+        <div>${ic('x', 15)} Pedido ${esc(p.numero)} se cierra como «${st.motivo === 'noPago' ? 'No lo pagó' : 'No lo reclamó'}»</div></div>`;
+  };
+  h.el.addEventListener('click', e => {
+    const c = e.target.closest('[data-ch] [data-v]'); if (c) { st[c.parentNode.dataset.ch] = c.dataset.v; return pinta(); }
+    const a = e.target.closest('[data-an]'); if (a) { st.anticipo = a.dataset.an; return pinta(); }
+  });
+  h.el.addEventListener('input', e => { const t = e.target; if (t.dataset.n !== undefined) nom[t.dataset.n] = t.value; else if (t.dataset.pr !== undefined) pre[t.dataset.pr] = t.value; });
+  h.el.addEventListener('change', e => { if (e.target.id === 'la-t') st.tienda = e.target.checked; });
+  pinta();
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('box', 18)} Liberar a existencia`, cls: 'pri', fn: async () => {
+    const productos = p.items.map((i, k) => { if (!lin.some(x => x.k === k)) return null; if (!String(nom[k] || '').trim()) throw new Error('Escribe el nombre de cada producto'); return { nombre: nom[k].trim(), precio: num(pre[k]) }; });
+    const g = await api('liberarApartado', { id: p.id, motivo: st.motivo, anticipo: st.anticipo, tienda: st.tienda, productos });
+    if (g.productos) { S.productos = g.productos; guardarCache(); }
+    h.cerrar(); S.pedidosL = null; S.inicio = null; S.cajaD = null;
+    toast('Liberado: ' + (lin.length === 1 ? 'el artículo pasó' : 'los artículos pasaron') + ' a tu existencia' + (g.venta ? ' y el anticipo quedó como ingreso (' + g.venta.numero + ')' : pag > 0 ? ' y el anticipo quedó anulado' : ''), 'ok', 4500);
+    R.pedidos();
+  } }]);
+}
+ACC.liberarAp = el => { const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (p) liberarApartado(p); };
 // Corregir un pedido en línea: cambiar cantidades o quitar productos y avisarle al cliente
 const MOTIVOS_PED = [['Se agotó', ' porque se agotó'], ['Error de precio', ' por un error de nuestra parte'], ['El cliente lo pidió', ' como nos pediste']];
 function editarPedido(p) {
@@ -6886,6 +7074,10 @@ R.tienda = () => {
       ${fila('autoListo', [['msjAutoListo', 'Texto']], 'Pedido listo', 'Al tocar «Marcar listo». {entrega} dice «Va en camino» o «Puedes pasar a recogerlo».')}
       ${fila('autoPago', [['msjAutoPagoOk', 'Cuando el pago coincide'], ['msjAutoPagoNo', 'Cuando el comprobante no coincide']], 'Pago recibido o no coincide', 'Al revisar el comprobante que te mandó.')}
       ${fila('autoCancelado', [['msjAutoCancelado', 'Texto']], 'Pedido cancelado', 'Incluye el motivo que escribas ({motivo}).')}
+      ${girosOn().includes('compras') ? `<div class="auto-t">Compras en línea</div>
+      ${fila('autoCamino', [['msjAutoCamino', 'Texto']], 'Va en camino', 'Al registrar la factura de su pedido.')}
+      ${fila('autoLlego', [['msjAutoLlego', 'Texto']], 'Llegó y está apartado', 'Al tocar «Ya llegó». {vence} es la fecha límite y {saldo} lo que le falta pagar.')}
+      ${fila('autoApartado', [['msjAutoApartado', 'Texto']], 'Recordatorio del apartado', 'Un día antes de que venza el plazo para retirarlo.')}` : ''}
       <div class="auto-t">Respuestas automáticas</div>
       ${fila('autoCerrado', [['msjAutoCerrado', 'Texto']], 'Fuera de horario', sinHora ? 'Pon la hora en que abres y cierras en «Información que ven tus clientes» para que funcione.' : 'Si te escriben cuando estás cerrado. {abre} dice cuándo abres.')}
       ${fila('autoBienvenida', [['msjAutoBienvenida', 'Texto']], 'Bienvenida al primer mensaje', 'Cuando un cliente te escribe por primera vez.')}
@@ -6917,6 +7109,7 @@ R.tienda = () => {
     <div class="f2"><label class="fld"><span>Tipo de cambio (L por US$1)</span><input data-k="comprasCambio" inputmode="decimal" value="${v('comprasCambio')}"></label><label class="fld"><span>Recargo o ganancia (%)</span><input data-k="comprasRecargo" inputmode="decimal" value="${v('comprasRecargo')}"></label></div>
     <div class="f2"><label class="fld"><span>Envío a Honduras por artículo (L)</span><input data-k="comprasEnvio" inputmode="decimal" value="${v('comprasEnvio')}"></label><label class="fld"><span>Anticipo para pedir (%)</span><input data-k="comprasAnticipo" inputmode="decimal" value="${v('comprasAnticipo')}"></label></div>
     <div class="f2"><label class="fld"><span>Tiempo de entrega</span><input data-k="comprasDias" value="${v('comprasDias')}" placeholder="15 a 20 días"></label><label class="fld"><span>Tiendas donde compras</span><input data-k="comprasTiendas" value="${v('comprasTiendas')}" placeholder="Shein, Temu, Amazon"></label></div>
+    <label class="fld"><span>Días para retirar un apartado</span><input data-k="comprasPlazo" inputmode="numeric" value="${v('comprasPlazo')}" placeholder="8"><small class="hint">Cuando llega un pedido queda apartado a nombre del cliente por estos días. Un día antes le recordamos en el chat de tu tienda.</small></label>
     <div class="aviso info sm" id="aj-cej"></div>
     <button class="btn pri" data-a="guardarAj" data-s="compras">Guardar</button>`);
   h += sec('portada', 'image', 'Foto de portada', `<div class="td-portada">${c.tiendaPortada ? `<img src="${esc(fotoAncha(c.tiendaPortada))}" alt="">` : `<span>Sin portada: se muestra el color de tu tema.<br>Una foto ancha de tu local o tus productos queda muy bien.</span>`}</div>
@@ -10090,6 +10283,11 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.81', fecha: '2026-11-13', items: [
+    { i: 'receipt', t: 'Compras en línea: registra la factura', d: 'En un pedido de Shein o Temu toca «Registrar factura»: anota el costo real de cada artículo, la foto de la factura y el envío (como gasto aparte o sumado al costo). Una sola factura puede traer pedidos de varios clientes. Queda la compra registrada y el pedido «En camino».', si: () => girosOn().includes('compras') && puede('admin') },
+    { i: 'lock', t: 'Apartados para tus clientes', d: 'Cuando llega, toca «Ya llegó»: queda apartado a nombre del cliente con su plazo para retirarlo, sin salir en tu tienda en línea ni en Vender. Al entregarlo se registra la salida con el costo real y el segundo pago.', si: () => girosOn().includes('compras') },
+    { i: 'box', t: 'Si no lo reclaman o no lo pagan', d: 'Toca «Liberar»: pasa a tu existencia normal con el costo de la factura (y si quieres, a tu tienda en línea con «Entrega inmediata»). El anticipo queda como ingreso o se le devuelve.', si: () => girosOn().includes('compras') && puede('admin') }
+  ] },
   { v: '1.9.79', fecha: '2026-11-13', items: [
     { i: 'store', t: 'Compras en línea: «Pedir por código»', d: 'En tu tienda en línea, tus clientes piden de Shein o Temu escribiendo el código del artículo (el enlace también sirve). Y la ropa que ya tienes en existencia sale con «Entrega inmediata» para distinguirla de lo que se pide por encargo.', si: () => girosOn().includes('compras') }
   ] },
