@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.76';
+const VERSION = '1.9.77';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -89,7 +89,7 @@ const SCHEMA = {
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo','variante'],
-  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId','presupuesto','cotiza'],
+  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId','presupuesto','cotiza','chatId'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
@@ -137,6 +137,17 @@ const CONFIG_DEF = {
   duenoNombre: '', duenoCargo: '', duenoMensaje: '', duenoFoto: '', duenoDatos: '', duenoWhatsapp: '',
   msjPedido: 'Hola {cliente} 👋, ¡gracias por tu pedido {numero} en {negocio}! El total es {total}. Te avisamos cuando esté listo.',
   msjListo: 'Hola {cliente} 😊, tu pedido {numero} ya está listo. Total: {total}.',
+  // Mensajes automáticos: la tienda le escribe sola al comprador en el chat cuando cambia su pedido (cada uno se apaga aparte)
+  autoRecibido: 'si', autoCotizado: 'si', autoConfirmado: 'si', autoListo: 'si', autoPago: 'si', autoCancelado: 'si', autoCerrado: 'si', autoBienvenida: 'no',
+  msjAutoRecibido: '¡Gracias {cliente}! Recibimos tu pedido {numero} por {total}. Te avisamos por aquí en cuanto lo confirmemos.',
+  msjAutoCotizado: 'Hola {cliente} 👋 Ya tenemos el precio de tu pedido {numero}: {total}. Puedes aceptarlo en «Tus pedidos».',
+  msjAutoConfirmado: 'Confirmamos tu pedido {numero} 👍 Ya lo estamos preparando.',
+  msjAutoListo: 'Tu pedido {numero} ya está listo ✅ {entrega} Total: {total}.',
+  msjAutoPagoOk: 'Recibimos tu pago del pedido {numero}. ¡Muchas gracias! 🙌',
+  msjAutoPagoNo: 'Revisamos el comprobante de tu pedido {numero} y no coincide con el pago. ¿Nos ayudas enviando otro desde «Tus pedidos»?',
+  msjAutoCancelado: 'Tu pedido {numero} fue cancelado.{motivo} Si tienes dudas, escríbenos por aquí.',
+  msjAutoCerrado: 'Hola 👋 Ahora estamos cerrados. {abre} y te respondemos en cuanto podamos.',
+  msjAutoBienvenida: 'Hola {cliente} 👋 Gracias por escribirnos. En un momento te atendemos.',
   msjCobro: 'Hola {cliente} 👋, te saluda {negocio}. Te recordamos tu saldo pendiente de {saldo}. ¡Gracias por tu preferencia!',
   // Facturación SAR (autoimpresor): apagada por defecto
   sarActivo: 'no', sarRazon: '', sarRtn: '', sarDireccion: '', sarCai: '', sarEst: '000', sarPunto: '001', sarDesde: '', sarHasta: '', sarLimite: '',
@@ -2154,7 +2165,7 @@ function comandaAccion_(u, d) {
   const e = { preparando: 'preparando', lista: 'lista', nueva: 'nueva' }[d.estado]; if (!e) throw new Error('Estado no válido');
   if (['entregada', 'cancelada'].indexOf(k.estado) >= 0) throw new Error('Esta comanda ya se entregó o se canceló');
   upsert_('Comandas', { id: k.id, estado: e, actualizado: ahora_(), lista: e === 'lista' ? ahora_() : '' });
-  if (e === 'lista' && k.pedidoId) { const p = rows_('Pedidos').find(x => x.id === k.pedidoId); if (p && p.estado === 'confirmado') upsert_('Pedidos', { id: p.id, estado: 'listo', actualizado: ahora_() }); } // al cliente le sale «¡Listo!»
+  if (e === 'lista' && k.pedidoId) { const p = rows_('Pedidos').find(x => x.id === k.pedidoId); if (p && p.estado === 'confirmado') autoPedido_(upsert_('Pedidos', { id: p.id, estado: 'listo', actualizado: ahora_() }), 'listo'); } // al cliente le sale «¡Listo!» (y el aviso en el chat)
   return cocina_(u, d);
 }
 
@@ -4352,6 +4363,7 @@ function estadoPedido_(u, d) {
   }
   if (d.estado === 'cancelado' && p.citaId) { const a = rows_('Agenda').find(x => x.id === p.citaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'cancelado', actualizado: ahora_() }); }
   const g = upsert_('Pedidos', upd);
+  if (['confirmado', 'listo', 'cancelado'].indexOf(d.estado) >= 0) g.avisado = autoPedido_(g, d.estado, { motivo: d.motivo });
   g.items = parseJ_(g.items, []); g.anticipoPagado = pagado;
   return g;
 }
@@ -5435,6 +5447,7 @@ function cotizarRamo_(u, d) {
   lineas.push({ productoId: '', tipo: 'ramo', nombre: pc.personal ? 'Diseño personalizado · ' + pc.cat + (pc.cant > 1 ? ' (' + pc.cant + ' unidades)' : '') : 'Ramo a tu gusto', cantidad: 1, precio: precio, total: precio });
   const env = Number(p.envio) || 0, cot = Object.assign(parseJ_(p.cotiza, {}), { precio: precio, nota: txt_(d.nota, 300), el: ahora_() });
   const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(lineas), subtotal: precio, total: r2_(precio + env), estado: 'cotizado', cotiza: JSON.stringify(cot), actualizado: ahora_() });
+  g.avisado = autoPedido_(g, 'cotizado');
   g.items = parseJ_(g.items, []); g.anticipoPagado = 0;
   return g;
 }
@@ -5578,6 +5591,7 @@ function pedidoPago_(u, d) {
     if (falta > 0.004) anticipoPedido_(u, { id: p.id, monto: falta, metodo: 'Transferencia', tienda: d.tienda });
   }
   const g = upsert_('Pedidos', { id: p.id, pagoEstado: d.ok ? 'ok' : 'no', actualizado: ahora_() });
+  g.avisado = autoPedido_(g, d.ok ? 'pagoOk' : 'pagoNo');
   g.items = parseJ_(g.items, []); g.anticipoPagado = anticipoDe_(p.id);
   return g;
 }
@@ -5703,7 +5717,19 @@ function pedir_(d) {
     cita: cita, hora: hora, vehiculo: vehiculo, placa: placa, citaId: '' });
   c.put(k, String(n + 1), 21600);
   const kh = 'PH_' + (NEG ? NEG.id : ''); c.put(kh, String(Number(c.get(kh) || 0) + 1), 3600);
-  return { id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, personal: personal, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
+  // Chat del pedido: el que ya tiene el cliente en este teléfono (si es de su mismo número) o uno nuevo; ahí le llegan los avisos automáticos
+  let chatClave = '';
+  if (cfg.tiendaChat !== 'no' && !enMesa && tel.length >= 8) {
+    try {
+      let ch = d.chatClave ? rows_('Chats').find(x => x.clave === String(d.chatClave) && tel8_(x.telefono) === tel.slice(-8)) : null;
+      if (ch) upsert_('Pedidos', { id: p.id, chatId: ch.id }); else ch = chatDePedido_(p);
+      p.chatId = ch ? ch.id : '';
+      chatClave = ch ? ch.clave : '';
+      if (ch && !ramo) autoPedido_(p, 'recibido');
+      else if (ch && ramo) autoMensaje_(cfg.autoRecibido !== 'no' && cfg.tienda === 'si' ? ch : null, plantilla_('¡Gracias {cliente}! Recibimos tu solicitud {numero}. Te mandamos el precio por aquí.', { cliente: nombre.split(' ')[0], numero: p.numero }));
+    } catch (e) { chatClave = ''; }
+  }
+  return { chatClave: chatClave, id: p.id, numero: p.numero, fecha: p.fecha, total: p.total, subtotal: ramo ? 0 : subtotal, ramo: ramo, personal: personal, presupuesto: presupuesto, envio: envio, descuento: descuentoCant_(items), items: items, entrega: entrega, pago: pago, anticipo: p.anticipo || 0, diasCompra: anticipo ? cfg.comprasDias : '', cita: cita, hora: hora, vehiculo: vehiculo, placa: placa,
     negocio: cfg.nombre, telefonoNegocio: cfg.telefono, datosPago: pago === 'Transferencia' ? cfg.tiendaDatosPago : pago === 'Tigo Money' ? cfg.tiendaTigo : '', enlacePago: pago === 'Tarjeta' ? cfg.tiendaEnlacePago || '' : '' };
 }
 
@@ -5717,7 +5743,7 @@ function venceChat_(ultimo) { return Utilities.formatDate(new Date((msDeLocal_(u
 function mensajesDe_(id) { return rows_('Mensajes').filter(m => m.chatId === id).sort((a, b) => a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0); }
 function chatPublico_(c) {
   return { nombre: c.nombre, producto: c.producto, productoId: c.productoId, vence: venceChat_(c.ultimo),
-    mensajes: mensajesDe_(c.id).map(m => ({ id: m.id, de: m.de, texto: m.texto, fecha: m.fecha })) };
+    mensajes: mensajesDe_(c.id).map(m => { const o = { id: m.id, de: m.de, texto: m.texto, fecha: m.fecha }; if (m.usuarioId === AUTO_ID) o.auto = true; return o; }) };
 }
 function chatLimites_(d) {
   const cfg = tiendaNeg_(d);
@@ -5732,6 +5758,7 @@ function chatEnviar_(d) {
   const texto = String(d.texto || '').replace(/[⟦⟧]/g, '').trim().replace(/\n{3,}/g, '\n\n').slice(0, 600);
   if (!texto) throw new Error('Escribe tu mensaje');
   let c = d.clave ? rows_('Chats').find(x => x.clave === String(d.clave)) : null;
+  const nuevoChat = !c || !mensajesDe_(c.id).some(m => m.de === 'cliente');
   const f = ahora_(), prod = d.productoId ? rows_('Productos').find(x => x.id === d.productoId && x.activo && x.tienda) : null;
   if (!c) {
     const nombre = txt_(d.nombre, 60); let tel = String(d.telefono || '').replace(/\D/g, '');
@@ -5753,6 +5780,7 @@ function chatEnviar_(d) {
   if (prod) { upd.productoId = prod.id; upd.producto = prod.nombre; }
   else if (ped) { upd.productoId = ''; upd.producto = (esDis ? 'Diseño ' : ped.cotiza || EST_RAMO.indexOf(ped.estado) >= 0 ? 'Cotización ' : 'Pedido ') + ped.numero; }
   c = upsert_('Chats', upd);
+  c = autoRespuesta_(c, cfg, nuevoChat) || c;
   const cs = CacheService.getScriptCache(), nid = NEG ? NEG.id : '', k1 = 'CM_' + nid + String(d.telefono || d.clave || '').replace(/[^0-9a-z]/gi, '').slice(-12), k2 = 'CN_' + nid;
   cs.put(k1, String(Number(cs.get(k1) || 0) + 1), 3600); cs.put(k2, String(Number(cs.get(k2) || 0) + 1), 3600);
   return Object.assign(chatPublico_(c), { clave: c.clave });
@@ -5768,7 +5796,7 @@ function chatAdmin_(c) {
 function chats_(u) {
   req_(u, ['admin', 'cajero']);
   if (config_().sysChats !== hoy_()) { try { lock_(() => limpiarChats_()); } catch (e) {} }
-  return rows_('Chats').sort((a, b) => a.ultimo < b.ultimo ? 1 : a.ultimo > b.ultimo ? -1 : 0).map(chatAdmin_);
+  return rows_('Chats').filter(c => c.ultimoTexto || c.deCliente).sort((a, b) => a.ultimo < b.ultimo ? 1 : a.ultimo > b.ultimo ? -1 : 0).map(chatAdmin_);
 }
 function chat_(u, d) {
   req_(u, ['admin', 'cajero']);
@@ -5776,7 +5804,7 @@ function chat_(u, d) {
   if (!c) throw new Error('Esta conversación ya no existe (se borra a los 2 meses)');
   if (c.sinLeer > 0) c = upsert_('Chats', { id: c.id, sinLeer: 0 });
   const us = porId_(rows_('Usuarios')), p = c.productoId ? rows_('Productos').find(x => x.id === c.productoId) : null;
-  return { chat: chatAdmin_(c), mensajes: mensajesDe_(c.id).map(m => Object.assign(m, { quien: m.usuarioId && us[m.usuarioId] ? us[m.usuarioId].nombre : '' })),
+  return { chat: chatAdmin_(c), mensajes: mensajesDe_(c.id).map(m => Object.assign(m, { quien: m.usuarioId && us[m.usuarioId] ? us[m.usuarioId].nombre : '', auto: m.usuarioId === AUTO_ID })),
     producto: p ? { id: p.id, nombre: p.nombre, precio: p.precio, stock: p.tipo === 'producto' ? p.stock : null, icono: p.icono, foto: p.foto, categoria: p.categoria } : null };
 }
 function chatResponder_(u, d) {
@@ -5796,6 +5824,79 @@ function chatBorrar_(u, d) {
   reescribir_('Mensajes', rows_('Mensajes').filter(m => m.chatId !== d.id));
   reescribir_('Chats', rows_('Chats').filter(c => c.id !== d.id));
   return true;
+}
+/* ===================== MENSAJES AUTOMÁTICOS (tienda → comprador) =====================
+ * Cuando el negocio cambia un pedido (confirmar, listo, pago, cancelar, precio de un ramo), la tienda le escribe sola
+ * al comprador en el chat de la tienda. Cada pedido queda ligado a su conversación (Pedidos.chatId): se crea al pedir,
+ * vacía, y no sale en Mensajes hasta que tenga un mensaje. El negocio enciende o apaga cada aviso y edita los textos.
+ * Los mensajes automáticos se guardan como del negocio, con usuarioId «auto».
+ */
+const AUTO_ID = 'auto';
+const AUTO_TIPOS = { recibido: ['autoRecibido', 'msjAutoRecibido'], cotizado: ['autoCotizado', 'msjAutoCotizado'], confirmado: ['autoConfirmado', 'msjAutoConfirmado'],
+  listo: ['autoListo', 'msjAutoListo'], pagoOk: ['autoPago', 'msjAutoPagoOk'], pagoNo: ['autoPago', 'msjAutoPagoNo'], cancelado: ['autoCancelado', 'msjAutoCancelado'] };
+function plantilla_(t, o) { return String(t || '').replace(/\{(\w+)\}/g, (m, k) => o[k] !== undefined ? o[k] : m); }
+function autoTexto_(t) { return String(t || '').replace(/[⟦⟧]/g, '').replace(/\s+([.,!?])/g, '$1').replace(/ {2,}/g, ' ').trim().slice(0, 600); }
+// Escribe un mensaje del negocio (automático) en una conversación y la pone de primera en la lista
+function autoMensaje_(c, texto) {
+  texto = autoTexto_(texto); if (!c || !texto) return null;
+  const f = ahora_();
+  upsert_('Mensajes', { chatId: c.id, de: 'negocio', texto: texto, usuarioId: AUTO_ID, fecha: f });
+  return upsert_('Chats', { id: c.id, ultimo: f, ultimoTexto: texto.slice(0, 120), deCliente: c.deCliente && Number(c.sinLeer) > 0, sinLeer: Number(c.sinLeer) || 0 });
+}
+// Conversación del pedido: la que trae ligada o, si se borró, una nueva con el teléfono del pedido
+function chatDePedido_(p) {
+  let c = p.chatId ? rows_('Chats').find(x => x.id === p.chatId) : null;
+  if (c) return c;
+  const tel = String(p.telefono || '').replace(/\D/g, '');
+  if (tel.length < 8) return null;
+  const f = ahora_();
+  c = upsert_('Chats', { telefono: tel.length === 8 ? '504' + tel : tel, nombre: txt_(p.nombre, 60), clienteId: p.clienteId || '', clave: Utilities.getUuid().replace(/-/g, ''), productoId: '', producto: 'Pedido ' + p.numero,
+    ultimo: f, ultimoTexto: '', deCliente: false, sinLeer: 0, creado: f });
+  upsert_('Pedidos', { id: p.id, chatId: c.id });
+  p.chatId = c.id;
+  return c;
+}
+// Avisa al comprador en el chat según lo que pasó con su pedido. Devuelve true si se mandó el mensaje.
+function autoPedido_(p, tipo, extra) {
+  try {
+    const cfg = config_(), t = AUTO_TIPOS[tipo];
+    if (!t || !p || cfg.tienda !== 'si' || cfg.tiendaChat === 'no' || cfg[t[0]] === 'no' || p.entrega === 'mesa') return false;
+    const c = chatDePedido_(p); if (!c) return false;
+    const listoTxt = p.entrega === 'domicilio' ? 'Va en camino 🛵' : 'Puedes pasar a recogerlo.';
+    const o = { cliente: String(p.nombre || '').split(' ')[0], numero: p.numero, total: money_(p.total, cfg), negocio: cfg.nombre || '', entrega: listoTxt,
+      motivo: extra && extra.motivo ? ' Motivo: ' + txt_(extra.motivo, 120) + '.' : '' };
+    return !!autoMensaje_(c, plantilla_(cfg[t[1]] || CONFIG_DEF[t[1]], o));
+  } catch (e) { return false; }
+}
+// ¿El negocio está abierto ahora? (con el horario de «Mi tienda en línea»). Si está cerrado, dice cuándo abre.
+function abiertoAhora_(cfg) {
+  if (!cfg.tiendaAbre || !cfg.tiendaCierra) return null;
+  const a = ahora_(), hm = a.slice(11, 16), dia = new Date(Date.UTC(+a.slice(0, 4), +a.slice(5, 7) - 1, +a.slice(8, 10))).getUTCDay();
+  const dias = String(cfg.tiendaDias || '1,2,3,4,5,6').split(',').map(Number);
+  const h12 = t => { const h = Number(t.slice(0, 2)), m = t.slice(3, 5); return (h % 12 || 12) + ':' + m + (h < 12 ? ' a. m.' : ' p. m.'); };
+  if (dias.indexOf(dia) >= 0 && hm >= cfg.tiendaAbre && hm < cfg.tiendaCierra) return { on: true };
+  if (dias.indexOf(dia) >= 0 && hm < cfg.tiendaAbre) return { on: false, abre: 'Abrimos hoy a las ' + h12(cfg.tiendaAbre) };
+  const NOM = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
+  for (let i = 1; i <= 7; i++) { const dd = (dia + i) % 7; if (dias.indexOf(dd) >= 0) return { on: false, abre: 'Abrimos ' + (i === 1 ? 'mañana' : 'el ' + NOM[dd]) + ' a las ' + h12(cfg.tiendaAbre) }; }
+  return { on: false, abre: 'Pronto abrimos' };
+}
+// Respuesta sola al mensaje del cliente: fuera de horario (una vez cada 6 horas por conversación) o bienvenida al primer mensaje
+function autoRespuesta_(c, cfg, nuevo) {
+  try {
+    const o = { cliente: String(c.nombre || '').split(' ')[0], negocio: cfg.nombre || '' };
+    if (cfg.autoCerrado !== 'no') {
+      const ab = abiertoAhora_(cfg);
+      if (ab && !ab.on) {
+        const cs = CacheService.getScriptCache(), k = 'AC_' + (NEG ? NEG.id : '') + c.id;
+        if (cs.get(k)) return null;
+        cs.put(k, '1', 21600);
+        o.abre = ab.abre;
+        return autoMensaje_(c, plantilla_(cfg.msjAutoCerrado || CONFIG_DEF.msjAutoCerrado, o));
+      }
+    }
+    if (nuevo && cfg.autoBienvenida === 'si') return autoMensaje_(c, plantilla_(cfg.msjAutoBienvenida || CONFIG_DEF.msjAutoBienvenida, o));
+  } catch (e) {}
+  return null;
 }
 // Borra las conversaciones sin mensajes en los últimos 2 meses (una vez al día)
 function limpiarChats_(forzar) {

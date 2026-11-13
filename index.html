@@ -810,6 +810,9 @@ body.en-tienda{padding-bottom:110px}
 .msg .bt{padding:9px 12px;border-radius:18px;line-height:1.4;white-space:pre-wrap;word-break:break-word}
 .msg.yo{align-self:flex-end;align-items:flex-end}.msg.yo .bt{background:var(--pri);color:var(--onpri);border-bottom-right-radius:5px}
 .msg.el{align-self:flex-start}.msg.el .bt{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:5px}
+.msg.auto .bt{border:1px dashed color-mix(in srgb,var(--pri) 50%,transparent)}.msg.yo.auto .bt{background:var(--pri2);color:var(--ink)}.auto-r{border-top:1px solid var(--line);padding:4px 0}.auto-r .sw-row{margin:0;border-top:0}.auto-r details{margin:0 0 6px 58px}.auto-r summary{font-size:12px;font-weight:600;color:var(--pri);cursor:pointer;padding:2px 0 6px}.auto-r details .fld{margin-top:4px}
+.auto-t{font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mut);margin:14px 0 4px}.var-t{font-size:12px;color:var(--mut);background:var(--bg);border-radius:10px;padding:8px 10px;margin:10px 0}.var-t code{color:var(--pri);font-weight:700}
+.m-auto{display:inline-block;font-size:10px;font-weight:700;color:var(--pri);background:var(--pri2);padding:1px 7px;border-radius:9px;margin:0 4px;vertical-align:1px}
 .chat-in{display:flex;gap:8px;align-items:flex-end;margin-top:6px}.chat-in textarea{flex:1;border-radius:20px;min-height:44px;max-height:120px;resize:none;padding:11px 14px}
 .chat-in button{width:44px;height:44px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;display:grid;place-items:center;cursor:pointer;flex:none}
 .chat-nota{font-size:11.5px;color:var(--mut);display:flex;gap:6px;align-items:center;justify-content:center;margin:6px 0}
@@ -1663,7 +1666,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.76';
+const APP_VER = '1.9.77';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -5170,8 +5173,8 @@ ACC.pedPago = async el => {
   const ok = !!el.dataset.ok, falta = r2(num(p.total) - num(p.anticipoPagado));
   if (!(await confirmar(ok ? `¿Confirmas que recibiste el pago de <b>${esc(p.nombre)}</b>?${falta > 0 ? ` Se anota <b>${money(falta)}</b> como anticipo por transferencia; al cobrar el pedido ya sale pagado.` : ''}` : `¿El comprobante de <b>${esc(p.nombre)}</b> no coincide? Le aparecerá en la tienda que debe mandar otro.`, { si: ok ? 'Pago recibido' : 'No coincide', peligro: !ok }))) return;
   const g = await api('pedidoPago', { id: p.id, ok });
-  Object.assign(p, g); toast(ok ? 'Pago confirmado' : 'Le avisamos que mande otro comprobante', 'ok'); R.pedidos();
-  if (!ok) { const h = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le escribes a <b>${esc(p.nombre)}</b>?</p>` }); const t = `Hola ${p.nombre.split(' ')[0]}, revisamos el comprobante de tu pedido ${p.numero} y no coincide con el pago. ¿Nos ayudas enviando otro? Gracias. — ${S.config.nombre || ''}`; h.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Escribir por WhatsApp</a>`; h.f.hidden = false; }
+  Object.assign(p, g); toast(ok ? 'Pago confirmado' + (g.avisado ? ' · le avisamos en el chat de tu tienda' : '') : 'Le avisamos que mande otro comprobante', 'ok'); R.pedidos();
+  if (!ok && !g.avisado) { const h = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le escribes a <b>${esc(p.nombre)}</b>?</p>` }); const t = `Hola ${p.nombre.split(' ')[0]}, revisamos el comprobante de tu pedido ${p.numero} y no coincide con el pago. ¿Nos ayudas enviando otro? Gracias. — ${S.config.nombre || ''}`; h.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Escribir por WhatsApp</a>`; h.f.hidden = false; }
 };
 function msjPedido(p) {
   const o = { cliente: p.nombre.split(' ')[0], numero: p.numero, total: money(p.total), negocio: S.config.nombre || '' };
@@ -5199,7 +5202,8 @@ function cotizarRamo(p) {
       await api('estadoPedido', { id: p.id, estado: 'cancelado', motivo: m || 'No se pudo armar' }); h.cerrar(); S.pedidosL = null; toast('Solicitud rechazada', 'ok'); R.pedidos(); } },
     { t: p.estado === 'cotizado' ? 'Cambiar precio' : 'Enviar precio', cls: 'pri', fn: async () => {
       const v = num($('#cr-p', h.el).value); if (!(v > 0)) throw new Error('Escribe el precio del ramo');
-      const g = await api('cotizarRamo', { id: p.id, precio: v, nota: $('#cr-n', h.el).value.trim() }); Object.assign(p, g); h.cerrar(); S.f.pest = 'cotizado'; S.f.pestAuto = 0; toast('Precio enviado. Queda en «Precio enviado» hasta que tu cliente lo acepte.', 'ok', 4500); R.pedidos();
+      const g = await api('cotizarRamo', { id: p.id, precio: v, nota: $('#cr-n', h.el).value.trim() }); Object.assign(p, g); h.cerrar(); S.f.pest = 'cotizado'; S.f.pestAuto = 0; toast('Precio enviado' + (g.avisado ? ' y avisado en el chat de tu tienda' : '') + '. Queda en «Precio enviado» hasta que tu cliente lo acepte.', 'ok', 4500); R.pedidos();
+      if (g.avisado) return;
       const t = `Hola ${p.nombre.split(' ')[0]} ${pers ? '✨ Tu diseño personalizado' : '💐 Tu ramo a tu gusto'} queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Tócalo para aceptarlo: ${linkTienda()}&ramo=${encodeURIComponent(p.id)}`;
       const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp? (opcional)</p><div class="msg-prev">${esc(t)}</div>` });
       a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300)); } }]);
@@ -5264,9 +5268,9 @@ ACC.pedAccion = async el => {
   if (el.dataset.e === 'mesas') { S.verCuenta = p.cuentaId; return ir('mesas'); }
   const g = await api('estadoPedido', { id: p.id, estado: el.dataset.e });
   Object.assign(p, g);
-  toast(el.dataset.e === 'confirmado' ? (modOn('mesas') ? 'Confirmado: ya está en Mesas y en Cocina' : 'Pedido confirmado') : 'Pedido listo', 'ok');
+  toast((el.dataset.e === 'confirmado' ? (modOn('mesas') ? 'Confirmado: ya está en Mesas y en Cocina' : 'Pedido confirmado') : 'Pedido listo') + (g.avisado ? ' · le avisamos en el chat de tu tienda' : ''), 'ok', g.avisado ? 3500 : undefined);
   S.pedidosL = null; S.mesasD = null; R.pedidos();
-  if (p.entrega === 'mesa') return; // en la mesa no hace falta avisar por WhatsApp
+  if (p.entrega === 'mesa' || g.avisado) return; // en la mesa o con el aviso ya enviado en el chat no hace falta WhatsApp
   const h = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp?</p><div class="msg-prev">${esc(msjPedido(p))}</div>` });
   h.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, msjPedido(p))}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; h.f.hidden = false;
   h.f.firstChild.addEventListener('click', () => setTimeout(() => h.cerrar(), 300));
@@ -5312,7 +5316,7 @@ async function verChat(id) {
     const box = $('#ch-m', h.el); if (!box) return;
     let dia = '';
     box.innerHTML = d.mensajes.map(x => { const f = String(x.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
-      return sep + `<div class="msg ${x.de === 'negocio' ? 'yo' : 'el'}"><div class="bt">${msgTxt(x.texto)}</div><small>${fHora(x.fecha)}${x.de === 'negocio' && x.quien ? ' · ' + esc(x.quien) : ''}</small></div>`; }).join('') || '<div class="empty">Sin mensajes</div>';
+      return sep + `<div class="msg ${x.de === 'negocio' ? 'yo' : 'el'}${x.auto ? ' auto' : ''}"><div class="bt">${msgTxt(x.texto)}</div><small>${x.auto ? '<span class="m-auto">Automático</span>' : ''}${fHora(x.fecha)}${x.de === 'negocio' && x.quien ? ' · ' + esc(x.quien) : ''}</small></div>`; }).join('') || '<div class="empty">Sin mensajes</div>';
     box.scrollTop = box.scrollHeight;
   };
   const pinta = () => {
@@ -6809,6 +6813,26 @@ R.tienda = () => {
     <label class="sw-row"><input type="checkbox" data-k="tiendaChat" data-on="si" data-off="no" ${c.tiendaChat !== 'no' ? 'checked' : ''}><span class="sw"></span><div><b>Recibir mensajes directos</b><small>Te escriben desde la tienda y respondes en Mensajes. Se borran solos a los 2 meses.</small></div></label>
     <label class="fld"><span>Mensaje de bienvenida</span><input data-k="tiendaMensaje" value="${v('tiendaMensaje')}" maxlength="160" placeholder="¡Bienvenido! Haz tu pedido…"></label>
     <button class="btn pri" data-a="guardarAj" data-s="estado">Guardar</button>`);
+  { // Mensajes automáticos: la tienda le escribe sola al comprador en el chat cuando cambia su pedido
+    const cot = girosOn().some(g => g === 'floristeria' || g === 'manualidades');
+    const fila = (k, msjs, t, d) => `<div class="auto-r"><label class="sw-row"><input type="checkbox" data-k="${k}" data-on="si" data-off="no" ${(k === 'autoBienvenida' ? c[k] === 'si' : c[k] !== 'no') ? 'checked' : ''}><span class="sw"></span><div><b>${t}</b><small>${d}</small></div></label>
+      <details><summary>Editar texto</summary>${msjs.map(([mk, et]) => `<label class="fld"><span>${et}</span><textarea data-k="${mk}" rows="3" maxlength="500">${v(mk)}</textarea></label>`).join('')}</details></div>`;
+    const sinHora = !c.tiendaAbre || !c.tiendaCierra;
+    h += sec('auto', 'chat', 'Mensajes automáticos', c.tiendaChat === 'no' ? `<div class="aviso info sm">${ic('chat', 18)}<div>Enciende <b>Recibir mensajes directos</b> para que tu tienda le avise sola a tus clientes en el chat cuando confirmas, terminas o cobras su pedido.</div></div>`
+      : `<p class="xs mut" style="margin-top:0">Le llegan a tu cliente en el chat de tu tienda cuando cambias su pedido. Tú solo trabajas el pedido como siempre; el botón de WhatsApp sigue en cada pedido.</p>
+      <div class="auto-t">Avisos del pedido</div>
+      ${fila('autoRecibido', [['msjAutoRecibido', 'Texto']], 'Pedido recibido', 'Apenas el cliente envía su pedido.')}
+      ${cot ? fila('autoCotizado', [['msjAutoCotizado', 'Texto']], 'Precio enviado', 'Cuando le pones precio a un ramo o diseño personalizado.') : ''}
+      ${fila('autoConfirmado', [['msjAutoConfirmado', 'Texto']], 'Pedido confirmado', 'Al tocar «Confirmar».')}
+      ${fila('autoListo', [['msjAutoListo', 'Texto']], 'Pedido listo', 'Al tocar «Marcar listo». {entrega} dice «Va en camino» o «Puedes pasar a recogerlo».')}
+      ${fila('autoPago', [['msjAutoPagoOk', 'Cuando el pago coincide'], ['msjAutoPagoNo', 'Cuando el comprobante no coincide']], 'Pago recibido o no coincide', 'Al revisar el comprobante que te mandó.')}
+      ${fila('autoCancelado', [['msjAutoCancelado', 'Texto']], 'Pedido cancelado', 'Incluye el motivo que escribas ({motivo}).')}
+      <div class="auto-t">Respuestas automáticas</div>
+      ${fila('autoCerrado', [['msjAutoCerrado', 'Texto']], 'Fuera de horario', sinHora ? 'Pon la hora en que abres y cierras en «Información que ven tus clientes» para que funcione.' : 'Si te escriben cuando estás cerrado. {abre} dice cuándo abres.')}
+      ${fila('autoBienvenida', [['msjAutoBienvenida', 'Texto']], 'Bienvenida al primer mensaje', 'Cuando un cliente te escribe por primera vez.')}
+      <div class="var-t">Puedes usar <code>{cliente}</code> <code>{numero}</code> <code>{total}</code> <code>{negocio}</code></div>
+      <button class="btn pri" data-a="guardarAj" data-s="auto">Guardar</button>`, c.tiendaChat === 'no' ? 'Apagados' : 'Encendidos');
+  }
   { // Secciones (giros) de la tienda: cada giro activo es un módulo en la portada
     const on = girosOn(), cuenta = id => S.productos.filter(p => p.activo && giroDeP(p) === id).length;
     h += sec('giros', 'grid', 'Secciones de tu tienda', `<p class="xs mut" style="margin-top:0">${on.length > 1 ? 'Tu tienda abre con un botón por cada sección y el cliente entra a la que quiera.' : 'Tu tienda tiene una sola sección. Si también vendes otra cosa (por ejemplo streaming y recargas), puedes activar más secciones.'}</p>
@@ -9976,6 +10000,9 @@ ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
 ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
 
 const NOVEDADES = [
+  { v: '1.9.77', fecha: '2026-11-12', items: [
+    { i: 'chat', t: 'Mensajes automáticos en tu tienda', d: 'Cuando confirmas, terminas, cobras o cancelas un pedido, tu tienda le avisa sola a tu cliente en el chat (sin abrir WhatsApp). También puede contestar sola cuando estás cerrado. Enciende o apaga cada aviso y cambia los textos en Mi tienda en línea › Mensajes automáticos.', si: () => S.plus, ir: 'tienda' }
+  ] },
   { v: '1.9.76', fecha: '2026-11-12', items: [
     { i: 'store', t: 'Tu tienda en línea no muestra el código automático', d: 'En las tiendas tipo catálogo, el comprador solo ve el código cuando tú lo escribiste. Los códigos que pone el programa (como CAT-0001) quedan solo para ti.', si: () => modOn('catalogo') }
   ] },
@@ -11088,8 +11115,8 @@ function tCarrito() {
       if (veh.trim().length < 2) throw new Error('Escribe qué vehículo traes');
     }
     LS.set('cliente_tienda', JSON.stringify({ nombre, telefono: tel, direccion: dir || cli.direccion || '' }));
-    const r = await api('pedir', { negocio: T.id, nombre, telefono: tel, entrega: T.entrega, mesa, direccion: dir, cita: citaOn() ? T.cita : '', hora: citaOn() ? T.hora : '', vehiculo: veh.trim(), placa: pla.trim(), pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: !enMesa && $('#tc-p', h.el).value !== 'Efectivo' && !($('#tc-p', h.el).value === 'Tarjeta' && n.enlacePago) && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => Object.assign({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }, T.fotos && T.fotos[k] ? { foto: T.fotos[k] } : {}))) });
-    const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
+    const r = await api('pedir', { chatClave: chatClave(), negocio: T.id, nombre, telefono: tel, entrega: T.entrega, mesa, direccion: dir, cita: citaOn() ? T.cita : '', hora: citaOn() ? T.hora : '', vehiculo: veh.trim(), placa: pla.trim(), pago: $('#tc-p', h.el).value, nota: $('#tc-o', h.el).value, comprobante: !enMesa && $('#tc-p', h.el).value !== 'Efectivo' && !($('#tc-p', h.el).value === 'Tarjeta' && n.enlacePago) && T.comp ? T.comp : '', items: T.compras.map(c => Object.assign({ id: '_compra' }, c)).concat(Object.keys(T.cart).map(k => Object.assign({ id: kId(k), cantidad: T.cart[k], opcion: kOp(k) }, T.fotos && T.fotos[k] ? { foto: T.fotos[k] } : {}))) });
+    if (r.chatClave && r.chatClave !== chatClave()) { LS.set(tKey('chat'), r.chatClave); LS.set(tKey('chatVisto'), ''); } const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
     T.cart = {}; guardarCarrito(); T.fotos = {}; guardarFotosCart(); T.compras = []; guardarCompras(); T.comp = ''; h.cerrar(); gridTienda(); pedidoEnviado(r, nombre, tel); misPedidosTienda();
   };
   pinta();
@@ -11128,9 +11155,10 @@ function chatBadgeTienda() {
     const visto = LS.get(tKey('chatVisto'), ''), nuevos = c.mensajes.filter(m => m.de === 'negocio' && m.fecha > visto).length;
     b.innerHTML = ic('chat', 24) + (nuevos ? `<b>${nuevos}</b>` : '');
     const box = $('#t-chatmis');
-    if (box && nuevos) box.innerHTML = `<div class="mis" data-chat="1" style="cursor:pointer"><b>Mensajes</b><div class="mis-r"><span>${ic('chat', 16)} ${esc(T.info.negocio.nombre)} te respondió</span><span class="badge">${nuevos} ${nuevos === 1 ? 'nuevo' : 'nuevos'}</span></div></div>`;
+    if (box && nuevos) box.innerHTML = `<div class="mis" data-chat="1" style="cursor:pointer"><b>Mensajes</b><div class="mis-r"><span>${ic('chat', 16)} ${esc(T.info.negocio.nombre)} te escribió</span><span class="badge">${nuevos} ${nuevos === 1 ? 'nuevo' : 'nuevos'}</span></div></div>`;
     else if (box) box.innerHTML = '';
   }).catch(() => {});
+  clearTimeout(T.tChatB); T.tChatB = setTimeout(() => { if (!document.hidden) chatBadgeTienda(); else document.addEventListener('visibilitychange', () => chatBadgeTienda(), { once: true }); }, 30000);
 }
 function chatTienda(productoId, ped) {
   const n = T.info.negocio, d = n.dueno, cli = LS.json('cliente_tienda', {}) || {};
@@ -11149,7 +11177,7 @@ function chatTienda(productoId, ped) {
     if (!ms.length) { box.innerHTML = `<div class="empty">${d ? esc(d.nombre.split(' ')[0]) + ' te responde por aquí.' : 'Escríbenos y te respondemos por aquí.'}${prod || ped ? '' : '<br>Cuéntanos qué necesitas.'}</div>`; return; }
     let dia = '';
     box.innerHTML = ms.map(m => { const f = String(m.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
-      return sep + `<div class="msg ${m.de === 'cliente' ? 'yo' : 'el'}"><div class="bt">${msgTxt(m.texto)}</div><small>${fHora(m.fecha)}</small></div>`; }).join('');
+      return sep + `<div class="msg ${m.de === 'cliente' ? 'yo' : 'el'}${m.auto ? ' auto' : ''}"><div class="bt">${msgTxt(m.texto)}</div><small>${fHora(m.fecha)}${m.auto ? '<span class="m-auto">Automático</span>' : ''}</small></div>`; }).join('');
     box.scrollTop = box.scrollHeight;
     const ult = ms.filter(m => m.de === 'negocio').map(m => m.fecha).sort().pop(); if (ult) LS.set(tKey('chatVisto'), ult);
   };
@@ -11254,9 +11282,9 @@ function armaRamo() {
     const nombre = $('#rf-n', h.el).value.trim(), telefono = $('#rf-t', h.el).value.trim(), direccion = ($('#rf-d', h.el) || {}).value || '';
     const det = $('#rf-det', h.el).value.trim(), msj = $('#rf-msj', h.el).value.trim();
     const nota = ['Para el ' + fFechaC(fe), det, msj ? 'Tarjeta: ' + msj : ''].filter(Boolean).join(' · ');
-    const r = await api('pedir', { negocio: T.id, ramo: true, presupuesto: pre, fotos, items, nombre, telefono, entrega, direccion: entrega === 'domicilio' ? direccion : '', pago: (n.pagos || ['Efectivo'])[0], nota });
+    const r = await api('pedir', { chatClave: chatClave(), negocio: T.id, ramo: true, presupuesto: pre, fotos, items, nombre, telefono, entrega, direccion: entrega === 'domicilio' ? direccion : '', pago: (n.pagos || ['Efectivo'])[0], nota });
     LS.set('cliente_tienda', JSON.stringify(Object.assign(cli, { nombre, telefono, direccion: direccion || cli.direccion || '' })));
-    const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
+    if (r.chatClave && r.chatClave !== chatClave()) { LS.set(tKey('chat'), r.chatClave); LS.set(tKey('chatVisto'), ''); } const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
     h.cerrar(); toast('¡Listo! La tienda te mandará el precio aquí, en «Tus pedidos».', 'ok', 5000); misPedidosTienda();
     const b = $('#t-mis'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
@@ -11296,9 +11324,9 @@ function armaDiseno() {
     const pre = num($('#rd-pre', h.el).value.replace(/[^\d.]/g, '')); if (!(pre > 0)) { $('#rd-pre', h.el).focus(); throw new Error('Escribe tu presupuesto'); }
     const fe = $('#rd-fe', h.el).value; if (!fe) throw new Error('Elige para cuándo lo quieres');
     const nombre = $('#rd-n', h.el).value.trim(), telefono = $('#rd-t', h.el).value.trim(), direccion = ($('#rd-dir', h.el) || {}).value || '';
-    const r = await api('pedir', { negocio: T.id, personal: true, categoria: cat, descripcion: desc, cantidad, presupuesto: pre, fotos, nombre, telefono, entrega, direccion: entrega === 'domicilio' ? direccion : '', pago: (n.pagos || ['Efectivo'])[0], nota: 'Para el ' + fFechaC(fe) + ' · ' + desc });
+    const r = await api('pedir', { chatClave: chatClave(), negocio: T.id, personal: true, categoria: cat, descripcion: desc, cantidad, presupuesto: pre, fotos, nombre, telefono, entrega, direccion: entrega === 'domicilio' ? direccion : '', pago: (n.pagos || ['Efectivo'])[0], nota: 'Para el ' + fFechaC(fe) + ' · ' + desc });
     LS.set('cliente_tienda', JSON.stringify(Object.assign(cli, { nombre, telefono, direccion: direccion || cli.direccion || '' })));
-    const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
+    if (r.chatClave && r.chatClave !== chatClave()) { LS.set(tKey('chat'), r.chatClave); LS.set(tKey('chatVisto'), ''); } const mis = LS.json(tKey('pedidos'), []) || []; mis.unshift(r.id); LS.set(tKey('pedidos'), JSON.stringify(mis.slice(0, 50)));
     h.cerrar(); toast('¡Listo! La tienda te mandará el precio aquí, en «Tus pedidos».', 'ok', 5000); misPedidosTienda();
     const b = $('#t-mis'); if (b) b.scrollIntoView({ behavior: 'smooth', block: 'center' });
   } }]);
