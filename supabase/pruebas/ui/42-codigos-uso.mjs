@@ -141,7 +141,13 @@ const r3 = await api('registrar', { negocio: 'Norey Beauty', nombre: 'Noemí Rey
 const t3 = r3.data.token, n3 = (await api('bootstrap', {}, t3)).data.negocioId; await activar(n3); await api('guardar', { entidad: 'Config', registro: { tienda: 'si' } }, t3);
 const lab = await api('guardar', { entidad: 'Productos', registro: { nombre: 'Labial mate Rosa Nude', categoria: 'Labios', precio: 180, tienda: true, stock: 5 } }, t3);
 pg = await nuevaPagina({});
-await paso(pg, 'Tienda en línea (catálogo) · el comprador ve el código automático del producto', async () => {
+const rim = await api('guardar', { entidad: 'Productos', registro: { nombre: 'Delineador negro', categoria: 'Ojos', precio: 95, tienda: true, stock: 5, codigo: 'DL-77' } }, t3);
+const verCod = async nombre => { await pg.goto('http://localhost:8765/?tienda=' + n3); await pg.waitForTimeout(3000);
+  await pg.evaluate(n => { const e = [...document.querySelectorAll('*')].filter(x => x.children.length === 0 && (x.textContent || '').includes(n)).pop(); if (e) e.click(); }, nombre); await pg.waitForTimeout(1200);
+  const t = (await pg.locator('body').innerText()).replace(/\s+/g, ' '); const m = t.match(/Cód\.: ?[A-Z0-9-]+/); return m ? m[0] : ''; };
+await paso(pg, 'Tienda en línea (catálogo) · el comprador NO ve el código automático', async () => { const c = await verCod('Labial mate Rosa Nude'); await pg.cap('tienda-sin-codigo-auto'); console.log('     [catálogo] automático ' + lab.data.codigo + ' → en la tienda: «' + c + '»'); return c === ''; });
+await paso(pg, 'Tienda en línea (catálogo) · el código que escribió el negocio (DL-77) sí se ve', async () => { const c = await verCod('Delineador negro'); await pg.cap('tienda-codigo-propio'); console.log('     [catálogo] propio → en la tienda: «' + c + '»'); return /DL-77/.test(c); });
+await paso(pg, 'Tienda en línea (catálogo) · (paso anterior, ya no aplica)', async () => { return true;
   console.log('     [catálogo] guardado con ' + (lab.ok ? lab.data.codigo : lab.error));
   await pg.goto('http://localhost:8765/?tienda=' + n3); await pg.waitForTimeout(3000);
   await pg.evaluate(() => { const e = [...document.querySelectorAll('*')].filter(x => x.children.length === 0 && /Labial mate Rosa Nude/.test(x.textContent || '')).pop(); if (e) e.click(); }); await pg.waitForTimeout(1200);
@@ -177,7 +183,12 @@ await paso(null, 'Panel · «Copiar productos» a otro negocio del mismo giro qu
   const dest = db.T.Productos.filter(p => p.negocio_id === n4), sin = dest.filter(p => !p.codigo).map(p => p.nombre), cs = dest.filter(p => p.codigo).map(p => p.codigo.toLowerCase());
   console.log('     [copiar] destino tenía ' + propio.data.codigo + ' · copiados ' + cp.data.copiados + ', omitidos ' + cp.data.omitidos + ' · quedaron SIN código: ' + (sin.join(', ') || 'ninguno') + ' · códigos repetidos: ' + (cs.length - new Set(cs).size));
   const nv = await api('guardar', { entidad: 'Productos', registro: { nombre: 'Polvo compacto', categoria: 'Rostro', precio: 200 } }, t4); console.log('     [copiar] el siguiente producto nuevo en el destino: ' + (nv.ok ? nv.data.codigo : nv.error));
-  return cs.length === new Set(cs).size && nv.ok;
+  const lc = dest.find(p => p.nombre === 'Labial mate Rosa Nude'); console.log('     [copiar] el Labial (CAT-0001 en el origen) quedó en el destino con ' + lc.codigo);
+  // código propio repetido con otro nombre
+  await api('guardar', { entidad: 'Productos', registro: { nombre: 'Esponja', categoria: 'Rostro', precio: 30, codigo: 'X-9' } }, t3); await api('guardar', { entidad: 'Productos', registro: { nombre: 'Brocha', categoria: 'Rostro', precio: 60, codigo: 'X-9' } }, t4);
+  const cp2 = await P('panelCopiarProductos', { de: n3, a: n4, cats: null, fotos: false }); const es = db.T.Productos.find(p => p.negocio_id === n4 && p.nombre === 'Esponja'); console.log('     [copiar] código propio repetido (X-9): la Esponja quedó con ' + (es && es.codigo));
+  const d2 = db.T.Productos.filter(p => p.negocio_id === n4), c2 = d2.map(p => String(p.codigo || '').toLowerCase());
+  return sin.length === 0 && d2.every(p => p.codigo) && c2.length === new Set(c2).size && nv.ok && /^CAT-\d{4}$/.test(lc.codigo) && lc.codigo !== 'CAT-0001';
 });
 pg = await nuevaPagina({});
 await paso(pg, 'Panel · entra con la clave y la lista de clientes carga', async () => {

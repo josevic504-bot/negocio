@@ -504,6 +504,8 @@ function RECORDATORIOS_(ids) {
         // (los de ejemplo toman el siguiente EJ libre, para que el Panel los siga contando como ejemplo)
         o.codigo = cod && !cods[ck] ? cod : '';
         if (cod && !o.codigo && /^EJ\d/i.test(cod)) { let k = 0, c; do { k++; c = 'EJ' + String(k).padStart(3, '0'); } while (cods[c.toLowerCase()]); o.codigo = c; }
+        // Cualquier otro código que ya exista en el destino: conserva sus letras (FAR, CAT…; PRD si no las tiene) y toma el siguiente número libre
+        if (cod && !o.codigo) { const m = /^([A-Z]{3})-\d+$/i.exec(cod), pf = m ? m[1].toUpperCase() : 'PRD', re = new RegExp('^' + pf + '-(\\d+)$', 'i'); let mx = 0, c; Object.keys(cods).forEach(k => { const x = re.exec(k); if (x) mx = Math.max(mx, Number(x[1])); }); do { mx++; c = pf + '-' + String(mx).padStart(4, '0'); } while (cods[c.toLowerCase()]); o.codigo = c; }
         if (o.codigo) cods[o.codigo.toLowerCase()] = 1;
         if (!d.costos) { o.costo = 0; o.margen = 0; }
         if (!d.existencias) {
