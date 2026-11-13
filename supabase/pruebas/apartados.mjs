@@ -115,5 +115,26 @@ const p5=db.T.Pedidos.find(p=>p.id===P5); v('pedido vuelve a por pedir',!p5.reci
 v('gasto anulado',db.T.Gastos.find(g=>g.id===G5).anulado===true);
 // Ahora se puede editar y cancelar
 x=await api('estadoPedido',{id:P5,estado:'cancelado',motivo:'x'},tok); v('cancelar luego de anular',x.ok,x);
+
+// Pedido anotado en el negocio (WhatsApp / en persona), sin Plus
+const lic=db.T.Licencias[0]; lic.estado='Activa'; lic.plus='';
+let pm=await api('pedidoManual',{nombre:'Carla Núñez',telefono:'9988-7766',canal:'WhatsApp',entrega:'recoger',items:[{enlace:'sw2306123',talla:'M',color:'Negro',cantidad:1,usd:18.4},{enlace:'sw2401122',talla:'38',cantidad:2,usd:21.2,precio:600}],pagado:500,metodo:'Transferencia'},tok);
+v('manual ok sin Plus',pm.ok,pm);
+const PM=pm.data;
+v('manual: precio calculado y manual',PM.items[0].precio===Math.ceil(18.4*25*1.15)&&PM.items[1].precio===600&&PM.items[1].total===1200,PM.items);
+v('manual: confirmado, origen y anticipo',PM.estado==='confirmado'&&PM.origen==='WhatsApp'&&PM.anticipoPagado===500&&db.T.Abonos.some(a=>a.ref===PM.id&&a.monto===500&&a.metodo==='Transferencia'),PM);
+v('manual: cliente creado',db.T.Clientes.some(c=>c.id===PM.clienteId&&c.nombre==='Carla Núñez'&&c.telefono==='9988-7766'));
+let pm2=await api('pedidoManual',{clienteId:PM.clienteId,canal:'En persona',entrega:'domicilio',direccion:'Col. Moderna, 3 calle',envio:60,items:[{enlace:'tm55',usd:10,cantidad:1}]},tok);
+v('manual: cliente guardado y domicilio',pm2.ok&&pm2.data.nombre==='Carla Núñez'&&pm2.data.envio===60&&pm2.data.total===pm2.data.items[0].precio+60&&pm2.data.origen==='En persona',pm2);
+x=await api('pedidoManual',{nombre:'Ca',telefono:'9988',items:[{enlace:'x',usd:1}]},tok); v('manual: valida nombre',!x.ok&&/nombre/.test(x.error),x);
+x=await api('pedidoManual',{nombre:'Pedro Pérez',telefono:'9988-1122',items:[{enlace:'sw1',usd:0}]},tok); v('manual: valida dólares',!x.ok&&/dólares/.test(x.error),x);
+x=await api('pedidoManual',{nombre:'Pedro Pérez',telefono:'9988-1122',items:[{enlace:'sw1',usd:5,cantidad:1}],pagado:99999},tok); v('manual: anticipo mayor',!x.ok&&/anticipo/.test(x.error),x);
+L=(await api('pedidos',{},tok)).data; v('manual en la lista',L.some(p=>p.id===PM.id&&p.origen==='WhatsApp'));
+f=await api('compraFactura',{pedidos:[{id:PM.id,costos:[460,500]}],proveedor:'Shein',factura:'M-1',metodo:'Efectivo',llego:true},tok);
+v('manual: factura sin Plus',f.ok&&f.data.pedidos[0].estado==='listo'&&f.data.pedidos[0].avisado===false,f);
+L=(await api('pedidos',{},tok)).data; const qm=L.find(x=>x.id===PM.id);
+vta=await api('venta',ticket(qm),tok); v('manual: entrega con segundo pago',vta.ok&&Math.abs(vta.data.venta.recibido-(vta.data.venta.total-500))<0.01&&Math.abs(vta.data.venta.costo-1460)<0.01,vta);
+let ft=await api('subirFoto',{tipo:'factura',data:'data:image/png;base64,iVBORw0KGgo='},tok); v('foto de factura sin Plus',ft.ok,ft);
+ft=await api('subirFoto',{data:'data:image/png;base64,iVBORw0KGgo='},tok); v('foto de producto sigue siendo Plus',!ft.ok&&/Plus/.test(ft.error),ft);
 // Cajero: no registra factura
 console.log(`\n${ok} bien · ${mal} mal`); process.exit(mal?1:0);
