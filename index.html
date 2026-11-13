@@ -5665,8 +5665,9 @@ function formProducto(p, onSave, pre) {
   // Al cambiar la categoría: color del dibujo y subcategorías de esa categoría
   $('#pf-cat', h.el).addEventListener('input', () => { img(); const w = $('#pf-subw', h.el); if (w) { const l = subsDe($('#pf-cat', h.el).value.trim()), v0 = $('#pf-sub', h.el).value; w.innerHTML = elegirHTML('pf-sub', l.includes(v0) ? v0 : '', l, girosOn().includes('vitaminas') ? 'Ej. Multivitamínicos, Proteínas' : 'Ej. Dama, Base, Gloss'); } });
   // Código automático: el ejemplo cambia con la sección o la categoría (el servidor pone el definitivo)
-  const codPh = () => { if (!nuevo) return; const gS = $('#pf-giro .chip.on', h.el); $('#pf-cod', h.el).placeholder = 'Se pone solo: ' + codAuto(gS ? gS.dataset.g : giroDeP({ categoria: $('#pf-cat', h.el).value.trim() })); };
-  $('#pf-cat', h.el).addEventListener('input', codPh);
+  // Igual que el servidor: manda la sección elegida; con la sección principal (o sin secciones) manda la categoría
+  const codPh = () => { if (!nuevo) return; const gS = $('#pf-giro .chip.on', h.el); $('#pf-cod', h.el).placeholder = 'Se pone solo: ' + codAuto(gS && gS.dataset.g !== girosOn()[0] ? gS.dataset.g : giroDeP({ categoria: $('#pf-cat', h.el).value.trim() })); };
+  $('#pf-cat', h.el).addEventListener('input', codPh); codPh();
   const pg = $('#pf-giro', h.el); if (pg) pg.addEventListener('click', e => { const b = e.target.closest('[data-g]'); if (!b) return; $$('.chip', pg).forEach(c => c.classList.toggle('on', c === b)); codPh(); });
   const file = $('#pf-file', h.el);
   if (file) file.addEventListener('change', async () => { if (!file.files[0]) return; try { st.fotoNueva = await comprimirImagen(file.files[0], DEMO.on ? 360 : 800); img(); } catch (e) { err(e); } });
@@ -6196,7 +6197,7 @@ function formCompra(provId) {
         const n = l.nuevo;
         return `<div class="cl cl-new"><div class="cl-h"><span class="av sm cl-ico">${ic('plus', 18)}</span><b>Producto nuevo</b><span class="badge b-info">se crea al guardar</span><button class="btn icon ghost" data-q="${i}" aria-label="Quitar">${ic('x', 18)}</button></div>
         <label class="fld"><span>Nombre del producto *</span><input data-i="${i}" data-k="nombre" maxlength="80" value="${esc(n.nombre)}" placeholder="Ej. Camiseta polo azul"></label>
-        <div class="f3"><label class="fld"><span>Categoría</span><input data-i="${i}" data-k="categoria" list="dl-cat-c" maxlength="40" value="${esc(n.categoria)}" placeholder="General"></label><label class="fld"><span>Código</span><input data-i="${i}" data-k="codigo" maxlength="40" value="${esc(n.codigo)}" placeholder="Se pone solo"></label><label class="fld"><span>ISV</span><select data-i="${i}" data-k="tasaIsv"><option value="">${isvG}%</option><option value="0">Exento</option><option value="15">15%</option><option value="18">18%</option></select></label></div>
+        <div class="f3"><label class="fld"><span>Categoría</span><input data-i="${i}" data-k="categoria" list="dl-cat-c" maxlength="40" value="${esc(n.categoria)}" placeholder="General"></label><label class="fld"><span>Código</span><input data-i="${i}" data-k="codigo" maxlength="40" value="${esc(n.codigo)}" placeholder="Auto"></label><label class="fld"><span>ISV</span><select data-i="${i}" data-k="tasaIsv"><option value="">${isvG}%</option><option value="0">Exento</option><option value="15">15%</option><option value="18">18%</option></select></label></div>
         ${numeros(l, i)}
         <div class="chips cl-pct">${[20, 30, 40, 50, 100].map(x => `<button type="button" class="chip ${num(l.pct) === x && l.pctFijo ? 'on' : ''}" data-chip="${i}" data-v="${x}">${x}%</button>`).join('')}</div>
         <small class="hint" id="fc-h${i}">${hintL(i)}</small></div>`;
