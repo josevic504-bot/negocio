@@ -89,7 +89,7 @@ const SCHEMA = {
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
   Inventario:     ['id','fecha','productoId','tipo','cantidad','stock','refId','usuarioId','nota','costo','variante'],
-  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId','presupuesto','cotiza','chatId','recibo'],
+  Pedidos:        ['id','numero','fecha','nombre','telefono','clienteId','entrega','direccion','pago','items','subtotal','envio','total','estado','ventaId','nota','actualizado','anticipo','comprobante','pagoEstado','cita','hora','vehiculo','placa','citaId','presupuesto','cotiza','chatId','recibo','origen'],
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
@@ -399,6 +399,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'compraFactura':   return lock_(() => compraFactura_(u, d));
     case 'compraLlego':     return lock_(() => compraLlego_(u, d));
     case 'liberarApartado': return lock_(() => liberarApartado_(u, d));
+    case 'pedidoManual':    return lock_(() => pedidoManual_(u, d));
     case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
     case 'cobroComprobante': return lock_(() => cobroComprobante_(u, d));
     case 'pedidoPago':      return lock_(() => pedidoPago_(u, d));
@@ -3412,7 +3413,7 @@ function carpetaFotos_() {
 
 function subirFoto_(u, d) {
   req_(u, ['admin','bodega']);
-  if (!plus_()) throw new Error('Las fotos de productos son parte del plan Plus');
+  if (!plus_() && !(d.tipo === 'factura' && girosActivos_().indexOf('compras') >= 0)) throw new Error('Las fotos de productos son parte del plan Plus'); // la foto de la factura de compras en línea va sin Plus
   const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(d.data || ''));
   if (!m) throw new Error('La foto no es válida');
   if (m[2].length > 900000) throw new Error('La foto es muy pesada');
@@ -4666,6 +4667,56 @@ function liberarApartado_(u, d) {
   const g = upsert_('Pedidos', { id: p.id, recibo: JSON.stringify(r), estado: 'cancelado', actualizado: ahora_(), nota: ((p.nota ? p.nota + ' · ' : '') + nota).slice(-1000) });
   g.items = parseJ_(g.items, []); g.recibo = r; g.anticipoPagado = 0;
   return { pedido: g, productos: rows_('Productos'), nuevos: nuevos, venta: venta };
+}
+
+// Pedido de compras en línea que el cliente hizo por WhatsApp, en persona o por llamada: lo anota el negocio y sigue el mismo camino
+// (registrar factura → en camino → apartado → entregar o liberar). Funciona con o sin Plus.
+function pedidoManual_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  if (girosActivos_().indexOf('compras') < 0) throw new Error('Esta opción es del giro Compras en línea');
+  const cfg = config_();
+  let cli = d.clienteId ? rows_('Clientes').find(x => x.id === d.clienteId) : null;
+  if (d.clienteId && !cli) throw new Error('El cliente ya no existe');
+  const nombre = cli ? txt_(cli.nombre, 60) : txt_(d.nombre, 60), tel = String(cli ? cli.telefono : d.telefono || '').replace(/\D/g, '');
+  if (nombre.length < 3) throw new Error('Escribe el nombre del cliente');
+  if (tel.length < 8) throw new Error('Escribe el WhatsApp del cliente (8 números)');
+  const canal = ['WhatsApp', 'En persona', 'Llamada'].indexOf(d.canal) >= 0 ? d.canal : 'WhatsApp';
+  const entrega = d.entrega === 'domicilio' ? 'domicilio' : 'recoger', direccion = entrega === 'domicilio' ? txt_(d.direccion, 200) : '';
+  if (entrega === 'domicilio' && direccion.length < 5) throw new Error('Escribe la dirección de entrega');
+  const lista = Array.isArray(d.items) ? d.items : [];
+  if (!lista.length) throw new Error('Agrega al menos un artículo');
+  if (lista.length > 30) throw new Error('Son demasiados artículos para un pedido');
+  const items = lista.map((i, n) => {
+    const enlace = txt_(i && i.enlace, 400), usd = r2_(Number(i && i.usd) || 0), cant = Math.floor(Number(i && i.cantidad) || 0);
+    if (enlace.length < 2) throw new Error('Escribe el código o el enlace del artículo ' + (n + 1));
+    if (!(usd > 0) || usd > 5000) throw new Error('Escribe el precio en dólares del artículo ' + (n + 1));
+    if (cant < 1 || cant > 50) throw new Error('Cantidad no válida en el artículo ' + (n + 1));
+    const manual = !(i.precio === undefined || i.precio === '' || i.precio === null);
+    if (manual && (!esNum_(i.precio) || Number(i.precio) < 0)) throw new Error('Precio no válido en el artículo ' + (n + 1));
+    if (!manual && !(Number(cfg.comprasCambio) > 0)) throw new Error('Pon el tipo de cambio en Mi tienda en línea › Compras en línea, o escribe el precio en lempiras');
+    const precio = manual ? r2_(i.precio) : precioCompra_(usd, cfg), total = r2_(precio * cant);
+    const det = [i.talla ? 'Talla: ' + txt_(i.talla, 20) : '', i.color ? 'Color: ' + txt_(i.color, 30) : '', i.nota ? 'Nota: ' + txt_(i.nota, 80) : ''].filter(Boolean).join(', ');
+    return { productoId: '', tipo: 'compra', enlace: enlace, usd: usd, nombre: txt_('Compra en línea' + (det ? ' (' + det + ')' : ''), 240), cantidad: cant, precio: precio, total: total };
+  });
+  const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
+  if (!(d.envio === undefined || d.envio === '' || d.envio === null) && (!esNum_(d.envio) || Number(d.envio) < 0)) throw new Error('El envío no es válido');
+  const envio = entrega === 'domicilio' && esNum_(d.envio) ? r2_(d.envio) : 0, total = r2_(subtotal + envio);
+  const anticipo = Math.ceil(subtotal * Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0)) / 100);
+  const pagado = esNum_(d.pagado) ? r2_(d.pagado) : 0;
+  if (pagado < 0 || pagado > total + 0.004) throw new Error('El anticipo no puede ser mayor que el total (' + money_(total, cfg) + ')');
+  if (!cli) {
+    const t8 = tel.slice(-8);
+    cli = rows_('Clientes').find(x => tel8_(x.telefono) && tel8_(x.telefono) === t8);
+    if (!cli) cli = upsert_('Clientes', { nombre: nombre, telefono: tel.length === 8 || (tel.length === 11 && tel.indexOf('504') === 0) ? t8.slice(0, 4) + '-' + t8.slice(4) : '+' + tel,
+      direccion: direccion, notas: 'Registrado al anotar un pedido de compras en línea', activo: true, limite: 0, creado: ahora_() });
+  }
+  const metodo = ['Efectivo', 'Tarjeta', 'Transferencia'].indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
+  const p = upsert_('Pedidos', { comprobante: '', pagoEstado: '', numero: siguiente_('P'), fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
+    pago: metodo, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: total, estado: 'confirmado', ventaId: '', anticipo: anticipo, presupuesto: 0, cotiza: '', cita: '', hora: '', vehiculo: '', placa: '', citaId: '',
+    origen: canal, chatId: '', recibo: '', actualizado: ahora_(), nota: txt_((d.nota ? txt_(d.nota, 200) + ' · ' : '') + 'Registrado en el negocio por ' + String(u.nombre || '').split(' ')[0] + ' · pidió por ' + canal, 400) });
+  if (pagado > 0) anticipoRegistrar_(u, pagado, cli.id, 'Anticipo pedido ' + p.numero, p.id, metodo, d);
+  p.items = items; p.recibo = null; p.anticipoPagado = pagado;
+  return p;
 }
 
 // Una vez al día: recordatorio en el chat de la tienda a quien tiene un apartado que vence mañana
@@ -6149,7 +6200,7 @@ function chatDePedido_(p) {
 function autoPedido_(p, tipo, extra) {
   try {
     const cfg = config_(), t = AUTO_TIPOS[tipo];
-    if (!t || !p || cfg.tienda !== 'si' || cfg.tiendaChat === 'no' || cfg[t[0]] === 'no' || p.entrega === 'mesa') return false;
+    if (!t || !p || cfg.tienda !== 'si' || cfg.tiendaChat === 'no' || cfg[t[0]] === 'no' || p.entrega === 'mesa' || p.origen) return false; // anotado en el negocio: se le avisa por WhatsApp
     const c = chatDePedido_(p); if (!c) return false;
     const listoTxt = p.entrega === 'domicilio' ? 'Va en camino 🛵' : 'Puedes pasar a recogerlo.';
     const o = { cliente: String(p.nombre || '').split(' ')[0], numero: p.numero, total: money_(p.total, cfg), negocio: cfg.nombre || '', entrega: listoTxt,

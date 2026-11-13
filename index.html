@@ -273,6 +273,10 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .la-op{display:flex;flex-direction:column;gap:6px}.la-o{display:flex;align-items:center;gap:10px;width:100%;text-align:left;border:1.5px solid var(--line);border-radius:12px;padding:9px 12px;background:var(--card);color:inherit;font:inherit;cursor:pointer}.la-o i{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);flex:none}
 .la-o.on{border-color:var(--pri)}.la-o.on i{border:5px solid var(--pri)}.la-o span{display:flex;flex-direction:column;font-size:14px}.la-o small{color:var(--mut);font-size:12px}
 .la-p{border-top:1px dashed var(--line);padding-top:6px;margin-top:6px}
+.np-it{border:1.5px solid var(--line);border-radius:14px;padding:6px 12px 2px;margin:8px 0}.np-ih{display:flex;align-items:center;justify-content:space-between;min-height:34px}.np-ih b{font-size:14px}
+.np-it .f3{display:grid;grid-template-columns:1fr 1fr 84px;gap:8px}.np-it .f2{gap:8px}
+.np-cli{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--pri) 6%,transparent)}.np-cli .tx{flex:1;display:flex;flex-direction:column;font-size:14px}.np-cli small{color:var(--mut);font-size:12px}
+.np-sug{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;border-top:1px dashed var(--line);background:none;padding:9px 2px;font:inherit;font-size:14px;color:inherit;cursor:pointer}.np-sug small{color:var(--mut);margin-left:auto}
 .rc-box{margin-top:12px;padding-top:4px;border-top:1px solid var(--line)}
 .ord-cw .placa{display:inline-flex;align-items:center;border:1.5px solid var(--ink);border-radius:6px;background:var(--card);padding:3px 8px;font:700 12.5px/1 var(--font);letter-spacing:.06em}
 .ord-cw .crono{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:600;font-size:12.5px;color:var(--mut)}
@@ -4386,7 +4390,7 @@ R.inicio = () => {
     const ped = S.plus ? tile('t-acc', 'inbox', 'Pedidos en línea', d.pedidos.nuevos ? (d.pedidos.nuevos === 1 ? '1 nuevo' : d.pedidos.nuevos + ' nuevos') : 'Sin nuevos', d.pedidos.nuevos ? 'Total ' + money(d.pedidos.total) : (d.pedidos.activos ? d.pedidos.activos + ' en proceso' : 'Tu tienda en línea'), ['ir', 'pedidos'])
       : tile('t-acc', 'store', 'Tienda en línea', 'Plus', 'Vende por internet con fotos', ['plusInfo'], '<span class="plus-b">PLUS</span>');
     tiles += ped;
-    if (d.apartados && S.plus && (d.apartados.camino || d.apartados.apartados)) { const ap = d.apartados; // compras en línea: en camino y apartados para clientes
+    if (d.apartados && (d.apartados.camino || d.apartados.apartados)) { const ap = d.apartados; // compras en línea: en camino y apartados para clientes
       tiles += tile(ap.vencidos ? 't-rojo' : 't-azul', 'bag', 'Compras en línea', ap.apartados ? (ap.apartados === 1 ? '1 apartado' : ap.apartados + ' apartados') : (ap.camino === 1 ? '1 en camino' : ap.camino + ' en camino'),
         ap.vencidos ? (ap.vencidos === 1 ? '1 vencido sin retirar' : ap.vencidos + ' vencidos sin retirar') : ap.apartados && ap.camino ? ap.camino + ' más en camino' : ap.apartados ? 'Esperan que los retiren' : 'Compradas a la tienda', ['ir', 'pedidos', { pest: ap.apartados ? 'apartado' : 'camino' }]); }
     if (d.ordenes && modOn('ordenes') && !vetT && cwOrd()) { const dentro = d.ordenes.recibido + d.ordenes.proceso + d.ordenes.listo;
@@ -5156,10 +5160,12 @@ ACC.activarPlus = async () => {
 R.pedidos_bar = () => S.plus && S.config.tienda === 'si' ? `<button class="hbtn" data-a="compartirTienda" aria-label="Compartir tienda">${ic('share', 20)}</button>` : '';
 R.pedidos = async () => {
   const m = $('#main');
-  if (!S.plus) { m.innerHTML = plusCard() + '<div class="empty">Cuando actives Plus, aquí verás los pedidos que te hagan por internet.</div>'; return; }
-  const tienda = S.config.tienda === 'si'
+  const conCompras = girosOn().includes('compras'); // compras en línea: los pedidos que llegan por WhatsApp o en persona se anotan aquí, con o sin Plus
+  if (!S.plus && !conCompras) { m.innerHTML = plusCard() + '<div class="empty">Cuando actives Plus, aquí verás los pedidos que te hagan por internet.</div>'; return; }
+  const nuevoBtn = conCompras && puede('admin', 'cajero') ? `<button class="btn pri big" style="width:100%;margin-top:12px" data-a="nuevoPedidoCompra">${ic('plus', 18)} Nuevo pedido (WhatsApp o en persona)</button>` : '';
+  const tienda = (!S.plus ? `<div class="aviso info">${ic('store', 20)}<div><b>Anota aquí los pedidos de Shein, Temu…</b><small>Con Plus también te piden solos desde tu tienda en línea.</small></div><button class="btn sm" data-a="plusInfo">Ver Plus</button></div>` : '') + nuevoBtn + (!S.plus ? '' : S.config.tienda === 'si'
     ? `<div class="link-card"><div class="li-ic">${ic('store', 22)}</div><div class="tx"><b>Tu tienda en línea está abierta</b><small>${esc(linkTienda())}</small></div><div class="row"><button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a></div></div>`
-    : `<div class="aviso info">${ic('store', 20)}<div><b>Tu tienda en línea está apagada</b><small>Actívala para recibir pedidos por internet.</small></div>${puede('admin') ? `<button class="btn sm pri" data-a="ir" data-v="tienda">Activar</button>` : ''}</div>`;
+    : `<div class="aviso info">${ic('store', 20)}<div><b>Tu tienda en línea está apagada</b><small>Actívala para recibir pedidos por internet.</small></div>${puede('admin') ? `<button class="btn sm pri" data-a="ir" data-v="tienda">Activar</button>` : ''}</div>`);
   if (!S.pedidosL) m.innerHTML = tienda + '<div class="empty">Cargando pedidos…</div>';
   const t0 = S.tienda || ''; let lp;
   try { lp = await api('pedidos', {}, !!S.pedidosL); } catch (e) { if (S.pedidosL && m.querySelector('.ords')) return err(e); throw e; }
@@ -5524,7 +5530,7 @@ function registrarFactura(p0) {
     const cb = e.target.closest('input[data-p]');
     if (cb) { if (cb.checked) sel.add(cb.dataset.p); else sel.delete(cb.dataset.p); return pinta(); }
     if (e.target.id === 'rf-ft' && e.target.files[0]) {
-      try { loader(true); const d = await comprimirImagen(e.target.files[0], DEMO.on ? 480 : 1200); st.foto = (await api('subirFoto', { data: d }, true)).foto; pinta(); }
+      try { loader(true); const d = await comprimirImagen(e.target.files[0], DEMO.on ? 480 : 1200); st.foto = (await api('subirFoto', { data: d, tipo: 'factura' }, true)).foto; pinta(); }
       catch (er) { err(er); } finally { loader(false); }
     }
   });
@@ -5597,6 +5603,70 @@ function liberarApartado(p) {
     R.pedidos();
   } }]);
 }
+// Pedido de compras en línea que llegó por WhatsApp, en persona o por llamada: lo anota el negocio (con o sin Plus)
+function precioCompraL(usd) { const c = S.config, t = num(c.comprasCambio), rec = Math.max(0, num(c.comprasRecargo)), env = Math.max(0, num(c.comprasEnvio)); return t > 0 && usd > 0 ? Math.ceil(usd * t * (1 + rec / 100) + env) : 0; }
+function nuevoPedidoCompra() {
+  const pct = Math.max(0, Math.min(100, num(S.config.comprasAnticipo)));
+  const st = { cli: null, nombre: '', tel: '', canal: 'WhatsApp', entrega: 'recoger', dir: '', envio: '', pagado: '', metodo: 'Efectivo', items: [{ enlace: '', talla: '', color: '', cantidad: '1', usd: '', precio: '' }] };
+  const h = hoja({ titulo: 'Nuevo pedido de compra en línea', html: '<div id="np"></div>' });
+  const chips = (k, ops) => `<div class="chips" data-ch="${k}">${ops.map(v => `<button type="button" class="chip ${st[k] === v[0] ? 'on' : ''}" data-v="${v[0]}">${v[1]}</button>`).join('')}</div>`;
+  const precioDe = it => it.precio !== '' ? num(it.precio) : precioCompraL(num(it.usd));
+  const totales = () => { const sub = st.items.reduce((a, it) => a + precioDe(it) * (parseInt(it.cantidad, 10) || 0), 0), env = st.entrega === 'domicilio' ? num(st.envio) : 0; return { sub, tot: sub + env, ant: Math.ceil(sub * pct / 100) }; };
+  const pintaTot = () => {
+    const t = totales(), b = $('#np-t', h.el); if (!b) return;
+    b.innerHTML = `<div><span>Total</span><b class="n">${money(t.tot)}</b></div>${pct ? `<div><span>Anticipo para pedir (${pct} %)</span><b class="n">${money(t.ant)}</b></div>` : ''}`;
+    st.items.forEach((it, i) => { const o = $(`[data-pl="${i}"]`, h.el); if (o) o.placeholder = precioCompraL(num(it.usd)) ? fmtN(precioCompraL(num(it.usd))) : '0.00'; });
+  };
+  const sugerir = () => {
+    const q = st.nombre.trim().toLowerCase(), box = $('#np-s', h.el); if (!box) return;
+    const l = !st.cli && q.length >= 2 ? (S.clientes || []).filter(c => c.activo !== false && (String(c.nombre).toLowerCase().includes(q) || String(c.telefono).replace(/\D/g, '').includes(q.replace(/\D/g, '') || '¬'))).slice(0, 4) : [];
+    box.innerHTML = l.map(c => `<button type="button" class="np-sug" data-cli="${c.id}">${ic('user', 15)} ${esc(c.nombre)} <small>${esc(c.telefono || '')}</small></button>`).join('');
+  };
+  const pinta = () => {
+    $('#np', h.el).innerHTML = `<span class="op-l">Cliente</span>
+      ${st.cli ? `<div class="np-cli">${ic('user', 18)}<div class="tx"><b>${esc(st.cli.nombre)}</b><small>${esc(st.cli.telefono || '')}</small></div><button type="button" class="btn sm ghost" data-x="cli">Cambiar</button></div>`
+        : `<div class="f2"><label class="fld"><span>Nombre (o busca uno guardado)</span><input id="np-n" maxlength="60" value="${esc(st.nombre)}" placeholder="Carla Núñez" autocomplete="off"></label><label class="fld"><span>WhatsApp</span><input id="np-w" inputmode="tel" maxlength="16" value="${esc(st.tel)}" placeholder="9988-7766"></label></div><div id="np-s"></div>`}
+      <span class="op-l" style="margin-top:10px">¿Por dónde lo pidió?</span>${chips('canal', [['WhatsApp', 'WhatsApp'], ['En persona', 'En persona'], ['Llamada', 'Llamada']])}
+      <span class="op-l" style="margin-top:12px">Artículos</span>
+      ${st.items.map((it, i) => `<div class="np-it"><div class="np-ih"><b>Artículo ${i + 1}</b>${st.items.length > 1 ? `<button type="button" class="btn icon sm ghost" data-del="${i}" aria-label="Quitar">${ic('trash', 16)}</button>` : ''}</div>
+        <label class="fld"><span>Código o enlace del artículo</span><input data-f="enlace" data-i="${i}" maxlength="400" value="${esc(it.enlace)}" placeholder="sw2306123456789"></label>
+        <div class="f3"><label class="fld"><span>Talla</span><input data-f="talla" data-i="${i}" maxlength="20" value="${esc(it.talla)}" placeholder="M"></label><label class="fld"><span>Color</span><input data-f="color" data-i="${i}" maxlength="30" value="${esc(it.color)}" placeholder="Negro"></label><label class="fld"><span>Cantidad</span><input data-f="cantidad" data-i="${i}" type="number" min="1" max="50" inputmode="numeric" value="${esc(it.cantidad)}"></label></div>
+        <div class="f2"><label class="fld"><span>Precio en la página (US$)</span><input data-f="usd" data-i="${i}" inputmode="decimal" value="${esc(it.usd)}" placeholder="18.40"></label><label class="fld"><span>Precio al cliente (L)</span><input data-f="precio" data-pl="${i}" data-i="${i}" inputmode="decimal" value="${esc(it.precio)}" placeholder="0.00"></label></div></div>`).join('')}
+      <button type="button" class="btn sm" id="np-add" style="margin-top:6px">${ic('plus', 16)} Agregar artículo</button>
+      <small class="hint">El precio al cliente se calcula con tu tipo de cambio y recargo; escríbelo si acordaste otro.</small>
+      <span class="op-l" style="margin-top:12px">Entrega</span>${chips('entrega', [['recoger', 'Recoge en el negocio'], ['domicilio', 'A domicilio']])}
+      ${st.entrega === 'domicilio' ? `<div class="f2"><label class="fld"><span>Dirección</span><input id="np-d" maxlength="200" value="${esc(st.dir)}" placeholder="Col. Moderna, 3 calle"></label><label class="fld"><span>Envío al cliente (L)</span><input id="np-e" inputmode="decimal" value="${esc(st.envio)}" placeholder="0.00"></label></div>` : ''}
+      <div class="calc-c" id="np-t"></div>
+      <span class="op-l" style="margin-top:12px">¿Ya te dio anticipo?</span>
+      <div class="f2"><label class="fld"><span>Monto recibido (opcional)</span><input id="np-a" inputmode="decimal" value="${esc(st.pagado)}" placeholder="0.00"></label><div class="fld"><span>¿Cómo pagó?</span><div class="pays" data-ch="metodo">${[['Efectivo', 'cash'], ['Transferencia', 'transfer'], ['Tarjeta', 'card']].map(([m, i]) => `<button type="button" class="pay ${st.metodo === m ? 'on' : ''}" data-v="${m}">${ic(i)}${m === 'Transferencia' ? 'Transf.' : m}</button>`).join('')}</div></div></div>`;
+    pintaTot(); sugerir();
+  };
+  h.el.addEventListener('click', e => {
+    const c = e.target.closest('[data-ch] [data-v]'); if (c) { st[c.parentNode.dataset.ch] = c.dataset.v; return pinta(); }
+    const s = e.target.closest('[data-cli]'); if (s) { st.cli = byId(S.clientes, s.dataset.cli); return pinta(); }
+    if (e.target.closest('[data-x="cli"]')) { st.cli = null; return pinta(); }
+    const d = e.target.closest('[data-del]'); if (d) { st.items.splice(+d.dataset.del, 1); return pinta(); }
+    if (e.target.closest('#np-add')) { st.items.push({ enlace: '', talla: '', color: '', cantidad: '1', usd: '', precio: '' }); pinta(); const l = $$('[data-f="enlace"]', h.el).pop(); if (l) l.focus(); }
+  });
+  h.el.addEventListener('input', e => {
+    const t = e.target;
+    if (t.dataset.f) { st.items[+t.dataset.i][t.dataset.f] = t.value; return pintaTot(); }
+    if (t.id === 'np-n') { st.nombre = t.value; return sugerir(); }
+    if (t.id === 'np-w') st.tel = t.value; else if (t.id === 'np-d') st.dir = t.value; else if (t.id === 'np-e') { st.envio = t.value; pintaTot(); } else if (t.id === 'np-a') st.pagado = t.value;
+  });
+  pinta();
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Guardar pedido`, cls: 'pri', fn: async () => {
+    const it = st.items.map(x => ({ enlace: x.enlace.trim(), talla: x.talla.trim(), color: x.color.trim(), cantidad: parseInt(x.cantidad, 10) || 0, usd: num(x.usd), precio: x.precio === '' ? '' : num(x.precio) }));
+    const g = await api('pedidoManual', { clienteId: st.cli ? st.cli.id : '', nombre: st.nombre.trim(), telefono: st.tel, canal: st.canal, entrega: st.entrega, direccion: st.dir.trim(), envio: num(st.envio), items: it, pagado: num(st.pagado), metodo: st.metodo });
+    h.cerrar(); S.pedidosL = null; S.inicio = null; S.cajaD = null; S.f.pest = 'confirmado'; S.f.pestAuto = 0;
+    toast('Pedido ' + g.numero + ' guardado' + (num(g.anticipoPagado) > 0 ? ' con su anticipo de ' + money(g.anticipoPagado) : ''), 'ok', 3500); R.pedidos();
+    const falta = r2(num(g.total) - num(g.anticipoPagado));
+    const t = `Hola ${String(g.nombre).split(' ')[0]} 👋 Anotamos tu pedido ${g.numero} en ${S.config.nombre || 'nuestra tienda'}:\n${g.items.map(i => '• ' + cant(i.cantidad) + ' × ' + String(i.nombre).replace(/^Compra en línea\s*/i, 'Artículo ') + ' — ' + money(i.total)).join('\n')}\nTotal: ${money(g.total)}${num(g.anticipoPagado) > 0 ? `\nAnticipo recibido: ${money(g.anticipoPagado)}\nTe falta pagar: ${money(falta)}` : num(g.anticipo) > 0 ? `\nAnticipo para pedirlo: ${money(g.anticipo)}` : ''}\nTe avisamos cuando lo compremos y cuando llegue. — ${S.config.nombre || ''}`;
+    const a = hoja({ titulo: 'Enviarle el resumen', cls: 'chica', html: `<p class="conf">¿Le mandas el resumen a <b>${esc(g.nombre)}</b> por WhatsApp?</p><div class="msg-prev" style="white-space:pre-line">${esc(t)}</div>` });
+    a.f.innerHTML = `<a class="btn wa big" href="${waLink(g.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300));
+  } }]);
+}
+ACC.nuevoPedidoCompra = () => nuevoPedidoCompra();
 ACC.liberarAp = el => { const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (p) liberarApartado(p); };
 // Corregir un pedido en línea: cambiar cantidades o quitar productos y avisarle al cliente
 const MOTIVOS_PED = [['Se agotó', ' porque se agotó'], ['Error de precio', ' por un error de nuestra parte'], ['El cliente lo pidió', ' como nos pediste']];
@@ -10286,6 +10356,7 @@ const NOVEDADES = [
   { v: '1.9.81', fecha: '2026-11-13', items: [
     { i: 'receipt', t: 'Compras en línea: registra la factura', d: 'En un pedido de Shein o Temu toca «Registrar factura»: anota el costo real de cada artículo, la foto de la factura y el envío (como gasto aparte o sumado al costo). Una sola factura puede traer pedidos de varios clientes. Queda la compra registrada y el pedido «En camino».', si: () => girosOn().includes('compras') && puede('admin') },
     { i: 'lock', t: 'Apartados para tus clientes', d: 'Cuando llega, toca «Ya llegó»: queda apartado a nombre del cliente con su plazo para retirarlo, sin salir en tu tienda en línea ni en Vender. Al entregarlo se registra la salida con el costo real y el segundo pago.', si: () => girosOn().includes('compras') },
+    { i: 'plus', t: 'Anota pedidos de WhatsApp o en persona', d: 'En Pedidos toca «Nuevo pedido»: eliges o creas al cliente, pones el código, talla y precio en dólares de cada artículo y el anticipo si ya te lo dio. Sigue el mismo camino que los de la tienda y le mandas el resumen por WhatsApp. Funciona aunque no tengas Plus.', si: () => girosOn().includes('compras') && puede('admin', 'cajero') },
     { i: 'box', t: 'Si no lo reclaman o no lo pagan', d: 'Toca «Liberar»: pasa a tu existencia normal con el costo de la factura (y si quieres, a tu tienda en línea con «Entrega inmediata»). El anticipo queda como ingreso o se le devuelve.', si: () => girosOn().includes('compras') && puede('admin') }
   ] },
   { v: '1.9.79', fecha: '2026-11-13', items: [
