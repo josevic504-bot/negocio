@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.81';
+const VERSION = '1.9.82';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -361,6 +361,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'borrarDatos':     return lock_(() => borrarDatos_(u, d));
     case 'limpiezaVer':     return limpiezaVer_(u);
     case 'limpiezaOmitir':  return lock_(() => limpiezaOmitir_(u));
+    case 'pasoMarca':       return lock_(() => pasoMarca_(u, d));
     case 'limpiarPrueba':   return lock_(() => limpiarPrueba_(u, d));
     case 'eliminarCuenta':  return lock_(() => eliminarCuenta_(u, d));
     case 'subirFoto':       return subirFoto_(u, d);
@@ -2762,6 +2763,7 @@ function panelNegocio_(d) {
     const prodsAct = rows_('Productos').filter(p => p.activo), propios = prodsAct.filter(p => !/^EJ\d/.test(String(p.codigo || '')));
     f.uso = { propios: propios.length, ejemplos: prodsAct.length - propios.length, ultimoPropio: propios.map(p => String(p.creado || '')).sort().pop() || '', ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
       pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
+    try { f.pasos = pasos_(); } catch (e) { f.pasos = null; }
     const lim7 = Date.now() - 7 * 86400000; f.ventas7 = v30.filter(v => msDeLocal_(v.fecha) >= lim7).length; // en la ficha, las ventas de 7 días se cuentan al momento
     f.salud = saludDe_(f, f.uso.productos, f.uso.clientes); // en la ficha, con los conteos de hoy
     // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
@@ -4930,6 +4932,7 @@ function inicio_(u, d) {
     if (modOn_('mesas') && (u.rol === 'admin' || u.rol === 'cajero')) out.mesas = mesasResumen_();
     if (girosActivos_().indexOf('compras') >= 0 && (u.rol === 'admin' || u.rol === 'cajero')) out.apartados = apartadosResumen_();
   } catch (e) {}
+  if (u.rol === 'admin' && !t) { try { if (enPrueba_()) out.pasos = pasos_(); } catch (e) {} }
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && deT(v, 'Ventas'));
     const vh = ventas.filter(v => v.fecha.slice(0, 10) === h && (u.rol === 'admin' || v.usuarioId === u.id));
@@ -4985,6 +4988,31 @@ function inicio_(u, d) {
       .map(m => ({ fecha: m.fecha, tipo: m.tipo, cantidad: m.cantidad, nombre: pm[m.productoId] ? pm[m.productoId].nombre : '—', nota: m.nota }));
   }
   return out;
+}
+
+/* ===================== PRIMEROS PASOS (1.9.82) =====================
+ * La lista de Inicio de los negocios en prueba se marca sola con lo que el negocio ya hizo.
+ * Compartir la tienda y abrir «¿Cómo me fue hoy?» no dejan rastro en las hojas: la app los anota con pasoMarca. */
+function enPrueba_() { return licencia_().estado === 'prueba'; }
+function pasos_() {
+  const cfg = config_(), pedT = rows_('Pedidos').some(p => !String(p.origen || '').trim()); // los anotados en el negocio (WhatsApp, en persona) llevan origen
+  return {
+    negocio: !!String(cfg.logo || '').trim(),
+    producto: rows_('Productos').some(p => p.activo && !/^EJ\d/.test(String(p.codigo || ''))), // los de ejemplo llevan código EJ001…
+    venta: rows_('Ventas').some(v => !v.anulada),
+    cliente: rows_('Clientes').some(c => c.activo),
+    compartir: cfg.sysPasoCompartir === 'si' || pedT,
+    pedido: pedT,
+    caja: rows_('Cierres').length > 0,
+    cuenta: cfg.sysPasoCuenta === 'si'
+  };
+}
+function pasoMarca_(u, d) {
+  req_(u, ['admin']);
+  const k = { compartir: 'sysPasoCompartir', cuenta: 'sysPasoCuenta' }[String(d && d.k || '')];
+  if (!k) throw new Error('Paso no válido');
+  if (config_()[k] !== 'si') guardarConfig_({ [k]: 'si' });
+  return true;
 }
 
 /* ===================== REPORTES ===================== */

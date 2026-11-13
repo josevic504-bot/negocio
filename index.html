@@ -1300,6 +1300,11 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .gg-l{display:flex;flex-direction:column;gap:8px}.gg-i{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;border:1px solid var(--line);border-radius:16px;padding:10px 12px;background:var(--card)}.gg-n{width:32px;height:32px;border-radius:50%;background:color-mix(in srgb,var(--pri) 13%,transparent);color:var(--pri);display:flex;align-items:center;justify-content:center;flex:none}
 .gg-t{flex:1;min-width:0}.gg-i b{display:block;font-weight:600;font-size:14.5px;line-height:1.2}.gg-i small{color:var(--mut);font-size:12.5px;line-height:1.25;display:block;margin-top:1px}.gg-i.ok{background:color-mix(in srgb,#00b56e 8%,transparent)}.gg-i.ok .gg-n{background:#00b56e;color:#fff}.gg-i.ok b{text-decoration:line-through;color:var(--mut)}.gg-oc{display:block;margin:10px auto 0}
 .gg-c{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:14px;margin:0 auto 16px;max-width:560px;box-shadow:0 4px 18px rgba(60,10,40,.08)}.gg-r{display:flex;justify-content:space-between;align-items:baseline;gap:8px}.gg-c h3{margin:0;font:600 21px var(--serif)}.gg-r a{color:var(--pri);font-weight:600;font-size:13.5px;cursor:pointer}.gg-bar{height:7px;border-radius:5px;background:var(--line);margin:9px 0 10px;overflow:hidden}.gg-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--h1),var(--h2))}.gg-s{border:0;padding:0;background:none}.gg-c-n{color:var(--mut);font-size:13px;flex:none}
+.pp-c h3{display:flex;align-items:center;gap:7px}.pp-c h3 .ic{color:var(--pri)}.pp-n{color:var(--pri);font-weight:700;font-size:13.5px;flex:none}.pp-m{margin:-2px 0 6px;color:var(--mut);font-size:13px;line-height:1.3}.pp-l{display:flex;flex-direction:column}
+.pp-i{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:none;border:0;border-top:1px solid var(--line);padding:9px 2px}.pp-i b{display:block;font-weight:600;font-size:14.5px;line-height:1.2}.pp-i small{color:var(--mut);font-size:12.5px;line-height:1.25;display:block;margin-top:1px}
+.pp-ck{width:26px;height:26px;border-radius:50%;border:2px solid var(--pri);color:transparent;display:flex;align-items:center;justify-content:center;flex:none}.pp-i.ok .pp-ck{background:var(--pri);color:#fff}.pp-i.ok b{text-decoration:line-through;color:var(--mut);font-weight:500}
+.pp-ir{flex:none;font-size:12.5px;font-weight:700;color:var(--pri);background:color-mix(in srgb,var(--pri) 12%,transparent);border-radius:20px;padding:4px 12px}.pp-oc{display:block;margin:4px 0 0 auto;background:none;border:0;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer;padding:6px 2px}
+.pp-p{border:1px solid var(--line);border-radius:16px;padding:12px;margin:0 0 12px}.pp-p .gg-bar{margin:8px 0}.pp-p .chip{font-size:12px;cursor:default}.pp-fin{text-align:center}.pp-fin h3{display:block;margin:6px 0 4px}.pp-fin p{color:var(--mut);font-size:14px;line-height:1.35;margin:0 0 12px}.pp-fi{width:52px;height:52px;border-radius:50%;margin:2px auto 0;background:#00b56e;color:#fff;display:flex;align-items:center;justify-content:center}.pp-auto{display:flex;align-items:center;gap:5px;margin:8px 0 0}
 .st-e{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--pri);font-weight:700;margin-bottom:3px}.st-d{display:flex;gap:5px;margin:4px 0 10px}.st-d i{height:5px;flex:1;border-radius:3px;background:var(--line)}.st-d i.on{background:var(--pri)}.st-h{font:600 27px/1.08 var(--serif);margin:0 0 5px}.st-p{color:var(--mut);font-size:14.5px;line-height:1.35;margin:0 0 11px}
 .st-img{display:block;width:100%;border-radius:15px;border:1px solid var(--line);margin-bottom:12px}.st-l{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}.st-li{display:flex;gap:9px;font-size:14px;line-height:1.3}.st-li>i{font:700 12.5px var(--sans,inherit);font-style:normal;width:22px;height:22px;border-radius:50%;background:#e8a400;color:#2a1600;display:flex;align-items:center;justify-content:center;flex:none}.st-li>i.v{background:color-mix(in srgb,var(--pri) 14%,transparent);color:var(--pri)}.st-li b{font-weight:600}.st-ok{margin-top:10px}
 .ms-k{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
@@ -1693,7 +1698,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.81';
+const APP_VER = '1.9.82';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -4197,6 +4202,14 @@ function panelImportar(id, nombre) {
     catch (x) { err(x); } finally { loader(false); e.target.value = ''; }
   });
 }
+// Primeros pasos del cliente (1.9.82): en qué paso va y cuál le falta, para saber qué decirle
+const PASOS_P = [['negocio', 'Logo y colores'], ['producto', 'Producto propio'], ['venta', 'Primera venta'], ['cliente', 'Un cliente'], ['compartir', 'Compartió su tienda'], ['pedido', 'Pedido en línea'], ['caja', 'Cierre de caja'], ['cuenta', '¿Cómo me fue hoy?']];
+function panelPasos(n) {
+  const p = n.pasos; if (!p) return '';
+  const l = PASOS_P.filter(x => (n.plus || n.estado === 'prueba') || !['compartir', 'pedido'].includes(x[0])), h = l.filter(x => p[x[0]]).length, f = l.find(x => !p[x[0]]);
+  return `<div class="pp-p"><div class="row" style="justify-content:space-between"><b>Primeros pasos</b><span class="pp-n">${h} de ${l.length}${f ? ' · falta «' + f[1] + '»' : ' · completo'}</span></div>
+    <div class="gg-bar"><i style="width:${Math.round(h / l.length * 100)}%"></i></div><div class="chips" style="flex-wrap:wrap">${l.map(x => `<span class="chip ${p[x[0]] ? 'on' : ''}">${ic(p[x[0]] ? 'check' : 'x', 13)} ${x[1]}</span>`).join('')}</div></div>`;
+}
 async function panelFicha(id) {
   const h = hoja({ titulo: 'Cargando…', ancho: 1, html: '<div class="empty">Cargando…</div>', onClose: () => { if (S.enPanel) panelResumen().catch(err); } });
   let n;
@@ -4211,6 +4224,7 @@ async function panelFicha(id) {
           : u.ejemplos ? `<div class="kpi" style="--k:var(--warn)"><small>Productos propios</small><b>Ninguno todavía</b><i>solo tiene los ${u.ejemplos} de ejemplo</i></div>`
           : `<div class="kpi" style="--k:var(--bad)"><small>Productos propios</small><b>Ninguno</b><i>no tiene productos, ni de ejemplo</i></div>`; })() : ''}<div class="kpi"><small>Plus · tienda</small><b>${n.plus ? 'Activo' : n.estado === 'prueba' ? 'Incluido' : 'No'}</b><i>${u && u.tienda ? 'tienda abierta' : 'tienda apagada'}</i></div>
       ${n.tiendaVis && ((u && u.tienda) || n.tiendaVis.semana) ? `<div class="kpi" style="--k:${n.tiendaVis.semana ? '#00b56e' : 'var(--bad)'}"><small>Visitas a su tienda</small><b>${n.tiendaVis.semana} en 7 días</b><i>${n.tiendaVis.semana ? `hoy ${n.tiendaVis.hoy} · ${n.tiendaVis.unicos} persona${n.tiendaVis.unicos === 1 ? '' : 's'}${n.tiendaVis.origen.length ? ' · más por ' + esc(tdOri(n.tiendaVis.origen[0].k)[0]) : ''}` : 'no está compartiendo su enlace'}</i></div>` : ''}</div>
+      ${panelPasos(n)}
       ${n.eliminada ? `<div class="aviso warn" style="border-color:var(--bad)">${ic('trash', 20)}<div><b>Cuenta eliminada por el cliente · ${esc(fCorta(n.eliminada.fecha))}</b><small>${n.eliminada.motivo ? 'Motivo: «' + esc(n.eliminada.motivo) + '». ' : ''}${n.eliminada.purgado ? 'Sus datos ya se borraron definitivamente.' : `Sus datos y respaldos se borran definitivamente el ${esc(fFechaC(n.eliminada.borraEl))}. Hasta entonces puedes recuperarla; una copia queda en Respaldos, abajo.`}</small></div>${n.eliminada.purgado ? '' : `<button class="btn sm pri" data-x="recuperar">${ic('undo', 15)} Recuperar</button>`}</div>` : ''}${panelSecSalud(n)}${n.colab ? `<div class="aviso colab">${ic('star', 20)}<div><b>Colaborador · todo activo sin cobro</b><small>Licencia, Plus y Contabilidad sin vencimiento; cambia de tipo de negocio cuando quiera y los giros extra se le activan sin cobro. No cuenta en conversión ni ingresos del panel.</small></div></div>` : ''}
       <div class="acciones">${n.colab ? `<button class="btn bad" data-x="quitarColab">${ic('x', 16)} Quitar colaborador</button>` : `${n.estado === 'bloqueada' ? `<button class="btn pri" data-x="reanudar">▶ Reanudar acceso</button>` : n.estado === 'activa' ? '' : `<button class="btn pri" data-x="activar">✓ Activar licencia</button>`}${n.plus ? `<button class="btn ghost" data-x="quitarPlus">Quitar Plus</button>` : `<button class="btn acc" data-x="plus">Activar Plus</button>`}${n.contab ? `<button class="btn ghost" data-x="quitarContab">Quitar Contabilidad</button>` : `<button class="btn" data-x="contab">${ic('chart', 16)} Activar Contabilidad</button>`}${n.estado === 'activa' ? '' : `<button class="btn" data-x="extender">+7 días de prueba</button>`}${n.estado === 'bloqueada' ? '' : `<button class="btn ghost" data-x="pausar">⏸ Pausar</button>`}<button class="btn ghost" data-x="colaborador" style="color:#6a3df0">${ic('star', 16)} Marcar colaborador</button>`}</div>
       ${panelSecGiros(n)}${panelSecGrupo(n)}
@@ -4441,7 +4455,7 @@ R.inicio = () => {
   const vacio = rol === 'admin' && !S.productos.length ? `<div class="aviso info">${ic('box', 20)}<div><b>Empieza agregando tus productos.</b><small>Puedes cargar productos de ejemplo de tu tipo de negocio y editarlos.</small></div><button class="btn sm pri" data-a="ir" data-v="productos">Productos</button></div>` : '';
   const ofAvisos = puede('admin', 'cajero') && 'Notification' in window && Notification.permission !== 'denied' && !avisosOn() && LS.get('avisosOferta', '') !== 'no' && !DEMO.on ? `<div class="aviso info">${ic('bell', 20)}<div><b>Recibe avisos en este teléfono.</b><small>Pedidos nuevos, mensajes, vencimientos y un resumen cada mañana, aunque la app esté cerrada.</small></div><div class="row"><button class="btn sm pri" data-a="avisosActivar">Activar</button><button class="btn sm ghost icon" data-a="avisosCerrar" aria-label="Cerrar">${ic('x', 16)}</button></div></div>` : '';
   const avSus = d.sus && susOn() && (d.sus.vencidas || d.sus.hoy || d.sus.semana) ? `<div class="aviso avi-sus">${ic('tv', 20)}<div><b>${d.sus.semana + d.sus.hoy ? `${d.sus.dias === 7 ? 'Vencen esta semana' : 'Vencen en ' + d.sus.dias + ' días'}: ${d.sus.semana + d.sus.hoy} ${d.sus.semana + d.sus.hoy === 1 ? 'suscripción' : 'suscripciones'} · ${money(d.sus.montoSemana)}` : `${d.sus.vencidas} ${d.sus.vencidas === 1 ? 'suscripción vencida' : 'suscripciones vencidas'} · ${money(d.sus.montoVencidas)}`}</b><small>${d.sus.vencidas && (d.sus.semana + d.sus.hoy) ? d.sus.vencidas + ' ya vencidas. ' : ''}Recuérdales por WhatsApp y renueva con un toque.</small></div><button class="btn sm pri" data-a="ir" data-v="vencimientos">Ver</button></div>` : '';
-  m.innerHTML = `<div class="hg"><div>${anuncioHTML()}${today}${rol === 'admin' ? guiaCard() : ''}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${avisoVacunas(d)}${avisoPagosCot(d)}${vacio}${aviso}${listas}</div>`;
+  m.innerHTML = `<div class="hg"><div>${anuncioHTML()}${today}${rol === 'admin' ? pasosCard(d) : ''}${bannerCobro()}${bannerContrato()}${rol === 'admin' ? cuentaBtn() : ''}${bannerPrueba()}${avisoSAR()}</div><div class="tiles">${tiles}</div></div><div class="hg1">${tarjetaPrueba()}${ofAvisos}${avSus}${avisoVacunas(d)}${avisoPagosCot(d)}${vacio}${aviso}${listas}</div>`;
 };
 function avisoPagosCot(d) {
   const c = d.cot; if (!c || !cotOn() || !c.lista.length) return '';
@@ -4565,6 +4579,7 @@ function cuentaTexto(per, d, extra) {
   return { frases: F, animo: false };
 }
 async function abrirCuenta(per) {
+  pasoMarca('cuenta');
   per = per || 'hoy';
   const [desde, hasta] = rangoPer(per);
   let h = S.hCuenta;
@@ -5742,7 +5757,7 @@ async function tiendaVisitas(per) {
     <small class="hint" style="display:block;margin-top:10px">No se cuentan tus propias entradas desde este teléfono. El mismo teléfono cuenta una vez cada 30 minutos. La tienda no vende sola: entre más compartas tu enlace, más visitas.</small>`;
 }
 ACC.tiendaVisPer = el => tiendaVisitas(el.dataset.k).catch(() => {});
-ACC.copiarTienda = async () => { try { await navigator.clipboard.writeText(linkTienda()); toast('Enlace copiado', 'ok'); } catch (e) { pedirTexto('Enlace de tu tienda', { valor: linkTienda() }); } };
+ACC.copiarTienda = async () => { pasoMarca('compartir'); try { await navigator.clipboard.writeText(linkTienda()); toast('Enlace copiado', 'ok'); } catch (e) { pedirTexto('Enlace de tu tienda', { valor: linkTienda() }); } };
 // Compartir la tienda: un enlace por red (…&src=wa, facebook, tiktok…) para que «Visitas a tu tienda» diga de dónde llegó cada persona
 const TD_CANALES = [['wa', 'WhatsApp', 'wa', 'Abre WhatsApp con tu enlace listo para enviar'], ['estado', 'Estado de WhatsApp', 'wa', 'Copia el enlace para pegarlo en tu estado'], ['facebook', 'Facebook', 'fb', 'Copia el enlace para tu página o publicación'], ['instagram', 'Instagram', 'insta', 'Copia el enlace para tu perfil o historia'], ['tiktok', 'TikTok', 'tv', 'Copia el enlace para tu perfil de TikTok']];
 ACC.compartirTienda = async () => {
@@ -5751,13 +5766,14 @@ ACC.compartirTienda = async () => {
     <div class="list">${TD_CANALES.map(c => `<button class="li" data-c="${c[0]}" style="width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit"><div class="av ${colorDe(c[1])}">${ic(c[2], 18)}</div><div class="tx" style="flex:1"><b>${c[1]}</b><small>${c[3]}</small></div>${ic(c[0] === 'wa' ? 'right' : 'copy', 18)}</button>`).join('')}
     ${navigator.share ? `<button class="li" data-c="otra" style="width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit"><div class="av t-gris">${ic('share', 18)}</div><div class="tx" style="flex:1"><b>Otra aplicación</b><small>Correo, mensajes y más</small></div>${ic('right', 18)}</button>` : ''}</div>` });
   h.b.querySelectorAll('[data-c]').forEach(b => b.onclick = async () => {
-    const c = b.dataset.c, u = linkTienda() + (c === 'otra' ? '' : '&src=' + c);
+    const c = b.dataset.c, u = linkTienda() + (c === 'otra' ? '' : '&src=' + c); pasoMarca('compartir');
     if (c === 'wa') { window.open(waLink('', txt(u)), '_blank'); return; }
     if (c === 'otra') { try { await navigator.share({ title: S.config.nombre, text: txt(u) }); } catch (e) {} return; }
     try { await navigator.clipboard.writeText(u); toast('Enlace para ' + b.querySelector('b').textContent + ' copiado', 'ok'); } catch (e) { pedirTexto('Enlace para ' + b.querySelector('b').textContent, { valor: u }); }
   });
 };
 ACC.qrTienda = async () => {
+  pasoMarca('compartir');
   await cargarLib('qr');
   const q = qrcode(0, 'M'); q.addData(linkTienda()); q.make();
   const h = hoja({ titulo: 'Código QR de tu tienda', cls: 'chica', html: `<div class="qr-box" id="qr-box"><div class="qr-h">${monograma()}<b>${esc(S.config.nombre)}</b><small>Haz tu pedido en línea</small></div>${q.createSvgTag({ cellSize: 6, margin: 2, scalable: true })}<small>${esc(linkTienda())}</small></div>
@@ -10305,55 +10321,88 @@ const GUIA = {
   otro: { n: 'tu negocio', d: 'Tu programa ya viene listo para empezar. Estos son tus primeros pasos:', p: [
     { ic: 'box', t: 'Crea tus productos y precios', s: 'Nombre, categoría y existencias', h: 'Tus productos y precios', p: 'Ejemplo: un producto. Así se configura cada uno.', img: 'p_otro', n: 1, ir: 'productos', b: 'Ver mis productos', l: ['<b>Nombre:</b> como lo conoces.', '<b>Categoría:</b> elige una o crea la tuya.', '<b>Costo y precio:</b> el costo es opcional.', '<b>Existencias:</b> apágalas si es un servicio.'] }, 'vender', 'clientes', 'compras', 'caja'] }
 };
-const guiaKey = () => 'guia_' + (S.negocioId || '1');
-// El avance se guarda en este equipo. Solo existe para quien se registró aquí: los clientes de antes no tienen guía.
-function guiaEst() { const e = LS.json(guiaKey(), null); if (!e || !S.config) return null; if (e.giro !== S.config.giro) { e.giro = S.config.giro; e.ok = []; LS.set(guiaKey(), JSON.stringify(e)); } return e; }
-const guiaGuarda = e => LS.set(guiaKey(), JSON.stringify(e));
 function guiaDe() { const g = GUIA[S.config.giro] || GUIA.otro; return { n: g.n, d: g.d, p: g.p.map(x => typeof x === 'string' ? GP[x] : x) }; }
-function guiaCard() {
-  const e = guiaEst(); if (!e || e.oculta) return '';
-  const g = guiaDe(), hechos = e.ok.length, n = g.p.findIndex((_, i) => !e.ok.includes(i));
-  if (n < 0) return '';
-  const x = g.p[n];
-  return `<div class="gg-c" id="gg-card"><div class="gg-r"><h3>Primeros pasos</h3><a data-a="guiaVer">Ver todos</a></div><div class="gg-bar"><i style="width:${hechos / g.p.length * 100}%"></i></div>
-    <button class="gg-i gg-s" data-a="guiaPaso" data-n="${n}"><span class="gg-n">${ic(x.ic, 18)}</span><span class="gg-t"><b>${x.t}</b><small>${x.s}</small></span><span class="gg-c-n">${hechos} de ${g.p.length}</span></button></div>`;
+
+/* ===================== PRIMEROS PASOS (1.9.82) =====================
+ * Lista en Inicio para los negocios en prueba (solo el administrador). Cada paso se marca solo con lo que el
+ * negocio ya hizo: el servidor lo revisa en «inicio» (d.pasos). Al tocar un paso se abre su explicación con
+ * imagen (la guía por tipo de negocio) o se va directo a la pantalla. Al completarlos sale la felicitación y se oculta. */
+const PASO_COSA = { comida: 'tu primer plato', streaming: 'tu primer plan', recargas: 'tu primer paquete', floristeria: 'tu primer arreglo', joyeria: 'tu primera joya', servicios: 'tu primer servicio', carwash: 'tu primer servicio' };
+const pasosKey = () => 'pasos_' + (S.negocioId || '1');
+function pasosDef() {
+  const g = guiaDe(), busca = f => g.p.find(x => x && f(x));
+  const venta = modOn('mesas') ? { ic: 'mesa', t: 'Cobra tu primera mesa', s: 'Toma el pedido y cóbralo', ayuda: busca(x => x.ir === 'mesas'), ir: ['mesas'] }
+    : modOn('mascotas') ? { ic: 'steth', t: 'Cobra tu primera consulta', s: 'Con «Guardar y cobrar»', ayuda: busca(x => /consulta/i.test(x.t)), ir: ['mascotas'] }
+    : susOn() ? { ic: 'tv', t: 'Vende tu primer perfil', s: 'Con su fecha de vencimiento', ayuda: busca(x => /perfil/i.test(x.t)), ir: ['cuentas'] }
+    : cwOrd() ? { ic: 'wrench', t: 'Cobra tu primer lavado', s: 'Recibe el vehículo y cóbralo', ayuda: busca(x => x.ir === 'ordenes'), ir: ['ordenes'] }
+    : { ic: 'cart', t: 'Haz tu primera venta', s: 'Aunque sea de prueba', ayuda: GP.vender, ir: ['vender'] };
+  const abierta = S.config.tienda === 'si', l = [
+    { k: 'negocio', ic: 'palette', t: 'Configura tu negocio', s: 'Tu logo y tus colores', ir: ['ajustes', { sec: 'apariencia' }] },
+    { k: 'producto', ic: 'box', t: 'Crea ' + (PASO_COSA[S.config.giro] || 'tu primer producto'), s: 'Uno tuyo, no de ejemplo', ayuda: busca(x => x.n === 1), ir: ['productos'] },
+    Object.assign({ k: 'venta' }, venta),
+    { k: 'cliente', ic: 'users', t: 'Registra un cliente', s: 'Para tus ventas al crédito', ayuda: GP.clientes, ir: ['clientes'] }
+  ];
+  if (S.plus) l.push( // la tienda en línea: incluida en la prueba
+    { k: 'compartir', ic: 'share', t: 'Comparte tu tienda en línea', s: abierta ? 'Por WhatsApp o en tu estado' : 'Primero enciéndela en Mi tienda', fn: () => abierta ? ACC.compartirTienda() : ir('tienda', {}) },
+    { k: 'pedido', ic: 'inbox', t: 'Recibe tu primer pedido en línea', s: 'Pídete algo tú mismo desde tu enlace', fn: pasoPedidoPrueba });
+  l.push(
+    { k: 'caja', ic: 'wallet', t: 'Cierra tu primera caja', s: 'Cuadra lo que entró en el día', ayuda: GP.caja, ir: ['caja'] },
+    { k: 'cuenta', ic: 'sparkle', t: 'Mira cómo te fue', s: 'Toca «¿Cómo me fue hoy?»', fn: () => abrirCuenta('hoy') });
+  return l;
 }
-const guiaRepinta = () => { const c = $('#gg-card'); if (c) c.outerHTML = guiaCard(); };
-function guiaLista() {
-  const e = guiaEst(); if (!e) return; const g = guiaDe();
-  const h = hoja({ titulo: '', html: `<div class="gg-h"><span class="gg-gi">${giroImg(S.config.giro)}</span><h2>Tu programa para ${g.n}</h2><p>${g.d}</p></div>
-    <div class="gg-l">${g.p.map((x, i) => `<button class="gg-i ${e.ok.includes(i) ? 'ok' : ''}" data-a="guiaPaso" data-n="${i}"><span class="gg-n">${ic(e.ok.includes(i) ? 'check' : x.ic, 18)}</span><span class="gg-t"><b>${x.t}</b><small>${x.s}</small></span>${ic('right', 16)}</button>`).join('')}</div>
-    <button class="btn ghost sm gg-oc" data-a="guiaOcultar">Ocultar esta guía</button>` });
-  h.botones([{ t: 'Lo hago después', fn: () => h.cerrar() }, { t: 'Empezar', cls: 'pri', fn: () => { h.cerrar(); const n = g.p.findIndex((_, i) => !e.ok.includes(i)); guiaPaso(n < 0 ? 0 : n); } }]);
+function pasosCard(d) {
+  const p = d && d.pasos, L = S.licencia;
+  if (!p || !L || L.estado !== 'prueba' || !S.config) return '';
+  const st = LS.json(pasosKey(), {}) || {}, l = pasosDef(), hechos = l.filter(x => p[x.k]).length, tot = l.length, faltan = tot - hechos;
+  if (!faltan) return st.fin ? '' : `<div class="gg-c pp-c pp-fin" id="pp-card"><div class="pp-fi">${ic('check', 26)}</div><h3>¡Listo! Tu negocio ya está funcionando</h3><p>Completaste tus ${tot} primeros pasos. Ya sabes vender, cobrar, cerrar caja${S.plus ? ', recibir pedidos en línea' : ''} y ver cómo te fue.</p><button class="btn pri" data-a="pasosFin">Cerrar</button></div>`;
+  if (st.oculta && Date.now() < st.oculta) return '';
+  const msg = !hechos ? 'Sigue estos pasos y en unos minutos tu negocio queda listo.' : `Vas bien. ${faltan === 1 ? 'Te falta 1 paso' : 'Te faltan ' + faltan + ' pasos'} para dejar tu negocio listo.`;
+  return `<div class="gg-c pp-c" id="pp-card"><div class="gg-r"><h3>${ic('sparkle', 20)} Primeros pasos</h3><span class="pp-n">${hechos} de ${tot}</span></div>
+    <div class="gg-bar"><i style="width:${Math.round(hechos / tot * 100)}%"></i></div><p class="pp-m">${msg}</p>
+    <div class="pp-l">${l.map(x => `<button class="pp-i ${p[x.k] ? 'ok' : ''}" data-a="pasoIr" data-k="${x.k}"><span class="pp-ck">${ic('check', 15)}</span><span class="gg-t"><b>${x.t}</b><small>${x.s}</small></span>${p[x.k] ? '' : '<span class="pp-ir">Ir</span>'}</button>`).join('')}</div>
+    <button class="pp-oc" data-a="pasosOcultar">Ocultar por ahora</button></div>`;
 }
-function guiaPaso(n) {
-  const e = guiaEst(); if (!e) return; const g = guiaDe(), x = g.p[n], t = g.p.length; if (!x) return;
-  const h = hoja({ titulo: '', html: `<div class="st-d">${g.p.map((_, i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</div><div class="st-e">Paso ${n + 1} de ${t}</div><h2 class="st-h">${x.h}</h2><p class="st-p">${x.p}</p>
-    <img class="st-img" src="guia/${x.img}.webp" alt="" decoding="async" onerror="this.remove()">
-    <div class="st-l">${x.l.map((l, i) => `<div class="st-li"><i class="${x.n ? '' : 'v'}">${x.n ? i + 1 : ic('check', 13)}</i><div>${l}</div></div>`).join('')}</div>
-    <label class="chk st-ok"><input type="checkbox" id="st-ok" ${e.ok.includes(n) ? 'checked' : ''}> Ya lo hice</label>` });
-  $('#st-ok', h.el).addEventListener('change', ev => {
-    const a = guiaEst(); a.ok = a.ok.filter(i => i !== n); if (ev.target.checked) a.ok.push(n); guiaGuarda(a); guiaRepinta();
-    if (a.ok.length === t) { toast('¡Listo! Completaste tus primeros pasos', 'ok', 4000); h.cerrar(); }
-  });
-  h.botones([{ t: 'Atrás', fn: () => { h.cerrar(); guiaLista(); } }, { t: x.b, cls: 'pri', fn: async () => {
-    h.cerrar();
-    if (x.copia) { try { await navigator.clipboard.writeText(linkTienda()); toast('Enlace copiado', 'ok'); return; } catch (err) { ir('tienda', {}); return; } }
-    ir(x.ir, x.par || {});
-  } }]);
+const pasosRepinta = () => { const c = $('#pp-card'); if (c && S.inicio) c.outerHTML = pasosCard(S.inicio); };
+// Pasos que el servidor no ve solo (compartir la tienda, abrir «¿Cómo me fue hoy?»): se marcan al hacerlos
+function pasoMarca(k) {
+  const p = S.inicio && S.inicio.pasos;
+  if (!p || p[k] || SOPORTE || !puede('admin')) return;
+  p[k] = true; pasosRepinta();
+  api('pasoMarca', { k }, true).catch(() => {});
 }
-// Se llama una sola vez, al terminar de registrarse
+function pasoPedidoPrueba() {
+  if (S.config.tienda !== 'si') { toast('Primero enciende tu tienda en línea', 'error'); ir('tienda', {}); return; }
+  window.open(linkTienda(), '_blank', 'noopener');
+  toast('Haz un pedido de prueba en tu tienda: te llega aquí, a Pedidos, con su aviso', 'ok', 6000);
+}
+const pasoIrA = x => { if (x.fn) x.fn(); else ir(x.ir[0], x.ir[1] || {}); };
+// La explicación con imagen de la guía por tipo de negocio; si el paso no tiene, va directo
+function pasoHoja(x) {
+  const a = x.ayuda; if (!a) return pasoIrA(x);
+  const ok = !!(S.inicio && S.inicio.pasos && S.inicio.pasos[x.k]);
+  const h = hoja({ titulo: '', html: `<div class="st-e">${ok ? 'Paso completado' : 'Primeros pasos'}</div><h2 class="st-h">${a.h}</h2><p class="st-p">${a.p}</p>
+    <img class="st-img" src="guia/${a.img}.webp" alt="" decoding="async" onerror="this.remove()">
+    <div class="st-l">${a.l.map((l, i) => `<div class="st-li"><i class="${a.n ? '' : 'v'}">${a.n ? i + 1 : ic('check', 13)}</i><div>${l}</div></div>`).join('')}</div>
+    ${ok ? '' : `<p class="xs mut pp-auto">${ic('check', 13)} Este paso se marca solo cuando lo hagas.</p>`}` });
+  h.botones([{ t: 'Cerrar', fn: () => h.cerrar() }, { t: a.b || 'Ir', cls: 'pri', fn: () => { h.cerrar(); pasoIrA(x); } }]);
+}
+// Al terminar de registrarse: la bienvenida con la lista de pasos de su tipo de negocio
 function guiaIniciar() {
   if (!S.config) return;
-  guiaGuarda({ giro: S.config.giro, ok: [] });
-  const c = $('.today'); if (c && !$('#gg-card')) c.insertAdjacentHTML('afterend', guiaCard());
-  guiaLista();
+  const g = guiaDe(), l = pasosDef();
+  const h = hoja({ titulo: '', html: `<div class="gg-h"><span class="gg-gi">${giroImg(S.config.giro)}</span><h2>Tu programa para ${g.n}</h2><p>${g.d}</p></div>
+    <div class="gg-l">${l.map(x => `<div class="gg-i"><span class="gg-n">${ic(x.ic, 18)}</span><span class="gg-t"><b>${x.t}</b><small>${x.s}</small></span></div>`).join('')}</div>
+    <p class="xs mut" style="text-align:center;margin:10px 0 0">La lista queda en Inicio y cada paso se marca solo cuando lo haces.</p>` });
+  h.botones([{ t: 'Empezar', cls: 'pri', fn: () => h.cerrar() }]);
 }
-ACC.guiaVer = () => guiaLista();
-ACC.guiaPaso = el => { cerrarHojas(); guiaPaso(+el.dataset.n); };
-ACC.guiaOcultar = () => { const e = guiaEst(); if (e) { e.oculta = 1; guiaGuarda(e); } cerrarHojas(); const c = $('#gg-card'); if (c) c.remove(); toast('Guía oculta', 'ok', 1800); };
+ACC.pasoIr = el => { const x = pasosDef().find(p => p.k === el.dataset.k); if (x) pasoHoja(x); };
+ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta = Date.now() + 86400000; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); toast('La lista vuelve a salir mañana', 'ok', 2200); };
+ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.82', fecha: '2026-11-13', items: [
+    { i: 'sparkle', t: 'Primeros pasos en Inicio', d: 'Una lista con lo que te falta para dejar tu negocio listo: tu logo, tu primer producto, tu primera venta, un cliente, compartir tu tienda, tu primer pedido en línea, el cierre de caja y «¿Cómo me fue hoy?». Cada paso se marca solo cuando lo haces.', si: () => puede('admin') && S.licencia && S.licencia.estado === 'prueba', ir: 'inicio' }
+  ] },
   { v: '1.9.81', fecha: '2026-11-13', items: [
     { i: 'receipt', t: 'Compras en línea: registra la factura', d: 'En un pedido de Shein o Temu toca «Registrar factura»: anota el costo real de cada artículo, la foto de la factura y el envío (como gasto aparte o sumado al costo). Una sola factura puede traer pedidos de varios clientes. Queda la compra registrada y el pedido «En camino».', si: () => girosOn().includes('compras') && puede('admin') },
     { i: 'lock', t: 'Apartados para tus clientes', d: 'Cuando llega, toca «Ya llegó»: queda apartado a nombre del cliente con su plazo para retirarlo, sin salir en tu tienda en línea ni en Vender. Al entregarlo se registra la salida con el costo real y el segundo pago.', si: () => girosOn().includes('compras') },
