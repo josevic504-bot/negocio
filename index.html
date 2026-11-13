@@ -744,7 +744,8 @@ body.en-tienda{padding-bottom:110px}
 .t-expl{font-size:12.5px;color:var(--mut);margin:14px 2px 8px}.ed-ped{text-align:center;font-size:12.5px;font-weight:600;color:var(--pri);margin-bottom:8px}.btn.quitar{color:var(--bad);border:1.5px solid var(--bad);background:transparent}
 .prod-big .ph{aspect-ratio:4/3;border-radius:22px;overflow:hidden;display:grid;place-items:center;color:#fff;position:relative;background:linear-gradient(135deg,var(--t1),var(--t2))}
 .prod-big .ph .emo{font-size:90px}.prod-big .ph .ini{font:600 60px var(--serif)}
-.prod-big .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.prod-big .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.prod-big .ph:has(img){aspect-ratio:auto;height:min(58vh,440px);background:#fff;border:1px solid var(--line)} /* al abrir el artículo la foto se ve completa (sin recortar), en un cuadro más alto con fondo blanco */
 .prod-n{font:600 26px/1.15 var(--serif);margin:14px 0 4px}.prod-p{font-size:22px;font-weight:700;color:var(--pri)}.prod-p small{font-size:13px;color:var(--mut);font-weight:400}
 .prod-d{color:var(--mut);line-height:1.5}
 /* ===== Tienda en línea · diseño elegante ===== */
