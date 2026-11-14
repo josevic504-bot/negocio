@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.83';
+const VERSION = '1.9.85';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -401,6 +401,8 @@ function rutaUsuario_(a, u, d, req) {
     case 'compraLlego':     return lock_(() => compraLlego_(u, d));
     case 'liberarApartado': return lock_(() => liberarApartado_(u, d));
     case 'pedidoManual':    return lock_(() => pedidoManual_(u, d));
+    case 'fotosArticulo':   return lock_(() => fotosArticulo_(u, d));
+    case 'vistaEnlace':     return lock_(() => vistaEnlace_(u, d));
     case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
     case 'cobroComprobante': return lock_(() => cobroComprobante_(u, d));
     case 'pedidoPago':      return lock_(() => pedidoPago_(u, d));
@@ -3415,8 +3417,10 @@ function carpetaFotos_() {
 }
 
 function subirFoto_(u, d) {
-  req_(u, ['admin','bodega']);
-  if (!plus_() && !(d.tipo === 'factura' && girosActivos_().indexOf('compras') >= 0)) throw new Error('Las fotos de productos son parte del plan Plus'); // la foto de la factura de compras en línea va sin Plus
+  const art = d.tipo === 'articulo';
+  req_(u, art ? ['admin','cajero'] : ['admin','bodega']);
+  if (art && girosActivos_().indexOf('compras') < 0) throw new Error('Esta opción es del giro Compras en línea');
+  if (!plus_() && !art && !(d.tipo === 'factura' && girosActivos_().indexOf('compras') >= 0)) throw new Error('Las fotos de productos son parte del plan Plus'); // la foto de la factura y las del artículo de compras en línea van sin Plus
   const m = /^data:(image\/(?:jpeg|png|webp));base64,(.+)$/.exec(String(d.data || ''));
   if (!m) throw new Error('La foto no es válida');
   if (m[2].length > 900000) throw new Error('La foto es muy pesada');
@@ -4699,8 +4703,13 @@ function pedidoManual_(u, d) {
     if (!manual && !(Number(cfg.comprasCambio) > 0)) throw new Error('Pon el tipo de cambio en Mi tienda en línea › Compras en línea, o escribe el precio en lempiras');
     const precio = manual ? r2_(i.precio) : precioCompra_(usd, cfg), total = r2_(precio * cant);
     const det = [i.talla ? 'Talla: ' + txt_(i.talla, 20) : '', i.color ? 'Color: ' + txt_(i.color, 30) : '', i.nota ? 'Nota: ' + txt_(i.nota, 80) : ''].filter(Boolean).join(', ');
-    return { productoId: '', tipo: 'compra', enlace: enlace, usd: usd, nombre: txt_('Compra en línea' + (det ? ' (' + det + ')' : ''), 240), cantidad: cant, precio: precio, total: total };
+    const fotos = fotosArtValidas_(i.fotos, n);
+    const it = { productoId: '', tipo: 'compra', enlace: enlace, usd: usd, nombre: txt_('Compra en línea' + (det ? ' (' + det + ')' : ''), 240), cantidad: cant, precio: precio, total: total };
+    if (fotos.length) it.fotos = fotos;
+    return it;
   });
+  // Vista previa del enlace (foto y nombre que da la página): si la página no la da, queda solo el enlace
+  items.slice(0, 5).forEach(it => { const v = vistaPrevia_(it.enlace); if (v) it.prev = v; });
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   if (!(d.envio === undefined || d.envio === '' || d.envio === null) && (!esNum_(d.envio) || Number(d.envio) < 0)) throw new Error('El envío no es válido');
   const envio = entrega === 'domicilio' && esNum_(d.envio) ? r2_(d.envio) : 0, total = r2_(subtotal + envio);
@@ -4764,6 +4773,59 @@ function repreciarPedido_(items, pm) {
 }
 const descuentoCant_ = items => r2_(items.reduce((a, i) => a + (Number(i.normal) > i.precio ? (i.normal - i.precio) * i.cantidad : 0), 0));
 // Corregir un pedido en línea antes de cobrarlo: cambiar cantidades o quitar productos (se agotó, error de precio…)
+/* ---- Compras en línea: fotos del artículo (hasta 2) y vista previa del enlace ---- */
+function fotosArtValidas_(lista, n) {
+  const fs = (Array.isArray(lista) ? lista : []).map(f => String(f || '').trim()).filter(Boolean);
+  if (fs.length > 2) throw new Error('Son máximo 2 fotos por artículo');
+  fs.forEach(f => { if (!fotoPropia_(f)) throw new Error('Una foto del artículo ' + (n + 1) + ' no es válida. Súbela de nuevo.'); });
+  return fs;
+}
+// Lee la foto y el nombre que la página del artículo da para compartir (lo mismo que muestra WhatsApp); el servidor solo consulta tiendas conocidas
+function vistaPrevia_(url) {
+  url = String(url || '').trim();
+  if (!/^https:\/\/[^\s]+$/i.test(url) || typeof UrlFetchApp === 'undefined') return null;
+  try {
+    const r = UrlFetchApp.fetch('vistaprevia:' + url, { muteHttpExceptions: true });
+    if (r.getResponseCode() !== 200) return null;
+    const o = JSON.parse(r.getContentText() || '{}');
+    if (!o || !o.titulo) return null;
+    return { titulo: txt_(o.titulo, 140), img: /^https:\/\/[^\s"'<>]+$/.test(String(o.img || '')) ? String(o.img).slice(0, 600) : '', sitio: txt_(o.sitio, 40) };
+  } catch (e) { return null; }
+}
+function pedidoCompraAbierto_(p, ix) {
+  if (!p) throw new Error('Este pedido ya no existe');
+  const items = parseJ_(p.items, []), it = items[Math.floor(Number(ix))];
+  if (!it || it.tipo !== 'compra') throw new Error('El pedido cambió. Ábrelo de nuevo.');
+  return { items: items, it: it };
+}
+// Agrega, cambia o quita las fotos de un artículo de un pedido ya anotado (mientras no se haya entregado)
+function fotosArticulo_(u, d) {
+  req_(u, ['admin','cajero']);
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  const { items, it } = pedidoCompraAbierto_(p, d.linea);
+  if (['entregado', 'cancelado'].indexOf(p.estado) >= 0) throw new Error('Este pedido ya está ' + p.estado);
+  const antes = [].concat(it.fotos || [], it.foto ? [it.foto] : []);
+  const nuevas = (Array.isArray(d.fotos) ? d.fotos : []).map(f => String(f || '').trim()).filter(Boolean);
+  if (nuevas.length > 2) throw new Error('Son máximo 2 fotos por artículo');
+  nuevas.forEach(f => { if (antes.indexOf(f) < 0 && !fotoPropia_(f)) throw new Error('La foto no es válida. Súbela de nuevo.'); });
+  antes.forEach(f => { if (nuevas.indexOf(f) < 0) borrarFoto_(f); });
+  delete it.foto; if (nuevas.length) it.fotos = nuevas; else delete it.fotos;
+  upsert_('Pedidos', { id: p.id, items: JSON.stringify(items), actualizado: ahora_() });
+  return { id: p.id, items: items };
+}
+// Vista previa de un enlace: para el formulario (solo devuelve) o para guardarla en un pedido que no la tenía
+function vistaEnlace_(u, d) {
+  req_(u, ['admin','cajero']);
+  if (girosActivos_().indexOf('compras') < 0) throw new Error('Esta opción es del giro Compras en línea');
+  if (!d.id) return { prev: vistaPrevia_(d.url) };
+  const p = rows_('Pedidos').find(x => x.id === d.id);
+  const { items, it } = pedidoCompraAbierto_(p, d.linea);
+  if (it.prev) return { prev: it.prev };
+  const v = vistaPrevia_(it.enlace);
+  it.prev = v || { no: 1 }; // sin vista previa: no se vuelve a intentar
+  upsert_('Pedidos', { id: p.id, items: JSON.stringify(items) });
+  return { prev: it.prev };
+}
 function editarPedido_(u, d) {
   req_(u, ['admin','cajero']);
   const p = rows_('Pedidos').find(x => x.id === d.id);
@@ -4773,12 +4835,12 @@ function editarPedido_(u, d) {
   const antes = parseJ_(p.items, []), cambios = Array.isArray(d.cantidades) ? d.cantidades : [];
   if (cambios.length !== antes.length) throw new Error('El pedido cambió mientras lo editabas. Ábrelo de nuevo.');
   const cfg = config_(), pm = porId_(rows_('Productos')), sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
-  const items = [], lineas = [], suma = {}, sumaV = {};
+  const items = [], lineas = [], suma = {}, sumaV = {}, quitadas = [];
   antes.forEach((it, i) => {
     const n = Math.floor(Number(cambios[i]) || 0);
     if (n < 0 || n > 999) throw new Error('Cantidad no válida en «' + it.nombre + '»');
     if (n !== it.cantidad) lineas.push('• ' + it.nombre + ': ' + (n ? it.cantidad + ' → ' + n : 'quitado'));
-    if (!n) return;
+    if (!n) { quitadas.push(it); return; }
     const pr = it.productoId ? pm[it.productoId] : null;
     if (pr) {
       suma[pr.id] = (suma[pr.id] || 0) + n;
@@ -4792,6 +4854,7 @@ function editarPedido_(u, d) {
   });
   if (!lineas.length) throw new Error('No cambiaste nada');
   if (!items.length) throw new Error('Si quitas todo, mejor cancela el pedido');
+  quitadas.forEach(it => { if (it.foto) borrarFoto_(it.foto); (it.fotos || []).forEach(borrarFoto_); });
   repreciarPedido_(items, pm);
   const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
   const pct = Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0));
@@ -5808,7 +5871,7 @@ function limpiarFotosRamo_() {
   const lim = diasAtras_(DIAS_FOTOS_RAMO); let n = 0;
   rows_('Pedidos').forEach(p => {
     if (['entregado', 'cancelado'].indexOf(p.estado) < 0 || String(p.actualizado).slice(0, 10) >= lim) return;
-    if (String(p.items).indexOf('"foto"') >= 0) { const its = parseJ_(p.items, []); its.forEach(i => { if (i.foto) { borrarFoto_(i.foto); n++; delete i.foto; i.fotoBorrada = 1; } }); upsert_('Pedidos', { id: p.id, items: JSON.stringify(its) }); }
+    if (/"fotos?"/.test(String(p.items))) { const its = parseJ_(p.items, []); its.forEach(i => { if (i.foto) { borrarFoto_(i.foto); n++; delete i.foto; i.fotoBorrada = 1; } if (i.fotos) { i.fotos.forEach(f => { borrarFoto_(f); n++; }); delete i.fotos; i.fotoBorrada = 1; } }); upsert_('Pedidos', { id: p.id, items: JSON.stringify(its) }); }
     if (String(p.cotiza).indexOf('"fotos"') < 0) return;
     const c = parseJ_(p.cotiza, {}); (c.fotos || []).forEach(id => { borrarFoto_(id); n++; });
     delete c.fotos; c.fotosBorradas = hoy_(); upsert_('Pedidos', { id: p.id, cotiza: JSON.stringify(c) });
@@ -5906,7 +5969,7 @@ function eliminarPedido_(u, d) {
   if (rb && !rb.liberado && !p.ventaId) throw new Error('Este pedido tiene su factura registrada. Entrégalo o libéralo; o anula primero la compra.');
   if (p.comprobante) borrarFoto_(p.comprobante);
   (parseJ_(p.cotiza, {}).fotos || []).forEach(borrarFoto_);
-  parseJ_(p.items, []).forEach(i => { if (i.foto) borrarFoto_(i.foto); });
+  parseJ_(p.items, []).forEach(i => { if (i.foto) borrarFoto_(i.foto); (i.fotos || []).forEach(borrarFoto_); });
   deleteRow_('Pedidos', p.id);
   return { id: p.id, eliminado: true };
 }
@@ -6062,7 +6125,8 @@ function pedir_(d) {
       if (cant < 1 || cant > 50) throw new Error('Cantidad no válida en una compra por enlace');
       const det = [i.talla ? 'Talla: ' + txt_(i.talla, 20) : '', i.color ? 'Color: ' + txt_(i.color, 30) : '', i.nota ? 'Nota: ' + txt_(i.nota, 80) : ''].filter(Boolean).join(', ');
       const precio = precioCompra_(usd, cfg), total = r2_(precio * cant);
-      items.push({ productoId: '', tipo: 'compra', enlace: enlace, usd: usd, nombre: txt_('Compra en línea' + (det ? ' (' + det + ')' : ''), 240), cantidad: cant, precio: precio, total: total });
+      const fs = (Array.isArray(i.fotos) ? i.fotos : []).filter(f => /^data:image\//.test(String(f))).slice(0, 2).filter(() => fotos < 6 && ++fotos);
+      items.push(Object.assign({ productoId: '', tipo: 'compra', enlace: enlace, usd: usd, nombre: txt_('Compra en línea' + (det ? ' (' + det + ')' : ''), 240), cantidad: cant, precio: precio, total: total }, fs.length ? { _fotos: fs } : {}));
       anticipo = r2_(anticipo + total * Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0)) / 100);
       return;
     }
@@ -6116,7 +6180,8 @@ function pedir_(d) {
   // «Arma tu ramo» (2 fotos) y diseño personalizado (3): fotos de referencia; se borran solas 7 días después de entregado o cancelado
   const fotosRef = ramo && Array.isArray(d.fotos) ? d.fotos.slice(0, personal ? 3 : 2).map((f, i) => guardarFoto_(f, (personal ? 'diseno-' : 'ramo-') + numP + '-' + (i + 1), 'La foto de referencia')) : [];
   // Manualidades: la imagen que el cliente sube en un producto («Personalízalo») va en esa línea del pedido
-  items.forEach((it, i) => { if (it._foto) it.foto = guardarFoto_(it._foto, 'pers-' + numP + '-' + (i + 1), 'Tu imagen'); delete it._foto; });
+  items.forEach((it, i) => { if (it._foto) it.foto = guardarFoto_(it._foto, 'pers-' + numP + '-' + (i + 1), 'Tu imagen'); delete it._foto;
+    if (it._fotos) it.fotos = it._fotos.map((f, k) => guardarFoto_(f, 'art-' + numP + '-' + (i + 1) + '-' + (k + 1), 'La foto del artículo')); delete it._fotos; });
   const cotizaIni = pers ? Object.assign(pers, { fotos: fotosRef }) : fotosRef.length ? { fotos: fotosRef } : null;
   const p = upsert_('Pedidos', { comprobante: comp, pagoEstado: comp ? 'revisar' : '', numero: numP, fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
     pago: pago, items: JSON.stringify(items), subtotal: ramo ? 0 : subtotal, envio: envio, total: ramo ? 0 : r2_(subtotal + envio), estado: ramo ? 'cotizar' : 'nuevo', ventaId: '', nota: txt_(d.nota, 300), presupuesto: presupuesto, cotiza: cotizaIni ? JSON.stringify(cotizaIni) : '', actualizado: ahora_(), anticipo: Math.ceil(anticipo),

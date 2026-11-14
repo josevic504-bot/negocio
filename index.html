@@ -277,7 +277,7 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .la-o.on{border-color:var(--pri)}.la-o.on i{border:5px solid var(--pri)}.la-o span{display:flex;flex-direction:column;font-size:14px}.la-o small{color:var(--mut);font-size:12px}
 .la-p{border-top:1px dashed var(--line);padding-top:6px;margin-top:6px}
 .np-it{border:1.5px solid var(--line);border-radius:14px;padding:6px 12px 2px;margin:8px 0}.np-ih{display:flex;align-items:center;justify-content:space-between;min-height:34px}.np-ih b{font-size:14px}
-.np-it .f3{display:grid;grid-template-columns:1fr 1fr 84px;gap:8px}.np-it .f2{gap:8px}
+.np-it .f3{display:grid;grid-template-columns:1fr 1fr 84px;gap:8px}.np-it .f2{gap:8px}.np-ft{margin:6px 0 8px}.lk-prev{display:flex;gap:10px;align-items:center;margin:6px 0;padding:8px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--pri) 5%,transparent);text-decoration:none;color:var(--ink)}.lk-prev img{width:56px;height:56px;object-fit:cover;border-radius:8px;flex:none;background:#fff}.lk-prev .tx{flex:1;min-width:0;display:flex;flex-direction:column;text-align:left}.lk-prev b{font-size:13.5px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.lk-prev small{color:var(--mut);font-size:12px;display:flex;align-items:center;gap:4px;margin-top:2px}.lk-prev .btn{flex:none}.it-fotos{display:flex;gap:8px;margin:6px 0 2px}.it-fotos .it-foto{margin:0}
 .np-cli{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--pri) 6%,transparent)}.np-cli .tx{flex:1;display:flex;flex-direction:column;font-size:14px}.np-cli small{color:var(--mut);font-size:12px}
 .np-sug{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;border-top:1px dashed var(--line);background:none;padding:9px 2px;font:inherit;font-size:14px;color:inherit;cursor:pointer}.np-sug small{color:var(--mut);margin-left:auto}
 .rc-box{margin-top:12px;padding-top:4px;border-top:1px solid var(--line)}
@@ -742,7 +742,7 @@ body.en-tienda{padding-bottom:110px}
 .preg-b b{color:var(--pri)}
 .pers-box{margin-top:14px;padding:12px 14px 4px;border:1.5px solid color-mix(in srgb,var(--pri) 30%,transparent);border-radius:16px}
 .pers-box>b{display:block;margin-bottom:2px}
-.it-foto{display:block;width:64px;height:64px;object-fit:cover;border-radius:10px;margin:6px 0 2px;cursor:pointer}.pers-box .fld{margin-top:8px!important}
+.art-ft{display:inline-flex;margin-top:6px;padding:4px 10px;font-size:12.5px;gap:5px}.it-foto{display:block;width:64px;height:64px;object-fit:cover;border-radius:10px;margin:6px 0 2px;cursor:pointer}.pers-box .fld{margin-top:8px!important}
 .ramo-c{border:1.5px solid var(--pri);border-radius:16px;padding:12px 14px;margin:6px 0 8px;transition:box-shadow .3s}.ramo-c.brilla{box-shadow:0 0 0 4px color-mix(in srgb,var(--pri) 30%,transparent)}.ramo-c .pp{display:flex;justify-content:space-between;align-items:baseline}.ramo-c .pp b{font-size:22px;color:var(--pri)}.ramo-c .nt{margin-top:6px;padding:8px 10px;border-radius:10px;background:color-mix(in srgb,var(--pri) 7%,transparent);font-size:13px}.ramo-c .row{display:flex;gap:8px;margin-top:10px}.ramo-c .row .btn{flex:1}.ramo-c .row .acc{flex:2}
 .t-expl{font-size:12.5px;color:var(--mut);margin:14px 2px 8px}.ed-ped{text-align:center;font-size:12.5px;font-weight:600;color:var(--pri);margin-bottom:8px}.btn.quitar{color:var(--bad);border:1.5px solid var(--bad);background:transparent}
 .prod-big .ph{aspect-ratio:4/3;border-radius:22px;overflow:hidden;display:grid;place-items:center;color:#fff;position:relative;background:linear-gradient(135deg,var(--t1),var(--t2))}
@@ -1701,7 +1701,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.84';
+const APP_VER = '1.9.85';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -5485,13 +5485,43 @@ function facturaPedHTML(p) {
     <div class="tots"><div class="tot"><span>Costo real${r.modo === 'costo' && num(r.envio) ? ' (con envío)' : ''}</span><b class="n">${money(c.costo)}</b></div>${env ? `<div class="tot"><span>Envío de la factura (gasto aparte)</span><b class="n">${money(env)}</b></div>` : ''}<div class="tot g"><span>Ganancia${env ? ' antes del envío' : ''}</span><b class="n" style="color:var(--ok)">${money(c.venta - c.costo)}</b></div></div>
     ${L ? `<p class="xs mut" style="margin:6px 0 0">Liberado el ${esc(fFechaC(L.fecha))}: ${L.motivo === 'noPago' ? 'no lo pagó' : 'no lo reclamó'}${L.anticipo === 'ingreso' ? ' · anticipo ' + money(L.monto) + ' como ingreso' : L.anticipo === 'devolver' ? ' · anticipo devuelto' : ''}.</p>` : ''}</div>`;
 }
+// Foto del artículo en pedidos de compras en línea: se agrega o cambia mientras el pedido no se haya entregado
+const fotosIt = i => [].concat(i.fotos || [], i.foto ? [i.foto] : []).slice(0, 2);
+const fotoArtOk = p => puede('admin', 'cajero') && !['entregado', 'cancelado'].includes(p.estado);
+ACC.fotoArt = el => {
+  const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
+  const k = +el.dataset.k, it = p.items[k]; if (!it) return;
+  let fotos = fotosIt(it).slice();
+  const h = hoja({ titulo: 'Fotos del artículo', cls: 'chica', html: `<p class="sm mut" style="margin:0 0 6px">Hasta 2: la captura que te mandó el cliente o una foto del artículo. Se borran solas 7 días después de entregar o cancelar el pedido.</p><div class="rf-fotos" id="fa-f"></div>` });
+  const pinta = () => { $('#fa-f', h.el).innerHTML = fotos.map((f, n) => `<div class="rf-foto"><img src="${esc(fotoSrc(f))}" alt="" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}"><button type="button" class="x" data-fax="${n}" aria-label="Quitar">×</button></div>`).join('') + (fotos.length < 2 ? `<label class="rf-foto">${ic('cam', 22)}<span>Subir foto</span><input type="file" accept="image/*" id="fa-i" hidden></label>` : ''); };
+  const guardar = async nuevas => { const r = await api('fotosArticulo', { id: p.id, linea: k, fotos: nuevas }); p.items = r.items; fotos = fotosIt(p.items[k]).slice(); pinta(); };
+  h.el.addEventListener('change', async e => {
+    if (e.target.id !== 'fa-i' || !e.target.files[0]) return;
+    try { loader(true); const d = await comprimirImagen(e.target.files[0], DEMO.on ? 480 : 1200); const f = (await api('subirFoto', { data: d, tipo: 'articulo' }, true)).foto; await guardar(fotos.concat(f)); toast('Foto guardada en el pedido', 'ok'); }
+    catch (er) { err(er); } finally { loader(false); }
+  });
+  h.el.addEventListener('click', async e => {
+    const x = e.target.closest('[data-fax]'); if (!x) return;
+    if (!(await confirmar('¿Quitar esta foto del pedido?', { si: 'Quitar', peligro: 1 }))) return;
+    try { loader(true); await guardar(fotos.filter((f, n) => n !== +x.dataset.fax)); } catch (er) { err(er); } finally { loader(false); }
+  });
+  h.onClose = () => { if (S.vista === 'pedidos') R.pedidos(); const v = PILA.find(x => x.el.querySelector('[data-a="fotoArt"]')); if (v) { v.cerrar(); ACC.verPedido({ dataset: { id: p.id } }); } };
+  pinta(); h.botones([{ t: 'Listo', cls: 'pri', fn: () => h.cerrar() }]);
+};
+// Vista previa del enlace de pedidos que todavía no la tienen (se busca una sola vez por artículo y queda guardada)
+function prevPedido(p, h) {
+  p.items.forEach((i, k) => {
+    if (i.tipo !== 'compra' || i.prev || !esEnlace(i.enlace) || !puede('admin', 'cajero')) return;
+    api('vistaEnlace', { id: p.id, linea: k }, true).then(r => { i.prev = r.prev; const b = $(`[data-lk="${k}"]`, h.el); const c = lkPrevHTML(i.prev, i.enlace); if (b && c) b.innerHTML = c; }).catch(() => {});
+  });
+}
 ACC.verPedido = el => {
   const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (!p) return;
   const e = EST_P[p.estado];
   const h = hoja({ titulo: 'Pedido ' + esc(p.numero), html: `<div class="kv"><div><small>Cliente</small>${esc(p.nombre)}</div><div><small>WhatsApp</small>${esc(fmtWA(p.telefono))}</div><div><small>Fecha</small>${esc(fFechaC(p.fecha))} · ${fHora(p.fecha)}</div><div><small>Estado</small><span class="badge ${e.c}">${e.t}</span></div>
     <div><small>Entrega</small>${p.entrega === 'domicilio' ? 'A domicilio' : 'Recoger en el negocio'}</div><div><small>Pago</small>${esc(p.pago)}</div></div>
     ${p.direccion ? `<p class="sm">${ic('pin', 15)} ${esc(p.direccion)} · <a href="https://www.google.com/maps/search/${encodeURIComponent(p.direccion)}" target="_blank" rel="noopener">Ver en mapa</a></p>` : ''}
-    <div class="tks">${p.items.map(i => `<div class="tk"><div class="tx"><b>${esc(i.nombre)}</b>${i.foto ? `<img class="it-foto" src="${esc(fotoSrc(i.foto))}" alt="Imagen del cliente" data-a="verFotoRamo" data-src="${esc(fotoAncha(i.foto))}">` : ''}<small>${cant(i.cantidad)} × ${money(i.precio)}${i.tipo === 'compra' ? ` · US$${Number(i.usd || 0).toFixed(2)} c/u` : ''}</small>${i.tipo === 'compra' ? `<small style="word-break:break-all"><a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">${ic('globe', 13)} ${esc(i.enlace)}</a></small>` : ''}</div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
+    <div class="tks">${p.items.map((i, k) => `<div class="tk"><div class="tx"><b>${esc(i.nombre)}</b>${fotosIt(i).length ? `<div class="it-fotos">${fotosIt(i).map(f => `<img class="it-foto" src="${esc(fotoSrc(f))}" alt="Foto del artículo" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}">`).join('')}</div>` : ''}<small>${cant(i.cantidad)} × ${money(i.precio)}${i.tipo === 'compra' ? ` · US$${Number(i.usd || 0).toFixed(2)} c/u` : ''}</small>${i.tipo === 'compra' ? `<div data-lk="${k}">` + (lkPrevHTML(i.prev, i.enlace) || `<small style="word-break:break-all"><a href="${esc(enlaceSeguro(i.enlace))}" target="_blank" rel="noopener">${ic('globe', 13)} ${esc(i.enlace)}</a></small>`) + '</div>' : ''}${i.tipo === 'compra' && fotoArtOk(p) ? `<button type="button" class="btn sm ghost art-ft" data-a="fotoArt" data-id="${p.id}" data-k="${k}">${ic('cam', 15)} ${fotosIt(i).length ? 'Fotos (' + fotosIt(i).length + ' de 2)' : 'Agregar fotos'}</button>` : ''}</div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
     <div class="tots">${p.envio ? `<div class="tot"><span>Envío</span><b class="n">${money(p.envio)}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(p.total)}</b></div>${p.anticipo ? `<div class="tot"><span>Anticipo para pedir el artículo</span><b class="n" style="color:var(--pri)">${money(p.anticipo)}</b></div>` : ''}${num(p.anticipoPagado) > 0 ? `<div class="tot"><span>Anticipo pagado ✓</span><b class="n" style="color:var(--ok)">${money(p.anticipoPagado)}</b></div><div class="tot g"><span>Falta por pagar</span><b class="n">${money(p.total - p.anticipoPagado)}</b></div>` : ''}</div>${facturaPedHTML(p)}${p.nota ? `<p class="sm mut">Nota: ${esc(p.nota)}</p>` : ''}` });
   const bs = [], sg = segCompra(p), rb = reciboP(p);
   if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !rb) bs.push({ t: 'Cancelar pedido', cls: 'bad', fn: async () => {
@@ -5509,7 +5539,7 @@ ACC.verPedido = el => {
   if (['nuevo', 'confirmado', 'listo'].includes(p.estado) && !p.ventaId && num(p.anticipo) > 0 && num(p.anticipoPagado) < num(p.anticipo) - 0.004)
     bs.unshift({ t: `${ic('coin', 18)} Recibí el anticipo`, cls: 'pri', fn: () => { h.cerrar(); anticipoPedido(p); } });
   bs.push({ t: `${ic('wa', 18)} WhatsApp`, cls: 'wa', fn: () => { window.open(waLink(p.telefono, msjPedido(p)), '_blank'); } });
-  h.botones(bs);
+  h.botones(bs); prevPedido(p, h);
 };
 // El cliente entregó el anticipo de su compra en línea: entra a la caja y al cobrar el pedido se descuenta solo
 function anticipoPedido(p) {
@@ -5673,9 +5703,12 @@ function liberarApartado(p) {
 }
 // Pedido de compras en línea que llegó por WhatsApp, en persona o por llamada: lo anota el negocio (con o sin Plus)
 function precioCompraL(usd) { const c = S.config, t = num(c.comprasCambio), rec = Math.max(0, num(c.comprasRecargo)), env = Math.max(0, num(c.comprasEnvio)); return t > 0 && usd > 0 ? Math.ceil(usd * t * (1 + rec / 100) + env) : 0; }
+// Vista previa del enlace (imagen y nombre que da la página, lo mismo que muestra WhatsApp)
+const lkPrevHTML = (v, url) => !v || !v.titulo ? '' : `<a class="lk-prev" href="${esc(enlaceSeguro(url))}" target="_blank" rel="noopener">${v.img ? `<img src="${esc(v.img)}" alt="" referrerpolicy="no-referrer" onerror="this.remove()">` : ''}<div class="tx"><b>${esc(v.titulo)}</b><small>${ic('globe', 12)} ${esc(v.sitio || '')}</small></div></a>`;
+const esEnlace = t => /^https:\/\/\S+\.\S+/i.test(String(t || '').trim());
 function nuevoPedidoCompra() {
   const pct = Math.max(0, Math.min(100, num(S.config.comprasAnticipo)));
-  const st = { cli: null, nombre: '', tel: '', canal: 'WhatsApp', entrega: 'recoger', dir: '', envio: '', pagado: '', metodo: 'Efectivo', items: [{ enlace: '', talla: '', color: '', cantidad: '1', usd: '', precio: '' }] };
+  const st = { cli: null, nombre: '', tel: '', canal: 'WhatsApp', entrega: 'recoger', dir: '', envio: '', pagado: '', metodo: 'Efectivo', items: [{ enlace: '', talla: '', color: '', cantidad: '1', usd: '', precio: '', fotos: [] }] };
   const h = hoja({ titulo: 'Nuevo pedido de compra en línea', html: '<div id="np"></div>' });
   const chips = (k, ops) => `<div class="chips" data-ch="${k}">${ops.map(v => `<button type="button" class="chip ${st[k] === v[0] ? 'on' : ''}" data-v="${v[0]}">${v[1]}</button>`).join('')}</div>`;
   const precioDe = it => it.precio !== '' ? num(it.precio) : precioCompraL(num(it.usd));
@@ -5698,6 +5731,7 @@ function nuevoPedidoCompra() {
       <span class="op-l" style="margin-top:12px">Artículos</span>
       ${st.items.map((it, i) => `<div class="np-it"><div class="np-ih"><b>Artículo ${i + 1}</b>${st.items.length > 1 ? `<button type="button" class="btn icon sm ghost" data-del="${i}" aria-label="Quitar">${ic('trash', 16)}</button>` : ''}</div>
         <label class="fld"><span>Código o enlace del artículo</span><input data-f="enlace" data-i="${i}" maxlength="400" value="${esc(it.enlace)}" placeholder="sw2306123456789"></label>
+        <div data-pv="${i}">${lkPrevHTML(it.prev, it.enlace)}</div><div class="fld np-ft"><span>Fotos del artículo (opcional, hasta 2)</span><div class="rf-fotos">${(it.fotos || []).map((f, k) => `<div class="rf-foto"><img src="${esc(fotoSrc(f))}" alt="" data-a="verFotoRamo" data-src="${esc(fotoAncha(f))}"><button type="button" class="x" data-ftx="${i}" data-k="${k}" aria-label="Quitar">×</button></div>`).join('')}${(it.fotos || []).length < 2 ? `<label class="rf-foto">${ic('cam', 22)}<span>Subir foto</span><input type="file" accept="image/*" data-ft="${i}" hidden></label>` : ''}</div></div>
         <div class="f3"><label class="fld"><span>Talla</span><input data-f="talla" data-i="${i}" maxlength="20" value="${esc(it.talla)}" placeholder="M"></label><label class="fld"><span>Color</span><input data-f="color" data-i="${i}" maxlength="30" value="${esc(it.color)}" placeholder="Negro"></label><label class="fld"><span>Cantidad</span><input data-f="cantidad" data-i="${i}" type="number" min="1" max="50" inputmode="numeric" value="${esc(it.cantidad)}"></label></div>
         <div class="f2"><label class="fld"><span>Precio en la página (US$)</span><input data-f="usd" data-i="${i}" inputmode="decimal" value="${esc(it.usd)}" placeholder="18.40"></label><label class="fld"><span>Precio al cliente (L)</span><input data-f="precio" data-pl="${i}" data-i="${i}" inputmode="decimal" value="${esc(it.precio)}" placeholder="0.00"></label></div></div>`).join('')}
       <button type="button" class="btn sm" id="np-add" style="margin-top:6px">${ic('plus', 16)} Agregar artículo</button>
@@ -5714,17 +5748,29 @@ function nuevoPedidoCompra() {
     const s = e.target.closest('[data-cli]'); if (s) { st.cli = byId(S.clientes, s.dataset.cli); return pinta(); }
     if (e.target.closest('[data-x="cli"]')) { st.cli = null; return pinta(); }
     const d = e.target.closest('[data-del]'); if (d) { st.items.splice(+d.dataset.del, 1); return pinta(); }
-    if (e.target.closest('#np-add')) { st.items.push({ enlace: '', talla: '', color: '', cantidad: '1', usd: '', precio: '' }); pinta(); const l = $$('[data-f="enlace"]', h.el).pop(); if (l) l.focus(); }
+    const fx = e.target.closest('[data-ftx]'); if (fx) { st.items[+fx.dataset.ftx].fotos.splice(+fx.dataset.k, 1); return pinta(); }
+    if (e.target.closest('#np-add')) { st.items.push({ enlace: '', talla: '', color: '', cantidad: '1', usd: '', precio: '', fotos: [] }); pinta(); const l = $$('[data-f="enlace"]', h.el).pop(); if (l) l.focus(); }
+  });
+  h.el.addEventListener('change', async e => {
+    const f = e.target.closest('input[data-ft]'); if (!f || !f.files[0]) return;
+    try { loader(true); const d = await comprimirImagen(f.files[0], DEMO.on ? 480 : 1200); const it = st.items[+f.dataset.ft]; (it.fotos = it.fotos || []).push((await api('subirFoto', { data: d, tipo: 'articulo' }, true)).foto); pinta(); }
+    catch (er) { err(er); } finally { loader(false); }
   });
   h.el.addEventListener('input', e => {
     const t = e.target;
-    if (t.dataset.f) { st.items[+t.dataset.i][t.dataset.f] = t.value; return pintaTot(); }
+    if (t.dataset.f) {
+      const it = st.items[+t.dataset.i]; it[t.dataset.f] = t.value;
+      if (t.dataset.f === 'enlace') { it.prev = null; const b = $(`[data-pv="${t.dataset.i}"]`, h.el); if (b) b.innerHTML = ''; clearTimeout(it.tpv);
+        if (esEnlace(t.value)) { const url = t.value.trim(); it.tpv = setTimeout(async () => { try { const r = await api('vistaEnlace', { url }, true); if (it.enlace.trim() !== url || !r.prev) return; it.prev = r.prev; const c = $(`[data-pv="${st.items.indexOf(it)}"]`, h.el); if (c) c.innerHTML = lkPrevHTML(it.prev, url); } catch (e) {} }, 700); } }
+      return pintaTot();
+    }
     if (t.id === 'np-n') { st.nombre = t.value; return sugerir(); }
     if (t.id === 'np-w') st.tel = t.value; else if (t.id === 'np-d') st.dir = t.value; else if (t.id === 'np-e') { st.envio = t.value; pintaTot(); } else if (t.id === 'np-a') st.pagado = t.value;
   });
   pinta();
   h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Guardar pedido`, cls: 'pri', fn: async () => {
-    const it = st.items.map(x => ({ enlace: x.enlace.trim(), talla: x.talla.trim(), color: x.color.trim(), cantidad: parseInt(x.cantidad, 10) || 0, usd: num(x.usd), precio: x.precio === '' ? '' : num(x.precio) }));
+    const it = st.items.map(x => ({ enlace: x.enlace.trim(), talla: x.talla.trim(), color: x.color.trim(), cantidad: parseInt(x.cantidad, 10) || 0, usd: num(x.usd), precio: x.precio === '' ? '' : num(x.precio), fotos: x.fotos || [] }));
+    st.items.forEach(x => clearTimeout(x.tpv));
     const g = await api('pedidoManual', { clienteId: st.cli ? st.cli.id : '', nombre: st.nombre.trim(), telefono: st.tel, canal: st.canal, entrega: st.entrega, direccion: st.dir.trim(), envio: num(st.envio), items: it, pagado: num(st.pagado), metodo: st.metodo });
     h.cerrar(); S.pedidosL = null; S.inicio = null; S.cajaD = null; S.f.pest = 'confirmado'; S.f.pestAuto = 0;
     toast('Pedido ' + g.numero + ' guardado' + (num(g.anticipoPagado) > 0 ? ' con su anticipo de ' + money(g.anticipoPagado) : ''), 'ok', 3500); R.pedidos();
@@ -10452,6 +10498,10 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.85', fecha: '2026-11-14', items: [
+    { i: 'cam', t: 'Fotos en los pedidos de compras en línea', d: 'Cada artículo puede llevar hasta 2 fotos: la captura que te mandó tu cliente o una foto del artículo. Se ponen al anotar el pedido o después, dentro del pedido con «Agregar fotos». En tu tienda en línea, quien pide por código también puede subir su captura.', si: () => girosOn().includes('compras') && puede('admin', 'cajero'), ir: 'pedidos' },
+    { i: 'globe', t: 'Vista previa del enlace', d: 'Cuando el artículo trae un enlace de Temu, Shein, Amazon u otra tienda conocida, el pedido muestra la foto y el nombre que da la página, como en WhatsApp. Si la página no los da, queda el enlace como siempre.', si: () => girosOn().includes('compras') && puede('admin', 'cajero'), ir: 'pedidos' }
+  ] },
   { v: '1.9.83', fecha: '2026-11-13', items: [
     { i: 'clock', t: 'Aviso antes de que termine tu prueba', d: 'Dos días antes y el último día te avisamos cuánto llevas registrado, para que actives tu licencia a tiempo y sigas con todo lo que ya tienes.', si: () => puede('admin') && S.licencia && S.licencia.estado === 'prueba', ir: 'inicio' }
   ] },
@@ -11115,7 +11165,7 @@ function cupoHora(dia, hora) {
   return { quedan: quedan, lleno: quedan <= 0 };
 }
 const precioCompraT = usd => { const c = T.info.negocio.compras; return Math.ceil(usd * c.cambio * (1 + c.recargo / 100) + c.envio); };
-function guardarCompras() { LS.set(tKey('compras'), JSON.stringify(T.compras)); }
+function guardarCompras() { try { LS.set(tKey('compras'), JSON.stringify(T.compras)); } catch (e) { try { LS.set(tKey('compras'), JSON.stringify(T.compras.map(c => Object.assign({}, c, { fotos: [] })))); } catch (x) {} } }
 const SEP = '\u0001';                       // carrito: «id» o «id␁Talla: M, Color: Negro»
 const kId = k => k.split(SEP)[0], kOp = k => k.split(SEP)[1] || '';
 const enCarrito = id => Object.keys(T.cart).reduce((a, k) => a + (kId(k) === id ? T.cart[k] : 0), 0);
@@ -11506,10 +11556,16 @@ function tCompra() {
     <label class="fld"><span>Código del artículo (o enlace)</span><input id="tq-e" autocomplete="off" autocapitalize="none" placeholder="Ej. sw2211058716"></label>
     <div class="f3"><label class="fld"><span>Talla</span><input id="tq-t" maxlength="20" placeholder="M"></label><label class="fld"><span>Color</span><input id="tq-c" maxlength="30" placeholder="Negro"></label><label class="fld"><span>Cantidad</span><input id="tq-n" type="number" min="1" max="50" value="1" inputmode="numeric"></label></div>
     <label class="fld"><span>Precio en la página (US$)</span><input id="tq-u" inputmode="decimal" placeholder="12.99"></label>
+    <div class="fld"><span>Captura o foto del artículo (opcional, hasta 2)</span><div class="rf-fotos" id="tq-fo"></div><small class="mut xs">Así la tienda ve exactamente lo que quieres.</small></div>
     <label class="fld"><span>Nota (opcional)</span><input id="tq-o" maxlength="80" placeholder="Otro color si no hay…"></label>
     <div class="calc-c" id="tq-r"></div>
     <p class="xs mut" style="margin:8px 2px 0">${c.dias ? 'Entrega aproximada: ' + esc(c.dias) + '. ' : ''}El precio final te lo confirmamos por mensaje.</p>` });
-  const leer = () => ({ enlace: $('#tq-e', h.el).value.trim(), talla: $('#tq-t', h.el).value.trim(), color: $('#tq-c', h.el).value.trim(), cantidad: Math.max(1, Math.min(50, parseInt($('#tq-n', h.el).value, 10) || 1)), usd: Math.round(num($('#tq-u', h.el).value) * 100) / 100, nota: $('#tq-o', h.el).value.trim() });
+  const leer = () => ({ enlace: $('#tq-e', h.el).value.trim(), talla: $('#tq-t', h.el).value.trim(), color: $('#tq-c', h.el).value.trim(), cantidad: Math.max(1, Math.min(50, parseInt($('#tq-n', h.el).value, 10) || 1)), usd: Math.round(num($('#tq-u', h.el).value) * 100) / 100, nota: $('#tq-o', h.el).value.trim(), fotos: fotosC.slice() });
+  const fotosC = [];
+  const pintaFotoC = () => { $('#tq-fo', h.el).innerHTML = fotosC.map((f, n) => `<div class="rf-foto"><img src="${f}" alt=""><button type="button" class="x" data-tqfx="${n}" aria-label="Quitar">×</button></div>`).join('') + (fotosC.length < 2 ? `<label class="rf-foto">${ic('image', 22)}<span>Subir captura</span><input type="file" accept="image/*" id="tq-fi" hidden></label>` : ''); };
+  h.el.addEventListener('change', async e => { if (e.target.id !== 'tq-fi' || !e.target.files[0]) return; try { fotosC.push(await comprimirImagen(e.target.files[0], 900)); pintaFotoC(); } catch (x) { err(x); } });
+  h.el.addEventListener('click', e => { const x = e.target.closest('[data-tqfx]'); if (x) { fotosC.splice(+x.dataset.tqfx, 1); pintaFotoC(); } });
+  pintaFotoC();
   const calc = () => { const x = leer(), pr = x.usd > 0 ? precioCompraT(x.usd) : 0, tot = pr * x.cantidad;
     $('#tq-r', h.el).innerHTML = pr ? `<div><span>Precio por artículo</span><b class="n">${money(pr)}</b></div><div class="g"><span>Total estimado</span><b class="n">${money(tot)}</b></div>${c.anticipo ? `<div style="color:var(--pri)"><span>Anticipo para pedir (${c.anticipo}%)</span><b class="n">${money(Math.ceil(tot * c.anticipo / 100))}</b></div>` : ''}` : '<div><span>Escribe el precio en dólares para ver cuánto te sale</span></div>';
     h.botones([{ t: `${ic('bag', 18)} Agregar al pedido${pr ? ' · ' + money(tot) : ''}`, cls: 'acc big', fn: () => {
@@ -11531,7 +11587,7 @@ function tCarrito() {
     const ahorroL = x => { const pu = precioLinea(x.p, x.op); return x.p.precioEsp && !(tVar(x.p, tVk(x.p, x.op)) || {}).p && pu === x.p.precioEsp ? (x.p.precio - pu) * x.q : 0; };
     const ahorro = items.reduce((a, x) => a + ahorroL(x), 0);
     const anticipo = comprasOn() && n.compras.anticipo ? Math.ceil(tSubCompras() * n.compras.anticipo / 100) : 0;
-    const comprasHTML = T.compras.map((c, i) => `<div class="tk"><div class="tx"><b>🔗 Compra en línea</b><small class="op">${esc([c.talla && 'Talla: ' + c.talla, c.color && 'Color: ' + c.color].filter(Boolean).join(', ') || c.enlace.slice(0, 40))}</small><small>US$${c.usd.toFixed(2)} → ${money(precioCompraT(c.usd))} c/u · ${c.cantidad} ${c.cantidad === 1 ? 'artículo' : 'artículos'}</small></div><button class="btn icon sm ghost" data-qc="${i}" aria-label="Quitar">${ic('trash', 16)}</button></div>`).join('');
+    const comprasHTML = T.compras.map((c, i) => `<div class="tk"><div class="tx"><b>🔗 Compra en línea</b><small class="op">${esc([c.talla && 'Talla: ' + c.talla, c.color && 'Color: ' + c.color].filter(Boolean).join(', ') || c.enlace.slice(0, 40))}</small><small>US$${c.usd.toFixed(2)} → ${money(precioCompraT(c.usd))} c/u · ${c.cantidad} ${c.cantidad === 1 ? 'artículo' : 'artículos'}</small>${(c.fotos || []).length ? `<div class="it-fotos">${c.fotos.map(f => `<img class="it-foto" src="${f}" alt="">`).join('')}</div>` : ''}</div><button class="btn icon sm ghost" data-qc="${i}" aria-label="Quitar">${ic('trash', 16)}</button></div>`).join('');
     const valores = { nom: ($('#tc-n', h.el) || {}).value, tel: ($('#tc-t', h.el) || {}).value, dir: ($('#tc-d', h.el) || {}).value, mesa: ($('#tc-m', h.el) || {}).value, pago: ($('#tc-p', h.el) || {}).value, nota: ($('#tc-o', h.el) || {}).value, veh: ($('#tc-v', h.el) || {}).value, pla: ($('#tc-pl', h.el) || {}).value };
     $('#tc', h.el).innerHTML = `${comprasHTML}${items.map(x => { const pu = precioLinea(x.p, x.op), ah = ahorroL(x); return `<div class="tk"><div class="tx" data-cam="${esc(x.k)}"><b>${esc(x.p.nombre)}</b>${x.op ? `<small class="op">${esc(x.op)}</small>` : ''}<small>${ah ? `<s>${money(x.p.precio)}</s> <b style="display:inline;color:var(--pri);font-weight:600">${money(pu)} c/u</b>` : `${money(pu)} c/u${x.p.precioEsp ? ` · especial desde ${x.p.minEsp}` : ''}`}</small>${ah ? `<small class="ahorro">Ahorras ${money(ah)}</small>` : ''}<small class="tk-cam">${ic('edit', 14)} Cambiar</small></div><div class="qty"><button data-id="${esc(x.k)}" data-d="-1">−</button><span>${x.q}</span><button data-id="${esc(x.k)}" data-d="1">+</button></div><b class="n tkt">${ah ? `<s>${money(pu * x.q + ah)}</s>` : ''}${money(pu * x.q)}</b></div>`; }).join('')}
       <div class="tots"><div class="tot"><span>Productos</span><b class="n">${money(sub + ahorro)}</b></div>${ahorro ? `<div class="tot ahorro"><span>Descuento por cantidad</span><b class="n">−${money(ahorro)}</b></div>` : ''}${T.entrega === 'domicilio' ? `<div class="tot"><span>Envío a domicilio</span><b class="n">${env ? money(env) : 'Gratis'}</b></div>` : ''}<div class="tot g"><span>Total</span><b class="n">${money(sub + env)}</b></div>${anticipo ? `<div class="tot"><span>Anticipo para pedir tus compras en línea</span><b class="n" style="color:var(--pri)">${money(anticipo)}</b></div>` : ''}</div>
