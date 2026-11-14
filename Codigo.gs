@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.82';
+const VERSION = '1.9.83';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -35,7 +35,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo','eliminadoEl','purgado'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo','eliminadoEl','purgado','pasos'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -2505,6 +2505,7 @@ function panelFicha_(l, segs) {
     giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l), colab: esColab_(l) };
   if (o.colab) { o.plus = true; o.contab = true; }
   o.salud = saludDe_(o, l.nProductos, l.nClientes); o.respaldo = l.respaldo || '';
+  o.pasos = pasosDe_(l); // primeros pasos guardados la última vez que entró (1.9.83)
   // ¿Toca contactarlo hoy?
   if (est === 'prueba' && dia >= 3 && !hecho('dia3')) o.contactar = 'dia3';
   else if (est === 'prueba' && lic.diasRestantes <= 1 && !hecho('vence')) o.contactar = 'vence';
@@ -2763,7 +2764,7 @@ function panelNegocio_(d) {
     const prodsAct = rows_('Productos').filter(p => p.activo), propios = prodsAct.filter(p => !/^EJ\d/.test(String(p.codigo || '')));
     f.uso = { propios: propios.length, ejemplos: prodsAct.length - propios.length, ultimoPropio: propios.map(p => String(p.creado || '')).sort().pop() || '', ventas30: v30.length, monto30: r2_(v30.reduce((a, v) => a + (Number(v.total) || 0), 0)), productos: rows_('Productos').filter(p => p.activo).length, clientes: rows_('Clientes').filter(c => c.activo).length,
       pedidos: rows_('Pedidos').length, tienda: cfg.tienda === 'si', usuarios: rows_('Usuarios').filter(u => u.activo).length };
-    try { f.pasos = pasos_(); } catch (e) { f.pasos = null; }
+    try { f.pasos = pasos_(); pasosGuardar_(l, f.pasos); } catch (e) { f.pasos = pasosDe_(l); }
     const lim7 = Date.now() - 7 * 86400000; f.ventas7 = v30.filter(v => msDeLocal_(v.fecha) >= lim7).length; // en la ficha, las ventas de 7 días se cuentan al momento
     f.salud = saludDe_(f, f.uso.productos, f.uso.clientes); // en la ficha, con los conteos de hoy
     // Si el negocio cambió de tipo o de nombre desde Ajustes, la ficha se corrige aquí mismo
@@ -4932,7 +4933,16 @@ function inicio_(u, d) {
     if (modOn_('mesas') && (u.rol === 'admin' || u.rol === 'cajero')) out.mesas = mesasResumen_();
     if (girosActivos_().indexOf('compras') >= 0 && (u.rol === 'admin' || u.rol === 'cajero')) out.apartados = apartadosResumen_();
   } catch (e) {}
-  if (u.rol === 'admin' && !t) { try { if (enPrueba_()) out.pasos = pasos_(); } catch (e) {} }
+  if (u.rol === 'admin' && !t) {
+    try {
+      const lp = licencia_();
+      if (lp.estado === 'prueba') {
+        out.pasos = pasos_();
+        if (MULTI_NEGOCIO && NEG && NEG.lic) pasosGuardar_(NEG.lic, out.pasos);
+        if (lp.diasRestantes <= 2) out.prueba = resumenPrueba_(); // lo que ya registró, para el aviso de fin de prueba
+      }
+    } catch (e) {}
+  }
   if (u.rol === 'admin' || u.rol === 'cajero') {
     const ventas = rowsDesde_('Ventas', vent).filter(v => !v.anulada && deT(v, 'Ventas'));
     const vh = ventas.filter(v => v.fecha.slice(0, 10) === h && (u.rol === 'admin' || v.usuarioId === u.id));
@@ -5006,6 +5016,35 @@ function pasos_() {
     caja: rows_('Cierres').length > 0,
     cuenta: cfg.sysPasoCuenta === 'si'
   };
+}
+// Los pasos se guardan en Licencias para el Panel (lista de clientes y embudo de cada publicidad): claves hechas separadas por coma
+const PASOS_K = ['negocio', 'producto', 'venta', 'cliente', 'compartir', 'pedido', 'caja', 'cuenta'];
+function pasosGuardar_(l, p) {
+  if (!l || !l.id || !p) return;
+  const v = PASOS_K.filter(k => p[k]).join(',') || 'ninguno';
+  if (String(l.pasos || '') !== v) { mSet_('Licencias', l, { pasos: v }); l.pasos = v; }
+}
+function pasosDe_(l) {
+  const s = String(l && l.pasos || '').trim(); if (!s) return null;
+  const o = {}; PASOS_K.forEach(k => { o[k] = false; }); s.split(',').forEach(k => { if (own_(o, k)) o[k] = true; });
+  return o;
+}
+// Lo que el negocio ya registró en la prueba (conteos, sin datos): ventas, productos propios y clientes
+function resumenPrueba_() {
+  return { ventas: rows_('Ventas').filter(v => !v.anulada).length, productos: rows_('Productos').filter(p => p.activo && !/^EJ\d/.test(String(p.codigo || ''))).length, clientes: rows_('Clientes').filter(c => c.activo).length };
+}
+// Aviso al celular a las 7 a. m. cuando faltan 2 días y 1 día para que termine la prueba (lo llama el resumen del día)
+function recordatorioPrueba_(l) {
+  const lic = licNegocio_(l);
+  if (lic.estado !== 'prueba' || esColab_(l) || lic.diasRestantes > 2 || lic.diasRestantes < 1) return null;
+  const r = resumenPrueba_(), pl = (n, uno, varios) => n + ' ' + (n === 1 ? uno : varios), hay = [];
+  if (r.ventas) hay.push(pl(r.ventas, 'venta', 'ventas'));
+  if (r.productos) hay.push(pl(r.productos, 'producto', 'productos'));
+  if (r.clientes) hay.push(pl(r.clientes, 'cliente', 'clientes'));
+  const ya = hay.length ? 'Ya llevas ' + (hay.length > 1 ? hay.slice(0, -1).join(', ') + ' y ' + hay[hay.length - 1] : hay[0]) + '. ' : '';
+  return lic.diasRestantes <= 1
+    ? { titulo: '⏰ Mañana termina tu prueba', cuerpo: ya + 'Activa tu licencia hoy y sigues con todo lo que registraste. Pago único, sin mensualidades.' }
+    : { titulo: '⏳ Tu prueba termina en 2 días', cuerpo: ya + 'Activa tu licencia y no pierdes nada de lo que registraste. Pago único, sin mensualidades.' };
 }
 function pasoMarca_(u, d) {
   req_(u, ['admin']);
@@ -7147,10 +7186,13 @@ function resumenCampanas_() {
     const ls = por[c.id], monto = Number(c.monto) || 0;
     const reg = ls.map(l => { const e = licNegocio_(l).estado; return { id: l.id, negocio: l.negocio, estado: esEliminada_(l) ? 'eliminada' : (e === 'completa' ? 'activa' : e), pagado: pagoDe[l.id] || 0 }; });
     const pagado = r2_(reg.reduce((a, x) => a + x.pagado, 0)), enPrueba = reg.filter(x => x.estado === 'prueba' && !(x.pagado > 0)).length;
+    // Embudo (1.9.83): cargaron productos propios, vendieron (paso o última venta anotada) y sin datos de uso guardados
+    const ps = ls.map(pasosDe_), productos = ps.filter(p => p && p.producto).length, vendieron = ls.filter((l, i) => (ps[i] && ps[i].venta) || !!String(l.ultimaVenta || '').trim()).length;
     invertido += monto; recuperado += pagado;
     return Object.assign({}, c, { monto: monto, registros: reg.length, activaron: reg.filter(x => x.estado === 'activa').length, pagado: pagado,
       recuperacion: monto ? Math.round(pagado * 100 / monto) : 0, costoRegistro: reg.length ? r2_(monto / reg.length) : 0,
-      enPrueba: enPrueba, posible: r2_(enPrueba * ticket * conv), clientes: reg, enCurso: !c.hasta || c.hasta >= hoy_() });
+      enPrueba: enPrueba, posible: r2_(enPrueba * ticket * conv), clientes: reg, enCurso: !c.hasta || c.hasta >= hoy_(),
+      productos: productos, vendieron: vendieron, costoVendio: vendieron ? r2_(monto / vendieron) : 0, sinDatos: ps.filter(p => !p).length });
   });
   return { lista: lista, invertido: r2_(invertido), recuperado: r2_(recuperado), conversion: Math.round(conv * 100), ticket: ticket };
 }
@@ -7162,7 +7204,8 @@ function panelGastos_() {
   const porMes = {}; todos.forEach(g => { const m = fecha10_(g.fecha).slice(0, 7); porMes[m] = r2_((porMes[m] || 0) + (Number(g.monto) || 0)); });
   return { campanas: rc.lista.map(c => ({ id: c.id, fecha: c.fecha, plataforma: c.plataforma, nombre: c.nombre, desde: c.desde, hasta: c.hasta, nota: c.nota, moneda: c.moneda,
       montoOrig: Number(c.montoOrig) || 0, tasa: Number(c.tasa) || 0, monto: c.monto, registros: c.registros, activaron: c.activaron, pagado: c.pagado, recuperacion: c.recuperacion,
-      costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso, vendedores: vendsDe_(c) })),
+      costoRegistro: c.costoRegistro, enPrueba: c.enPrueba, posible: c.posible, clientes: c.clientes, enCurso: c.enCurso, vendedores: vendsDe_(c),
+      productos: c.productos, vendieron: c.vendieron, costoVendio: c.costoVendio, sinDatos: c.sinDatos })),
     vendLista: vendedores_().map(v => ({ codigo: v.codigo, nombre: v.nombre })), otros: otros, invertido: rc.invertido, recuperado: rc.recuperado, conversion: rc.conversion, ticket: rc.ticket, gastosMes: porMes[mes] || 0, porMes: porMes, tasa: tasaDolar_(), version: VERSION };
 }
 function panelGastoGuardar_(d) {
