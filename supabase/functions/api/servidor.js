@@ -249,6 +249,8 @@ function RECORDATORIOS_(ids) {
       try { var cb = cobroDe_(l); if (cb && (cb.vencidas.length || (cb.proxima && cb.proxima.f <= addDiasIso_(hoy_(), 3)))) {
         var ml = function (n) { return money_(n, { moneda: 'L' }); };
         out.push({ neg: id, tipo: 'licencia', titulo: '💳 Pago de tu licencia', cuerpo: (cb.vencidas.length ? 'Tienes un pago pendiente de ' + ml(cb.total) : 'Tu pago de ' + ml(cb.proxima.m) + ' vence el ' + cb.proxima.f.slice(8, 10) + '/' + cb.proxima.f.slice(5, 7)) + ' · Toca para enviar tu comprobante' }); } } catch (e) { if (e && e.message === '__FALTA__') throw e; }
+      // Aviso de fin de prueba: 2 días y 1 día antes (1.9.83)
+      try { if (typeof recordatorioPrueba_ === 'function') { var rp = recordatorioPrueba_(l); if (rp) out.push({ neg: id, tipo: 'licencia', titulo: rp.titulo, cuerpo: rp.cuerpo }); } } catch (e) { if (e && e.message === '__FALTA__') throw e; }
       try { bloquearSiVence_(); } catch (e) { if (e && e.message === '__FALTA__') throw e; return; }
       var cfg = config_(), a = avisosDia_(), p = [];
       var pl = function (n, uno, varios) { return n === 1 ? uno : n + ' ' + varios; };
