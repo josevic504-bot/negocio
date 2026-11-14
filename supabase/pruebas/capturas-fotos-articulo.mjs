@@ -1,0 +1,68 @@
+// Capturas 1.9.85: fotos del artículo y vista previa del enlace (compras en línea)
+import { createRequire } from 'node:module'; const { chromium } = createRequire(import.meta.url)('playwright');
+import fs from 'node:fs'; import path from 'node:path'; import http from 'node:http'; import { createHash } from 'node:crypto';
+import { crearServidor } from '../functions/api/servidor.js';
+import { dbFalsa } from './db-falsa.mjs';
+const RAIZ = process.argv[3], OUT = process.argv[2]; fs.mkdirSync(OUT, { recursive: true });
+const SRC = fs.readFileSync(RAIZ + '/Codigo.gs', 'utf8');
+const grab = n => { const m = SRC.match(new RegExp('^const ' + n + ' = ([\\s\\S]*?);\\s*$', 'm')); return eval('(' + m[1] + ')'); };
+const db = dbFalsa(grab('SCHEMA'), grab('SCHEMA_M'), grab('NUMS'), grab('BOOLS'));
+const archivos = {};
+const IMGB = 'data:image/jpeg;base64,' + fs.readFileSync('/tmp/b.jpg').toString('base64');
+db.web = async u => u === 'vistaprevia:https://share.temu.com/ycQIB1sgPQA' ? { texto: JSON.stringify({ titulo: 'Bolso bandolera de piel sintética, cierre doble y correa ajustable', img: 'http://localhost:8774/__img/b.jpg', sitio: 'Temu' }), codigo: 200 } : { texto: '{}', codigo: 204 };
+const ef0 = db.efecto ? db.efecto.bind(db) : null;
+db.efecto = async e => { if (e.subir) archivos[e.subir.ruta] = Buffer.from(e.subir.b64, 'base64'); return ef0 ? ef0(e) : undefined; };
+const srv = crearServidor(SRC, { cargar: p => db.cargar(p), aplicar: p => db.aplicar(p), web: u => db.web(u), efecto: e => db.efecto(e), push: q => (q.lista ? [] : true) },
+  { sha256: b => createHash('sha256').update(b).digest(), log: () => {}, urlArchivo: r => 'http://localhost:8774/__f/' + r, rutaDeUrl: u => (u.split('/__f/')[1] || null) });
+const api = (action, data, token) => srv.atender({ action, token, data: data || {} });
+const web = http.createServer((q, r) => { const u = decodeURIComponent(q.url.split('?')[0]);
+  if (u.indexOf('/__f/') === 0) { const b = archivos[u.slice(5)]; if (!b) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': 'image/jpeg' }); return r.end(b); }
+  if (u.indexOf('/__img/') === 0) { r.writeHead(200, { 'Content-Type': 'image/jpeg' }); return r.end(fs.readFileSync('/tmp/' + u.slice(7))); }
+  let f = path.join(RAIZ, u); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.webp') ? 'image/webp' : f.endsWith('.png') ? 'image/png' : 'application/octet-stream' }); r.end(d); }); }).listen(8774);
+const tok = (await api('registrar', { negocio: 'Todo en Uno HN', nombre: 'Karla Hernández', giro: 'compras', whatsapp: '33130265', pin: '1234' })).data.token;
+const neg = (await api('bootstrap', {}, tok)).data.negocioId;
+await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }] });
+await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tema: 'turquesa', tiendaPagos: 'Efectivo,Transferencia', comprasCambio: '25', comprasRecargo: '15', comprasAnticipo: '50', comprasPlazo: '8', tiendaAbre: '00:00', tiendaCierra: '23:59', tiendaDias: '0,1,2,3,4,5,6', comprasTiendas: 'Shein, Temu' } }, tok);
+const br = await chromium.launch();
+const errores = [];
+const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, colorScheme: 'dark' }); const app = await ctx.newPage();
+app.on('pageerror', e => { errores.push(e.message); console.log('ERROR JS:', e.message); });
+app.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) console.log('consola:', m.text()); });
+await app.route(/^https?:\/\/(?!localhost).*/, async rt => { if (rt.request().url().indexOf('/functions/v1/api') < 0) return rt.abort(); const b = JSON.parse(rt.request().postData() || '{}'); const r = await api(b.action, b.data, b.token); rt.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(r) }); });
+await app.addInitScript(t => { localStorage.setItem('gnvm@/|token', t); localStorage.setItem('gnvm@/|verVisto', '9.9.9'); localStorage.setItem('gnvm@/|tema', 'turquesa'); localStorage.setItem('gnvm@/|modoColor', 'oscuro'); }, tok);
+await app.goto('http://localhost:8774/'); await app.waitForTimeout(3000); await app.evaluate(() => { cerrarHojas(); aplicarTema('turquesa'); }); await app.waitForTimeout(400);
+await app.evaluate(() => ir('pedidos')); await app.waitForTimeout(1500);
+await app.locator('[data-a="nuevoPedidoCompra"]').click(); await app.waitForTimeout(600);
+await app.fill('#np-n', 'Lucia Martínez'); await app.fill('#np-w', '9875-2672');
+await app.fill('[data-f="enlace"][data-i="0"]', 'https://share.temu.com/ycQIB1sgPQA'); await app.waitForTimeout(1500);
+await app.fill('[data-f="color"][data-i="0"]', 'Negra'); await app.fill('[data-f="usd"][data-i="0"]', '13.40'); await app.fill('[data-f="precio"][data-i="0"]', '230');
+await app.setInputFiles('input[data-ft="0"]', '/tmp/b.jpg'); await app.waitForTimeout(1500);
+await app.setInputFiles('input[data-ft="0"]', '/tmp/c.jpg'); await app.waitForTimeout(1500);
+await app.evaluate(() => { const s = [...document.querySelectorAll('.sheet .sheet-b')].pop(); if (s) s.scrollTop = 170; }); await app.waitForTimeout(300);
+await app.screenshot({ path: OUT + '/f1-nuevo-pedido.png' });
+await app.locator('.sheet-f .btn.pri').click(); await app.waitForTimeout(1500);
+await app.evaluate(() => cerrarHojas()); await app.waitForTimeout(800);
+const id = db.T.Pedidos[0].id;
+await app.evaluate(i => ACC.verPedido({ dataset: { id: i } }), id); await app.waitForTimeout(1200);
+await app.screenshot({ path: OUT + '/f2-pedido.png' });
+await app.locator('[data-a="fotoArt"]').first().click(); await app.waitForTimeout(600);
+await app.screenshot({ path: OUT + '/f3-fotos.png' });
+await app.locator('[data-fax="1"]').click(); await app.waitForTimeout(400); await app.locator('.sheet-f .btn').last().click(); await app.waitForTimeout(1200);
+await app.screenshot({ path: OUT + '/f4-quitada.png' });
+await app.locator('.sheet-f .btn.pri').last().click(); await app.waitForTimeout(1200);
+await app.screenshot({ path: OUT + '/f5-pedido-1foto.png' });
+console.log('fotos guardadas:', JSON.stringify(JSON.parse(db.T.Pedidos[0].items)[0].fotos));
+// Tienda
+const tp = await ctx.newPage(); tp.on('pageerror', e => { errores.push(e.message); console.log('ERROR JS tienda:', e.message); });
+await tp.route(/^https?:\/\/(?!localhost).*/, async rt => { if (rt.request().url().indexOf('/functions/v1/api') < 0) return rt.abort(); const b = JSON.parse(rt.request().postData() || '{}'); const r = await api(b.action, b.data, b.token); rt.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(r) }); });
+await tp.goto('http://localhost:8774/?tienda=' + neg); await tp.waitForTimeout(3000);
+await tp.evaluate(() => tCompra()); await tp.waitForTimeout(600);
+await tp.fill('#tq-e', 'sw2211058716'); await tp.fill('#tq-c', 'Negro'); await tp.fill('#tq-u', '13.40');
+await tp.setInputFiles('#tq-fi', '/tmp/b.jpg'); await tp.waitForTimeout(800); await tp.setInputFiles('#tq-fi', '/tmp/c.jpg'); await tp.waitForTimeout(800);
+await tp.evaluate(() => { const s = [...document.querySelectorAll('.sheet .sheet-b')].pop(); if (s) s.scrollTop = 9999; }); await tp.waitForTimeout(300);
+await tp.screenshot({ path: OUT + '/f6-tienda-codigo.png' });
+await tp.locator('.sheet-f .btn').last().click(); await tp.waitForTimeout(800);
+await tp.evaluate(() => tCarrito()); await tp.waitForTimeout(800);
+await tp.screenshot({ path: OUT + '/f7-tienda-carrito.png' });
+console.log('errores JS:', errores.length);
+await br.close(); web.close(); process.exit(0);

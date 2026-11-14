@@ -14,6 +14,37 @@ const MOTOR_URL = Deno.env.get('MOTOR_URL') || 'https://raw.githubusercontent.co
 const BUCKET = 'archivos';
 const WEB_PERMITIDA = ['https://open.er-api.com/'];
 
+// Vista previa de enlaces de compras en línea: foto y nombre que la página da para compartir (og:title / og:image).
+// Solo tiendas conocidas y por https (cada redirección se revisa); se lee como mucho 600 KB de la página.
+const TIENDAS_VP = ['temu.com', 'shein.com', 'sheinlink.com', 'amazon.com', 'amzn.to', 'a.co', 'aliexpress.com', 'aliexpress.us', 'ebay.com', 'walmart.com', 'target.com', 'etsy.com'];
+const tiendaOk = (u: string) => { try { const x = new URL(u); return x.protocol === 'https:' && TIENDAS_VP.some(d => x.hostname === d || x.hostname.endsWith('.' + d)); } catch (_e) { return false; } };
+const entHtml = (s: string) => s.replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#0?39;|&apos;/g, "'").replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&#x([0-9a-f]+);/gi, (_m, h) => String.fromCodePoint(parseInt(h, 16))).replace(/&#(\d+);/g, (_m, d) => String.fromCodePoint(+d));
+async function vistaPrevia(url: string) {
+  const nada = { texto: '{}', codigo: 204 };
+  try {
+    let u = url, r: Response | null = null;
+    for (let i = 0; i < 6; i++) {
+      if (!tiendaOk(u)) return nada;
+      r = await fetch(u, { redirect: 'manual', signal: AbortSignal.timeout(5000), headers: { 'User-Agent': 'WhatsApp/2.24.6.77 A', 'Accept': 'text/html', 'Accept-Language': 'es-419,es;q=0.9' } });
+      const loc = r.status >= 300 && r.status < 400 ? r.headers.get('location') : null;
+      if (!loc) break;
+      u = new URL(loc, u).toString(); r = null;
+    }
+    if (!r || !r.ok || !r.body) return nada;
+    const lector = r.body.getReader(), dec = new TextDecoder(); let html = '';
+    while (html.length < 600000) { const { done, value } = await lector.read(); if (done) break; html += dec.decode(value, { stream: true }); if (/<\/head>/i.test(html)) break; }
+    try { lector.cancel(); } catch (_e) { /* nada */ }
+    const meta = (k: string) => { const m = new RegExp('<meta[^>]+(?:property|name)=["\']' + k + '["\'][^>]*>', 'i').exec(html); if (!m) return ''; const c = /content=(?:"([^"]*)"|'([^']*)')/i.exec(m[0]); return c ? entHtml(c[1] ?? c[2] ?? '').trim() : ''; };
+    const titulo = meta('og:title') || meta('twitter:title') || entHtml((/<title[^>]*>([^<]*)<\/title>/i.exec(html) || ['', ''])[1]).trim();
+    let img = meta('og:image') || meta('og:image:secure_url') || meta('twitter:image');
+    if (img) { try { img = new URL(img, u).toString(); } catch (_e) { img = ''; } }
+    if (!/^https:/.test(img)) img = '';
+    const sitio = meta('og:site_name') || new URL(u).hostname.replace(/^(www|m|share|es|us)\./, '');
+    if (!titulo) return nada;
+    return { texto: JSON.stringify({ titulo: titulo.slice(0, 200), img: img.slice(0, 600), sitio: sitio.slice(0, 40) }), codigo: 200 };
+  } catch (_e) { return nada; }
+}
+
 const cab = { apikey: CLAVE, Authorization: 'Bearer ' + CLAVE, 'Content-Type': 'application/json' };
 async function rpc(fn: string, p: unknown) {
   const r = await fetch(`${URL_SB}/rest/v1/rpc/${fn}`, { method: 'POST', headers: cab, body: JSON.stringify({ p }) });
@@ -57,6 +88,7 @@ const db = {
   cargar: (p: unknown) => rpc('api_cargar', p),
   aplicar: (p: unknown) => rpc('api_aplicar', p),
   async web(url: string) {
+    if (url.indexOf('vistaprevia:') === 0) return vistaPrevia(url.slice(12));
     if (!WEB_PERMITIDA.some(w => url.indexOf(w) === 0)) return { texto: '', codigo: 403 };
     try {
       const r = await fetch(url, { signal: AbortSignal.timeout(6000) });
