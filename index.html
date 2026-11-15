@@ -1388,6 +1388,30 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .ft-tabs{display:flex;gap:8px;overflow-x:auto;margin:4px 0 12px;scrollbar-width:none}.ft-tabs button{display:flex;align-items:center;gap:7px;border:1.5px solid var(--line);background:var(--card);border-radius:14px;padding:7px 12px;font:500 13.5px var(--font);color:var(--ink);white-space:nowrap;cursor:pointer}
 .ft-tabs button .gimg{width:22px;height:22px;vertical-align:0}.ft-tabs button.on{border-color:var(--pri);background:var(--pri2);color:var(--pri);font-weight:600}
 .sp-ya{font:600 11.5px var(--font);color:#00965c;margin:2px 0 1px}
+/* Ayuda en vivo */
+.av-ban{position:fixed;left:0;right:0;top:0;z-index:97;background:#1f7a4d;color:#fff;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:calc(6px + env(safe-area-inset-top)) 12px 6px;font:600 12.5px var(--font);box-shadow:0 2px 10px rgba(0,0,0,.18)}
+.av-ban button{background:#fff;color:#1f7a4d;border:0;border-radius:9px;padding:4px 11px;font:700 12px var(--font);cursor:pointer}
+html.av-on body{padding-top:calc(34px + env(safe-area-inset-top))}html.av-on .bar{top:calc(34px + env(safe-area-inset-top))}html.av-on .sheet-bg{top:calc(34px + env(safe-area-inset-top))}
+.av-mk{position:fixed;inset:0;z-index:96;pointer-events:none}
+.av-hl{position:fixed;border:3px solid #ffb300;border-radius:12px;box-shadow:0 0 0 6px rgba(255,179,0,.3),0 0 0 14px rgba(255,179,0,.13);animation:avLat 1.1s ease-in-out infinite}.av-hl.red{border-radius:50%}
+.av-dedo{position:fixed;font-size:30px;line-height:1;filter:drop-shadow(0 3px 4px rgba(0,0,0,.3));animation:avDedo 1.1s ease-in-out infinite}
+.av-tip{position:fixed;max-width:min(300px,calc(100vw - 24px));background:#2a1420;color:#fff;font:600 13px/1.35 var(--font);padding:9px 12px;border-radius:11px;box-shadow:0 8px 20px rgba(0,0,0,.28);pointer-events:auto}
+@keyframes avLat{50%{box-shadow:0 0 0 10px rgba(255,179,0,.4),0 0 0 22px rgba(255,179,0,.08)}}@keyframes avDedo{50%{transform:translate(-4px,-7px)}}
+.av-ok div{font-size:13px;color:var(--ok,#2e7d4f);margin:5px 0;font-weight:500}
+.msg .bt .av-bt{display:flex;margin-top:8px;width:100%;justify-content:center}
+.sheet.av-h{display:flex;flex-direction:column;max-width:600px}.sheet.av-h .sheet-b{flex:1;display:flex;flex-direction:column;min-height:0;gap:8px}
+.av-live{background:#e53935;color:#fff;font:700 11.5px var(--font);padding:3px 9px;border-radius:10px;margin-left:auto;margin-right:8px}.av-live.off{background:var(--mut)}
+.av-sub{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:13px}.av-sub small{color:var(--mut);text-align:right}
+.av-box{flex:1;min-height:240px;background:var(--pri2);border-radius:16px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.av-fr{position:relative;transform-origin:0 0;flex:none;border-radius:14px;overflow:hidden;box-shadow:0 0 0 7px #1b0f15,0 10px 30px rgba(0,0,0,.3);background:#fff}
+.av-fr iframe{border:0;display:block;background:#fff;pointer-events:none}
+.av-cap{position:absolute;inset:0;cursor:crosshair;touch-action:none}
+.av-vm{position:absolute;border:3px solid #ffb300;border-radius:12px;box-shadow:0 0 0 6px rgba(255,179,0,.3);pointer-events:none}.av-vm.red{border-radius:50%}
+.av-z{position:absolute;border:2px dashed #ffb300;background:rgba(255,179,0,.15);pointer-events:none}
+.av-onda{position:absolute;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;background:rgba(33,150,243,.35);border:2px solid #2196f3;pointer-events:none;animation:avOnda .9s ease-out forwards}
+@keyframes avOnda{to{transform:scale(1.9);opacity:0}}
+.av-tools{display:flex;flex-direction:column;gap:8px}.av-tools.off{opacity:.45;pointer-events:none}.av-tools .seg button.av-finb{color:var(--bad)}
+.av-nota{display:flex;gap:8px}.av-nota input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:400 14px var(--font);background:var(--card);color:var(--ink)}
 </style>
 <script src="visitas.js?v=3" defer></script>
 </head>
@@ -2382,6 +2406,7 @@ function aplicarDatos(d) {
   if (S.user) prepararTienda();
   if (d.sar) S.sar = d.sar;
   if (d.rt) { S.rt = d.rt; setTimeout(() => rtConectar(S.rt), 0); }
+  if (S.user && !S.enPanel) setTimeout(avReanudar, 800);
   if (S.user && avisosOn() && puede('admin', 'cajero') && LS.get('pushF_' + (S.negocioId || ''), '') !== hoy()) setTimeout(() => pushSuscribir(false).then(x => { if (x) LS.set('pushF_' + (S.negocioId || ''), hoy()); }), 1500);
   aplicarTema(S.config.tema || LS.get('tema', TEMA_DEF));
   document.title = (S.config.nombre || 'Mi Negocio') + ' · Gestión de Negocio VM';
@@ -2427,7 +2452,7 @@ function mostrarApp() {
   setTimeout(() => buscarActualizacion(true), 4000);
 }
 function salir(expirada) {
-  rtCerrar();
+  rtCerrar(); avTerminar(true);
   if (!expirada && S.token) { // el token se borra abajo, así que el logout va con el token guardado aparte (si no, el servidor recibía uno vacío y la sesión seguía viva)
     const ng = S.negocioId || '', tok = S.token;
     const adios = () => DEMO.on ? api('logout', {}, true) : fetch(apiUrl(), { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action: 'logout', token: tok, dev: DEV_ID, data: {} }) });
@@ -2981,9 +3006,13 @@ async function verSoporte(id, inicial) {
   const h = hoja({ titulo: '', cls: 'chat-h2', html: '<div class="empty">Cargando…</div>', onClose: () => { clearInterval(timer); S.soporteNuevos = 0; pintarHeader(); } });
   const pintaMsgs = () => {
     const box = $('#sp-m', h.el); if (!box) return; let dia = '';
+    const inv = d.mensajes.slice().reverse().find(x => x.de === 'adm' && String(x.texto).includes('[vivo?]'));
+    const hace = inv ? (Date.now() - parseLocal(String(inv.fecha).replace(' ', 'T')).getTime()) / 60000 : 999;
     box.innerHTML = d.mensajes.map(x => { const f = String(x.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
-      return sep + `<div class="msg ${x.de === 'cli' ? 'yo' : 'el'}"><div class="bt">${x.foto ? `<img src="${esc(x.foto)}" alt="" style="max-width:100%;border-radius:12px;display:block;margin-bottom:6px">` : ''}${esc(x.texto)}</div><small>${fHora(String(x.fecha).replace(' ', 'T'))}${x.de === 'adm' ? ' · Soporte' : ''}</small></div>`; }).join('') || '<div class="empty">Sin mensajes</div>';
+      return sep + `<div class="msg ${x.de === 'cli' ? 'yo' : 'el'}"><div class="bt">${x.foto ? `<img src="${esc(x.foto)}" alt="" style="max-width:100%;border-radius:12px;display:block;margin-bottom:6px">` : ''}${esc(avLimpia(x.texto))}${x === inv && AV.rol !== 'cli' && hace < 60 ? `<button class="btn sm pri av-bt" data-a="avAceptar" data-chat="${esc(id)}" data-f="${esc(x.fecha)}">🤝 Aceptar ayuda</button>` : ''}</div><small>${fHora(String(x.fecha).replace(' ', 'T'))}${x.de === 'adm' ? ' · Soporte' : ''}</small></div>`; }).join('') || '<div class="empty">Sin mensajes</div>';
     box.scrollTop = box.scrollHeight;
+    // Si Molina invitó a la ayuda en vivo hace poco y aún no la ha visto, se le ofrece al momento
+    if (inv && hace < 30 && AV.rol !== 'cli' && LS.get('avInv_' + id, '') !== String(inv.fecha)) { LS.set('avInv_' + id, String(inv.fecha)); setTimeout(() => avAceptarHoja(id), 400); }
   };
   const pinta = () => {
     const c = d.chat;
@@ -2991,7 +3020,8 @@ async function verSoporte(id, inicial) {
       <div class="chips" style="margin-bottom:8px"><span class="chip">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</span></div>
       <div class="msgs" id="sp-m"></div>
       <div class="chat-in"><label class="btn icon ghost" style="flex:none" aria-label="Adjuntar captura">${ic('cam', 20)}<input type="file" accept="image/*" id="sp-f2" hidden></label><textarea id="sp-in" rows="1" placeholder="Escribe tu mensaje…" maxlength="800"></textarea><button id="sp-send" aria-label="Enviar">${ic('send', 20)}</button></div>
-      <p class="chat-nota">${ic('wa', 14)} ¿Urgente? <a href="${waLink(CONTACTO_WA, 'Hola, escribo desde ' + (S.config.nombre || 'mi negocio') + ' sobre: ' + motivoTxt(c.motivo).slice(3))}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></p>`;
+      <p class="chat-nota">${ic('wa', 14)} ¿Urgente? <a href="${waLink(CONTACTO_WA, 'Hola, escribo desde ' + (S.config.nombre || 'mi negocio') + ' sobre: ' + motivoTxt(c.motivo).slice(3))}" target="_blank" rel="noopener">Escríbenos por WhatsApp</a></p>
+      <p class="chat-nota"><button type="button" class="lnk" data-a="avAceptar" data-chat="${esc(id)}">🤝 Ayuda en vivo: que te señalemos en tu pantalla dónde tocar</button></p>`;
     pintaMsgs();
     const inp = $('#sp-in', h.el);
     inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(120, inp.scrollHeight) + 'px'; });
@@ -3014,7 +3044,7 @@ ACC.verSoporte = el => verSoporte(el.dataset.id);
 async function listaSoporte(box) {
   try {
     const l = await api('soporteLista', {}, true);
-    box.innerHTML = l.length ? `<div class="sec-t"><h3>Tus conversaciones</h3></div><div class="list">${l.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="verSoporte" data-id="${c.id}"><div class="av t-pri">VM</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo).slice(3))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]+/, '')) : ''}</b><span class="h">${hace(String(c.ultimo).replace(' ', 'T'))}</span></div><small>${c.deCliente ? 'Tú: ' : ''}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : ''}</div>`).join('')}</div>` : '';
+    box.innerHTML = l.length ? `<div class="sec-t"><h3>Tus conversaciones</h3></div><div class="list">${l.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="verSoporte" data-id="${c.id}"><div class="av t-pri">VM</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo).slice(3))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]+/, '')) : ''}</b><span class="h">${hace(String(c.ultimo).replace(' ', 'T'))}</span></div><small>${c.deCliente ? 'Tú: ' : ''}${esc(avLimpia(c.ultimoTexto))}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : ''}</div>`).join('')}</div>` : '';
   } catch (e) { box.innerHTML = ''; }
 }
 // Tarjeta en Inicio durante la prueba: día 3 (¿qué tal?) y los últimos 2 días (fin de la prueba).
@@ -3205,7 +3235,7 @@ async function panelResumen() {
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
 // si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas. También la pantalla de Visitas.
 // «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
-const PANEL_REV = 7; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+const PANEL_REV = 8; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
 let pnTecleo = 0, pnAutoDesde = 0;
 document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
 const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
@@ -3724,7 +3754,7 @@ function tarjetaCliDetalle(n) {
   const cls = n.colab ? 'colab' : n.sop || n.contactar === 'vence' ? 'ur' : t ? 'at' : '';
   return `<div class="cc-l"><span style="color:${n.ventas7 ? 'var(--ok, #00b56e)' : 'var(--mut)'}">${ventasTxt(n)}</span><span style="color:${sub[0]}">${sub[1]}</span>${pasosMini(n)}${n.canal && n.canal !== 'directo' ? `<span class="cc-canal">${ic(visOri(n.canal)[1], 13)} vía ${esc(visOri(n.canal)[0])}</span>` : ''}${n.version && P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? `<span style="color:var(--bad)">app ${esc(n.version)}</span>` : ''}</div>
     ${cobroTarjeta(n)}
-    ${n.sop ? `<div class="cc-a i"><span style="color:var(--info)">${ic('chat', 20)}</span><div class="tx"><b>${n.sop.sin} mensaje${n.sop.sin === 1 ? '' : 's'} sin responder</b><small>“${esc(n.sop.texto)}”</small></div><div class="bt"><button class="btn sm pri" data-a="panelSoporteVer" data-id="${n.sop.id}">${ic('chat', 15)} Responder</button></div></div>` : ''}
+    ${n.sop ? `<div class="cc-a i"><span style="color:var(--info)">${ic('chat', 20)}</span><div class="tx"><b>${n.sop.sin} mensaje${n.sop.sin === 1 ? '' : 's'} sin responder</b><small>“${esc(avLimpia(n.sop.texto))}”</small></div><div class="bt"><button class="btn sm pri" data-a="panelSoporteVer" data-id="${n.sop.id}">${ic('chat', 15)} Responder</button></div></div>` : ''}
     ${t ? `<div class="cc-a ${n.contactar === 'vence' ? 'b' : 'w'}"><span style="color:${n.contactar === 'vence' ? 'var(--bad)' : 'var(--warn)'}">${ic('alert', 20)}</span><div class="tx"><b>${t[0]}</b><small>${t[2]}${n.sinEntrar >= 2 ? ' · no entra hace ' + n.sinEntrar + ' días' : ''}</small></div><div class="bt">${n.contactar === 'vence' || n.contactar === 'vencida' ? `<button class="btn sm" data-a="panelAccion" data-id="${n.id}" data-x="extender">+7 días</button>` : ''}<button class="btn sm" data-a="panelContactado" data-id="${n.id}" data-t="${n.contactar}">Ya le escribí</button><a class="btn wa sm" data-a="panelWA" href="${waPlantilla(n, n.contactar)}" target="_blank" rel="noopener">${ic('wa', 15)} Escribir</a></div></div>` : ''}`;
 }
 ACC.panelWA = el => { window.open(el.href, '_blank', 'noopener'); };
@@ -4297,7 +4327,7 @@ async function panelFicha(id) {
       ${panelSecCuotas(n)}${panelSecContratos(n)}
       <div class="sec-t"><h3>Pagos recibidos</h3><a data-x="pago">+ Anotar pago</a></div>
       <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small>${n.llego && n.llego.id ? `<small style="color:var(--pri)">${ic('sparkle', 12)} Llegó por ${esc(n.llego.nombre)}</small>` : ''}</div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
-      ${n.soporte.length ? `<div class="sec-t"><h3>Soporte</h3></div><div class="list">${n.soporte.slice(0, 5).map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av t-pri">${ic('chat', 18)}</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small>${esc(c.ultimoTexto)}</small></div>${c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : ''}</div>`).join('')}</div>` : ''}
+      ${n.soporte.length ? `<div class="sec-t"><h3>Soporte</h3></div><div class="list">${n.soporte.slice(0, 5).map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av t-pri">${ic('chat', 18)}</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small>${esc(avLimpia(c.ultimoTexto))}</small></div>${c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : ''}</div>`).join('')}</div>` : ''}
       <div class="sec-t"><h3>Historial</h3></div>
       <div class="list">${n.seguimiento.map(x => `<div class="li"><div class="av ${x.tipo === 'seguridad' ? 't-rojo' : x.tipo === 'accion' ? 't-pri' : 't-verde'}">${ic(x.tipo === 'seguridad' ? 'lock' : x.tipo === 'accion' ? 'check' : 'wa', 18)}</div><div class="tx"><b>${esc(x.nota)}</b><small>${esc(fFechaC(String(x.fecha).slice(0, 10)))} ${esc(String(x.fecha).slice(11, 16))}</small></div></div>`).join('')}<div class="li"><div class="av t-cian">${ic('plus', 18)}</div><div class="tx"><b>Se registró</b><small>${esc(fFechaC(String(n.registro).slice(0, 10)))} · prueba de ${DIAS_PRUEBA_REG} días</small></div></div></div>
       <label class="fld" style="margin-top:12px"><span>Notas internas</span><textarea id="pn-notas" rows="2" maxlength="500">${esc(n.notas)}</textarea></label><button class="btn sm" data-x="nota">Guardar notas</button>
@@ -4352,17 +4382,20 @@ ACC.panelSoporteLista = async () => {
   const vis = l.filter(c => !f.mot || (f.mot === 'sin' ? c.sinLeer : c.motivo === f.mot));
   $('#main').innerHTML = `<div class="ch-sum"><div><b>${sin.length}</b><small>sin responder</small></div><div><b>${err_.length}</b><small>error${err_.length === 1 ? '' : 'es'} abierto${err_.length === 1 ? '' : 's'}</small></div><div><b>${l.length}</b><small>conversaciones</small></div></div>
     <div class="chips" style="margin-bottom:10px">${[['', 'Todos'], ['sin', 'Sin responder']].concat(MOTIVOS_UI.map(m => [m[0], m[1] + ' ' + m[2].split(' ')[0]])).map(x => `<button class="chip ${(f.mot || '') === x[0] ? 'on' : ''}" data-a="panelSopFiltro" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
-    <div class="list">${vis.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av ${colorDe(c.negocio)}">${esc(iniciales(c.negocio))}</div><div class="tx"><div class="row sp"><b>${esc(c.negocio)}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small><span class="badge ${c.motivo === 'error' ? 'b-bad' : c.motivo === 'prueba' ? 'b-warn' : c.motivo === 'idea' ? 'b-ok' : 'b-info'}">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]+/, '')) : ''}</span> ${c.deCliente ? '' : 'Tú: '}${esc(c.ultimoTexto)}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">✓</span>' : ''}</div>`).join('') || '<div class="empty">Sin conversaciones</div>'}</div>`;
+    <div class="list">${vis.map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av ${colorDe(c.negocio)}">${esc(iniciales(c.negocio))}</div><div class="tx"><div class="row sp"><b>${esc(c.negocio)}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small><span class="badge ${c.motivo === 'error' ? 'b-bad' : c.motivo === 'prueba' ? 'b-warn' : c.motivo === 'idea' ? 'b-ok' : 'b-info'}">${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo.replace(/^[^A-Za-z0-9ÁÉÍÓÚÜÑáéíóúüñ]+/, '')) : ''}</span> ${c.deCliente ? '' : 'Tú: '}${esc(avLimpia(c.ultimoTexto))}</small></div>${c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : c.estado === 'resuelto' ? '<span class="badge b-ok">✓</span>' : ''}</div>`).join('') || '<div class="empty">Sin conversaciones</div>'}</div>`;
 };
 ACC.panelSopFiltro = el => { P.f.mot = el.dataset.k; ACC.panelSoporteLista(); };
 ACC.panelSoporteVer = el => panelChat(el.dataset.id);
 async function panelChat(id) {
-  let d = null, timer = null, enviando = false;
+  let d = null, timer = null, enviando = false, avEsp = 0, avVisto = '', tAv = null;
+  const AV_INV = 'Te ayudo viendo tu pantalla 👇 Toca «Aceptar ayuda» y te señalo dónde tocar. [vivo?]';
+  const ultVivo = () => { for (let i = d.mensajes.length - 1; i >= 0; i--) { const x = d.mensajes[i], m = x.de === 'cli' && String(x.texto).match(/\[vivo:([a-f0-9]{16,64})\]/); if (m) return m[1]; } return ''; };
   const RAP = ['Lo reviso y te aviso por aquí', 'Te mando un video corto de cómo se hace', '¿Me pasás una captura?', 'Ya quedó corregido, actualiza la app', '¿Te activo la licencia?'];
-  const h = hoja({ titulo: '', cls: 'chat-h2', html: '<div class="empty">Cargando…</div>', onClose: () => { clearInterval(timer); if (S.enPanel && !PILA.length) { if ($('#pn-tabs')) panelResumen(); else ACC.panelSoporteLista(); } } });
-  const pintaMsgs = () => { const box = $('#pc-m', h.el); if (!box) return; let dia = '';
+  const h = hoja({ titulo: '', cls: 'chat-h2', html: '<div class="empty">Cargando…</div>', onClose: () => { clearInterval(timer); clearInterval(tAv); if (S.enPanel && !PILA.length) { if ($('#pn-tabs')) panelResumen(); else ACC.panelSoporteLista(); } } });
+  const pintaMsgs = () => { const box = $('#pc-m', h.el); if (!box) return; let dia = ''; const vivo = ultVivo();
     box.innerHTML = d.mensajes.map(x => { const f = String(x.fecha).slice(0, 10), sep = f !== dia ? `<div class="day">${f === hoy() ? 'Hoy' : esc(fFechaC(f))}</div>` : ''; dia = f;
-      return sep + `<div class="msg ${x.de === 'adm' ? 'yo' : 'el'}"><div class="bt">${x.foto ? `<a href="${esc(x.foto)}" target="_blank"><img src="${esc(x.foto)}" alt="" style="max-width:100%;border-radius:12px;display:block;margin-bottom:6px"></a>` : ''}${esc(x.texto)}</div><small>${fHora(String(x.fecha).replace(' ', 'T'))}${x.quien && x.de === 'cli' ? ' · ' + esc(x.quien) : ''}</small></div>`; }).join('');
+      const esVivo = vivo && x.de === 'cli' && String(x.texto).includes('[vivo:' + vivo + ']');
+      return sep + `<div class="msg ${x.de === 'adm' ? 'yo' : 'el'}"><div class="bt">${x.foto ? `<a href="${esc(x.foto)}" target="_blank"><img src="${esc(x.foto)}" alt="" style="max-width:100%;border-radius:12px;display:block;margin-bottom:6px"></a>` : ''}${esc(avLimpia(x.texto))}${esVivo ? `<button class="btn sm pri av-bt" data-a="avVer" data-id="${vivo}" data-n="${esc(d.chat.negocio)}">▶ Ver en vivo</button>` : ''}</div><small>${fHora(String(x.fecha).replace(' ', 'T'))}${x.quien && x.de === 'cli' ? ' · ' + esc(x.quien) : ''}</small></div>`; }).join('');
     box.scrollTop = box.scrollHeight; };
   const pinta = () => {
     const c = d.chat, n = d.negocio;
@@ -4371,19 +4404,422 @@ async function panelChat(id) {
       <div class="msgs" id="pc-m"></div>
       <div class="rapidas" id="pc-r">${RAP.map(t => `<button type="button" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>
       <div class="chat-in"><textarea id="pc-in" rows="1" placeholder="Escribe tu respuesta…" maxlength="800"></textarea><button id="pc-send" aria-label="Enviar">${ic('send', 20)}</button></div>
-      <div class="chat-acts"><button class="btn sm" data-x="${c.estado === 'resuelto' ? 'abierto' : 'resuelto'}">${c.estado === 'resuelto' ? 'Reabrir' : '✓ Marcar resuelto'}</button>${n ? `<button class="btn sm" data-x="ficha">Ver negocio</button>` : ''}</div>`;
+      <div class="chat-acts"><button class="btn sm pri" data-x="vivo">🤝 Ayuda en vivo</button><button class="btn sm" data-x="${c.estado === 'resuelto' ? 'abierto' : 'resuelto'}">${c.estado === 'resuelto' ? 'Reabrir' : '✓ Marcar resuelto'}</button>${n ? `<button class="btn sm" data-x="ficha">Ver negocio</button>` : ''}</div>`;
     pintaMsgs();
     const inp = $('#pc-in', h.el);
     inp.addEventListener('input', () => { inp.style.height = 'auto'; inp.style.height = Math.min(120, inp.scrollHeight) + 'px'; });
     inp.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey && window.innerWidth > 700) { e.preventDefault(); enviar().catch(err); } });
     $('#pc-r', h.el).addEventListener('click', e => { const b = e.target.closest('[data-t]'); if (!b) return; inp.value = (inp.value ? inp.value + ' ' : '') + b.dataset.t; inp.focus(); inp.dispatchEvent(new Event('input')); });
     $('#pc-send', h.el).onclick = () => enviar().catch(err);
-    h.b.querySelectorAll('[data-x]').forEach(b => b.onclick = async () => { try { if (b.dataset.x === 'ficha') { panelFicha(c.negocioId); return; } d = await api('panelSoporteEstado', { id, estado: b.dataset.x }); toast(b.dataset.x === 'resuelto' ? 'Marcado como resuelto' : 'Reabierto', 'ok'); pinta(); } catch (e) { err(e); } });
+    h.b.querySelectorAll('[data-x]').forEach(b => b.onclick = async () => { try { if (b.dataset.x === 'ficha') { panelFicha(c.negocioId); return; }
+      if (b.dataset.x === 'vivo') {
+        b.disabled = true; avVisto = ultVivo();
+        try { d = await api('panelSoporteResponder', { id, texto: AV_INV }, true); } finally { b.disabled = false; }
+        pintaMsgs(); toast('Invitación enviada. Cuando acepte, su pantalla se abre sola.', 'ok', 4000);
+        // Mientras espera que acepte, se revisa el chat cada 4 segundos (hasta 5 minutos)
+        avEsp = Date.now() + 5 * 60000; clearInterval(tAv);
+        tAv = setInterval(async () => {
+          if (Date.now() > avEsp || h.cerrado) { clearInterval(tAv); return; }
+          try { const n = await api('panelSoporteVer', { id }, true); if (n.mensajes.length !== d.mensajes.length) { d = n; pintaMsgs(); } } catch (e) { return; }
+          const v = ultVivo(); if (v && v !== avVisto) { clearInterval(tAv); avEsp = 0; avVer(v, d.chat.negocio); }
+        }, 4000);
+        return;
+      } d = await api('panelSoporteEstado', { id, estado: b.dataset.x }); toast(b.dataset.x === 'resuelto' ? 'Marcado como resuelto' : 'Reabierto', 'ok'); pinta(); } catch (e) { err(e); } });
   };
   const enviar = async () => { if (enviando) return; const inp = $('#pc-in', h.el), texto = inp.value.trim(); if (!texto) throw new Error('Escribe tu respuesta'); enviando = true; $('#pc-send', h.el).disabled = true;
     try { d = await api('panelSoporteResponder', { id, texto }, true); inp.value = ''; inp.style.height = ''; pintaMsgs(); } finally { enviando = false; $('#pc-send', h.el).disabled = false; } };
   try { d = await api('panelSoporteVer', { id }); pinta(); } catch (e) { h.cerrar(); throw e; }
   timer = setInterval(async () => { if (document.hidden || enviando) return; try { const n = await api('panelSoporteVer', { id }, true); if (n.mensajes.length !== d.mensajes.length) { d = n; pintaMsgs(); } } catch (e) {} }, 20000);
+}
+
+/* ===================== AYUDA EN VIVO (1.9.86) =====================
+   El cliente acepta desde el chat de soporte y su app manda, por un canal propio de Supabase Realtime
+   (código al azar que solo viaja dentro de ese chat), una copia de lo que tiene en pantalla.
+   El Panel la muestra en vivo y marca dónde tocar. Solo señala: no toca ni cambia nada.
+   El PIN y las contraseñas viajan ocultos. Termina cuando cualquiera de los dos quiere o a los 15 minutos. */
+const AV_MIN = 15, AV_TROZO = 48000;
+const AV = { rol: '', id: '', cx: null, fin: 0, chat: '', ultVisor: 0, ultEnvio: 0, tSnap: null, ultHash: '', seq: 0, mo: null, marca: null, tm: null, imgs: new Map(), imgEnv: new Set(), ultToque: 0,
+  /* visor */ modo: 'punto', k: 1, meta: null, trozos: {}, ultK: 0, vMarca: null, vImgs: {}, hoja: null, tEspera: null, recibio: false };
+const avLimpia = t => String(t === undefined || t === null ? '' : t).replace(/\s*\[vivo(?:\?|:[a-f0-9]{16,64})\]/g, '');
+const avHash = s => { let h = 2166136261; for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return (h >>> 0).toString(36) + s.length.toString(36); };
+const avRuta = (el, body) => { const r = []; while (el && el !== body && el.parentElement) { r.unshift(Array.prototype.indexOf.call(el.parentElement.children, el)); el = el.parentElement; } return el === body ? r : null; };
+const avDeRuta = (body, r) => { let e = body; for (const i of r || []) { e = e && e.children[i]; if (!e) return null; } return e; };
+const avAttrs = el => Array.from(el.attributes).map(a => [a.name, a.value]);
+const avOculto = x => x.type === 'password' || /pin|clave|pass|contra/i.test((x.id || '') + ' ' + (x.name || '') + ' ' + (x.getAttribute('autocomplete') || ''));
+const avMMSS = ms => { const s = Math.max(0, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
+async function avGz(s) {
+  if (!window.CompressionStream) return 'r' + s;
+  const ab = await new Response(new Blob([s]).stream().pipeThrough(new CompressionStream('gzip'))).arrayBuffer();
+  const u = new Uint8Array(ab); let bin = '';
+  for (let i = 0; i < u.length; i += 0x8000) bin += String.fromCharCode.apply(null, u.subarray(i, i + 0x8000));
+  return 'z' + btoa(bin);
+}
+async function avUngz(s) {
+  if (s[0] === 'r') return s.slice(1);
+  const bin = atob(s.slice(1)), u = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+  return await new Response(new Blob([u]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+}
+
+/* ---------- Canal en vivo (Supabase Realtime · broadcast) ---------- */
+function avCanal(id, alMsg, alEstado) {
+  const topic = 'realtime:ayuda-' + id;
+  const c = { abierto: false, cerrado: false, ws: null, hb: null, tRe: null, ref: 0, intentos: 0 };
+  const env = (t, event, payload) => { try { c.ws.send(JSON.stringify({ topic: t, event, payload, ref: String(++c.ref) })); } catch (e) {} };
+  c.enviar = (event, payload) => { if (c.abierto) env(topic, 'broadcast', { type: 'broadcast', event, payload }); };
+  c.cerrar = () => { c.cerrado = true; c.abierto = false; clearTimeout(c.tRe); clearInterval(c.hb); try { c.ws && c.ws.close(); } catch (e) {} };
+  const abrir = () => {
+    if (c.cerrado) return;
+    let ws; try { ws = c.ws = new WebSocket(SB.url.replace(/^http/, 'ws') + '/realtime/v1/websocket?apikey=' + SB.key + '&vsn=1.0.0'); } catch (e) { alEstado('error'); return; }
+    ws.onopen = () => { c.intentos = 0; env(topic, 'phx_join', { config: { broadcast: { self: false, ack: false }, presence: { key: '' }, private: false } }); c.hb = setInterval(() => env('phoenix', 'heartbeat', {}), 25000); };
+    ws.onmessage = m => {
+      let j; try { j = JSON.parse(m.data); } catch (e) { return; }
+      if (j.topic !== topic) return;
+      if (j.event === 'phx_reply' && !c.abierto && j.payload && j.payload.status === 'ok') { c.abierto = true; alEstado('ok'); return; }
+      if (j.event === 'broadcast' && j.payload) alMsg(j.payload.event, j.payload.payload || {});
+    };
+    ws.onclose = () => {
+      clearInterval(c.hb); if (c.ws !== ws) return; c.abierto = false;
+      if (c.cerrado) return;
+      alEstado('cortado');
+      c.tRe = setTimeout(abrir, Math.min(15000, 1500 * Math.pow(2, c.intentos++)));
+    };
+  };
+  abrir();
+  return c;
+}
+
+/* ---------- Lado del cliente ---------- */
+function avAceptarHoja(chatId) {
+  if (AV.rol === 'cli') { toast('La ayuda en vivo ya está activa', 'ok'); return; }
+  if (SOPORTE || DEMO.on) { toast('La ayuda en vivo funciona con tu cuenta real', 'error'); return; }
+  const h = hoja({ titulo: '🤝 Ayuda en vivo', html: `<p style="margin:0 0 10px;font-size:14px;line-height:1.45"><b>Molina Soluciones Digitales</b> quiere ver tu pantalla del programa para señalarte dónde tocar.</p>
+    <div class="av-ok">${['Solo ve este programa, no tus otras apps', 'No puede tocar ni cambiar nada por ti', 'Tu PIN y tus contraseñas se ocultan', 'Puedes terminar cuando quieras · máximo ' + AV_MIN + ' minutos'].map(t => `<div>✔ ${t}</div>`).join('')}</div>` });
+  h.botones([{ t: 'Ahora no', fn: () => h.cerrar() }, { t: 'Aceptar ayuda', cls: 'pri', fn: () => avIniciar(chatId) }]);
+}
+ACC.avAceptar = el => { LS.set('avInv_' + el.dataset.chat, el.dataset.f || '1'); avAceptarHoja(el.dataset.chat); };
+async function avIniciar(chatId) {
+  if (!('WebSocket' in window) || !window.crypto || !crypto.getRandomValues) throw new Error('Este teléfono no permite la ayuda en vivo. Escríbenos por WhatsApp.');
+  const a = new Uint8Array(16); crypto.getRandomValues(a);
+  const id = Array.from(a, x => x.toString(16).padStart(2, '0')).join('');
+  await api('soporteEnviar', { id: chatId, texto: '🤝 Acepté la ayuda en vivo: ya puedes ver mi pantalla del programa. [vivo:' + id + ']', foto: '' }, true);
+  cerrarHojas();
+  avCliente(id, Date.now() + AV_MIN * 60000, chatId);
+  toast('Listo: muévete por el programa y te señalamos dónde tocar', 'ok', 5000);
+}
+function avCliente(id, fin, chatId) {
+  avTerminar(false);
+  Object.assign(AV, { rol: 'cli', id, fin, chat: chatId, ultVisor: 0, ultHash: '', seq: 0, marca: null });
+  AV.imgEnv.clear();
+  try { sessionStorage.setItem('avSes', JSON.stringify({ id, fin, chat: chatId })); } catch (e) {}
+  document.documentElement.classList.add('av-on');
+  const b = document.createElement('div'); b.id = 'av-ban'; b.className = 'av-ban'; b.setAttribute('data-av-quiet', '');
+  b.innerHTML = `<span>🤝 Molina te está ayudando · <b id="av-bt">${avMMSS(fin - Date.now())}</b></span><button type="button">Terminar</button>`;
+  b.querySelector('button').onclick = () => { avTerminar(true); toast('Terminaste la ayuda en vivo', 'ok'); };
+  document.body.appendChild(b);
+  AV.mo = new MutationObserver(recs => {
+    if (recs.some(r => { const t = r.target.nodeType === 1 ? r.target : r.target.parentElement; return t && !t.closest('[data-av-skip],[data-av-quiet]'); })) avProgramar();
+  });
+  AV.mo.observe(document.body, { subtree: true, childList: true, attributes: true, characterData: true });
+  AV.cx = avCanal(id, avCliMsg, est => { if (est === 'ok') AV.cx.enviar('lista', { fin: AV.fin }); });
+  AV.tm = setInterval(() => {
+    const r = AV.fin - Date.now(), bt = $('#av-bt'); if (bt) bt.textContent = avMMSS(r);
+    if (r <= 0) { avTerminar(true); toast('Terminó el tiempo de la ayuda en vivo', 'ok'); }
+  }, 1000);
+}
+function avReanudar() {
+  if (AV.rol || SOPORTE || DEMO.on || S.enPanel || !S.user) return;
+  let s = null; try { s = JSON.parse(sessionStorage.getItem('avSes') || 'null'); } catch (e) {}
+  if (s && s.id && s.fin > Date.now() + 5000) avCliente(s.id, s.fin, s.chat);
+}
+function avCliMsg(ev, p) {
+  if (AV.rol !== 'cli') return;
+  if (ev === 'hola') { AV.ultVisor = Date.now(); if (p.nuevo) { AV.ultHash = ''; AV.imgEnv.clear(); } avProgramar(0); }
+  else if (ev === 'marca') avMarcar(p);
+  else if (ev === 'quitar') avQuitarMarca();
+  else if (ev === 'fin') { avTerminar(false); toast('Molina terminó la ayuda en vivo. ¡Éxitos!', 'ok', 4000); }
+}
+function avProgramar(ms) {
+  if (AV.rol !== 'cli' || AV.tSnap || Date.now() - AV.ultVisor > 30000) return;
+  AV.tSnap = setTimeout(() => avEnviar().catch(() => {}), ms === 0 ? 0 : Math.max(250, 900 - (Date.now() - AV.ultEnvio)));
+}
+['scroll', 'input', 'change', 'resize'].forEach(t => window.addEventListener(t, () => { if (AV.rol === 'cli') avProgramar(); }, true));
+document.addEventListener('visibilitychange', () => { if (AV.rol === 'cli' && !document.hidden) avProgramar(0); });
+// Dónde toca el cliente (para que Molina lo vea) y si tocó lo que se le marcó
+document.addEventListener('pointerdown', e => {
+  if (AV.rol !== 'cli' || !AV.cx) return;
+  if (Date.now() - AV.ultVisor < 30000 && Date.now() - AV.ultToque > 120) { AV.ultToque = Date.now(); AV.cx.enviar('toque', { x: Math.round(e.clientX), y: Math.round(e.clientY) }); }
+  const m = AV.marca; if (!m || m.p.tipo === 'nota') return;
+  const r = avRectMarca(m);
+  if (r && e.clientX >= r.l - 10 && e.clientX <= r.l + r.w + 10 && e.clientY >= r.t - 10 && e.clientY <= r.t + r.h + 10) {
+    AV.cx.enviar('tocado', {}); setTimeout(() => { if (AV.marca === m) avQuitarMarca(); }, 250);
+  }
+}, true);
+
+// Copia de la pantalla: el mismo HTML de la app, sin scripts, con lo escrito en los campos (el PIN y las claves ocultos)
+function avFoto() {
+  const b = document.body, vh = innerHeight, sc = [], cortes = [];
+  const todos = b.getElementsByTagName('*');
+  for (let i = 0; i < todos.length; i++) {
+    const el = todos[i];
+    if (el.scrollTop || el.scrollLeft) sc.push(el);
+    if (el.childElementCount > 40) for (const c of el.children) { const r = c.getBoundingClientRect(); if (r.height && (r.bottom < -vh || r.top > vh * 2)) cortes.push([c, Math.round(r.height)]); }
+  }
+  // Las listas largas: lo que está lejos de la pantalla va como un espacio vacío de su mismo alto
+  cortes.forEach(([c, h]) => c.setAttribute('data-avc', h));
+  const cl = b.cloneNode(true);
+  cortes.forEach(([c]) => c.removeAttribute('data-avc'));
+  if (AV.mo) AV.mo.takeRecords();
+  const par = sel => [b.querySelectorAll(sel), cl.querySelectorAll(sel)];
+  const [li, ci] = par('input,textarea,select');
+  li.forEach((x, i) => { const y = ci[i]; if (!y) return; const oc = avOculto(x);
+    if (x.tagName === 'TEXTAREA') y.textContent = oc && x.value ? '••••' : x.value;
+    else if (x.tagName === 'SELECT') Array.from(y.options).forEach((o, k) => o.toggleAttribute('selected', k === x.selectedIndex));
+    else if (x.type === 'checkbox' || x.type === 'radio') y.toggleAttribute('checked', x.checked);
+    else if (x.type === 'file') y.removeAttribute('value');
+    else y.setAttribute('value', oc ? (x.value ? '••••••' : '') : x.value);
+  });
+  const [lc, cc] = par('canvas');
+  lc.forEach((x, i) => { const y = cc[i]; if (!y) return; const r = x.getBoundingClientRect(), im = document.createElement('img');
+    if (y.className) im.className = y.className;
+    im.setAttribute('style', (y.getAttribute('style') || '') + `;width:${r.width}px;height:${r.height}px`);
+    try { const u = r.width && r.height ? x.toDataURL('image/jpeg', 0.6) : ''; if (u.length < 120000) im.src = u; } catch (e) {}
+    y.replaceWith(im); });
+  const nuevas = [];
+  cl.querySelectorAll('img').forEach(y => { const s = y.getAttribute('src') || '';
+    if (s.slice(0, 5) !== 'data:' || s.length < 3000) return;
+    let h = AV.imgs.get(s); if (!h) { if (AV.imgs.size > 300) AV.imgs.clear(); h = avHash(s); AV.imgs.set(s, h); }
+    y.removeAttribute('src'); y.setAttribute('data-avimg', h);
+    if (!AV.imgEnv.has(h) && s.length < 400000) { AV.imgEnv.add(h); nuevas.push([h, s]); } });
+  cl.querySelectorAll('[data-avc]').forEach(y => { const h = y.getAttribute('data-avc'); y.removeAttribute('data-avc'); y.innerHTML = ''; y.style.height = h + 'px'; y.style.minHeight = h + 'px'; y.style.visibility = 'hidden'; });
+  cl.querySelectorAll('script,iframe,object,embed,video,audio,[data-av-skip]').forEach(y => { const z = document.createElement('b'); z.hidden = true; y.replaceWith(z); });
+  cl.querySelectorAll('[hidden],#print-area,#recibo-tmp').forEach(y => { y.innerHTML = ''; });
+  const css = Array.from(document.head.querySelectorAll('style')).slice(1).map(s => s.textContent).join('\n');
+  const m = { w: innerWidth, h: innerHeight, sx: Math.round(scrollX), sy: Math.round(scrollY), fin: AV.fin,
+    sc: sc.map(e => [avRuta(e, b), Math.round(e.scrollTop), Math.round(e.scrollLeft)]).filter(x => x[0]) };
+  return { j: { html: cl.innerHTML, css, ha: avAttrs(document.documentElement), ba: avAttrs(b) }, m, nuevas };
+}
+async function avEnviar() {
+  AV.tSnap = null;
+  if (AV.rol !== 'cli' || !AV.cx || !AV.cx.abierto || document.hidden || Date.now() - AV.ultVisor > 30000) return;
+  AV.ultEnvio = Date.now();
+  let f; try { f = avFoto(); } catch (e) { return; }
+  for (const [h, s] of f.nuevas) { const n = Math.ceil(s.length / AV_TROZO); for (let i = 0; i < n; i++) AV.cx.enviar('img', { h, i, n, d: s.slice(i * AV_TROZO, (i + 1) * AV_TROZO) }); }
+  const llave = avHash(f.j.html + '\u0001' + f.j.css + '\u0001' + JSON.stringify(f.j.ha) + JSON.stringify(f.j.ba));
+  if (llave === AV.ultHash) { AV.cx.enviar('pos', { m: f.m }); return; }
+  const z = await avGz(JSON.stringify(f.j));
+  if (AV.rol !== 'cli' || !AV.cx) return;
+  const n = Math.ceil(z.length / AV_TROZO) || 1;
+  if (n > 30) { AV.cx.enviar('grande', { m: f.m }); return; }
+  AV.ultHash = llave; const k = ++AV.seq;
+  for (let i = 0; i < n; i++) AV.cx.enviar('snap', { k, i, n, d: z.slice(i * AV_TROZO, (i + 1) * AV_TROZO), m: i === n - 1 ? f.m : undefined });
+}
+
+// La marca de Molina en la pantalla del cliente
+function avMarcar(p) {
+  avQuitarMarca();
+  const capa = document.createElement('div'); capa.className = 'av-mk'; capa.setAttribute('data-av-skip', '');
+  capa.innerHTML = (p.tipo === 'nota' ? '' : `<div class="av-hl${p.tipo === 'punto' && !p.ruta ? ' red' : ''}"></div><div class="av-dedo">👆</div>`) + (p.nota ? `<div class="av-tip">💬 ${esc(String(p.nota).slice(0, 140))}</div>` : '');
+  document.body.appendChild(capa);
+  let el = null;
+  if (p.ruta) { el = avDeRuta(document.body, p.ruta); if (el && (el.tagName !== p.tag || el.closest('[data-av-skip]'))) el = null; }
+  const m = AV.marca = { p, el, capa };
+  const tip = capa.querySelector('.av-tip'); if (tip) tip.onclick = () => { if (p.tipo === 'nota' && AV.marca === m) avQuitarMarca(); };
+  if (el) { const r = el.getBoundingClientRect(); if (r.bottom < 50 || r.top > innerHeight - 50) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  const paso = () => { if (AV.marca !== m) return; avPosMarca(m); requestAnimationFrame(paso); };
+  paso();
+  try { if (navigator.vibrate) navigator.vibrate(70); } catch (e) {}
+  if (p.tipo === 'nota') m.tAuto = setTimeout(() => { if (AV.marca === m) avQuitarMarca(); }, 20000);
+}
+function avRectMarca(m) {
+  const p = m.p, dy = (p.sy || 0) - scrollY;
+  if (p.tipo === 'zona') return { l: p.x, t: p.y + (p.fija ? 0 : dy), w: p.w, h: p.h };
+  if (m.el && m.el.isConnected) { const r = m.el.getBoundingClientRect(); if (r.width || r.height) return { l: r.left - 5, t: r.top - 5, w: r.width + 10, h: r.height + 10 }; }
+  if (p.tipo === 'punto') return { l: p.x - 26, t: p.y + (p.fija ? 0 : dy) - 26, w: 52, h: 52 };
+  return null;
+}
+function avPosMarca(m) {
+  const r = avRectMarca(m), hl = m.capa.querySelector('.av-hl'), de = m.capa.querySelector('.av-dedo'), tip = m.capa.querySelector('.av-tip');
+  if (r && hl) { Object.assign(hl.style, { left: r.l + 'px', top: r.t + 'px', width: r.w + 'px', height: r.h + 'px' }); Object.assign(de.style, { left: (r.l + r.w - 22) + 'px', top: (r.t + r.h - 14) + 'px' }); }
+  if (tip) {
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    if (!r || !hl) { tip.style.left = Math.max(12, (innerWidth - tw) / 2) + 'px'; tip.style.top = (innerHeight * 0.22) + 'px'; return; }
+    const abajo = r.t + r.h + 14 + th < innerHeight - 10;
+    tip.style.left = Math.min(Math.max(12, r.l), innerWidth - tw - 12) + 'px';
+    tip.style.top = (abajo ? r.t + r.h + 14 : Math.max(10, r.t - th - 14)) + 'px';
+  }
+}
+function avQuitarMarca() { const m = AV.marca; AV.marca = null; if (m) { clearTimeout(m.tAuto); m.capa.remove(); } }
+function avTerminar(avisar) {
+  if (!AV.rol) return;
+  const cx = AV.cx, rol = AV.rol;
+  if (avisar && cx) cx.enviar('fin', {});
+  AV.rol = ''; AV.cx = null; clearTimeout(AV.tSnap); AV.tSnap = null; clearInterval(AV.tm); clearTimeout(AV.tEspera);
+  if (cx) setTimeout(() => cx.cerrar(), 400);
+  if (rol === 'cli') {
+    if (AV.mo) AV.mo.disconnect(); AV.mo = null;
+    avQuitarMarca(); const b = $('#av-ban'); if (b) b.remove();
+    document.documentElement.classList.remove('av-on');
+    try { sessionStorage.removeItem('avSes'); } catch (e) {}
+  }
+}
+
+/* ---------- Lado de Molina (Panel) ---------- */
+ACC.avVer = el => avVer(el.dataset.id, el.dataset.n || '');
+function avVer(id, nombre) {
+  if (!/^[a-f0-9]{16,64}$/.test(id || '')) return;
+  if (!window.DecompressionStream) { toast('Abre el Panel en Chrome actualizado para ver en vivo', 'error'); return; }
+  avTerminar(false);
+  Object.assign(AV, { rol: 'vis', id, modo: 'punto', k: 1, meta: null, trozos: {}, ultK: 0, vMarca: null, vImgs: {}, recibio: false, imgT: {} });
+  const mainCss = (document.querySelector('head style') || {}).textContent || '';
+  const h = AV.hoja = hoja({ titulo: '🤝 Ayuda en vivo', full: true, fijo: true, cls: 'av-h', extra: '<span class="av-live" id="av-lv">● <span id="av-t">--:--</span></span>',
+    html: `<div class="av-sub"><b>${esc(nombre || 'Cliente')}</b><small id="av-est">Conectando…</small></div>
+      <div class="av-box" id="av-box"><div class="av-fr" id="av-fr"><iframe id="av-if" sandbox="allow-same-origin" title="Pantalla del cliente" tabindex="-1"></iframe><div class="av-cap" id="av-cap"></div></div></div>
+      <div class="av-tools"><div class="seg full" id="av-modo"><button type="button" data-m="punto" class="on">👆 Señalar</button><button type="button" data-m="zona">✏️ Marcar zona</button><button type="button" data-m="fin" class="av-finb">■ Terminar</button></div>
+      <div class="av-nota"><input id="av-nt" maxlength="120" placeholder="Nota para el cliente (opcional) · ej. Escribe aquí el precio"><button type="button" class="btn pri" id="av-env">Enviar</button></div></div>`,
+    onClose: () => { if (AV.rol === 'vis') { if (AV.cx) AV.cx.enviar('quitar', {}); avTerminar(false); } } });
+  const fr = $('#av-if', h.el);
+  fr.srcdoc = `<!DOCTYPE html><html><head><meta charset="utf-8"><base href="${esc(document.baseURI)}"><link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Jost:wght@400;500;600;700&display=swap" rel="stylesheet"><style>${mainCss}</style><style id="av-x"></style><style>*,*::before,*::after{transition:none!important;animation-duration:0s!important;caret-color:transparent}html,body{scrollbar-width:none}::-webkit-scrollbar{display:none}</style></head><body></body></html>`;
+  fr.onload = () => { if (AV.pend) { const x = AV.pend; AV.pend = null; avPintaVisor(x.j, x.m); } };
+  $('#av-modo', h.el).onclick = e => { const b = e.target.closest('[data-m]'); if (!b) return;
+    if (b.dataset.m === 'fin') { if (AV.cx) AV.cx.enviar('fin', {}); avTerminar(false); h.cerrar(); toast('Ayuda en vivo terminada', 'ok'); return; }
+    AV.modo = b.dataset.m; $$('#av-modo [data-m]', h.el).forEach(x => x.classList.toggle('on', x === b)); };
+  $('#av-env', h.el).onclick = () => {
+    const nota = $('#av-nt', h.el).value.trim(); if (!nota) { toast('Escribe la nota', 'error'); return; }
+    const mk = AV.vMarca ? Object.assign({}, AV.vMarca, { nota }) : { tipo: 'nota', nota };
+    avMandarMarca(mk); toast('Nota enviada', 'ok', 1500);
+  };
+  avCapturaEventos($('#av-cap', h.el));
+  addEventListener('resize', avEscala);
+  AV.cx = avCanal(id, avVisMsg, est => {
+    if (AV.rol !== 'vis') return;
+    if (est === 'ok') { AV.cx.enviar('hola', { nuevo: 1 }); avEstado(AV.recibio ? 'En vivo' : 'Esperando la pantalla del cliente…'); }
+    else if (est === 'cortado') avEstado('Se cortó la conexión, reconectando…');
+  });
+  AV.tm = setInterval(() => {
+    if (AV.rol !== 'vis') return;
+    if (AV.cx && AV.cx.abierto) AV.cx.enviar('hola', {});
+    const t = $('#av-t'); if (t && AV.meta && AV.meta.fin) { const r = AV.meta.fin - Date.now(); t.textContent = avMMSS(r); if (r <= 0) avEstado('Terminó el tiempo de la ayuda en vivo', true); }
+  }, 1000);
+  AV.tEspera = setTimeout(() => { if (AV.rol === 'vis' && !AV.recibio) avEstado('Aún no llega su pantalla: pídele que abra el programa (la ayuda dura ' + AV_MIN + ' min desde que aceptó)'); }, 20000);
+}
+function avEstado(t, apagado) {
+  const e = $('#av-est'); if (e) e.textContent = t;
+  if (apagado) { const lv = $('#av-lv'); if (lv) lv.classList.add('off'); const tl = $('.av-tools', AV.hoja && AV.hoja.el); if (tl) tl.classList.add('off'); }
+}
+async function avVisMsg(ev, p) {
+  if (AV.rol !== 'vis') return;
+  if (ev === 'snap') {
+    if (!(p.k > AV.ultK) || !(p.n > 0) || p.n > 40) return;
+    const t = AV.trozos[p.k] || (AV.trozos[p.k] = { n: p.n, d: [], c: 0 });
+    if (t.d[p.i] === undefined) { t.d[p.i] = String(p.d || ''); t.c++; }
+    if (p.m) t.m = p.m;
+    if (t.c < t.n || !t.m) return;
+    Object.keys(AV.trozos).forEach(k => { if (Number(k) <= p.k) delete AV.trozos[k]; });
+    AV.ultK = p.k;
+    let j; try { j = JSON.parse(await avUngz(t.d.join(''))); } catch (e) { return; }
+    if (AV.rol !== 'vis' || p.k !== AV.ultK) return;
+    avPintaVisor(j, t.m);
+  } else if (ev === 'img') {
+    const t = AV.imgT[p.h] || (AV.imgT[p.h] = { d: [], c: 0 });
+    if (t.d[p.i] === undefined) { t.d[p.i] = String(p.d || ''); t.c++; }
+    if (t.c >= p.n) { const s = t.d.join(''); delete AV.imgT[p.h]; if (/^data:image\//.test(s)) { AV.vImgs[p.h] = s; avPonImgs(); } }
+  } else if (ev === 'pos') { if (p.m) avPos(p.m); }
+  else if (ev === 'lista') { AV.cx.enviar('hola', { nuevo: 1 }); }
+  else if (ev === 'grande') { avEstado('Esta pantalla del cliente es muy pesada para verla en vivo; pídele que baje o cambie de pantalla'); if (p.m) avPos(p.m); }
+  else if (ev === 'toque') avOnda(p.x, p.y, '');
+  else if (ev === 'tocado') { AV.vMarca = null; avPintaMarcaVisor(); avEstado('✓ El cliente tocó donde le marcaste'); }
+  else if (ev === 'fin') { AV.vMarca = null; avPintaMarcaVisor(); avEstado('El cliente terminó la ayuda en vivo', true); }
+}
+function avPintaVisor(j, m) {
+  const fr = $('#av-if'); if (!fr) return;
+  const doc = fr.contentDocument;
+  if (!doc || !doc.body || !doc.getElementById('av-x')) { AV.pend = { j, m }; return; }
+  const ponAttrs = (el, l) => { Array.from(el.attributes).forEach(a => el.removeAttribute(a.name)); (l || []).forEach(([k, v]) => { if (/^[a-z][\w:-]*$/i.test(k) && !/^on/i.test(k)) el.setAttribute(k, v); }); };
+  ponAttrs(doc.documentElement, j.ha); ponAttrs(doc.body, j.ba);
+  doc.getElementById('av-x').textContent = String(j.css || '');
+  doc.body.innerHTML = String(j.html || '');
+  // Por seguridad nada de lo recibido carga páginas ni archivos aparte (se cambian por un elemento vacío: las rutas no se mueven)
+  doc.body.querySelectorAll('script,iframe,object,embed,link,meta,base,frame,frameset,form').forEach(y => { if (y.tagName === 'FORM') { y.removeAttribute('action'); return; } const z = doc.createElement('b'); z.hidden = true; y.replaceWith(z); });
+  avPonImgs();
+  if (!AV.recibio) { AV.recibio = true; avEstado('En vivo · toca en su pantalla para señalarle'); }
+  avPos(m);
+}
+function avPonImgs() {
+  const fr = $('#av-if'), doc = fr && fr.contentDocument; if (!doc || !doc.body) return;
+  doc.body.querySelectorAll('img[data-avimg]').forEach(y => { const s = AV.vImgs[y.getAttribute('data-avimg')]; if (s && y.getAttribute('src') !== s) y.setAttribute('src', s); });
+}
+function avPos(m) {
+  if (!m || !(m.w > 0 && m.h > 0)) return;
+  AV.meta = m; avEscala();
+  const fr = $('#av-if'), doc = fr && fr.contentDocument; if (!doc || !doc.body) return;
+  const se = doc.scrollingElement || doc.documentElement; se.scrollLeft = m.sx || 0; se.scrollTop = m.sy || 0;
+  (m.sc || []).forEach(([r, t, l]) => { const e = avDeRuta(doc.body, r); if (e && e !== doc.body) { e.scrollTop = t; e.scrollLeft = l; } });
+  avPintaMarcaVisor();
+}
+function avEscala() {
+  const m = AV.meta, box = $('#av-box'), fw = $('#av-fr'), fr = $('#av-if'); if (!m || !box || !fw || !fr) return;
+  const k = AV.k = Math.min((box.clientWidth - 8) / m.w, (box.clientHeight - 8) / m.h, 1.3);
+  fr.style.width = m.w + 'px'; fr.style.height = m.h + 'px';
+  Object.assign(fw.style, { width: m.w + 'px', height: m.h + 'px', transform: `scale(${k})`, marginRight: (m.w * k - m.w) + 'px', marginBottom: (m.h * k - m.h) + 'px' });
+}
+function avPunto(cap, e) { const r = cap.getBoundingClientRect(); return { x: Math.round((e.clientX - r.left) / AV.k), y: Math.round((e.clientY - r.top) / AV.k) }; }
+function avCapturaEventos(cap) {
+  let ini = null, cuadro = null;
+  cap.addEventListener('pointerdown', e => {
+    if (!AV.meta) return; e.preventDefault();
+    if (AV.modo === 'zona') { ini = avPunto(cap, e); cuadro = document.createElement('div'); cuadro.className = 'av-z'; cap.appendChild(cuadro); try { cap.setPointerCapture(e.pointerId); } catch (x) {} }
+  });
+  cap.addEventListener('pointermove', e => {
+    if (!ini || !cuadro) return; const p = avPunto(cap, e);
+    Object.assign(cuadro.style, { left: Math.min(ini.x, p.x) + 'px', top: Math.min(ini.y, p.y) + 'px', width: Math.abs(p.x - ini.x) + 'px', height: Math.abs(p.y - ini.y) + 'px' });
+  });
+  cap.addEventListener('pointerup', e => {
+    if (!AV.meta || $('.av-tools.off')) { ini = null; if (cuadro) cuadro.remove(); cuadro = null; return; }
+    const p = avPunto(cap, e), nota = ($('#av-nt') || {}).value ? $('#av-nt').value.trim() : '';
+    if (AV.modo === 'zona' && ini) {
+      const z = { tipo: 'zona', x: Math.min(ini.x, p.x), y: Math.min(ini.y, p.y), w: Math.abs(p.x - ini.x), h: Math.abs(p.y - ini.y), sy: AV.meta.sy, nota };
+      ini = null; if (cuadro) cuadro.remove(); cuadro = null;
+      if (z.w < 12 || z.h < 12) { z.x -= 40; z.y -= 30; z.w = 80; z.h = 60; }
+      avMandarMarca(z); return;
+    }
+    if (AV.modo === 'punto') avSenalar(p.x, p.y, nota);
+  });
+}
+function avSenalar(x, y, nota) {
+  const doc = $('#av-if').contentDocument, m = AV.meta;
+  let el = doc && doc.elementFromPoint(x, y), t = el && el.closest('button,a,input,select,textarea,label,.li,[data-a],.chip,.fld,.btn,.card,.tile,.qa,td,th');
+  if (t) { const r = t.getBoundingClientRect(); if (r.width * r.height > m.w * m.h * 0.45) t = null; }
+  const ruta = t ? avRuta(t, doc.body) : null;
+  // Si lo tocado está fijo en la pantalla (barra, menú de abajo, ventana), el punto no se mueve con el desplazamiento
+  let fija = false; for (let e = el; e && e !== doc.body; e = e.parentElement) { const ps = doc.defaultView.getComputedStyle(e).position; if (ps === 'fixed' || ps === 'sticky') { fija = true; break; } }
+  avMandarMarca({ tipo: 'punto', x, y, sy: m.sy, fija, ruta, tag: t ? t.tagName : '', nota });
+}
+function avMandarMarca(mk) {
+  if (!AV.cx || AV.rol !== 'vis') return;
+  AV.vMarca = mk.tipo === 'nota' ? null : mk; AV.cx.enviar('marca', mk); avPintaMarcaVisor();
+  const nt = $('#av-nt'); if (nt && mk.nota) nt.value = ''; // la nota va con esa marca; la siguiente lleva la suya
+  if (mk.tipo !== 'nota') avEstado('Marca enviada: espera a que el cliente toque ahí');
+}
+function avPintaMarcaVisor() {
+  const cap = $('#av-cap'); if (!cap) return;
+  let d = $('.av-vm', cap); const mk = AV.vMarca, m = AV.meta;
+  if (!mk || !m) { if (d) d.remove(); return; }
+  if (!d) { d = document.createElement('div'); d.className = 'av-vm'; cap.appendChild(d); }
+  let r = null; const dy = (mk.sy || 0) - m.sy;
+  if (mk.tipo === 'zona') r = { l: mk.x, t: mk.y + dy, w: mk.w, h: mk.h };
+  else {
+    const doc = $('#av-if').contentDocument, el = mk.ruta && doc && doc.body ? avDeRuta(doc.body, mk.ruta) : null;
+    if (el && el.tagName === mk.tag) { const q = el.getBoundingClientRect(); r = { l: q.left - 5, t: q.top - 5, w: q.width + 10, h: q.height + 10 }; }
+    else r = { l: mk.x - 26, t: mk.y + (mk.fija ? 0 : dy) - 26, w: 52, h: 52, red: true };
+  }
+  d.classList.toggle('red', !!r.red);
+  Object.assign(d.style, { left: r.l + 'px', top: r.t + 'px', width: r.w + 'px', height: r.h + 'px' });
+}
+function avOnda(x, y) {
+  const cap = $('#av-cap'); if (!cap || !(x >= 0)) return;
+  const o = document.createElement('div'); o.className = 'av-onda'; o.style.left = x + 'px'; o.style.top = y + 'px';
+  cap.appendChild(o); setTimeout(() => o.remove(), 900);
 }
 ACC.panelPlantillas = async () => {
   const pl = await api('panelPlantillas', {}); P.pl = pl;
