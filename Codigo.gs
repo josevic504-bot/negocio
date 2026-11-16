@@ -123,7 +123,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaEnlacePago: '', tiendaTigo: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', mesas: '', mesasZonas: '', tiempoPrep: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', dirOn: 'no', dirCiudad: '', dirFrase: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', mesas: '', mesasZonas: '', tiempoPrep: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
   // Cotizaciones y contratos (servicios)
@@ -3232,6 +3232,11 @@ function guardar_(u, d) {
       if (t && !/^https:\/\/[^\s"'<>]+$/i.test(/^https?:\/\//i.test(t) ? t.replace(/^http:/i, 'https:') : 'https://' + t)) throw new Error('El enlace de pago debe ser una dirección web (https://…)');
       reg.tiendaEnlacePago = !t ? '' : (/^https?:\/\//i.test(t) ? t.replace(/^http:/i, 'https:') : 'https://' + t).slice(0, 400); }
     if (reg.tiendaTigo !== undefined) reg.tiendaTigo = txt_(reg.tiendaTigo, 120);
+    // Tiendas Catrachas (directorio público): ciudad y frase corta
+    if (reg.dirOn !== undefined) reg.dirOn = reg.dirOn === 'si' ? 'si' : 'no';
+    if (reg.dirCiudad !== undefined) reg.dirCiudad = txt_(reg.dirCiudad, 40);
+    if (reg.dirFrase !== undefined) reg.dirFrase = txt_(reg.dirFrase, 80);
+    if (reg.dirOn === 'si' && !String(reg.dirCiudad !== undefined ? reg.dirCiudad : config_().dirCiudad || '').trim()) throw new Error('Escribe tu ciudad para aparecer en Tiendas Catrachas');
     if (reg.tiendaPagos !== undefined) reg.tiendaPagos = reg.tiendaPagos.split(',').filter(x => ['Efectivo', 'Transferencia', 'Tarjeta', 'Tigo Money'].indexOf(x) >= 0).join(',') || 'Efectivo';
     if (reg.tiendaMapa) { const t = reg.tiendaMapa.trim(); if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de Google Maps debe ser una dirección web (https://…)'); reg.tiendaMapa = /^https?:\/\//i.test(t) ? t : 'https://' + t; }
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
@@ -5822,7 +5827,7 @@ function tiendaInfo_(d) {
   const todosG = girosActivos_(cfg), activos = girosLinea_(cfg), catOn = activos.some(g => modEnGiro_('catalogo', g, cfg));
   // Tienda por secciones (un bloque por categoría): Beauty & Moda (catálogo), Recargas y Streaming de fábrica, o cualquier giro con el módulo encendido
   const secGiros = activos.filter(g => g === 'catalogo' || modEnGiro_('secciones', g, cfg)), secOn = secGiros.length > 0;
-  return {
+  const R = {
     negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       mesas: modOn_('mesas') ? zonasMesa_(cfg).reduce((a, z) => a + z.n, 0) : 0, tiempo: modOn_('mesas') ? Math.max(0, parseInt(cfg.tiempoPrep, 10) || 0) : 0,
@@ -5852,6 +5857,10 @@ function tiendaInfo_(d) {
     }).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre)),
     hoy: hoy_()
   };
+  // Tiendas Catrachas (directorio público): el negocio lo encendió, tiene Plus pagado y ya creó productos propios (o les puso foto a los de ejemplo)
+  R.negocio.dir = cfg.dirOn === 'si' && plusReal_() && rows_('Productos').some(p => p.activo && p.tienda && (!/^EJ\d/.test(String(p.codigo || '')) || p.foto))
+    ? { ciudad: cfg.dirCiudad || '', frase: cfg.dirFrase || '' } : null;
+  return R;
 }
 
 // Antes de esperar el candado: el negocio existe, la tienda está abierta y no hay una avalancha de pedidos
