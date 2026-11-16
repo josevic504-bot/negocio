@@ -340,7 +340,7 @@ function route_(req) {
 }
 
 // Acciones del Panel que solo leen: no esperan ni frenan el candado que usan las ventas de todos los negocios
-const PANEL_LECTURA = ['panelSolicitudes', 'panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelVendedores', 'panelSalir'];
+const PANEL_LECTURA = ['panelSolicitudes', 'panelCatrachas', 'panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelVendedores', 'panelSalir'];
 function sinCostos_(x) {
   if (Array.isArray(x)) return x.map(sinCostos_);
   if (!x || typeof x !== 'object') return x;
@@ -2448,6 +2448,7 @@ function rutaPanel_(a, d) {
     case 'panelLlego':             return panelLlego_(d);
     case 'panelVisitas':           return panelVisitas_(d);
     case 'panelSolicitudes':       return panelSolicitudes_();
+    case 'panelCatrachas':         return panelCatrachas_(d);
     case 'panelSolicitudEstado':   return panelSolicitudEstado_(d);
     case 'panelVendedores':        return panelVendedores_();
     case 'panelVendedorGuardar':   return panelVendedorGuardar_(d);
@@ -7392,6 +7393,39 @@ function solicitudDir_(d) {
   mAppend_('Solicitudes', Object.assign(reg, { id: mId_('SO'), fecha: ahora_().replace('T', ' '), estado: 'nueva', creado: ahora_() }));
   return true;
 }
+/* ---- Tiendas Catrachas: análisis para el Panel (visitas al sitio, clics a las tiendas, búsquedas y solicitudes) ----
+ * El sitio manda sus visitas con páginas «tc-…»: tc-inicio, tc-dir, tc-giro-…, tc-gc-…, tc-ciudad-…, tc-t-<código> (ficha),
+ * tc-ir-<código> (clic para entrar a una tienda), tc-b-<lo que buscaron>, tc-aparecer, tc-negocio, tc-prog-…, tc-guia-… */
+function panelCatrachas_(d) {
+  const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 30, desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
+  let todas = []; try { todas = visitasFilas_(60000, 'tc'); } catch (e) {}
+  const f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
+  const tipo = p => p.indexOf('tc-ir-') === 0 ? 'ir' : p.indexOf('tc-b-') === 0 ? 'buscar' : 'vista';
+  const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
+  const vistas = f.filter(x => tipo(x.pagina) === 'vista'), clics = f.filter(x => tipo(x.pagina) === 'ir'), busq = f.filter(x => tipo(x.pagina) === 'buscar');
+  const seccion = p => p === 'catrachas' || p === 'tc-inicio' ? 'Inicio' : p === 'tc-dir' ? 'Directorio' : /^tc-(giro|gc|ciudad)-/.test(p) ? 'Tipo de negocio y ciudad' : p.indexOf('tc-t-') === 0 ? 'Fichas de tienda'
+    : p === 'tc-aparecer' ? '«Aparece aquí»' : p === 'tc-negocio' || p.indexOf('tc-prog') === 0 ? 'Para tu negocio' : p.indexOf('tc-guia') === 0 ? 'Guías' : 'Otras';
+  const contar = (l, fn) => { const o = {}; l.forEach(x => { const k = fn(x) || 'directo'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n); };
+  // Tiendas: cuántas veces vieron su ficha y cuántas veces tocaron para entrar
+  const nombres = {}; mRows_('Licencias').forEach(l => { nombres[String(l.id).toLowerCase()] = l.negocio; });
+  const T = {}; const tt = id => (T[id] = T[id] || { id: id.toUpperCase(), negocio: nombres[id] || id.toUpperCase(), vistas: 0, clics: 0 });
+  vistas.forEach(x => { if (x.pagina.indexOf('tc-t-') === 0) tt(x.pagina.slice(5)).vistas++; });
+  clics.forEach(x => { tt(x.pagina.slice(6)).clics++; });
+  const barras = [];
+  if (dias <= 30) { for (let i = dias - 1; i >= 0; i--) { const k = diaMenos_(i); barras.push({ k: k, n: vistas.filter(x => x.fecha.slice(0, 10) === k).length }); } }
+  else { for (let w = 12; w >= 0; w--) { const a = diaMenos_(w * 7 + 6), b = diaMenos_(w * 7); if (b >= desde) barras.push({ k: a < desde ? desde : a, n: vistas.filter(x => { const k = x.fecha.slice(0, 10); return k >= a && k <= b; }).length, semana: true }); } }
+  const sol = mRows_('Solicitudes'), solP = sol.filter(s => String(s.fecha).slice(0, 10) >= desde), est = e => sol.filter(s => s.estado === e).length;
+  const personas = unicos(vistas), queEntran = unicos(clics);
+  return { dias: dias, desde: desde, visitas: vistas.length, personas: personas, anterior: prev.filter(x => tipo(x.pagina) === 'vista').length,
+    clics: clics.length, personasClic: queEntran, tasa: personas ? Math.round(queEntran * 100 / personas) : 0,
+    cel: vistas.length ? Math.round(vistas.filter(x => x.disp !== 'pc').length * 100 / vistas.length) : 0,
+    barras: barras, secciones: contar(vistas, x => seccion(x.pagina)), origen: contar(vistas, x => x.origen).slice(0, 8),
+    tiendas: Object.keys(T).map(k => T[k]).sort((a, b) => (b.vistas + b.clics) - (a.vistas + a.clics)).slice(0, 20),
+    busquedas: contar(busq, x => x.pagina.slice(5).replace(/-/g, ' ')).slice(0, 15), nBusquedas: busq.length,
+    duenos: { aparecer: vistas.filter(x => x.pagina === 'tc-aparecer').length, negocio: vistas.filter(x => seccion(x.pagina) === 'Para tu negocio').length, guias: vistas.filter(x => seccion(x.pagina) === 'Guías').length,
+      solicitudes: solP.length, total: sol.length, nuevas: est('nueva'), contactadas: est('contactada'), aprobadas: est('aprobada'), descartadas: est('descartada') },
+    precio: 150 };
+}
 function panelSolicitudes_() { return mRows_('Solicitudes').slice().reverse().slice(0, 100); }
 function panelSolicitudEstado_(d) {
   const s = mRows_('Solicitudes').find(x => x.id === (d && d.id)); if (!s) throw new Error('Esa solicitud ya no existe');
@@ -7404,8 +7438,10 @@ function visitasFilas_(maxFilas, tiendas) {
   const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 2) return [];
   const h = SCHEMA_M.Visitas, cuantas = Math.min(n - 1, maxFilas || 60000), ini = n - cuantas + 1;
   return s.getRange(ini, 2, cuantas, 6).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]), ref: String(r[5] || '') }))
-    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha) && (x.pagina.indexOf('t-') === 0) === !!tiendas);
+    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha) && (tiendas === 'tc' ? esTC_(x.pagina) : !esTC_(x.pagina) && (x.pagina.indexOf('t-') === 0) === !!tiendas));
 }
+// Páginas del sitio de Tiendas Catrachas (molinasoluciones.com): se miden aparte, en su propio análisis del Panel
+function esTC_(p) { return p === 'catrachas' || String(p).indexOf('tc-') === 0; }
 function diaMenos_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
 // Para la tarjeta del resumen: hoy y últimos 7 días
 function visitasMini_() {
