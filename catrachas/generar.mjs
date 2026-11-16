@@ -8,7 +8,7 @@ import { writeFileSync, mkdirSync, readFileSync, rmSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const SITIO = 'https://molinasoluciones.com';
-const TIENDA_URL = process.env.TIENDA_URL || 'https://josevic504-bot.github.io/negocio/'; // cambia al mover el repositorio
+const TIENDA_URL = process.env.TIENDA_URL || 'https://app.molinasoluciones.com/'; // cambia al mover el repositorio
 const API = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
 const SB = 'https://qvhtlezxjklhwlnvexje.supabase.co';
 // Llave pública (la misma que ya va en la app): no da acceso a ninguna tabla, solo a la función del directorio

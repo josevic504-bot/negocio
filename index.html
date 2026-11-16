@@ -3821,7 +3821,7 @@ ACC.panelAccion = async el => { const r = await panelEjecutar(el.dataset.id, el.
 /* ===== Visitas a los enlaces (solo Panel) ===== */
 const VIS_PAG = { negocio: 'Negocio VM', demo: 'Demo Negocio VM', catalogo: 'Catálogo', salon: 'Salón VM', eventos: 'Eventos VM' };
 const VIS_ORI = { tiktok: ['TikTok', 'tv'], wa: ['WhatsApp', 'wa'], whatsapp: ['WhatsApp', 'wa'], facebook: ['Facebook', 'fb'], fb: ['Facebook', 'fb'], instagram: ['Instagram', 'insta'], ig: ['Instagram', 'insta'], google: ['Google', 'search'], youtube: ['YouTube', 'tv'], estado: ['Estado de WhatsApp', 'wa'], 'mis-paginas': ['Desde tus páginas', 'layers'], 'otro-sitio': ['Otro sitio web', 'globe'], directo: ['Directo (sin etiqueta)', 'right'] };
-const VIS_LINKS = [['negocio', 'https://josevic504-bot.github.io/negocio/'], ['demo', 'https://josevic504-bot.github.io/negocio/?demo'], ['salon', 'https://josevic504-bot.github.io/salonlicencias/'], ['eventos', 'https://josevic504-bot.github.io/eventos/']];
+const VIS_LINKS = [['negocio', 'https://app.molinasoluciones.com/'], ['demo', 'https://app.molinasoluciones.com/?demo'], ['salon', 'https://josevic504-bot.github.io/salonlicencias/'], ['eventos', 'https://josevic504-bot.github.io/eventos/']];
 const tiene = (o, k) => Object.prototype.hasOwnProperty.call(o, k); // la clave viene de afuera: «constructor» no es un canal
 const visOri = k => /^v-/.test(String(k || '')) ? ['Vendedor: ' + nombreVend(String(k)), 'user'] : tiene(VIS_ORI, k) ? VIS_ORI[k] : [String(k || '').charAt(0).toUpperCase() + String(k || '').slice(1), 'tag'];
 const visPag = k => tiene(VIS_PAG, k) ? VIS_PAG[k] : k;
