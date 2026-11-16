@@ -3193,6 +3193,18 @@ function panelMensajeA(id, n) {
   } }]);
 }
 /* ---- Panel: mensajes a los negocios ---- */
+// Tiendas Catrachas: solicitudes del formulario «Aparece aquí» del sitio (negocios que no usan el programa)
+ACC.panelSolicitudes = async () => {
+  const EST = [['nueva', 'Nueva'], ['contactada', 'Contactada'], ['aprobada', 'Aprobada'], ['descartada', 'Descartada']];
+  const h = hoja({ titulo: 'Solicitudes de Tiendas Catrachas', ancho: 1, html: `<p class="xs mut" style="margin-top:0">Llegan del formulario «Aparece aquí» de molinasoluciones.com. Al que envía se le dice que se evaluará y que en 48 horas lo contactas.</p><div class="list" id="so-l"><div class="empty">Cargando…</div></div>` });
+  const lista = l => { const b = $('#pn-sol-n'), n = l.filter(s => s.estado === 'nueva').length; if (b) { b.textContent = n; b.hidden = !n; }
+    $('#so-l', h.el).innerHTML = l.map(s => `<div class="li" style="align-items:flex-start"><div class="tx"><b>${esc(s.negocio)}</b><small>${esc(s.nombre)} · ${esc(s.tipo || 'Sin tipo')} · ${esc(s.ciudad)}</small>
+      <small>${/^https?:\/\//i.test(s.enlace) ? `<a href="${esc(enlaceSeguro(s.enlace))}" target="_blank" rel="noopener">${esc(s.enlace)}</a>` : esc(s.enlace)}</small>${s.nota ? `<small>«${esc(s.nota)}»</small>` : ''}<small>${esc(String(s.fecha).slice(0, 16))}</small>
+      <div class="chips" style="flex-wrap:wrap;margin-top:8px">${EST.map(([k, t]) => `<button type="button" class="chip ${s.estado === k ? 'on' : ''}" data-e="${k}" data-id="${esc(s.id)}">${t}</button>`).join('')}</div></div>
+      <a class="btn sm pri" href="${esc(waLink(s.whatsapp, 'Hola ' + s.nombre + ', te escribo de Tiendas Catrachas por tu solicitud para que ' + s.negocio + ' aparezca en el directorio.'))}" target="_blank" rel="noopener">WhatsApp</a></div>`).join('') || '<div class="empty">Todavía no hay solicitudes</div>'; };
+  api('panelSolicitudes', {}, true).then(lista).catch(err);
+  h.el.addEventListener('click', async e => { const b = e.target.closest('[data-e]'); if (!b) return; try { lista(await api('panelSolicitudEstado', { id: b.dataset.id, estado: b.dataset.e })); } catch (x) { err(x); } });
+};
 ACC.panelMensajes = async () => {
   const st = { filtro: 'todos', push: true, banner: true, giro: '' };
   const giros = GIROS_LOCAL.filter(g => g[0] !== 'otro');
@@ -3235,7 +3247,7 @@ async function panelResumen() {
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
 // si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas. También la pantalla de Visitas.
 // «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
-const PANEL_REV = 8; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+const PANEL_REV = 9; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
 let pnTecleo = 0, pnAutoDesde = 0;
 document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
 const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
@@ -3264,6 +3276,7 @@ function panelPinta() {
   $('#main').innerHTML = avisoServidor(d.appVer) + `<div class="pn">${t === 'cli' ? pnClientes(d) : t === 'mkt' ? pnMarketing(d) : t === 'resp' ? pnRespaldos() : pnDashboard(d)}</div>`;
   if (t === 'cli') pnClientesListo(d);
   if (t === 'resp') pnRespLista();
+  if (t === 'mkt') api('panelSolicitudes', {}, true).then(l => { const n = l.filter(s => s.estado === 'nueva').length, b = $('#pn-sol-n'); if (b) { b.textContent = n; b.hidden = !n; } }).catch(() => {});
   window.scrollTo(0, 0);
 }
 ACC.panelTab = el => { P.tab = el.dataset.k; LS.set('panelTab', P.tab); if (el.dataset.f !== undefined) P.f.est = el.dataset.f; panelPinta(); };
@@ -3330,6 +3343,7 @@ function pnMarketing(d) {
   const k = d.kpis, v = d.visitas || {}, ori = v.origen || [], mo = Math.max(1, ...ori.map(o => o.n));
   const pct = k.invertidoPub ? Math.round(k.recuperadoPub * 100 / k.invertidoPub) : 0;
   return `<button class="pn-cta" data-a="panelMensajes">${ic('bell', 22)}<div><b>Enviar mensaje a los negocios</b><small>Aviso al teléfono o banner en su app: novedades, mantenimiento, promociones</small></div></button>
+    <button class="pn-cta" data-a="panelSolicitudes">${ic('store', 22)}<div><b>Solicitudes de Tiendas Catrachas <span class="badge" id="pn-sol-n" hidden></span></b><small>Negocios con tienda propia que quieren aparecer en el directorio (L 150 al mes)</small></div></button>
     <div class="pn-h">Visitas <a data-a="panelVisitas">Ver detalle</a></div>
     <div class="pn-g2"><button class="pn-k" data-a="panelVisitas"><small>Hoy</small><b>${v.hoy || 0}</b><i>7 días: ${v.semana || 0}</i></button><button class="pn-k" data-a="panelVisitas"><small>Personas distintas</small><b>${v.unicos || 0}</b><i>en 7 días</i></button></div>
     ${ori.length ? `<button class="pn-card pn-ori" data-a="panelVisitas">${ori.map((o, i) => `<div><em>${esc(visOri(o.k)[0])}</em><span style="width:${Math.max(8, Math.round(o.n * 110 / mo))}px;opacity:${1 - i * .2}"></span><b>${o.n}</b></div>`).join('')}</button>` : ''}

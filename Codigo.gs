@@ -51,7 +51,9 @@ const SCHEMA_M = {
   // Contratos de licencia: Vic los crea desde el Panel y el dueño los firma desde su celular (la firma es una imagen pequeña)
   Contratos:   ['id','negocioId','fecha','titulo','texto','monto','desde','hasta','estado','firma','firmadoEl','firmadoPor','huella','pdfId','creado'],
   // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
-  Visitas:     ['id','fecha','pagina','origen','disp','vid','ref']
+  Visitas:     ['id','fecha','pagina','origen','disp','vid','ref'],
+  // Tiendas Catrachas: negocios con tienda propia (no usan el programa) que piden aparecer en el directorio. estado: nueva, contactada, aprobada, descartada
+  Solicitudes: ['id','fecha','negocio','nombre','whatsapp','tipo','ciudad','enlace','nota','estado','creado']
 };
 const PANEL_SEG = 7776000; // 90 días sin usarlo (se renueva al entrar); en Supabase ya no aplica el límite de 6 horas de Google
 const GRACIA_DEF = 5; // días después de la fecha de pago antes de pausar el programa
@@ -313,6 +315,8 @@ function route_(req) {
   if (a === 'info') return { multi: MULTI_NEGOCIO, version: VERSION };
   // Contador de visitas (público, sin usuario)
   if (a === 'visita') return visita_(d);
+  // Tiendas Catrachas: formulario público «Aparece aquí» (molinasoluciones.com/aparecer/)
+  if (a === 'solicitudDir') return solicitudDir_(d);
   // Tienda en línea (página pública, sin usuario)
   if (a === 'tiendaInfo') return tiendaInfo_(d);
   if (a === 'pedir') { pedirLimites_(d); return lock_(() => pedir_(d)); }
@@ -336,7 +340,7 @@ function route_(req) {
 }
 
 // Acciones del Panel que solo leen: no esperan ni frenan el candado que usan las ventas de todos los negocios
-const PANEL_LECTURA = ['panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelVendedores', 'panelSalir'];
+const PANEL_LECTURA = ['panelSolicitudes', 'panelResumen', 'panelNegocio', 'panelGastos', 'panelTasa', 'panelSoporte', 'panelPlantillas', 'panelVisitas', 'panelVendedores', 'panelSalir'];
 function sinCostos_(x) {
   if (Array.isArray(x)) return x.map(sinCostos_);
   if (!x || typeof x !== 'object') return x;
@@ -2443,6 +2447,8 @@ function rutaPanel_(a, d) {
     case 'panelTasa':              return { tasa: tasaDolar_(d && d.forzar) };
     case 'panelLlego':             return panelLlego_(d);
     case 'panelVisitas':           return panelVisitas_(d);
+    case 'panelSolicitudes':       return panelSolicitudes_();
+    case 'panelSolicitudEstado':   return panelSolicitudEstado_(d);
     case 'panelVendedores':        return panelVendedores_();
     case 'panelVendedorGuardar':   return panelVendedorGuardar_(d);
     case 'panelVendedorQuitar':    return panelVendedorQuitar_(d);
@@ -7366,6 +7372,31 @@ function visita_(d) {
   mAppend_('Visitas', { id: mId_('VI'), fecha: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), pagina: pagina, origen: slug_(d.o, 20) || 'directo',
     disp: d.d === 'pc' ? 'pc' : 'cel', vid: vid, ref: String(d.r || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 60) });
   return true;
+}
+/* ---- Tiendas Catrachas: solicitudes de negocios con tienda propia que quieren aparecer (L 150 al mes) ----
+ * La manda el formulario público del sitio: { action:'solicitudDir', data:{ negocio, nombre, whatsapp, tipo, ciudad, enlace, nota } }.
+ * Solo se guarda para que Vic la vea en el Panel y los contacte; no publica nada. */
+function solicitudDir_(d) {
+  if (!MULTI_NEGOCIO) throw new Error('No disponible');
+  d = d || {};
+  const reg = { negocio: txt_(d.negocio, 80), nombre: txt_(d.nombre, 60), whatsapp: String(d.whatsapp || '').replace(/[^0-9+ -]/g, '').trim().slice(0, 20), tipo: txt_(d.tipo, 50), ciudad: txt_(d.ciudad, 40), enlace: txt_(d.enlace, 200), nota: txt_(d.nota, 300) };
+  const tel = reg.whatsapp.replace(/\D/g, '');
+  if (reg.negocio.length < 2 || reg.nombre.length < 2 || reg.ciudad.length < 2 || reg.enlace.length < 3) throw new Error('Completa los datos para enviar tu solicitud');
+  if (tel.length < 8) throw new Error('Escribe tu número de WhatsApp completo');
+  const c = CacheService.getScriptCache(), hoyK = Utilities.formatDate(new Date(), TZ, 'yyyyMMdd');
+  const kd = 'SOD_' + hoyK, nd = Number(c.get(kd) || 0);
+  if (nd >= 60) throw new Error('Hoy recibimos muchas solicitudes. Inténtalo mañana o escríbenos por WhatsApp.'); // freno contra abusos
+  const kt = 'SOT_' + tel.slice(-8) + '_' + hoyK;
+  if (c.get(kt)) return true; // el mismo número ya la mandó hoy: no se duplica
+  c.put(kd, String(nd + 1), 90000); c.put(kt, '1', 90000);
+  mAppend_('Solicitudes', Object.assign(reg, { id: mId_('SO'), fecha: ahora_().replace('T', ' '), estado: 'nueva', creado: ahora_() }));
+  return true;
+}
+function panelSolicitudes_() { return mRows_('Solicitudes').slice().reverse().slice(0, 100); }
+function panelSolicitudEstado_(d) {
+  const s = mRows_('Solicitudes').find(x => x.id === (d && d.id)); if (!s) throw new Error('Esa solicitud ya no existe');
+  mSet_('Solicitudes', s, { estado: ['nueva', 'contactada', 'aprobada', 'descartada'].indexOf(d.estado) >= 0 ? d.estado : 'nueva' });
+  return panelSolicitudes_();
 }
 // Lee solo las columnas fecha, página, origen, disp, vid y ref de las últimas filas (rápido aunque la hoja crezca)
 // Sin «tiendas» devuelve las visitas a las páginas de Molina; con «tiendas» = true, solo las de las tiendas en línea de los clientes (página «t-…»)
