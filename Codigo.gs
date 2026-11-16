@@ -22,7 +22,7 @@
 const MULTI_NEGOCIO = true;
 const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite en modo un solo negocio)
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
-const URL_APP = 'https://josevic504-bot.github.io/negocio/'; // dirección pública de la app (para enlaces en correos)
+const URL_APP = 'https://app.molinasoluciones.com/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
 const VERSION = '1.9.85';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
@@ -2457,7 +2457,7 @@ const PLANTILLAS_DEF = {
   inactivo: 'Hola {dueno}, vi que no has vuelto a entrar a Gestión de Negocio VM. ¿Te trabó algo? Te ayudo por acá.',
   vencida: 'Hola {dueno}, tu prueba de Gestión de Negocio VM ya terminó, pero tus datos de {negocio} siguen guardados. Cuando querás, activamos tu licencia y seguís donde lo dejaste.',
   activada: '¡Listo {dueno}! Tu licencia de Gestión de Negocio VM para {negocio} ya está activa. Gracias por confiar 🙌 Cualquier duda, me escribís.',
-  bienvenida: '¡Hola {dueno}! 👋 Bienvenido a *Gestión de Negocio VM* 🎉\n\nGracias por confiar en nosotros para llevar el control de *{negocio}*. Desde hoy tenés en un solo lugar tus ventas, inventario, clientes, compras, gastos, caja y reportes, desde el teléfono o la computadora.\n\n🔗 Tu enlace de acceso:\nhttps://josevic504-bot.github.io/negocio/\nEntrá con tu número de WhatsApp y tu PIN. Guardalo en favoritos o instalalo en tu teléfono.\n\nPara empezar te recomiendo:\n1️⃣ Cargá tus productos con su costo y precio.\n2️⃣ Registrá tus ventas del día.\n3️⃣ Al cerrar, revisá tu caja y tus reportes.\n\nTe dejo la imagen con todo lo que incluye. Si tenés cualquier duda, escribime por aquí o desde *Ayuda* dentro de la app; con gusto te acompaño.\n\n_Molina Soluciones Digitales_'
+  bienvenida: '¡Hola {dueno}! 👋 Bienvenido a *Gestión de Negocio VM* 🎉\n\nGracias por confiar en nosotros para llevar el control de *{negocio}*. Desde hoy tenés en un solo lugar tus ventas, inventario, clientes, compras, gastos, caja y reportes, desde el teléfono o la computadora.\n\n🔗 Tu enlace de acceso:\nhttps://app.molinasoluciones.com/\nEntrá con tu número de WhatsApp y tu PIN. Guardalo en favoritos o instalalo en tu teléfono.\n\nPara empezar te recomiendo:\n1️⃣ Cargá tus productos con su costo y precio.\n2️⃣ Registrá tus ventas del día.\n3️⃣ Al cerrar, revisá tu caja y tus reportes.\n\nTe dejo la imagen con todo lo que incluye. Si tenés cualquier duda, escribime por aquí o desde *Ayuda* dentro de la app; con gusto te acompaño.\n\n_Molina Soluciones Digitales_'
 };
 // Texto del contrato de licencia. Se edita desde Panel › Mensajes; los {campos} se rellenan al crear cada contrato.
 const CONTRATO_DEF = `Entre MOLINA SOLUCIONES DIGITALES, representada por José Vicdonio Molina Izaguirre, en adelante «el Licenciante», y {dueno}, en representación del negocio {negocio}{rtn}{direccion}, con WhatsApp {whatsapp}, en adelante «el Cliente», se celebra el presente contrato bajo las siguientes cláusulas:

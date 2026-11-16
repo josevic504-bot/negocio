@@ -1,7 +1,7 @@
 /* Contador de visitas · Molina Soluciones Digitales
  * Se usa en todas las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Uso en otra página:
  *   <script>(window.mvq = window.mvq || []).push('catalogo')</script>
- *   <script src="https://josevic504-bot.github.io/negocio/visitas.js?v=1" defer></script>
+ *   <script src="https://app.molinasoluciones.com/visitas.js?v=1" defer></script>
  * Manda al servidor de Negocio VM (Supabase) la página, de dónde vino (?src=tiktok, ?src=wa, …) y si es celular o PC.
  * No guarda nombres, teléfonos ni nada personal: solo un número al azar del navegador para contar personas distintas.
  * No cuenta: el navegador de Vic (marcado al abrir el Panel Molina) ni a quien ya usa un programa (marcado al iniciar sesión).
