@@ -1,0 +1,90 @@
+// Prueba y capturas 1.9.86: Tiendas Catrachas (interruptor en «Mi tienda en línea», dato público «dir» y páginas del directorio)
+// Uso: node catrachas.mjs <carpeta de capturas> <raíz del repo en main> <carpeta «publico» generada>
+import { createRequire } from 'node:module'; const { chromium } = createRequire(import.meta.url)('playwright');
+import fs from 'node:fs'; import path from 'node:path'; import http from 'node:http'; import { createHash } from 'node:crypto';
+import { crearServidor } from '../functions/api/servidor.js';
+import { dbFalsa } from './db-falsa.mjs';
+const OUT = process.argv[2], RAIZ = process.argv[3], PUB = process.argv[4]; fs.mkdirSync(OUT, { recursive: true });
+const SRC = fs.readFileSync(RAIZ + '/Codigo.gs', 'utf8');
+const grab = n => { const m = SRC.match(new RegExp('^const ' + n + ' = ([\\s\\S]*?);\\s*$', 'm')); return eval('(' + m[1] + ')'); };
+const db = dbFalsa(grab('SCHEMA'), grab('SCHEMA_M'), grab('NUMS'), grab('BOOLS'));
+const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b).digest(), log: () => {}, urlArchivo: r => 'http://localhost:8781/__f/' + r, rutaDeUrl: u => (u.split('/__f/')[1] || null) });
+const api = async (action, data, token, extra) => srv.atender(Object.assign({ action, token, data: data || {} }, extra || {}));
+const tipo = f => f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.css') ? 'text/css' : f.endsWith('.js') ? 'text/javascript' : f.endsWith('.png') ? 'image/png' : 'application/octet-stream';
+const sirve = (raiz, puerto) => http.createServer((q, r) => { const u = decodeURIComponent(q.url.split('?')[0]); let f = path.join(raiz, u); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': tipo(f) }); r.end(d); }); }).listen(puerto);
+const web = sirve(RAIZ, 8781), web2 = sirve(PUB, 8782);
+let fallas = 0; const v = (n, c, x) => { console.log((c ? '✔ ' : '✘ ') + n); if (!c) { fallas++; if (x !== undefined) console.log('   ', JSON.stringify(x).slice(0, 400)); } };
+
+// 1) Servidor
+const tok = (await api('registrar', { negocio: 'Flores del Valle', nombre: 'Ana Mejía', giro: 'floristeria', whatsapp: '33130265', pin: '1234' })).data.token;
+const neg = (await api('bootstrap', {}, tok)).data.negocioId;
+const cfg = r => api('guardar', { entidad: 'Config', registro: r }, tok);
+const dir = async () => { const r = await api('tiendaInfo', { negocio: neg }); return r.ok ? r.data.negocio.dir : 'ERROR ' + r.error; };
+await cfg({ tienda: 'si' });
+v('apagado de fábrica: la tienda no trae «dir»', (await dir()) === null);
+const sinCiudad = await cfg({ dirOn: 'si', dirCiudad: '' });
+v('encender sin ciudad se rechaza', !sinCiudad.ok && /ciudad/i.test(sinCiudad.error), sinCiudad);
+const ok1 = await cfg({ dirOn: 'si', dirCiudad: 'El Progreso', dirFrase: 'Arreglos listos y «Arma tu ramo» a tu gusto' });
+v('encender con ciudad se guarda', ok1.ok && ok1.data.dirOn === 'si', ok1.error);
+await api('cargarEjemplos', { giro: 'floristeria' }, tok);
+v('en la prueba gratis no aparece (Plus sin pagar)', (await dir()) === null, await dir());
+await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { estado: 'Activa', plus: 'Sí' } }] });
+v('con Plus pero solo productos de ejemplo no aparece', (await dir()) === null, await dir());
+const pr = (await api('guardar', { entidad: 'Productos', registro: { nombre: 'Ramo de 12 rosas', categoria: 'Arreglos listos', precio: 650, costo: 300, stock: 5, tipo: 'producto', activo: true, tienda: true } }, tok));
+const d1 = await dir();
+v('con Plus y un producto propio sí aparece', d1 && d1.ciudad === 'El Progreso' && /Arma tu ramo/.test(d1.frase), d1);
+await api('guardar', { entidad: 'Productos', registro: { id: pr.data.id, tienda: false } }, tok);
+v('si el producto propio no está en la tienda, no aparece', (await dir()) === null, await dir());
+await api('guardar', { entidad: 'Productos', registro: { id: pr.data.id, tienda: true } }, tok);
+await cfg({ dirOn: 'no' }); v('al apagarlo deja de aparecer', (await dir()) === null);
+await cfg({ dirOn: 'x<script>' }); v('un valor raro queda como apagado', (await api('bootstrap', {}, tok)).data.config.dirOn === 'no');
+const otras = await cfg({ tiendaHorario: 'Lunes a sábado' }); v('guardar otra sección no pide ciudad', otras.ok, otras.error);
+
+// 2) La app: sección nueva en «Mi tienda en línea»
+const br = await chromium.launch();
+const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 }); const app = await ctx.newPage();
+const errores = []; app.on('pageerror', e => { errores.push(e.message); console.log('ERROR JS:', e.message); });
+await app.route(/^https?:\/\/(?!localhost).*/, async rt => { if (rt.request().url().indexOf('/functions/v1/api') < 0) return rt.abort(); const b = JSON.parse(rt.request().postData() || '{}'); const r = await api(b.action, b.data, b.token, { panel: b.panel }); rt.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(r) }); });
+await app.addInitScript(t => { localStorage.setItem('gnvm@/|token', t); localStorage.setItem('gnvm@/|verVisto', '9.9.9'); localStorage.setItem('gnvm@/|avisosOferta', 'no'); }, tok);
+await app.goto('http://localhost:8781/'); await app.waitForTimeout(3000); await app.evaluate(() => cerrarHojas()); await app.waitForTimeout(300);
+await app.evaluate(() => ir('tienda')); await app.waitForTimeout(1200);
+v('la sección sale en «Mi tienda en línea»', await app.locator('#aj-dir').count() === 1);
+v('el interruptor sale apagado', !(await app.locator('#aj-dir [data-k="dirOn"]').isChecked()));
+const ver = async n => { await app.evaluate(() => { document.querySelector('#aj-dir').scrollIntoView({ block: 'start' }); scrollBy(0, -70); }); await app.waitForTimeout(500); await app.screenshot({ path: OUT + '/' + n + '.png' }); };
+await ver('1-app-apagado');
+await app.locator('#aj-dir .sw').click(); await app.locator('#aj-dir [data-a="guardarAj"]').click(); await app.waitForTimeout(1200);
+v('encender y guardar deja el interruptor encendido', await app.locator('#aj-dir [data-k="dirOn"]').isChecked());
+v('el servidor ya la muestra en el directorio', !!(await dir()), await dir());
+await ver('2-app-encendido');
+await app.locator('#aj-dir [data-k="dirCiudad"]').fill(''); await app.locator('#aj-dir [data-a="guardarAj"]').click(); await app.waitForTimeout(1000);
+v('borrar la ciudad con el interruptor encendido no se guarda (el servidor avisa)', (await api('bootstrap', {}, tok)).data.config.dirCiudad === 'El Progreso' && /ciudad/i.test(await app.evaluate(() => document.body.innerText)));
+await app.screenshot({ path: OUT + '/2b-app-sin-ciudad.png' });
+v('sin errores de JavaScript en la app', !errores.length, errores);
+
+// 3) Las páginas del directorio (generadas con tiendas de ejemplo)
+const err2 = [];
+const foto = async (ruta, n, w, h, completa) => { const c = await br.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: w < 500 ? 2 : 1 }); const p = await c.newPage(); p.on('pageerror', e => err2.push(ruta + ': ' + e.message));
+  await p.route(/^https?:\/\/(?!localhost).*/, rt => rt.abort()); const r = await p.goto('http://localhost:8782' + ruta); await p.waitForTimeout(600); await p.screenshot({ path: OUT + '/' + n + '.png', fullPage: !!completa }); return { p, c, st: r.status() }; };
+let x = await foto('/tiendas/', '3-directorio-celular', 390, 844, true);
+v('el directorio abre y lista 7 tiendas', x.st === 200 && await x.p.locator('.tarjeta').count() === 7);
+v('la primera es la más visitada', /Todo en Uno HN/.test(await x.p.locator('.tarjeta h3').first().textContent()));
+await x.p.locator('#buscar').fill('floristeria'); await x.p.waitForTimeout(200);
+v('buscar «floristeria» deja 2 tiendas', await x.p.locator('.tarjeta:visible').count() === 2);
+await x.p.locator('#buscar').fill('zzzz'); await x.p.waitForTimeout(200); v('sin resultados avisa', await x.p.locator('#nada').isVisible());
+await x.p.locator('#buscar').fill(''); await x.p.locator('#ciudad').selectOption('la-lima'); await x.p.waitForTimeout(200);
+v('filtrar por ciudad deja 1 tienda', await x.p.locator('.tarjeta:visible').count() === 1);
+const sinDesborde = async p => p.evaluate(() => document.documentElement.scrollWidth <= innerWidth);
+v('el directorio no se desborda en celular', await sinDesborde(x.p)); await x.c.close();
+x = await foto('/tiendas/flores-del-valle/', '4-ficha-celular', 390, 844, true);
+v('la ficha abre con 6 productos', x.st === 200 && await x.p.locator('.prod').count() === 6);
+v('«Entrar a la tienda» lleva a la tienda con su código y el origen', /\?tienda=FLOR01&src=catrachas$/.test(await x.p.locator('.acciones .btn').first().getAttribute('href')));
+v('precio «desde», agotado y precio especial salen como en la tienda', /desde/.test(await x.p.locator('.prod').nth(0).textContent() + await x.p.locator('.prod').nth(1).textContent() + await x.p.locator('.prods').textContent()) && await x.p.locator('.et.out').count() === 1 && /desde 12 piezas/.test(await x.p.locator('.prods').textContent()));
+v('la ficha no se desborda en celular', await sinDesborde(x.p)); await x.c.close();
+x = await foto('/tiendas/floristerias/el-progreso/', '5-giro-ciudad-celular', 390, 844, true);
+v('«Floristerías en El Progreso» lista 2 tiendas', /Floristerías en El Progreso/.test(await x.p.locator('h1').textContent()) && await x.p.locator('.tarjeta').count() === 2); await x.c.close();
+x = await foto('/tiendas/', '6-directorio-computadora', 1280, 900, true); v('el directorio abre en computadora', x.st === 200); await x.c.close();
+x = await foto('/tiendas/flores-del-valle/', '7-ficha-computadora', 1280, 900, true); await x.c.close();
+x = await foto('/tiendas/no-existe/', '8-404', 390, 844); v('una dirección que no existe da 404', x.st === 404); await x.c.close();
+v('sin errores de JavaScript en las páginas', !err2.length, err2);
+await br.close(); web.close(); web2.close();
+console.log(fallas ? fallas + ' FALLAS' : 'TODO BIEN'); process.exit(fallas ? 1 : 0);
