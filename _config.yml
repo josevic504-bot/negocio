@@ -1,0 +1,2 @@
+# GitHub Pages: publicar también la carpeta .well-known (assetlinks de las apps Android)
+include: [".well-known"]
