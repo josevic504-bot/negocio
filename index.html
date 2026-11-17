@@ -1050,6 +1050,7 @@ body.en-tienda{padding-bottom:110px}
 .pj-bar i.ojo{background:var(--warn)}.pj-bar i.mal{background:var(--bad)}
 .pj-sg{display:flex!important;align-items:center;gap:6px;color:var(--pri)!important}
 .pj-inv{margin-top:10px}
+.pj-gh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:12px 4px 6px;font-size:15px}.pj-gh small{color:var(--mut);font-weight:400}.pj-mas{margin:6px 0 2px}.pj-nota{margin:10px 4px 0}
 .pj-cats{display:flex;flex-direction:column;gap:9px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:10px}
 .pj-cat{display:flex;align-items:center;gap:10px;font-size:13.5px}
 .pj-cat .e{font-size:18px;width:24px;text-align:center}
@@ -1729,7 +1730,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.85';
+const APP_VER = '1.9.86';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -8013,12 +8014,23 @@ function verProyecto(d) {
     if (k === 'gasto') formGastoProy(d, d.gastos.find(g => g.id === id), pinta);
     if (k === 'prod') formProdProy(d, d.r.productos.find(x => x.id === id), pinta);
     if (k === 'nuevoProd') formProdProy(d, null, pinta);
+    if (k === 'masProd') { const x0 = d.r.productos.find(x => x.id === id); if (x0) formProdProy(d, null, pinta, ppPartes(x0.nombre)[0]); }
     if (k === 'usarSug') { const x = d.r.productos.find(y => y.id === id); api('productoProyecto', { registro: Object.assign({}, x, { precio: x.sugerido }) }).then(r => { pinta(r); toast('Precio aplicado', 'ok'); }).catch(err); }
     if (k === 'inventario') pasarAInventario(d, pinta);
     if (k === 'editar') formProyecto(d, pinta);
     if (d.cot && ['verCot', 'doc', 'entregable', 'avisarPago', 'pagosEditar', 'cobrarPago'].includes(k)) { if (k === 'avisarPago') e.stopPropagation(); accionProyCot(d, k, a, pinta).catch(err); }
   };
   pinta(d);
+}
+// Productos finales de un proyecto: «Producto · Tamaño». Un producto puede tener varios tamaños y varias tandas
+// (se sigue produciendo con los gastos del mismo proyecto; el gasto se reparte entre todo lo producido)
+const ppPartes = n => { const s = String(n || ''), i = s.indexOf(' · '); return i > 0 ? [s.slice(0, i).trim(), s.slice(i + 3).trim()] : [s.trim(), '']; };
+function gruposProdProy(prods) {
+  const G = [], porBase = {}, tandas = {};
+  prods.slice().sort((a, b) => String(a.creado || '').localeCompare(String(b.creado || ''))).forEach(x => { const k = norm(x.nombre); tandas[k] = (tandas[k] || 0) + 1; x._tanda = tandas[k]; });
+  prods.forEach(x => { const pt = ppPartes(x.nombre), k = norm(pt[0]); let g = porBase[k]; if (!g) { g = porBase[k] = { base: pt[0], filas: [] }; G.push(g); }
+    x._tam = pt[1]; x._nTandas = tandas[norm(x.nombre)]; g.filas.push(x); });
+  return G;
 }
 function htmlProyecto(d) {
   const r = d.r, s = SEM[r.semaforo] || SEM.gris, uno = r.nProductos === 1, p0 = r.productos[0];
@@ -8050,10 +8062,11 @@ function htmlProyecto(d) {
   const pend = r.productos.filter(x => !x.inventario);
   if (d.cot) return cab + htmlProyectoCot(d) + (() => { const g = d.gastos.filter(x => !x.anulado); return `<div class="sec-t"><h3>Gastos <span class="mut sm">${g.length}</span></h3><span class="sm"><b class="n">${money(r.costo)}</b></span></div><div class="list pj-gastos">${g.map(x => filaGastoProy(x)).join('') || '<div class="empty">Todavía no hay gastos del proyecto.</div>'}</div>`; })();
   const prods = `<div class="sec-t"><h3>${r.nProductos > 1 ? 'Productos finales' : 'Producto final'}</h3>${d.estado !== 'cancelado' ? '<a data-pj="nuevoProd">+ Agregar</a>' : ''}</div>
-    <div class="list">${r.productos.map(x => `<div class="li" data-pj="prod" data-id="${x.id}"><div class="av t-pri"><span class="emo">📦</span></div><div class="tx"><b>${esc(x.nombre)}</b>
-      <small>${esc(unidadTxt(x.cantidad, x.unidad))} · costo c/u ${money(x.costoUnit)}${r.nProductos > 1 && x.peso !== 1 ? ' · peso ' + cant(x.peso) : ''}</small>
+    ${gruposProdProy(r.productos).map(gr => `${r.nProductos > 1 ? `<div class="pj-gh"><b>${esc(gr.base)}</b><small>${gr.filas.length > 1 ? cant(gr.filas.reduce((a, x) => a + x.cantidad, 0)) + ' en total' : ''}</small></div>` : ''}<div class="list">${gr.filas.map(x => `<div class="li" data-pj="prod" data-id="${x.id}"><div class="av t-pri"><span class="emo">📦</span></div><div class="tx"><b>${esc(r.nProductos > 1 && x._tam ? x._tam : x.nombre)}</b>
+      <small>${esc(unidadTxt(x.cantidad, x.unidad))} · costo c/u ${money(x.costoUnit)}${r.nProductos > 1 && x.peso !== 1 ? ' · peso ' + cant(x.peso) : ''}</small>${x._nTandas > 1 ? `<small>Tanda ${x._tanda}</small>` : ''}
       ${!x.precio && x.sugerido ? `<small class="pj-sg">Sugerido ${money(x.sugerido)} <button class="lnk" data-pj="usarSug" data-id="${x.id}">Usar</button></small>` : ''}</div>
-      <div class="am">${x.precio ? `<span class="n">${money(x.precio)}</span><small class="${x.ganUnit < 0 ? 'neg' : 'pos'}">${x.ganUnit < 0 ? 'pierdes ' + money(-x.ganUnit) : 'ganas ' + money(x.ganUnit)} c/u</small>` : '<span class="badge b-warn">Sin precio</span>'}${x.inventario ? `<small><span class="badge b-ok">${ic('box', 12)} En inventario</span></small>` : ''}</div></div>`).join('') || '<div class="empty">Agrega lo que vas a producir y cuántas unidades</div>'}</div>
+      <div class="am">${x.precio ? `<span class="n">${money(x.precio)}</span><small class="${x.ganUnit < 0 ? 'neg' : 'pos'}">${x.ganUnit < 0 ? 'pierdes ' + money(-x.ganUnit) : 'ganas ' + money(x.ganUnit)} c/u</small>` : '<span class="badge b-warn">Sin precio</span>'}${x.inventario ? `<small><span class="badge b-ok">${ic('box', 12)} En inventario</span></small>` : ''}</div></div>`).join('')}</div>${d.estado !== 'cancelado' ? `<button class="btn sm pj-mas" data-pj="masProd" data-id="${gr.filas[0].id}">${ic('plus', 16)} Producir más u otro tamaño</button>` : ''}`).join('') || '<div class="list"><div class="empty">Agrega lo que vas a producir y cuántas unidades</div></div>'}
+    ${r.nProductos > 1 && r.costo > 0 ? `<p class="xs mut pj-nota">Los gastos del proyecto (${money(r.costo)}) se reparten entre todo lo producido. Si produces más, el costo por unidad se vuelve a calcular.</p>` : ''}
     ${pend.length && r.costo > 0 && d.estado !== 'cancelado' ? `<button class="btn full pj-inv" data-pj="inventario">${ic('box', 18)} Pasar al inventario para vender</button>` : ''}`;
   // Gastos
   const g = d.gastos.filter(x => !x.anulado), an = d.gastos.filter(x => x.anulado);
@@ -8171,24 +8184,37 @@ function elegirProducto(cb) {
   $('#ep-l', h.el).addEventListener('click', e => { const x = e.target.closest('[data-p]'); if (!x) return; h.cerrar(); cb(byId(S.productos, x.dataset.p)); });
 }
 
-function formProdProy(d, x, pinta) {
+function formProdProy(d, x, pinta, base) {
   const nuevo = !x, multi = d.r.nProductos > 1 || (nuevo && d.r.nProductos >= 1);
-  const h = hoja({ titulo: nuevo ? 'Producto final' : esc(x.nombre), cls: 'chica pj-form', html: `
-    <label class="fld"><span>Producto *</span><input id="pp-n" maxlength="80" value="${esc(x ? x.nombre : '')}" placeholder="Ej. Canasta navideña"></label>
+  const pt = x ? ppPartes(x.nombre) : [base || '', ''];
+  // «Producir más u otro tamaño»: los tamaños que ya tiene ese producto, para elegir uno (trae su precio, unidad y peso) o escribir uno nuevo
+  const herm = base ? d.r.productos.filter(y => norm(ppPartes(y.nombre)[0]) === norm(base)) : [];
+  const tams = []; herm.forEach(y => { const t = ppPartes(y.nombre)[1]; if (t && !tams.some(z => norm(z) === norm(t))) tams.push(t); });
+  const u0 = x ? x.unidad : herm.length ? herm[0].unidad : '';
+  const h = hoja({ titulo: nuevo ? (base ? 'Producir más · ' + esc(base) : 'Producto final') : esc(x.nombre), cls: 'chica pj-form', html: `
+    <label class="fld"><span>Producto *</span><input id="pp-n" maxlength="50" value="${esc(pt[0])}" placeholder="Ej. Canasta navideña"></label>
+    <label class="fld"><span>Tamaño o presentación</span><input id="pp-t" maxlength="26" value="${esc(pt[1])}" list="dl-pptam" placeholder="Ej. Pequeña, 8 oz, Docena (opcional)"></label><datalist id="dl-pptam">${tams.map(t => `<option value="${esc(t)}">`).join('')}</datalist>
+    ${tams.length ? `<div class="chips" id="pp-tams" style="margin:-4px 0 10px">${tams.map(t => `<button type="button" class="chip" data-t="${esc(t)}">${esc(t)}</button>`).join('')}</div>` : ''}
     <div class="f2"><label class="fld"><span>Cantidad producida *</span><input id="pp-q" inputmode="decimal" value="${x ? cant(x.cantidad) : ''}" ${x && x.inventario ? 'disabled' : ''}></label>
-    <label class="fld"><span>Unidad</span><select id="pp-u">${UNIDADES.map(u => `<option ${x && x.unidad === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
+    <label class="fld"><span>Unidad</span><select id="pp-u">${UNIDADES.map(u => `<option ${u0 === u ? 'selected' : ''}>${u}</option>`).join('')}</select></label></div>
     <label class="fld"><span>Precio de venta c/u</span><input id="pp-p" inputmode="decimal" value="${x && x.precio ? x.precio : ''}" placeholder="${x && x.sugerido ? 'Sugerido ' + fmtN(x.sugerido) : '0.00'}"></label>
     ${x && x.sugerido ? `<div class="sug"><span>Precio sugerido (${fmtN(d.r.margen, 0)}% de ganancia${d.r.tasa ? ' + ISV' : ''})</span><b class="n">${money(x.sugerido)}</b><button type="button" class="btn sm pri" id="pp-us">Usar</button></div>` : ''}
     ${multi ? `<label class="fld" style="margin-top:10px"><span>Peso en el costo</span><input id="pp-w" inputmode="decimal" value="${x ? cant(x.peso) : '1'}"></label><small class="hint" style="margin-top:-8px">Cómo se reparte el gasto entre los productos. 1 = normal; 2 = lleva el doble de material y trabajo que uno de peso 1; 0.5 = la mitad.</small>` : ''}
-    ${x && x.inventario ? `<p class="sm mut">${ic('box', 14)} Pasó al inventario el ${esc(fFechaC(x.inventario))}. La cantidad ya no se puede cambiar.</p>` : ''}`, foco: nuevo ? '#pp-n' : null });
+    ${x && x.inventario ? `<p class="sm mut">${ic('box', 14)} Pasó al inventario el ${esc(fFechaC(x.inventario))}. La cantidad ya no se puede cambiar.</p>` : ''}`, foco: nuevo ? (base ? (tams.length ? '#pp-t' : '#pp-q') : '#pp-n') : null });
   const us = $('#pp-us', h.el); if (us) us.onclick = () => { $('#pp-p', h.el).value = x.sugerido; };
+  // Al elegir un tamaño que ya existe, trae su precio, unidad y peso (solo falta la cantidad de la tanda nueva)
+  const traer = () => { const t = norm($('#pp-t', h.el).value.trim()); const y = herm.slice().reverse().find(z => norm(ppPartes(z.nombre)[1]) === t); if (!y) return;
+    if (y.precio) $('#pp-p', h.el).value = y.precio; $('#pp-u', h.el).value = y.unidad; if ($('#pp-w', h.el)) $('#pp-w', h.el).value = cant(y.peso); };
+  if (nuevo && herm.length) { $('#pp-t', h.el).addEventListener('change', traer); if (!tams.length) traer();
+    const ch = $('#pp-tams', h.el); if (ch) ch.onclick = e => { const b = e.target.closest('[data-t]'); if (!b) return; $('#pp-t', h.el).value = b.dataset.t; traer(); $('#pp-q', h.el).focus(); }; }
   const bs = [];
   if (!nuevo && !x.inventario) bs.push({ t: ic('trash', 18), cls: 'bad icon', fn: async () => {
     if (!(await confirmar(`¿Quitar «${esc(x.nombre)}» del proyecto?`, { si: 'Quitar', peligro: 1 }))) return;
     const r = await api('quitarProductoProyecto', { id: x.id }); h.cerrar(); pinta(r); toast('Producto quitado', 'ok');
   } });
   bs.push({ t: 'Guardar', cls: 'pri', fn: async () => {
-    const reg = { id: x ? x.id : undefined, proyectoId: d.id, nombre: $('#pp-n', h.el).value, cantidad: num($('#pp-q', h.el).value), unidad: $('#pp-u', h.el).value,
+    const nb = $('#pp-n', h.el).value.trim(), nt = $('#pp-t', h.el).value.trim();
+    const reg = { id: x ? x.id : undefined, proyectoId: d.id, nombre: nb && nt ? nb + ' · ' + nt : nb, cantidad: num($('#pp-q', h.el).value), unidad: $('#pp-u', h.el).value,
       precio: num($('#pp-p', h.el).value), peso: $('#pp-w', h.el) ? num($('#pp-w', h.el).value) || 1 : (x ? x.peso : 1) };
     const r = await api('productoProyecto', { registro: reg }); h.cerrar(); pinta(r); toast('Guardado', 'ok');
   } });
@@ -8237,8 +8263,8 @@ function pasarAInventario(d, pinta) {
   const pend = d.r.productos.filter(x => !x.inventario);
   const opts = S.productos.filter(p => p.activo && p.tipo === 'producto').sort((a, b) => a.nombre.localeCompare(b.nombre));
   const h = hoja({ titulo: 'Pasar al inventario', ancho: 1, html: `<p class="sm mut">Las unidades producidas suben a tus existencias para venderlas en <b>Vender</b> y en la tienda. El costo por unidad del proyecto queda como costo del producto.
-    Hazlo cuando ya registraste todos los gastos.</p>
-    ${pend.map((x, i) => { const igual = opts.find(p => norm(p.nombre) === norm(x.nombre)); return `<div class="panel pj-pi" data-i="${i}"><label class="chk"><input type="checkbox" data-sel checked> <b>${esc(x.nombre)}</b> · ${esc(unidadTxt(x.cantidad, x.unidad))} · costo c/u ${money(x.costoUnit)}</label>
+    Hazlo cuando ya registraste todos los gastos.${d.r.productos.some(x => x.inventario) ? ' Lo que produces de más se suma al mismo producto y su costo se promedia con lo que ya tienes.' : ''}</p>
+    ${pend.map((x, i) => { const ant = d.r.productos.find(y => y.inventario && y.productoId && norm(y.nombre) === norm(x.nombre)); const igual = (ant && opts.find(p => p.id === ant.productoId)) || opts.find(p => norm(p.nombre) === norm(x.nombre)); return `<div class="panel pj-pi" data-i="${i}"><label class="chk"><input type="checkbox" data-sel checked> <b>${esc(x.nombre)}</b> · ${esc(unidadTxt(x.cantidad, x.unidad))} · costo c/u ${money(x.costoUnit)}</label>
       <div class="f2" style="margin-top:8px"><label class="fld"><span>Agregar como</span><select data-dest><option value="">Producto nuevo</option>${opts.map(p => `<option value="${p.id}" ${igual && igual.id === p.id ? 'selected' : ''}>${esc(p.nombre)} (hay ${cant(p.stock)})</option>`).join('')}</select></label>
       <label class="fld"><span>Precio de venta</span><input data-precio inputmode="decimal" value="${x.precio || x.sugerido || ''}"></label></div>
       <label class="fld" data-catw><span>Categoría</span><input data-cat list="dl-cat2" value="Producción"></label>
@@ -10987,6 +11013,10 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.86', fecha: '2026-11-17', items: [
+    { i: 'box', t: 'Proyectos: tamaños y más producción', d: 'Cada producto final puede tener varios tamaños o presentaciones (Pequeña, Mediana, 8 oz…), cada uno con su cantidad, su precio y su parte del costo.' },
+    { i: 'plus', t: 'Producir más con el mismo proyecto', d: 'Con «Producir más u otro tamaño» sigues agregando tandas del mismo producto o productos nuevos, aunque lo anterior ya esté en inventario. Los gastos del proyecto se reparten entre todo lo producido y la tanda nueva se suma al mismo producto del inventario.' }
+  ] },
   { v: '1.9.85', fecha: '2026-11-14', items: [
     { i: 'cam', t: 'Fotos en los pedidos de compras en línea', d: 'Cada artículo puede llevar hasta 2 fotos: la captura que te mandó tu cliente o una foto del artículo. Se ponen al anotar el pedido o después, dentro del pedido con «Agregar fotos». En tu tienda en línea, quien pide por código también puede subir su captura.', si: () => girosOn().includes('compras') && puede('admin', 'cajero'), ir: 'pedidos' },
     { i: 'globe', t: 'Vista previa del enlace', d: 'Cuando el artículo trae un enlace de Temu, Shein, Amazon u otra tienda conocida, el pedido muestra la foto y el nombre que da la página, como en WhatsApp. Si la página no los da, queda el enlace como siempre.', si: () => girosOn().includes('compras') && puede('admin', 'cajero'), ir: 'pedidos' }
