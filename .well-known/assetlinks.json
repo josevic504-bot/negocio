@@ -1,15 +1,27 @@
-[{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.molinasoluciones.negociovm",
-    "sha256_cert_fingerprints": ["4E:E0:A2:C3:B1:63:D5:D0:98:F4:8A:47:31:80:88:1A:AF:22:22:12:88:6E:07:F0:40:1E:B7:03:9F:21:47:B9"]
+[
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.molinasoluciones.negociovm",
+      "sha256_cert_fingerprints": [
+        "4E:E0:A2:C3:B1:63:D5:D0:98:F4:8A:47:31:80:88:1A:AF:22:22:12:88:6E:07:F0:40:1E:B7:03:9F:21:47:B9"
+      ]
+    }
+  },
+  {
+    "relation": [
+      "delegate_permission/common.handle_all_urls"
+    ],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.molinasoluciones.panelmolina",
+      "sha256_cert_fingerprints": [
+        "D5:87:D5:16:A5:02:7D:13:BA:8F:E3:46:CF:27:26:0E:43:32:A8:AD:D5:EE:F8:72:54:D8:F8:C9:59:80:EF:86",
+        "7A:BB:D2:B9:D8:EA:11:2D:37:53:03:DD:5C:DE:26:FF:D0:0B:6D:DD:13:DE:8F:37:B0:2F:AE:E3:C6:04:72:3D"
+      ]
+    }
   }
-},{
-  "relation": ["delegate_permission/common.handle_all_urls"],
-  "target": {
-    "namespace": "android_app",
-    "package_name": "com.molinasoluciones.panelmolina",
-    "sha256_cert_fingerprints": ["7A:BB:D2:B9:D8:EA:11:2D:37:53:03:DD:5C:DE:26:FF:D0:0B:6D:DD:13:DE:8F:37:B0:2F:AE:E3:C6:04:72:3D"]
-  }
-}]
+]
