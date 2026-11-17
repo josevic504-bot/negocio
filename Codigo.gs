@@ -3243,7 +3243,7 @@ function guardar_(u, d) {
     if (reg.dirOn !== undefined) reg.dirOn = reg.dirOn === 'si' ? 'si' : 'no';
     if (reg.dirCiudad !== undefined) reg.dirCiudad = txt_(reg.dirCiudad, 40);
     if (reg.dirFrase !== undefined) reg.dirFrase = txt_(reg.dirFrase, 80);
-    if (reg.dirOn === 'si' && !String(reg.dirCiudad !== undefined ? reg.dirCiudad : config_().dirCiudad || '').trim()) throw new Error('Escribe tu ciudad para aparecer en Tiendas Catrachas');
+    // Sin ciudad también puede aparecer: en el sitio sale como «Honduras» hasta que la escriba
     if (reg.tiendaPagos !== undefined) reg.tiendaPagos = reg.tiendaPagos.split(',').filter(x => ['Efectivo', 'Transferencia', 'Tarjeta', 'Tigo Money'].indexOf(x) >= 0).join(',') || 'Efectivo';
     if (reg.tiendaMapa) { const t = reg.tiendaMapa.trim(); if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de Google Maps debe ser una dirección web (https://…)'); reg.tiendaMapa = /^https?:\/\//i.test(t) ? t : 'https://' + t; }
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
@@ -6449,7 +6449,7 @@ function instalarNegocio_(op) {
     const actual = sh.getRange(1, 1, 1, h.length).getValues()[0];
     if (h.some((k, i) => actual[i] !== k)) sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
   });
-  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si' } : {});
+  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si', dirOn: 'si' } : {}); // los negocios nuevos empiezan con Tiendas Catrachas encendido (aparecen al tener Plus y productos propios)
   if (rows_('Usuarios').length === 0) {
     const salt = Utilities.getUuid(), a = op.admin || { usuario: 'admin', nombre: 'Administrador', pin: 'admin123' };
     upsert_('Usuarios', { usuario: a.usuario, nombre: a.nombre, rol: 'admin', color: '#d10f6f',
