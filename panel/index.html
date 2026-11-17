@@ -22,6 +22,8 @@
    (siempre actualizada, sin copias) y la abre en modo panel. */
 (async () => {
   try {
+    // Un enlace de tienda que llegue a /panel/ se manda a la tienda (en la raíz), no al Panel
+    if (new URLSearchParams(location.search).has('tienda')) { location.replace('../' + location.search); return; }
     if (!location.search.includes('panel')) history.replaceState(null, '', location.pathname + '?panel');
     const r = await fetch('../index.html?v=' + Date.now(), { cache: 'no-store' });
     let h = await r.text();
