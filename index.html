@@ -807,6 +807,10 @@ body.en-tienda{padding-bottom:110px}
 .shop-foot .fl img{width:100%;height:100%;object-fit:cover}
 .shop-foot .fn{font:600 20px var(--serif);margin-top:6px}.shop-foot .fs{font-size:11px;color:var(--mut);letter-spacing:.1em;margin-top:2px}
 .shop-foot .fs a{color:var(--pri);text-decoration:none}
+/* Enlace al directorio Tiendas Catrachas al pie de cada tienda en línea */
+.tc-link{display:flex;align-items:center;gap:12px;margin:18px auto 0;padding:12px 14px;border:1px solid var(--line);border-radius:16px;background:var(--card,#fff);text-decoration:none;color:inherit;text-align:left;max-width:360px;grid-column:1/-1;width:100%;box-sizing:border-box}
+.tc-m{flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#7a0f3e;color:#f3d9a4;font:600 14px var(--serif)}
+.tc-t{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}.tc-t b{font-size:14.5px;font-weight:600}.tc-t small{font-size:12px;color:var(--mut)}.tc-a{font-size:22px;color:var(--pri)}
 /* Propietario */
 .owner{margin:18px 0 4px}.owner .shop-sec{margin-bottom:10px}
 .owner-c{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:22px 18px 18px;text-align:center;position:relative;overflow:hidden}
@@ -11838,7 +11842,8 @@ function pintarTienda() {
       <div class="shop-foot" id="t-contacto"><div class="fcol fbrand"><div class="fl">${logoChico}</div><div class="fn">${esc(n.nombre)}</div>${n.eslogan ? `<div class="fs">${esc(n.eslogan)}</div>` : ''}<div class="fs">Pedidos en línea · Gracias por preferirnos</div></div>
         <div class="fcol fdesk"><div class="ft">Contacto</div>${n.direccion ? `<div>${ic('map', 15)} ${esc(n.direccion)}</div>` : ''}${n.telefono ? `<div>${ic('wa', 15)} <a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}${n.horario ? `<div>${ic('clock', 15)} ${esc(n.horario)}</div>` : ''}</div>
         <div class="fcol fdesk"><div class="ft">Síguenos</div>${insta ? `<div>${ic('insta', 15)} <a href="${esc(insta)}" target="_blank" rel="noopener">Instagram</a></div>` : ''}${fb ? `<div>${ic('fb', 15)} <a href="${esc(fb)}" target="_blank" rel="noopener">Facebook</a></div>` : ''}${mapa ? `<div>${ic('pin', 15)} <a href="${esc(mapa)}" target="_blank" rel="noopener">Cómo llegar</a></div>` : ''}<div>${ic('truck', 15)} <span>${entTxt}</span></div></div>
-        ${n.telefono ? `<div class="fs fmob"><a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}</div></div>
+        ${n.telefono ? `<div class="fs fmob"><a href="${waLink(n.telefono, 'Hola, tengo una consulta')}" target="_blank" rel="noopener">${esc(n.telefono)}</a></div>` : ''}
+        <a class="tc-link" href="https://molinasoluciones.com/tiendas/?src=tienda" target="_blank" rel="noopener"><span class="tc-m">TC</span><span class="tc-t"><b>Descubre más tiendas hondureñas</b><small>Tiendas Catrachas · molinasoluciones.com</small></span><span class="tc-a">›</span></a></div></div>
     <div id="t-bar"></div>${n.chat ? `<button class="t-chat" id="t-chatbtn" aria-label="Mensajes">${ic('chat', 24)}</button>` : ''}`;
   $('#t-q').addEventListener('input', debounce(e => { T.q = e.target.value; gridTienda(); }, 150));
   const tf = $('#t-f'); if (tf) tf.addEventListener('click', e => { const b = e.target.closest('[data-f]'); if (!b) return; T.f = T.f === b.dataset.f ? '' : b.dataset.f; $$('#t-f .chip').forEach(x => x.classList.toggle('on', x.dataset.f === T.f)); gridTienda(); });
