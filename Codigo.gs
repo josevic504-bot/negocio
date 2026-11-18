@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://app.molinasoluciones.com/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.85';
+const VERSION = '1.9.87';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -405,6 +405,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'compraLlego':     return lock_(() => compraLlego_(u, d));
     case 'liberarApartado': return lock_(() => liberarApartado_(u, d));
     case 'pedidoManual':    return lock_(() => pedidoManual_(u, d));
+    case 'pedidoNegocio':   return lock_(() => pedidoNegocio_(u, d));
     case 'fotosArticulo':   return lock_(() => fotosArticulo_(u, d));
     case 'vistaEnlace':     return lock_(() => vistaEnlace_(u, d));
     case 'anuncioVisto':    return lock_(() => anuncioVisto_(u, d));
@@ -4737,6 +4738,66 @@ function pedidoManual_(u, d) {
   const metodo = ['Efectivo', 'Tarjeta', 'Transferencia'].indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
   const p = upsert_('Pedidos', { comprobante: '', pagoEstado: '', numero: siguiente_('P'), fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
     pago: metodo, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: total, estado: 'confirmado', ventaId: '', anticipo: anticipo, presupuesto: 0, cotiza: '', cita: '', hora: '', vehiculo: '', placa: '', citaId: '',
+    origen: canal, chatId: '', recibo: '', actualizado: ahora_(), nota: txt_((d.nota ? txt_(d.nota, 200) + ' · ' : '') + 'Registrado en el negocio por ' + String(u.nombre || '').split(' ')[0] + ' · pidió por ' + canal, 400) });
+  if (pagado > 0) anticipoRegistrar_(u, pagado, cli.id, 'Anticipo pedido ' + p.numero, p.id, metodo, d);
+  p.items = items; p.recibo = null; p.anticipoPagado = pagado;
+  return p;
+}
+
+/* Pedido anotado en el negocio con productos del catálogo (1.9.87): lo que el cliente pide por WhatsApp, llamada o en persona
+ * se registra desde Pedidos, sin entrar a la tienda en línea (con o sin Plus). Mismos precios y existencias que la tienda (opciones y precio por
+ * cantidad incluidos); entra ya «Confirmado» y sigue el mismo camino (Listo → Entregar y cobrar). Lo que pagó entra como anticipo. */
+function pedidoNegocio_(u, d) {
+  req_(u, ['admin', 'cajero']);
+  if (modOn_('mesas')) throw new Error('En un restaurante los pedidos se toman desde Mesas');
+  const cfg = config_();
+  let cli = d.clienteId ? rows_('Clientes').find(x => x.id === d.clienteId) : null;
+  if (d.clienteId && !cli) throw new Error('El cliente ya no existe');
+  const nombre = cli ? txt_(cli.nombre, 60) : txt_(d.nombre, 60), tel = String(cli ? cli.telefono : d.telefono || '').replace(/\D/g, '');
+  if (nombre.length < 3) throw new Error('Escribe el nombre del cliente');
+  if (tel.length < 8) throw new Error('Escribe el WhatsApp del cliente (8 números)');
+  const canal = ['WhatsApp', 'En persona', 'Llamada'].indexOf(d.canal) >= 0 ? d.canal : 'WhatsApp';
+  const entrega = d.entrega === 'domicilio' ? 'domicilio' : 'recoger', direccion = entrega === 'domicilio' ? txt_(d.direccion, 200) : '';
+  if (entrega === 'domicilio' && direccion.length < 5) throw new Error('Escribe la dirección de entrega');
+  const lista = Array.isArray(d.items) ? d.items : [];
+  if (!lista.length) throw new Error('Agrega al menos un producto');
+  if (lista.length > 40) throw new Error('Son demasiados productos para un pedido');
+  const pm = porId_(rows_('Productos')), act = girosActivos_(), fija = tiendaAsignada_(u, act);
+  const sin = cfg.tiendaSinStock === 'si' || cfg.venderSinStock === 'si';
+  const items = [], suma = {}, sumaV = {};
+  lista.forEach(i => {
+    const p = i && typeof i === 'object' ? pm[i.id] : null, cant = Math.floor(Number(i && i.cantidad) || 0);
+    if (!p || !p.activo) throw new Error('Uno de los productos ya no está disponible. Quítalo y vuelve a guardarlo.');
+    if (fija && giroDeProd_(p, act) !== fija) throw new Error('«' + p.nombre + '» es de otra tienda');
+    if (cant < 1 || cant > 999) throw new Error('Cantidad no válida en «' + p.nombre + '»');
+    suma[p.id] = (suma[p.id] || 0) + cant;
+    if (p.tipo === 'producto' && !sin && p.stock < suma[p.id]) throw new Error(p.stock > 0 ? 'Solo quedan ' + Math.floor(p.stock) + ' de «' + p.nombre + '»' : '«' + p.nombre + '» está agotado');
+    const V = varsDe_(p), vk = V ? varKey_(p, txt_(i.opcion, 160)) : '', op = vk || txt_(i.opcion, 160);
+    if (V && !vk) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
+    if (vk) { const kk = p.id + SEPV + vk; sumaV[kk] = (sumaV[kk] || 0) + cant; const hay = Math.floor(Number(V[vk] && V[vk].s) || 0);
+      if (p.tipo === 'producto' && !sin && hay < sumaV[kk]) throw new Error(hay > 0 ? 'Solo quedan ' + hay + ' de «' + p.nombre + ' (' + vk + ')»' : '«' + p.nombre + ' (' + vk + ')» está agotado'); }
+    const nom = op ? txt_(p.nombre + ' (' + op + ')', 240) : p.nombre, pu = precioVar_(p, vk);
+    const ya = items.find(x => x.productoId === p.id && x.nombre === nom);
+    if (ya) { ya.cantidad += cant; ya.total = r2_(ya.cantidad * ya.precio); }
+    else items.push({ productoId: p.id, nombre: nom, cantidad: cant, precio: pu, total: r2_(cant * pu), _propio: tienePrecioVar_(p, vk) });
+  });
+  // Precio especial por cantidad, igual que en la tienda
+  items.forEach(i => { const p = pm[i.productoId], pe = !i._propio ? precioCant_(p, suma[p.id]) : 0; if (pe && pe !== i.precio) { i.normal = i.precio; i.precio = pe; i.total = r2_(i.cantidad * pe); } delete i._propio; });
+  const subtotal = r2_(items.reduce((a, i) => a + i.total, 0));
+  const conEnvio = !(d.envio === undefined || d.envio === '' || d.envio === null);
+  if (conEnvio && (!esNum_(d.envio) || Number(d.envio) < 0)) throw new Error('El envío no es válido');
+  const envio = entrega === 'domicilio' ? r2_(conEnvio ? d.envio : Number(cfg.tiendaEnvio) || 0) : 0, total = r2_(subtotal + envio);
+  const pagado = esNum_(d.pagado) ? r2_(d.pagado) : 0;
+  if (pagado < 0 || pagado > total + 0.004) throw new Error('Lo que pagó no puede ser mayor que el total (' + money_(total, cfg) + ')');
+  if (!cli) {
+    const t8 = tel.slice(-8);
+    cli = rows_('Clientes').find(x => tel8_(x.telefono) && tel8_(x.telefono) === t8);
+    if (!cli) cli = upsert_('Clientes', { nombre: nombre, telefono: tel.length === 8 || (tel.length === 11 && tel.indexOf('504') === 0) ? t8.slice(0, 4) + '-' + t8.slice(4) : '+' + tel,
+      direccion: direccion, notas: 'Registrado al anotar un pedido en el negocio', activo: true, limite: 0, creado: ahora_() });
+  }
+  const metodo = ['Efectivo', 'Tarjeta', 'Transferencia'].indexOf(d.metodo) >= 0 ? d.metodo : 'Efectivo';
+  const p = upsert_('Pedidos', { comprobante: '', pagoEstado: '', numero: siguiente_('P'), fecha: ahora_(), nombre: nombre, telefono: tel, clienteId: cli.id, entrega: entrega, direccion: direccion,
+    pago: metodo, items: JSON.stringify(items), subtotal: subtotal, envio: envio, total: total, estado: 'confirmado', ventaId: '', anticipo: 0, presupuesto: 0, cotiza: '', cita: '', hora: '', vehiculo: '', placa: '', citaId: '',
     origen: canal, chatId: '', recibo: '', actualizado: ahora_(), nota: txt_((d.nota ? txt_(d.nota, 200) + ' · ' : '') + 'Registrado en el negocio por ' + String(u.nombre || '').split(' ')[0] + ' · pidió por ' + canal, 400) });
   if (pagado > 0) anticipoRegistrar_(u, pagado, cli.id, 'Anticipo pedido ' + p.numero, p.id, metodo, d);
   p.items = items; p.recibo = null; p.anticipoPagado = pagado;

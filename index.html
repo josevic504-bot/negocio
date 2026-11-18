@@ -278,6 +278,7 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .la-p{border-top:1px dashed var(--line);padding-top:6px;margin-top:6px}
 .np-it{border:1.5px solid var(--line);border-radius:14px;padding:6px 12px 2px;margin:8px 0}.np-ih{display:flex;align-items:center;justify-content:space-between;min-height:34px}.np-ih b{font-size:14px}
 .np-it .f3{display:grid;grid-template-columns:1fr 1fr 84px;gap:8px}.np-it .f2{gap:8px}.np-ft{margin:6px 0 8px}.lk-prev{display:flex;gap:10px;align-items:center;margin:6px 0;padding:8px;border-radius:12px;border:1px solid var(--line);background:color-mix(in srgb,var(--pri) 5%,transparent);text-decoration:none;color:var(--ink)}.lk-prev img{width:56px;height:56px;object-fit:cover;border-radius:8px;flex:none;background:#fff}.lk-prev .tx{flex:1;min-width:0;display:flex;flex-direction:column;text-align:left}.lk-prev b{font-size:13.5px;font-weight:600;line-height:1.25;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}.lk-prev small{color:var(--mut);font-size:12px;display:flex;align-items:center;gap:4px;margin-top:2px}.lk-prev .btn{flex:none}.it-fotos{display:flex;gap:8px;margin:6px 0 2px}.it-fotos .it-foto{margin:0}
+.pn-it{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line)}.pn-it .tx{flex:1;min-width:0;display:flex;flex-direction:column}.pn-it .tx b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pn-it .tx small{color:var(--mut);font-size:12px}.pn-it>b{min-width:76px;text-align:right;font-size:14px}
 .np-cli{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:14px;background:color-mix(in srgb,var(--pri) 6%,transparent)}.np-cli .tx{flex:1;display:flex;flex-direction:column;font-size:14px}.np-cli small{color:var(--mut);font-size:12px}
 .np-sug{display:flex;align-items:center;gap:8px;width:100%;text-align:left;border:0;border-top:1px dashed var(--line);background:none;padding:9px 2px;font:inherit;font-size:14px;color:inherit;cursor:pointer}.np-sug small{color:var(--mut);margin-left:auto}
 .rc-box{margin-top:12px;padding-top:4px;border-top:1px solid var(--line)}
@@ -1730,7 +1731,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.86';
+const APP_VER = '1.9.87';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -5713,9 +5714,13 @@ R.pedidos_bar = () => S.plus && S.config.tienda === 'si' ? `<button class="hbtn"
 R.pedidos = async () => {
   const m = $('#main');
   const conCompras = girosOn().includes('compras'); // compras en línea: los pedidos que llegan por WhatsApp o en persona se anotan aquí, con o sin Plus
-  if (!S.plus && !conCompras) { m.innerHTML = plusCard() + '<div class="empty">Cuando actives Plus, aquí verás los pedidos que te hagan por internet.</div>'; return; }
-  const nuevoBtn = conCompras && puede('admin', 'cajero') ? `<button class="btn pri big" style="width:100%;margin-top:12px" data-a="nuevoPedidoCompra">${ic('plus', 18)} Nuevo pedido (WhatsApp o en persona)</button>` : '';
-  const tienda = (!S.plus ? `<div class="aviso info">${ic('store', 20)}<div><b>Anota aquí los pedidos de Shein, Temu…</b><small>Con Plus también te piden solos desde tu tienda en línea.</small></div><button class="btn sm" data-a="plusInfo">Ver Plus</button></div>` : '') + nuevoBtn + (!S.plus ? '' : S.config.tienda === 'si'
+  // Pedido anotado en el negocio con productos del catálogo: para todos, con o sin Plus (en restaurante se toma desde Mesas)
+  const verCat = !modOn('mesas') && puede('admin', 'cajero') && S.tienda !== 'compras' && (S.productos || []).some(p => p.activo && enTiendaP(p));
+  if (!S.plus && !conCompras && !verCat) { m.innerHTML = plusCard() + '<div class="empty">Cuando actives Plus, aquí verás los pedidos que te hagan por internet.</div>'; return; }
+  const verComp = conCompras && puede('admin', 'cajero') && (!S.tienda || S.tienda === 'compras');
+  const nuevoBtn = (verCat ? `<button class="btn pri big" style="width:100%;margin-top:12px" data-a="nuevoPedidoNegocio">${ic('plus', 18)} Nuevo pedido</button><small class="hint" style="display:block;text-align:center;margin:6px 0 ${verComp ? 0 : 12}px">Para pedidos por WhatsApp, llamada o en persona</small>` : '')
+    + (verComp ? `<button class="btn ${verCat ? '' : 'pri'} big" style="width:100%;margin-top:12px" data-a="nuevoPedidoCompra">${ic('plus', 18)} ${verCat ? 'Nuevo pedido de compra en línea (Shein, Temu…)' : 'Nuevo pedido (WhatsApp o en persona)'}</button>` : '');
+  const tienda = (!S.plus ? `<div class="aviso info">${ic('store', 20)}<div><b>${verCat ? 'Anota aquí los pedidos que te hacen por WhatsApp, llamada o en persona' : 'Anota aquí los pedidos de Shein, Temu…'}</b><small>Con Plus también te piden solos desde tu tienda en línea.</small></div><button class="btn sm" data-a="plusInfo">Ver Plus</button></div>` : '') + nuevoBtn + (!S.plus ? '' : S.config.tienda === 'si'
     ? `<div class="link-card"><div class="li-ic">${ic('store', 22)}</div><div class="tx"><b>Tu tienda en línea está abierta</b><small>${esc(linkTienda())}</small></div><div class="row"><button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a></div></div>`
     : `<div class="aviso info">${ic('store', 20)}<div><b>Tu tienda en línea está apagada</b><small>Actívala para recibir pedidos por internet.</small></div>${puede('admin') ? `<button class="btn sm pri" data-a="ir" data-v="tienda">Activar</button>` : ''}</div>`);
   if (!S.pedidosL) m.innerHTML = tienda + '<div class="empty">Cargando pedidos…</div>';
@@ -6265,6 +6270,79 @@ function nuevoPedidoCompra() {
   } }]);
 }
 ACC.nuevoPedidoCompra = () => nuevoPedidoCompra();
+
+/* Pedido anotado en el negocio con productos del catálogo (1.9.87): sin entrar a la tienda en línea */
+function nuevoPedidoNegocio() {
+  const st = { cli: null, nombre: '', tel: '', canal: 'WhatsApp', entrega: 'recoger', dir: '', envio: num(S.config.tiendaEnvio) > 0 ? String(num(S.config.tiendaEnvio)) : '', nota: '', pagado: '', metodo: 'Efectivo', items: [] };
+  const h = hoja({ titulo: 'Nuevo pedido', html: '<div id="pn"></div>' });
+  const chips = (k, ops) => `<div class="chips" data-ch="${k}">${ops.map(v => `<button type="button" class="chip ${st[k] === v[0] ? 'on' : ''}" data-v="${v[0]}">${v[1]}</button>`).join('')}</div>`;
+  const prod = it => byId(S.productos, it.id), sumaP = id => st.items.filter(x => x.id === id).reduce((a, x) => a + x.cantidad, 0);
+  // Mismo precio que la tienda: el de la opción si tiene, o el especial por cantidad
+  const pu = it => { const p = prod(it), vk = varKey(p, it.v), V = varsDe(p), propio = !!(V && vk && V[vk] && num(V[vk].p) > 0); return !propio && num(p.precioEsp) > 0 && num(p.minEsp) > 1 && sumaP(p.id) >= num(p.minEsp) ? num(p.precioEsp) : num(precioVar(p, vk)); };
+  const sinTope = S.config.tiendaSinStock === 'si' || S.config.venderSinStock === 'si';
+  const cabe = (p, v, n) => { // n = cuántas quedarían de esa línea
+    if (p.tipo !== 'producto' || sinTope) return true;
+    const otras = st.items.filter(x => x.id === p.id && (x.v || '') !== (v || '')).reduce((a, x) => a + x.cantidad, 0), V = varsDe(p), vk = V ? varKey(p, v) : '', hay = vk && V[vk] ? num(V[vk].s) : num(p.stock);
+    if (otras + n > num(p.stock) || n > hay) { toast(Math.min(hay, num(p.stock) - otras) <= 0 ? '«' + p.nombre + (v ? ' · ' + v : '') + '» está agotado' : 'Solo hay ' + cant(Math.min(hay, num(p.stock) - otras)) + ' de «' + p.nombre + (v ? ' · ' + v : '') + '»', 'error'); return false; }
+    return true;
+  };
+  const totales = () => { const sub = r2(st.items.reduce((a, it) => a + r2(pu(it) * it.cantidad), 0)), env = st.entrega === 'domicilio' ? num(st.envio) : 0; return { sub, env, tot: r2(sub + env) }; };
+  const pintaTot = () => { const t = totales(), b = $('#pn-t', h.el); if (b) b.innerHTML = `${t.env ? `<div><span>Productos</span><b class="n">${money(t.sub)}</b></div><div><span>Envío</span><b class="n">${money(t.env)}</b></div>` : ''}<div${t.env ? ' class="g"' : ''}><span>Total</span><b class="n">${money(t.tot)}</b></div>`; };
+  const sugerir = () => {
+    const q = st.nombre.trim().toLowerCase(), box = $('#pn-s', h.el); if (!box) return;
+    const l = !st.cli && q.length >= 2 ? (S.clientes || []).filter(c => c.activo !== false && (String(c.nombre).toLowerCase().includes(q) || String(c.telefono).replace(/\D/g, '').includes(q.replace(/\D/g, '') || '¬'))).slice(0, 4) : [];
+    box.innerHTML = l.map(c => `<button type="button" class="np-sug" data-cli="${c.id}">${ic('user', 15)} ${esc(c.nombre)} <small>${esc(c.telefono || '')}</small></button>`).join('');
+  };
+  const pinta = () => {
+    $('#pn', h.el).innerHTML = `<span class="op-l">Cliente</span>
+      ${st.cli ? `<div class="np-cli">${ic('user', 18)}<div class="tx"><b>${esc(st.cli.nombre)}</b><small>${esc(st.cli.telefono || '')}</small></div><button type="button" class="btn sm ghost" data-x="cli">Cambiar</button></div>`
+        : `<div class="f2"><label class="fld"><span>Nombre (o busca uno guardado)</span><input id="pn-n" maxlength="60" value="${esc(st.nombre)}" placeholder="Carla Núñez" autocomplete="off"></label><label class="fld"><span>WhatsApp</span><input id="pn-w" inputmode="tel" maxlength="16" value="${esc(st.tel)}" placeholder="9988-7766"></label></div><div id="pn-s"></div>`}
+      <span class="op-l" style="margin-top:10px">¿Por dónde lo pidió?</span>${chips('canal', [['WhatsApp', 'WhatsApp'], ['En persona', 'En persona'], ['Llamada', 'Llamada']])}
+      <span class="op-l" style="margin-top:12px">Productos</span>
+      ${st.items.map((it, i) => { const p = prod(it), u = pu(it); return `<div class="pn-it"><div class="tx"><b>${esc(p.nombre)}</b><small>${it.v ? esc(it.v) + ' · ' : ''}${money(u)} c/u${u < num(precioVar(p, varKey(p, it.v))) ? ' · precio por cantidad' : ''}</small></div><div class="qty"><button type="button" data-q="${i}" data-d="-1" aria-label="Menos">−</button><span>${cant(it.cantidad)}</span><button type="button" data-q="${i}" data-d="1" aria-label="Más">+</button></div><b class="n">${money(r2(u * it.cantidad))}</b></div>`; }).join('')}
+      <button type="button" class="btn ${st.items.length ? 'sm' : ''}" id="pn-add" style="margin-top:8px${st.items.length ? '' : ';width:100%;justify-content:center'}">${ic(st.items.length ? 'plus' : 'search', 16)} ${st.items.length ? 'Agregar otro producto' : 'Buscar y agregar producto'}</button>
+      <span class="op-l" style="margin-top:12px">Entrega</span>${chips('entrega', [['recoger', 'Recoge en el negocio'], ['domicilio', 'A domicilio']])}
+      ${st.entrega === 'domicilio' ? `<div class="f2"><label class="fld"><span>Dirección</span><input id="pn-d" maxlength="200" value="${esc(st.dir)}" placeholder="Col. Moderna, 3 calle"></label><label class="fld"><span>Envío al cliente (L)</span><input id="pn-e" inputmode="decimal" value="${esc(st.envio)}" placeholder="0.00"></label></div>` : ''}
+      <label class="fld" style="margin-top:8px"><span>Nota del pedido (opcional)</span><input id="pn-o" maxlength="200" value="${esc(st.nota)}" placeholder="Lo quiere para el sábado"></label>
+      <div class="calc-c" id="pn-t"></div>
+      <span class="op-l" style="margin-top:12px">¿Ya te pagó algo?</span>
+      <div class="f2"><label class="fld"><span>Monto recibido (opcional)</span><input id="pn-a" inputmode="decimal" value="${esc(st.pagado)}" placeholder="0.00"></label><div class="fld"><span>¿Cómo pagó?</span><div class="pays" data-ch="metodo">${[['Efectivo', 'cash'], ['Transferencia', 'transfer'], ['Tarjeta', 'card']].map(([m, i]) => `<button type="button" class="pay ${st.metodo === m ? 'on' : ''}" data-v="${m}">${ic(i)}${m === 'Transferencia' ? 'Transf.' : m}</button>`).join('')}</div></div></div>`;
+    pintaTot(); sugerir();
+  };
+  h.el.addEventListener('click', e => {
+    const c = e.target.closest('[data-ch] [data-v]'); if (c) { st[c.parentNode.dataset.ch] = c.dataset.v; return pinta(); }
+    const s = e.target.closest('[data-cli]'); if (s) { st.cli = byId(S.clientes, s.dataset.cli); return pinta(); }
+    if (e.target.closest('[data-x="cli"]')) { st.cli = null; return pinta(); }
+    const q = e.target.closest('[data-q]'); if (q) { const it = st.items[+q.dataset.q], n = it.cantidad + Number(q.dataset.d);
+      if (n < 1) st.items.splice(+q.dataset.q, 1); else if (n > 999 || (Number(q.dataset.d) > 0 && !cabe(prod(it), it.v, n))) return; else it.cantidad = n;
+      return pinta(); }
+    if (e.target.closest('#pn-add')) elegirParaVenta(async p => {
+      let v = ''; if ((modOn('variantes') || varsDe(p)) && p.opciones) { v = await elegirVariante(p); if (v === null) return; }
+      const ya = st.items.find(x => x.id === p.id && (x.v || '') === v);
+      if (!cabe(p, v, (ya ? ya.cantidad : 0) + 1)) return;
+      if (ya) ya.cantidad++; else st.items.push({ id: p.id, v, cantidad: 1 });
+      pinta();
+    });
+  });
+  h.el.addEventListener('input', e => {
+    const t = e.target;
+    if (t.id === 'pn-n') { st.nombre = t.value; return sugerir(); }
+    if (t.id === 'pn-w') st.tel = t.value; else if (t.id === 'pn-d') st.dir = t.value; else if (t.id === 'pn-o') st.nota = t.value; else if (t.id === 'pn-e') { st.envio = t.value; pintaTot(); } else if (t.id === 'pn-a') st.pagado = t.value;
+  });
+  pinta();
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Guardar pedido`, cls: 'pri', fn: async () => {
+    if (!st.items.length) throw new Error('Agrega al menos un producto');
+    const g = await api('pedidoNegocio', { clienteId: st.cli ? st.cli.id : '', nombre: st.nombre.trim(), telefono: st.tel, canal: st.canal, entrega: st.entrega, direccion: st.dir.trim(), envio: st.envio === '' ? '' : num(st.envio), nota: st.nota.trim(),
+      items: st.items.map(x => ({ id: x.id, opcion: varKey(prod(x), x.v) || x.v || '', cantidad: x.cantidad })), pagado: num(st.pagado), metodo: st.metodo });
+    h.cerrar(); S.pedidosL = null; S.inicio = null; S.cajaD = null; S.f.pest = 'confirmado'; S.f.pestAuto = 0;
+    toast('Pedido ' + g.numero + ' guardado' + (num(g.anticipoPagado) > 0 ? ' con su pago de ' + money(g.anticipoPagado) : ''), 'ok', 3500); R.pedidos();
+    const falta = r2(num(g.total) - num(g.anticipoPagado));
+    const t = `Hola ${String(g.nombre).split(' ')[0]} 👋 Anotamos tu pedido ${g.numero} en ${S.config.nombre || 'nuestra tienda'}:\n${g.items.map(i => '• ' + cant(i.cantidad) + ' × ' + i.nombre + ' — ' + money(i.total)).join('\n')}${num(g.envio) > 0 ? '\nEnvío: ' + money(g.envio) : ''}\nTotal: ${money(g.total)}${num(g.anticipoPagado) > 0 ? `\nRecibido: ${money(g.anticipoPagado)}${falta > 0 ? `\nTe falta pagar: ${money(falta)}` : ''}` : ''}\n${g.entrega === 'domicilio' ? 'Te lo llevamos a: ' + g.direccion : 'Te avisamos cuando esté listo para que pases por él.'} — ${S.config.nombre || ''}`;
+    const a = hoja({ titulo: 'Enviarle el resumen', cls: 'chica', html: `<p class="conf">¿Le mandas el resumen a <b>${esc(g.nombre)}</b> por WhatsApp?</p><div class="msg-prev" style="white-space:pre-line">${esc(t)}</div>` });
+    a.f.innerHTML = `<a class="btn wa big" href="${waLink(g.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300));
+  } }]);
+}
+ACC.nuevoPedidoNegocio = () => nuevoPedidoNegocio();
 ACC.liberarAp = el => { const p = (S.pedidosL || []).find(x => x.id === el.dataset.id); if (p) liberarApartado(p); };
 // Corregir un pedido en línea: cambiar cantidades o quitar productos y avisarle al cliente
 const MOTIVOS_PED = [['Se agotó', ' porque se agotó'], ['Error de precio', ' por un error de nuestra parte'], ['El cliente lo pidió', ' como nos pediste']];
@@ -11013,6 +11091,9 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.87', fecha: '2026-11-18', items: [
+    { i: 'plus', t: 'Nuevo pedido sin entrar a tu tienda', d: 'En Pedidos toca «Nuevo pedido» para anotar lo que te piden por WhatsApp, llamada o en persona: eliges o creas al cliente, agregas tus productos con sus cantidades, la entrega y lo que ya te pagó. Entra como Confirmado, luego lo marcas Listo y lo entregas y cobras; al guardarlo le mandas el resumen por WhatsApp. Funciona aunque no tengas Plus.', si: () => !modOn('mesas') && puede('admin', 'cajero'), ir: 'pedidos' }
+  ] },
   { v: '1.9.86', fecha: '2026-11-17', items: [
     { i: 'box', t: 'Proyectos: tamaños y más producción', d: 'Cada producto final puede tener varios tamaños o presentaciones (Pequeña, Mediana, 8 oz…), cada uno con su cantidad, su precio y su parte del costo.' },
     { i: 'plus', t: 'Producir más con el mismo proyecto', d: 'Con «Producir más u otro tamaño» sigues agregando tandas del mismo producto o productos nuevos, aunque lo anterior ya esté en inventario. Los gastos del proyecto se reparten entre todo lo producido y la tanda nueva se suma al mismo producto del inventario.' }
@@ -11342,9 +11423,9 @@ const AYUDA = {
   mensajes: { d: 'Los mensajes que tus clientes te escriben desde tu tienda en línea (plan Plus).',
     p: ['Toca una conversación para leerla y responder.', 'Usa las <b>respuestas rápidas</b> para contestar con un toque.', 'Desde el chat puedes <b>crear un pedido</b> o avisarle al cliente por WhatsApp.'],
     t: ['El cliente ve tu respuesta cuando vuelve a abrir la tienda; si es urgente, avísale por WhatsApp.', 'Las conversaciones sin mensajes nuevos por 2 meses se borran solas.'] },
-  pedidos: { d: 'Los pedidos que tus clientes hacen en tu tienda en línea (plan Plus).',
+  pedidos: { d: 'Los pedidos que tus clientes hacen en tu tienda en línea (plan Plus) y los que anotas tú mismo.',
     p: ['Comparte el enlace o el código QR de tu tienda.', 'Cuando llega un pedido nuevo te avisamos. Tócalo para <b>Confirmar</b> y avisa al cliente por WhatsApp.', 'Márcalo <b>Listo</b> cuando lo tengas preparado.', 'Al entregarlo toca <b>Entregar y cobrar</b>: se registra la venta y se descuenta el inventario.'],
-    t: ['Para cancelar un pedido ábrelo con «Ver».', 'En Mi tienda en línea › Entregas y pagos defines el envío, el pedido mínimo y las formas de pago.'] },
+    t: ['Con <b>Nuevo pedido</b> anotas tú mismo lo que te piden por WhatsApp, llamada o en persona, sin entrar a tu tienda.', 'Para cancelar un pedido ábrelo con «Ver».', 'En Mi tienda en línea › Entregas y pagos defines el envío, el pedido mínimo y las formas de pago.'] },
   productos: { d: 'Tu catálogo y tus existencias.',
     p: ['Toca <b>+</b> para agregar un producto: nombre, precio y, si lo sabes, el costo.', 'Activa <b>Controlar existencias</b> para llevar inventario; apágalo para servicios o platos.', 'Toca un producto para editarlo, <b>Ajustar</b> existencias o ver sus <b>Movimientos</b>.'],
     t: ['Usa los filtros «Por agotarse» y «Agotados» para saber qué comprar.', 'Si no conoces el costo, deja el campo vacío: el costo promedio se calcula solo con las compras.'] },
