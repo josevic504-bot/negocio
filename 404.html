@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Abriendo la tienda…</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#fff;color:#8e0a5a;font-family:system-ui,sans-serif;font-size:15px}</style>
+</head>
+<body>
+<div>Abriendo la tienda…</div>
+<script>
+/* Enlace con nombre de la tienda: app.molinasoluciones.com/nombre-del-negocio
+   Esta página recibe cualquier dirección que no existe y, si parece el nombre de una tienda, abre esa tienda
+   (conserva lo demás del enlace: ?src=wa, ?mesa=3…). Cualquier otra cosa va a la página principal. */
+(function () {
+  var p = location.pathname.split('/').filter(Boolean), s = '';
+  try { s = decodeURIComponent(p[0] || '').toLowerCase(); } catch (e) {}
+  var q = location.search.replace(/^\?/, '');
+  if (p.length === 1 && /^[a-z0-9][a-z0-9-]{1,28}[a-z0-9]$/.test(s)) location.replace('/?tienda=' + s + (q ? '&' + q : '') + location.hash);
+  else location.replace('/');
+})();
+</script>
+</body>
+</html>

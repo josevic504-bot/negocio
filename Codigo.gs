@@ -24,7 +24,7 @@ const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite e
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://app.molinasoluciones.com/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
-const VERSION = '1.9.87';
+const VERSION = '1.9.88';
 // Revisión de las hojas: cuando cambia, cada negocio agrega solo las columnas nuevas (giro, anticipo…) la próxima vez que abre el programa
 const ESQUEMA = VERSION + '-g6';
 const DIAS_FOTO = 90;               // las fotos de productos agotados y sin movimiento por más de estos días se borran solas
@@ -35,7 +35,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo','eliminadoEl','purgado','pasos'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo','eliminadoEl','purgado','pasos','enlace'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -356,6 +356,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'inicio':          return inicio_(u, d);
     case 'tiendas':         return tiendas_(u);
     case 'tiendaVisitas':   return tiendaVisitas_(u, d);
+    case 'tiendaEnlace':    return lock_(() => tiendaEnlace_(u, d));
     case 'pendientes':      return pendientes_(u, d);
     case 'guardar':         return lock_(() => guardar_(u, d));
     case 'eliminar':        return lock_(() => eliminar_(u, d));
@@ -1128,6 +1129,8 @@ function bootstrap_(u, d) {
   };
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); if (d && d.vid && !NEG.lic.vid && u.rol === 'admin') upd.vid = String(d.vid).replace(/[^A-Za-z0-9]/g, '').slice(0, 24); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
+  if (MULTI_NEGOCIO && NEG) { try { r.enlace = enlaceAsegurar_(NEG.lic); } catch (e) { r.enlace = ''; } }
+  if (MULTI_NEGOCIO && NEG && d && d.inicio) { try { ingresoCliente_(u, d); } catch (e) {} }
   if (u.rol === 'admin' && !encargado_(u)) { try { const lz = limpiezaEstado_(r.licencia); if (lz) r.limpieza = lz; } catch (e) {} }
   if (d && d.inicio) r.inicio = inicio_(u, d);
   if (MULTI_NEGOCIO && NEG && u.rol === 'admin' && !encargado_(u)) { const cb = cobroDe_(NEG.lic); if (cb && (cb.vencidas.length || (cb.proxima && cb.proxima.f <= addDiasIso_(hoy_(), 5)))) r.cobroVM = cb; try { r.contratoVM = contratosResumen_(NEG.id); } catch (e) {} }
@@ -1219,7 +1222,7 @@ function mRows_(name) {
   return MEMO[key];
 }
 
-const M_TEXTO = ['persona','giros','pagina','origen','vid','ref','desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version','firmadoEl','huella'];
+const M_TEXTO = ['enlace','persona','giros','pagina','origen','vid','ref','desde','hasta','llegoPor','whatsapp','id','negocioId','usuarioId','hojaId','registro','ultimaConexion','ultimaVenta','version','chatId','fecha','ultimo','creado','version','firmadoEl','huella'];
 function mId_(p) { return p + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase().padStart(2, '0'); }
 // Día de prueba en que va el negocio (1 = el día que se registró)
 function diaPrueba_(l) { const ms = msDeLocal_(String(l.registro || '').replace(' ', 'T')); return ms ? Math.floor((Date.now() - ms) / 86400000) + 1 : 0; }
@@ -1265,12 +1268,57 @@ function waNorm_(w) {
 }
 
 function negocioPorId_(id) {
+  // Enlace con nombre (…/variedades-sofia): se busca el negocio que lo tiene y se sigue con su código de siempre
+  if (/^[a-z0-9-]{3,30}$/.test(String(id)) && !mRows_('Licencias').some(x => x.id === id)) { const e = mRows_('Licencias').find(x => String(x.enlace || '') === id && !esEliminada_(x)); if (e) id = e.id; }
   const c = CacheService.getScriptCache();
   try { const x = c.get('L_' + id); if (x) return JSON.parse(x); } catch (e) {}
   let l = mRows_('Licencias').find(x => x.id === id) || null;
   if (l && esEliminada_(l)) l = null; // cliente eliminado desde el Panel: ni sesión ni tienda
   if (l) { try { c.put('L_' + id, JSON.stringify(l), 120); } catch (e) {} }
   return l;
+}
+/* Enlace con nombre de la tienda (1.9.88): app.molinasoluciones.com/nombre-del-negocio. Sale del nombre del negocio la primera vez
+ * que alguien del negocio abre la app y el dueño puede cambiarlo. El enlace con código (?tienda=CÓDIGO) sigue funcionando siempre. */
+const ENLACE_RES = ['panel', 'tiendas', 'tienda', 'app', 'guia', 'iconos', 'catrachas', 'demo', 'index', 'admin', 'api', 'soporte', 'molina', 'negocio', 'ayuda', 'login', 'registro', 'www', 'visitas', 'codigo'];
+function enlaceLimpio_(t) { return norm_(t).replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30).replace(/-+$/, ''); }
+function enlaceLibre_(e, propioId) { return e.length >= 3 && ENLACE_RES.indexOf(e) < 0 && !mRows_('Licencias').some(l => l.id !== propioId && !esEliminada_(l) && (String(l.enlace || '') === e || String(l.id).toLowerCase() === e)); }
+function enlaceAsegurar_(lic) {
+  const f = mRows_('Licencias').find(x => x.id === lic.id); if (!f) return '';
+  if (f.enlace) return (lic.enlace = String(f.enlace));
+  let base = enlaceLimpio_(f.negocio); if (base.length < 3) base = 'tienda-' + String(f.id).toLowerCase().slice(-5);
+  let e = base, n = 2; while (!enlaceLibre_(e, f.id) && n < 300) e = base.slice(0, 26).replace(/-+$/, '') + '-' + (n++);
+  mSet_('Licencias', f, { enlace: e }); lic.enlace = e;
+  try { CacheService.getScriptCache().remove('L_' + f.id); } catch (z) {}
+  return e;
+}
+function tiendaEnlace_(u, d) {
+  req_(u, ['admin']);
+  if (encargado_(u)) throw new Error('Solo el dueño del negocio puede cambiar el enlace de la tienda');
+  if (!MULTI_NEGOCIO || !NEG) throw new Error('Este sistema no usa enlaces con nombre');
+  const e = enlaceLimpio_(d && d.enlace), actual = enlaceAsegurar_(NEG.lic);
+  if (e.length < 3) throw new Error('El nombre del enlace debe tener al menos 3 letras o números');
+  const libre = e === actual || enlaceLibre_(e, NEG.id);
+  if (d && d.probar) return { enlace: e, libre: libre };
+  if (!libre) throw new Error(ENLACE_RES.indexOf(e) >= 0 ? 'Ese nombre está reservado. Prueba con otro.' : 'Ese nombre ya lo usa otra tienda. Prueba con otro.');
+  if (e !== actual) { const f = mRows_('Licencias').find(x => x.id === NEG.id); mSet_('Licencias', f, { enlace: e }); NEG.lic.enlace = e; try { CacheService.getScriptCache().remove('L_' + NEG.id); } catch (z) {} }
+  return { enlace: e };
+}
+/* Entradas de los clientes a su programa (1.9.88): cada vez que alguien de un negocio abre la app queda una fila en Visitas con
+ * página «c-código», quién entró y desde qué equipo (una por usuario cada 30 minutos). Van aparte: no se suman a las visitas
+ * de las páginas de Molina ni a las de las tiendas. Solo las ve Vic en el Panel (Visitas › «Clientes que entraron»). */
+function esCli_(p) { return String(p).indexOf('c-') === 0; }
+function ingresoCliente_(u, d) {
+  const c = CacheService.getScriptCache(), k = 'IN_' + NEG.id + '_' + u.id;
+  if (c.get(k)) return;
+  c.put(k, '1', 1800);
+  mAppend_('Visitas', { id: mId_('VI'), fecha: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), pagina: 'c-' + String(NEG.id).toLowerCase(), origen: 'cliente',
+    disp: d && d.disp === 'pc' ? 'pc' : 'cel', vid: String(u.id || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24), ref: txt_(String(u.nombre || '').split(' ')[0], 20).replace(/\|/g, '') + '|' + String(u.rol || '') });
+}
+// Panel: entradas de clientes entre dos días (la más antigua primero)
+function ingresosClientes_(desde, hasta) {
+  const lic = {}; mRows_('Licencias').forEach(l => { lic['c-' + String(l.id).toLowerCase()] = l; });
+  return visitasFilas_(60000, 'cli').filter(x => { const k = x.fecha.slice(0, 10); return k >= desde && k <= hasta; }).map(x => { const l = lic[x.pagina], r = String(x.ref || '').split('|');
+    return { f: x.fecha, id: l && !esEliminada_(l) ? l.id : '', n: l ? l.negocio : 'Negocio eliminado', q: r[0] || '', rol: r[1] || '', d: x.disp === 'pc' ? 'pc' : 'cel' }; });
 }
 function esEliminada_(l) { return String(l && l.estado || '').trim().toLowerCase() === 'eliminada';
 }
@@ -2511,7 +2559,7 @@ function panelFicha_(l, segs) {
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
     usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: Math.floor(sin), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, contab: ['sí', 'si'].indexOf(String(l.contab).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
     ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: diasDesde_(l.ultimaVenta) >= 7 ? 0 : Number(l.ventas7) || 0, // ventas7 se anota cuando el negocio usa la app: si su última venta ya tiene 7 días o más, esta semana no vendió
-    version: l.version || '', etiqueta: l.etiqueta || '',
+    version: l.version || '', etiqueta: l.etiqueta || '', enlace: l.enlace || '',
     giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l), colab: esColab_(l) };
   if (o.colab) { o.plus = true; o.contab = true; }
   o.salud = saludDe_(o, l.nProductos, l.nClientes); o.respaldo = l.respaldo || '';
@@ -5896,7 +5944,7 @@ function tiendaInfo_(d) {
   // Tienda por secciones (un bloque por categoría): Beauty & Moda (catálogo), Recargas y Streaming de fábrica, o cualquier giro con el módulo encendido
   const secGiros = activos.filter(g => g === 'catalogo' || modEnGiro_('secciones', g, cfg)), secOn = secGiros.length > 0;
   const R = {
-    negocio: { nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
+    negocio: { nid: MULTI_NEGOCIO && NEG ? NEG.id : '', nombre: cfg.nombre, gid: own_(GIROS, cfg.giro) ? cfg.giro : 'otro', giro: (own_(GIROS, cfg.giro) ? GIROS[cfg.giro] : GIROS.otro).n, eslogan: cfg.eslogan, logo: cfg.logo, tema: cfg.tema, telefono: cfg.telefono, direccion: cfg.direccion,
       moneda: cfg.moneda, mensaje: cfg.tiendaMensaje, horario: cfg.tiendaHorario, entrega: cfg.tiendaEntrega, envio: Number(cfg.tiendaEnvio) || 0,
       mesas: modOn_('mesas') ? zonasMesa_(cfg).reduce((a, z) => a + z.n, 0) : 0, tiempo: modOn_('mesas') ? Math.max(0, parseInt(cfg.tiempoPrep, 10) || 0) : 0,
       // Restaurante: zonas y qué mesas están ocupadas (solo los números), para que el cliente toque la suya
@@ -7414,6 +7462,7 @@ function slug_(x, n) { return String(x || '').toLowerCase().normalize('NFD').rep
 function visita_(d) {
   if (!MULTI_NEGOCIO) return false;
   const pagina = slug_(d.p, 30); if (!pagina) return false;
+  if (esCli_(pagina)) return false; // las entradas de clientes solo las anota el servidor al iniciar sesión
   // Tienda en línea de un cliente: la página es «t-» + el código del negocio (debe existir). Lleva sus propios frenos.
   const esT = pagina.indexOf('t-') === 0, pre = esT ? 'VT' : 'VI';
   if (esT && !negocioPorId_(pagina.slice(2).toUpperCase())) return false;
@@ -7494,12 +7543,13 @@ function panelSolicitudEstado_(d) {
   return panelSolicitudes_();
 }
 // Lee solo las columnas fecha, página, origen, disp, vid y ref de las últimas filas (rápido aunque la hoja crezca)
+// Con «tiendas» = 'cli', las entradas de clientes a su programa (página «c-…»), que nunca se mezclan con lo demás.
 // Sin «tiendas» devuelve las visitas a las páginas de Molina; con «tiendas» = true, solo las de las tiendas en línea de los clientes (página «t-…»)
 function visitasFilas_(maxFilas, tiendas) {
   const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 2) return [];
   const h = SCHEMA_M.Visitas, cuantas = Math.min(n - 1, maxFilas || 60000), ini = n - cuantas + 1;
   return s.getRange(ini, 2, cuantas, 6).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]), ref: String(r[5] || '') }))
-    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha) && (tiendas === 'tc' ? esTC_(x.pagina) : !esTC_(x.pagina) && (x.pagina.indexOf('t-') === 0) === !!tiendas));
+    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha) && (tiendas === 'cli' ? esCli_(x.pagina) : !esCli_(x.pagina) && (tiendas === 'tc' ? esTC_(x.pagina) : !esTC_(x.pagina) && (x.pagina.indexOf('t-') === 0) === !!tiendas)));
 }
 // Páginas del sitio de Tiendas Catrachas (molinasoluciones.com): se miden aparte, en su propio análisis del Panel
 function esTC_(p) { return p === 'catrachas' || String(p).indexOf('tc-') === 0; }
@@ -7537,7 +7587,8 @@ function panelVisitasDia_(dia) {
   return { dia: dia, hoy: hoy, total: f.length, unicos: u, anterior: prev.length, registros: regs, conversion: u ? Math.round(regs * 1000 / u) / 10 : 0,
     cel: f.length ? Math.round(cel * 100 / f.length) : 0, barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'),
     lista: f.slice(-300).reverse().map(x => ({ h: x.fecha.slice(11, 16), p: x.pagina, o: x.origen || 'directo', d: x.disp, r: x.ref })), mas: Math.max(0, f.length - 300),
-    min: diaMenos_(VISITA_DIAS - 1) };
+    min: diaMenos_(VISITA_DIAS - 1),
+    clientes: ingresosClientes_(dia, dia).slice(-300).reverse().map(x => ({ h: x.f.slice(11, 16), id: x.id, n: x.n, q: x.q, rol: x.rol, d: x.d })) };
 }
 function panelVisitas_(d) {
   try { lock_(() => borrarVisitasViejas_()); } catch (e) {} // borra con candado (la pantalla de visitas ya no lo toma)
@@ -7568,7 +7619,8 @@ function panelVisitas_(d) {
   const cel = f.filter(x => x.disp !== 'pc').length;
   return { dias: dias, desde: desde, hasta: hasta, rango: !!rango, hoy: hoy, total: f.length, unicos: unicos(f), hoyN: f.filter(x => x.fecha.slice(0, 10) === hoy).length, anterior: prev.length,
     registros: regs, conversion: unicos(f) ? Math.round(regs * 1000 / unicos(f)) / 10 : 0, cel: f.length ? Math.round(cel * 100 / f.length) : 0,
-    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: minimo, tiendas: visitasTiendas_(desde, hasta) };
+    barras: barras, origen: contar(f, 'origen'), paginas: contar(f, 'pagina'), porHora: porHora, min: minimo, tiendas: visitasTiendas_(desde, hasta),
+    clientes: (() => { const o = {}; ingresosClientes_(desde, hasta).forEach(x => { const k = x.id || x.n, y = o[k] = o[k] || { id: x.id, n: x.n, veces: 0, ult: '' }; y.veces++; if (x.f > y.ult) y.ult = x.f; }); return Object.keys(o).map(k => o[k]).sort((a, b) => a.ult < b.ult ? 1 : -1); })() };
 }
 /* ----- Visitas a la tienda en línea de cada cliente -----
  * La tienda (…/?tienda=CÓDIGO) manda la visita con página «t-código». El negocio las ve en «Mi tienda en línea» y Vic en el Panel. */

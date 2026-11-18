@@ -1731,7 +1731,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.87';
+const APP_VER = '1.9.88';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2093,7 +2093,8 @@ ACC.pickGiro = el => {
 // (Panel Molina o Negocio VM) en lugar de la tienda: ahí se abre en la misma ventana y «atrás» regresa
 const appInstalada = () => matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches || String(document.referrer).indexOf('android-app://') === 0 || navigator.standalone === true;
 document.addEventListener('click', e => {
-  const a = e.target.closest('a[target="_blank"][href*="?tienda="]');
+  let a = e.target.closest('a[target="_blank"]');
+  if (a && String(a.getAttribute('href')).indexOf('?tienda=') < 0 && !(S.enlace && a.href === linkTienda())) a = null; // solo los enlaces a la tienda (con código o con nombre)
   if (a && appInstalada() && new URL(a.href, location.href).origin === location.origin) { e.preventDefault(); location.href = a.href; }
 }, true);
 document.addEventListener('click', e => {
@@ -2385,7 +2386,7 @@ async function arrancar() {
   if (cache && cache.usuario) { aplicarDatos(cache); S.cobroVM = null; S.contratoVM = null; mostrarApp(); } else cache = null; // el pago pendiente se toma del dato fresco
   try {
     const tReq = S.tienda || '';
-    const d = await api('bootstrap', { inicio: true, app: APP_VER, vid: DEMO.on ? '' : miOrigen().v || '' }, !!cache);
+    const d = await api('bootstrap', { inicio: true, app: APP_VER, vid: DEMO.on ? '' : miOrigen().v || '', disp: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) ? 'cel' : 'pc' }, !!cache);
     const ini = d.inicio || null; delete d.inicio;
     aplicarDatos(d); S.limpiezaFresca = true;
     // D7: el Inicio que trae el arranque solo sirve si es de la tienda en la que se quedó (pudo elegir otra mientras cargaba)
@@ -2405,6 +2406,7 @@ function aplicarDatos(d) {
   if (d.contab !== undefined) S.contab = !!d.contab;
   if (d.girosActivos) S.girosActivos = d.girosActivos;
   if (d.negocios) S.negocios = d.negocios;
+  if (d.enlace !== undefined) S.enlace = d.enlace || '';
   if (d.negocioId !== undefined) { S.negocioId = d.negocioId; if (!DEMO.on) mvMiNegocio(d.negocioId); }
   if (d.multi !== undefined) { S.multi = !!d.multi; LS.set('multi', S.multi ? '1' : '0'); }
   if (d.usuario) { S.user = d.usuario; S.cobroVM = d.cobroVM || null; S.contratoVM = d.contratoVM || null; S.anuncio = d.anuncio || null; S.limpieza = d.limpieza || null; }
@@ -2426,6 +2428,7 @@ function guardarCache() {
     if (!c) return;
     ['config', 'usuarios', 'productos', 'clientes', 'proveedores', 'gastoCats'].forEach(k => { c[k] = S[k]; });
     c.plus = S.plus; c.plusIncluido = S.plusIncluido;
+    c.enlace = S.enlace || '';
     LS.set(cacheKey(), JSON.stringify(c));
   } catch (e) {}
 }
@@ -3895,11 +3898,14 @@ ACC.panelVisitas = async (el, quiet) => {
       ${porDia ? `<p class="h" style="margin:8px 0 0;font-size:12px">${ic('info', 14)} Toca una barra para ver ese día: de dónde vinieron y cada visita.</p>` : ''}</div>
     <div class="sec-t"><h3>De dónde vienen</h3></div>${visLista(v.origen, v.total, x => visOri(x.k))}
     <div class="sec-t"><h3>Qué página vieron</h3></div>${visLista(v.paginas, v.total, x => [visPag(x.k), 'doc'])}
+    ${v.clientes ? `<div class="sec-t"><h3>Clientes que entraron</h3><a>${v.clientes.length ? v.clientes.length + ' negocio' + (v.clientes.length === 1 ? '' : 's') : esc(per)}</a></div>
+    ${v.clientes.length ? `<div class="list">${v.clientes.map(c => `<div class="li" ${c.id ? `data-a="panelVer" data-id="${esc(c.id)}"` : ''}><div class="av ${colorDe(c.n)}">${ic('user', 18)}</div><div class="tx"><b>${esc(c.n)}</b><small>Última entrada: ${esc(fFechaC(c.ult.slice(0, 10)).replace(/ \d{4}$/, ''))}, ${h12(c.ult.slice(11, 16))}</small></div><div class="am n"><b>${c.veces}</b></div></div>`).join('')}</div>` : '<div class="empty">Ningún cliente entró a su programa en estos días</div>'}
+    <p class="h" style="margin:8px 2px 0;font-size:12px">Veces que cada negocio abrió su programa (una por usuario cada 30 minutos). No se suman a tus visitas de arriba. Toca un día en la gráfica para ver cada entrada con su hora.</p>` : ''}
     ${v.tiendas ? `<div class="sec-t"><h3>Tiendas de tus clientes</h3><a>${v.tiendas.filter(t => !t.n).length ? v.tiendas.filter(t => !t.n).length + ' sin visitas' : esc(per)}</a></div>
     ${v.tiendas.length ? `<div class="list">${v.tiendas.map(t => `<div class="li" data-a="panelVer" data-id="${esc(t.id)}"><div class="av ${colorDe(t.negocio)}">${esc(iniciales(t.negocio))}</div><div class="tx"><b>${esc(t.negocio)}</b><small>${t.n ? t.u + ' persona' + (t.u === 1 ? '' : 's') + ' distinta' + (t.u === 1 ? '' : 's') : '<span style="color:var(--bad)">Nadie entró a su tienda en estos días</span>'}</small></div><div class="am n"><b>${t.n}</b></div></div>`).join('')}</div>` : '<div class="empty">Ningún cliente tiene tienda en línea todavía</div>'}
     <p class="h" style="margin:8px 2px 0;font-size:12px">Visitas a la tienda en línea de cada negocio (no se suman a tus visitas de arriba). Cada negocio ve las suyas en «Mi tienda en línea».</p>` : ''}
     <button class="btn" style="width:100%;margin-top:14px" data-a="panelEnlaces">${ic('link', 16)} Tus enlaces para compartir</button>
-    <p class="credit" style="margin-top:14px">No se cuentan tus propias visitas (este teléfono queda marcado al abrir el Panel) ni las de clientes que ya iniciaron sesión. El mismo teléfono cuenta una vez cada 30 minutos. No se guarda ningún dato personal.</p>`;
+    <p class="credit" style="margin-top:14px">No se cuentan tus propias visitas (este teléfono queda marcado al abrir el Panel). Las entradas de clientes que ya iniciaron sesión van aparte, en «Clientes que entraron». El mismo teléfono cuenta una vez cada 30 minutos. No se guarda ningún dato personal.</p>`;
   visChipsEventos(); if (quiet) window.scrollTo(0, y);
 };
 // Un solo día: de dónde vinieron, qué página vieron, a qué hora y cada visita
@@ -3924,15 +3930,20 @@ async function panelVisitasDia(dia, quiet) {
     <div class="sec-t"><h3>De dónde vienen</h3></div>${visLista(v.origen, v.total, x => visOri(x.k))}
     <div class="sec-t"><h3>Qué página vieron</h3></div>${visLista(v.paginas, v.total, x => [visPag(x.k), 'doc'])}
     <div class="sec-t"><h3>Cada visita del día</h3><a>${v.total} en total</a></div><div id="vis-cada"></div>
-    <p class="credit" style="margin-top:14px">Hora de Honduras. No se cuentan tus propias visitas ni las de clientes que ya iniciaron sesión. No se guarda ningún dato personal.</p>`;
+    <p class="credit" style="margin-top:14px">Hora de Honduras. No se cuentan tus propias visitas; las entradas de clientes que ya iniciaron sesión van aparte, en «Clientes que entraron». No se guarda ningún dato personal.</p>`;
   visCada(); visChipsEventos(); if (quiet) window.scrollTo(0, y);
 }
 // Lista de cada visita del día, con filtro por origen (TikTok, WhatsApp…)
 function visCada() {
   const v = P.vd, box = $('#vis-cada'); if (!v || !box) return;
-  if (!v.lista.length) { box.innerHTML = '<div class="empty">Este día nadie abrió tus páginas</div>'; return; }
+  const cl = v.clientes || [];
+  if (!v.lista.length && !cl.length) { box.innerHTML = '<div class="empty">Este día nadie abrió tus páginas</div>'; return; }
   const o = P.visOri, l = o ? v.lista.filter(x => x.o === o) : v.lista;
-  box.innerHTML = `${v.origen.length > 1 ? `<div class="chips" style="margin-bottom:10px"><button class="chip ${o ? '' : 'on'}" data-a="visFiltroOri" data-o="">Todas · ${v.lista.length}</button>${v.origen.map(x => `<button class="chip ${o === x.k ? 'on' : ''}" data-a="visFiltroOri" data-o="${esc(x.k)}">${ic(visOri(x.k)[1], 15)} ${esc(visOri(x.k)[0].replace(' (sin etiqueta)', ''))} · ${x.n}</button>`).join('')}</div>` : ''}
+  const chipCli = cl.length ? `<button class="chip ${o === '_cli' ? 'on' : ''}" data-a="visFiltroOri" data-o="_cli">${ic('user', 15)} Clientes que entraron · ${cl.length}</button>` : '';
+  if (o === '_cli') { box.innerHTML = `<div class="chips" style="margin-bottom:10px;flex-wrap:wrap"><button class="chip" data-a="visFiltroOri" data-o="">Todas · ${v.lista.length}</button>${chipCli}</div>
+    <div class="list">${cl.map(x => `<div class="li" ${x.id ? `data-a="panelVer" data-id="${esc(x.id)}"` : ''}><div class="av ${colorDe(x.n)}">${ic('user', 18)}</div><div class="tx"><b>${esc(x.n)}</b><small style="white-space:normal">Entró a su programa${x.q ? ' · ' + esc(x.q) : ''}${x.rol ? ' (' + esc((ROLES[x.rol] || x.rol).toLowerCase()) + ')' : ''} · ${x.d === 'pc' ? 'PC' : 'celular'}</small></div><div class="am n"><b>${h12(x.h)}</b></div></div>`).join('') || '<div class="empty">Este día no entró ningún cliente</div>'}</div>
+    <p class="h" style="margin-top:8px">Cada usuario cuenta una vez cada 30 minutos. Estas entradas no se suman a las visitas de tus páginas.</p>`; return; }
+  box.innerHTML = `${v.origen.length > 1 || chipCli ? `<div class="chips" style="margin-bottom:10px;flex-wrap:wrap"><button class="chip ${o ? '' : 'on'}" data-a="visFiltroOri" data-o="">Todas · ${v.lista.length}</button>${chipCli}${v.origen.map(x => `<button class="chip ${o === x.k ? 'on' : ''}" data-a="visFiltroOri" data-o="${esc(x.k)}">${ic(visOri(x.k)[1], 15)} ${esc(visOri(x.k)[0].replace(' (sin etiqueta)', ''))} · ${x.n}</button>`).join('')}</div>` : ''}
     <div class="list">${l.map(x => { const t = visOri(x.o); return `<div class="li"><div class="av ${colorDe(t[0])}">${ic(t[1], 18)}</div><div class="tx"><b>${esc(t[0].replace(' (sin etiqueta)', ''))}</b><small>${esc(visPag(x.p))} · ${x.d === 'pc' ? 'PC' : 'celular'}${x.r ? ' · desde ' + esc(x.r) : ''}</small></div><div class="am n"><b>${h12(x.h)}</b></div></div>`; }).join('')}</div>
     ${v.mas ? `<p class="h" style="margin-top:8px">Se muestran las últimas 300 visitas del día (${v.mas} más no aparecen).</p>` : ''}`;
 }
@@ -4370,7 +4381,7 @@ async function panelFicha(id) {
       <div class="sec-t"><h3>Etiqueta</h3></div>
       <div class="chips" style="flex-wrap:wrap">${(P.d && P.d.etiquetas || ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido']).map(e => `<button class="chip ${n.etiqueta === e ? 'on' : ''}" data-x="etiqueta" data-e="${esc(e)}">${esc(e)}</button>`).join('')}${n.etiqueta ? `<button class="chip" data-x="etiqueta" data-e="">Quitar</button>` : ''}</div>
       <div class="sec-t"><h3>Escribirle por WhatsApp</h3></div>
-      <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<button class="btn wa sm" data-x="bienv">${ic('sparkle', 14)} Bienvenida + imagen</button><a class="btn sm" href="${esc(new URL('./?tienda=' + encodeURIComponent(n.id), document.baseURI).href)}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
+      <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<button class="btn wa sm" data-x="bienv">${ic('sparkle', 14)} Bienvenida + imagen</button><a class="btn sm" href="${esc(new URL(n.enlace ? './' + n.enlace : './?tienda=' + encodeURIComponent(n.id), document.baseURI).href)}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
       <div class="sec-t"><h3>¿Cómo llegó?</h3>${(n.campanas || []).length ? '<a data-x="llego">Cambiar</a>' : ''}</div>
       ${llegoHTML(n)}
       ${panelSecCuotas(n)}${panelSecContratos(n)}
@@ -5697,7 +5708,11 @@ function elegirParaVenta(cb) {
 
 /* ===================== PEDIDOS EN LÍNEA ===================== */
 const EST_P = { cotizar: { t: 'Por cotizar', c: 'b-warn', s: -1, ramo: 1 }, cotizado: { t: 'Precio enviado', c: 'b-info', s: -1, ramo: 1 }, nuevo: { t: 'Nuevo', c: 'b-warn', s: 0 }, confirmado: { t: 'Confirmado', c: 'b-info', s: 1 }, listo: { t: 'Listo', c: 'b-ok', s: 2 }, entregado: { t: 'Entregado', c: 'b-mut', s: 3 }, cancelado: { t: 'Cancelado', c: 'b-bad', s: -1 } };
-function linkTienda() { const u = location.href.split('#')[0].split('?')[0]; return u + '?tienda=' + encodeURIComponent(S.multi ? S.negocioId : '1'); }
+// Enlace fijo con el código del negocio: nunca cambia (es el que llevan los códigos QR, para que sigan sirviendo aunque se cambie el nombre)
+function linkTiendaFijo() { const u = location.href.split('#')[0].split('?')[0]; return u + '?tienda=' + encodeURIComponent(S.multi ? S.negocioId : '1'); }
+// Enlace para compartir: con el nombre del negocio (…/variedades-sofia) cuando la app vive en la raíz del sitio; si no, el fijo
+function linkTienda() { let raiz = false; try { raiz = /^\/(index\.html)?$/.test(new URL(document.baseURI).pathname); } catch (e) {} return S.multi && S.enlace && raiz ? location.origin + '/' + S.enlace : linkTiendaFijo(); }
+const linkTiendaCon = extra => linkTienda() + (extra ? (linkTienda().includes('?') ? '&' : '?') + extra : '');
 function plusCard(corto) {
   return `<div class="plus-card"><div class="plus-h"><span class="plus-b">PLUS</span><h3>Tienda en línea con fotos</h3></div>
     <ul><li>${ic('globe', 18)} Tu catálogo en internet con un enlace y código QR</li><li>${ic('image', 18)} Fotos de tus productos en el sistema y en la tienda</li><li>${ic('inbox', 18)} Los pedidos llegan solos al sistema y los atiendes por WhatsApp</li>${corto ? '' : `<li>${ic('truck', 18)} Entrega a domicilio o para recoger, con costo de envío</li>`}</ul>
@@ -5721,7 +5736,7 @@ R.pedidos = async () => {
   const nuevoBtn = (verCat ? `<button class="btn pri big" style="width:100%;margin-top:12px" data-a="nuevoPedidoNegocio">${ic('plus', 18)} Nuevo pedido</button><small class="hint" style="display:block;text-align:center;margin:6px 0 ${verComp ? 0 : 12}px">Para pedidos por WhatsApp, llamada o en persona</small>` : '')
     + (verComp ? `<button class="btn ${verCat ? '' : 'pri'} big" style="width:100%;margin-top:12px" data-a="nuevoPedidoCompra">${ic('plus', 18)} ${verCat ? 'Nuevo pedido de compra en línea (Shein, Temu…)' : 'Nuevo pedido (WhatsApp o en persona)'}</button>` : '');
   const tienda = (!S.plus ? `<div class="aviso info">${ic('store', 20)}<div><b>${verCat ? 'Anota aquí los pedidos que te hacen por WhatsApp, llamada o en persona' : 'Anota aquí los pedidos de Shein, Temu…'}</b><small>Con Plus también te piden solos desde tu tienda en línea.</small></div><button class="btn sm" data-a="plusInfo">Ver Plus</button></div>` : '') + nuevoBtn + (!S.plus ? '' : S.config.tienda === 'si'
-    ? `<div class="link-card"><div class="li-ic">${ic('store', 22)}</div><div class="tx"><b>Tu tienda en línea está abierta</b><small>${esc(linkTienda())}</small></div><div class="row"><button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a></div></div>`
+    ? `<div class="link-card"><div class="li-ic">${ic('store', 22)}</div><div class="tx"><b>Tu tienda en línea está abierta</b><small>${esc(linkTienda())}</small></div><div class="row"><button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a>${S.multi && S.enlace && puede('admin') && !encargado() ? `<button class="btn sm" data-a="enlaceTienda">${ic('edit', 16)} Cambiar enlace</button>` : ''}</div></div>`
     : `<div class="aviso info">${ic('store', 20)}<div><b>Tu tienda en línea está apagada</b><small>Actívala para recibir pedidos por internet.</small></div>${puede('admin') ? `<button class="btn sm pri" data-a="ir" data-v="tienda">Activar</button>` : ''}</div>`);
   if (!S.pedidosL) m.innerHTML = tienda + '<div class="empty">Cargando pedidos…</div>';
   const t0 = S.tienda || ''; let lp;
@@ -6417,6 +6432,31 @@ async function tiendaVisitas(per) {
     <small class="hint" style="display:block;margin-top:10px">No se cuentan tus propias entradas desde este teléfono. El mismo teléfono cuenta una vez cada 30 minutos. La tienda no vende sola: entre más compartas tu enlace, más visitas.</small>`;
 }
 ACC.tiendaVisPer = el => tiendaVisitas(el.dataset.k).catch(() => {});
+// El dueño le cambia el nombre al enlace de su tienda (…/nombre-del-negocio)
+ACC.enlaceTienda = () => {
+  const base = linkTienda().slice(0, linkTienda().lastIndexOf('/') + 1).replace(/^https?:\/\//, ''), limpio = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 30).replace(/-+$/, '');
+  const h = hoja({ titulo: 'El enlace de tu tienda', cls: 'chica', html: `<p class="conf" style="margin-top:0">Ponle a tu tienda un enlace con el nombre de tu negocio: es más fácil de recordar y de compartir.</p>
+    <label class="fld"><span>Nombre del enlace</span><input id="en-i" maxlength="30" value="${esc(S.enlace)}" autocomplete="off" autocapitalize="none" spellcheck="false"></label>
+    <div class="msg-prev" style="margin-top:8px"><small style="opacity:.75;display:block">Tu tienda queda en</small><b id="en-p" style="word-break:break-all"></b></div>
+    <div id="en-e" style="margin-top:10px"></div>
+    <small class="hint" style="display:block;margin-top:8px">Solo letras, números y guiones. Si lo cambias, el enlace con el nombre anterior deja de abrir tu tienda; tus códigos QR siguen sirviendo.</small>`, foco: '#en-i' });
+  let t = 0, ok = true;
+  const est = (cls, i, b, s) => { $('#en-e', h.el).innerHTML = `<div class="aviso ${cls}">${ic(i, 20)}<div><b>${b}</b>${s ? `<small>${s}</small>` : ''}</div></div>`; };
+  const revisa = () => {
+    const e = limpio($('#en-i', h.el).value); $('#en-p', h.el).textContent = base + (e || '…'); clearTimeout(t);
+    if (e === S.enlace) { ok = true; return est('info', 'check', 'Es tu enlace actual'); }
+    if (e.length < 3) { ok = false; return est('bad', 'alert', 'Muy corto', 'Escribe al menos 3 letras o números.'); }
+    ok = false; $('#en-e', h.el).innerHTML = '<small class="hint">Revisando si está disponible…</small>';
+    t = setTimeout(async () => { try { const r = await api('tiendaEnlace', { enlace: e, probar: true }, true); if (limpio($('#en-i', h.el).value) !== e) return; ok = r.libre; r.libre ? est('ok', 'check', 'Disponible') : est('bad', 'alert', 'No disponible', 'Ese nombre ya lo usa otra tienda o está reservado.'); } catch (x) {} }, 500);
+  };
+  $('#en-i', h.el).addEventListener('input', revisa); revisa();
+  h.botones([{ t: 'Cancelar', fn: () => h.cerrar() }, { t: `${ic('check', 18)} Guardar enlace`, cls: 'pri', fn: async () => {
+    const e = limpio($('#en-i', h.el).value);
+    if (e.length < 3) throw new Error('Escribe al menos 3 letras o números');
+    if (e !== S.enlace) { const r = await api('tiendaEnlace', { enlace: e }); S.enlace = r.enlace; guardarCache(); toast('Listo: tu tienda ahora está en ' + base + r.enlace, 'ok', 5000); }
+    h.cerrar(); render();
+  } }]);
+};
 ACC.copiarTienda = async () => { pasoMarca('compartir'); try { await navigator.clipboard.writeText(linkTienda()); toast('Enlace copiado', 'ok'); } catch (e) { pedirTexto('Enlace de tu tienda', { valor: linkTienda() }); } };
 // Compartir la tienda: un enlace por red (…&src=wa, facebook, tiktok…) para que «Visitas a tu tienda» diga de dónde llegó cada persona
 const TD_CANALES = [['wa', 'WhatsApp', 'wa', 'Abre WhatsApp con tu enlace listo para enviar'], ['estado', 'Estado de WhatsApp', 'wa', 'Copia el enlace para pegarlo en tu estado'], ['facebook', 'Facebook', 'fb', 'Copia el enlace para tu página o publicación'], ['instagram', 'Instagram', 'insta', 'Copia el enlace para tu perfil o historia'], ['tiktok', 'TikTok', 'tv', 'Copia el enlace para tu perfil de TikTok']];
@@ -6426,7 +6466,7 @@ ACC.compartirTienda = async () => {
     <div class="list">${TD_CANALES.map(c => `<button class="li" data-c="${c[0]}" style="width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit"><div class="av ${colorDe(c[1])}">${ic(c[2], 18)}</div><div class="tx" style="flex:1"><b>${c[1]}</b><small>${c[3]}</small></div>${ic(c[0] === 'wa' ? 'right' : 'copy', 18)}</button>`).join('')}
     ${navigator.share ? `<button class="li" data-c="otra" style="width:100%;text-align:left;cursor:pointer;font:inherit;color:inherit"><div class="av t-gris">${ic('share', 18)}</div><div class="tx" style="flex:1"><b>Otra aplicación</b><small>Correo, mensajes y más</small></div>${ic('right', 18)}</button>` : ''}</div>` });
   h.b.querySelectorAll('[data-c]').forEach(b => b.onclick = async () => {
-    const c = b.dataset.c, u = linkTienda() + (c === 'otra' ? '' : '&src=' + c); pasoMarca('compartir');
+    const c = b.dataset.c, u = linkTiendaCon(c === 'otra' ? '' : 'src=' + c); pasoMarca('compartir');
     if (c === 'wa') { window.open(waLink('', txt(u)), '_blank'); return; }
     if (c === 'otra') { try { await navigator.share({ title: S.config.nombre, text: txt(u) }); } catch (e) {} return; }
     try { await navigator.clipboard.writeText(u); toast('Enlace para ' + b.querySelector('b').textContent + ' copiado', 'ok'); } catch (e) { pedirTexto('Enlace para ' + b.querySelector('b').textContent, { valor: u }); }
@@ -6435,7 +6475,7 @@ ACC.compartirTienda = async () => {
 ACC.qrTienda = async () => {
   pasoMarca('compartir');
   await cargarLib('qr');
-  const q = qrcode(0, 'M'); q.addData(linkTienda()); q.make();
+  const q = qrcode(0, 'M'); q.addData(linkTiendaFijo()); q.make();
   const h = hoja({ titulo: 'Código QR de tu tienda', cls: 'chica', html: `<div class="qr-box" id="qr-box"><div class="qr-h">${monograma()}<b>${esc(S.config.nombre)}</b><small>Haz tu pedido en línea</small></div>${q.createSvgTag({ cellSize: 6, margin: 2, scalable: true })}<small>${esc(linkTienda())}</small></div>
     <p class="sm mut" style="text-align:center">Imprímelo y ponlo en el mostrador, o compártelo en tus redes.</p>` });
   h.botones([{ t: `${ic('save', 18)} Descargar imagen`, cls: 'pri', fn: async () => { const b = await aImagen($('#qr-box', h.el)); compartirArchivo(b, 'tienda-qr.png', 'Haz tu pedido en ' + S.config.nombre); } }]);
@@ -7800,7 +7840,7 @@ R.tienda = () => {
   const abierta = c.tienda === 'si', fu = c.tiendaFuente || 'elegante';
   cargarFuentes(Object.keys(FUENTES));
   let h = `${S.plusIncluido ? `<div class="aviso info" style="margin-bottom:12px">${ic('sparkle', 20)}<div><b>Plus incluido en tu prueba gratis</b><small>Al activar tu licencia, la tienda en línea se activa por separado.</small></div></div>` : ''}<div class="td-head"><div class="st ${abierta ? '' : 'off'}"><i></i>${abierta ? 'Tu tienda está abierta' : 'Tu tienda está apagada'}</div><div class="lnk">${esc(linkTienda())}</div>
-      <div class="row">${abierta ? `<button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a><button class="btn sm" data-a="compartirTienda">${ic('share', 16)} Compartir</button>` : ''}</div></div>`;
+      <div class="row">${abierta ? `<button class="btn sm" data-a="copiarTienda">${ic('copy', 16)} Copiar</button><button class="btn sm" data-a="qrTienda">${ic('barcode', 16)} QR</button><a class="btn sm" href="${esc(linkTienda())}" target="_blank" rel="noopener">${ic('eye', 16)} Ver</a><button class="btn sm" data-a="compartirTienda">${ic('share', 16)} Compartir</button>${S.multi && S.enlace && puede('admin') && !encargado() ? `<button class="btn sm" data-a="enlaceTienda">${ic('edit', 16)} Cambiar enlace</button>` : ''}` : ''}</div></div>`;
   if (abierta && S.user && S.user.rol === 'admin') h += `<section class="panel td-vis" id="td-vis" hidden></section>`;
   if (encargado()) { m.innerHTML = h + sec('giros', 'grid', 'Tu tienda en la página', tiendasLineaHTML()) + `<p class="xs mut" style="margin:10px 4px">El resto de la tienda en línea (nombre, colores, pagos y entregas) lo maneja el dueño del negocio.</p>`; tiendaVisitas().catch(() => {}); return; }
   h += sec('estado', 'globe', 'Recibir pedidos', `<label class="sw-row"><input type="checkbox" data-k="tienda" data-on="si" data-off="no" ${abierta ? 'checked' : ''}><span class="sw"></span><div><b>Tienda abierta</b><small>Tus clientes ven tu catálogo y te hacen pedidos desde el enlace</small></div></label>
@@ -9406,7 +9446,7 @@ ACC.kcEstado = async el => { el.disabled = true; try { S.cocinaD = await api('co
 function volverTicketPrev() { if (S.ticket.cuentaId) { S.ticket = S.ticketPrev || { items: [], clienteId: '', pedidoId: '', descuento: 0 }; S.ticketPrev = null; guardarTicket(); } }
 ACC.mesasQR = async () => {
   await cargarLib('qr');
-  const l = listaMesas(zonasMesa()), qr = m => { const q = qrcode(0, 'M'); q.addData(linkTienda() + (linkTienda().includes('?') ? '&' : '?') + 'mesa=' + m); q.make(); return q.createSvgTag({ cellSize: 4, margin: 2 }); };
+  const l = listaMesas(zonasMesa()), qr = m => { const q = qrcode(0, 'M'); q.addData(linkTiendaFijo() + '&mesa=' + m); q.make(); return q.createSvgTag({ cellSize: 4, margin: 2 }); };
   imprimirContrato(`<div class="qr-mesas">${l.map(x => `<div class="qr-m"><b>${esc(S.config.nombre || '')}</b>${qr(x.m)}<div class="qr-n">Mesa ${esc(x.m)}</div><small>Escanea y haz tu pedido</small></div>`).join('')}</div>`); // hoja carta: 2 por fila, para recortar
 };
 ACC.mesasConfig = () => {
@@ -11091,6 +11131,9 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.88', fecha: '2026-11-18', items: [
+    { i: 'globe', t: 'Tu tienda con el nombre de tu negocio', d: 'El enlace de tu tienda en línea ahora lleva el nombre de tu negocio en vez de un código: es más fácil de recordar y de compartir. Con «Cambiar enlace» le pones el nombre que quieras. El enlace anterior y tus códigos QR siguen funcionando.', si: () => S.plus && S.multi && !!S.enlace && puede('admin'), ir: 'tienda' }
+  ] },
   { v: '1.9.87', fecha: '2026-11-18', items: [
     { i: 'plus', t: 'Nuevo pedido sin entrar a tu tienda', d: 'En Pedidos toca «Nuevo pedido» para anotar lo que te piden por WhatsApp, llamada o en persona: eliges o creas al cliente, agregas tus productos con sus cantidades, la entrega y lo que ya te pagó. Entra como Confirmado, luego lo marcas Listo y lo entregas y cobras; al guardarlo le mandas el resumen por WhatsApp. Funciona aunque no tengas Plus.', si: () => !modOn('mesas') && puede('admin', 'cajero'), ir: 'pedidos' }
   ] },
@@ -11591,7 +11634,7 @@ function textoVenta(v, det) {
   return l.join('\n');
 }
 function qrTiendaSVG(px) {
-  try { if (!S.plus || S.config.tienda !== 'si' || !window.qrcode) return ''; const q = qrcode(0, 'M'); q.addData(linkTienda()); q.make(); return q.createSvgTag({ cellSize: 3, margin: 0, scalable: true }).replace('<svg ', `<svg width="${px}" height="${px}" `); } catch (e) { return ''; }
+  try { if (!S.plus || S.config.tienda !== 'si' || !window.qrcode) return ''; const q = qrcode(0, 'M'); q.addData(linkTiendaFijo()); q.make(); return q.createSvgTag({ cellSize: 3, margin: 0, scalable: true }).replace('<svg ', `<svg width="${px}" height="${px}" `); } catch (e) { return ''; }
 }
 function reciboHTML(tipo, d) {
   const c = S.config;
@@ -11786,6 +11829,8 @@ async function iniciarTienda(id) {
     return;
   }
   const n = T.info.negocio;
+  // Llegó por el enlace con nombre: de aquí en adelante se trabaja con el código del negocio (carrito, pedidos y visitas van por código)
+  if (n.nid && n.nid !== T.id) { T.id = n.nid; T.cart = LS.json(tKey('carrito'), {}) || {}; T.compras = LS.json(tKey('compras'), []) || []; }
   if (!DEMO.on && /^[A-Za-z0-9]{4,24}$/.test(T.id)) (window.mvq = window.mvq || []).push('t-' + T.id.toLowerCase()); // visita a la tienda (la ve el negocio en «Mi tienda en línea»)
   S.config = Object.assign({}, S.config, { moneda: n.moneda, nombre: n.nombre });
   S.tiendaModo = n.modo || 'auto'; aplicarTema(n.tema); aplicarFuenteTienda(n.fuente);
