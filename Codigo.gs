@@ -75,7 +75,7 @@ const SCHEMA = {
   Suscripciones:  ['id','ventaId','clienteId','cliente','telefono','productoId','producto','plataforma','cuentaId','perfil','pin','inicio','vence','meses','precio','estado','nota','creado','renueva'],
   Clientes:       ['id','nombre','telefono','rtn','direccion','correo','limite','notas','activo','creado','equipo'],
   Proveedores:    ['id','nombre','telefono','contacto','rtn','direccion','notas','activo','creado'],
-  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal','cotizacionId','mesero'],
+  Ventas:         ['id','numero','fecha','clienteId','usuarioId','subtotal','descuento','isv','total','costo','metodo','recibido','cambio','saldo','pedidoId','anulada','nota','factura','fiscal','anulacion','servicio','mesa','cocina','anticipo','corrige','corregida','edicion','sucursal','cotizacionId','mesero','clienteNombre'],
   VentaDetalle:   ['id','ventaId','productoId','descripcion','cantidad','precio','costo','total','serie','garantia','giro'],
   Ordenes:        ['id','numero','clienteId','cliente','telefono','equipo','placa','falla','diagnostico','estado','promesa','anticipo','presupuesto','ventaId','nota','lavador','usuarioId','creado','actualizado'],
   Agenda:         ['id','tipo','clienteId','cliente','telefono','dia','hora','detalle','productoId','monto','anticipo','atiende','estado','ventaId','nota','usuarioId','creado','actualizado','mascotaId','mascota'],
@@ -909,7 +909,7 @@ function limpiezaVer_(u) {
   return {
     desde: D.corte ? Utilities.formatDate(new Date(D.corte), TZ, 'yyyy-MM-dd') : '',
     productos: D.ej.map(p => ({ id: p.id, n: p.nombre, i: p.icono || '', dep: D.deps(p.id) })),
-    ventas: T.Ventas.map(v => ({ id: v.id, n: v.numero, f: v.fecha, c: D.cli[v.clienteId] ? D.cli[v.clienteId].nombre : '', t: r2_(v.total), a: !!v.anulada })),
+    ventas: T.Ventas.map(v => ({ id: v.id, n: v.numero, f: v.fecha, c: D.cli[v.clienteId] ? D.cli[v.clienteId].nombre : v.clienteNombre || '', t: r2_(v.total), a: !!v.anulada })),
     compras: T.Compras.map(c => ({ id: c.id, n: c.numero, f: c.fecha, c: D.prov[c.proveedorId] ? D.prov[c.proveedorId].nombre : '', t: r2_(c.total), a: !!c.anulada })),
     gastos: T.Gastos.map(g => ({ id: g.id, n: [g.categoria, g.detalle].filter(Boolean).join(' · '), f: g.fechaGasto || g.creado, t: r2_(g.monto), a: !!g.anulado })),
     pedidos: T.Pedidos.map(p => ({ id: p.id, n: p.numero, f: p.fecha, c: p.nombre, t: r2_(p.total), e: p.estado })),
@@ -3930,6 +3930,8 @@ function venta_(u, d, interno) {
   const costo = r2_(items.reduce((a, i) => a + i.cantidad * (i.costo || 0), 0));
   let recibido = 0, cambio = 0, saldo = 0;
   const clienteId = d.clienteId && rows_('Clientes').some(c => c.id === d.clienteId) ? d.clienteId : '';
+  // Venta pagada a alguien que no está guardado como cliente: solo se anota su nombre (al crédito se exige cliente registrado, más abajo)
+  const clienteNombre = clienteId ? '' : txt_(d.clienteNombre, 60);
   // Anticipo ya pagado (orden de trabajo, cita o encargo): se descuenta de lo que falta por pagar, no del total de la venta
   const antTot = anticipoDe_(d.ordenId || d.agendaId || d.pedidoId || d.cotizacionId);
   if (antTot > total + 0.004) throw new Error('El anticipo ya pagado (' + money_(antTot, cfg) + ') es mayor que el total (' + money_(total, cfg) + '). Revisa el total: si vas a devolver la diferencia, regístrala como gasto «Devolución de anticipo».');
@@ -3972,7 +3974,7 @@ function venta_(u, d, interno) {
   const venta = {
     // Una venta corregida conserva su número interno, su fecha y quién la vendió. Si lleva factura SAR nueva (o su mes ya
     // se cerró en Contabilidad), queda con la fecha de hoy: una factura no se emite con fecha atrasada.
-    id: newId_('Ventas'), numero: ed ? ed.numero : siguiente_('V'), fecha: ed && !factura && !mesCerrado_(ed.fecha) ? ed.fecha : fecha, clienteId: clienteId, usuarioId: ed ? ed.usuarioId : u.id,
+    id: newId_('Ventas'), numero: ed ? ed.numero : siguiente_('V'), fecha: ed && !factura && !mesCerrado_(ed.fecha) ? ed.fecha : fecha, clienteId: clienteId, clienteNombre: clienteNombre, usuarioId: ed ? ed.usuarioId : u.id,
     subtotal: subtotal, descuento: descuento, isv: isv, total: total, costo: costo, metodo: metodo,
     recibido: recibido, cambio: cambio, saldo: saldo, pedidoId: d.pedidoId || '', cotizacionId: txt_(d.cotizacionId, 24), anulada: false, nota: txt_(d.nota, 200),
     factura: factura, fiscal: fiscal, servicio: ['mesa', 'llevar', 'domicilio'].indexOf(d.servicio) >= 0 && (d.servicio !== 'mesa' || d.mesa || d.cocina) ? d.servicio : '', mesa: txt_(d.mesa, 20), cocina: txt_(d.cocina, 200), anticipo: anticipo,
@@ -4089,7 +4091,7 @@ function editarVenta_(u, d) {
   const ed = { de: v.id, devuelto: devuelto, costos: costos, saldoAnt: v.saldo, pagado: pagado, cliente: v.clienteId, fecha: v.fecha, numero: v.numero, usuarioId: v.usuarioId, mesero: v.mesero || '', listo: false, tienda: v.sucursal || '' };
   // Datos fiscales de la factura anterior (si el cliente no cambió, se conservan)
   const fzA = parseJ_(v.fiscal, null), fd = d.fiscal || (fzA && d.clienteId === v.clienteId ? { rtn: fzA.rtn, nombre: fzA.nombre, exonerado: !!(fzA.oce || fzA.cre || fzA.sag), oce: fzA.oce, cre: fzA.cre, sag: fzA.sag } : undefined);
-  const nd = { items: d.items, clienteId: d.clienteId, metodo: d.metodo, descuento: d.descuento, recibido: d.recibido, nota: d.nota === undefined ? v.nota : d.nota, pedidoId: v.pedidoId,
+  const nd = { items: d.items, clienteId: d.clienteId, clienteNombre: d.clienteNombre === undefined ? v.clienteNombre : d.clienteNombre, metodo: d.metodo, descuento: d.descuento, recibido: d.recibido, nota: d.nota === undefined ? v.nota : d.nota, pedidoId: v.pedidoId,
     fiscal: fd, servicio: v.servicio, mesa: v.mesa, cocina: v.cocina };
   // 1) Validar todo (existencias, límite de crédito, abonos) sin escribir nada
   const pre = venta_(u, nd, { ed: ed, soloValidar: true });
@@ -5074,7 +5076,7 @@ function ventasDelDia_(dia, tienda) {
   v.forEach(x => { x.detalle = []; ids[x.id] = x; });
   rowsDesde_('VentaDetalle', vent).forEach(x => { if (ids[x.ventaId]) ids[x.ventaId].detalle.push({ descripcion: x.descripcion, cantidad: x.cantidad, total: x.total, productoId: x.productoId }); });
   return desc_(v, 'fecha').map(x => ({ id: x.id, numero: x.numero, factura: x.factura, fecha: x.fecha, total: x.total, metodo: x.metodo, saldo: x.saldo, anulada: x.anulada,
-    cliente: x.clienteId && cm[x.clienteId] ? cm[x.clienteId].nombre : 'Consumidor final', usuario: us[x.usuarioId] ? us[x.usuarioId].nombre : '',
+    cliente: x.clienteId && cm[x.clienteId] ? cm[x.clienteId].nombre : x.clienteNombre || 'Consumidor final', usuario: us[x.usuarioId] ? us[x.usuarioId].nombre : '',
     pedido: x.pedidoId && pm[x.pedidoId] ? pm[x.pedidoId].numero : (x.pedidoId ? 'en línea' : ''), detalle: x.detalle }));
 }
 
@@ -5138,7 +5140,7 @@ function inicio_(u, d) {
     out.spark = spark;
     const cm = porId_(rows_('Clientes'));
     out.ultimas = desc_(rowsDesde_('Ventas', vent).filter(v => !v.corregida && deT(v, 'Ventas') && (u.rol === 'admin' || v.usuarioId === u.id)), 'fecha').slice(0, 5)
-      .map(v => ({ id: v.id, numero: v.numero, fecha: v.fecha, total: v.total, metodo: v.metodo, anulada: v.anulada, cliente: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final' }));
+      .map(v => ({ id: v.id, numero: v.numero, fecha: v.fecha, total: v.total, metodo: v.metodo, anulada: v.anulada, cliente: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : v.clienteNombre || 'Consumidor final' }));
     const pmI = t ? porId_(rows_('Productos')) : null, pedT = p => !t || girosPedido_(p, pmI, act).indexOf(t) >= 0;
     const ped = rows_('Pedidos').filter(p => p.estado === 'nuevo' && pedT(p));
     out.pedidos = { nuevos: ped.length, total: r2_(ped.reduce((a, p) => a + p.total, 0)), activos: rows_('Pedidos').filter(p => ['confirmado','listo'].indexOf(p.estado) >= 0 && pedT(p)).length };
@@ -5436,7 +5438,7 @@ function diario_(u, d) {
   ventas.forEach(v => { det[v.id] = []; });
   rows_('VentaDetalle').forEach(x => { if (det[x.ventaId]) det[x.ventaId].push(x.descripcion + (x.cantidad !== 1 ? ' ×' + x.cantidad : '')); });
   const mov = ventas.map(v => ({ id: v.id, fecha: v.fecha, tipo: 'venta', numero: v.numero, concepto: (det[v.id].join(', ') || 'Venta') + (v.corregida ? ' (antes de editarla)' : v.corrige ? ' (editada)' : ''), categoria: 'Venta',
-    tercero: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final', metodo: v.metodo, usuario: us[v.usuarioId] ? us[v.usuarioId].nombre : '',
+    tercero: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : v.clienteNombre || 'Consumidor final', metodo: v.metodo, usuario: us[v.usuarioId] ? us[v.usuarioId].nombre : '',
     monto: v.total, cobrado: v.metodo === 'Crédito' ? v.recibido : r2_(v.total - (Number(v.anticipo) || 0)), anulado: v.anulada })); // el anticipo ya entró antes como cobro
   rows_('Abonos').filter(a => a.fecha.slice(0, 7) === mes).forEach(a => mov.push({ id: a.id, fecha: a.fecha, tipo: 'cobro', numero: '', concepto: 'Abono a cuenta', categoria: 'Cobro',
     tercero: cm[a.clienteId] ? cm[a.clienteId].nombre : 'Cliente', metodo: a.metodo, usuario: us[a.usuarioId] ? us[a.usuarioId].nombre : '', monto: a.monto, cobrado: a.monto, anulado: a.anulado }));
@@ -7063,7 +7065,7 @@ function asientosDerivados_(desde, hasta) {
     L.push(lin_(m.ventas, 0, neto, 'Venta ' + v.numero));
     if (v.isv > 0) L.push(lin_(m.isvPagar, 0, v.isv, 'ISV 15 %'));
     if (cfg.inventario === 'perpetuo' && v.costo > 0) { L.push(lin_(m.costoVentas, v.costo, 0, 'Costo de lo vendido')); L.push(lin_(m.inventario, 0, v.costo, 'Salida de inventario')); }
-    emite(v.id, v.fecha, 'venta', 'Venta ' + v.numero + (v.factura ? ' · Fact. ' + v.factura : ''), v.id, L, v.anulada, cm[v.clienteId] ? cm[v.clienteId].nombre : 'Consumidor final', fa);
+    emite(v.id, v.fecha, 'venta', 'Venta ' + v.numero + (v.factura ? ' · Fact. ' + v.factura : ''), v.id, L, v.anulada, cm[v.clienteId] ? cm[v.clienteId].nombre : v.clienteNombre || 'Consumidor final', fa);
   });
 
   rows_('Abonos').forEach(a => {

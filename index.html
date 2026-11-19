@@ -1806,6 +1806,8 @@ const puede = (...roles) => !!S.user && roles.includes(S.user.rol);
 const ROLES = { admin: 'Administrador', cajero: 'Cajero', bodega: 'Bodega', mesero: 'Mesero', cocina: 'Cocina' };
 const ROL_DESC = { get admin() { return S.user && repMulti() ? 'Todo el sistema. Si le asignas una tienda, es el encargado de esa tienda y solo la administra a ella.' : 'Todo el sistema: precios, reportes, usuarios y ajustes'; }, cajero: 'Vende, cobra, atiende pedidos, registra gastos y cierra caja', bodega: 'Productos, precios, compras, proveedores e inventario', mesero: 'Abre mesas, toma los pedidos y los manda a cocina; no cobra. Ve cuánto ha vendido', cocina: 'Solo ve la pantalla de Cocina: las comandas que llegan y las marca como listas' };
 const nomCliente = id => (byId(S.clientes, id) || {}).nombre || 'Consumidor final';
+// Cliente de una venta: el registrado o, en ventas pagadas, el nombre que se escribió sin guardarlo
+const nomCliVenta = v => (byId(S.clientes, v.clienteId) || {}).nombre || v.clienteNombre || 'Consumidor final';
 const nomUsuario = id => (byId(S.usuarios, id) || {}).nombre || '—';
 const fmtWA = w => { const d = String(w || '').replace(/\D/g, ''); if (d.length === 11 && d.indexOf('504') === 0) return '+504 ' + d.slice(3, 7) + '-' + d.slice(7); return d ? '+' + d : ''; };
 const waLink = (tel, txt) => { let d = String(tel || '').replace(/\D/g, ''); if (d.length === 8) d = '504' + d; return 'https://wa.me/' + d + (txt ? '?text=' + encodeURIComponent(txt) : ''); };
@@ -5347,7 +5349,7 @@ function pintarCartBar() {
   const b = $('#v-bar'); if (!b) return;
   if (!S.ticket.items.length) { b.innerHTML = ''; return; }
   const t = calcTotales(S.ticket);
-  b.innerHTML = `<button class="cartbar" data-a="abrirCobro"><span class="ci">${ic('cart', 22)}<b>${cant(t.n)}</b></span><span class="ct"><small>${t.n === 1 ? '1 artículo' : cant(t.n) + ' artículos'}${S.ticket.clienteId ? ' · ' + esc(nomCliente(S.ticket.clienteId)) : ''}</small><strong class="n">${money(t.total)}</strong></span><span class="go">Cobrar ${ic('arrow', 18)}</span></button>`;
+  b.innerHTML = `<button class="cartbar" data-a="abrirCobro"><span class="ci">${ic('cart', 22)}<b>${cant(t.n)}</b></span><span class="ct"><small>${t.n === 1 ? '1 artículo' : cant(t.n) + ' artículos'}${S.ticket.clienteId ? ' · ' + esc(nomCliente(S.ticket.clienteId)) : S.ticket.clienteNombre ? ' · ' + esc(S.ticket.clienteNombre) : ''}</small><strong class="n">${money(t.total)}</strong></span><span class="go">Cobrar ${ic('arrow', 18)}</span></button>`;
 }
 ACC.vcat = el => { S.f.vcat = el.dataset.c; $$('#v-cats .chip').forEach(c => c.classList.toggle('on', c === el)); pintarGridVenta(); };
 ACC.vadd = async el => { const p = byId(S.productos, el.dataset.id); if (!p) return; let v = ''; if ((modOn('variantes') || varsDe(p)) && p.opciones) { v = await elegirVariante(p); if (v === null) return; } if (agregarAlTicket(p, 1, v)) pintarGridVenta(); };
@@ -5435,7 +5437,7 @@ function abrirCobro() {
     const exo = sarOn() && fz.exonerado, t = exo ? calcTotales(S.ticket, true) : t0;
     const ant = (S.ticket.ordenId || S.ticket.agendaId || S.ticket.pedidoId || S.ticket.cotizacionId) ? Math.min(num(S.ticket.anticipo), t.total) : 0, porPagar = r2(t.total - ant);
     $('#cb', h.el).innerHTML = `
-      <div class="fld"><span>Cliente</span><div class="input-row"><input id="cb-cli" list="dl-cli" placeholder="Consumidor final" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : '')}" autocomplete="off"><button class="btn icon" data-a="nuevoClienteRapido" title="Nuevo cliente">${ic('userplus')}</button></div>
+      <div class="fld"><span>Cliente</span><div class="input-row"><input id="cb-cli" list="dl-cli" placeholder="Consumidor final" maxlength="60" value="${esc(cli ? cli.nombre + (cli.telefono ? ' · ' + cli.telefono : '') : S.ticket.clienteNombre || '')}" autocomplete="off"><button class="btn icon" data-a="nuevoClienteRapido" title="Nuevo cliente">${ic('userplus')}</button></div>
       <datalist id="dl-cli">${S.clientes.filter(c => c.activo).map(c => `<option value="${esc(c.nombre + (c.telefono ? ' · ' + c.telefono : ''))}">`).join('')}</datalist>
       ${cli && cli.saldo > 0 ? `<small class="hint">Saldo pendiente: <b>${money(cli.saldo)}</b>${cli.limite ? ' · límite ' + money(cli.limite) : ''}</small>` : ''}</div>
       ${sarOn() ? `<div class="sar-box"><div class="sar-h">${ic('doc', 17)}<b>Factura ${esc(S.sar && S.sar.siguiente || '')}</b>${S.sar && S.sar.estado !== 'ok' ? `<span class="badge ${(EST_SAR[S.sar.estado] || EST_SAR.incompleto)[0]}">${(EST_SAR[S.sar.estado] || EST_SAR.incompleto)[1]}</span>` : ''}</div>
@@ -5453,7 +5455,7 @@ function abrirCobro() {
       <div class="fld"><span>Forma de pago</span><div class="pays">${pagos.map(([m, i]) => `<button class="pay ${metodo === m ? 'on' : ''}" data-a="cbMet" data-m="${m}">${ic(i)}${m === 'Transferencia' ? 'Transfer.' : m}</button>`).join('')}</div></div>
       ${metodo === 'Efectivo' ? `<div class="f2"><label class="fld"><span>Recibido</span><input id="cb-rec" inputmode="decimal" placeholder="${fmtN(porPagar)}" value="${esc(S.ticket.recibido || '')}"></label><div class="fld"><span>&nbsp;</span><div class="rapidos">${billetes(porPagar).map(b => `<button class="chip" data-a="cbRec" data-v="${b}">${b === porPagar ? 'Exacto' : fmtN(b, 0)}</button>`).join('')}</div></div></div>
         <div class="cambio" id="cb-cambio"></div>` : ''}
-      ${metodo === 'Crédito' ? `${!cli ? `<div class="aviso warn sm">${ic('alert', 18)}<div>Para vender al crédito elige un cliente registrado.</div></div>` : ''}<label class="fld"><span>Abono inicial (opcional)</span><input id="cb-ant" inputmode="decimal" placeholder="0.00" value="${esc(S.ticket.anticipoCred || '')}"></label>
+      ${metodo === 'Crédito' ? `${!cli ? `<div class="aviso warn sm">${ic('alert', 18)}<div>${S.ticket.clienteNombre ? `Para vender al crédito, <b>${esc(S.ticket.clienteNombre)}</b> debe estar guardado como cliente: tócalo en la lista o guárdalo con el botón +.` : 'Para vender al crédito elige un cliente registrado.'}</div></div>` : ''}<label class="fld"><span>Abono inicial (opcional)</span><input id="cb-ant" inputmode="decimal" placeholder="0.00" value="${esc(S.ticket.anticipoCred || '')}"></label>
         <div class="cambio warn" id="cb-cred"></div>` : ''}
       <label class="fld"><span>Nota (opcional)</span><input id="cb-nota" maxlength="200" value="${esc(S.ticket.nota || '')}"></label>`;
     const rec = $('#cb-rec', h.el), antI = $('#cb-ant', h.el);
@@ -5468,7 +5470,9 @@ function abrirCobro() {
     ci.addEventListener('change', () => {
       const v = ci.value.trim();
       const c = v ? S.clientes.find(x => (x.nombre + (x.telefono ? ' · ' + x.telefono : '')) === v) || S.clientes.find(x => norm(x.nombre) === norm(v)) : null;
-      if (v && !c) { toast('Ese cliente no está registrado. Tócalo en la lista o créalo con el botón +', 'error'); ci.value = ''; }
+      // Venta pagada: se acepta un nombre escrito sin guardarlo como cliente. Al crédito el cliente debe estar registrado (se le lleva la cuenta).
+      S.ticket.clienteNombre = v && !c ? v.replace(/\s+/g, ' ').slice(0, 60) : '';
+      if (v && !c && metodo === 'Crédito') toast('Para vender al crédito guarda a ese cliente con el botón +', 'error');
       S.ticket.clienteId = c ? c.id : ''; S.ticket.fiscal = { exonerado: (S.ticket.fiscal || {}).exonerado }; guardarTicket(); pinta();
     });
     if (sarOn()) {
@@ -5491,7 +5495,7 @@ function abrirCobro() {
     const fz = S.ticket.fiscal || {}, exo = sarOn() && fz.exonerado;
     const t = calcTotales(S.ticket, exo);
     const datos = { items: S.ticket.items.map(i => ({ productoId: i.productoId, descripcion: i.descripcion, cantidad: i.cantidad, precio: i.precio, variante: i.variante || '', serie: i.serie || '', mk: i.mk || '' })),
-      clienteId: S.ticket.clienteId, metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '', ordenId: S.ticket.ordenId || '', agendaId: S.ticket.agendaId || '', consultaId: S.ticket.consultaId || '', cotizacionId: S.ticket.cotizacionId || '' };
+      clienteId: S.ticket.clienteId, clienteNombre: S.ticket.clienteId ? '' : S.ticket.clienteNombre || '', metodo, descuento: S.ticket.descuento || 0, pedidoId: S.ticket.pedidoId || '', nota: S.ticket.nota || '', ordenId: S.ticket.ordenId || '', agendaId: S.ticket.agendaId || '', consultaId: S.ticket.consultaId || '', cotizacionId: S.ticket.cotizacionId || '' };
     if (S.ticket.cuentaId) { datos.cuentaId = S.ticket.cuentaId; datos.cuentaParte = !!S.ticket.cuentaParte; }
     const deMesa = !!S.ticket.cuentaId;
     if (modOn('comanda') && (S.ticket.servicio || S.ticket.mesa || S.ticket.cocina)) { datos.servicio = S.ticket.servicio || 'mesa'; datos.mesa = S.ticket.mesa || ''; datos.cocina = S.ticket.cocina || ''; }
@@ -5566,7 +5570,7 @@ ACC.cbDesc = async () => {
   if (!puede('admin') && S.ticket.descuento > t.subtotal * 0.5 + 0.004) { S.ticket.descuento = r2(t.subtotal * 0.5); toast('El descuento máximo es del 50 %: queda en ' + money(S.ticket.descuento), 'error', 4000); }
   guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta();
 };
-ACC.nuevoClienteRapido = () => formCliente(null, c => { S.ticket.clienteId = c.id; guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta(); });
+ACC.nuevoClienteRapido = () => formCliente(null, c => { S.ticket.clienteId = c.id; S.ticket.clienteNombre = ''; guardarTicket(); S.hCobro && S.hCobro.pinta(); S.hFact && S.hFact.pinta(); }, S.ticket.clienteNombre ? { nombre: S.ticket.clienteNombre } : null);
 
 function ventaLista(v, det, accesos) {
   const cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
@@ -5588,7 +5592,7 @@ function detalleVenta(v) {
   const fz = fiscalDe(v), edi = (() => { try { return v.edicion ? JSON.parse(v.edicion) : null; } catch (e) { return null; } })();
   const h = hoja({ titulo: v.factura ? 'Factura ' + esc(v.factura) : 'Venta ' + esc(v.numero), html: `${v.anulada ? `<div class="aviso bad">${ic('x', 18)}<div><b>${v.corregida ? 'Versión anterior (se editó)' : v.factura ? 'Factura anulada' : 'Venta anulada'}</b><small>${esc(v.nota)}</small></div></div>` : ''}
     ${edi && !v.anulada ? `<div class="aviso info sm ed-av">${ic('edit', 18)}<div><b>Editada${edi.veces > 1 ? ' ' + edi.veces + ' veces' : ''} · antes ${money(edi.antes.total)}${edi.antes.metodo !== v.metodo ? ' en ' + esc(edi.antes.metodo) : ''}</b><small>${esc(fFechaC(edi.fecha))} ${fHora(edi.fecha)} · ${esc(edi.por)} · ${esc(edi.motivo)}${edi.antes.factura && edi.antes.factura !== v.factura ? ' · reemplaza la factura ' + esc(edi.antes.factura) : ''}</small>${v.anterior ? `<button class="lnk" data-a="verVentaAnt">Ver cómo era antes ${ic('arrow', 14)}</button>` : ''}</div></div>` : ''}
-    <div class="kv"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(fz ? fz.nombre : cli ? cli.nombre : 'Consumidor final')}</div>${fz ? `<div><small>RTN del cliente</small>${esc(fmtRtn(fz.rtn)) || '—'}</div><div><small>Venta interna</small>${esc(v.numero)}</div>` : ''}<div><small>Atendió</small>${esc(nomUsuario(v.usuarioId))}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
+    <div class="kv"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(fz ? fz.nombre : cli ? cli.nombre : v.clienteNombre || 'Consumidor final')}</div>${fz ? `<div><small>RTN del cliente</small>${esc(fmtRtn(fz.rtn)) || '—'}</div><div><small>Venta interna</small>${esc(v.numero)}</div>` : ''}<div><small>Atendió</small>${esc(nomUsuario(v.usuarioId))}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
     <div class="tks">${v.detalle.map(i => `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small>${cant(i.cantidad)} × ${money(i.precio)}${i.serie ? ' · serie ' + esc(i.serie) : ''}${i.garantia ? ' · garantía hasta ' + fFechaC(garantiaHasta(v.fecha, i.garantia)) : ''}</small></div><b class="n">${money(i.total)}</b></div>`).join('')}</div>
     ${bloqueCuentaVenta(v)}
     ${v.servicio ? `<p class="sm mut">${v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio'}${v.cocina ? ' · cocina: ' + esc(v.cocina) : ''}</p>` : ''}
@@ -5646,7 +5650,7 @@ function editarVenta(v) {
     if (vuelven.length) efe.push(['box', `Vuelven al inventario: ${vuelven.map(nomP).join(', ')}.`]);
     if (salen.length) efe.push(['box', `Salen del inventario: ${salen.map(nomP).join(', ')}.`]);
     efe.push(['doc', v.factura ? `La factura ${esc(v.factura)} queda <b>anulada</b> y se emite una nueva con el número que sigue${sarOn() ? ' y la <b>fecha de hoy</b>' : ''} (así lo pide el SAR).` : `Conserva su número <b>${esc(v.numero)}</b> y su fecha (${esc(fFechaC(v.fecha))}). Queda guardado cómo era antes.`]);
-    $('#ev', h.el).innerHTML = `<div class="ev-h"><span>${esc(fFechaC(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)}${v.clienteId ? ' · ' + esc(nomCliente(v.clienteId)) : ''}</span><b class="n">${money(v.total)}</b></div>
+    $('#ev', h.el).innerHTML = `<div class="ev-h"><span>${esc(fFechaC(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)}${v.clienteId || v.clienteNombre ? ' · ' + esc(nomCliVenta(v)) : ''}</span><b class="n">${money(v.total)}</b></div>
       <div class="tks">${E.items.map((i, k) => i.cantidad > 0 ? `<div class="tk"><div class="tx"><b>${esc(i.descripcion)}</b><small><a data-ep="${k}">${money(i.precio)} c/u ✎</a>${i.antes && i.cantidad !== i.antes ? ` · <span class="ev-ant">antes ${cant(i.antes)}</span>` : !i.antes ? ' · <span class="ev-nuevo">nuevo</span>' : ''}${i.precio !== i.pAntes && i.antes ? ` · <span class="ev-ant">antes ${money(i.pAntes)}</span>` : ''}</small></div>
           <div class="qty"><button data-k="${k}" data-d="-1">−</button><span data-eq="${k}">${cant(i.cantidad)}</span><button data-k="${k}" data-d="1">+</button></div><button class="btn icon sm ghost" data-x="${k}" aria-label="Quitar" style="color:var(--bad)">${ic('trash', 16)}</button></div>`
         : `<div class="tk ev-q"><div class="tx"><b>${esc(i.descripcion)}</b><small>Se quita de la venta</small></div><button class="btn sm ghost" data-u="${k}">Deshacer</button></div>`).join('')}</div>
@@ -6972,8 +6976,8 @@ function listaClientes() {
 }
 ACC.csal = el => { S.f.csal = el.dataset.k ? 1 : 0; R.clientes(); };
 ACC.nuevoCliente = () => formCliente(null, () => { if (S.vista === 'clientes') R.clientes(); });
-function formCliente(c, cb) {
-  const nuevo = !c; c = c || { activo: true };
+function formCliente(c, cb, pre) {
+  const nuevo = !c; c = c || Object.assign({ activo: true }, pre || {}); // pre: datos ya escritos (p. ej. el nombre tecleado al cobrar)
   const h = hoja({ titulo: nuevo ? 'Nuevo cliente' : 'Editar cliente', foco: nuevo ? '#cf-n' : null, html: `<label class="fld"><span>Nombre *</span><input id="cf-n" maxlength="80" value="${esc(c.nombre || '')}"></label>
     <div class="f2"><label class="fld"><span>Teléfono / WhatsApp</span><input id="cf-t" type="tel" inputmode="tel" value="${esc(c.telefono || '')}" placeholder="9876-5432"></label><label class="fld"><span>RTN</span><input id="cf-r" inputmode="numeric" value="${esc(c.rtn || '')}"></label></div>
     <label class="fld"><span>Dirección</span><input id="cf-d" maxlength="200" value="${esc(c.direccion || '')}"></label>
@@ -7464,12 +7468,12 @@ R.ventas = async () => {
   S.ventasL = d.lista || d; S.ventasR = d.resumen ? d : null; listaVentas();
 };
 function listaVentas() {
-  const q = norm(S.f.vhq || ''), l = (S.ventasL || []).filter(v => !q || norm(v.numero).includes(q) || norm(v.factura).includes(q) || norm(nomCliente(v.clienteId)).includes(q) || v.detalle.some(i => norm(i.descripcion).includes(q)));
+  const q = norm(S.f.vhq || ''), l = (S.ventasL || []).filter(v => !q || norm(v.numero).includes(q) || norm(v.factura).includes(q) || norm(nomCliVenta(v)).includes(q) || v.detalle.some(i => norm(i.descripcion).includes(q)));
   const act = l.filter(v => !v.anulada), rec = !q && S.ventasR && S.ventasR.recortada;
   const tot = rec ? S.ventasR.resumen.total : act.reduce((a, v) => a + v.total, 0), n = rec ? S.ventasR.resumen.n : act.length;
   const pm = {}; if (!rec) act.forEach(v => { pm[v.metodo] = (pm[v.metodo] || 0) + v.total; });
   $('#vh-b').innerHTML = `${rec ? `<p class="xs mut" style="margin:0 2px 10px">Se muestran las ${l.length} ventas más recientes; los totales son de todo el período.</p>` : ''}<div class="kpis"><div class="kpi"><small>Vendido</small><b class="n">${money(tot)}</b><i>${n} ventas</i></div><div class="kpi" style="--k:#00b56e"><small>Ticket promedio</small><b class="n">${money(n ? tot / n : 0)}</b></div>${Object.keys(pm).map(m => `<div class="kpi" style="--k:${{ Efectivo: '#00b56e', Tarjeta: '#1b4fd8', Transferencia: '#00a8b5', 'Crédito': '#f25c05' }[m] || 'var(--pri)'}"><small>${esc(m)}</small><b class="n">${money(pm[m])}</b></div>`).join('')}</div>
-    <div class="list">${l.map(v => `<div class="li ${v.anulada ? 'anul' : ''}" data-a="verVentaL" data-id="${v.id}"><div class="av ${colorDe(nomCliente(v.clienteId))}">${esc(iniciales(nomCliente(v.clienteId)))}</div><div class="tx"><b>${esc(v.factura ? 'Fact. ' + v.factura.slice(-8) : v.numero)} · ${esc(nomCliente(v.clienteId))}</b><small>${esc(fFecha(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)} · ${v.detalle.length === 1 ? esc(v.detalle[0].descripcion) : v.detalle.length + ' artículos'}${v.corrige ? ' · <span class="ed-tag">editada</span>' : ''}${v.anulada ? ' · anulada' : ''}</small></div><div class="am n">${money(v.total)}${v.saldo > 0 ? `<small class="neg">debe ${money(v.saldo)}</small>` : ''}</div></div>`).join('') || '<div class="empty">No hay ventas en este periodo</div>'}</div>`;
+    <div class="list">${l.map(v => `<div class="li ${v.anulada ? 'anul' : ''}" data-a="verVentaL" data-id="${v.id}"><div class="av ${colorDe(nomCliVenta(v))}">${esc(iniciales(nomCliVenta(v)))}</div><div class="tx"><b>${esc(v.factura ? 'Fact. ' + v.factura.slice(-8) : v.numero)} · ${esc(nomCliVenta(v))}</b><small>${esc(fFecha(v.fecha))} ${fHora(v.fecha)} · ${esc(v.metodo)} · ${v.detalle.length === 1 ? esc(v.detalle[0].descripcion) : v.detalle.length + ' artículos'}${v.corrige ? ' · <span class="ed-tag">editada</span>' : ''}${v.anulada ? ' · anulada' : ''}</small></div><div class="am n">${money(v.total)}${v.saldo > 0 ? `<small class="neg">debe ${money(v.saldo)}</small>` : ''}</div></div>`).join('') || '<div class="empty">No hay ventas en este periodo</div>'}</div>`;
 }
 ACC.vper = el => { S.f.vper = el.dataset.k; R.ventas(); };
 ACC.verVentaL = el => { const v = (S.ventasL || []).find(x => x.id === el.dataset.id); if (v) detalleVenta(v); };
@@ -11701,7 +11705,7 @@ function reciboHTML(tipo, d) {
   if (tipo === 'venta') {
     const v = d.v, cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
     return `<div class="rc">${cab}<div class="rc-b"><div class="rc-t"><b>Comprobante de pago</b><small>N.º ${esc(v.numero)}</small></div>
-      <div class="rc-m"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(cli ? cli.nombre : 'Consumidor final')}</div><div><small>Atendió</small>${esc(nomUsuario(v.usuarioId).split(' ')[0])}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
+      <div class="rc-m"><div><small>Fecha</small>${esc(fFechaC(v.fecha))} · ${fHora(v.fecha)}</div><div><small>Cliente</small>${esc(cli ? cli.nombre : v.clienteNombre || 'Consumidor final')}</div><div><small>Atendió</small>${esc(nomUsuario(v.usuarioId).split(' ')[0])}</div><div><small>Pago</small>${esc(v.metodo)}</div></div>
       ${d.det.map(i => `<div class="rc-i"><span>${esc(i.descripcion)} <small>× ${cant(i.cantidad)}</small>${i.serie ? `<br><small>Serie ${esc(i.serie)}</small>` : ''}${i.garantia ? `<br><small>Garantía ${i.garantia} días · hasta ${fFechaC(garantiaHasta(v.fecha, i.garantia))}</small>` : ''}</span><b>${money(i.total)}</b></div>`).join('')}
       ${v.servicio ? `<div class="rc-s"><span>Servicio</span><span>${v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio'}</span></div>` : ''}
       <div class="rc-s"><span>Subtotal</span><span>${money(v.subtotal)}</span></div>${v.descuento ? `<div class="rc-s"><span>Descuento</span><span>− ${money(v.descuento)}</span></div>` : ''}<div class="rc-s"><span>ISV</span><span>${money(v.isv)}</span></div>
@@ -11774,7 +11778,7 @@ function imprimirTicket(v, det) {
   const c = S.config, cli = v.clienteId ? byId(S.clientes, v.clienteId) : null;
   const L = (a, b) => `<div class="pl"><span>${a}</span><span>${b}</span></div>`;
   $('#print-area').innerHTML = `<div class="ticket"><div class="pc">${c.logo ? `<img src="${esc(c.logo)}" alt="">` : ''}<b>${esc(c.nombre || '')}</b>${c.rtn ? `<div>RTN ${esc(c.rtn)}</div>` : ''}${c.direccion ? `<div>${esc(c.direccion)}</div>` : ''}${c.telefono ? `<div>Tel. ${esc(c.telefono)}</div>` : ''}</div>
-    <div class="ps">${L('Comprobante', esc(v.numero))}${L('Fecha', esc(fFechaC(v.fecha)) + ' ' + fHora(v.fecha))}${L('Cliente', esc(cli ? cli.nombre : 'Consumidor final'))}${L('Atendió', esc(nomUsuario(v.usuarioId)))}</div>
+    <div class="ps">${L('Comprobante', esc(v.numero))}${L('Fecha', esc(fFechaC(v.fecha)) + ' ' + fHora(v.fecha))}${L('Cliente', esc(cli ? cli.nombre : v.clienteNombre || 'Consumidor final'))}${L('Atendió', esc(nomUsuario(v.usuarioId)))}</div>
     <div class="ps">${det.map(i => `<div>${esc(i.descripcion)}</div>${i.serie ? `<div>&nbsp;&nbsp;Serie ${esc(i.serie)}</div>` : ''}${i.garantia ? `<div>&nbsp;&nbsp;Garantía hasta ${fFechaC(garantiaHasta(v.fecha, i.garantia))}</div>` : ''}${L('&nbsp;&nbsp;' + cant(i.cantidad) + ' × ' + money(i.precio), money(i.total))}`).join('')}</div>${v.servicio ? `<div class="ps">${L('Servicio', v.servicio === 'mesa' ? 'Mesa ' + esc(v.mesa || '') : v.servicio === 'llevar' ? 'Para llevar' : 'Domicilio')}</div>` : ''}
     <div class="ps">${L('Subtotal', money(v.subtotal))}${v.descuento ? L('Descuento', '−' + money(v.descuento)) : ''}${L('ISV', money(v.isv))}<div class="pl pt"><span>TOTAL</span><span>${money(v.total)}</span></div>${num(v.anticipo) > 0 ? L('Anticipo ya pagado', '−' + money(v.anticipo)) + L('Pagado hoy', money(v.total - v.anticipo)) : ''}${L('Pago', esc(v.metodo))}${v.metodo === 'Efectivo' ? L('Recibido', money(v.recibido)) + L('Cambio', money(v.cambio)) : ''}${v.metodo === 'Crédito' ? L('Anticipo', money(v.recibido)) + L('Saldo', money(v.saldo)) : ''}</div>
     <div class="pc"><div>${esc(c.mensajeRecibo || '¡Gracias por su compra!')}</div><small>Este comprobante no sustituye la factura fiscal</small></div></div>`;
