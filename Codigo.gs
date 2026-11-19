@@ -1471,6 +1471,8 @@ function registrar_(d) {
   if (!nombre) throw new Error('Escribe tu nombre');
   if (wa.length < 10) throw new Error('Escribe tu número de WhatsApp');
   if (!/^\d{4,6}$/.test(pin)) throw new Error('El PIN debe tener de 4 a 6 números');
+  // La ciudad es obligatoria: es la ciudad con la que el negocio sale en Tiendas Catrachas (dirCiudad)
+  if (txt_(d.ciudad, 40).length < 3) throw new Error('Escribe la ciudad donde está tu negocio. Si no ves ese campo, cierra la app y vuelve a abrirla.');
   const yaExiste = () => { delete MEMO._m_Accesos; return mRows_('Accesos').some(x => String(x.whatsapp) === wa); };
   if (yaExiste()) throw new Error('Ese WhatsApp ya tiene una cuenta. Toca «Ya tengo cuenta» para ingresar.');
   const cs = CacheService.getScriptCache(), nReg = Number(cs.get('REG_H') || 0);

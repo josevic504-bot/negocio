@@ -2754,7 +2754,7 @@ ACC.demoEjemplo = async el => {
         Object.keys(DEMO.cache || {}).forEach(k => { if (k.indexOf('L_') === 0) delete DEMO.cache[k]; }); demoGuardar(); DEMO.route = null; demoBackend();
         r = await api('login', { whatsapp: '9876-0000', pin: '1234' });
       } else {
-      r = await api('registrar', { negocio: 'Variedades Sofía', giro: 'variedades', nombre: 'Sofía Hernández', whatsapp: '9876-0000', pin: '1234' });
+      r = await api('registrar', { negocio: 'Variedades Sofía', giro: 'variedades', ciudad: 'San Pedro Sula', nombre: 'Sofía Hernández', whatsapp: '9876-0000', pin: '1234' });
       const B = DEMO.B;
       B.setNegocio_(B.negocioPorId_(licEj().id));
       B.sembrarEjemplo_(r.usuario.id);
