@@ -3295,7 +3295,8 @@ function guardar_(u, d) {
     if (reg.dirOn !== undefined) reg.dirOn = reg.dirOn === 'si' ? 'si' : 'no';
     if (reg.dirCiudad !== undefined) reg.dirCiudad = txt_(reg.dirCiudad, 40);
     if (reg.dirFrase !== undefined) reg.dirFrase = txt_(reg.dirFrase, 80);
-    // Sin ciudad también puede aparecer: en el sitio sale como «Honduras» hasta que la escriba
+    // Con Tiendas Catrachas encendido no se puede guardar esa sección sin ciudad (los negocios viejos sin ciudad siguen saliendo como «Honduras» hasta que la escriban)
+    if (reg.dirCiudad !== undefined && reg.dirCiudad.trim().length < 3 && (reg.dirOn !== undefined ? reg.dirOn : config_().dirOn) === 'si') throw new Error('Escribe la ciudad de tu negocio: con ella te encuentran en Tiendas Catrachas.');
     if (reg.tiendaPagos !== undefined) reg.tiendaPagos = reg.tiendaPagos.split(',').filter(x => ['Efectivo', 'Transferencia', 'Tarjeta', 'Tigo Money'].indexOf(x) >= 0).join(',') || 'Efectivo';
     if (reg.tiendaMapa) { const t = reg.tiendaMapa.trim(); if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de Google Maps debe ser una dirección web (https://…)'); reg.tiendaMapa = /^https?:\/\//i.test(t) ? t : 'https://' + t; }
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
