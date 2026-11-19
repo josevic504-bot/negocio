@@ -1731,7 +1731,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.90';
+const APP_VER = '1.9.91';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -7515,11 +7515,11 @@ R.reportes = () => {
   if (fija && !['resumen', 'inventario', 'cuentas'].includes(S.f.rtab || 'resumen')) S.f.rtab = 'resumen';
   const tab = S.f.rtab || 'resumen';
   const tabs = fija ? [['resumen', 'Resumen'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']]
-    : [['resumen', 'Resumen']].concat(multi ? [['secciones', 'Por tienda']] : [], [['diario', 'Diario'], ['ganancias', 'Ganancias'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']], sarOn() || (S.sar && S.sar.estado !== 'incompleto') ? [['sar', 'Libro SAR']] : []);
+    : [['resumen', 'Resumen']].concat(multi ? [['secciones', 'Por tienda']] : [], [['diario', 'Diario'], ['cobrado', 'Cobrado'], ['ganancias', 'Ganancias'], ['inventario', 'Inventario'], ['cuentas', 'Cuentas']], sarOn() || (S.sar && S.sar.estado !== 'incompleto') ? [['sar', 'Libro SAR']] : []);
   $('#main').innerHTML = `<div class="seg tabs">${tabs.map(([k, t]) => `<button class="${tab === k ? 'on' : ''}" data-a="rtab" data-k="${k}">${t}</button>`).join('')}</div>${multi && REP_CON_SECCION.includes(tab) ? secSelector() : ''}<div id="rp"></div>`;
   S.repCSV = null; // la descarga siempre es de la pestaña que se ve
   if (multi) secALaVista();
-  return ({ resumen: repResumen, secciones: repSecciones, diario: repDiario, ganancias: repGanancias, inventario: repInventario, cuentas: repCuentas, sar: repLibroSAR })[tab]();
+  return ({ resumen: repResumen, secciones: repSecciones, diario: repDiario, cobrado: repCobrado, ganancias: repGanancias, inventario: repInventario, cuentas: repCuentas, sar: repLibroSAR })[tab]();
 };
 ACC.rtab = el => { S.f.rtab = el.dataset.k; const r = R.reportes(); if (r && r.catch) r.catch(err); };
 /* ---------- Reportes por sección (giro) ----------
@@ -7645,6 +7645,38 @@ async function repDiario() {
   S.repCSV = () => csv(`diario-${mes}.csv`, [['Fecha', 'Hora', 'Tipo', 'Número', 'Concepto', 'Cliente / proveedor', 'Forma de pago', 'Usuario', 'Monto', 'Anulado']].concat(d.movimientos.map(x => [x.fecha.slice(0, 10), x.fecha.slice(11, 16), TIPO[x.tipo][0], x.numero, x.concepto, x.tercero, x.metodo, x.usuario, (ent(x) ? 1 : -1) * x.monto, x.anulado ? 'Sí' : ''])));
 }
 ACC.dmes = el => { const m = S.f.dmes || hoy().slice(0, 7); const d = new Date(m + '-15T12:00'); d.setMonth(d.getMonth() + Number(el.dataset.d)); S.f.dmes = toLocal(d).slice(0, 7); return repDiario(); };
+
+/* ---------- Reportes · Cobrado: el dinero que entró por fechas (abonos de clientes y ventas cobradas al momento) ----------
+ * Sale de los mismos movimientos del Diario (un mes por consulta), filtrados al rango de fechas elegido. */
+async function repCobrado() {
+  const per = S.f.kper || 'mes', que = S.f.kque || 'todo';
+  let [desde, hasta] = per === 'otro' ? [S.f.kdesde || hoy(), S.f.khasta || hoy()] : rangoPer(per);
+  $('#rp').innerHTML = `<div class="chips" style="margin:12px 0 8px">${['hoy', 'ayer', 'd7', 'mes', 'ant', 'anio'].map(k => `<button class="chip ${per === k ? 'on' : ''}" data-a="kper" data-k="${k}">${PERIODOS[k]}</button>`).join('')}<button class="chip ${per === 'otro' ? 'on' : ''}" data-a="kper" data-k="otro">Elegir fechas</button></div>
+    ${per === 'otro' ? `<div class="row" style="margin-bottom:10px"><input type="date" id="k-d" value="${desde}" max="${hoy()}" style="width:auto"><span class="mut">a</span><input type="date" id="k-h" value="${hasta}" max="${hoy()}" style="width:auto"><button class="btn pri sm" data-a="kVer">Ver</button></div>` : ''}
+    <div class="seg" style="margin-bottom:10px">${[['todo', 'Todo'], ['abonos', 'Abonos de clientes'], ['ventas', 'Ventas cobradas']].map(([k, t]) => `<button class="${que === k ? 'on' : ''}" data-a="kque" data-k="${k}">${t}</button>`).join('')}</div><div id="rp-b"><div class="empty">Calculando…</div></div>`;
+  const meses = []; { const d = new Date(desde.slice(0, 7) + '-15T12:00'), fin = hasta.slice(0, 7); while (toLocal(d).slice(0, 7) <= fin && meses.length < 24) { meses.push(toLocal(d).slice(0, 7)); d.setMonth(d.getMonth() + 1); } }
+  const todos = [];
+  for (const m of meses) { const d = await api('diario', { mes: m }, true); (d.movimientos || []).forEach(x => todos.push(x)); }
+  const vigente = () => enRep('cobrado') && (S.f.kper || 'mes') === per && (per !== 'otro' || ((S.f.kdesde || hoy()) === desde && (S.f.khasta || hoy()) === hasta));
+  if (!vigente()) return;
+  const base = todos.filter(x => !x.anulado && (x.tipo === 'cobro' || x.tipo === 'venta') && x.cobrado > 0.004 && x.fecha.slice(0, 10) >= desde && x.fecha.slice(0, 10) <= hasta);
+  const pinta = () => {
+    const q = S.f.kque || 'todo', mv = base.filter(x => q === 'todo' || (q === 'abonos' ? x.tipo === 'cobro' : x.tipo === 'venta'));
+    const sum = l => l.reduce((a, x) => a + x.cobrado, 0), ab = base.filter(x => x.tipo === 'cobro'), ve = base.filter(x => x.tipo === 'venta');
+    const agrupa = (l, f) => { const m = {}; l.forEach(x => { const k = f(x); m[k] = (m[k] || 0) + x.cobrado; }); return Object.keys(m).map(k => ({ nombre: k, total: m[k] })).sort((a, b) => b.total - a.total); };
+    const forma = x => x.tipo === 'venta' && x.metodo === 'Crédito' ? 'Anticipo de venta al crédito' : (x.metodo || 'Sin forma de pago');
+    const dias = {}; mv.forEach(x => { (dias[x.fecha.slice(0, 10)] = dias[x.fecha.slice(0, 10)] || []).push(x); });
+    $('#rp-b').innerHTML = `<div class="kpis k4"><div class="kpi" style="--k:#00b56e"><small>Total cobrado</small><b class="n">${money(sum(base))}</b><i>${esc(fFechaC(desde))}${desde !== hasta ? ' a ' + esc(fFechaC(hasta)) : ''}</i></div><div class="kpi" style="--k:#00a8b5"><small>Abonos de clientes</small><b class="n">${money(sum(ab))}</b><i>${ab.length} ${ab.length === 1 ? 'abono' : 'abonos'}</i></div><div class="kpi" style="--k:${serie(0)}"><small>Ventas cobradas</small><b class="n">${money(sum(ve))}</b><i>${ve.length} ${ve.length === 1 ? 'venta' : 'ventas'}</i></div></div>
+      ${mv.length ? `<div class="g2"><div class="chart"><h3>Por forma de pago</h3>${rankBars(agrupa(mv, forma), 'total', money)}</div><div class="chart"><h3>Quién pagó</h3>${rankBars(agrupa(mv, x => x.tercero || 'Cliente').slice(0, 8), 'total', money)}</div></div>` : ''}
+      ${Object.keys(dias).sort().reverse().map(f => { const l = dias[f].slice().sort((a, b) => a.fecha < b.fecha ? 1 : -1);
+        return `<div class="dia"><div class="dia-h"><b>${esc(cap(fFechaL(f)))}</b><span class="n pos">+${money(sum(l))}</span></div>${l.map(x => `<div class="mv"><span class="hr">${fHora(x.fecha) || '—'}</span><span class="badge ${x.tipo === 'cobro' ? 'b-info' : 'b-ok'}">${x.tipo === 'cobro' ? 'Abono' : 'Venta'}</span><span class="cn"><b>${esc(x.tercero || 'Cliente')}</b><small>${esc([x.numero, forma(x), x.usuario].filter(Boolean).join(' · '))}</small></span><span class="n pos">+${money(x.cobrado)}</span></div>`).join('')}</div>`; }).join('') || '<div class="empty">No se cobró nada en estas fechas</div>'}`;
+    S.repCSV = () => csv(`cobrado-${desde}-a-${hasta}.csv`, [['Cobrado', S.config.nombre, desde + ' a ' + hasta], [], ['Fecha', 'Hora', 'Tipo', 'Número', 'Cliente', 'Forma de pago', 'Usuario', 'Cobrado']].concat(mv.slice().sort((a, b) => a.fecha < b.fecha ? -1 : 1).map(x => [x.fecha.slice(0, 10), x.fecha.slice(11, 16), x.tipo === 'cobro' ? 'Abono' : 'Venta', x.numero, x.tercero, forma(x), x.usuario, x.cobrado]), [[], ['', '', '', '', '', '', 'Total', r2(sum(mv))]]));
+  };
+  S.cobPinta = pinta; pinta();
+}
+ACC.kper = el => { S.f.kper = el.dataset.k; return repCobrado(); };
+ACC.kVer = () => { S.f.kdesde = $('#k-d').value; S.f.khasta = $('#k-h').value; if (S.f.kdesde > S.f.khasta) return toast('La fecha inicial es mayor que la final', 'error'); return repCobrado(); };
+ACC.kque = el => { S.f.kque = el.dataset.k; $$('#rp .seg [data-a="kque"]').forEach(b => b.classList.toggle('on', b === el)); if (S.cobPinta && enRep('cobrado')) S.cobPinta(); };
 
 async function repGanancias() {
   $('#rp').innerHTML = '<div class="empty">Cargando…</div>';
@@ -11144,6 +11176,9 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.91', fecha: '2026-11-19', items: [
+    { i: 'coin', t: 'Reporte de lo cobrado, por fechas', d: 'En Reportes hay una pestaña nueva, «Cobrado»: elige hoy, la semana, el mes o tus propias fechas y mira cuánto dinero entró, por forma de pago y por cliente. Puedes ver todo, solo los abonos o solo las ventas cobradas, y descargarlo para Excel.' }
+  ] },
   { v: '1.9.90', fecha: '2026-11-19', items: [
     { i: 'coin', t: 'Vuelve a ver y enviar un abono', d: 'En la ficha del cliente, toca cualquier abono del historial: lo abres con su fecha, forma de pago y a qué factura se aplicó, y puedes generar de nuevo su comprobante o mandarlo por WhatsApp.' }
   ] },
