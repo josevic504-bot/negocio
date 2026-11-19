@@ -1731,7 +1731,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.89';
+const APP_VER = '1.9.90';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -7008,14 +7008,14 @@ ACC.verCliente = async el => {
     c.saldo = d.saldo;
     const pend = d.ventas.filter(v => !v.anulada && v.saldo > 0);
     const hist = d.ventas.map(v => ({ t: 'v', f: v.fecha, v })).concat(d.abonos.map(a => ({ t: 'a', f: a.fecha, a }))).sort((x, y) => x.f < y.f ? 1 : -1);
-    S.cuentaVentas = d.ventas;
+    S.cuentaVentas = d.ventas; S.cuentaAbonos = d.abonos;
     h.b.innerHTML = `<div class="cli-h"><div class="av ${colorDe(c.nombre)} lg">${esc(iniciales(c.nombre))}</div><div class="tx"><b>${esc(c.telefono || 'Sin teléfono')}</b><small>${esc(c.direccion || '')}${c.rtn ? ' · RTN ' + esc(c.rtn) : ''}</small></div></div>
       <div class="kpis"><div class="kpi" style="--k:${d.saldo > 0 ? '#f25c05' : '#00b56e'}"><small>Saldo</small><b class="n">${money(d.saldo)}</b><i>${c.limite ? 'Límite ' + money(c.limite) : 'Sin límite'}</i></div><div class="kpi"><small>Ha comprado</small><b class="n">${money(d.totalComprado)}</b><i>${d.compras} compras${d.ultima ? ' · última ' + hace(d.ultima) : ''}</i></div></div>
       <div class="acciones">${d.saldo > 0 ? `<button class="btn acc" data-a="abonar" data-id="${c.id}">${ic('coin', 18)} Abonar</button>` : ''}${c.telefono ? `<a class="btn wa" href="${waLink(c.telefono, d.saldo > 0 ? plantilla(S.config.msjCobro, { cliente: c.nombre.split(' ')[0], saldo: money(d.saldo), negocio: S.config.nombre }) : '')}" target="_blank" rel="noopener">${ic('wa', 18)} ${d.saldo > 0 ? 'Recordar saldo' : 'WhatsApp'}</a>` : ''}<button class="btn" data-a="editCliente" data-id="${c.id}">${ic('edit', 18)} Editar</button></div>
       ${pend.length ? `<div class="sec-t"><h3>Facturas pendientes</h3></div><div class="list">${pend.map(v => `<div class="li" data-a="cuentaVenta" data-id="${v.id}"><div class="av t-naranja">${ic('doc', 20)}</div><div class="tx"><b>${esc(v.numero)}</b><small>${esc(fFechaC(v.fecha))} · total ${money(v.total)}</small></div><div class="am n">${money(v.saldo)}<small>pendiente</small></div></div>`).join('')}</div>` : ''}
       <div class="sec-t"><h3>Historial</h3></div><div class="list">${hist.map(x => x.t === 'v'
         ? `<div class="li ${x.v.anulada ? 'anul' : ''}" data-a="cuentaVenta" data-id="${x.v.id}"><div class="av t-pri">${ic('bag', 20)}</div><div class="tx"><b>Compra ${esc(x.v.numero)}</b><small>${esc(fFechaC(x.f))} · ${esc(x.v.metodo)}${x.v.anulada ? ' · anulada' : ''}</small></div><div class="am n">${money(x.v.total)}</div></div>`
-        : `<div class="li ${x.a.anulado ? 'anul' : ''}"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>Abono · ${esc(x.a.metodo)}</b><small>${esc(fFechaC(x.f))} ${fHora(x.f)}${x.a.anulado ? ' · anulado' : ''}</small></div><div class="am n pos">${money(x.a.monto)}${puede('admin') && !x.a.anulado ? `<small><a data-a="anularAbono" data-id="${x.a.id}" data-c="${c.id}">Anular</a></small>` : ''}</div></div>`).join('') || '<div class="empty">Sin compras todavía</div>'}</div>`;
+        : `<div class="li ${x.a.anulado ? 'anul' : ''}" data-a="verAbono" data-id="${x.a.id}" data-c="${c.id}"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>Abono · ${esc(x.a.metodo)}</b><small>${esc(fFechaC(x.f))} ${fHora(x.f)}${x.a.anulado ? ' · anulado' : ''}</small></div><div class="am n pos">${money(x.a.monto)}${puede('admin') && !x.a.anulado ? `<small><a data-a="anularAbono" data-id="${x.a.id}" data-c="${c.id}">Anular</a></small>` : ''}</div></div>`).join('') || '<div class="empty">Sin compras todavía</div>'}</div>`;
   };
   S.hCli = { h, pinta };
   try { await pinta(); } catch (e) { err(e); h.cerrar(); }
@@ -7058,6 +7058,19 @@ function abonar(c) {
   } }]);
 }
 ACC.recAbono = () => S.ultAbono && imagenRecibo('abono', S.ultAbono);
+// Ver de nuevo un abono ya registrado (desde el historial del cliente) para reenviar su comprobante
+ACC.verAbono = el => {
+  const a = (S.cuentaAbonos || []).find(x => x.id === el.dataset.id), c = byId(S.clientes, el.dataset.c); if (!a || !c) return;
+  const ap = (() => { try { return JSON.parse(a.aplicado || '[]'); } catch (e) { return []; } })();
+  const hv = hoja({ titulo: '', cls: 'exito', html: `<div class="ok-big"><i>${ic(a.anulado ? 'x' : 'check', 40)}</i><h2>${a.anulado ? 'Abono anulado' : 'Abono'}</h2><p class="mut">${esc(c.nombre)} · ${esc(a.metodo)}</p><div class="ok-tot n">${money(a.monto)}</div>
+      <p class="mut sm" style="margin:2px 0 10px">${esc(fFechaC(a.fecha))} · ${fHora(a.fecha)}</p>
+      ${ap.length ? `<div class="list" style="text-align:left">${ap.map(x => `<div class="li"><div class="tx"><b>Abono a ${esc(x.numero)}</b></div><div class="am n">${money(x.monto)}</div></div>`).join('')}</div>` : ''}
+      ${a.nota ? `<p class="mut sm" style="margin-top:8px">Nota: ${esc(a.nota)}</p>` : ''}
+      <div class="cambio ${c.saldo > 0 ? 'warn' : ''}" style="margin-top:10px"><span>Saldo a hoy</span><b class="n">${money(c.saldo)}</b></div></div>
+      ${a.anulado ? '' : `<div class="acciones"><button class="btn" id="va-rec">${ic('image', 18)} Comprobante</button>${c.telefono ? `<a class="btn wa" href="${waLink(c.telefono, `Hola ${c.nombre.split(' ')[0]}, te confirmamos tu abono de ${money(a.monto)} del ${fFechaC(a.fecha)} en ${S.config.nombre}. Tu saldo a hoy es ${money(c.saldo)}. ¡Gracias!`)}" target="_blank" rel="noopener">${ic('wa', 18)} WhatsApp</a>` : ''}</div>`}` });
+  const b = $('#va-rec', hv.el); if (b) b.onclick = () => imagenRecibo('abono', { a, c, antes: null });
+  hv.botones([{ t: 'Cerrar', cls: 'pri big', fn: () => hv.cerrar() }]);
+};
 
 /* ===================== PROVEEDORES ===================== */
 R.proveedores_bar = () => `<button class="hbtn" data-a="nuevoProveedor" aria-label="Nuevo proveedor">${ic('plus', 22)}</button>`;
@@ -11131,6 +11144,9 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.90', fecha: '2026-11-19', items: [
+    { i: 'coin', t: 'Vuelve a ver y enviar un abono', d: 'En la ficha del cliente, toca cualquier abono del historial: lo abres con su fecha, forma de pago y a qué factura se aplicó, y puedes generar de nuevo su comprobante o mandarlo por WhatsApp.' }
+  ] },
   { v: '1.9.89', fecha: '2026-11-19', items: [
     { i: 'doc', t: 'Comprobantes en imagen, corregidos', d: 'El botón «Comprobante» de ventas y abonos volvió a generar la imagen para descargar o compartir por WhatsApp (salía un error de color).' }
   ] },
@@ -11661,7 +11677,7 @@ function reciboHTML(tipo, d) {
     return `<div class="rc">${cab}<div class="rc-b"><div class="rc-t"><b>Comprobante de abono</b><small>${esc(fFechaC(a.fecha))} · ${fHora(a.fecha)}</small></div>
       <div class="rc-m"><div><small>Cliente</small>${esc(d.c.nombre)}</div><div><small>Pago</small>${esc(a.metodo)}</div></div>
       ${ap.map(x => `<div class="rc-i"><span>Abono a ${esc(x.numero)}</span><b>${money(x.monto)}</b></div>`).join('')}
-      <div class="rc-s"><span>Saldo anterior</span><span>${money(d.antes)}</span></div><div class="rc-s"><span>Saldo actual</span><span>${money(d.c.saldo)}</span></div>
+      ${d.antes == null ? `<div class="rc-s"><span>Saldo a hoy</span><span>${money(d.c.saldo)}</span></div>` : `<div class="rc-s"><span>Saldo anterior</span><span>${money(d.antes)}</span></div><div class="rc-s"><span>Saldo actual</span><span>${money(d.c.saldo)}</span></div>`}
       <div class="rc-tot"><span>Abono recibido</span><b>${money(a.monto)}</b></div></div>${pie.replace('¡Gracias por su compra!', '¡Gracias por su pago!')}</div>`;
   }
   return '';
