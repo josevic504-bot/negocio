@@ -1494,6 +1494,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
   NEG = { id: id, hojaId: libro.getId(), lic: lic };
   MEMO._ss = libro;
   instalarNegocio_({ nombre: negocio, giro: giro, telefono: wa.length === 11 && wa.indexOf('504') === 0 ? wa.slice(3, 7) + '-' + wa.slice(7) : wa,
+    ciudad: txt_(d.ciudad, 40), // la ciudad se pide al registrarse: con ella el negocio sale bien ubicado en Tiendas Catrachas desde el inicio
     admin: { usuario: wa, nombre: nombre, pin: pin } });
   const adm = rows_('Usuarios').find(x => x.usuario === wa);
   return lock_(() => {
@@ -6558,7 +6559,7 @@ function instalarNegocio_(op) {
     const actual = sh.getRange(1, 1, 1, h.length).getValues()[0];
     if (h.some((k, i) => actual[i] !== k)) sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
   });
-  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si', dirOn: 'si' } : {}); // los negocios nuevos empiezan con Tiendas Catrachas encendido (aparecen desde la prueba gratis, al crear productos propios)
+  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si', dirOn: 'si', dirCiudad: op.ciudad || '' } : {}); // los negocios nuevos empiezan con Tiendas Catrachas encendido (aparecen desde la prueba gratis, al crear productos propios)
   if (rows_('Usuarios').length === 0) {
     const salt = Utilities.getUuid(), a = op.admin || { usuario: 'admin', nombre: 'Administrador', pin: 'admin123' };
     upsert_('Usuarios', { usuario: a.usuario, nombre: a.nombre, rol: 'admin', color: '#d10f6f',

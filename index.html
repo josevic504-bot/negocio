@@ -2540,6 +2540,7 @@ function pintarLogin() {
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
         <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['carwash', 'joyeria', 'floristeria', 'vitaminas', 'manualidades'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
+        <label class="fld"><span>Ciudad donde está tu negocio</span><input id="r-ciu" list="r-ciudades" maxlength="40" required autocomplete="address-level2" placeholder="Ej. San Pedro Sula"><datalist id="r-ciudades">${['Tegucigalpa', 'San Pedro Sula', 'La Ceiba', 'Choloma', 'El Progreso', 'Comayagua', 'Choluteca', 'Puerto Cortés', 'Danlí', 'Siguatepeque', 'Juticalpa', 'Tela', 'Villanueva', 'La Lima', 'Santa Rosa de Copán', 'Tocoa', 'Olanchito', 'Catacamas', 'Santa Bárbara', 'La Esperanza', 'Gracias', 'La Paz', 'Roatán', 'Yoro', 'Nacaome'].map(x => `<option value="${x}">`).join('')}</datalist></label>
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
@@ -2724,9 +2725,10 @@ async function registrarse(ev) {
     const pin = $('#r-pin').value.trim();
     if (!/^\d{4,6}$/.test(pin)) throw new Error('El PIN debe tener de 4 a 6 números');
     if ($('#r-wa').value.replace(/\D/g, '').length < 8) throw new Error('Escribe tu número de WhatsApp');
+    if ($('#r-ciu') && $('#r-ciu').value.trim().length < 3) throw new Error('Escribe la ciudad donde está tu negocio');
     registrando = true;
     if (btn) { btn.disabled = true; btn.textContent = 'Creando tu negocio… (puede tardar un minuto)'; }
-    const r = await api('registrar', { negocio: $('#r-neg').value.trim(), giro: $('#r-giro').value, nombre: $('#r-nom').value.trim(), whatsapp: $('#r-wa').value, pin, origen: miOrigen() });
+    const r = await api('registrar', { negocio: $('#r-neg').value.trim(), giro: $('#r-giro').value, ciudad: $('#r-ciu') ? $('#r-ciu').value.trim() : '', nombre: $('#r-nom').value.trim(), whatsapp: $('#r-wa').value, pin, origen: miOrigen() });
     S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing'); if (!DEMO.on) mvMarca('mv_cliente');
     limpiarSesion();
     await arrancar();
