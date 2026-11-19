@@ -23,7 +23,7 @@ const dir = async () => { const r = await api('tiendaInfo', { negocio: neg }); r
 await cfg({ tienda: 'si' });
 v('apagado de fábrica: la tienda no trae «dir»', (await dir()) === null);
 const sinCiudad = await cfg({ dirOn: 'si', dirCiudad: '' });
-v('encender sin ciudad se guarda (regla del 17 nov: sale como «Honduras» hasta que la escriba)', sinCiudad.ok && sinCiudad.data.dirOn === 'si', sinCiudad.error);
+v('encender sin ciudad se rechaza', !sinCiudad.ok && /ciudad/i.test(sinCiudad.error), sinCiudad);
 const ok1 = await cfg({ dirOn: 'si', dirCiudad: 'El Progreso', dirFrase: 'Arreglos listos y «Arma tu ramo» a tu gusto' });
 v('encender con ciudad se guarda', ok1.ok && ok1.data.dirOn === 'si', ok1.error);
 await api('cargarEjemplos', { giro: 'floristeria' }, tok);
@@ -57,7 +57,7 @@ v('encender y guardar deja el interruptor encendido', await app.locator('#aj-dir
 v('el servidor ya la muestra en el directorio', !!(await dir()), await dir());
 await ver('2-app-encendido');
 await app.locator('#aj-dir [data-k="dirCiudad"]').fill(''); await app.locator('#aj-dir [data-a="guardarAj"]').click(); await app.waitForTimeout(1000);
-v('borrar la ciudad con el interruptor encendido: se guarda y la app avisa que sale como «Honduras»', (await api('bootstrap', {}, tok)).data.config.dirCiudad === '' && /apareces como «Honduras»/i.test(await app.evaluate(() => document.body.innerText)));
+v('borrar la ciudad con el interruptor encendido no se guarda (el servidor avisa)', (await api('bootstrap', {}, tok)).data.config.dirCiudad === 'El Progreso' && /ciudad/i.test(await app.evaluate(() => document.body.innerText)));
 await app.screenshot({ path: OUT + '/2b-app-sin-ciudad.png' });
 v('sin errores de JavaScript en la app', !errores.length, errores);
 

@@ -38,6 +38,18 @@ await api('guardar', { entidad: 'Config', registro: { dirOn: 'no' } }, tok);
 r = await api('tiendaInfo', { negocio: NEG });
 ok('si el dueño lo apaga, deja de salir', r.ok && !r.data.negocio.dir, r.error || r.data.negocio.dir);
 await api('guardar', { entidad: 'Config', registro: { dirOn: 'si' } }, tok);
+{ const c0 = cfg('dirCiudad');
+  let q = await api('guardar', { entidad: 'Config', registro: { dirOn: 'si', dirCiudad: '' } }, tok);
+  ok('Tiendas Catrachas encendido: borrar la ciudad se rechaza', !q.ok && /ciudad/i.test(q.error) && cfg('dirCiudad') === c0, q.error || 'se guardó');
+  q = await api('guardar', { entidad: 'Config', registro: { dirCiudad: ' ' } }, tok);
+  ok('también si solo manda la ciudad vacía', !q.ok && cfg('dirCiudad') === c0, q.error || 'se guardó');
+  q = await api('guardar', { entidad: 'Config', registro: { dirOn: 'no', dirCiudad: '' } }, tok);
+  ok('apagándolo sí puede quedar sin ciudad', q.ok && cfg('dirCiudad') === '', q.error);
+  q = await api('guardar', { entidad: 'Config', registro: { dirOn: 'si', dirCiudad: 'La Ceiba' } }, tok);
+  ok('cambiar a otra ciudad se guarda', q.ok && cfg('dirCiudad') === 'La Ceiba', q.error);
+  q = await api('guardar', { entidad: 'Config', registro: { tiendaHorario: 'Lunes a sábado' } }, tok);
+  ok('guardar otra sección no pide ciudad', q.ok, q.error);
+  await api('guardar', { entidad: 'Config', registro: { dirCiudad: c0 } }, tok); }
 
 sec('Cobrar con nombre sin guardar al cliente');
 r = await api('venta', { items: [{ productoId: prodId, cantidad: 1, precio: 550 }], metodo: 'Efectivo', recibido: 600, clienteNombre: '  Doña   Marta López ', clave: 'k1' }, tok);
