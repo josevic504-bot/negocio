@@ -265,8 +265,8 @@ input[type=checkbox],input[type=radio]{width:18px;height:18px;accent-color:var(-
 .ord-cw{display:flex;align-items:center;gap:9px;margin-top:9px;flex-wrap:wrap}
 /* Compras en línea: factura, en camino, apartados (1.9.81) */
 .seg-c{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:9px;font-size:12.5px;color:var(--mut)}.seg-c .badge{display:inline-flex;align-items:center;gap:4px}.seg-c.venc small{color:var(--bad);font-weight:600}
-.rf-foto,.rc-f{display:flex;align-items:center;gap:12px;margin:8px 0;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--pri) 6%,transparent)}.rf-foto img,.rc-f img{width:52px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;flex:none;box-shadow:0 0 0 1px var(--line)}
-.rf-foto .ph,.rc-f .ph{width:52px;height:52px;border-radius:10px;border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);flex:none}.rf-foto .tx,.rc-f .tx{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13.5px}.rf-foto small,.rc-f small{color:var(--mut);font-size:12px}
+.rf-foto,.ap-fac{display:flex;align-items:center;gap:12px;margin:8px 0;padding:10px;border-radius:14px;background:color-mix(in srgb,var(--pri) 6%,transparent)}.rf-foto img,.ap-fac img{width:52px;height:64px;object-fit:cover;border-radius:8px;cursor:pointer;flex:none;box-shadow:0 0 0 1px var(--line)}
+.rf-foto .ph,.ap-fac .ph{width:52px;height:52px;border-radius:10px;border:1.5px dashed var(--line);display:flex;align-items:center;justify-content:center;color:var(--mut);flex:none}.rf-foto .tx,.ap-fac .tx{flex:1;min-width:0;display:flex;flex-direction:column;font-size:13.5px}.rf-foto small,.ap-fac small{color:var(--mut);font-size:12px}
 .rf-p{border:1.5px solid var(--line);border-radius:14px;padding:4px 12px;margin:8px 0}.rf-p.on{border-color:color-mix(in srgb,var(--pri) 55%,transparent);background:color-mix(in srgb,var(--pri) 4%,transparent)}
 .rf-ph{display:flex;align-items:center;gap:10px;padding:8px 0;cursor:pointer}.rf-ph input{width:20px;height:20px;accent-color:var(--pri);flex:none}.rf-ph .tx{display:flex;flex-direction:column;font-size:14px}.rf-ph small{color:var(--mut);font-size:12px}
 .rf-l{display:grid;grid-template-columns:1fr 104px;gap:2px 10px;align-items:center;padding:8px 0;border-top:1px dashed var(--line)}.rf-l .tx{display:flex;flex-direction:column;min-width:0;font-size:13.5px}.rf-l small{color:var(--mut);font-size:12px;word-break:break-all}
@@ -1731,7 +1731,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.88';
+const APP_VER = '1.9.89';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -5985,7 +5985,7 @@ function facturaPedHTML(p) {
   const r = reciboP(p); if (!r) return '';
   const c = costoReciboP(p), env = r.modo === 'gasto' ? num(r.envio) : 0, L = r.liberado;
   return `<div class="rc-box">${segCompraHTML(p)}
-    <div class="rc-f">${r.foto ? `<img src="${esc(fotoSrc(r.foto))}" alt="Factura" data-a="verFotoRamo" data-src="${esc(fotoAncha(r.foto))}">` : `<span class="ph">${ic('receipt', 20)}</span>`}<div class="tx"><b>Factura ${esc(r.prov || '')}${r.factura ? ' · ' + esc(r.factura) : ''}</b><small>Comprada el ${esc(fFechaC(r.fecha))}${r.llego ? ' · llegó el ' + esc(fFechaC(r.llego)) : ''}</small></div></div>
+    <div class="ap-fac">${r.foto ? `<img src="${esc(fotoSrc(r.foto))}" alt="Factura" data-a="verFotoRamo" data-src="${esc(fotoAncha(r.foto))}">` : `<span class="ph">${ic('receipt', 20)}</span>`}<div class="tx"><b>Factura ${esc(r.prov || '')}${r.factura ? ' · ' + esc(r.factura) : ''}</b><small>Comprada el ${esc(fFechaC(r.fecha))}${r.llego ? ' · llegó el ' + esc(fFechaC(r.llego)) : ''}</small></div></div>
     <div class="tots"><div class="tot"><span>Costo real${r.modo === 'costo' && num(r.envio) ? ' (con envío)' : ''}</span><b class="n">${money(c.costo)}</b></div>${env ? `<div class="tot"><span>Envío de la factura (gasto aparte)</span><b class="n">${money(env)}</b></div>` : ''}<div class="tot g"><span>Ganancia${env ? ' antes del envío' : ''}</span><b class="n" style="color:var(--ok)">${money(c.venta - c.costo)}</b></div></div>
     ${L ? `<p class="xs mut" style="margin:6px 0 0">Liberado el ${esc(fFechaC(L.fecha))}: ${L.motivo === 'noPago' ? 'no lo pagó' : 'no lo reclamó'}${L.anticipo === 'ingreso' ? ' · anticipo ' + money(L.monto) + ' como ingreso' : L.anticipo === 'devolver' ? ' · anticipo devuelto' : ''}.</p>` : ''}</div>`;
 }
@@ -11131,6 +11131,9 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.89', fecha: '2026-11-19', items: [
+    { i: 'doc', t: 'Comprobantes en imagen, corregidos', d: 'El botón «Comprobante» de ventas y abonos volvió a generar la imagen para descargar o compartir por WhatsApp (salía un error de color).' }
+  ] },
   { v: '1.9.88', fecha: '2026-11-18', items: [
     { i: 'globe', t: 'Tu tienda con el nombre de tu negocio', d: 'El enlace de tu tienda en línea ahora lleva el nombre de tu negocio en vez de un código: es más fácil de recordar y de compartir. Con «Cambiar enlace» le pones el nombre que quieras. El enlace anterior y tus códigos QR siguen funcionando.', si: () => S.plus && S.multi && !!S.enlace && puede('admin'), ir: 'tienda' }
   ] },
@@ -11663,10 +11666,32 @@ function reciboHTML(tipo, d) {
   }
   return '';
 }
+// html2canvas no entiende color-mix() ni color(): el navegador los entrega como «color(srgb …)» y la captura se cae.
+// Antes de capturar, en la copia que usa html2canvas, esos colores se pasan a rgba().
+function coloresParaCaptura(doc, raiz) {
+  const RX = /\b(?:color|oklab|oklch|lab|lch)\([^()]*\)/g, win = doc.defaultView || window;
+  const cx = document.createElement('canvas').getContext('2d', { willReadFrequently: true }); cx.canvas.width = cx.canvas.height = 1;
+  const memo = {};
+  const aRgb = c => { if (memo[c]) return memo[c]; cx.clearRect(0, 0, 1, 1); cx.fillStyle = '#000'; cx.fillStyle = c; cx.fillRect(0, 0, 1, 1); const p = cx.getImageData(0, 0, 1, 1).data; return memo[c] = `rgba(${p[0]},${p[1]},${p[2]},${+(p[3] / 255).toFixed(3)})`; };
+  let css = '', n = 0;
+  [doc.documentElement, doc.body, raiz].concat(Array.from(raiz.querySelectorAll('*'))).forEach(e => {
+    if (!e || !e.style) return;
+    [null, '::before', '::after'].forEach(ps => {
+      const cs = win.getComputedStyle(e, ps); if (ps && (!cs.content || cs.content === 'none')) return;
+      let regla = '';
+      // Se revisan todas las propiedades (no una lista fija): html2canvas copia a mano los ::before/::after con todos sus colores ya resueltos
+      for (let i = 0; i < cs.length; i++) { const k = cs[i]; if (k.charCodeAt(0) === 45 && k.charCodeAt(1) === 45) continue;
+        const v = cs.getPropertyValue(k); if (!v || v.indexOf('(') < 0) continue; RX.lastIndex = 0; if (!RX.test(v)) continue;
+        const nv = v.replace(RX, aRgb); if (ps) regla += k + ':' + nv + ' !important;'; else e.style.setProperty(k, nv, 'important'); }
+      if (regla) { let id = e.getAttribute('data-cap'); if (!id) { id = String(++n); e.setAttribute('data-cap', id); } css += `[data-cap="${id}"]${ps}{${regla}}`; }
+    });
+  });
+  if (css) { const st = doc.createElement('style'); st.textContent = css; doc.head.appendChild(st); }
+}
 async function aImagen(el) {
   await cargarLib('canvas');
   try { await document.fonts.ready; } catch (e) {}
-  const cv = await html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true, logging: false });
+  const cv = await html2canvas(el, { scale: 2, backgroundColor: null, useCORS: true, logging: false, onclone: (doc, clon) => { try { coloresParaCaptura(doc, clon); } catch (e) {} } });
   return await new Promise(ok => cv.toBlob(ok, 'image/png'));
 }
 async function imagenRecibo(tipo, d) {
