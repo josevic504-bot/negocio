@@ -7,7 +7,7 @@ const GIROS = [
   ['servicios', ['proyectos', 'ordenes'], { proyectos: 'nuevaCot', ordenes: 'nuevaOrden' }],
   ['repuestos', ['ordenes'], { ordenes: 'nuevaOrden' }],
   ['panaderia', ['encargos'], { encargos: 'nuevaAgenda' }],
-  ['comida', ['vender'], {}],
+  ['comida', ['mesas'], {}],
   ['catalogo', ['tienda', 'productos'], {}],
   ['farmacia', ['productos'], {}],
 ];
@@ -15,7 +15,7 @@ let n = 0;
 for (const [giro, vistas, nuevos] of GIROS) {
   n++;
   const wa = '9800000' + n;
-  const reg = await api('registrar', { negocio: 'Negocio ' + giro, nombre: 'Vic', giro, whatsapp: wa, pin: '1234' });
+  const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Negocio ' + giro, nombre: 'Vic', giro, whatsapp: wa, pin: '1234' });
   if (!reg.ok) { ok('registro ' + giro, false, reg.error); continue; }
   const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
   const pg = await nuevaPagina({ token: tok, verApi: false });
@@ -40,12 +40,8 @@ for (const [giro, vistas, nuevos] of GIROS) {
     }
   }
   // Vender en comida: comanda / sin inventario
-  if (giro === 'comida') await paso(pg, 'comida · vender un plato (sin inventario) y comanda', async () => {
-    await pg.ir('vender'); await pg.fill('#v-q', 'Baleada sencilla'); await pg.waitForTimeout(400); await pg.tocar('.pc[data-a=vadd]'); await pg.fill('#v-q', '');
-    await pg.accion('abrirCobro'); await pg.clic('[data-a=cbRec][data-v]'); await btn(pg, /^Cobrar L/, 1500);
-    await pg.cap('comida-venta');
-    return db.T.Ventas.some(v => v.negocio_id === db.T.Licencias[n - 1].id);
-  });
+  // Restaurantes: desde que tienen Mesas ya no usan «Vender» (la venta por mesa se prueba en 37-mesas y 40-tienda-restaurante)
+  if (giro === 'comida') await paso(pg, 'comida · el inicio lleva a Mesas y no muestra «Vender»', async () => { await pg.ir('inicio'); await pg.waitForTimeout(700); return (await pg.locator('.qa [data-v="mesas"]').count()) === 1 && (await pg.locator('.qa [data-v="vender"]').count()) === 0; });
   // Beauty & Moda: tienda estilo catálogo con precio especial y tonos
   if (giro === 'catalogo') await paso(pg, 'Beauty & Moda · tienda pública con secciones, tonos y precio especial', async () => {
     const nid = db.T.Licencias[n - 1].id; const t = await nuevaPagina({});
@@ -65,7 +61,7 @@ for (const [giro, vistas, nuevos] of GIROS) {
   await pg.context().close();
 }
 /* ---------- Contabilidad (activada desde el Panel) y multitienda ---------- */
-const reg = await api('registrar', { negocio: 'Multi Prueba', nombre: 'Vic', giro: 'tienda', whatsapp: '98009999', pin: '1234' }); const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Multi Prueba', nombre: 'Vic', giro: 'tienda', whatsapp: '98009999', pin: '1234' }); const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
 const nid = db.T.Licencias[db.T.Licencias.length - 1].id;
 db.props.PANEL_CLAVE = 'clave-panel';
 const pl = await api('panelLogin', { clave: 'clave-panel' }); const ptok = pl.ok ? (pl.data.token || pl.data) : null; if (!pl.ok) console.log('   panelLogin', pl.error);

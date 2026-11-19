@@ -13,7 +13,7 @@ const web = http.createServer((q, r) => { const u = decodeURIComponent(q.url.spl
 let fallas = 0; const v = (n, c, x) => { console.log((c ? '✔ ' : '✘ ') + n); if (!c) { fallas++; if (x !== undefined) console.log('   ', JSON.stringify(x).slice(0, 400)); } };
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123' } });
 const nombres = ['Primero Viejo', 'Segundo Medio', 'Tercero Nuevo'];
-for (let i = 0; i < 3; i++) { await api('registrar', { negocio: nombres[i], nombre: 'Dueño ' + i, giro: 'variedades', whatsapp: '3313027' + i, pin: '1234' }); }
+for (let i = 0; i < 3; i++) { await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: nombres[i], nombre: 'Dueño ' + i, giro: 'variedades', whatsapp: '3313027' + i, pin: '1234' }); }
 // fechas de registro distintas
 (db.T.Licencias||[]).forEach((l, i) => { l.registro = new Date(Date.UTC(2026, 9, 1 + i * 10)).toISOString(); });
 const br = await chromium.launch(); const ctx = await br.newContext({ viewport: { width: 430, height: 900 }, deviceScaleFactor: 2 }); const pg = await ctx.newPage();

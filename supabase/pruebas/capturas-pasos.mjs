@@ -14,7 +14,7 @@ let fallas = 0; const v = (n, c, x) => { console.log((c ? '✔ ' : '✘ ') + n);
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123' } });
 
 // 1) Servidor: negocio nuevo en prueba
-const tok = (await api('registrar', { negocio: 'Variedades Karla', nombre: 'Karla Hernández', giro: 'variedades', whatsapp: '33130265', pin: '1234' })).data.token;
+const tok = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Karla', nombre: 'Karla Hernández', giro: 'variedades', whatsapp: '33130265', pin: '1234' })).data.token;
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 let p = (await api('inicio', {}, tok)).data.pasos;
 v('recién registrado trae pasos', !!p, p);
@@ -35,7 +35,7 @@ const pt = (await api('panelLogin', { clave: 'clave123' })).data; const PT = pt 
 const fi = (await api('panelNegocio', { id: neg }, PT, { panel: PT })).data;
 v('la ficha del Panel trae los pasos', fi && fi.pasos && fi.pasos.venta && !fi.pasos.caja, fi && fi.pasos);
 // 3) Negocio con licencia activa: no ve la lista
-const tok2 = (await api('registrar', { negocio: 'Ferretería El Clavo', nombre: 'Luis Mejía', giro: 'ferreteria', whatsapp: '33130266', pin: '1234' })).data.token;
+const tok2 = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Ferretería El Clavo', nombre: 'Luis Mejía', giro: 'ferreteria', whatsapp: '33130266', pin: '1234' })).data.token;
 const neg2 = (await api('bootstrap', {}, tok2)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg2 }, row: { estado: 'Activa' } }] });
 v('con licencia activa el servidor no manda pasos', !(await api('inicio', {}, tok2)).data.pasos);
@@ -80,7 +80,7 @@ await app.locator('[data-a="pasosFin"]').click(); await app.waitForTimeout(300);
 await app.evaluate(() => { ir('ventas'); ir('inicio'); }); await app.waitForTimeout(900);
 v('al cerrar la felicitación ya no vuelve', await app.locator('#pp-card').count() === 0);
 // Ocultar por ahora (otro negocio en prueba)
-const tok3 = (await api('registrar', { negocio: 'Comedor Doña Tere', nombre: 'Teresa Rivera', giro: 'comida', whatsapp: '33130267', pin: '1234' })).data.token;
+const tok3 = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Comedor Doña Tere', nombre: 'Teresa Rivera', giro: 'comida', whatsapp: '33130267', pin: '1234' })).data.token;
 const app3 = await ctx.newPage(); app3.on('pageerror', e => { errores.push(e.message); console.log('ERROR JS:', e.message); });
 await app3.route(/^https?:\/\/(?!localhost).*/, async rt => { if (rt.request().url().indexOf('/functions/v1/api') < 0) return rt.abort(); const b = JSON.parse(rt.request().postData() || '{}'); const r = await api(b.action, b.data, b.token, { panel: b.panel }); rt.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' }, body: JSON.stringify(r) }); });
 await app3.addInitScript(t => { localStorage.setItem('gnvm@/|token', t); localStorage.setItem('gnvm@/|verVisto', '9.9.9'); localStorage.setItem('gnvm@/|avisosOferta', 'no'); }, tok3);

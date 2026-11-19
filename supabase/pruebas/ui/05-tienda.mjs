@@ -1,14 +1,14 @@
 // Tienda en línea (página pública) → pedido y chat → el negocio lo atiende en Pedidos y Mensajes
 import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
 import { paso, texto, tiene, btn, dump } from './lib.mjs';
-const reg = await api('registrar', { negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula', negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
 const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
 const nid = db.T.Licencias[0].id;
 const prod = n => db.T.Productos.find(x => x.nombre.startsWith(n));
 const pg = await nuevaPagina({ token: tok });
 await pg.goto('http://localhost:8765/'); await esperar(pg, 8000); await pg.waitForTimeout(1000);
 await pg.ir('tienda');
-await paso(pg, 'Mi tienda · enlace, estilos de letra, portada, secciones, datos del dueño', async () => tiene(pg, new RegExp('tienda=' + nid + '.*Copiar QR.*Secciones de tu tienda.*Letra y modo de tu tienda.*Elegante.*Moderna')));
+await paso(pg, 'Mi tienda · enlace, estilos de letra, portada, secciones, datos del dueño', async () => tiene(pg, new RegExp('localhost:8765/[a-z0-9-]+.*Copiar QR.*Secciones de tu tienda.*Letra y modo de tu tienda.*Elegante.*Moderna')));
 await paso(pg, 'Mi tienda · guardar mensaje de bienvenida y datos de entrega', async () => {
   const w = pg.locator('input[placeholder="¡Bienvenido! Haz tu pedido…"]'); await w.fill('¡Bienvenidos a la prueba total!');
   await pg.clic('[data-a=guardarAj][data-s="estado"]'); await pg.waitForTimeout(800);
@@ -59,7 +59,7 @@ await paso(t, 'Tienda pública · chat con el negocio', async () => {
   if (await btnChat.count()) await btnChat.last().click(); else await t.evaluate(() => { const b = [...document.querySelectorAll('button')].filter(x => x.getBoundingClientRect().width > 0).pop(); b && b.click(); });
   await t.waitForTimeout(700);
   const d = await dump(t); console.log('     [chat] ' + d.slice(-800));
-  await t.fill('#tch-n', 'Ana Cliente'); await t.fill('#tch-t', '9911-2233'); await t.fill('#tch-in', '¿Tienen la camiseta en rojo?');
+  if (await t.locator('#tch-n').isVisible()) { await t.fill('#tch-n', 'Ana Cliente'); await t.fill('#tch-t', '9911-2233'); } await t.fill('#tch-in', '¿Tienen la camiseta en rojo?');
   const enviado = await t.evaluate(() => { const b = [...document.querySelectorAll('button')].filter(x => x.getBoundingClientRect().width > 0 && /Enviar/i.test(x.innerText + (x.getAttribute('aria-label') || ''))); if (b.length) { b[b.length - 1].click(); return 'btn'; } return null; });
   if (!enviado) await t.press('#tch-in', 'Enter');
   await t.waitForTimeout(1200);
@@ -102,9 +102,10 @@ await pg.cap('pedido-final');
 await pg.evaluate(() => cerrarHojas());
 await pg.ir('mensajes');
 await paso(pg, 'Mensajes · chat del cliente y respuesta', async () => {
-  if (!(await tiene(pg, /camiseta en rojo/))) throw new Error('no aparece el mensaje');
+  // La lista muestra el último mensaje (ahora puede ser un mensaje automático): el del cliente se busca dentro del chat
   await pg.clic('[data-a=verChat]'); await pg.waitForTimeout(600);
   const d = await dump(pg); console.log('     [chat negocio] ' + d.slice(-500));
+  if (!/camiseta en rojo/.test(d) && !(await tiene(pg, /camiseta en rojo/))) throw new Error('no aparece el mensaje');
   await pg.fill('#ch-in', 'Sí, en rojo la tenemos en talla M.');
   await pg.evaluate(() => { const ta = document.getElementById('ch-in'); let b = ta.parentElement.querySelector('button'); if (!b) b = [...document.querySelectorAll('button')].filter(x => x.getBoundingClientRect().width > 0 && !x.innerText.trim() && !x.dataset.a && !x.dataset.cerrar && x.compareDocumentPosition(ta) & 2).pop(); b && b.click(); });
   await pg.waitForTimeout(1200);

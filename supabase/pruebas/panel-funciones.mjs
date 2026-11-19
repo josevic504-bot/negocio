@@ -14,8 +14,8 @@ const no = (n, r) => { if (r.ok) f++; console.log((r.ok ? '✗ (debió fallar) '
 const igual = (n, a, b) => { const x = JSON.stringify(a) === JSON.stringify(b); if (!x) f++; console.log((x ? '✓ ' : '✗ ') + n + ': ' + JSON.stringify(a) + (x ? '' : ' (esperado ' + JSON.stringify(b) + ')')); };
 const ef = () => { const e = db.efectos || []; db.efectos = []; return e.filter(x => x.push).map(x => x.push.negocio + ' | ' + x.push.titulo + ' | ' + x.push.cuerpo); };
 await db.aplicar({ props: { PANEL_CLAVE: 'c', TAREAS_CLAVE: 'tt', RT_SECRETO: 's', VAPID_PUBLICA: 'a', VAPID_PRIVADA: 'b' } });
-const A = (await api('registrar', { negocio: 'Norey Beauty', nombre: 'Noemí', giro: 'catalogo', whatsapp: '31111111', pin: '1111' })).data.token;
-const B = (await api('registrar', { negocio: 'Pulpería Mary', nombre: 'Mary', giro: 'tienda', whatsapp: '32222222', pin: '2222' })).data.token;
+const A = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Norey Beauty', nombre: 'Noemí', giro: 'catalogo', whatsapp: '31111111', pin: '1111' })).data.token;
+const B = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería Mary', nombre: 'Mary', giro: 'tienda', whatsapp: '32222222', pin: '2222' })).data.token;
 const na = (await api('bootstrap', {}, A)).data.negocioId, nb = (await api('bootstrap', {}, B)).data.negocioId;
 subsT.push({ negocio: na, apagados: '' }, { negocio: nb, apagados: '' });
 await api('guardar', { entidad: 'Productos', registro: { nombre: 'Gloss', categoria: 'Labios', precio: 120, tipo: 'producto', stock: 5 } }, A);

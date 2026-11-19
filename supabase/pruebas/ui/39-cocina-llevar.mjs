@@ -1,7 +1,7 @@
 // 1.9.67 · Cocina (comandas nueva → preparando → lista → 🔔 en la mesa) y pedidos para llevar / a domicilio desde Mesas
 import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
 import { paso, texto, tiene, btn } from './lib.mjs';
-const r = await api('registrar', { negocio: 'Comedor La Ceiba', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
+const r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Comedor La Ceiba', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
 await api('cargarEjemplos', {}, A);
 await api('guardarUsuario', { registro: { usuario: '98222222', nombre: 'Karla', rol: 'mesero', activo: true }, clave: '1111' }, A);
 await api('guardarUsuario', { registro: { usuario: '98555555', nombre: 'Doña Rosa', rol: 'cocina', activo: true }, clave: '5555' }, A);

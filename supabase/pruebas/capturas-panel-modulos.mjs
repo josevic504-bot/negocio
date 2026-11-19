@@ -15,7 +15,7 @@ const web = http.createServer((q, r) => { const u = decodeURIComponent(q.url.spl
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123', DATOS_PAGO_LIC: 'BAC · Cuenta 7300-0000-1 · José Vicdonio Molina' } });
 const negs = [];
 for (const [n, d, g, w] of [['Norey Beauty & More', 'Noemí Reyes', 'catalogo', '33130265'], ['Boutique Ana', 'Ana López', 'ropa', '99887766'], ['Vet Canitas', 'Luis Pérez', 'veterinaria', '98765432'], ['Comedor Mary', 'Mary Castro', 'comida', '97776655'], ['Eventos Sol', 'Karla Díaz', 'eventos', '96665544']]) {
-  const t = (await api('registrar', { negocio: n, nombre: d, giro: g, whatsapp: w, pin: '1234' })).data.token; negs.push({ t, id: (await api('bootstrap', {}, t)).data.negocioId });
+  const t = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: n, nombre: d, giro: g, whatsapp: w, pin: '1234' })).data.token; negs.push({ t, id: (await api('bootstrap', {}, t)).data.negocioId });
 }
 const pt = (await api('panelLogin', { clave: 'clave123' })).data.token;
 const P = (a, d) => srv.atender({ action: a, panel: pt, data: d || {} });

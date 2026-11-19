@@ -1,7 +1,7 @@
 // 1.9.49: el cliente cambia su pedido desde «Tus pedidos»; precio por cantidad; el negocio baja cantidades
 import { api, db } from './prueba.mjs';
 let ok=0, mal=0; const v=(n,c,d)=>{ if(c) ok++; else { mal++; console.log('✗',n,d===undefined?'':JSON.stringify(d)); } };
-const reg = await api('registrar',{negocio:'Belleza Demo',nombre:'Demo',giro:'catalogo',whatsapp:'98765432',pin:'1234'}); const tok=reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio:'Belleza Demo',nombre:'Demo',giro:'catalogo',whatsapp:'98765432',pin:'1234'}); const tok=reg.data.token;
 await api('cargarEjemplos',{},tok);
 const N=db.T.Licencias[0].id, P=n=>db.T.Productos.find(x=>x.nombre.startsWith(n));
 const polvo=P('Polvo'), blush=P('Blush');

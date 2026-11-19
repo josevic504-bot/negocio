@@ -1,6 +1,6 @@
 import { api, db } from './prueba.mjs';
 let ok=0,mal=0; const v=(n,c,d)=>{ if(c) ok++; else { mal++; console.log('✗',n,JSON.stringify(d||'').slice(0,400)); } };
-const r = await api('registrar', { negocio: 'Comedor Sol', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
+const r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Comedor Sol', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
 await api('cargarEjemplos', {}, A);
 await api('guardar',{entidad:'Config',registro:{tienda:'si',tiendaEntrega:'ambos'}},A);
 const N=db.T.Licencias[0].id; const p=db.T.Productos.find(x=>x.activo&&x.tienda);

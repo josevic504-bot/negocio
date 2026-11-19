@@ -4,7 +4,7 @@ import { api } from './prueba.mjs';
 import http from 'node:http'; import fs from 'node:fs'; import path from 'node:path';
 const RAIZ = process.argv[3] || path.resolve('../..'), OUT = process.argv[2];
 const srv = http.createServer((q, r) => { let f = path.join(RAIZ, decodeURIComponent(q.url.split('?')[0])); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.js') ? 'text/javascript' : f.endsWith('.json') ? 'application/json' : f.endsWith('.png') ? 'image/png' : 'application/octet-stream' }); r.end(d); }); }).listen(8765);
-const reg = await api('registrar', { negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
 const tok = reg.data.token;
 await api('cargarEjemplos', {}, tok);
 const b = (await api('bootstrap', {}, tok)).data;

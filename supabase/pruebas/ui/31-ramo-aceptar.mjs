@@ -3,7 +3,7 @@ import fs from 'node:fs';
 const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src:url(data:font/woff2;base64,${fs.readFileSync('node_modules/@fontsource/'+p).toString('base64')})}`;
 const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
 const tiro = async (pg, n) => { await pg.waitForTimeout(450); await pg.screenshot({ path: `${OUT}/${n}.png` }); };
-const reg = await api('registrar', { negocio: 'Flores del Valle', nombre: 'Demo', giro: 'floristeria', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula', negocio: 'Flores del Valle', nombre: 'Demo', giro: 'floristeria', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
 await api('cargarEjemplos', {}, tok);
 await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tiendaEntrega: 'ambos', tiendaEnvio: '90', tiendaPagos: 'Efectivo,Transferencia' } }, tok);
 const N = db.T.Licencias[0].id, P = n => db.T.Productos.find(x => x.nombre.startsWith(n));
@@ -28,13 +28,15 @@ for (const [id, pr] of [[id1, '980'], [id2, '850']]) {
   await pg.evaluate(id => document.querySelector(`[data-a="pedAccion"][data-e="cotizar"][data-id="${id}"]`).click(), id); await pg.waitForTimeout(500);
   await pg.fill('#cr-p', pr); await pg.fill('#cr-n', 'El lirio va en botón para que dure más.');
   await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button')].filter(b => /Enviar precio/.test(b.textContent)).pop().click()); await pg.waitForTimeout(800);
-  if (id === id1) { msj = await pg.evaluate(() => document.querySelector('.msg-prev').textContent); await tiro(pg, '2-aviso-whatsapp'); }
+  if (id === id1) { msj = await pg.evaluate(() => { const e = document.querySelector('.msg-prev'); return e ? e.textContent : 'SIN-VISTA-PREVIA ' + ([...document.querySelectorAll('.sheet, .hoja')].pop() || document.body).innerText.replace(/\s+/g, ' ').slice(0, 200); }); console.log('     [aviso] ' + msj.slice(0, 260)); }
   await pg.evaluate(() => cerrarHojas()); await pg.waitForTimeout(400);
 }
 const tp = await pg.txt();
 ok('App: sigue visible en «Precio enviado» con contador', /Precio enviado 2/.test(tp) && /María López/.test(tp) && /Ya aceptó/.test(tp), tp.slice(0, 300));
 await pg.evaluate(() => window.scrollTo(0, 0)); await tiro(pg, '1-app-precio-enviado');
-ok('Enlace del WhatsApp abre el ramo', msj.includes('&ramo=' + id1), msj);
+// Con el chat de la tienda encendido el precio se avisa solo por el chat (mensaje automático), ya no sale la vista previa de WhatsApp
+const porChat = !/https?:/.test(msj); if (porChat) msj = 'http://localhost:8765/?tienda=' + N + '&ramo=' + encodeURIComponent(id1);
+ok('El precio se avisa al cliente (por el chat de la tienda, o con el enlace de WhatsApp)', porChat ? db.T.Mensajes.some(m => /Ya tenemos el precio de tu pedido/.test(m.texto)) : msj.includes('&ramo=' + id1), msj);
 // Cliente 1 abre el enlace en el navegador de WhatsApp (sin datos guardados)
 const w = await nuevaPagina({}); await w.goto(msj.match(/https?:\S+/)[0].replace(/^https?:\/\/[^/]+/, 'http://localhost:8765')); await w.waitForTimeout(1500); await w.addStyleTag({ content: css });
 ok('Pide su WhatsApp', /Escribe el WhatsApp/.test(await w.locator('.sheet').last().innerText().catch(() => '')));

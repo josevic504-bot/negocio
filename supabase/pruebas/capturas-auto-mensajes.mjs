@@ -11,7 +11,7 @@ const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b)
 const api = (action, data, token) => srv.atender({ action, token, data: data || {} });
 const web = http.createServer((q, r) => { const u = decodeURIComponent(q.url.split('?')[0]);
   let f = path.join(RAIZ, u); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.webp') ? 'image/webp' : f.endsWith('.png') ? 'image/png' : 'application/octet-stream' }); r.end(d); }); }).listen(8772);
-const tok = (await api('registrar', { negocio: 'Variedades Hernández', nombre: 'Karla Hernández', giro: 'variedades', whatsapp: '33130265', pin: '1234' })).data.token;
+const tok = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Hernández', nombre: 'Karla Hernández', giro: 'variedades', whatsapp: '33130265', pin: '1234' })).data.token;
 await api('cargarEjemplos', {}, tok);
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }] });

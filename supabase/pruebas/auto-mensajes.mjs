@@ -1,7 +1,7 @@
 // 1.9.77: mensajes automáticos de la tienda al comprador (pedido recibido, confirmado, listo, pago, cancelado, precio de ramo, fuera de horario, bienvenida)
 import { api, db } from './prueba.mjs';
 let ok=0, mal=0; const v=(n,c,d)=>{ if(c) ok++; else { mal++; console.log('✗',n,d===undefined?'':JSON.stringify(d)); } };
-const reg = await api('registrar',{negocio:'Variedades Demo',nombre:'Demo',giro:'variedades',whatsapp:'98765432',pin:'1234'}); const tok=reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio:'Variedades Demo',nombre:'Demo',giro:'variedades',whatsapp:'98765432',pin:'1234'}); const tok=reg.data.token;
 await api('cargarEjemplos',{},tok);
 const N=db.T.Licencias[0].id;
 const g=await api('guardar',{entidad:'Config',registro:{tienda:'si',tiendaEntrega:'ambos',tiendaPagos:'Efectivo,Transferencia',tiendaAbre:'00:00',tiendaCierra:'23:59',tiendaDias:'0,1,2,3,4,5,6'}},tok);
@@ -71,7 +71,7 @@ r=await api('chatEnviar',{negocio:N,nombre:'Juan Paz',telefono:'2211-0099',texto
 v('bienvenida al primer mensaje',r.ok&&r.data.mensajes.length===2&&/Hola Juan 👋 Gracias por escribirnos/.test(r.data.mensajes[1].texto),r.data.mensajes);
 r=await api('chatEnviar',{negocio:N,clave:r.data.clave,texto:'otra cosa'}); v('bienvenida solo una vez',r.data.mensajes.length===3,r.data.mensajes);
 // ramo (floristería)
-const reg2 = await api('registrar',{negocio:'Flores Demo',nombre:'Demo',giro:'floristeria',whatsapp:'98760000',pin:'1234'}); const tok2=reg2.data.token;
+const reg2 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio:'Flores Demo',nombre:'Demo',giro:'floristeria',whatsapp:'98760000',pin:'1234'}); const tok2=reg2.data.token;
 await api('cargarEjemplos',{},tok2); const N2=db.T.Licencias.find(x=>x.negocio==='Flores Demo').id;
 await api('guardar',{entidad:'Config',registro:{tienda:'si',tiendaEntrega:'ambos'}},tok2);
 const fl=db.T.Productos.filter(x=>x.negocio_id===N2&&x.activo&&/flores sueltas/i.test(x.categoria))[0];

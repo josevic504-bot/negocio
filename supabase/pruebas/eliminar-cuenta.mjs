@@ -11,7 +11,7 @@ const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b)
 const api = (action, data, token, extra) => srv.atender(Object.assign({ action, token, data: data || {} }, extra || {}));
 let fallas = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) fallas++; };
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123', TAREAS_CLAVE: 'tk', RT_SECRETO: 'rt', VAPID_PUBLICA: 'p', VAPID_PRIVADA: 'q' } });
-const reg = async (n, w) => { const t = (await api('registrar', { negocio: n, nombre: 'Dueña', giro: 'catalogo', whatsapp: w, pin: '1234' })).data.token; await api('cargarEjemplos', {}, t); return { t, id: (await api('bootstrap', {}, t)).data.negocioId }; };
+const reg = async (n, w) => { const t = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: n, nombre: 'Dueña', giro: 'catalogo', whatsapp: w, pin: '1234' })).data.token; await api('cargarEjemplos', {}, t); return { t, id: (await api('bootstrap', {}, t)).data.negocioId }; };
 const A = await reg('Norey Beauty', '33130265'), B = await reg('Comedor Mary', '97776655');
 const pt = (await api('panelLogin', { clave: 'clave123' })).data.token;
 const P = (a, d) => srv.atender({ action: a, panel: pt, data: d || {} });
@@ -39,12 +39,12 @@ const rl = (await P('panelRespaldos', { id: A.id })).data; ok(rl.length >= 1 && 
 const rs = await P('panelRespaldoRestaurar', { id: A.id, rid: rl[rl.length - 1].id, alcance: 'todo' }); ok(rs.ok && cuenta('Productos', A.id) === prodA, 'Vic recupera todo desde la copia (' + cuenta('Productos', A.id) + ' productos)');
 // eliminarCuenta
 ok((await api('eliminarCuenta', { confirmar: 'borrar', pin: '1234' }, B.t)).error.indexOf('ELIMINAR') >= 0, 'pide escribir ELIMINAR');
-const ec = await api('eliminarCuenta', { confirmar: 'eliminar', pin: '1234', motivo: 'Cerré el negocio' }, B.t); ok(ec.ok && ec.data.hasta > '2026-11-30', 'cuenta eliminada, se guarda hasta ' + (ec.data && ec.data.hasta));
+const ec = await api('eliminarCuenta', { confirmar: 'eliminar', pin: '1234', motivo: 'Cerré el negocio' }, B.t); ok(ec.ok && ec.data.hasta > new Date().toISOString().slice(0, 10), 'cuenta eliminada, se guarda hasta ' + (ec.data && ec.data.hasta));
 const bb = await api('bootstrap', {}, B.t); ok(!bb.ok && /eliminada/.test(bb.error), 'sus usuarios ya no entran: ' + String(bb.error).slice(0, 40));
 const lg = await api('login', { whatsapp: '97776655', pin: '1234' }); ok(!lg.ok, 'ni con el WhatsApp: ' + lg.error);
-const re = await api('registrar', { negocio: 'Mary 2', nombre: 'Mary', giro: 'comida', whatsapp: '97776655', pin: '1234' }); ok(re.ok, 'su WhatsApp queda libre para registrarse de nuevo');
+const re = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Mary 2', nombre: 'Mary', giro: 'comida', whatsapp: '97776655', pin: '1234' }); ok(re.ok, 'su WhatsApp queda libre para registrarse de nuevo');
 let res = (await P('panelResumen')).data;
-ok(res.eliminadas.length === 1 && res.eliminadas[0].motivo === 'Cerré el negocio' && res.eliminadas[0].borraEl === '2026-12-03' && res.negocios.every(n => n.id !== B.id), 'el Panel la ve en eliminadas: ' + JSON.stringify(res.eliminadas[0].borraEl));
+ok(res.eliminadas.length === 1 && res.eliminadas[0].motivo === 'Cerré el negocio' && res.eliminadas[0].borraEl === ec.data.hasta && res.negocios.every(n => n.id !== B.id), 'el Panel la ve en eliminadas: ' + JSON.stringify(res.eliminadas[0].borraEl));
 ok(res.avisosCli.length >= 3, 'avisos del cliente en pendientes: ' + res.avisosCli.length);
 const fi = (await P('panelNegocio', { id: B.id })).data; ok(fi.estado === 'eliminada' && fi.eliminada && !fi.eliminada.purgado, 'ficha: ' + JSON.stringify(fi.eliminada));
 // Recuperar

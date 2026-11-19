@@ -16,32 +16,32 @@ const panel = (a, d) => api(a, d, undefined, { panel: PT });
 
 /* ===================== REGISTRAR ===================== */
 sec('registrar');
-let r = await api('registrar', { negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '3313-0265', pin: '1234' });
+let r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '3313-0265', pin: '1234' });
 ok('registrar válido', r.ok && r.data.token && r.data.usuario.rol === 'admin', err(r));
 let TOK = r.data.token; const NEG1 = db.T.Licencias[0].id;
 ok('whatsapp se guarda con 504', db.T.Accesos[0].whatsapp === '50433130265', db.T.Accesos[0].whatsapp);
-r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130265', pin: '9999' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130265', pin: '9999' });
 ok('registrar whatsapp repetido → rechazado', !r.ok && /ya tiene una cuenta/.test(r.error), err(r));
-r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '123' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '123' });
 ok('registrar pin corto (3) → rechazado', !r.ok && /4 a 6/.test(r.error), err(r));
-r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '1234567' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '1234567' });
 ok('registrar pin largo (7) → rechazado', !r.ok && /4 a 6/.test(r.error), err(r));
-r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: 'abcd' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: 'abcd' });
 ok('registrar pin con letras → rechazado', !r.ok && /4 a 6/.test(r.error), err(r));
-r = await api('registrar', { negocio: '', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '1234' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: '', nombre: 'X', giro: 'tienda', whatsapp: '33130266', pin: '1234' });
 ok('registrar sin nombre de negocio → rechazado', !r.ok && /nombre de tu negocio/.test(r.error), err(r));
-r = await api('registrar', { negocio: 'Otra', nombre: '', giro: 'tienda', whatsapp: '33130266', pin: '1234' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Otra', nombre: '', giro: 'tienda', whatsapp: '33130266', pin: '1234' });
 ok('registrar sin nombre propio → rechazado', !r.ok && /tu nombre/.test(r.error), err(r));
-r = await api('registrar', { negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '3313', pin: '1234' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Otra', nombre: 'X', giro: 'tienda', whatsapp: '3313', pin: '1234' });
 ok('registrar whatsapp corto → rechazado', !r.ok && /WhatsApp/.test(r.error), err(r));
-r = await api('registrar', { negocio: 'Giro raro', nombre: 'Ana', giro: 'inexistente', whatsapp: '99990001', pin: '5555' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Giro raro', nombre: 'Ana', giro: 'inexistente', whatsapp: '99990001', pin: '5555' });
 ok('registrar giro inválido → se acepta como «otro»', r.ok && db.T.Licencias.find(l => l.negocio === 'Giro raro').giro === 'Otro tipo de negocio', err(r));
 const TOK_ANA = r.data.token;
-r = await api('registrar', { negocio: 'Cinco', nombre: 'C', giro: 'otro', whatsapp: '99990005', pin: '12345' }); ok('registrar pin de 5 dígitos → ok', r.ok, err(r));
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Cinco', nombre: 'C', giro: 'otro', whatsapp: '99990005', pin: '12345' }); ok('registrar pin de 5 dígitos → ok', r.ok, err(r));
 db.cache['REG_H'] = { v: '30', e: Date.now() + 3600000 };
-r = await api('registrar', { negocio: 'Treinta', nombre: 'T', giro: 'otro', whatsapp: '99990030', pin: '1234' }); ok('registrar con 30 registros en la hora → rechazado', !r.ok && /muchos registros/.test(r.error), err(r));
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Treinta', nombre: 'T', giro: 'otro', whatsapp: '99990030', pin: '1234' }); ok('registrar con 30 registros en la hora → rechazado', !r.ok && /muchos registros/.test(r.error), err(r));
 delete db.cache['REG_H'];
-r = await api('registrar', { negocio: 'Boutique Luna', nombre: 'Beto', giro: 'boutique', whatsapp: '99990002', pin: '2222' });
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Boutique Luna', nombre: 'Beto', giro: 'boutique', whatsapp: '99990002', pin: '2222' });
 ok('registrar boutique', r.ok, err(r)); const TOK_B = r.data.token; const NEG_B = db.T.Licencias.find(l => l.negocio === 'Boutique Luna').id;
 
 /* ===================== INFO / LOGIN ===================== */
@@ -383,7 +383,7 @@ r = await api('historial', {}, TOK); ok('historial admin', r.ok && Array.isArray
 
 /* ===================== cambiarNegocio ===================== */
 sec('cambiarNegocio (una persona con 2 negocios)');
-r = await api('registrar', { negocio: 'Segundo de Vic', nombre: 'Vic', giro: 'comida', whatsapp: '33130265', pin: '1234' }); ok('registrar 2.º negocio con el mismo whatsapp → rechazado (se agrega desde el Panel)', !r.ok && /ya tiene una cuenta/.test(r.error), err(r));
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Segundo de Vic', nombre: 'Vic', giro: 'comida', whatsapp: '33130265', pin: '1234' }); ok('registrar 2.º negocio con el mismo whatsapp → rechazado (se agrega desde el Panel)', !r.ok && /ya tiene una cuenta/.test(r.error), err(r));
 r = await api('cambiarNegocio', { negocioId: NEG_B }, TOK); ok('cambiarNegocio a uno ajeno → rechazado', !r.ok && /No tienes acceso/.test(r.error), err(r));
 r = await api('bootstrap', {}, TOK); ok('con un solo negocio: negocios = []', r.ok && r.data.negocios.length === 0, err(r));
 r = await panel('panelAccion', { id: NEG1, accion: 'agregarNegocio', negocio: 'Comedor de Vic', giro: 'comida', copiar: { usuarios: true, clientes: true } }); ok('Panel: agregar 2.º negocio a Vic', r.ok, err(r));
@@ -469,7 +469,7 @@ ok('licencia marcada Eliminada con motivo', licB.estado === 'Eliminada' && /Cier
 ok('acceso tapado con x', db.T.Accesos.find(a => a.negocioId === NEG_B).whatsapp === 'x50499990002');
 r = await api('bootstrap', {}, TOK_B); ok('sesión de cuenta eliminada → aviso «eliminada»', !r.ok && /PRUEBA_VENCIDA/.test(r.error) && /"tipo":"eliminada"/.test(r.error), err(r));
 r = await api('login', { whatsapp: '99990002', pin: '2222' }); ok('login de cuenta eliminada → incorrectos', !r.ok && /incorrectos/.test(r.error), err(r));
-r = await api('registrar', { negocio: 'Boutique Luna Nueva', nombre: 'Beto', giro: 'boutique', whatsapp: '99990002', pin: '3333' }); ok('el whatsapp queda libre para registrarse de nuevo', r.ok && r.data.token, err(r));
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Boutique Luna Nueva', nombre: 'Beto', giro: 'boutique', whatsapp: '99990002', pin: '3333' }); ok('el whatsapp queda libre para registrarse de nuevo', r.ok && r.data.token, err(r));
 r = await panel('panelAccion', { id: NEG_B, accion: 'recuperar' }); ok('Panel: recuperar cuenta eliminada', r.ok, err(r));
 ok('al recuperar se destapa el acceso', db.T.Accesos.find(a => a.negocioId === NEG_B).whatsapp === '50499990002');
 r = await api('login', { whatsapp: '99990002', pin: '2222' }); ok('recuperada + registro nuevo con el mismo whatsapp: login pide elegir o entra', r.ok, err(r));

@@ -4,7 +4,7 @@ const F1 = process.env.F1, F2 = process.env.F2; // fotos de prueba (jpg)
 const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src:url(data:font/woff2;base64,${fs.readFileSync('node_modules/@fontsource/'+p).toString('base64')})}`;
 const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
 const tiro = async (pg, n) => { await pg.waitForTimeout(400); await pg.screenshot({ path: `${OUT}/${n}.png` }); };
-const reg = await api('registrar', { negocio: 'Flores del Valle', nombre: 'Demo', giro: 'floristeria', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Flores del Valle', nombre: 'Demo', giro: 'floristeria', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
 await api('cargarEjemplos', {}, tok); await api('guardar', { entidad: 'Config', registro: { tienda: 'si' } }, tok);
 const N = db.T.Licencias[0].id, rosa = db.T.Productos.find(x => x.nombre.startsWith('Rosa')).id;
 const t = await nuevaPagina({}); await t.goto('http://localhost:8765/?tienda=' + N); await t.waitForTimeout(2000); await t.addStyleTag({ content: css });
@@ -28,7 +28,7 @@ await pg.evaluate(() => [...document.querySelectorAll('.sheet-f button')].filter
 const c2 = JSON.parse(db.T.Pedidos[0].cotiza);
 ok('Al cotizar se conservan las fotos', c2.precio === 880 && c2.fotos.length === 2, db.T.Pedidos[0].cotiza);
 // Limpieza en un negocio aparte (su limpieza diaria todavía no ha corrido hoy)
-const reg2 = await api('registrar', { negocio: 'Flores Dos', nombre: 'Demo', giro: 'floristeria', whatsapp: '97771111', pin: '1234' }); const tok2 = reg2.data.token;
+const reg2 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Flores Dos', nombre: 'Demo', giro: 'floristeria', whatsapp: '97771111', pin: '1234' }); const tok2 = reg2.data.token;
 await api('cargarEjemplos', {}, tok2); await api('guardar', { entidad: 'Config', registro: { tienda: 'si' } }, tok2);
 const N2 = db.T.Licencias.find(x => x.negocio === 'Flores Dos').id, rosa2 = db.T.Productos.find(x => x.negocio_id === N2 && x.nombre.startsWith('Rosa')).id;
 const foto = 'data:image/jpeg;base64,' + fs.readFileSync(F1).toString('base64');

@@ -16,18 +16,18 @@ const web = sirve(RAIZ, 8781), web2 = sirve(PUB, 8782);
 let fallas = 0; const v = (n, c, x) => { console.log((c ? '✔ ' : '✘ ') + n); if (!c) { fallas++; if (x !== undefined) console.log('   ', JSON.stringify(x).slice(0, 400)); } };
 
 // 1) Servidor
-const tok = (await api('registrar', { negocio: 'Flores del Valle', nombre: 'Ana Mejía', giro: 'floristeria', whatsapp: '33130265', pin: '1234' })).data.token;
+const tok = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Flores del Valle', nombre: 'Ana Mejía', giro: 'floristeria', whatsapp: '33130265', pin: '1234' })).data.token;
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 const cfg = r => api('guardar', { entidad: 'Config', registro: r }, tok);
 const dir = async () => { const r = await api('tiendaInfo', { negocio: neg }); return r.ok ? r.data.negocio.dir : 'ERROR ' + r.error; };
 await cfg({ tienda: 'si' });
 v('apagado de fábrica: la tienda no trae «dir»', (await dir()) === null);
 const sinCiudad = await cfg({ dirOn: 'si', dirCiudad: '' });
-v('encender sin ciudad se rechaza', !sinCiudad.ok && /ciudad/i.test(sinCiudad.error), sinCiudad);
+v('encender sin ciudad se guarda (regla del 17 nov: sale como «Honduras» hasta que la escriba)', sinCiudad.ok && sinCiudad.data.dirOn === 'si', sinCiudad.error);
 const ok1 = await cfg({ dirOn: 'si', dirCiudad: 'El Progreso', dirFrase: 'Arreglos listos y «Arma tu ramo» a tu gusto' });
 v('encender con ciudad se guarda', ok1.ok && ok1.data.dirOn === 'si', ok1.error);
 await api('cargarEjemplos', { giro: 'floristeria' }, tok);
-v('en la prueba gratis no aparece (Plus sin pagar)', (await dir()) === null, await dir());
+v('en la prueba gratis con solo productos de ejemplo no aparece', (await dir()) === null, await dir());
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { estado: 'Activa', plus: 'Sí' } }] });
 v('con Plus pero solo productos de ejemplo no aparece', (await dir()) === null, await dir());
 const pr = (await api('guardar', { entidad: 'Productos', registro: { nombre: 'Ramo de 12 rosas', categoria: 'Arreglos listos', precio: 650, costo: 300, stock: 5, tipo: 'producto', activo: true, tienda: true } }, tok));
@@ -57,11 +57,12 @@ v('encender y guardar deja el interruptor encendido', await app.locator('#aj-dir
 v('el servidor ya la muestra en el directorio', !!(await dir()), await dir());
 await ver('2-app-encendido');
 await app.locator('#aj-dir [data-k="dirCiudad"]').fill(''); await app.locator('#aj-dir [data-a="guardarAj"]').click(); await app.waitForTimeout(1000);
-v('borrar la ciudad con el interruptor encendido no se guarda (el servidor avisa)', (await api('bootstrap', {}, tok)).data.config.dirCiudad === 'El Progreso' && /ciudad/i.test(await app.evaluate(() => document.body.innerText)));
+v('borrar la ciudad con el interruptor encendido: se guarda y la app avisa que sale como «Honduras»', (await api('bootstrap', {}, tok)).data.config.dirCiudad === '' && /apareces como «Honduras»/i.test(await app.evaluate(() => document.body.innerText)));
 await app.screenshot({ path: OUT + '/2b-app-sin-ciudad.png' });
 v('sin errores de JavaScript en la app', !errores.length, errores);
 
-// 3) Las páginas del directorio (generadas con tiendas de ejemplo)
+// 3) Las páginas del directorio (generadas con tiendas de ejemplo). Sin la carpeta «publico» de muestra (7 tiendas) esta parte se omite.
+if (!PUB || !fs.existsSync(PUB + '/tiendas/index.html') || !/Todo en Uno HN/.test(fs.readFileSync(PUB + '/tiendas/index.html', 'utf8'))) { console.log('— páginas del directorio: OMITIDAS (falta la carpeta «publico» generada con las 7 tiendas de muestra)'); await br.close(); web.close(); web2.close(); console.log(fallas ? fallas + ' FALLAS' : 'TODO BIEN'); process.exit(fallas ? 1 : 0); }
 const err2 = [];
 const foto = async (ruta, n, w, h, completa) => { const c = await br.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: w < 500 ? 2 : 1 }); const p = await c.newPage(); p.on('pageerror', e => err2.push(ruta + ': ' + e.message));
   await p.route(/^https?:\/\/(?!localhost).*/, rt => rt.abort()); const r = await p.goto('http://localhost:8782' + ruta); await p.waitForTimeout(600); await p.screenshot({ path: OUT + '/' + n + '.png', fullPage: !!completa }); return { p, c, st: r.status() }; };

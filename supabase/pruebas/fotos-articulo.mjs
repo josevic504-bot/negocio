@@ -5,7 +5,7 @@ const webs=[]; db.web = async u => { webs.push(u);
   if (u === 'vistaprevia:https://share.temu.com/ycQIB1sgPQA') return { texto: JSON.stringify({ titulo: 'Bolso bandolera negro', img: 'https://img.kwcdn.com/x.jpg', sitio: 'Temu' }), codigo: 200 };
   if (u.indexOf('vistaprevia:') === 0) return { texto: '{}', codigo: 204 };
   return { texto: JSON.stringify({ result: 'success', rates: { HNL: 26.5 } }), codigo: 200 }; };
-const reg = await api('registrar',{negocio:'Todo en Uno Demo',nombre:'Demo',giro:'compras',whatsapp:'98765400',pin:'1234'}); const tok=reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio:'Todo en Uno Demo',nombre:'Demo',giro:'compras',whatsapp:'98765400',pin:'1234'}); const tok=reg.data.token;
 v('registro',reg.ok,reg);
 const N=db.T.Licencias[0].id;
 let g=await api('guardar',{entidad:'Config',registro:{tienda:'si',tiendaEntrega:'ambos',tiendaPagos:'Efectivo,Transferencia',comprasCambio:'25',comprasRecargo:'15',comprasEnvio:'0',comprasAnticipo:'50',comprasPlazo:'8',tiendaAbre:'00:00',tiendaCierra:'23:59',tiendaDias:'0,1,2,3,4,5,6'}},tok);

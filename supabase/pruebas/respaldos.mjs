@@ -9,10 +9,10 @@ const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b)
 const api = (action, data, token, extra) => srv.atender(Object.assign({ action, token, data: data || {} }, extra || {}));
 let fallas = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); if (!c) fallas++; };
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123', TAREAS_CLAVE: 'tk', RT_SECRETO: 'rt' } });
-const t1 = (await api('registrar', { negocio: 'Norey Beauty', nombre: 'Noemí', giro: 'catalogo', whatsapp: '33130265', pin: '1234' })).data.token;
+const t1 = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Norey Beauty', nombre: 'Noemí', giro: 'catalogo', whatsapp: '33130265', pin: '1234' })).data.token;
 await api('cargarEjemplos', {}, t1);
 const n1 = (await api('bootstrap', {}, t1)).data.negocioId;
-const t2 = (await api('registrar', { negocio: 'Perfumería Rosa', nombre: 'Rosa', giro: 'catalogo', whatsapp: '99887766', pin: '1234' })).data.token;
+const t2 = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Perfumería Rosa', nombre: 'Rosa', giro: 'catalogo', whatsapp: '99887766', pin: '1234' })).data.token;
 const n2 = (await api('bootstrap', {}, t2)).data.negocioId;
 const pt = (await api('panelLogin', { clave: 'clave123' })).data.token;
 const P = (a, d) => srv.atender({ action: a, panel: pt, data: d || {} });

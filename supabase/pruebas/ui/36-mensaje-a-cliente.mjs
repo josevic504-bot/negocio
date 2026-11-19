@@ -5,8 +5,8 @@ const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src
 const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
 const tiro = async (pg, n) => { await pg.waitForTimeout(500); await pg.screenshot({ path: `${OUT}/${n}.png` }); };
 db.props.PANEL_CLAVE = 'clave-panel';
-const r1 = await api('registrar', { negocio: 'Variedades Ana', nombre: 'Ana Rivera', giro: 'variedades', whatsapp: '98765432', pin: '1234' }); const tok1 = r1.data.token;
-const r2 = await api('registrar', { negocio: 'Ferretería Luis', nombre: 'Luis Paz', giro: 'ferreteria', whatsapp: '97001122', pin: '1234' }); const tok2 = r2.data.token;
+const r1 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Ana', nombre: 'Ana Rivera', giro: 'variedades', whatsapp: '98765432', pin: '1234' }); const tok1 = r1.data.token;
+const r2 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Ferretería Luis', nombre: 'Luis Paz', giro: 'ferreteria', whatsapp: '97001122', pin: '1234' }); const tok2 = r2.data.token;
 const lic1 = db.T.Licencias.find(l => l.negocio === 'Variedades Ana'), lic2 = db.T.Licencias.find(l => l.negocio === 'Ferretería Luis');
 // Panel → ficha → mensaje
 const pg = await nuevaPagina({}); await pg.goto('http://localhost:8765/?panel'); await pg.waitForTimeout(1500); await pg.addStyleTag({ content: css });

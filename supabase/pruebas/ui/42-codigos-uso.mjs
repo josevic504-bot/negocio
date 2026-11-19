@@ -20,7 +20,7 @@ const nuevoProd = async (pg, nombre, cat, precio, cod, antes) => {
 };
 
 /* ============ 1) FARMACIA (un giro) ============ */
-const reg = await api('registrar', { negocio: 'Farmacia San Rafael', nombre: 'Rafael Mejía', giro: 'farmacia', whatsapp: '98765432', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Farmacia San Rafael', nombre: 'Rafael Mejía', giro: 'farmacia', whatsapp: '98765432', pin: '1234' });
 const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
 const neg = (await api('bootstrap', {}, tok)).data.negocioId; const prod = n => prodN(neg, n);
 let pg = await abrir(tok);
@@ -110,7 +110,7 @@ await paso(pg, 'App · limpiar datos de prueba sigue ofreciendo solo los de ejem
 await pg.context().close();
 
 /* ============ 2) VARIAS SECCIONES ============ */
-const r2 = await api('registrar', { negocio: 'Todo en Uno HN', nombre: 'Karla Paz', giro: 'variedades', whatsapp: '99001122', pin: '1234' });
+const r2 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Todo en Uno HN', nombre: 'Karla Paz', giro: 'variedades', whatsapp: '99001122', pin: '1234' });
 const t2 = r2.data.token, n2 = (await api('bootstrap', {}, t2)).data.negocioId; await activar(n2, { giros: 'streaming,recargas' });
 pg = await abrir(t2);
 await paso(pg, 'Secciones · al tocar «Streaming» el campo cambia a STR-0001 y se guarda así', async () => {
@@ -137,7 +137,7 @@ await paso(pg, 'Secciones · usuario de bodega asignado a Recargas: su producto 
 await pg.context().close();
 
 /* ============ 3) CATÁLOGO: lo que ve el comprador ============ */
-const r3 = await api('registrar', { negocio: 'Norey Beauty', nombre: 'Noemí Reyes', giro: 'catalogo', whatsapp: '33130265', pin: '1234' });
+const r3 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Norey Beauty', nombre: 'Noemí Reyes', giro: 'catalogo', whatsapp: '33130265', pin: '1234' });
 const t3 = r3.data.token, n3 = (await api('bootstrap', {}, t3)).data.negocioId; await activar(n3); await api('guardar', { entidad: 'Config', registro: { tienda: 'si' } }, t3);
 const lab = await api('guardar', { entidad: 'Productos', registro: { nombre: 'Labial mate Rosa Nude', categoria: 'Labios', precio: 180, tienda: true, stock: 5 } }, t3);
 pg = await nuevaPagina({});
@@ -177,7 +177,7 @@ await paso(null, 'Panel · carga desde Excel: «revisar» no gasta códigos; al 
   return /^CAT-\d{4}$/.test(s.codigo) && r.codigo === 'RM-01' && l.codigo === lab.data.codigo && l.precio === 190 && db.T.Productos.filter(p => p.negocio_id === n3).length === antes + 2;
 });
 await paso(null, 'Panel · «Copiar productos» a otro negocio del mismo giro que ya usa CAT-0001', async () => {
-  const r4 = await api('registrar', { negocio: 'Bella Catálogo', nombre: 'Ana', giro: 'catalogo', whatsapp: '95551234', pin: '1234' }); const t4 = r4.data.token, n4 = (await api('bootstrap', {}, t4)).data.negocioId; await activar(n4);
+  const r4 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Bella Catálogo', nombre: 'Ana', giro: 'catalogo', whatsapp: '95551234', pin: '1234' }); const t4 = r4.data.token, n4 = (await api('bootstrap', {}, t4)).data.negocioId; await activar(n4);
   const propio = await api('guardar', { entidad: 'Productos', registro: { nombre: 'Base líquida', categoria: 'Rostro', precio: 300 } }, t4);
   const cp = await P('panelCopiarProductos', { de: n3, a: n4, cats: null, fotos: false }); if (!cp.ok) throw new Error(cp.error);
   const dest = db.T.Productos.filter(p => p.negocio_id === n4), sin = dest.filter(p => !p.codigo).map(p => p.nombre), cs = dest.filter(p => p.codigo).map(p => p.codigo.toLowerCase());

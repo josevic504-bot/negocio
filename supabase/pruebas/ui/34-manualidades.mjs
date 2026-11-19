@@ -9,7 +9,7 @@ const servirFotos = async pg => pg.route(/archivos\//, rt => { const ruta = deco
   return e ? rt.fulfill({ status: 200, contentType: e.subir.mime, body: Buffer.from(e.subir.b64, 'base64') }) : rt.abort(); });
 const subir = async (pg, sel, data) => { const b = Buffer.from(data.split(',')[1], 'base64'); await pg.setInputFiles(sel, { name: 'ejemplo.jpg', mimeType: 'image/jpeg', buffer: b }); await pg.waitForTimeout(700); };
 // Registro con el giro nuevo y ejemplos
-const reg = await api('registrar', { negocio: 'Detalles Mágicos', nombre: 'Demo', giro: 'manualidades', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Detalles Mágicos', nombre: 'Demo', giro: 'manualidades', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
 ok('Registro con giro Manualidades', reg.ok, JSON.stringify(reg).slice(0, 150));
 const ej = await api('cargarEjemplos', {}, tok); ok('Ejemplos del giro', ej.ok && ej.data.agregados === 8, JSON.stringify(ej).slice(0, 150));
 await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tiendaEntrega: 'ambos', tiendaEnvio: '80', tiendaPagos: 'Efectivo,Transferencia' } }, tok);

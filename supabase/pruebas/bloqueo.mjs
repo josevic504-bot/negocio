@@ -6,9 +6,9 @@ const IP = 'a1b2c3d4e5f60718', IP2 = '0000000000000002';
 const login = (wa, pin, ip) => api('login', { whatsapp: wa, pin }, undefined, { ip });
 const vencer = pref => Object.keys(db.cache).forEach(k => { if (k.indexOf(pref) === 0) db.cache[k].e = Date.now() - 1; });
 const pushes = () => (db.efectos || []).filter(e => e.push).map(e => e.push);
-const reg = await api('registrar', { negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
 ok(reg.ok, 'registrar');
-const r2 = await api('registrar', { negocio: 'Otro', nombre: 'Ana', giro: 'tienda', whatsapp: '99990000', pin: '5555' }); ok(r2.ok, 'registrar 2');
+const r2 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Otro', nombre: 'Ana', giro: 'tienda', whatsapp: '99990000', pin: '5555' }); ok(r2.ok, 'registrar 2');
 db.props.VAPID_PUBLICA = 'x'; db.props.VAPID_PRIVADA = 'y';
 // 1) 5 fallos → 10 minutos
 let r; for (let i = 0; i < 4; i++) r = await login('33130265', '0000', IP);

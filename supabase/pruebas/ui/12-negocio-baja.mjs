@@ -1,5 +1,5 @@
 import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
-const reg = await api('registrar', { negocio: 'Belleza Demo', nombre: 'Demo', giro: 'catalogo', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Belleza Demo', nombre: 'Demo', giro: 'catalogo', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
 await api('cargarEjemplos', {}, tok);
 const nid = db.T.Licencias[0].id, polvo = db.T.Productos.find(x => x.nombre.startsWith('Polvo'));
 const r = await api('pedir', { negocio: nid, nombre: 'María López', telefono: '9876-5432', entrega: 'recoger', pago: 'Efectivo', items: [{ id: polvo.id, cantidad: 3, opcion: 'Tono: Oscuro' }] });

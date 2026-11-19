@@ -26,7 +26,7 @@ let nWa = 31000000;
 async function negocio(giro, nombre, op) {
   op = op || {};
   const wa = String(nWa++);
-  const r = await api('registrar', { negocio: nombre, nombre: 'Dueño ' + nombre, giro, whatsapp: wa, pin: '1234' });
+  const r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: nombre, nombre: 'Dueño ' + nombre, giro, whatsapp: wa, pin: '1234' });
   if (!r.ok) throw new Error('registrar ' + giro + ': ' + r.error);
   const tok = r.data.token, neg = (await api('bootstrap', {}, tok)).data.negocioId;
   if (op.activar) await activar(neg);

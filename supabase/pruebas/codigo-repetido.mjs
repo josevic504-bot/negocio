@@ -16,7 +16,7 @@ let fallas = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); i
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123' } });
 
 // 1) Ejemplos de dos giros en el mismo negocio: los códigos no se repiten
-const tok = (await api('registrar', { negocio: 'Variedades Sofía', nombre: 'Sofía', giro: 'variedades', whatsapp: '33445566', pin: '1234' })).data.token;
+const tok = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Sofía', nombre: 'Sofía', giro: 'variedades', whatsapp: '33445566', pin: '1234' })).data.token;
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa', giros: 'comida' } }] });
 await api('cargarEjemplos', {}, tok);
@@ -42,7 +42,7 @@ const g4 = await api('guardar', { entidad: 'Productos', registro: { nombre: 'Pro
 ok(g4.ok, 'producto nuevo con código libre: se guarda');
 
 // 3) Copiar productos desde el Panel a un negocio que ya tiene ejemplos: no repite códigos
-const t2 = (await api('registrar', { negocio: 'Tienda Luis', nombre: 'Luis', giro: 'variedades', whatsapp: '99887766', pin: '1234' })).data.token;
+const t2 = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Tienda Luis', nombre: 'Luis', giro: 'variedades', whatsapp: '99887766', pin: '1234' })).data.token;
 const n2 = (await api('bootstrap', {}, t2)).data.negocioId;
 await api('cargarEjemplos', {}, t2);
 const pt = (await api('panelLogin', { clave: 'clave123' })).data.token;

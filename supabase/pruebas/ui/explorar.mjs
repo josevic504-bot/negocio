@@ -1,7 +1,7 @@
 // Explorador: abre una vista, ejecuta pasos y vuelca los campos/botones visibles (para armar las pruebas)
 import { nuevaPagina, cerrar, esperar, api, db } from './base.mjs';
 const pasos = JSON.parse(process.argv[2] || '[]');
-const reg = await api('registrar', { negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: process.env.GIRO || 'variedades', whatsapp: '98765432', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: process.env.GIRO || 'variedades', whatsapp: '98765432', pin: '1234' });
 const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
 const b = (await api('bootstrap', {}, tok)).data; const p = b.productos[0];
 const cli = (await api('guardar', { entidad: 'Clientes', registro: { nombre: 'Doña Marta', telefono: '9999-0000', limite: 5000, activo: true } }, tok)).data; const cid = (cli.registro || cli).id;

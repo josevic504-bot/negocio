@@ -11,7 +11,7 @@ db.push = async q => {
   if (q.quitar) { const i = subsT.findIndex(s => s.endpoint === q.quitar.endpoint && s.negocio === q.quitar.negocio); if (i >= 0) subsT.splice(i, 1); return true; }
 };
 await db.aplicar({ props: { TAREAS_CLAVE: 'tt', VAPID_PUBLICA: 'PUB', VAPID_PRIVADA: 'PRIV', RT_SECRETO: 'secreto' } });
-const reg = await api('registrar', { negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
 const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 const unidos = []; const pushes = [];

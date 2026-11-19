@@ -21,10 +21,10 @@ const G = new Function('SpreadsheetApp', 'Utilities', 'CacheService', 'LockServi
   SRC + '\n' + EXP + '\nreturn { route_, instalar, setNegocio_, negocioPorId_, sembrarEjemplo_, mRows_, exportarASupabase };')(...SH, UrlFetchApp);
 G.instalar();
 const g = req => { try { return { ok: true, data: JSON.parse(JSON.stringify(G.route_(JSON.parse(JSON.stringify(req))) ?? null)) }; } catch (e) { return { ok: false, error: String(e.message || e) }; } };
-const r1 = g({ action: 'registrar', data: { negocio: 'Variedades Sofía', giro: 'variedades', nombre: 'Sofía Hernández', whatsapp: '9876-0000', pin: '1234' } });
+const r1 = g({ action: 'registrar', data: { ciudad: 'San Pedro Sula', negocio: 'Variedades Sofía', giro: 'variedades', nombre: 'Sofía Hernández', whatsapp: '9876-0000', pin: '1234' } });
 const lic = G.mRows_('Licencias').find(l => l.negocio === 'Variedades Sofía');
 G.setNegocio_(G.negocioPorId_(lic.id)); G.sembrarEjemplo_(r1.data.usuario.id);
-g({ action: 'registrar', data: { negocio: 'Ferretería El Clavo', giro: 'ferreteria', nombre: 'Luis', whatsapp: '9555-1111', pin: '4321' } });
+g({ action: 'registrar', data: { ciudad: 'San Pedro Sula', negocio: 'Ferretería El Clavo', giro: 'ferreteria', nombre: 'Luis', whatsapp: '9555-1111', pin: '4321' } });
 DEMO.db.props = Object.assign(DEMO.db.props || {}, { PANEL_CLAVE: 'xyz', PLUS_PASSWORD: 'p' });
 // Exportar
 G.exportarASupabase();

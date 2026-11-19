@@ -19,7 +19,7 @@ const web = http.createServer((q, r) => { const u = decodeURIComponent(q.url.spl
   if (u.indexOf('/__f/') === 0) { const b = archivos[u.slice(5)]; if (!b) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'Content-Type': 'image/jpeg' }); return r.end(b); }
   if (u.indexOf('/__img/') === 0) { r.writeHead(200, { 'Content-Type': 'image/jpeg' }); return r.end(fs.readFileSync('/tmp/' + u.slice(7))); }
   let f = path.join(RAIZ, u); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : f.endsWith('.webp') ? 'image/webp' : f.endsWith('.png') ? 'image/png' : 'application/octet-stream' }); r.end(d); }); }).listen(8774);
-const tok = (await api('registrar', { negocio: 'Todo en Uno HN', nombre: 'Karla Hernández', giro: 'compras', whatsapp: '33130265', pin: '1234' })).data.token;
+const tok = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Todo en Uno HN', nombre: 'Karla Hernández', giro: 'compras', whatsapp: '33130265', pin: '1234' })).data.token;
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }] });
 await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tema: 'turquesa', tiendaPagos: 'Efectivo,Transferencia', comprasCambio: '25', comprasRecargo: '15', comprasAnticipo: '50', comprasPlazo: '8', tiendaAbre: '00:00', tiendaCierra: '23:59', tiendaDias: '0,1,2,3,4,5,6', comprasTiendas: 'Shein, Temu' } }, tok);

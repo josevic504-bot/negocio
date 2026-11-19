@@ -1,5 +1,5 @@
 import { api, db, logs } from './prueba.mjs';
-const reg = await api('registrar', { negocio: 'Tienda Doble Caja', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Tienda Doble Caja', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
 const tok = reg.data.token;
 const p = (await api('guardar', { entidad: 'Productos', registro: { nombre: 'Refresco', precio: 25, costo: 15, stock: 100, tipo: 'producto', activo: true } }, tok)).data;
 // 10 ventas al mismo tiempo, cada una de 3 unidades

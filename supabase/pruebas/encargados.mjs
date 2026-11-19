@@ -7,7 +7,7 @@ const mal = (n, r, re) => ok(n, !r.ok && (!re || re.test(String(r.error))), r.ok
 await db.aplicar({ props: { PANEL_CLAVE: 'clave-panel' } });
 const PT = (await api('panelLogin', { clave: 'clave-panel' })).data.token;
 const P = (a, d) => api(a, d, undefined, { panel: PT });
-const reg = await api('registrar', { negocio: 'Todo en Uno', nombre: 'Carlos', giro: 'boutique', whatsapp: '99887766', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Todo en Uno', nombre: 'Carlos', giro: 'boutique', whatsapp: '99887766', pin: '1234' });
 const T = reg.data.token; const neg = (await api('bootstrap', {}, T)).data.negocioId;
 await P('panelAccion', { id: neg, accion: 'activar', monto: 1000, metodo: 'Efectivo' });
 await P('panelAccion', { id: neg, accion: 'plus', monto: 300, metodo: 'Efectivo' });

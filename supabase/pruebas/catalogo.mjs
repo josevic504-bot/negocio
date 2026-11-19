@@ -8,7 +8,7 @@ const db = dbFalsa(grab('SCHEMA'), grab('SCHEMA_M'), grab('NUMS'), grab('BOOLS')
 const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b).digest(), log: () => {}, urlArchivo: r => 'https://x/' + r, rutaDeUrl: () => null });
 const api = (action, data, token) => srv.atender({ action, token, data: data || {} });
 const ok = (n, r) => { console.log((r.ok ? '✓ ' : '✗ ') + n + (r.ok ? '' : ': ' + r.error)); return r.data; };
-const reg = ok('registrar con giro catálogo', await api('registrar', { negocio: 'Norey Beauty', nombre: 'Vic', giro: 'catalogo', whatsapp: '33130265', pin: '1234' }));
+const reg = ok('registrar con giro catálogo', await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Norey Beauty', nombre: 'Vic', giro: 'catalogo', whatsapp: '33130265', pin: '1234' }));
 const tok = reg.token;
 const ej = ok('productos de ejemplo', await api('cargarEjemplos', {}, tok)); console.log('   ', ej.agregados, 'productos');
 await api('guardar', { entidad: 'Config', registro: { tienda: 'si' } }, tok);

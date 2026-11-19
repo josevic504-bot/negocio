@@ -22,7 +22,7 @@ const neg = [['Pulpería La Bendición', 'tienda', maria.codigo, 3000], ['Boutiq
   ['Farmacia San José', 'farmacia', carlos.codigo, 3000], ['Comedor Doña Tere', 'restaurante', carlos.codigo, 0], ['Celulares HN', 'tecnologia', 'facebook', 3000]];
 let i = 0;
 for (const [n, g, o, pago] of neg) {
-  const r = await api('registrar', { negocio: n, nombre: 'Dueño ' + (++i), giro: g, whatsapp: '9' + String(1000000 + i * 1111).slice(0, 7), pin: '1234', origen: { o, v: 'vid' + i } });
+  const r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: n, nombre: 'Dueño ' + (++i), giro: g, whatsapp: '9' + String(1000000 + i * 1111).slice(0, 7), pin: '1234', origen: { o, v: 'vid' + i } });
   const id = r.data && (r.data.negocioId || (r.data.sesion && r.data.sesion.negocioId));
   db.T.Licencias.forEach(l => { if (l.negocio === n) l._id = l.id; });
   const lic = db.T.Licencias.find(l => l.negocio === n);

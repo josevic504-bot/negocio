@@ -1,6 +1,6 @@
 import { api, db } from './prueba.mjs';
 const ok = (n, c, x) => console.log((c ? '✓ ' : '✗ ') + n + (c ? '' : ' ' + JSON.stringify(x).slice(0, 300)));
-const r = await api('registrar', { negocio: 'Comedor Sol', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
+const r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Comedor Sol', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
 await api('cargarEjemplos', {}, A);
 const b = await api('bootstrap', {}, A); const prods = b.data.productos; ok('bootstrap', b.ok, b);
 // usuarios: cajero y mesero

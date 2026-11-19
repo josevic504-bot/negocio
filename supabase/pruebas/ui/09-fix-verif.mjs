@@ -3,7 +3,7 @@ import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
 import { paso, texto, tiene, btn, dump } from './lib.mjs';
 db.props.PANEL_CLAVE = 'clave-panel';
 const ptok = (await api('panelLogin', { clave: 'clave-panel' })).data.token;
-const reg = await api('registrar', { negocio: 'Multi Prueba', nombre: 'Vic', giro: 'tienda', whatsapp: '98009999', pin: '1234' }); const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Multi Prueba', nombre: 'Vic', giro: 'tienda', whatsapp: '98009999', pin: '1234' }); const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
 const nid = db.T.Licencias[0].id;
 for (const a of [{ accion: 'activar' }, { accion: 'contab' }, { accion: 'plus' }, { accion: 'giros', giros: ['streaming', 'recargas'] }]) { const r = await api('panelAccion', Object.assign({ id: nid }, a), null, { panel: ptok }); if (!r.ok) console.log('   panel', a.accion, r.error); }
 const pg = await nuevaPagina({ token: tok, verApi: false });
@@ -20,7 +20,7 @@ await paso(pg, 'FIX 5 · cambiar el giro principal con varias tiendas conserva l
   return /3 SECCIONES/i.test(tx) && /Abarrotes/.test(tx) && /Streaming/.test(tx);
 });
 await paso(pg, 'FIX 7 · Panel: reanudar una licencia Vencida con pago anotado vuelve a Vencida', async () => {
-  const r2 = await api('registrar', { negocio: 'Vencido SA', nombre: 'Ana', giro: 'comida', whatsapp: '98008888', pin: '1234' }); const id2 = db.T.Licencias[1].id;
+  const r2 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Vencido SA', nombre: 'Ana', giro: 'comida', whatsapp: '98008888', pin: '1234' }); const id2 = db.T.Licencias[1].id;
   const l = db.T.Licencias[1]; l.vencePrueba = '2026-10-01'; l.estado = 'Prueba';
   await api('panelPago', { id: id2, monto: 100, concepto: 'Anticipo' }, null, { panel: ptok });
   let a = await api('panelAccion', { id: id2, accion: 'pausar' }, null, { panel: ptok }); if (!a.ok) throw new Error('pausar: ' + a.error);
@@ -29,7 +29,7 @@ await paso(pg, 'FIX 7 · Panel: reanudar una licencia Vencida con pago anotado v
   return /Prueba|Vencida/.test(est);
 });
 await paso(pg, 'FIX 4 · el cajero no recibe la clave de la cuenta de streaming', async () => {
-  const r3 = await api('registrar', { negocio: 'Stream SA', nombre: 'Luis', giro: 'streaming', whatsapp: '98007777', pin: '1234' }); const t3 = r3.data.token;
+  const r3 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Stream SA', nombre: 'Luis', giro: 'streaming', whatsapp: '98007777', pin: '1234' }); const t3 = r3.data.token;
   await api('guardar', { entidad: 'Cuentas', registro: { plataforma: 'Netflix', nombre: 'Netflix 1', perfiles: 5, correo: 'a@b.c', clave: 'secreta', activo: true } }, t3);
   const uc = await api('guardarUsuario', { registro: { nombre: 'Caja', usuario: '9800-6666', rol: 'cajero', activo: true }, clave: '2222' }, t3); if (!uc.ok) throw new Error(uc.error);
   const lc = await api('login', { whatsapp: '98006666', pin: '2222' }); if (!lc.ok) throw new Error(lc.error);
@@ -37,7 +37,7 @@ await paso(pg, 'FIX 4 · el cajero no recibe la clave de la cuenta de streaming'
   return !JSON.stringify(s.data).includes('secreta') && !JSON.stringify(c.data).includes('secreta');
 });
 await paso(pg, 'FIX 3 · editar pedido respeta la existencia por talla/color', async () => {
-  const r4 = await api('registrar', { negocio: 'Ropa SA', nombre: 'Mia', giro: 'boutique', whatsapp: '98005555', pin: '1234' }); const t4 = r4.data.token; await api('cargarEjemplos', {}, t4);
+  const r4 = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Ropa SA', nombre: 'Mia', giro: 'boutique', whatsapp: '98005555', pin: '1234' }); const t4 = r4.data.token; await api('cargarEjemplos', {}, t4);
   const nid4 = db.T.Licencias[db.T.Licencias.length - 1].id;
   const blusa = db.T.Productos.find(p => p.negocio_id === nid4 && /Blusa/.test(p.nombre));
   const V = {}; V['Talla: S, Color: Blanco'] = { s: 1 }; V['Talla: S, Color: Rosa'] = { s: 5 };

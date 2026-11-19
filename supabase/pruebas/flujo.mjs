@@ -1,6 +1,6 @@
 import { api, db, logs } from './prueba.mjs';
 const ok = (n, r) => { if (!r.ok) { console.log('✗', n, r.error); process.exitCode = 1; } else console.log('✓', n); return r.data; };
-const reg = ok('registrar', await api('registrar', { negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' }));
+const reg = ok('registrar', await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' }));
 let tok = reg.token;
 ok('login', await api('login', { whatsapp: '33130265', pin: '1234' }));
 const bad = await api('login', { whatsapp: '33130265', pin: '9999' }); console.log(bad.ok ? '✗ PIN malo aceptado' : '✓ PIN malo rechazado: ' + bad.error);

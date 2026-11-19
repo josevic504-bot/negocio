@@ -12,7 +12,7 @@ const api = (action, data, token) => srv.atender({ action, token, data: data || 
 let fallas = 0;
 const ok = (t, c, extra) => { console.log((c ? 'OK   ' : 'FALLA') + ' · ' + t + (c ? '' : ' → ' + JSON.stringify(extra).slice(0, 300))); if (!c) fallas++; };
 
-const reg = await api('registrar', { negocio: 'Vida Natural HN', nombre: 'Ana', giro: 'vitaminas', whatsapp: '99990000', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Vida Natural HN', nombre: 'Ana', giro: 'vitaminas', whatsapp: '99990000', pin: '1234' });
 ok('registro con giro vitaminas', reg.ok, reg); const tok = reg.data.token;
 let r = await api('cargarEjemplos', {}, tok); ok('carga 10 ejemplos', r.ok && r.data.agregados === 10, r);
 let ps = r.data.productos, multi = ps.find(p => p.nombre === 'Multivitamínico adulto'), cola = ps.find(p => p.nombre.startsWith('Colágeno'));

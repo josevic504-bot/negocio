@@ -26,7 +26,7 @@ export const texto = async pg => (await pg.locator('body').innerText()).replace(
 export const tiene = async (pg, re) => re.test(await texto(pg));
 export async function btn(pg, texto, ms = 700) {
   const re = texto instanceof RegExp ? texto.source : texto, flags = texto instanceof RegExp ? texto.flags : '';
-  const r = await pg.evaluate(([re, flags, exacto]) => { const rx = new RegExp(re, flags); const els = [...document.querySelectorAll('button, a.btn')].filter(e => e.getBoundingClientRect().width > 0 && (exacto ? rx.test((e.innerText || '').trim()) : rx.test(e.innerText || ''))); if (!els.length) return false; els[els.length - 1].click(); return els[els.length - 1].innerText.trim().slice(0, 40); }, [re, flags, !(texto instanceof RegExp)]);
+  const r = await pg.evaluate(([re, flags, exacto]) => { const rx = new RegExp(re, flags); const els = [...document.querySelectorAll('button, a.btn')].filter(e => e.getBoundingClientRect().width > 0 && (exacto ? rx.test((e.innerText || '').replace(/\u00a0/g, ' ').trim()) : rx.test((e.innerText || '').replace(/\u00a0/g, ' ')))); if (!els.length) return false; els[els.length - 1].click(); return els[els.length - 1].innerText.trim().slice(0, 40); }, [re, flags, !(texto instanceof RegExp)]);
   if (r === false) throw new Error('no hay botón visible «' + re + '»');
   await pg.waitForTimeout(ms);
 }

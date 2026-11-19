@@ -21,7 +21,7 @@ for (let i = 0; i < 5; i++) await api('visita', { p: 'negocio', o: 'v-maria', d:
 await api('visita', { p: 'negocio', o: 'tiktok', d: 'cel', v: 'otronavega01' });
 const negs = [];
 for (const [n, w, o] of [['Tienda Luna', '33130265', { o: 'v-maria', v: 'vendmaria0000' }], ['Comedor Mary', '97776655', { o: 'v-maria', v: 'vendmaria0001' }], ['Vet Canitas', '98765432', { o: 'tiktok', v: 'otronavega01' }]]) {
-  const t = (await api('registrar', { negocio: n, nombre: 'Dueño', giro: 'catalogo', whatsapp: w, pin: '1234', origen: o })).data.token;
+  const t = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: n, nombre: 'Dueño', giro: 'catalogo', whatsapp: w, pin: '1234', origen: o })).data.token;
   if (n === 'Tienda Luna') await api('cargarEjemplos', {}, t);
   negs.push((await api('bootstrap', {}, t)).data.negocioId);
 }

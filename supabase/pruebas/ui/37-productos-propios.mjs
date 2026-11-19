@@ -4,7 +4,7 @@ import fs from 'node:fs';
 const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src:url(data:font/woff2;base64,${fs.readFileSync('node_modules/@fontsource/'+p).toString('base64')})}`;
 const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
 db.props.PANEL_CLAVE = 'clave-panel';
-const reg = async (neg, nom, wa) => (await api('registrar', { negocio: neg, nombre: nom, giro: 'variedades', whatsapp: wa, pin: '1234' })).data.token;
+const reg = async (neg, nom, wa) => (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: neg, nombre: nom, giro: 'variedades', whatsapp: wa, pin: '1234' })).data.token;
 const tA = await reg('Variedades Ana', 'Ana Rivera', '98765432'), tB = await reg('Tienda Beto', 'Beto Cruz', '97001122'), tC = await reg('Kiosko Caro', 'Caro Díaz', '96003344');
 const ejA = await api('cargarEjemplos', {}, tA); const ejB = await api('cargarEjemplos', {}, tB);
 const nEj = ejA.data.agregados;

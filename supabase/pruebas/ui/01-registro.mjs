@@ -14,7 +14,7 @@ ok('Intro: al terminar aparece el registro', /Crea tu cuenta/.test(t), t.slice(0
 await pg.cap('registro');
 // Validaciones del formulario
 await pg.fill('#r-neg', 'Variedades Prueba Total');
-await pg.fill('#r-nom', 'Vic Prueba');
+await pg.fill('#r-nom', 'Vic Prueba'); await pg.fill('#r-ciu', 'San Pedro Sula');
 await pg.fill('#r-wa', '9876');
 await pg.fill('#r-pin', '12');
 await pg.click('#r-btn'); await pg.waitForTimeout(500);

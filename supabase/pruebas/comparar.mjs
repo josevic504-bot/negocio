@@ -18,7 +18,7 @@ Object.defineProperty(globalThis.crypto, 'randomUUID', { value: uuidFijo, config
 const demoMod = new Function(sha + '\n' + shims + '\n' + demoComp + '\nreturn { demoCompilar };')();
 
 const pasos = (tok, x) => [
-  ['registrar', { negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' }],
+  ['registrar', { ciudad: 'San Pedro Sula', negocio: 'Pulpería La Bendición', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' }],
   ['login', { whatsapp: '33130265', pin: '1234' }],
   ['login', { whatsapp: '33130265', pin: '0000' }],
   ['bootstrap', {}], ['cargarEjemplos', {}],

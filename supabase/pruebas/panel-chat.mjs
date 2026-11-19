@@ -1,7 +1,7 @@
 // Panel Molina, dólar, soporte, visitas y chat de la tienda en el servidor nuevo (simulado)
 import { api, db, srv, logs } from './prueba.mjs';
 const ok = (n, r) => { console.log((r.ok ? '✓ ' : '✗ ') + n + (r.ok ? '' : ': ' + r.error)); return r.data; };
-const reg = await api('registrar', { negocio: 'Tienda Chat', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Tienda Chat', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
 const tok = reg.data.token, neg = (await api('bootstrap', {}, tok)).data.negocioId;
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123' } });
 // Tienda en línea: el cliente escribe y el negocio responde

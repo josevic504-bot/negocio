@@ -3,7 +3,7 @@ import { nuevaPagina, cerrar, esperar, api, db, OUT } from './base.mjs';
 import fs from 'node:fs';
 const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src:url(data:font/woff2;base64,${fs.readFileSync('node_modules/@fontsource/'+p).toString('base64')})}`;
 const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
-const reg = await api('registrar', { negocio: 'Detalles Mágicos', nombre: 'Demo', giro: 'manualidades', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Detalles Mágicos', nombre: 'Demo', giro: 'manualidades', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
 await api('cargarEjemplos', {}, tok);
 const taza = db.T.Productos.find(x => x.nombre === 'Taza personalizada');
 const pg = await nuevaPagina({ token: tok }); await pg.goto('http://localhost:8765/'); await esperar(pg, 8000); await pg.waitForTimeout(600); await pg.addStyleTag({ content: css });

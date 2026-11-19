@@ -11,13 +11,13 @@ await db.aplicar({ props: { PANEL_CLAVE: 'clave123', TAREAS_CLAVE: 'tt', VAPID_P
 const sub = (n) => ({ endpoint: 'https://fcm.googleapis.com/fcm/send/abc' + n, keys: { p256dh: 'BPk' + 'x'.repeat(60), auth: 'auth1234abcd' } });
 const efectos = () => { const e = db.efectos || []; db.efectos = []; return e; };
 
-const reg = await api('registrar', { negocio: 'Tienda Avisos', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Tienda Avisos', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' });
 const tok = reg.data.token;
 const pl = ok('panel: entrar', await srv.atender({ action: 'panelLogin', data: { clave: 'clave123' } })); const pt = pl.token;
 ok('panel: activar avisos', await srv.atender({ action: 'pushGuardar', panel: pt, data: { sub: sub(0) } }));
 efectos();
 // Registro nuevo → aviso al Panel
-await api('registrar', { negocio: 'Pulpería Nueva', nombre: 'Ana', giro: 'tienda', whatsapp: '31112222', pin: '1111', origen: { o: 'tiktok', v: 'x1' } });
+await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería Nueva', nombre: 'Ana', giro: 'tienda', whatsapp: '31112222', pin: '1111', origen: { o: 'tiktok', v: 'x1' } });
 console.log('   aviso registro:', JSON.stringify(efectos().filter(e => e.push).map(e => e.push)));
 
 const b = ok('arranque trae canal', await api('bootstrap', { app: '1.9.26' }, tok)); console.log('   canal:', b.rt);

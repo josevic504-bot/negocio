@@ -7,7 +7,7 @@ await api('panelGastoGuardar', { tipo: 'publicidad', plataforma: 'TikTok', nombr
 const NEG = [['Variedades El Sol', 3, 2], ['Pulpería La Esquina', 1, 0], ['Boutique Lucía', 0, 1], ['Farmacia San José', 0, 0]];
 const toks = [];
 for (const [i, [n, ventas, extra]] of NEG.entries()) {
-  const r = await api('registrar', { negocio: n, nombre: 'Dueño ' + (i + 1), giro: 'tienda', whatsapp: '9700000' + i, pin: '1234' }); const t = r.data.token; toks.push(t);
+  const r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: n, nombre: 'Dueño ' + (i + 1), giro: 'tienda', whatsapp: '9700000' + i, pin: '1234' }); const t = r.data.token; toks.push(t);
   if (ventas || extra) await api('guardar', { entidad: 'Productos', registro: { nombre: 'Artículo ' + i, categoria: 'General', precio: 50, tipo: 'producto', stock: 20 } }, t);
   const b = (await api('bootstrap', {}, t)).data, p = b.productos.find(x => x.nombre === 'Artículo ' + i);
   for (let k = 0; k < ventas; k++) await api('venta', { items: [{ productoId: p.id, cantidad: 1 }], metodo: 'Efectivo', recibido: 100, clave: 'v' + i + k }, t);

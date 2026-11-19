@@ -11,7 +11,7 @@ let fallas = 0;
 const ok = (n, r) => { if (!r.ok) fallas++; console.log((r.ok ? '✓ ' : '✗ ') + n + (r.ok ? '' : ': ' + r.error)); return r.data; };
 const no = (n, r) => { if (r.ok) fallas++; console.log((r.ok ? '✗ (debió fallar) ' : '✓ ') + n + (r.ok ? '' : ' → ' + r.error)); };
 const igual = (n, a, b) => { const x = JSON.stringify(a) === JSON.stringify(b); if (!x) fallas++; console.log((x ? '✓ ' : '✗ ') + n + ': ' + JSON.stringify(a) + (x ? '' : ' (esperado ' + JSON.stringify(b) + ')')); };
-const tok = (await api('registrar', { negocio: 'Norey', nombre: 'Vic', giro: 'catalogo', whatsapp: '33130265', pin: '1234' })).data.token;
+const tok = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Norey', nombre: 'Vic', giro: 'catalogo', whatsapp: '33130265', pin: '1234' })).data.token;
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }], props: { PANEL_CLAVE: 'c' } });
 await api('guardar', { entidad: 'Config', registro: { tienda: 'si' } }, tok);

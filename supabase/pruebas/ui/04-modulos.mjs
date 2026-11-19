@@ -1,7 +1,7 @@
 // Flujos de cada módulo (administrador): crédito, clientes/abonos, productos, gastos, compras, caja, ventas (anular/editar), reportes, resumen del día, usuarios, ajustes, ayuda
 import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
 import { paso, texto, tiene, btn, dump } from './lib.mjs';
-const reg = await api('registrar', { negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
 const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
 await api('guardar', { entidad: 'Proveedores', registro: { nombre: 'Distribuidora Sula', telefono: '2222-0000', activo: true } }, tok);
 const prod = n => db.T.Productos.find(x => x.nombre.startsWith(n));

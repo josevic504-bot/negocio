@@ -1,7 +1,7 @@
 // 1.9.65 · Restaurante: tablero de mesas, rol Mesero, cuenta por mesa, cocina, dividir y cobrar, ventas por mesero
 import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
 import { paso, texto, tiene, btn } from './lib.mjs';
-const r = await api('registrar', { negocio: 'Comedor La Ceiba', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
+const r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Comedor La Ceiba', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
 await api('cargarEjemplos', {}, A);
 await api('guardar', { entidad: 'Config', registro: { mesasZonas: JSON.stringify([{ z: 'Salón', n: 8 }, { z: 'Terraza', n: 4 }]) } }, A);
 await api('guardarUsuario', { registro: { usuario: '98222222', nombre: 'Karla', rol: 'mesero', activo: true }, clave: '1111' }, A);

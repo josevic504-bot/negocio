@@ -1,7 +1,7 @@
 // Dos negocios vendiendo al mismo tiempo en el mismo servidor: cada uno debe ver solo lo suyo
 import { api } from './prueba.mjs';
-const A = await api('registrar', { negocio: 'Tienda A', nombre: 'Ana', giro: 'tienda', whatsapp: '31111111', pin: '1111' });
-const Bn = await api('registrar', { negocio: 'Tienda B', nombre: 'Beto', giro: 'tienda', whatsapp: '32222222', pin: '2222' });
+const A = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Tienda A', nombre: 'Ana', giro: 'tienda', whatsapp: '31111111', pin: '1111' });
+const Bn = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Tienda B', nombre: 'Beto', giro: 'tienda', whatsapp: '32222222', pin: '2222' });
 const ta = A.data.token, tb = Bn.data.token;
 const pa = (await api('guardar', { entidad: 'Productos', registro: { nombre: 'Pan A', precio: 10, costo: 5, stock: 50, tipo: 'producto', activo: true } }, ta)).data;
 const pb = (await api('guardar', { entidad: 'Productos', registro: { nombre: 'Leche B', precio: 30, costo: 20, stock: 80, tipo: 'producto', activo: true } }, tb)).data;

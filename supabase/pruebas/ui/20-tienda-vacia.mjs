@@ -2,7 +2,7 @@ import { nuevaPagina, ok, cerrar, api, db, OUT } from './base.mjs';
 import fs from 'node:fs';
 const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src:url(data:font/woff2;base64,${fs.readFileSync('node_modules/@fontsource/'+p).toString('base64')})}`;
 const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
-const reg = await api('registrar', { negocio: 'Variedades Demo', nombre: 'Demo', giro: 'variedades', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Demo', nombre: 'Demo', giro: 'variedades', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
 await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tiendaModo: 'oscuro' } }, tok);
 const N = db.T.Licencias[0].id;
 const t = await nuevaPagina({}); await t.goto('http://localhost:8765/?tienda=' + N); await t.waitForTimeout(2000); await t.addStyleTag({ content: css });

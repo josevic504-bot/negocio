@@ -11,7 +11,7 @@ const srv = crearServidor(SRC, db, { sha256: b => createHash('sha256').update(b)
 const api = (action, data, token, extra) => srv.atender(Object.assign({ action, token, data: data || {} }, extra || {}));
 const web = http.createServer((q, r) => { const u = decodeURIComponent(q.url.split('?')[0]); let f = path.join(RAIZ, u); if (f.endsWith('/')) f += 'index.html'; fs.readFile(f, (e, d) => { if (e) { r.writeHead(404); r.end(); return; } r.writeHead(200, { 'Content-Type': f.endsWith('.html') ? 'text/html; charset=utf-8' : 'application/octet-stream' }); r.end(d); }); }).listen(8778);
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123' } });
-const t = (await api('registrar', { negocio: 'Norey Beauty & More', nombre: 'Noemí', giro: 'catalogo', whatsapp: '33130265', pin: '1234' })).data.token; await api('cargarEjemplos', {}, t);
+const t = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Norey Beauty & More', nombre: 'Noemí', giro: 'catalogo', whatsapp: '33130265', pin: '1234' })).data.token; await api('cargarEjemplos', {}, t);
 const br = await chromium.launch();
 async function pagina(init) {
   const ctx = await br.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2 }); const pg = await ctx.newPage();

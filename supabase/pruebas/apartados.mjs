@@ -1,7 +1,7 @@
 // 1.9.81: compras en línea — factura (varios pedidos), en camino, llegó (apartado), entrega con costo real y segundo pago, liberar
 import { api, db } from './prueba.mjs';
 let ok=0, mal=0; const v=(n,c,d)=>{ if(c) ok++; else { mal++; console.log('✗',n,d===undefined?'':JSON.stringify(d).slice(0,600)); } };
-const reg = await api('registrar',{negocio:'Todo en Uno Demo',nombre:'Demo',giro:'compras',whatsapp:'98765400',pin:'1234'}); const tok=reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio:'Todo en Uno Demo',nombre:'Demo',giro:'compras',whatsapp:'98765400',pin:'1234'}); const tok=reg.data.token;
 v('registro',reg.ok,reg);
 const N=db.T.Licencias[0].id;
 let g=await api('guardar',{entidad:'Config',registro:{tienda:'si',tiendaEntrega:'ambos',tiendaPagos:'Efectivo,Transferencia',comprasCambio:'25',comprasRecargo:'15',comprasEnvio:'0',comprasAnticipo:'50',comprasPlazo:'8',tiendaAbre:'00:00',tiendaCierra:'23:59',tiendaDias:'0,1,2,3,4,5,6'}},tok);

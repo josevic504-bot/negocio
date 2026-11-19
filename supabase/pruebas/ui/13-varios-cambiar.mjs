@@ -2,7 +2,7 @@ import { nuevaPagina, ok, cerrar, api, db, OUT } from './base.mjs';
 import fs from 'node:fs';
 const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src:url(data:font/woff2;base64,${fs.readFileSync('node_modules/@fontsource/'+p).toString('base64')})}`;
 const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
-const reg = await api('registrar', { negocio: 'Belleza Demo', nombre: 'Demo', giro: 'catalogo', whatsapp: '98765432', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Belleza Demo', nombre: 'Demo', giro: 'catalogo', whatsapp: '98765432', pin: '1234' });
 await api('cargarEjemplos', {}, reg.data.token);
 const nid = db.T.Licencias[0].id, P = n => db.T.Productos.find(x => x.nombre.startsWith(n)), polvo = P('Polvo'), blusa = P('Blusa'), deli = P('Delineador');
 const t = await nuevaPagina({});

@@ -1,7 +1,7 @@
 // Flujos principales por pantalla (administrador): vender, clientes, productos, gastos, compras, caja, reportes
 import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
 import { paso, texto, tiene, btn, dump } from './lib.mjs';
-const reg = await api('registrar', { negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
 const tok = reg.data.token; await api('cargarEjemplos', {}, tok);
 const prods = () => db.T.Productos;
 const stock = n => { const p = prods().find(x => x.nombre.startsWith(n)); return p ? p.stock : null; };

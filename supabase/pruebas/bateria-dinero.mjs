@@ -17,7 +17,7 @@ let clave = 0; const K = () => 'K' + (++clave);
 
 /* ===================== PREPARACIÓN ===================== */
 await db.aplicar({ props: { PANEL_CLAVE: 'c', RT_SECRETO: 's', VAPID_PUBLICA: 'a', VAPID_PRIVADA: 'b' } });
-const reg = okRes('registrar', await api('registrar', { negocio: 'Pulpería Prueba', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' }));
+const reg = okRes('registrar', await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería Prueba', nombre: 'Vic', giro: 'tienda', whatsapp: '33130265', pin: '1234' }));
 const tok = reg.token;
 const boot0 = okRes('bootstrap', await api('bootstrap', {}, tok));
 const neg = boot0.negocioId;

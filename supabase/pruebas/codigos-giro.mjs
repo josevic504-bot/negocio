@@ -15,7 +15,7 @@ let fallas = 0; const ok = (c, m) => { console.log((c ? '✓ ' : '✗ ') + m); i
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123' } });
 
 // 1) Farmacia
-const tok = (await api('registrar', { negocio: 'Farmacia San Rafael', nombre: 'Rafael', giro: 'farmacia', whatsapp: '33112233', pin: '1234' })).data.token;
+const tok = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Farmacia San Rafael', nombre: 'Rafael', giro: 'farmacia', whatsapp: '33112233', pin: '1234' })).data.token;
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si', estado: 'Activa' } }] });
 await api('cargarEjemplos', {}, tok);
@@ -36,7 +36,7 @@ const pa = (await api('bootstrap', {}, tok)).data.productos.find(p => p.nombre =
 ok(pa && pa.codigo === 'FAR-0003', 'compra con producto nuevo → ' + (pa ? pa.codigo : (co.error || 'no creado')));
 
 // 2) Varios giros: variedades + streaming
-const t2 = (await api('registrar', { negocio: 'Todo en Uno HN', nombre: 'Karla', giro: 'variedades', whatsapp: '99001122', pin: '1234' })).data.token;
+const t2 = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Todo en Uno HN', nombre: 'Karla', giro: 'variedades', whatsapp: '99001122', pin: '1234' })).data.token;
 const n2 = (await api('bootstrap', {}, t2)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: n2 }, row: { plus: 'si', estado: 'Activa', giros: 'streaming,recargas' } }] });
 const v1 = await api('guardar', { entidad: 'Productos', registro: { nombre: 'Termo 1 L', categoria: 'Hogar', precio: 320 } }, t2);

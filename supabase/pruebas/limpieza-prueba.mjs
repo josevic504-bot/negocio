@@ -18,7 +18,7 @@ const espera = ms => new Promise(r => setTimeout(r, ms));
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123' } });
 
 // ---- Durante la prueba ----
-const tok = (await api('registrar', { negocio: 'Variedades Sofía', nombre: 'Sofía', giro: 'variedades', whatsapp: '33445566', pin: '1234' })).data.token;
+const tok = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Sofía', nombre: 'Sofía', giro: 'variedades', whatsapp: '33445566', pin: '1234' })).data.token;
 const neg = (await api('bootstrap', {}, tok)).data.negocioId;
 await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: neg }, row: { plus: 'si' } }] });
 await api('cargarEjemplos', {}, tok);
@@ -116,7 +116,7 @@ const enAj = pg.locator('[data-a="limpiarPrueba"]');
 ok(await enAj.count() === 1, 'en Ajustes › Mi cuenta aparece «Limpiar datos de la prueba»');
 if (await enAj.count()) { await enAj.scrollIntoViewIfNeeded(); await pg.screenshot({ path: OUT + '/lz8-ajustes.png' }); }
 // Conservar todo
-const t2 = (await api('registrar', { negocio: 'Tienda Luis', nombre: 'Luis', giro: 'variedades', whatsapp: '99887766', pin: '1234' })).data.token;
+const t2 = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Tienda Luis', nombre: 'Luis', giro: 'variedades', whatsapp: '99887766', pin: '1234' })).data.token;
 const n2 = (await api('bootstrap', {}, t2)).data.negocioId; await api('cargarEjemplos', {}, t2); await api('bootstrap', {}, t2);
 await espera(1100); await db.aplicar({ ops: [{ t: 'Licencias', op: 'upd', k: { id: n2 }, row: { estado: 'Activa' } }] });
 ok((await api('bootstrap', {}, t2)).data.limpieza.aviso, 'otro negocio activado: sale el aviso');

@@ -1,6 +1,6 @@
 // Recorrido de TODAS las pantallas por rol (admin, cajero, bodega) en un negocio con datos
 import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
-const reg = await api('registrar', { negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Prueba Total', nombre: 'Vic Prueba', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
 const tok = reg.data.token;
 await api('cargarEjemplos', {}, tok);
 const b = (await api('bootstrap', {}, tok)).data;

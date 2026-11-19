@@ -17,9 +17,9 @@ const hoy = new Date(Date.now() - 6 * 3600000).toISOString().slice(0, 10), dia =
 const pt = (await api('panelLogin', { clave: 'c' })).data.token;
 const P = (a, d) => srv.atender({ action: a, panel: pt, data: d || {} });
 ok('panel: publicidad que cubre hoy', await P('panelGastoGuardar', { tipo: 'publicidad', plataforma: 'TikTok', nombre: 'Prueba embudo', moneda: 'HNL', montoOrig: 300, fecha: dia(-1), desde: dia(-1) }));
-const A = (await api('registrar', { negocio: 'Variedades Uno', nombre: 'Ana', giro: 'tienda', whatsapp: '31111111', pin: '1111' })).data.token;
-const B = (await api('registrar', { negocio: 'Pulpería Dos', nombre: 'Beto', giro: 'tienda', whatsapp: '32222222', pin: '2222' })).data.token;
-const C = (await api('registrar', { negocio: 'Tienda Tres', nombre: 'Caro', giro: 'tienda', whatsapp: '33333333', pin: '3333' })).data.token;
+const A = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Uno', nombre: 'Ana', giro: 'tienda', whatsapp: '31111111', pin: '1111' })).data.token;
+const B = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Pulpería Dos', nombre: 'Beto', giro: 'tienda', whatsapp: '32222222', pin: '2222' })).data.token;
+const C = (await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Tienda Tres', nombre: 'Caro', giro: 'tienda', whatsapp: '33333333', pin: '3333' })).data.token;
 const na = (await api('bootstrap', {}, A)).data.negocioId, nb = (await api('bootstrap', {}, B)).data.negocioId, nc = (await api('bootstrap', {}, C)).data.negocioId;
 // A: producto propio y una venta; B: solo entra; C: nunca abre Inicio
 const pr = ok('A crea un producto', await api('guardar', { entidad: 'Productos', registro: { nombre: 'Jabón', categoria: 'Limpieza', precio: 30, tipo: 'producto', stock: 10 } }, A));

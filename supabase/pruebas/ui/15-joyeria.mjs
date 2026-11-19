@@ -11,7 +11,7 @@ await r0.tocar('[data-a="pickGiro"]'); await r0.waitForTimeout(400);
 ok('Joyería en el selector', (await r0.locator('.gpick .r[data-v="joyeria"]').count()) === 1);
 await r0.evaluate(() => document.querySelector('.gpick .r[data-v="joyeria"]').scrollIntoView({ block: 'center' })); await tiro(r0, '1-registro');
 // negocio de joyería
-const reg = await api('registrar', { negocio: 'Joyería Brillante', nombre: 'Demo', giro: 'joyeria', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
+const reg = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Joyería Brillante', nombre: 'Demo', giro: 'joyeria', whatsapp: '98765432', pin: '1234' }); const tok = reg.data.token;
 const ej = await api('cargarEjemplos', {}, tok); ok('Ejemplos cargados', ej.ok && ej.data.agregados === 12, JSON.stringify(ej).slice(0,200));
 const N = db.T.Licencias[0].id, cad = db.T.Productos.find(x => x.nombre === 'Cadena de oro 14k');
 ok('Existencia por largo', JSON.parse(cad.variantes)['Largo: 50 cm'].p === 7600 && cad.stock === 3, cad.variantes + ' ' + cad.stock);

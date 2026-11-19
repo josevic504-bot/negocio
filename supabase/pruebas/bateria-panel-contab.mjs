@@ -16,7 +16,7 @@ const FOTO = 'data:image/png;base64,' + 'A'.repeat(400);
 /* ========== Datos ========== */
 sec('Preparar negocios');
 await db.aplicar({ props: { PANEL_CLAVE: 'clave-vic', TAREAS_CLAVE: 'tt', VAPID_PUBLICA: 'a', VAPID_PRIVADA: 'b' } });
-const reg = async (negocio, nombre, giro, wa, pin, extra) => { const r = await api('registrar', Object.assign({ negocio, nombre, giro, whatsapp: wa, pin }, extra || {})); ok('registrar ' + negocio, r.ok, r.error); const tok = r.data.token; const b = await api('bootstrap', {}, tok); return { tok, id: b.data.negocioId, boot: b.data }; };
+const reg = async (negocio, nombre, giro, wa, pin, extra) => { const r = await api('registrar', Object.assign({ negocio, nombre, giro, ciudad: 'San Pedro Sula', whatsapp: wa, pin }, extra || {})); ok('registrar ' + negocio, r.ok, r.error); const tok = r.data.token; const b = await api('bootstrap', {}, tok); return { tok, id: b.data.negocioId, boot: b.data }; };
 const A = await reg('Pulpería La Bendición', 'Vic', 'tienda', '33130265', '1234');
 const B = await reg('Norey Beauty', 'Noemí', 'catalogo', '31111111', '1111');
 const C = await reg('Ferretería El Tornillo', 'Carlos', 'ferreteria', '32222222', '2222');
@@ -364,7 +364,7 @@ r = await api('bootstrap', {}, E.tok); ok('su sesión muere', !r.ok, r.error);
 r = await api('login', { whatsapp: '35555555', pin: '5555' }); ok('ya no puede entrar', !r.ok, r.error);
 ok('sus accesos se borraron', !db.T.Accesos.some(a => a.negocioId === E.id));
 r = await P('panelResumen'); ok('ya no aparece en el resumen (ni en eliminadas, que son las del cliente)', !r.data.negocios.some(x => x.id === E.id) && r.data.eliminadas.length === 0, r.data.eliminadas);
-r = await api('registrar', { negocio: 'Barbería Juan 2', nombre: 'Pedro', giro: 'belleza', whatsapp: '35555555', pin: '5555' }); ok('su WhatsApp queda libre para registrarse de nuevo', r.ok, r.error);
+r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Barbería Juan 2', nombre: 'Pedro', giro: 'belleza', whatsapp: '35555555', pin: '5555' }); ok('su WhatsApp queda libre para registrarse de nuevo', r.ok, r.error);
 r = await P('panelVerApp', { id: E.id }); ok('ver app de un eliminado → error', !r.ok, r.error);
 
 /* ========== panelSalir ========== */

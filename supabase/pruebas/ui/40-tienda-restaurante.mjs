@@ -1,7 +1,7 @@
 // 1.9.67 · Tienda del restaurante: comer aquí (QR / número de mesa), para llevar y a domicilio → Mesas y Cocina → «¡Listo!» al cliente
 import { nuevaPagina, ok, cerrar, esperar, api, db } from './base.mjs';
 import { paso, texto, tiene, btn } from './lib.mjs';
-const r = await api('registrar', { negocio: 'Comedor La Ceiba', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
+const r = await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Comedor La Ceiba', nombre: 'Vic', giro: 'comida', whatsapp: '98111111', pin: '1234' }); const A = r.data.token;
 await api('cargarEjemplos', {}, A);
 await api('guardar', { entidad: 'Config', registro: { tienda: 'si', tiempoPrep: '20', mesasZonas: JSON.stringify([{ z: 'Salón', n: 8 }, { z: 'Terraza', n: 4 }]) } }, A);
 const nid = db.T.Licencias[0].id, P = db.T.Productos.filter(p => p.negocio_id === nid); const pid = n => P.find(p => p.nombre === n).id;
@@ -78,5 +78,5 @@ await paso(pg, 'Cobrar la mesa 4: el pedido del celular queda entregado', async 
 await paso(pg, 'Sin Vender: no está en el menú y «ir a Vender» lleva a Mesas', async () => { await pg.evaluate(() => { cerrarHojas(); ir('vender'); }); await pg.waitForTimeout(600); const v = await pg.evaluate(() => S.vista); await pg.accion('mas', 600); const t = await pg.hojaTxt(); await pg.evaluate(() => cerrarHojas()); return v === 'mesas' && !/Vender/.test(t); });
 await paso(pg, 'Inicio: el botón grande lleva a Mesas', async () => { await pg.ir('inicio'); await pg.waitForTimeout(900); await pg.cap('inicio-sin-vender'); return (await pg.locator('.qa [data-v="mesas"]').count()) === 1 && (await pg.locator('.qa [data-v="vender"]').count()) === 0; });
 /* 8 · Imprimir QR de las mesas */
-await paso(pg, 'Mesas › ⚙: «Códigos QR» arma una hoja con un QR por mesa', async () => { await pg.evaluate(() => { cerrarHojas(); window.print = () => {}; }); await pg.ir('mesas'); await pg.waitForTimeout(800); await pg.accion('mesasConfig', 700); await pg.accion('mesasQR', 1500); const n = await pg.locator('#print-area .qr-m svg').count(); const u = await pg.evaluate(() => linkTienda()); return n === 12 && /tienda=/.test(u); });
+await paso(pg, 'Mesas › ⚙: «Códigos QR» arma una hoja con un QR por mesa', async () => { await pg.evaluate(() => { cerrarHojas(); window.print = () => {}; }); await pg.ir('mesas'); await pg.waitForTimeout(800); await pg.accion('mesasConfig', 700); await pg.accion('mesasQR', 1500); const n = await pg.locator('#print-area .qr-m svg').count(); const u = await pg.evaluate(() => linkTienda()); return n === 12 && /tienda=|localhost:8765\/[a-z0-9-]+$/.test(u); });
 await cerrar();

@@ -5,7 +5,7 @@ const f64 = (fam, w, p) => `@font-face{font-family:'${fam}';font-weight:${w};src
 const css = [400,500,600,700].map(w=>f64('Jost',w,`jost/files/jost-latin-${w}-normal.woff2`)).join('')+[500,600].map(w=>f64('Cormorant Garamond',w,`cormorant-garamond/files/cormorant-garamond-latin-${w}-normal.woff2`)).join('');
 const tiro = async (pg, n) => { await pg.waitForTimeout(500); await pg.screenshot({ path: `${OUT}/${n}.png` }); };
 db.props.PANEL_CLAVE = 'clave-panel';
-await api('registrar', { negocio: 'Variedades Ana', nombre: 'Ana Rivera', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
+await api('registrar', { ciudad: 'San Pedro Sula',  ciudad: 'San Pedro Sula', negocio: 'Variedades Ana', nombre: 'Ana Rivera', giro: 'variedades', whatsapp: '98765432', pin: '1234' });
 await api('visita', { p: 'negocio', v: 'v0', o: 'tiktok' });
 const base = db.T.Visitas[0]; console.log('fila:', JSON.stringify(base));
 // Visitas de ejemplo en los últimos 60 días (hora de Honduras)
