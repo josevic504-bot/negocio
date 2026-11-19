@@ -5973,8 +5973,8 @@ function tiendaInfo_(d) {
     }).sort((a, b) => a.categoria.localeCompare(b.categoria) || a.nombre.localeCompare(b.nombre)),
     hoy: hoy_()
   };
-  // Tiendas Catrachas (directorio público): el negocio lo encendió, tiene Plus pagado y ya creó productos propios (o les puso foto a los de ejemplo)
-  R.negocio.dir = cfg.dirOn === 'si' && plusReal_() && rows_('Productos').some(p => p.activo && p.tienda && (!/^EJ\d/.test(String(p.codigo || '')) || p.foto))
+  // Tiendas Catrachas (directorio público): el negocio lo encendió, tiene Plus (pagado o incluido en la prueba gratis) y ya creó productos propios (o les puso foto a los de ejemplo)
+  R.negocio.dir = cfg.dirOn === 'si' && plus_() && rows_('Productos').some(p => p.activo && p.tienda && (!/^EJ\d/.test(String(p.codigo || '')) || p.foto))
     ? { ciudad: cfg.dirCiudad || '', frase: cfg.dirFrase || '' } : null;
   return R;
 }
@@ -6558,7 +6558,7 @@ function instalarNegocio_(op) {
     const actual = sh.getRange(1, 1, 1, h.length).getValues()[0];
     if (h.some((k, i) => actual[i] !== k)) sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
   });
-  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si', dirOn: 'si' } : {}); // los negocios nuevos empiezan con Tiendas Catrachas encendido (aparecen al tener Plus y productos propios)
+  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si', dirOn: 'si' } : {}); // los negocios nuevos empiezan con Tiendas Catrachas encendido (aparecen desde la prueba gratis, al crear productos propios)
   if (rows_('Usuarios').length === 0) {
     const salt = Utilities.getUuid(), a = op.admin || { usuario: 'admin', nombre: 'Administrador', pin: 'admin123' };
     upsert_('Usuarios', { usuario: a.usuario, nombre: a.nombre, rol: 'admin', color: '#d10f6f',
