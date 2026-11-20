@@ -20,11 +20,11 @@ ok(seg.length === 1 && seg[0].negocioId && /cambia tu PIN/.test(seg[0].nota), 'q
 ok(pushes().some(p => p.tipo === 'seguridad' && p.negocio === seg[0].negocioId), 'aviso al teléfono del dueño: ' + JSON.stringify(pushes().filter(p => p.tipo === 'seguridad')[0] || null).slice(0, 160));
 // 2) otro WhatsApp desde la misma conexión: normal
 r = await login('99990000', '5555', IP); ok(r.ok, 'otro WhatsApp entra normal desde la misma conexión');
-// 3) escalera 10 min → 1 h → hasta mañana (se simula que pasó el tiempo)
+// 3) escalera 10 min → 1 h → 6 horas (desde el 20 nov 2026; antes «hasta mañana») (se simula que pasó el tiempo)
 vencer('BL_'); for (let i = 0; i < 5; i++) r = await login('33130265', '0000', IP);
 ok(/1 hora/.test(r.error), '2.ª tanda el mismo día: 1 hora (' + r.error + ')');
 vencer('BL_'); for (let i = 0; i < 5; i++) r = await login('33130265', '0000', IP);
-ok(/hasta mañana/.test(r.error), '3.ª tanda: hasta mañana (' + r.error + ')');
+ok(/6 horas/.test(r.error), '3.ª tanda: 6 horas (' + r.error + ')');
 ok(db.T.Seguimiento.filter(x => x.tipo === 'seguridad').length === 3, 'un aviso por cada bloqueo (3)');
 // 4) al vencer el bloqueo y acertar, entra y se limpia el contador
 vencer('BL_'); r = await login('33130265', '1234', IP); ok(r.ok, 'vencido el bloqueo, con el PIN correcto entra');

@@ -424,7 +424,7 @@ ok('queda aviso de seguridad en Seguimiento del negocio', segAna.length === 1 &&
 vencer('BL_'); for (let i = 0; i < 5; i++) r = await login('99990001', '0000', IP);
 ok('2.ª tanda el mismo día → 1 hora', !r.ok && /1 hora/.test(r.error), err(r));
 vencer('BL_'); for (let i = 0; i < 5; i++) r = await login('99990001', '0000', IP);
-ok('3.ª tanda → hasta mañana', !r.ok && /hasta mañana/.test(r.error), err(r));
+ok('3.ª tanda → 6 horas', !r.ok && /6 horas/.test(r.error), err(r));
 vencer('BL_'); r = await login('99990001', '5555', IP); ok('vencido el bloqueo, con PIN correcto entra', r.ok, err(r));
 ok('contador de fallos se limpia al acertar', !db.cache['F_50499990001'] || db.cache['F_50499990001'].e < Date.now());
 const IP4 = '4444444444444444';
