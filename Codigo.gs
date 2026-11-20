@@ -7627,10 +7627,12 @@ function visitasFilas_(maxFilas, tiendas) {
   const s = masterSheet_('Visitas'), n = s.getLastRow(); if (n < 2) return [];
   const h = SCHEMA_M.Visitas, cuantas = Math.min(n - 1, maxFilas || 60000), ini = n - cuantas + 1;
   return s.getRange(ini, 2, cuantas, 6).getValues().map(r => ({ fecha: r[0] instanceof Date ? Utilities.formatDate(r[0], TZ, 'yyyy-MM-dd HH:mm') : String(r[0]), pagina: String(r[1]), origen: String(r[2]), disp: String(r[3]), vid: String(r[4]), ref: String(r[5] || '') }))
-    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha) && (tiendas === 'cli' ? esCli_(x.pagina) : !esCli_(x.pagina) && (tiendas === 'tc' ? esTC_(x.pagina) : !esTC_(x.pagina) && (x.pagina.indexOf('t-') === 0) === !!tiendas)));
+    .filter(x => /^\d{4}-\d{2}-\d{2}/.test(x.fecha) && (tiendas === 'paso' ? esPaso_(x.pagina) : !esPaso_(x.pagina)) && (tiendas === 'paso' ? true : tiendas === 'cli' ? esCli_(x.pagina) : !esCli_(x.pagina) && (tiendas === 'tc' ? esTC_(x.pagina) : !esTC_(x.pagina) && (x.pagina.indexOf('t-') === 0) === !!tiendas)));
 }
 // Páginas del sitio de Tiendas Catrachas (molinasoluciones.com): se miden aparte, en su propio análisis del Panel
 function esTC_(p) { return p === 'catrachas' || String(p).indexOf('tc-') === 0; }
+// Pasos del registro («r-form», «r-escribe», «r-enviar», «r-demo»): no son visitas; se leen aparte con visitasFilas_(n, 'paso')
+function esPaso_(p) { return String(p).indexOf('r-') === 0; }
 function diaMenos_(n) { return Utilities.formatDate(new Date(Date.now() - n * 86400000), TZ, 'yyyy-MM-dd'); }
 // Para la tarjeta del resumen: hoy y últimos 7 días
 function visitasMini_() {
