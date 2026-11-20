@@ -2583,7 +2583,7 @@ function panelFicha_(l, segs) {
   const est = esColab_(l) ? 'colaborador' : lic.estado === 'completa' ? 'activa' : lic.estado, dia = diaPrueba_(l), sin = diasDesde_(l.ultimaConexion);
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
     usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: diasCal_(l.ultimaConexion), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, contab: ['sí', 'si'].indexOf(String(l.contab).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
-    ultimaVenta: l.ultimaVenta || '', sinVender: Math.floor(diasDesde_(l.ultimaVenta)), ventas7: diasDesde_(l.ultimaVenta) >= 7 ? 0 : Number(l.ventas7) || 0, // ventas7 se anota cuando el negocio usa la app: si su última venta ya tiene 7 días o más, esta semana no vendió
+    ultimaVenta: l.ultimaVenta || '', sinVender: diasCal_(l.ultimaVenta), ventas7: diasDesde_(l.ultimaVenta) >= 7 ? 0 : Number(l.ventas7) || 0, // ventas7 se anota cuando el negocio usa la app: si su última venta ya tiene 7 días o más, esta semana no vendió
     version: l.version || '', etiqueta: l.etiqueta || '', enlace: l.enlace || '',
     giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l), colab: esColab_(l) };
   if (o.colab) { o.plus = true; o.contab = true; }
