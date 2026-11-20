@@ -36,7 +36,7 @@ ok('mesero ve lo suyo de hoy', x.data.meseros.length === 1 && x.data.meseros[0].
 v = await api('venta', { cuentaId: id, items: [{ productoId: p1.id, cantidad: 1 }], metodo: 'Efectivo', clave: 'x3' }, C); ok('no cobra dos veces', !v.ok, v);
 x = await api('mesaAccion', { op: 'limpiar', id }, M); ok('limpiar', x.ok && !x.data.cuentas.length, x);
 x = await api('venta', { items: [{ productoId: p1.id, cantidad: 1 }], metodo: 'Efectivo' }, M); ok('mesero no cobra', !x.ok, x);
-const rp = await api('reporte', { desde: new Date().toISOString().slice(0,10), hasta: new Date().toISOString().slice(0,10) }, A); ok('reporte meseros', rp.ok && rp.data.meseros && rp.data.meseros[0].nombre === 'Karla Mesera', rp.ok ? rp.data.meseros : rp);
+const rp = await api('reporte', { desde: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Tegucigalpa' }).format(new Date()), hasta: new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Tegucigalpa' }).format(new Date()) }, A); ok('reporte meseros', rp.ok && rp.data.meseros && rp.data.meseros[0].nombre === 'Karla Mesera', rp.ok ? rp.data.meseros : rp);
 const ini = await api('inicio', {}, A); ok('inicio mesas', ini.ok && ini.data.mesas && ini.data.mesas.total === 10, ini.data && ini.data.mesas);
 const pend = await api('pendientes', {}, M); console.log('pendientes mesero', pend.ok, pend.error);
 const iniM = await api('inicio', {}, M); console.log('inicio mesero', iniM.ok, iniM.error);

@@ -403,7 +403,7 @@ okN('reporte.kpi.ventas = ventas().resumen.total', rep.kpi.ventas, Lh.resumen.to
 console.log('\n— Diario / cuentas / inventario —');
 const dia = okRes('diario mes actual', await api('diario', { mes: mesAct }, tok));
 const nMov = ventasDb().filter(v => v.fecha.slice(0, 7) === mesAct).length + db.T.Abonos.filter(a => a.negocio_id === neg).length + db.T.Gastos.filter(g => g.negocio_id === neg && g.fechaGasto.slice(0, 7) === mesAct).length + db.T.Compras.filter(c => c.negocio_id === neg && c.fecha.slice(0, 7) === mesAct).length + db.T.Pagos.filter(p => p.negocio_id === neg).length;
-okN('diario: un movimiento por documento', dia.movimientos.length, nMov);
+okN('diario: un movimiento por documento', dia.movimientos.filter(m => !m.deVenta).length, nMov); // 1.9.92: lo cobrado al editar una venta sale aparte, el día en que entró
 okN('diario.resumen.ventas = no anuladas del mes', dia.resumen.ventas, ventasDb().filter(v => !v.anulada && v.fecha.slice(0, 7) === mesAct).reduce((a, v) => a + v.total, 0));
 okN('diario.resumen.gastos', dia.resumen.gastos, db.T.Gastos.filter(g => g.negocio_id === neg && !g.anulado && g.fechaGasto.slice(0, 7) === mesAct).reduce((a, g) => a + g.monto, 0));
 ok('diario ordenado por fecha', dia.movimientos.every((m, i, a) => !i || a[i - 1].fecha <= m.fecha));
