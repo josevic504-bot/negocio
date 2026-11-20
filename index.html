@@ -393,7 +393,7 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .lg-hero{background:radial-gradient(130% 150% at 15% 0%,var(--h2) 0%,var(--h1) 75%);color:#fff;text-align:center;padding:42px 20px 96px;border-radius:0 0 40px 40px;position:relative;overflow:hidden}
 .lg-hero:before{content:"";position:absolute;width:300px;height:300px;border-radius:50%;right:-100px;top:-120px;background:radial-gradient(closest-side,rgba(255,255,255,.18),transparent)}
 .lg-hero:after{content:"";position:absolute;width:320px;height:320px;border-radius:50%;left:-130px;bottom:-210px;background:radial-gradient(closest-side,color-mix(in srgb,var(--a2) 50%,transparent),transparent)}
-.lg-hero>*{position:relative;z-index:1}.lg-hero .mono{width:72px;height:72px}
+.lg-hero>*{position:relative;z-index:1}.lg-hero.chico{padding:20px 20px 88px}.lg-hero.chico .mono{width:46px;height:46px}.lg-hero.chico .hero-name{font-size:27px}#demo-cta{position:fixed;left:12px;right:12px;bottom:calc(98px + env(safe-area-inset-bottom));z-index:40;display:flex;align-items:center;gap:8px;background:#221b2a;color:#fff;border-radius:16px;padding:8px 8px 8px 14px;font-size:13.5px;box-shadow:0 10px 30px rgba(0,0,0,.3)}#demo-cta span{flex:1;line-height:1.25}#demo-cta .btn{min-height:38px;padding:0 12px;font-size:13.5px;white-space:nowrap}#demo-cta .x{background:none;border:0;color:#fff;font-size:20px;padding:4px 8px;opacity:.8}@media(min-width:900px){#demo-cta{left:auto;right:20px;bottom:20px;max-width:420px}}.lg-hero .mono{width:72px;height:72px}
 .lg-card{position:relative;z-index:2;background:var(--card);border:1px solid var(--line);border-radius:28px;box-shadow:0 18px 44px rgba(0,0,0,.14);padding:22px 20px 16px;margin:-70px auto 16px;width:min(460px,calc(100% - 24px))}
 .in-wrap{overflow:hidden;margin:-4px -20px 0;touch-action:pan-y}
 .in-track{display:flex;transition:transform .35s ease}
@@ -2523,6 +2523,7 @@ function pintarLogin() {
   quitarSplash();
   setTimeout(() => { try { ofrecerApk(); } catch (e) {} }, 1500);
   $('#login').hidden = false;
+  if (!DEMO.on && LS.get('volvioDemo', '')) { LS.del('volvioDemo'); S.lmodo = 'reg'; S.lmodoElegido = 1; } // vuelve de «Verlo por dentro» directo a crear su cuenta
   if (!S.lmodo) S.lmodo = LS.get('cuenta', '') || DEMO.on ? 'ing' : 'reg';
   if (DEMO.on && !LS.get('cuenta', '') && !S.lmodoElegido) S.lmodo = 'demo';
   if (!S.multi && S.lmodo === 'reg') S.lmodo = 'ing';
@@ -2533,14 +2534,14 @@ function pintarLogin() {
   const marca = !reg && !demo && nombre;
   const multi = S.multi;
   const giros = (S.giros.length ? S.giros : GIROS_LOCAL);
-  $('#login').innerHTML = `<div class="lg-hero">${logo && !reg ? `<div class="hero-logo"><img src="${esc(logo)}" alt=""></div>` : `<div class="mono">${ic('store', 30)}</div>`}
+  $('#login').innerHTML = `<div class="lg-hero${reg ? ' chico' : ''}">${logo && !reg ? `<div class="hero-logo"><img src="${esc(logo)}" alt=""></div>` : `<div class="mono">${ic('store', reg ? 22 : 30)}</div>`}
       <div class="hero-name">${esc(!reg && !demo && nombre ? nombre : 'Gestión de Negocio VM')}</div><div class="hero-tag">${reg ? 'Prueba gratis ' + DIAS_PRUEBA_REG + ' días' : demo ? 'Modo prueba' : marca && eslogan ? esc(eslogan) : 'Administra tu negocio'}</div>
       ${DEMO.on && !demo ? '<span class="demo-tag" style="position:relative;z-index:1">MODO PRUEBA</span>' : ''}</div>
     <div class="lg-card">
     ${demo ? `<h3 class="lg-t">Conoce el sistema</h3><p class="lg-p">Entra a un <b>negocio de ejemplo</b> con productos, ventas, clientes, pedidos en línea y reportes. Todo queda solo en este navegador.</p>
       <button class="btn pri big" data-a="demoEjemplo">${ic('sparkle')} Entrar al negocio de ejemplo</button>
       <button class="btn big" data-a="lmodo" data-m="reg" style="margin-top:8px">Registrar un negocio propio de prueba</button>`
-    : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p">Prueba gratis durante <b>${DIAS_PRUEBA_REG} días</b> el sistema completo. Sin tarjeta.</p><div class="in-mini"><span>Ventas</span><span>Inventario</span><span>Clientes</span><span>Caja</span><span>Tienda en línea</span><span>Reportes</span></div>
+    : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p" style="margin-bottom:10px"><b>${DIAS_PRUEBA_REG} días gratis</b> · sistema completo · sin tarjeta</p>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
         <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['carwash', 'joyeria', 'floristeria', 'vitaminas', 'manualidades'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
@@ -2548,7 +2549,7 @@ function pintarLogin() {
         <label class="fld"><span>Tu nombre</span><input id="r-nom" autocomplete="name" maxlength="60" required></label>
         <div class="f2"><label class="fld"><span>Tu WhatsApp</span><input id="r-wa" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
         <label class="fld"><span>Crea un PIN (4 a 6 números)</span>${pw('id="r-pin" inputmode="numeric" maxlength="6" autocomplete="new-password" required')}</label></div>
-        <button class="btn pri big" type="submit" id="r-btn">Comenzar prueba gratis</button><div class="lg-err" id="r-err"></div><button type="button" class="in-link" data-a="introVer">${ic('help', 15)} Ver introducción del programa</button></form>`
+        <button class="btn pri big" type="submit" id="r-btn">Comenzar prueba gratis</button><div class="lg-err" id="r-err"></div><button type="button" class="in-link" data-a="introVer">${ic('help', 15)} Ver introducción del programa</button>${DEMO.on ? '' : `<button type="button" class="in-link" data-a="verDemo">${ic('eye', 15)} Verlo por dentro sin registrarme</button>`}</form>`
     : `<h3 class="lg-t">${nombre ? 'Hola de nuevo' : 'Ingresar'}</h3>
       <form id="f-log" autocomplete="on">
         ${multi ? `<label class="fld"><span>Tu WhatsApp</span><input id="l-user" type="tel" inputmode="tel" autocomplete="tel" placeholder="9876-5432" required></label>
@@ -2562,6 +2563,9 @@ function pintarLogin() {
     <div class="row" style="justify-content:center;margin-top:6px">${!API_URL_DEFAULT || DEMO.on ? `<button class="btn ghost sm" data-a="alternarDemo">${DEMO.on ? 'Salir del modo prueba' : 'Probar en modo prueba'}</button>` : ''}${!API_URL_DEFAULT && !DEMO.on ? `<button class="btn ghost sm" data-a="configServidor">Configurar servidor</button>` : ''}${DEMO.on && !demo ? `<button class="btn ghost sm" data-a="lmodo" data-m="demo">Negocio de ejemplo</button>` : ''}</div>${enSupabase() && !DEMO.on ? `<div style="text-align:center"><button class="sb-login" data-a="menuServidor">⚡ Conectado al servidor nuevo (prueba)</button></div>` : ''}
     </div>${creditoHTML()}`;
   const fr = $('#f-reg'); if (fr) fr.onsubmit = registrarse;
+  if (fr && reg) { pasoReg('form'); fr.addEventListener('input', () => pasoReg('escribe'), { once: true }); }
+  // Llegó con «Verlo por dentro»: entra de una vez al negocio de ejemplo
+  if (demo) { let dd = ''; try { dd = sessionStorage.getItem(LS_NS + 'demoDirecto') || ''; sessionStorage.removeItem(LS_NS + 'demoDirecto'); } catch (e) {} const b = dd && $('#login [data-a="demoEjemplo"]'); if (b) setTimeout(() => b.click(), 50); }
   const fl = $('#f-log'); if (fl) fl.onsubmit = ingresar;
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
@@ -2584,11 +2588,11 @@ const INTRO = [
 ];
 function pintarIntro() {
   const n = S.introN || 0, last = n === INTRO.length - 1;
-  $('#login').innerHTML = `<div class="lg-hero"><div class="mono">${ic('store', 30)}</div><div class="hero-name">Gestión de Negocio VM</div><div class="hero-tag">Conoce el programa</div></div>
+  $('#login').innerHTML = `<div class="lg-hero chico"><div class="mono">${ic('store', 22)}</div><div class="hero-name">Gestión de Negocio VM</div><div class="hero-tag">Pruébalo gratis ${DIAS_PRUEBA_REG} días · sin tarjeta</div></div>
     <div class="lg-card"><div class="in-wrap"><div class="in-track" style="transform:translateX(-${n * 100}%)">${INTRO.map(s => `<div class="in-sl"><div class="in-vis"><div class="in-ico">${ic(s.i, 18)}</div>${s.v()}</div><h3>${s.t}${s.plus ? ' <span class="in-plus">PLUS</span>' : ''}</h3><p>${s.p}</p></div>`).join('')}</div></div>
     <div class="in-dots">${INTRO.map((_, k) => `<i class="${k === n ? 'on' : ''}"></i>`).join('')}</div>
-    <div class="in-nav">${last ? `<button class="btn pri big" data-a="introFin">${ic('sparkle')} Crear mi cuenta gratis</button>` : `<button class="btn ghost big" data-a="introFin">Saltar</button><button class="btn pri big" data-a="introSig">Siguiente ${ic('right', 18)}</button>`}</div>
-    ${last ? `<p class="lg-p sm">${DIAS_PRUEBA_REG} días gratis · sin tarjeta · sin compromiso</p>` : ''}
+    <button class="btn pri big" data-a="introFin" style="width:100%">${ic('sparkle')} Crear mi cuenta gratis</button>
+    <div class="in-nav" style="margin-top:8px">${DEMO.on ? '' : `<button class="btn big" data-a="verDemo">Verlo por dentro</button>`}${last ? '' : `<button class="btn big" data-a="introSig">Siguiente ${ic('right', 18)}</button>`}</div>
     <button class="btn ghost big" data-a="lmodo" data-m="ing" style="margin-top:6px">Ya tengo cuenta · Ingresar</button></div>${creditoHTML()}`;
   const w = $('#login .in-wrap'); let x0 = null;
   w.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
@@ -2597,6 +2601,13 @@ function pintarIntro() {
   aplicarTema(LS.get('tema', TEMA_DEF));
 }
 ACC.introSig = () => { S.introN = Math.min(INTRO.length - 1, (S.introN || 0) + 1); pintarIntro(); };
+// Pasos del registro (Panel Molina): se anotan como visitas «r-…» para saber dónde se va la gente que llega de un anuncio. No guardan nada personal.
+const pasoReg = p => { if (DEMO.on) return; try { (window.mvq = window.mvq || []).push('r-' + p); } catch (e) {} };
+// «Verlo por dentro»: abre el negocio de ejemplo sin registrarse y deja a la mano el botón para crear la cuenta
+ACC.verDemo = () => { pasoReg('demo'); LS.set('demoVisita', '1'); LS.set('modo', 'demo'); try { sessionStorage.setItem(LS_NS + 'demoDirecto', '1'); } catch (e) {} location.replace(location.pathname); };
+ACC.demoCrear = () => { LS.del('demoVisita'); LS.set('volvioDemo', '1'); LS.set('introVisto', '1'); LS.set('modo', 'real'); try { sessionStorage.removeItem(LS_NS + 'modoSes'); } catch (e) {} location.replace(location.pathname); };
+ACC.demoCtaX = () => { LS.del('demoVisita'); const c = $('#demo-cta'); if (c) c.remove(); };
+function demoCta() { if (!DEMO.on || !LS.get('demoVisita', '') || $('#demo-cta')) return; const d = document.createElement('div'); d.id = 'demo-cta'; d.innerHTML = '<span>Este es un negocio de ejemplo</span><button class="btn pri" data-a="demoCrear">Crear mi cuenta gratis</button><button class="x" data-a="demoCtaX" aria-label="Cerrar">×</button>'; document.body.appendChild(d); }
 ACC.introFin = () => { S.introVista = 1; LS.set('introVisto', '1'); S.lmodo = 'reg'; S.lmodoElegido = 1; pintarLogin(); window.scrollTo(0, 0); };
 ACC.introVer = () => { S.lmodo = 'intro'; S.introN = 0; pintarLogin(); window.scrollTo(0, 0); };
 async function ingresar(ev) {
@@ -2723,6 +2734,7 @@ let registrando = false;
 async function registrarse(ev) {
   ev.preventDefault();
   if (registrando) return; // un solo registro aunque toquen el botón varias veces
+  pasoReg('enviar');
   $('#r-err').textContent = '';
   const btn = $('#r-btn');
   try {
@@ -4905,6 +4917,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!LS.get('cuenta', '')) S.lmodo = 'demo'; history.replaceState(null, '', location.pathname); if (!DEMO.on) { location.reload(); return; } }
   if (q.has('tienda')) { S.enTienda = true; return iniciarTienda(q.get('tienda')); }
   if (q.has('panel')) { if (DEMO.on) { try { await demoFuente(); demoBackend(); } catch (e) { toast(e.message, 'error'); } } return iniciarPanel(); }
+  demoCta();
   // Contador de visitas (Panel Molina): cuenta a quien abre el enlace; no a los clientes con sesión
   if (S.token && !DEMO.on) mvMarca('mv_cliente'); else (window.mvq = window.mvq || []).push(DEMO.on ? 'demo' : 'negocio');
   if ('serviceWorker' in navigator && location.protocol === 'https:') { try { navigator.serviceWorker.register('sw.js'); } catch (e) {} }
