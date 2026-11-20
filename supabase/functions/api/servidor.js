@@ -169,7 +169,7 @@ export function crearServidor(SRC, db, opciones = {}) {
     },
     getAll: ks => { const o = {}; (ks || []).forEach(k => { const v = cache.get(k); if (v !== null) o[k] = v; }); return o; },
     put: (k, v, s) => {
-      k = String(k); if (sinCache(k)) return; s = Math.min(Number(s) || 600, String(k).indexOf('P_') === 0 ? 7776000 : 21600); // la sesión del Panel dura hasta 90 días; lo demás, hasta 6 horas
+      k = String(k); if (sinCache(k)) return; s = Math.min(Number(s) || 600, String(k).indexOf('P_') === 0 ? 7776000 : /^B[LS]_/.test(k) ? 86400 : 21600); // la sesión del Panel dura hasta 90 días; los bloqueos por intentos fallidos, hasta 24 horas (antes se cortaban a las 6); lo demás, hasta 6 horas
       // La sesión se renueva en cada acción: si el valor es el mismo y le queda casi todo el tiempo, no se vuelve a guardar (ahorra una escritura por clic)
       const prev = (k in C.cache) ? C.cache[k] : R.c[k];
       if (prev && prev.v === String(v) && s >= 3600 && prev.e - Date.now() > (s - 3600) * 1000) return;
