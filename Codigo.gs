@@ -742,9 +742,9 @@ function publico_(u) { const o = Object.assign({}, u); delete o.hash; delete o.s
 
 /* ---- Intentos fallidos con bloqueo progresivo ----
  * k identifica a quién se cuenta (WhatsApp, usuario, conexión «i…», Panel «p…»). Al llegar al máximo de fallos seguidos se bloquea
- * 10 minutos; si vuelve a pasar el mismo día, 1 hora; la tercera vez, 24 horas. El bloqueo es solo para ese k: a nadie más le afecta. */
-const BLOQ_ESC = [600, 3600, 86400];
-const bloqTexto_ = seg => seg >= 86400 ? 'hasta mañana' : seg >= 3600 ? '1 hora' : '10 minutos';
+ * 10 minutos; si vuelve a pasar el mismo día, 1 hora; la tercera vez, 6 horas (24 era demasiado). El bloqueo es solo para ese k: a nadie más le afecta. */
+const BLOQ_ESC = [600, 3600, 21600];
+const bloqTexto_ = seg => seg >= 21600 ? '6 horas' : seg >= 3600 ? '1 hora' : '10 minutos';
 function bloqueado_(k, msg) { const b = CacheService.getScriptCache().get('BL_' + k); if (b) throw new Error((msg || 'Demasiados intentos fallidos.') + ' Espera ' + b + '.'); }
 // Anota un fallo; devuelve los segundos de bloqueo si con este fallo quedó bloqueado (0 si todavía no)
 function fallo_(k, max) {
@@ -1380,7 +1380,7 @@ function bloquearSiVence_() {
 
 function loginMulti_(d, ip) {
   const wa = waNorm_(d.whatsapp);
-  // Bloqueo progresivo por WhatsApp (5 fallos) y por conexión (20 fallos con cualquier número): 10 min → 1 h → 24 h
+  // Bloqueo progresivo por WhatsApp (5 fallos) y por conexión (20 fallos con cualquier número): 10 min → 1 h → 6 h
   bloqueado_(wa, 'Demasiados intentos fallidos.');
   if (ip) bloqueado_('i' + ip, 'Demasiados intentos fallidos desde esta conexión.');
   // Una persona puede tener varios negocios con el mismo WhatsApp y PIN (los vincula Vic desde el Panel)
