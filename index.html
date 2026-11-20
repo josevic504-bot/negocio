@@ -453,6 +453,14 @@ select{appearance:none;background-image:linear-gradient(45deg,transparent 50%,va
 .pays.three{grid-template-columns:repeat(3,1fr)}
 .rapidos{display:flex;gap:5px;flex-wrap:wrap}.rapidos .chip{padding:7px 10px}
 .cambio.warn{background:var(--warnb);color:var(--warn)}.cambio.bad{background:var(--badb);color:var(--bad)}.cambio.info{background:var(--infob);color:var(--info)}
+.fx-t{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut);margin:6px 2px 8px}
+.fx-acc{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin:0 0 14px}@media(min-width:700px){.fx-acc{grid-template-columns:repeat(3,1fr)}}
+.fx-a{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:11px 12px;box-shadow:var(--sh);text-align:left;font:inherit;color:inherit;text-decoration:none;cursor:pointer;min-width:0}.fx-a:hover{border-color:var(--pri)}
+.fx-a i{width:40px;height:40px;border-radius:13px;display:grid;place-items:center;color:#fff;flex:none;background:linear-gradient(135deg,var(--t1),var(--t2))}.fx-a span{min-width:0}.fx-a b{display:block;font-size:14px;font-weight:600}.fx-a small{display:block;font-size:11.5px;color:var(--mut);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.fx-a.off{opacity:.55}.t-wa{--t1:#128c4a;--t2:#25d366}
+.fx-g{background:var(--card);border:1px solid var(--line);border-radius:20px;box-shadow:var(--sh);margin-bottom:12px;overflow:hidden}
+.fx-gh{display:flex;align-items:center;gap:10px;width:100%;padding:14px 15px;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}.fx-gh b{font-size:16px;font-weight:600;white-space:nowrap}.fx-gh small{margin-left:auto;font-size:12.5px;color:var(--mut);text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.fx-gh>.ic{color:var(--mut);transform:rotate(90deg);transition:.15s}.fx-g.cerrado .fx-gh>.ic{transform:none}
+.fx-n{width:26px;height:26px;border-radius:9px;background:var(--pri2);color:var(--pri);display:grid;place-items:center;font-size:13px;font-weight:700;flex:none}
+.fx-gb{padding:2px 14px 14px;border-top:1px solid var(--line)}.fx-g.cerrado .fx-gb{display:none}.fx-gb .kpis{grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}@media(min-width:700px){.fx-gb .kpis{grid-template-columns:repeat(3,1fr)}}.fx-gb .kpi{padding:10px 11px;box-shadow:none}.fx-gb .kpi b{font-size:16px;white-space:normal}.fx-gb .sec-t h3{font-size:15px}.fx-gb .li{box-shadow:none}
 .acciones{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 4px}.acciones .btn{flex:1 1 auto}
 .ok-big{text-align:center;padding:6px 0 4px}
 .ok-big>i{display:grid;place-items:center;width:78px;height:78px;margin:0 auto 10px;border-radius:50%;color:#fff;background:linear-gradient(135deg,#00915a,#2fd58b);box-shadow:0 10px 26px rgba(0,145,90,.35);animation:pop .35s ease}
@@ -4357,13 +4365,38 @@ function panelPasos(n) {
   return `<div class="pp-p"><div class="row" style="justify-content:space-between"><b>Primeros pasos</b><span class="pp-n">${h} de ${l.length}${f ? ' · falta «' + f[1] + '»' : ' · completo'}</span></div>
     <div class="gg-bar"><i style="width:${Math.round(h / l.length * 100)}%"></i></div><div class="chips" style="flex-wrap:wrap">${l.map(x => `<span class="chip ${p[x[0]] ? 'on' : ''}">${ic(p[x[0]] ? 'check' : 'x', 13)} ${x[1]}</span>`).join('')}</div></div>`;
 }
+// WhatsApp de la ficha: al tocarlo salen las sugerencias de mensaje (antes eran una fila de botones a media ficha)
+function panelWaSugerencias(id, n) {
+  const ops = [['dia3', '¿Qué tal la prueba?', 'Para saber cómo le va en los primeros días'], ['vence', 'Vence mañana', 'Aviso de que su prueba termina'], ['activada', 'Licencia activada', 'Confirmación de que ya quedó activa'], ['inactivo', 'Sin entrar', 'Para quien dejó de abrir el programa'], ['vencida', 'Prueba vencida', 'Invitación a activar la licencia']];
+  const h = hoja({ titulo: 'Escribirle por WhatsApp', html: `<p class="sm mut" style="margin:0 0 10px">A <b>${esc(String(n.dueno || '').split(' ')[0] || n.negocio)}</b> · ${esc(fmtWA(n.whatsapp))}. Elige el mensaje; se abre WhatsApp con el texto listo para que lo revises antes de enviar.</p>
+    <div class="list">${ops.map(x => `<a class="li" style="width:100%;text-align:left;font:inherit;color:inherit;text-decoration:none" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}" data-n="${esc(x[1])}"><div class="av t-wa">${ic('wa', 18)}</div><div class="tx"><b>${x[1]}</b><small>${x[2]}</small></div>${ic('right', 16)}</a>`).join('')}
+    <button type="button" class="li" style="width:100%;text-align:left;font:inherit;color:inherit;text-decoration:none" data-w="bienv"><div class="av t-pri">${ic('sparkle', 18)}</div><div class="tx"><b>Bienvenida + imagen</b><small>El mensaje de bienvenida con la imagen</small></div>${ic('right', 16)}</button>
+    <a class="li" style="width:100%;text-align:left;font:inherit;color:inherit;text-decoration:none" href="${waLink(n.whatsapp)}" target="_blank" rel="noopener" data-t="libre" data-n="Sin mensaje"><div class="av t-verde">${ic('chat', 18)}</div><div class="tx"><b>Abrir el chat sin mensaje</b><small>Para escribirle lo que quieras</small></div>${ic('right', 16)}</a></div>` });
+  h.b.onclick = e => {
+    if (e.target.closest('[data-w="bienv"]')) { h.cerrar(); panelBienvenida(n); return; }
+    const a = e.target.closest('a[data-t]'); if (!a) return;
+    if (a.dataset.t !== 'libre') api('panelContacto', { id, tipo: a.dataset.t, nota: 'WhatsApp · ' + a.dataset.n }, true).catch(() => {});
+    setTimeout(() => h.cerrar(), 300);
+  };
+}
 async function panelFicha(id) {
   const h = hoja({ titulo: 'Cargando…', ancho: 1, html: '<div class="empty">Cargando…</div>', onClose: () => { if (S.enPanel) panelResumen().catch(err); } });
-  let n;
+  let n; const ab = { 1: true, 2: true }; // grupos abiertos de la ficha (se conservan al repintar)
   const pinta = async () => {
     n = await api('panelNegocio', { id }); $('.sheet-h h3', h.el).textContent = n.negocio;
-    const u = n.uso, e = EST_L[n.estado];
+    const u = n.uso, e = EST_L[n.estado], sinLeerF = n.soporte.reduce((t, c) => t + (Number(c.sinLeer) || 0), 0);
     h.b.innerHTML = `<div class="cli-h"><div class="av ${colorDe(n.negocio)} lg">${esc(iniciales(n.negocio))}</div><div class="tx"><b>${esc(n.dueno)} · ${esc(fmtWA(n.whatsapp))}</b><small>${esc(n.giro)} · registrado el ${esc(fFechaC(String(n.registro).slice(0, 10)))} · ${n.usuarios} usuario${n.usuarios > 1 ? 's' : ''}</small></div></div>
+      <div class="fx-t">Entrar y contactar</div>
+      <div class="fx-acc">
+        <a class="fx-a" href="${esc(new URL(n.enlace ? './' + n.enlace : './?tienda=' + encodeURIComponent(n.id), document.baseURI).href)}" target="_blank" rel="noopener"><i class="t-verde">${ic('store', 20)}</i><span><b>Ver su tienda</b><small>${u && u.tienda ? 'Vista del comprador' : 'Tienda apagada'}</small></span></a>
+        <button type="button" class="fx-a" data-x="verApp"><i class="t-pri">${ic('eye', 20)}</i><span><b>Ver su app</b><small>Solo ver · 2 horas</small></span></button>
+        <button type="button" class="fx-a" data-x="mensaje"><i class="t-azul">${ic('chat', 20)}</i><span><b>Mensaje en app</b><small>Le sale al abrirla</small></span></button>
+        <button type="button" class="fx-a" data-x="waSug"><i class="t-wa">${ic('wa', 20)}</i><span><b>WhatsApp</b><small>${esc(fmtWA(n.whatsapp))}</small></span></button>
+        <button type="button" class="fx-a${n.soporte.length ? '' : ' off'}" ${n.soporte.length ? `data-a="panelSoporteVer" data-id="${esc(n.soporte[0].id)}"` : 'data-x="sinChat"'}><i class="t-naranja">${ic('inbox', 20)}</i><span><b>Chat de soporte</b><small>${n.soporte.length ? (sinLeerF ? sinLeerF + ' sin leer' : n.soporte.length + ' conversaci' + (n.soporte.length === 1 ? 'ón' : 'ones')) : 'Sin conversaciones'}</small></span></button>
+        <button type="button" class="fx-a${n.soporte.length ? '' : ' off'}" ${n.soporte.length ? `data-a="panelSoporteVer" data-id="${esc(n.soporte[0].id)}"` : 'data-x="sinChat"'}><i class="t-morado">${ic('tv', 20)}</i><span><b>Ayuda en vivo</b><small>Desde su chat</small></span></button>
+      </div>
+      <small class="hint" style="margin:-6px 2px 12px;display:block">«Ver su app» muestra lo mismo que el cliente, sin su PIN: no se puede guardar nada, vence en 2 horas y queda anotado.</small>
+      <div class="fx-g${ab[1] ? '' : ' cerrado'}"><button type="button" class="fx-gh" data-gf="1"><span class="fx-n">1</span><b>Resumen</b><small>${esc(e[1]) + (n.estado === 'prueba' ? ' · día ' + n.dia : '') + (n.pasos && !n.colab ? ' · ' + pasosLista(n).filter(x => n.pasos[x[0]]).length + ' de ' + pasosLista(n).length + ' pasos' : '')}</small>${ic('right', 16)}</button><div class="fx-gb">
       <div class="kpis"><div class="kpi" style="--k:${n.estado === 'activa' ? '#00b56e' : n.estado === 'prueba' ? 'var(--warn)' : 'var(--bad)'}"><small>Estado</small><b>${e[1]}</b><i>${n.estado === 'prueba' ? `día ${n.dia} · vence ${esc(fFechaC(n.vencePrueba))}` : n.estado === 'vencida' ? 'venció el ' + esc(fFechaC(n.vencePrueba)) : n.plus ? 'con Plus' : 'sin Plus'}</i></div><div class="kpi"><small>Última conexión</small><b>${n.sinEntrar === 0 ? 'Hoy' : n.sinEntrar === 1 ? 'Ayer' : 'Hace ' + n.sinEntrar + ' días'}</b><i>${esc(String(n.ultimaConexion).slice(11))}${n.version ? ' · app ' + esc(n.version) + (P.d && P.d.appVer && cmpVer(n.version, P.d.appVer) < 0 ? ' <span style="color:var(--bad)">(desactualizada)</span>' : '') : ''}</i></div>
       <div class="kpi" style="--k:${n.ventas7 ? '#00b56e' : 'var(--mut)'}"><small>Última venta</small><b>${n.ultimaVenta ? (n.sinVender === 0 ? 'Hoy' : n.sinVender === 1 ? 'Ayer' : 'Hace ' + n.sinVender + ' días') : 'Ninguna'}</b><i>${n.ventas7} venta${n.ventas7 === 1 ? '' : 's'} en 7 días</i></div>
       ${u ? `<div class="kpi"><small>Uso en 30 días</small><b>${u.ventas30} venta${u.ventas30 === 1 ? '' : 's'}</b><i>${u.productos} productos · ${u.clientes} clientes · ${u.pedidos} pedidos</i></div>` : `<div class="kpi"><small>Uso</small><b>—</b><i>${esc(n.usoError || 'sin datos')}</i></div>`}${u && u.propios !== undefined ? (() => { const dd = u.ultimoPropio ? Math.max(0, Math.round((parseLocal(hoy()) - parseLocal(String(u.ultimoPropio).slice(0, 10))) / 86400000)) : -1, hace = dd < 0 ? '' : dd === 0 ? 'hoy' : dd === 1 ? 'ayer' : 'hace ' + dd + ' días';
@@ -4373,39 +4406,44 @@ async function panelFicha(id) {
       ${n.tiendaVis && ((u && u.tienda) || n.tiendaVis.semana) ? `<div class="kpi" style="--k:${n.tiendaVis.semana ? '#00b56e' : 'var(--bad)'}"><small>Visitas a su tienda</small><b>${n.tiendaVis.semana} en 7 días</b><i>${n.tiendaVis.semana ? `hoy ${n.tiendaVis.hoy} · ${n.tiendaVis.unicos} persona${n.tiendaVis.unicos === 1 ? '' : 's'}${n.tiendaVis.origen.length ? ' · más por ' + esc(tdOri(n.tiendaVis.origen[0].k)[0]) : ''}` : 'no está compartiendo su enlace'}</i></div>` : ''}</div>
       ${panelPasos(n)}
       ${n.eliminada ? `<div class="aviso warn" style="border-color:var(--bad)">${ic('trash', 20)}<div><b>Cuenta eliminada por el cliente · ${esc(fCorta(n.eliminada.fecha))}</b><small>${n.eliminada.motivo ? 'Motivo: «' + esc(n.eliminada.motivo) + '». ' : ''}${n.eliminada.purgado ? 'Sus datos ya se borraron definitivamente.' : `Sus datos y respaldos se borran definitivamente el ${esc(fFechaC(n.eliminada.borraEl))}. Hasta entonces puedes recuperarla; una copia queda en Respaldos, abajo.`}</small></div>${n.eliminada.purgado ? '' : `<button class="btn sm pri" data-x="recuperar">${ic('undo', 15)} Recuperar</button>`}</div>` : ''}${panelSecSalud(n)}${n.colab ? `<div class="aviso colab">${ic('star', 20)}<div><b>Colaborador · todo activo sin cobro</b><small>Licencia, Plus y Contabilidad sin vencimiento; cambia de tipo de negocio cuando quiera y los giros extra se le activan sin cobro. No cuenta en conversión ni ingresos del panel.</small></div></div>` : ''}
+      </div></div>
+      <div class="fx-g${ab[2] ? '' : ' cerrado'}"><button type="button" class="fx-gh" data-gf="2"><span class="fx-n">2</span><b>Licencia y pagos</b><small>${n.pagos.length ? n.pagos.length + ' pago' + (n.pagos.length === 1 ? '' : 's') + ' recibido' + (n.pagos.length === 1 ? '' : 's') : 'Sin pagos todavía'}</small>${ic('right', 16)}</button><div class="fx-gb">
       <div class="acciones">${n.colab ? `<button class="btn bad" data-x="quitarColab">${ic('x', 16)} Quitar colaborador</button>` : `${n.estado === 'bloqueada' ? `<button class="btn pri" data-x="reanudar">▶ Reanudar acceso</button>` : n.estado === 'activa' ? '' : `<button class="btn pri" data-x="activar">✓ Activar licencia</button>`}${n.plus ? `<button class="btn ghost" data-x="quitarPlus">Quitar Plus</button>` : `<button class="btn acc" data-x="plus">Activar Plus</button>`}${n.contab ? `<button class="btn ghost" data-x="quitarContab">Quitar Contabilidad</button>` : `<button class="btn" data-x="contab">${ic('chart', 16)} Activar Contabilidad</button>`}${n.estado === 'activa' ? '' : `<button class="btn" data-x="extender">+7 días de prueba</button>`}${n.estado === 'bloqueada' ? '' : `<button class="btn ghost" data-x="pausar">⏸ Pausar</button>`}<button class="btn ghost" data-x="colaborador" style="color:#6a3df0">${ic('star', 16)} Marcar colaborador</button>`}</div>
+      ${panelSecCuotas(n)}${panelSecContratos(n)}
+      <div class="sec-t"><h3>Pagos recibidos</h3><a data-x="pago">+ Anotar pago</a></div>
+      <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small>${n.llego && n.llego.id ? `<small style="color:var(--pri)">${ic('sparkle', 12)} Llegó por ${esc(n.llego.nombre)}</small>` : ''}</div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
+      </div></div>
+      <div class="fx-g${ab[3] ? '' : ' cerrado'}"><button type="button" class="fx-gh" data-gf="3"><span class="fx-n">3</span><b>Su negocio</b><small>${'Giros, productos y respaldos'}</small>${ic('right', 16)}</button><div class="fx-gb">
       ${panelSecGiros(n)}${panelSecGrupo(n)}
-      <div class="sec-t"><h3>Soporte</h3></div>
-      <div class="row"><button class="btn" data-x="verApp">${ic('eye', 16)} Ver su app (solo ver)</button><button class="btn" data-x="mensaje">${ic('chat', 16)} Enviarle un mensaje en la app</button></div>
-      <small class="hint">Ves lo mismo que el cliente para ayudarlo, sin su PIN. No se puede guardar nada; vence en 2 horas y queda anotado.</small>
       <div class="sec-t"><h3>Productos</h3></div>
       <div class="row"><button class="btn pri" data-x="importar">${ic('doc', 16)} Cargar productos desde Excel</button><button class="btn" data-x="copiar">${ic('copy', 16)} Copiar de otro negocio</button></div>
       <small class="hint">Llena la plantilla con la lista del cliente y se la cargas de un solo; los que ya tiene se actualizan.</small>
       <div class="sec-t"><h3>Respaldos</h3><a data-x="respHacer">Hacer uno ahora</a></div>
       <div class="list" id="pf-resp"><div class="empty">Cargando…</div></div>
       <small class="hint">Se hace solo cada noche a las 2 a. m., si hubo cambios. Las copias se guardan hasta 30 días. Toca una para restaurarla o descargarla en Excel.</small>
+      </div></div>
+      <div class="fx-g${ab[4] ? '' : ' cerrado'}"><button type="button" class="fx-gh" data-gf="4"><span class="fx-n">4</span><b>Seguimiento</b><small>${n.etiqueta ? esc(n.etiqueta) : 'Etiqueta, historial y notas'}</small>${ic('right', 16)}</button><div class="fx-gb">
       <div class="sec-t"><h3>Etiqueta</h3></div>
       <div class="chips" style="flex-wrap:wrap">${(P.d && P.d.etiquetas || ['Interesado', 'Precio alto', 'Ya tiene otro sistema', 'Perdido']).map(e => `<button class="chip ${n.etiqueta === e ? 'on' : ''}" data-x="etiqueta" data-e="${esc(e)}">${esc(e)}</button>`).join('')}${n.etiqueta ? `<button class="chip" data-x="etiqueta" data-e="">Quitar</button>` : ''}</div>
-      <div class="sec-t"><h3>Escribirle por WhatsApp</h3></div>
-      <div class="row">${[['dia3', '¿Qué tal la prueba?'], ['vence', 'Vence mañana'], ['activada', 'Licencia activada'], ['inactivo', 'Sin entrar'], ['vencida', 'Prueba vencida']].map(x => `<a class="btn wa sm" href="${waPlantilla(n, x[0])}" target="_blank" rel="noopener" data-t="${x[0]}">${ic('wa', 14)} ${x[1]}</a>`).join('')}<button class="btn wa sm" data-x="bienv">${ic('sparkle', 14)} Bienvenida + imagen</button><a class="btn sm" href="${esc(new URL(n.enlace ? './' + n.enlace : './?tienda=' + encodeURIComponent(n.id), document.baseURI).href)}" target="_blank" rel="noopener">${ic('store', 14)} Ver su tienda</a></div>
       <div class="sec-t"><h3>¿Cómo llegó?</h3>${(n.campanas || []).length ? '<a data-x="llego">Cambiar</a>' : ''}</div>
       ${llegoHTML(n)}
-      ${panelSecCuotas(n)}${panelSecContratos(n)}
-      <div class="sec-t"><h3>Pagos recibidos</h3><a data-x="pago">+ Anotar pago</a></div>
-      <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small>${n.llego && n.llego.id ? `<small style="color:var(--pri)">${ic('sparkle', 12)} Llegó por ${esc(n.llego.nombre)}</small>` : ''}</div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
       ${n.soporte.length ? `<div class="sec-t"><h3>Soporte</h3></div><div class="list">${n.soporte.slice(0, 5).map(c => `<div class="li ch ${c.sinLeer ? 'nv' : ''}" data-a="panelSoporteVer" data-id="${c.id}"><div class="av t-pri">${ic('chat', 18)}</div><div class="tx"><div class="row sp"><b>${esc(motivoTxt(c.motivo))}${c.modulo ? ' · ' + esc(c.modulo) : ''}</b><span class="h">${cuandoP(c.ultimo)}</span></div><small>${esc(avLimpia(c.ultimoTexto))}</small></div>${c.estado === 'resuelto' ? '<span class="badge b-ok">Resuelto</span>' : c.sinLeer ? `<span class="badge b-warn">${c.sinLeer}</span>` : ''}</div>`).join('')}</div>` : ''}
       <div class="sec-t"><h3>Historial</h3></div>
       <div class="list">${n.seguimiento.map(x => `<div class="li"><div class="av ${x.tipo === 'seguridad' ? 't-rojo' : x.tipo === 'accion' ? 't-pri' : 't-verde'}">${ic(x.tipo === 'seguridad' ? 'lock' : x.tipo === 'accion' ? 'check' : 'wa', 18)}</div><div class="tx"><b>${esc(x.nota)}</b><small>${esc(fFechaC(String(x.fecha).slice(0, 10)))} ${esc(String(x.fecha).slice(11, 16))}</small></div></div>`).join('')}<div class="li"><div class="av t-cian">${ic('plus', 18)}</div><div class="tx"><b>Se registró</b><small>${esc(fFechaC(String(n.registro).slice(0, 10)))} · prueba de ${DIAS_PRUEBA_REG} días</small></div></div></div>
       <label class="fld" style="margin-top:12px"><span>Notas internas</span><textarea id="pn-notas" rows="2" maxlength="500">${esc(n.notas)}</textarea></label><button class="btn sm" data-x="nota">Guardar notas</button>
-      <div class="sec-t" style="margin-top:22px"><h3 style="color:var(--bad)">Zona de peligro</h3></div>
+      </div></div>
+      <div class="fx-g${ab[5] ? '' : ' cerrado'}"><button type="button" class="fx-gh" data-gf="5"><span class="fx-n">5</span><b>Zona de peligro</b><small>${'Eliminar cliente'}</small>${ic('right', 16)}</button><div class="fx-gb">
       <div style="border:1.5px solid var(--bad);background:var(--badb);padding:14px 16px;border-radius:16px"><b style="display:block;margin-bottom:4px">Eliminar este cliente</b>
       <small style="display:block;color:var(--mut);line-height:1.5;margin-bottom:10px">Se quita del panel, nadie de este negocio podrá entrar y su WhatsApp queda libre para registrarse de nuevo. Su hoja de datos va a la papelera de Google Drive (se puede recuperar 30 días). Los pagos anotados se conservan en tus ingresos.</small>
-      <button class="btn bad" data-x="eliminar">${ic('trash', 18)} Eliminar cliente</button></div>`;
+      <button class="btn bad" data-x="eliminar">${ic('trash', 18)} Eliminar cliente</button></div></div></div>`;
     panelRespCargar(id, h);
     h.b.onclick = async e => {
       const gm = e.target.closest('[data-gm]'); if (gm) { gm.classList.toggle('on'); return; }
+      const gf = e.target.closest('[data-gf]'); if (gf) { ab[gf.dataset.gf] = !ab[gf.dataset.gf]; gf.parentNode.classList.toggle('cerrado', !ab[gf.dataset.gf]); return; }
       const b = e.target.closest('[data-x]'); if (!b) return; const x = b.dataset.x;
       try {
+        if (x === 'waSug') { panelWaSugerencias(id, n); return; }
+        if (x === 'sinChat') { toast('Este cliente todavía no ha abierto un chat de soporte. La ayuda en vivo se inicia desde su chat.', '', 5000); return; }
         if (x === 'importar') { panelImportar(id, n.negocio); return; }
         if (x === 'copiar') { await panelCopiar(id, n); return; }
         if (x === 'respHacer') { b.disabled = true; try { await respHacer(id); await panelRespCargar(id, h); } finally { b.disabled = false; } return; }
