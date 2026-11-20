@@ -1731,7 +1731,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.91';
+const APP_VER = '1.9.92';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -1936,7 +1936,7 @@ async function api(action, data, silent) {
       r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ action, token: S.token, panel: S.enPanel ? P.tok : undefined, dev: DEV_ID, data: data || {} }), redirect: 'follow' });
     } catch (e) { throw new Error('Sin conexión con el servidor. Revisa tu internet.'); }
     let j;
-    try { j = await r.json(); } catch (e) { throw new Error('Respuesta inválida del servidor. Verifica que la App web esté implementada con acceso «Cualquier usuario».'); }
+    try { j = await r.json(); } catch (e) { throw new Error('El servidor no respondió bien. Antes de repetir lo que estabas haciendo, revisa si ya quedó guardado; si sigue fallando, intenta de nuevo en un minuto.'); }
     if (!j.ok) return manejarError(j.error);
     return j.data;
   } finally { if (!silent) loader(false); }
@@ -5208,7 +5208,7 @@ function refrescarPrecios() {
   t.items.forEach((i, k) => {
     if (!i.productoId || i.precioMan) return;
     const p = byId(S.productos, i.productoId); if (!p) return;
-    const meses = susOn() && t.sus && t.sus[k] && t.sus[k].meses && esSus(p) ? Number(t.sus[k].meses) : 1, esp = r2(num(p.precio) * meses);
+    const meses = susOn() && t.sus && t.sus[k] && t.sus[k].meses && esSus(p) ? Number(t.sus[k].meses) : 1, esp = r2(num(precioVar(p, varKey(p, i.variante))) * meses); // la opción (talla, tono, presentación) puede tener su propio precio
     if (Math.abs(esp - num(i.precio)) > 0.004) { i.precio = esp; cambio = true; }
   });
   if (cambio) guardarTicket();
@@ -5222,6 +5222,14 @@ function quitarLinea(k) {
   S.ticket.sus = nuevo;
 }
 // E4: la marca contra cobros repetidos cambia si cambia lo que se cobra (un reintento igual devuelve la misma venta)
+// Un solo registro por toque (abonos, pagos, compras, gastos, cierre, ajustes): si se pierde la señal y se vuelve a tocar, el servidor devuelve lo ya guardado
+async function apiUna(h, accion, datos) {
+  h._ck = h._ck || Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+  datos.clave = h._ck + '-' + firmaTxt(JSON.stringify(datos));
+  const r = await api(accion, datos); h._ck = null;
+  if (r && r.repetida) toast('Esto ya se había registrado: no se guardó dos veces', 'ok', 5000);
+  return r;
+}
 const firmaTxt = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = ((h << 5) + h + t.charCodeAt(i)) | 0; return (h >>> 0).toString(36); };
 // Mismo cálculo que el servidor: cada línea redondeada, cada parte del ISV redondeada y el total = suma de las partes
 function calcTotales(t, exo) {
@@ -5527,6 +5535,7 @@ function abrirCobro() {
     if (S.hFact) { const f = S.hFact; f.onClose = null; S.hFact = null; f.cerrar(); }
     if (S.vista === 'vender') R.vender();
     if (r.repetida) toast('Esta venta ya se había registrado: no se cobró dos veces', 'ok', 5000);
+    if (r.mesaQueda > 0) toast('Ojo: a esta mesa le agregaron ' + money(r.mesaQueda) + ' mientras cobrabas. La mesa sigue abierta con eso pendiente.', '', 9000);
     ventaLista(r.venta, r.detalle, r.accesos);
   };
   pinta();
@@ -5830,7 +5839,7 @@ function cotizarRamo(p) {
       const v = num($('#cr-p', h.el).value); if (!(v > 0)) throw new Error('Escribe el precio del ramo');
       const g = await api('cotizarRamo', { id: p.id, precio: v, nota: $('#cr-n', h.el).value.trim() }); Object.assign(p, g); h.cerrar(); S.f.pest = 'cotizado'; S.f.pestAuto = 0; toast('Precio enviado' + (g.avisado ? ' y avisado en el chat de tu tienda' : '') + '. Queda en «Precio enviado» hasta que tu cliente lo acepte.', 'ok', 4500); R.pedidos();
       if (g.avisado) return;
-      const t = `Hola ${p.nombre.split(' ')[0]} ${pers ? '✨ Tu diseño personalizado' : '💐 Tu ramo a tu gusto'} queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Tócalo para aceptarlo: ${linkTienda()}&ramo=${encodeURIComponent(p.id)}`;
+      const t = `Hola ${p.nombre.split(' ')[0]} ${pers ? '✨ Tu diseño personalizado' : '💐 Tu ramo a tu gusto'} queda en ${money(v)}${p.envio ? ' + envío ' + money(p.envio) : ''}. Tócalo para aceptarlo: ${linkTiendaCon('ramo=' + encodeURIComponent(p.id))}`;
       const a = hoja({ titulo: 'Avisar al cliente', cls: 'chica', html: `<p class="conf">¿Le avisas a <b>${esc(p.nombre)}</b> por WhatsApp? (opcional)</p><div class="msg-prev">${esc(t)}</div>` });
       a.f.innerHTML = `<a class="btn wa big" href="${waLink(p.telefono, t)}" target="_blank" rel="noopener">${ic('wa')} Enviar WhatsApp</a>`; a.f.hidden = false; a.f.firstChild.addEventListener('click', () => setTimeout(() => a.cerrar(), 300)); } }]);
 }
@@ -6112,7 +6121,7 @@ function registrarFactura(p0) {
     box.innerHTML = sel.size ? `<b>Al guardar se registra:</b>
       <div>${ic('receipt', 15)} Compra a ${esc(st.prov)} · <b class="n">${money(total)}</b>${st.metodo === 'Crédito' ? ' al crédito' : ''}${st.factura ? ' · Fact. ' + esc(st.factura) : ''}</div>
       ${env > 0 ? `<div>${ic('truck', 15)} ${st.modo === 'gasto' ? 'Gasto de envío · <b class="n">' + money(env) + '</b>' : 'Envío de ' + money(env) + ' repartido en el costo de cada artículo'}</div>` : ''}
-      <div>${ic(st.llego ? 'lock' : 'truck', 15)} ${n === 1 ? '1 artículo' : cant(n) + ' artículos'} de ${sel.size === 1 ? '1 pedido' : sel.size + ' pedidos'} · ${st.llego ? 'apartados hasta el ' + fFechaC(new Date(Date.now() + plazo * 864e5).toISOString().slice(0, 10)) : 'quedan «En camino»'}</div>
+      <div>${ic(st.llego ? 'lock' : 'truck', 15)} ${n === 1 ? '1 artículo' : cant(n) + ' artículos'} de ${sel.size === 1 ? '1 pedido' : sel.size + ' pedidos'} · ${st.llego ? 'apartados hasta el ' + fFechaC(toLocal(new Date(Date.now() + plazo * 864e5)).slice(0, 10)) : 'quedan «En camino»'}</div>
       <div class="ok-t">${ic('eyeoff', 15)} No salen en la tienda en línea ni en Vender</div>
       ${falta ? `<div class="mut">Falta el costo de ${falta === 1 ? '1 artículo' : falta + ' artículos'}</div>` : `<div class="mut">Ganancia estimada: <b class="n">${money(gan)}</b></div>`}` : '<div class="mut">Elige al menos un pedido</div>';
     abiertos.forEach(p => p.items.forEach((i, k) => { const o = $(`[data-l="${p.id}|${k}"]`, h.el); if (o) o.textContent = lineaL(p.id, k) > 0 ? '= ' + money(lineaL(p.id, k)) + ' c/u' : ''; }));
@@ -6166,7 +6175,7 @@ function registrarFactura(p0) {
   } }]);
 }
 async function marcarLlego(p) {
-  const plazo = Math.max(1, Math.min(90, parseInt(S.config.comprasPlazo, 10) || 8)), vence = new Date(Date.now() + plazo * 864e5).toISOString().slice(0, 10);
+  const plazo = Math.max(1, Math.min(90, parseInt(S.config.comprasPlazo, 10) || 8)), vence = toLocal(new Date(Date.now() + plazo * 864e5)).slice(0, 10);
   if (!(await confirmar(`¿Ya tienes el pedido <b>${esc(p.numero)}</b> de <b>${esc(p.nombre)}</b>?<br><br>Queda apartado a su nombre hasta el <b>${esc(fFechaC(vence))}</b> (${plazo} días). No sale en tu tienda en línea ni en Vender.`, { si: 'Ya llegó' }))) return;
   const g = await api('compraLlego', { ids: [p.id] });
   S.pedidosL = null; S.inicio = null; S.f.pest = 'apartado'; S.f.pestAuto = 0;
@@ -6678,7 +6687,7 @@ function formProducto(p, onSave, pre) {
   ACC.pfKardex = () => kardex(p);
   const ctrl = $('#pf-ctrl', h.el), stk = $('#pf-stk', h.el);
   // Tabla por opción: una fila por combinación de las opciones escritas arriba (se rehace al cambiar las opciones)
-  const vAct = {}; { const V = varsDe(p); if (V) Object.keys(V).forEach(k => { vAct[k] = { s: V[k].s, p: V[k].p }; }); }
+  const vAct = {}, vIni = {}; { const V = varsDe(p); if (V) Object.keys(V).forEach(k => { vAct[k] = { s: V[k].s, p: V[k].p }; vIni[k] = num(V[k].s); }); } // vIni: existencia con la que se abrió el formulario
   const opsForm = () => $$('.pf-on', h.el).length ? leerOpc(opcLeerForm(h.el)) : leerOpc(p.opciones);
   const varOn = () => !!($('#pf-var', h.el) || {}).checked;
   const pintaVar = () => {
@@ -6738,6 +6747,7 @@ function formProducto(p, onSave, pre) {
       costo: Math.round(num(costo.value) * 10000) / 10000, margen: pct.value ? r2(pct.value) : (p.margen || 0), tasaIsv: isvSel.value, unidad: $('#pf-uni', h.el).value, icono: st.icono,
       tipo: ctrl.checked ? 'producto' : 'servicio', stockMin: num($('#pf-min', h.el).value) };
     if (nuevo) reg.stock = num(($('#pf-stock', h.el) || {}).value);
+    else if (Math.abs(reg.costo - num(p.costo)) < 0.00005) delete reg.costo; // el costo no se tocó: no se pisa el que dejó una compra mientras el formulario estaba abierto
     const gSel = $('#pf-giro .chip.on', h.el); if (gSel) reg.giro = gSel.dataset.g === girosOn()[0] ? '' : gSel.dataset.g;
     if ($('#pf-tienda', h.el)) { reg.tienda = $('#pf-tienda', h.el).checked; reg.descripcion = $('#pf-desc', h.el).value.trim(); }
     if ($('#pf-pe', h.el)) {
@@ -6753,7 +6763,8 @@ function formProducto(p, onSave, pre) {
       if (varOn()) {
         $$('#pf-vg [data-vk]', h.el).forEach(i => { (vAct[i.dataset.vk] = vAct[i.dataset.vk] || {})[i.dataset.c] = i.value; });
         const cs = combosDe(opsForm()); if (!cs.length) throw new Error('Escribe las opciones (tono, talla…) o apaga «Llevar cada opción por separado»');
-        const V = {}; cs.forEach(k => { const x = vAct[k] || {}; V[k] = { p: num(x.p) > 0 ? r2(x.p) : 0, s: num(x.s) }; if (num(x.s) < 0) throw new Error('La existencia no puede ser negativa'); });
+        // La existencia solo viaja si se cambió en este formulario: así no se pisa lo que se vendió o compró mientras estaba abierto
+        const V = {}; cs.forEach(k => { const x = vAct[k] || {}; if (num(x.s) < 0) throw new Error('La existencia no puede ser negativa'); V[k] = { p: num(x.p) > 0 ? r2(x.p) : 0 }; if (nuevo || !(k in vIni) || Math.abs(num(x.s) - vIni[k]) > 0.0004) V[k].s = num(x.s); });
         reg.variantes = JSON.stringify(V);
         if (nuevo) delete reg.stock;
       } else if (varsDe(p)) reg.variantes = '';
@@ -6814,7 +6825,7 @@ function ajusteStock(p, cb) {
   h.botones([{ t: 'Guardar ajuste', cls: 'pri', fn: async () => {
     if ($('#aj-c', h.el).value.trim() === '') throw new Error('Escribe la cantidad');
     if (V && !vSel) throw new Error('Elige la opción que ajustas');
-    const g = await api('ajusteStock', { id: p.id, modo, cantidad: num($('#aj-c', h.el).value), motivo: $('#aj-mot', h.el).value, variante: vSel });
+    const g = await apiUna(h, 'ajusteStock', { id: p.id, modo, cantidad: num($('#aj-c', h.el).value), motivo: $('#aj-mot', h.el).value, variante: vSel });
     const i = S.productos.findIndex(x => x.id === g.id); if (i >= 0) S.productos[i] = g;
     guardarCache(); S.inicio = null; h.cerrar(); toast('Existencias actualizadas', 'ok'); if (cb) cb(g); if (S.vista === 'productos') listaProductos(); else if (S.vista === 'inicio') R.inicio();
   } }]);
@@ -7055,7 +7066,7 @@ function abonar(c) {
     const monto = r2($('#ab-m', h.el).value);
     if (!(monto > 0)) throw new Error('Escribe el monto');
     const antes = c.saldo;
-    const r = await api('abono', { clienteId: c.id, monto, metodo, nota: $('#ab-n', h.el).value });
+    const r = await apiUna(h, 'abono', { clienteId: c.id, monto, metodo, nota: $('#ab-n', h.el).value });
     c.saldo = r.saldo; guardarCache(); S.inicio = null; h.cerrar();
     if (S.hCli) S.hCli.pinta().catch(() => {});
     if (S.vista === 'clientes') listaClientes(); else if (S.vista === 'inicio') R.inicio();
@@ -7137,7 +7148,7 @@ ACC.pagarProv = el => {
   $('#pg-t', h.el).onclick = () => { $('#pg-m', h.el).value = p.saldo; };
   $('#pg-p', h.el).addEventListener('click', e => { const b = e.target.closest('[data-m]'); if (!b) return; metodo = b.dataset.m; $$('#pg-p .pay', h.el).forEach(x => x.classList.toggle('on', x === b)); });
   h.botones([{ t: 'Registrar pago', cls: 'pri', fn: async () => {
-    const r = await api('pago', { proveedorId: p.id, monto: r2($('#pg-m', h.el).value), metodo, nota: $('#pg-n', h.el).value });
+    const r = await apiUna(h, 'pago', { proveedorId: p.id, monto: r2($('#pg-m', h.el).value), metodo, nota: $('#pg-n', h.el).value });
     S.proveedores = r.proveedores; guardarCache(); S.inicio = null; h.cerrar(); toast('Pago registrado', 'ok'); if (S.hProv) S.hProv.pinta(); if (S.vista === 'proveedores') R.proveedores();
   } }]);
 };
@@ -7301,7 +7312,7 @@ function formCompra(provId) {
     if (repetido) throw new Error('Ya tienes un producto llamado «' + repetido.nuevo.nombre.trim() + '». Búscalo en la lista en vez de crearlo.');
     const sinCosto = st.lineas.filter(l => !(num(l.costo) > 0));
     if (sinCosto.length && !(await confirmar(`${sinCosto.length === 1 ? 'Una línea no tiene' : sinCosto.length + ' líneas no tienen'} costo (${sinCosto.map(l => '«' + esc(l.nuevo ? l.nuevo.nombre : (byId(S.productos, l.id) || {}).nombre || '') + '»').join(', ')}). Sin costo, la ganancia de esos productos se verá mayor de lo real. ¿Guardar así?`, { si: 'Guardar sin costo' }))) return;
-    const r = await api('compra', { proveedorId: $('#fc-p', h.el).value, factura: $('#fc-f', h.el).value, fecha: $('#fc-d', h.el).value, metodo: st.metodo, nota: $('#fc-n', h.el).value,
+    const r = await apiUna(h, 'compra', { proveedorId: $('#fc-p', h.el).value, factura: $('#fc-f', h.el).value, fecha: $('#fc-d', h.el).value, metodo: st.metodo, nota: $('#fc-n', h.el).value,
       items: st.lineas.map(l => Object.assign({ cantidad: num(l.cantidad), costo: num(l.costo), precio: String(l.precio).trim() === '' ? '' : num(l.precio), margen: l.pctFijo && num(l.pct) > 0 ? num(l.pct) : '' },
         l.nuevo ? { nuevo: { nombre: l.nuevo.nombre.trim(), categoria: l.nuevo.categoria.trim(), codigo: l.nuevo.codigo.trim(), tasaIsv: l.nuevo.tasaIsv } } : { productoId: l.id, variante: l.variante || '' })) });
     S.productos = r.productos; S.proveedores = r.proveedores; guardarCache(); S.inicio = null;
@@ -7367,7 +7378,7 @@ function formGasto(g) {
     const r = await api('anularGasto', { id: g.id }); S.gastoCats = r.cats; guardarCache(); h.cerrar(); toast('Gasto anulado', 'ok'); if (S.vista === 'gastos') R.gastos();
   } });
   bs.push({ t: nuevo ? 'Guardar gasto' : 'Guardar cambios', cls: 'pri', fn: async () => {
-    const r = await api('guardarGasto', { registro: { id: g.id, categoria: ci.value, detalle: di.value, monto: num($('#gf-m', h.el).value), fechaGasto: $('#gf-f', h.el).value, proveedor: $('#gf-p', h.el).value, metodo, nota: $('#gf-n', h.el).value, giro: secs.length ? giroG : undefined } });
+    const r = await apiUna(h, 'guardarGasto', { registro: { id: g.id, categoria: ci.value, detalle: di.value, monto: num($('#gf-m', h.el).value), fechaGasto: $('#gf-f', h.el).value, proveedor: $('#gf-p', h.el).value, metodo, nota: $('#gf-n', h.el).value, giro: secs.length ? giroG : undefined } });
     S.gastoCats = r.cats; guardarCache(); S.inicio = null; h.cerrar(); toast('Gasto guardado', 'ok');
     if (S.vista === 'gastos') R.gastos(); else if (S.vista === 'inicio') R.inicio(); else if (S.vista === 'caja') R.caja();
   } });
@@ -7448,7 +7459,7 @@ ACC.cerrarCaja = () => {
   ['#cc-f', '#cc-c'].forEach(s => $(s, h.el).addEventListener('input', act)); act();
   h.botones([{ t: 'Guardar cierre', cls: 'pri', fn: async () => {
     if ($('#cc-c', h.el).value.trim() === '') throw new Error('Escribe cuánto efectivo contaste');
-    const r = await api('cerrarCaja', { fondo: num($('#cc-f', h.el).value), contado: num($('#cc-c', h.el).value), nota: $('#cc-n', h.el).value, caja: d.tienda || '' });
+    const r = await apiUna(h, 'cerrarCaja', { fondo: num($('#cc-f', h.el).value), contado: num($('#cc-c', h.el).value), nota: $('#cc-n', h.el).value, caja: d.tienda || '' });
     S.cajaD = r.caja; S.inicio = null; h.cerrar();
     const c = r.cierre;
     const txt = `*Cierre de caja · ${S.config.nombre}${d.tienda ? ' · ' + giroCorto(d.tienda) : ''}*\n${fFechaC(c.hasta)} ${fHora(c.hasta)} · ${S.user.nombre}\nFondo: ${money(c.fondo)}\nVentas en efectivo: ${money(c.ventas)}\nCobros: ${money(c.cobros)}\nGastos y compras: −${money(c.gastos)}\nPagos: −${money(c.pagos)}\nEsperado: ${money(c.esperado)}\nContado: ${money(c.contado)}\nDiferencia: ${money(c.diferencia)}${c.nota ? '\nNota: ' + c.nota : ''}`;
@@ -7677,7 +7688,7 @@ async function repCobrado() {
     $('#rp-b').innerHTML = `<div class="kpis k4"><div class="kpi" style="--k:#00b56e"><small>Total cobrado</small><b class="n">${money(sum(base))}</b><i>${esc(fFechaC(desde))}${desde !== hasta ? ' a ' + esc(fFechaC(hasta)) : ''}</i></div><div class="kpi" style="--k:#00a8b5"><small>Abonos de clientes</small><b class="n">${money(sum(ab))}</b><i>${ab.length} ${ab.length === 1 ? 'abono' : 'abonos'}</i></div><div class="kpi" style="--k:${serie(0)}"><small>Ventas cobradas</small><b class="n">${money(sum(ve))}</b><i>${ve.length} ${ve.length === 1 ? 'venta' : 'ventas'}</i></div></div>
       ${mv.length ? `<div class="g2"><div class="chart"><h3>Por forma de pago</h3>${rankBars(agrupa(mv, forma), 'total', money)}</div><div class="chart"><h3>Quién pagó</h3>${rankBars(agrupa(mv, x => x.tercero || 'Cliente').slice(0, 8), 'total', money)}</div></div>` : ''}
       ${Object.keys(dias).sort().reverse().map(f => { const l = dias[f].slice().sort((a, b) => a.fecha < b.fecha ? 1 : -1);
-        return `<div class="dia"><div class="dia-h"><b>${esc(cap(fFechaL(f)))}</b><span class="n pos">+${money(sum(l))}</span></div>${l.map(x => `<div class="mv"><span class="hr">${fHora(x.fecha) || '—'}</span><span class="badge ${x.tipo === 'cobro' ? 'b-info' : 'b-ok'}">${x.tipo === 'cobro' ? 'Abono' : 'Venta'}</span><span class="cn"><b>${esc(x.tercero || 'Cliente')}</b><small>${esc([x.numero, forma(x), x.usuario].filter(Boolean).join(' · '))}</small></span><span class="n pos">+${money(x.cobrado)}</span></div>`).join('')}</div>`; }).join('') || '<div class="empty">No se cobró nada en estas fechas</div>'}`;
+        return `<div class="dia"><div class="dia-h"><b>${esc(cap(fFechaL(f)))}</b><span class="n pos">+${money(sum(l))}</span></div>${l.map(x => `<div class="mv"><span class="hr">${fHora(x.fecha) || '—'}</span><span class="badge ${x.tipo === 'cobro' ? 'b-info' : 'b-ok'}">${x.tipo === 'cobro' ? (x.deVenta ? 'Venta cobrada' : 'Abono') : 'Venta'}</span><span class="cn"><b>${esc(x.tercero || 'Cliente')}</b><small>${esc([x.numero, forma(x), x.usuario].filter(Boolean).join(' · '))}</small></span><span class="n pos">+${money(x.cobrado)}</span></div>`).join('')}</div>`; }).join('') || '<div class="empty">No se cobró nada en estas fechas</div>'}`;
     S.repCSV = () => csv(`cobrado-${desde}-a-${hasta}.csv`, [['Cobrado', S.config.nombre, desde + ' a ' + hasta], [], ['Fecha', 'Hora', 'Tipo', 'Número', 'Cliente', 'Forma de pago', 'Usuario', 'Cobrado']].concat(mv.slice().sort((a, b) => a.fecha < b.fecha ? -1 : 1).map(x => [x.fecha.slice(0, 10), x.fecha.slice(11, 16), x.tipo === 'cobro' ? 'Abono' : 'Venta', x.numero, x.tercero, forma(x), x.usuario, x.cobrado]), [[], ['', '', '', '', '', '', 'Total', r2(sum(mv))]]));
   };
   S.cobPinta = pinta; pinta();
@@ -11184,6 +11195,10 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.92', fecha: '2026-11-19', items: [
+    { i: 'check', t: 'Revisión completa: cobros y existencias más exactos', d: 'Revisamos todo el programa y corregimos varios detalles: el precio propio de una talla, tono o presentación se respeta al cobrar; en Mesas, lo que se agrega mientras se cobra ya no se pierde; un abono, gasto, compra o cierre no se registra dos veces si falla la señal; y al guardar un producto con tallas no se cambian sus existencias si no las tocaste.' },
+    { i: 'coin', t: 'Lo cobrado sale el día en que entró el dinero', d: 'Si una venta estaba al crédito y la cambias a pagada otro día, ese cobro ahora aparece en Reportes (Diario y Cobrado) el día en que la cobraste.' }
+  ] },
   { v: '1.9.91', fecha: '2026-11-19', items: [
     { i: 'coin', t: 'Reporte de lo cobrado, por fechas', d: 'En Reportes hay una pestaña nueva, «Cobrado»: elige hoy, la semana, el mes o tus propias fechas y mira cuánto dinero entró, por forma de pago y por cliente. Puedes ver todo, solo los abonos o solo las ventas cobradas, y descargarlo para Excel.' }
   ] },

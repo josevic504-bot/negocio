@@ -314,9 +314,9 @@ function route_(req) {
   if (a === 'registrar') return registrar_(d);
   if (a === 'info') return { multi: MULTI_NEGOCIO, version: VERSION };
   // Contador de visitas (público, sin usuario)
-  if (a === 'visita') return visita_(d);
+  if (a === 'visita') return visita_(d, ipDe_(req));
   // Tiendas Catrachas: formulario público «Aparece aquí» (molinasoluciones.com/aparecer/)
-  if (a === 'solicitudDir') return solicitudDir_(d);
+  if (a === 'solicitudDir') return solicitudDir_(d, ipDe_(req));
   // Tienda en línea (página pública, sin usuario)
   if (a === 'tiendaInfo') return tiendaInfo_(d);
   if (a === 'pedir') { pedirLimites_(d); return lock_(() => pedir_(d)); }
@@ -381,19 +381,19 @@ function rutaUsuario_(a, u, d, req) {
     case 'ventas':          return ventas_(u, d);
     case 'anularVenta':     return lock_(() => anularVenta_(u, d));
     case 'editarVenta':     return lock_(() => editarVenta_(u, d));
-    case 'abono':           return lock_(() => abono_(u, d));
+    case 'abono':           return lock_(() => unaVez_('ab', d, () => abono_(u, d)));
     case 'anularAbono':     return lock_(() => anularAbono_(u, d));
     case 'cuentaCliente':   return cuentaCliente_(u, d);
-    case 'compra':          return lock_(() => compra_(u, d));
+    case 'compra':          return lock_(() => unaVez_('co', d, () => compra_(u, d)));
     case 'compras':         return compras_(u, d);
     case 'anularCompra':    return lock_(() => anularCompra_(u, d));
-    case 'pago':            return lock_(() => pago_(u, d));
+    case 'pago':            return lock_(() => unaVez_('pg', d, () => pago_(u, d)));
     case 'anularPago':      return lock_(() => anularPago_(u, d));
     case 'cuentaProveedor': return cuentaProveedor_(u, d);
-    case 'ajusteStock':     return lock_(() => ajusteStock_(u, d));
+    case 'ajusteStock':     return lock_(() => unaVez_('aj', d, () => ajusteStock_(u, d)));
     case 'kardex':          return kardex_(u, d);
     case 'gastos':          return gastos_(u, d);
-    case 'guardarGasto':    return lock_(() => guardarGasto_(u, d));
+    case 'guardarGasto':    return lock_(() => d && d.registro && !d.registro.id ? unaVez_('ga', d, () => guardarGasto_(u, d)) : guardarGasto_(u, d));
     case 'anularGasto':     return lock_(() => anularGasto_(u, d));
     case 'pedidos':         return pedidos_(u, d);
     case 'estadoPedido':    return lock_(() => estadoPedido_(u, d));
@@ -454,7 +454,7 @@ function rutaUsuario_(a, u, d, req) {
     case 'cotizacionFirmar': return lock_(() => cotizacionFirmar_(u, d));
     case 'entregable':      return lock_(() => entregable_(u, d));
     case 'caja':            return caja_(u, d);
-    case 'cerrarCaja':      return lock_(() => cerrarCaja_(u, d));
+    case 'cerrarCaja':      return lock_(() => unaVez_('cc', d, () => cerrarCaja_(u, d)));
     case 'reporte':         return reporte_(u, d);
     case 'diario':          return diario_(u, d);
     case 'historial':       return historial_(u);
@@ -1011,6 +1011,8 @@ function guardarUsuario_(u, d) {
     if (r.usuario.length < 10) throw new Error('Escribe un número de WhatsApp válido');
     const grupo = new Set(grupoDe_(NEG.lic).map(x => x.id));
     if (mRows_('Accesos').some(x => String(x.whatsapp) === r.usuario && !(x.negocioId === NEG.id && x.usuarioId === r.id) && !grupo.has(x.negocioId))) throw new Error('Ese WhatsApp ya está registrado en otra cuenta');
+    // Un WhatsApp que ya entra a OTRO negocio del mismo dueño da acceso a ese negocio: solo el dueño (administrador sin tienda asignada) puede repetirlo
+    if (tiendaAsignada_(u, girosActivos_()) && mRows_('Accesos').some(x => String(x.whatsapp) === r.usuario && x.negocioId !== NEG.id && grupo.has(x.negocioId))) throw new Error('Ese WhatsApp ya entra a otro negocio del dueño. Solo el dueño puede agregarlo aquí.');
   }
   if (/\s/.test(r.usuario)) throw new Error('El usuario no debe tener espacios');
   if (todos.some(x => x.usuario === r.usuario && x.id !== r.id)) throw new Error('Ese usuario ya existe');
@@ -1355,7 +1357,7 @@ function licNegocio_(l) {
   if (est === 'activa' || est === 'colaborador') return { estado: 'completa' };
   if (est === 'bloqueada' || est === 'eliminada') return { estado: 'bloqueada', contacto: CONTACTO_WA, eliminada: est === 'eliminada' && !!l.eliminadoEl };
   const vence = String(l.vencePrueba || '').slice(0, 10);
-  const fin = /^\d{4}-\d{2}-\d{2}$/.test(vence) ? new Date(vence + 'T00:00:00').getTime() : 0;
+  const fin = /^\d{4}-\d{2}-\d{2}$/.test(vence) ? msDeLocal_(vence + 'T00:00') : 0; // medianoche de Honduras (antes dependía de la hora del servidor y vencía a las 6 p. m. del día anterior)
   const resta = Math.ceil((fin - Date.now()) / 86400000);
   const r = { estado: resta > 0 ? 'prueba' : 'vencida', diasRestantes: Math.max(0, resta), vence: vence, dia: diaPrueba_(l), contacto: CONTACTO_WA };
   const debe = r.estado === 'prueba' ? 'Prueba' : 'Vencida';
@@ -1472,7 +1474,7 @@ function registrar_(d) {
   if (wa.length < 10) throw new Error('Escribe tu número de WhatsApp');
   if (!/^\d{4,6}$/.test(pin)) throw new Error('El PIN debe tener de 4 a 6 números');
   // La ciudad es obligatoria: es la ciudad con la que el negocio sale en Tiendas Catrachas (dirCiudad)
-  if (txt_(d.ciudad, 40).length < 3) throw new Error('Escribe la ciudad donde está tu negocio. Si no ves ese campo, cierra la app y vuelve a abrirla.');
+  if ((txt_(d.ciudad, 40).match(/[a-záéíóúüñ]/gi) || []).length < 3) throw new Error('Escribe la ciudad donde está tu negocio. Si no ves ese campo, cierra la app y vuelve a abrirla.');
   const yaExiste = () => { delete MEMO._m_Accesos; return mRows_('Accesos').some(x => String(x.whatsapp) === wa); };
   if (yaExiste()) throw new Error('Ese WhatsApp ya tiene una cuenta. Toca «Ya tengo cuenta» para ingresar.');
   const cs = CacheService.getScriptCache(), nReg = Number(cs.get('REG_H') || 0);
@@ -1536,6 +1538,7 @@ function ordenes_(u, d) {
 function ordenGuardar_(u, d) {
   req_(u, ['admin', 'cajero', 'bodega']);
   const r = Object.assign({}, d.registro || {});
+  delete r.ventaId; delete r.usuarioId; delete r.creado; // los pone el servidor: desde fuera no se puede «soltar» la venta para reutilizar un anticipo
   const prev = r.id ? rows_('Ordenes').find(x => x.id === r.id) : null;
   if (r.id && !prev) throw new Error('La orden ya no existe');
   if (prev && ['entregado', 'cancelado'].indexOf(prev.estado) >= 0 && r.estado !== undefined && r.estado !== prev.estado && u.rol !== 'admin') throw new Error('Una orden ' + (prev.estado === 'entregado' ? 'entregada' : 'cancelada') + ' ya no se cambia');
@@ -1580,6 +1583,7 @@ function agenda_(u, d) {
 function agendaGuardar_(u, d) {
   req_(u, ['admin', 'cajero', 'bodega']);
   const r = Object.assign({}, d.registro || {});
+  delete r.ventaId; delete r.usuarioId; delete r.creado; // los pone el servidor: desde fuera no se puede «soltar» la venta para reutilizar un anticipo
   const prev = r.id ? rows_('Agenda').find(x => x.id === r.id) : null;
   if (r.id && !prev) throw new Error('El registro ya no existe');
   if (r.tipo !== undefined) r.tipo = r.tipo === 'encargo' ? 'encargo' : 'cita';
@@ -2031,6 +2035,12 @@ function salidoDe_(v) { return movDe_(v.id, 'venta', (idMs_(v.id) || 0) - 60000)
 function cerrarLigados_(d, venta) {
   if (d.ordenId) { const o = rows_('Ordenes').find(x => x.id === d.ordenId); if (o && o.estado !== 'entregado') upsert_('Ordenes', { id: o.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
   if (d.agendaId) { const a = rows_('Agenda').find(x => x.id === d.agendaId); if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
+  // Pedido en línea con cita (carwash): al cobrar el pedido su cita queda atendida, y al cobrar la cita su pedido queda entregado
+  // (antes quedaba el otro abierto y el mismo servicio se podía cobrar dos veces)
+  if (d.pedidoId) { const pe = rows_('Pedidos').find(x => x.id === d.pedidoId), a = pe && pe.citaId ? rows_('Agenda').find(x => x.id === pe.citaId) : null;
+    if (a && a.estado === 'pendiente') upsert_('Agenda', { id: a.id, estado: 'atendido', ventaId: venta.id, actualizado: ahora_() }); }
+  if (d.agendaId && !d.pedidoId) { const pe = rows_('Pedidos').find(x => x.citaId === d.agendaId && !x.ventaId && ['nuevo', 'confirmado', 'listo'].indexOf(x.estado) >= 0);
+    if (pe) upsert_('Pedidos', { id: pe.id, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() }); }
   if (d.cotizacionId && modOn_('cotizaciones')) { const q = rows_('Cotizaciones').find(x => x.id === d.cotizacionId); if (q) { cotCerrarPagos_(q, venta); } }
   if (d.consultaId) { // si la venta anterior de la consulta se anuló, queda ligada a la nueva
     const c = rows_('Consultas').find(x => x.id === d.consultaId);
@@ -2217,11 +2227,14 @@ function mesaAgregar_(u, c, d) {
 function mesaCobrada_(cta, d, venta) {
   const c = cuentaMesa_(cta);
   c.ventaIds.push(venta.id);
-  if (d.cuentaParte) {
+  // Siempre se descuenta lo que de verdad se cobró (por línea). Así, lo que el mesero agregó mientras el cajero tenía abierta
+  // la pantalla de cobro NO se pierde: queda en la mesa, que sigue abierta, para cobrarlo después.
+  const conMk = (d.items || []).some(i => i && i.mk);
+  if (d.cuentaParte || conMk) {
     const pag = {}; (d.items || []).forEach(i => { if (i && i.mk) pag[i.mk] = (pag[i.mk] || 0) + (Number(i.cantidad) || 0); });
     c.items.forEach(i => { if (pag[i.k]) { i.cantidad = r3_(Math.max(0, i.cantidad - pag[i.k])); i.env = Math.min(Number(i.env) || 0, i.cantidad); } });
   }
-  const queda = d.cuentaParte ? c.items.filter(i => i.cantidad > 0.0004) : [];
+  const queda = d.cuentaParte || conMk ? c.items.filter(i => i.cantidad > 0.0004) : [];
   const llevar = c.tipo === 'llevar' || c.tipo === 'domicilio';
   guardarCuentaMesa_(c, queda, queda.length ? { ventaIds: c.ventaIds.join(',') } : llevar ? { ventaIds: c.ventaIds.join(','), estado: 'cerrada', cerrada: ahora_() } : { ventaIds: c.ventaIds.join(','), estado: 'pagada' });
   // Lo que ya estaba listo en cocina se da por entregado al cobrar todo; los pedidos en línea de esta cuenta quedan entregados
@@ -2231,6 +2244,7 @@ function mesaCobrada_(cta, d, venta) {
     const peds = [...new Set(ks.map(k => k.pedidoId).concat([c.pedidoId]).filter(Boolean))];
     rows_('Pedidos').filter(p => peds.indexOf(p.id) >= 0 && ['confirmado', 'listo', 'nuevo'].indexOf(p.estado) >= 0).forEach(p => upsert_('Pedidos', { id: p.id, estado: 'entregado', ventaId: p.ventaId || venta.id, actualizado: ahora_() }));
   }
+  return !d.cuentaParte && queda.length ? r2_(queda.reduce((t, i) => t + i.cantidad * i.precio, 0)) : 0; // quedó algo que se agregó mientras se cobraba
 }
 // Pantalla de Cocina: lo que está por preparar y lo que se terminó hace poco
 function cocina_(u, d) {
@@ -2359,10 +2373,16 @@ function susPlan_(d, items, clienteId) {
     const veces = Math.max(1, Math.min(10, Math.round(it.cantidad) || 1)), total = entregas.reduce((t, x) => t + x.n, 0) * veces;
     const prevR = sd.renuevaId ? rows_('Suscripciones').find(x => x.id === sd.renuevaId) : null;
     const renuevaId = prevR && entregas.some(e => norm_(e.plataforma) === norm_(prevR.plataforma)) ? prevR.id : ''; // solo se renueva una de la misma plataforma
+    // Combo (varias plataformas en una venta): al renovar se renuevan TODAS las de esa venta, cada una con la de su plataforma.
+    // Antes solo se renovaba una y la otra quedaba «activa» (vencida después) y su perfil contaba como ocupado por otro.
+    const hermanas = renuevaId ? rows_('Suscripciones').filter(x => x.id === prevR.id || (prevR.ventaId && x.ventaId === prevR.ventaId && x.productoId === prevR.productoId && x.estado !== 'cancelada' && x.estado !== 'renovada')) : [];
+    const esHermana = id => hermanas.some(x => x.id === id), usadas = {};
     let k = 0;
     entregas.forEach(e => {
       for (let i = 0; i < e.n * veces; i++) {
-        const a = asig[k++] || {};
+        let a = asig[k++] || {};
+        const her = hermanas.find(x => !usadas[x.id] && norm_(x.plataforma) === norm_(e.plataforma)); if (her) usadas[her.id] = 1;
+        if (her && !a.cuentaId && her.cuentaId && cu[her.cuentaId]) a = Object.assign({}, a, { cuentaId: her.cuentaId, perfil: her.perfil, pin: a.pin || her.pin }); // sigue con su misma cuenta y perfil
         const venceA = /^\d{4}-\d{2}-\d{2}$/.test(String(a.vence || '')) ? String(a.vence) : vence;
         if (venceA < h) throw new Error('La fecha de vencimiento de ' + e.plataforma + ' ya pasó');
         const c = a.cuentaId ? cu[a.cuentaId] : null;
@@ -2371,12 +2391,12 @@ function susPlan_(d, items, clienteId) {
         const perfil = c ? (e.entrega === 'cuenta' ? 0 : Math.max(1, Math.min(Number(c.perfiles) || 1, parseInt(a.perfil, 10) || 1))) : '';
         if (c) {
           const ocC = oc[c.id] || {}, ya = ocC[String(perfil)];
-          if (ya && ya.id !== renuevaId) throw new Error((perfil ? 'El perfil ' + perfil + ' de ' : 'La cuenta ') + c.nombre + ' ya está ocupado por ' + (ya.cliente || 'otro cliente'));
-          if (perfil !== 0 && ocC['0'] && ocC['0'].id !== renuevaId) throw new Error('La cuenta ' + c.nombre + ' se vendió completa a ' + (ocC['0'].cliente || 'otro cliente'));
-          if (perfil === 0 && Object.keys(ocC).some(p => p !== '0' && ocC[p].id !== renuevaId)) throw new Error('La cuenta ' + c.nombre + ' tiene perfiles vendidos por separado');
+          if (ya && ya.id !== renuevaId && !esHermana(ya.id)) throw new Error((perfil ? 'El perfil ' + perfil + ' de ' : 'La cuenta ') + c.nombre + ' ya está ocupado por ' + (ya.cliente || 'otro cliente'));
+          if (perfil !== 0 && ocC['0'] && ocC['0'].id !== renuevaId && !esHermana(ocC['0'].id)) throw new Error('La cuenta ' + c.nombre + ' se vendió completa a ' + (ocC['0'].cliente || 'otro cliente'));
+          if (perfil === 0 && Object.keys(ocC).some(p => p !== '0' && ocC[p].id !== renuevaId && !esHermana(ocC[p].id))) throw new Error('La cuenta ' + c.nombre + ' tiene perfiles vendidos por separado');
           (oc[c.id] = ocC)[String(perfil)] = { id: '_', cliente: cli ? cli.nombre : '' };
         }
-        plan.push({ it: it, e: e, c: c, perfil: perfil, pin: a.pin, venceA: venceA, meses: meses, total: total, cliente: cli, nombre: sd.cliente, renuevaId: renuevaId });
+        plan.push({ it: it, e: e, c: c, perfil: perfil, pin: a.pin, venceA: venceA, meses: meses, total: total, cliente: cli, nombre: sd.cliente, renuevaId: her ? her.id : renuevaId });
       }
     });
   });
@@ -2611,7 +2631,7 @@ function panelResumen_() {
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
   const mes = hoy_().slice(0, 7), todosPagos = mRows_('PagosLic'), pagos = todosPagos.filter(p => String(p.fecha).slice(0, 7) === mes);
   // Conversión: de las pruebas que ya terminaron (o se activaron antes de terminar), cuántas compraron
-  const terminadas = lics.filter(x => x.estado === 'activa' || x.estado === 'vencida' || x.estado === 'bloqueada'), compraron = lics.filter(x => x.estado === 'activa');
+  const terminadas = lics.filter(x => x.estado === 'activa' || x.estado === 'vencida' || x.estado === 'bloqueada'), pagoLicDe = {}, compraron = (todosPagos.forEach(p => { if (Number(p.monto) > 0) pagoLicDe[p.negocioId] = 1; }), lics.filter(x => x.estado === 'activa' || (x.estado === 'bloqueada' && pagoLicDe[x.id]))); // quien pagó y está en pausa también compró
   const porMes = {};
   lics.forEach(x => { const m = String(x.registro).slice(0, 7); if (!/^\d{4}-\d{2}$/.test(m)) return; const o = porMes[m] = porMes[m] || { mes: m, registros: 0, activos: 0 }; o.registros++; if (x.estado === 'activa') o.activos++; });
   // Activados sin pago anotado (licencia o Plus)
@@ -2745,6 +2765,7 @@ function panelImportar_(d) {
       const opciones = opciones_([[f.op1, f.val1], [f.op2, f.val2], [f.op3, f.val3]].filter(x => !vacio(x[0]) && !vacio(x[1])).map(x => txt_(x[0], 30) + ': ' + String(x[1])).join('|'));
       const ex = (codigo && porCod[codigo.toLowerCase()]) || porNom[clave] || null;
       const reg = { nombre: nombre, categoria: categoria, precio: r2_(precio), tienda: !/^no$/i.test(String(f.tienda || '').trim()) };
+      if (ex && vacio(f.tienda)) delete reg.tienda; // columna vacía en un producto que ya existe: se respeta si el dueño lo tenía oculto de la tienda
       if (ex) reg.id = ex.id;
       if (codigo) reg.codigo = codigo;
       if (costo !== null) reg.costo = r4_(costo);
@@ -2935,7 +2956,9 @@ function panelAccion_(d) {
     case 'quitarPlus': upd.plus = ''; nota = 'Plus desactivado'; break;
     case 'contab':     upd.contab = 'Sí'; nota = 'Contabilidad activada'; pago('Contabilidad'); break;
     case 'quitarContab': upd.contab = ''; nota = 'Contabilidad desactivada'; break;
-    case 'extender': { const dias = Math.max(1, Math.min(90, Number(d.dias) || 7)); const base = Math.max(Date.now(), msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T00:00') || 0);
+    case 'extender': { { const eA = String(l.estado || '').trim().toLowerCase(), eP = String(estadoAntesPausa_(l) || '').trim().toLowerCase();
+        if (eA === 'activa' || eA === 'colaborador' || (eA === 'bloqueada' && (eP === 'activa' || eP === 'colaborador'))) throw new Error('Este cliente ya tiene licencia: no se le pone prueba. Si está en pausa, usa «Reanudar».'); }
+      const dias = Math.max(1, Math.min(90, Number(d.dias) || 7)); const base = Math.max(Date.now(), msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T00:00') || 0);
       upd.vencePrueba = Utilities.formatDate(new Date(base + dias * 86400000), TZ, 'yyyy-MM-dd'); upd.estado = 'Prueba'; nota = 'Prueba extendida ' + dias + ' días'; break; }
     case 'pausar': { // se anota cómo estaba para devolverlo igual al reanudar
       const e0 = String(l.estado || '').trim().toLowerCase();
@@ -3294,9 +3317,11 @@ function guardar_(u, d) {
     // Tiendas Catrachas (directorio público): ciudad y frase corta
     if (reg.dirOn !== undefined) reg.dirOn = reg.dirOn === 'si' ? 'si' : 'no';
     if (reg.dirCiudad !== undefined) reg.dirCiudad = txt_(reg.dirCiudad, 40);
+    // Montos de la configuración: se guardan como número aunque se escriban «1,500» o «L 500» (antes la Caja los contaba como 0)
+    ['fondoCaja'].forEach(k => { if (reg[k] !== undefined) { const n = Number(String(reg[k]).replace(/[^0-9.\-]/g, '')); reg[k] = String(isFinite(n) && n > 0 ? r2_(n) : 0); } });
     if (reg.dirFrase !== undefined) reg.dirFrase = txt_(reg.dirFrase, 80);
     // Con Tiendas Catrachas encendido no se puede guardar esa sección sin ciudad (los negocios viejos sin ciudad siguen saliendo como «Honduras» hasta que la escriban)
-    if (reg.dirCiudad !== undefined && reg.dirCiudad.trim().length < 3 && (reg.dirOn !== undefined ? reg.dirOn : config_().dirOn) === 'si') throw new Error('Escribe la ciudad de tu negocio: con ella te encuentran en Tiendas Catrachas.');
+    if (reg.dirCiudad !== undefined && (reg.dirCiudad.match(/[a-záéíóúüñ]/gi) || []).length < 3 && (reg.dirOn !== undefined ? reg.dirOn : config_().dirOn) === 'si') throw new Error('Escribe la ciudad de tu negocio: con ella te encuentran en Tiendas Catrachas.');
     if (reg.tiendaPagos !== undefined) reg.tiendaPagos = reg.tiendaPagos.split(',').filter(x => ['Efectivo', 'Transferencia', 'Tarjeta', 'Tigo Money'].indexOf(x) >= 0).join(',') || 'Efectivo';
     if (reg.tiendaMapa) { const t = reg.tiendaMapa.trim(); if (/^[a-z][a-z0-9+.-]*:/i.test(t) && !/^https?:\/\//i.test(t)) throw new Error('El enlace de Google Maps debe ser una dirección web (https://…)'); reg.tiendaMapa = /^https?:\/\//i.test(t) ? t : 'https://' + t; }
     if (reg.nombre !== undefined && !txt_(reg.nombre)) throw new Error('Escribe el nombre del negocio');
@@ -3482,6 +3507,7 @@ function carpetaFotos_() {
 }
 
 function subirFoto_(u, d) {
+  noVer_(); // en modo soporte (solo ver) no se suben archivos al negocio
   const art = d.tipo === 'articulo';
   req_(u, art ? ['admin','cajero'] : ['admin','bodega']);
   if (art && girosActivos_().indexOf('compras') < 0) throw new Error('Esta opción es del giro Compras en línea');
@@ -3638,7 +3664,7 @@ function moverStock_(cambios, tipo, refId, u, nota, fecha, costos) {
       costo: r4_(costos && costos[id] !== undefined ? costos[id] : p.costo) }); // costo unitario del momento
   });
   Object.keys(cur).forEach(id => { const upd = { id: id, stock: cur[id] }; if (vars[id]) upd.variantes = JSON.stringify(vars[id]);
-    const lt = lotesMover_(pm[id], cur[id], ks.filter(k => k.split(SEPV)[0] === id).reduce((a, k) => r3_(a + (Number(cambios[k]) || 0)), 0));
+    const lt = lotesMover_(pm[id], cur[id], ks.filter(k => k.split(SEPV)[0] === id).reduce((a, k) => r3_(a + (Number(cambios[k]) || 0)), 0), tipo);
     if (lt) { upd.lotes = lt.lotes; upd.caduca = lt.caduca; }
     upsert_('Productos', upd); });
   Object.keys(LOTE_ENT).forEach(k => { delete LOTE_ENT[k]; }); Object.keys(LOTE_SIN).forEach(k => { delete LOTE_SIN[k]; });
@@ -3651,11 +3677,12 @@ function moverStock_(cambios, tipo, refId, u, nota, fecha, costos) {
 const LOTE_ENT = {}, LOTE_SIN = {};
 function lotesDe_(p) { const a = parseJ_(p && p.lotes, null); return Array.isArray(a) ? a.filter(x => x && Number(x.n) > 0).map(x => ({ l: String(x.l || ''), v: String(x.v || ''), n: r3_(Number(x.n) || 0) })) : null; }
 function lotesOrden_(a) { return a.sort((x, y) => (x.v || '9999') < (y.v || '9999') ? -1 : (x.v || '9999') > (y.v || '9999') ? 1 : 0); }
-function lotesMover_(p, stockNuevo, neto) {
+function lotesMover_(p, stockNuevo, neto, tipo) {
   const ent = LOTE_ENT[p.id], prev = lotesDe_(p);
   if (!ent && !prev) return null;
   let a = lotesOrden_((prev || []).slice());
   if (ent && neto > 0) { const ex = a.find(x => x.l === ent.l && x.v === ent.v); if (ex) ex.n = r3_(ex.n + neto); else a.push({ l: ent.l, v: ent.v, n: neto }); a = lotesOrden_(a); }
+  else if (!ent && neto > 0 && tipo === 'anulación' && a.length) a[0].n = r3_(a[0].n + neto); // lo que vuelve al anular o editar una venta regresa al lote que vence primero (antes quedaba «sin lote»)
   else if (neto < 0 && !LOTE_SIN[p.id]) { let q = -neto; for (const x of a) { if (q <= 0) break; const t = Math.min(x.n, q); x.n = r3_(x.n - t); q = r3_(q - t); } }
   // Los lotes nunca suman más que la existencia: lo que sobra sale de los que vencen antes
   let exceso = r3_(a.reduce((s, x) => s + x.n, 0) - Math.max(0, Number(stockNuevo) || 0));
@@ -3842,7 +3869,7 @@ function venta_(u, d, interno) {
   const preciosPedido = Object.create(null), costosPedido = Object.create(null);
   // Venta ligada a una cita/encargo: vale el precio acordado en la cita (lo puso quien la agendó)
   const agLig = d.agendaId ? rows_('Agenda').find(x => x.id === d.agendaId && x.estado === 'pendiente') : null;
-  const precioLigado = p => !!agLig && (!agLig.productoId || agLig.productoId === p.id); // solo la línea de la cita
+  const precioLigado = p => !!agLig && !!agLig.productoId && agLig.productoId === p.id; // solo la línea de la cita, y solo al precio acordado en ella
   if (d.pedidoId) {
     const pe = rows_('Pedidos').find(x => x.id === d.pedidoId);
     if (!pe) throw new Error('El pedido en línea ya no existe');
@@ -3854,7 +3881,7 @@ function venta_(u, d, interno) {
     const rb = reciboDe_(pe);
     if (rb && !rb.liberado) {
       if (!rb.llego && !ed) throw new Error('El pedido ' + pe.numero + ' todavía viene en camino: toca «Ya llegó» cuando lo tengas para entregarlo');
-      parseJ_(pe.items, []).forEach((x, k) => { if (esCompraLinea_(x) && rb.costos[k] !== null && rb.costos[k] !== undefined) costosPedido[txt_(x.nombre, 80)] = Number(rb.costos[k]) || 0; });
+      parseJ_(pe.items, []).forEach((x, k) => { if (esCompraLinea_(x) && rb.costos[k] !== null && rb.costos[k] !== undefined) (costosPedido[txt_(x.nombre, 80)] = costosPedido[txt_(x.nombre, 80)] || []).push(Number(rb.costos[k]) || 0); }); // una cola por nombre: dos artículos con el mismo nombre conservan cada uno su costo
     }
   }
   // Cuenta de una mesa (restaurante): debe seguir abierta; la venta queda a nombre del mesero que atendió la mesa
@@ -3867,7 +3894,9 @@ function venta_(u, d, interno) {
     d.sus.forEach(sd => { if (sd.vence && sd.vence < h0) throw new Error('Una fecha de vencimiento ya pasó'); (Array.isArray(sd.asig) ? sd.asig : []).forEach(a => { if (a.vence && a.vence < h0) throw new Error('La fecha de vencimiento de ' + (a.plataforma || 'una plataforma') + ' ya pasó'); }); });
   }
   const sumaP = {}; d.items.forEach(i => { if (i && i.productoId) sumaP[i.productoId] = (sumaP[i.productoId] || 0) + (Number(i.cantidad) || 0); });
-  const items = d.items.map(i => {
+  // Suscripciones por varios meses: la línea vale precio × meses (también cuando cobra un cajero)
+  const mesesIdx = {}; if (Array.isArray(d.sus)) d.sus.forEach(sd => { const m = parseInt(sd && sd.meses, 10); if (sd && m >= 2 && m <= 24) mesesIdx[Number(sd.idx)] = m; });
+  const items = d.items.map((i, ix) => {
     if (!i || typeof i !== 'object') throw new Error('Un artículo del ticket no es válido');
     const p = i.productoId ? pm[i.productoId] : null;
     if (i.productoId && !p) throw new Error('Un producto del ticket ya no existe');
@@ -3879,17 +3908,19 @@ function venta_(u, d, interno) {
     if (p && varsDe_(p) && !vk && p.tipo === 'producto') throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '»');
     if (!(i.precio === undefined || i.precio === '' || i.precio === null) && !esNum_(i.precio)) throw new Error('Precio no válido');
     let precio = (i.precio === undefined || i.precio === '' || i.precio === null) ? (p ? precioVar_(p, vk) : 0) : r2_(i.precio);
-    if (p && u.rol !== 'admin' && !precioLigado(p)) { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
+    if (p && u.rol !== 'admin' && precioLigado(p)) { const acordado = r2_(Number(agLig.monto) || 0), pvL = precioVar_(p, vk); if (Math.abs(precio - acordado) > 0.004 && Math.abs(precio - pvL) > 0.004) precio = acordado > 0 ? acordado : pvL; }
+    else if (p && u.rol !== 'admin') { // solo el administrador cambia precios (en un pedido en línea vale el precio del pedido)
       const delPedido = preciosPedido[p.id];
       const esp = tienePrecioVar_(p, vk) ? 0 : precioCant_(p, sumaP[p.id]), pv = precioVar_(p, vk);
-      if (Math.abs(precio - pv) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005) && !(esp && Math.abs(precio - esp) < 0.005)) precio = delPedido !== undefined ? delPedido : pv;
+      const porMeses = mesesIdx[ix] && susDeProducto_(p).length ? r2_(pv * mesesIdx[ix]) : 0;
+      if (Math.abs(precio - pv) > 0.004 && !(delPedido !== undefined && Math.abs(precio - delPedido) < 0.005) && !(esp && Math.abs(precio - esp) < 0.005) && !(porMeses && Math.abs(precio - porMeses) < 0.005)) precio = delPedido !== undefined ? delPedido : porMeses || pv;
     }
     if (precio < 0) throw new Error('Precio no válido');
     const desc = p ? p.nombre + (i.variante ? ' · ' + txt_(i.variante, 60) : '') : txt_(i.descripcion, 80);
     if (!desc) throw new Error('Escribe la descripción del artículo');
     if (!p && !(i.costo === undefined || i.costo === '' || i.costo === null) && !(Number(i.costo) >= 0)) throw new Error('El costo de «' + desc + '» no es válido');
     const costoP = p ? (ed && ed.costos && ed.costos[p.id] !== undefined ? ed.costos[p.id] : p.costo) : 0; // al editar, lo ya vendido conserva su costo
-    return { p: p, vk: vk, productoId: p ? p.id : '', descripcion: vk && i.variante === undefined && p ? p.nombre + ' · ' + vk.split(', ').map(x => x.split(': ')[1]).join(' · ') : desc, cantidad: cant, precio: precio, costo: p ? costoP : costosPedido[desc] !== undefined ? r4_(costosPedido[desc]) : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
+    return { p: p, vk: vk, productoId: p ? p.id : '', descripcion: vk && i.variante === undefined && p ? p.nombre + ' · ' + vk.split(', ').map(x => x.split(': ')[1]).join(' · ') : desc, cantidad: cant, precio: precio, costo: p ? costoP : costosPedido[desc] !== undefined ? r4_(costosPedido[desc].length > 1 ? costosPedido[desc].shift() : costosPedido[desc][0]) : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
   });
   if (!items.length) throw new Error('El ticket está vacío');
   // Existencias
@@ -4001,10 +4032,10 @@ function venta_(u, d, interno) {
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   const nuevasSus = susRegistrar_(u, planSus, venta);
   cerrarLigados_(d, venta);
-  if (cta) mesaCobrada_(cta, d, venta);
+  const mesaQueda = cta ? mesaCobrada_(cta, d, venta) : 0;
   if (kc) { try { CacheService.getScriptCache().put(kc, venta.id, 21600); } catch (e) {} } // la venta quedó completa: un reintento la devuelve
   if (MULTI_NEGOCIO && NEG && !ed) { try { mSet_('Licencias', NEG.lic, usoLic_(1)); } catch (e) {} }
-  return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [] };
+  return { venta: venta, detalle: detalle, productos: rows_('Productos'), saldoCliente: clienteId ? (saldosClientes_()[clienteId] || 0) : 0, sar: sar ? estadoSAR_() : null, accesos: nuevasSus.length ? susAccesos_(nuevasSus) : [], mesaQueda: mesaQueda };
 }
 
 // ¿El mes de esta fecha ya se cerró en Contabilidad? (si el módulo está activo)
@@ -4113,12 +4144,31 @@ function editarVenta_(u, d) {
   abonos.forEach(a => { upsert_('Abonos', { id: a.id, aplicado: JSON.stringify(parseJ_(a.aplicado, []).map(x => x.id === v.id ? Object.assign({}, x, { id: nv.id, numero: nv.numero }) : x)) }); });
   const edicion = { antes: { total: v.total, metodo: v.metodo, cliente: v.clienteId, factura: v.factura, items: det.map(i => ({ d: i.descripcion, c: i.cantidad, p: i.precio })) }, motivo: motivo, por: u.nombre, fecha: ahora_(), veces: (parseJ_(v.edicion, {}).veces || 0) + 1 };
   upsert_('Ventas', { id: nv.id, saldo: r2_(Math.max(0, nv.saldo - pagado)), corrige: v.id, edicion: JSON.stringify(edicion) });
+  // Lo que estaba ligado a la venta original (consulta, orden de trabajo, cita) pasa a la versión corregida:
+  // así no vuelve a salir «por cobrar» ni queda apuntando a una venta anulada
+  ['Consultas', 'Ordenes', 'Agenda'].forEach(t => { try { rows_(t).filter(x => x.ventaId === v.id).forEach(x => upsert_(t, t === 'Consultas' ? { id: x.id, ventaId: nv.id, total: nv.total, actualizado: ahora_() } : { id: x.id, ventaId: nv.id, actualizado: ahora_() })); } catch (e) {} });
   // Suscripciones (streaming): siguen con la venta si su producto sigue en ella; si se quitó, se cancelan
   const sigue = new Set(r.detalle.map(x => x.productoId).filter(Boolean));
   subs.forEach(x => { if (x.estado !== 'cancelada' && x.estado !== 'renovada' && sigue.has(x.productoId)) upsert_('Suscripciones', { id: x.id, ventaId: nv.id }); });
   susDeshacer_(subs.filter(x => !sigue.has(x.productoId)), 'Se quitó al editar la venta ' + v.numero);
   const vf = rows_('Ventas').find(x => x.id === nv.id);
   return { venta: vf, detalle: r.detalle, anterior: v.id, productos: rows_('Productos'), saldoCliente: vf.clienteId ? (saldosClientes_()[vf.clienteId] || 0) : 0, sar: r.sar };
+}
+
+/* Un solo registro por toque: si la respuesta se perdió por mala señal y el usuario vuelve a tocar, se devuelve lo que ya se
+ * guardó en vez de registrarlo otra vez (igual que las ventas). La app manda d.clave; sin clave todo sigue como antes. */
+function unaVez_(pref, d, fn) {
+  const clave = txt_(d && d.clave, 60), kc = clave && NEG ? 'VK_' + NEG.id + '_' + pref + '_' + clave : '';
+  if (!kc) return fn();
+  let ya = null; try { ya = CacheService.getScriptCache().get(kc); } catch (e) {}
+  if (ya) {
+    const r = parseJ_(ya, null);
+    if (r && typeof r === 'object') { if (r.__prod) { delete r.__prod; r.productos = rows_('Productos'); } r.repetida = true; return r; }
+    throw new Error('Esto ya se había registrado hace un momento: no se guardó dos veces. Cierra y revisa.');
+  }
+  const r = fn();
+  try { const c = Object.assign({}, r); if (c.productos) { delete c.productos; c.__prod = 1; } const j = JSON.stringify(c); CacheService.getScriptCache().put(kc, j.length < 60000 ? j : '1', 21600); } catch (e) {}
+  return r;
 }
 
 /* ===================== CUENTAS POR COBRAR (abonos) ===================== */
@@ -4987,7 +5037,7 @@ function editarPedido_(u, d) {
   const pct = Math.max(0, Math.min(100, Number(cfg.comprasAnticipo) || 0));
   const anticipo = Math.ceil(items.filter(i => i.tipo === 'compra').reduce((a, i) => a + i.total, 0) * pct / 100);
   const motivo = txt_(d.motivo, 80);
-  const nota = ((p.nota ? p.nota + ' · ' : '') + 'Editado ' + ahora_().replace('T', ' ').slice(5, 16) + ' por ' + String(u.nombre || '').split(' ')[0] + (motivo ? ' (' + motivo + ')' : '') + ': ' + lineas.map(x => x.slice(2)).join('; ')).slice(0, 1000);
+  const nota = ((p.nota ? p.nota + ' · ' : '') + 'Editado ' + ahora_().replace('T', ' ').slice(5, 16) + ' por ' + String(u.nombre || '').split(' ')[0] + (motivo ? ' (' + motivo + ')' : '') + ': ' + lineas.map(x => x.slice(2)).join('; ')).slice(-1000);
   const pagadoP = anticipoDe_(p.id);
   if (pagadoP > r2_(subtotal + (Number(p.envio) || 0)) + 0.004) throw new Error('El cliente ya pagó ' + money_(pagadoP, cfg) + ' de anticipo: el nuevo total no puede ser menor.');
   const g = upsert_('Pedidos', { id: p.id, items: JSON.stringify(items), subtotal: subtotal, total: r2_(subtotal + (Number(p.envio) || 0)), anticipo: anticipo, nota: nota, actualizado: ahora_() });
@@ -5443,6 +5493,21 @@ function diario_(u, d) {
   const mov = ventas.map(v => ({ id: v.id, fecha: v.fecha, tipo: 'venta', numero: v.numero, concepto: (det[v.id].join(', ') || 'Venta') + (v.corregida ? ' (antes de editarla)' : v.corrige ? ' (editada)' : ''), categoria: 'Venta',
     tercero: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : v.clienteNombre || 'Consumidor final', metodo: v.metodo, usuario: us[v.usuarioId] ? us[v.usuarioId].nombre : '',
     monto: v.total, cobrado: v.metodo === 'Crédito' ? v.recibido : r2_(v.total - (Number(v.anticipo) || 0)), anulado: v.anulada })); // el anticipo ya entró antes como cobro
+  // Ventas editadas: lo que se cobró AL EDITARLA (p. ej. estaba al crédito y se cambió a pagada días después) cuenta el día
+  // en que entró el dinero, no el día de la venta. Antes ese cobro salía con la fecha vieja y no sumaba a lo recibido de hoy.
+  const vTodas = rows_('Ventas'), vPorId = porId_(vTodas), cobV = x => x.metodo === 'Crédito' ? (Number(x.recibido) || 0) : r2_(x.total - (Number(x.anticipo) || 0));
+  vTodas.filter(v => v.corrige && !v.anulada && !v.corregida).forEach(v => {
+    const cadena = [v]; let x = v, tope = 0; while (x.corrige && vPorId[x.corrige] && tope++ < 30) { x = vPorId[x.corrige]; cadena.unshift(x); }
+    const partes = [{ f: v.fecha, m: cobV(cadena[0]) }];
+    for (let k = 1; k < cadena.length; k++) {
+      let dif = r2_(cobV(cadena[k]) - cobV(cadena[k - 1])); const fe = String(parseJ_(cadena[k].edicion, {}).fecha || v.fecha);
+      if (dif > 0.004) partes.push({ f: fe, m: dif });
+      else for (let j = partes.length - 1; j >= 0 && dif < -0.004; j--) { const q = Math.min(partes[j].m, -dif); partes[j].m = r2_(partes[j].m - q); dif = r2_(dif + q); }
+    }
+    const fila = mov.find(m => m.id === v.id); if (fila) fila.cobrado = partes[0].m;
+    partes.slice(1).forEach((q, k) => { if (q.m > 0.004 && q.f.slice(0, 7) === mes) mov.push({ id: v.id + '-ed' + k, fecha: q.f, tipo: 'cobro', numero: v.numero, concepto: 'Cobro al editar la venta ' + v.numero, categoria: 'Cobro', deVenta: true,
+      tercero: v.clienteId && cm[v.clienteId] ? cm[v.clienteId].nombre : v.clienteNombre || 'Consumidor final', metodo: v.metodo === 'Crédito' ? 'Efectivo' : v.metodo, usuario: parseJ_(v.edicion, {}).por || '', monto: q.m, cobrado: q.m, anulado: false }); });
+  });
   rows_('Abonos').filter(a => a.fecha.slice(0, 7) === mes).forEach(a => mov.push({ id: a.id, fecha: a.fecha, tipo: 'cobro', numero: '', concepto: 'Abono a cuenta', categoria: 'Cobro',
     tercero: cm[a.clienteId] ? cm[a.clienteId].nombre : 'Cliente', metodo: a.metodo, usuario: us[a.usuarioId] ? us[a.usuarioId].nombre : '', monto: a.monto, cobrado: a.monto, anulado: a.anulado }));
   rows_('Gastos').filter(g => g.fechaGasto.slice(0, 7) === mes).forEach(g => mov.push({ id: g.id,
@@ -6101,6 +6166,7 @@ function eliminarPedido_(u, d) {
   if (p.comprobante) borrarFoto_(p.comprobante);
   (parseJ_(p.cotiza, {}).fotos || []).forEach(borrarFoto_);
   parseJ_(p.items, []).forEach(i => { if (i.foto) borrarFoto_(i.foto); (i.fotos || []).forEach(borrarFoto_); });
+  if (p.citaId) { const ac = rows_('Agenda').find(x => x.id === p.citaId); if (ac && ac.estado === 'pendiente') upsert_('Agenda', { id: ac.id, estado: 'cancelado', actualizado: ahora_() }); } // su cita deja de ocupar el cupo
   deleteRow_('Pedidos', p.id);
   return { id: p.id, eliminado: true };
 }
@@ -6296,11 +6362,11 @@ function pedir_(d) {
     upsert_('Clientes', { id: cli.id, direccion: direccion });
   }
   // Carwash: el cliente aparta día y hora y dice qué vehículo trae
-  const conCita = girosActivos_(cfg).indexOf('carwash') >= 0;
+  const conCita = girosLinea_(cfg).indexOf('carwash') >= 0; // solo si el carwash se muestra en la tienda en línea (igual que la pantalla del comprador)
   const cita = conCita && /^\d{4}-\d{2}-\d{2}$/.test(String(d.cita || '')) ? String(d.cita) : '';
   if (conCita && !cita) throw new Error('Elige el día en que traes tu vehículo');
   if (cita && (cita < hoy_() || cita > diasAtras_(-60))) throw new Error('Elige un día entre hoy y los próximos 60 días');
-  const hora = cita && /^\d{2}:\d{2}$/.test(String(d.hora || '')) ? String(d.hora) : '';
+  const hora = cita && /^([01]\d|2[0-3]):[0-5]\d$/.test(String(d.hora || '')) ? String(d.hora) : '';
   if (cita && !hora) throw new Error('Elige la hora a la que traes tu vehículo');
   const vehiculo = cita ? txt_(d.vehiculo, 80) : '', placa = cita ? txt_(d.placa, 20) : '';
   if (cita && vehiculo.length < 2) throw new Error('Escribe qué vehículo traes');
@@ -7465,7 +7531,7 @@ function probarCambioDolar() {
  */
 const VISITA_DIAS = 180; // las visitas más viejas se borran solas
 function slug_(x, n) { return String(x || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9-]/g, '').slice(0, n || 30); }
-function visita_(d) {
+function visita_(d, ip) {
   if (!MULTI_NEGOCIO) return false;
   const pagina = slug_(d.p, 30); if (!pagina) return false;
   if (esCli_(pagina)) return false; // las entradas de clientes solo las anota el servidor al iniciar sesión
@@ -7476,6 +7542,9 @@ function visita_(d) {
   if (vid.length < 6) vid = ''; // el contador de la página siempre manda uno de 8 o más
   const c = CacheService.getScriptCache(), k = 'VI_' + vid + '_' + pagina;
   if (vid && c.get(k)) return true;
+  // Freno por conexión: una sola conexión no puede inflar las visitas de una tienda (ni gastar el cupo de las demás)
+  const kIp = ip ? 'VIP_' + ip + '_' + Utilities.formatDate(new Date(), TZ, 'yyyyMMddHH') : '', nIp = kIp ? Number(c.get(kIp) || 0) : 0;
+  if (kIp && nIp >= 40) return false; // máximo 40 visitas nuevas por hora desde la misma conexión
   const ahoraV = new Date(), min = pre + 'M_' + Utilities.formatDate(ahoraV, TZ, 'HHmm'), n = Number(c.get(min) || 0);
   if (n >= 150) return false; // freno contra abusos: máximo 150 visitas por minuto
   const dia = pre + 'D_' + Utilities.formatDate(ahoraV, TZ, 'yyyyMMdd'), nd = Number(c.get(dia) || 0);
@@ -7486,6 +7555,7 @@ function visita_(d) {
   if (esT && nt >= 1500) return false; // y cada tienda, máximo 1,500 por día
   c.put(min, String(n + 1), 120); c.put(dia, String(nd + 1), 90000); if (!vid) c.put(sinV, String(ns + 1), 120); if (esT) c.put(diaT, String(nt + 1), 90000);
   if (vid) c.put(k, '1', 1800);
+  if (kIp) c.put(kIp, String(nIp + 1), 3700);
   mAppend_('Visitas', { id: mId_('VI'), fecha: Utilities.formatDate(new Date(), TZ, 'yyyy-MM-dd HH:mm'), pagina: pagina, origen: slug_(d.o, 20) || 'directo',
     disp: d.d === 'pc' ? 'pc' : 'cel', vid: vid, ref: String(d.r || '').toLowerCase().replace(/[^a-z0-9.-]/g, '').slice(0, 60) });
   return true;
@@ -7493,7 +7563,7 @@ function visita_(d) {
 /* ---- Tiendas Catrachas: solicitudes de negocios con tienda propia que quieren aparecer (L 150 al mes) ----
  * La manda el formulario público del sitio: { action:'solicitudDir', data:{ negocio, nombre, whatsapp, tipo, ciudad, enlace, nota } }.
  * Solo se guarda para que Vic la vea en el Panel y los contacte; no publica nada. */
-function solicitudDir_(d) {
+function solicitudDir_(d, ip) {
   if (!MULTI_NEGOCIO) throw new Error('No disponible');
   d = d || {};
   const reg = { negocio: txt_(d.negocio, 80), nombre: txt_(d.nombre, 60), whatsapp: String(d.whatsapp || '').replace(/[^0-9+ -]/g, '').trim().slice(0, 20), tipo: txt_(d.tipo, 50), ciudad: txt_(d.ciudad, 40), enlace: txt_(d.enlace, 200), nota: txt_(d.nota, 300) };
@@ -7502,10 +7572,12 @@ function solicitudDir_(d) {
   if (tel.length < 8) throw new Error('Escribe tu número de WhatsApp completo');
   const c = CacheService.getScriptCache(), hoyK = Utilities.formatDate(new Date(), TZ, 'yyyyMMdd');
   const kd = 'SOD_' + hoyK, nd = Number(c.get(kd) || 0);
+  const kip = ip ? 'SOI_' + ip + '_' + hoyK : '', nip = kip ? Number(c.get(kip) || 0) : 0;
+  if (kip && nip >= 5) throw new Error('Ya recibimos tus solicitudes de hoy. Si necesitas algo más, escríbenos por WhatsApp.'); // una sola conexión no puede agotar el cupo del día
   if (nd >= 60) throw new Error('Hoy recibimos muchas solicitudes. Inténtalo mañana o escríbenos por WhatsApp.'); // freno contra abusos
   const kt = 'SOT_' + tel.slice(-8) + '_' + hoyK;
   if (c.get(kt)) return true; // el mismo número ya la mandó hoy: no se duplica
-  c.put(kd, String(nd + 1), 90000); c.put(kt, '1', 90000);
+  c.put(kd, String(nd + 1), 90000); c.put(kt, '1', 90000); if (kip) c.put(kip, String(nip + 1), 90000);
   mAppend_('Solicitudes', Object.assign(reg, { id: mId_('SO'), fecha: ahora_().replace('T', ' '), estado: 'nueva', creado: ahora_() }));
   return true;
 }
