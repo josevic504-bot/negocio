@@ -26,6 +26,7 @@ await paso(pg, 'Panel · activar licencia con pago anotado', async () => {
 });
 await pg.cap('panel-activada');
 await paso(pg, 'Panel · nota de seguimiento y etiqueta', async () => {
+  await pg.tocar('.fx-g.cerrado [data-gf="4"]', 400).catch(() => {}); // desde la ficha por grupos, las notas y la etiqueta están en «Seguimiento»
   await pg.fill('#pn-notas', 'Llamé y quedó contento'); await pg.clic('[data-x="nota"]'); await pg.waitForTimeout(1000);
   await pg.clic('[data-x="etiqueta"][data-e="Interesado"]'); await pg.waitForTimeout(1000);
   const l = db.T.Licencias.find(x => x.negocio === 'Cliente 1');
