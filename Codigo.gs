@@ -5255,6 +5255,7 @@ function pasos_() {
   return {
     negocio: !!String(cfg.logo || '').trim(),
     producto: rows_('Productos').some(p => p.activo && !/^EJ\d/.test(String(p.codigo || ''))), // los de ejemplo llevan código EJ001…
+    ver: cfg.sysPasoVer === 'si' || pedT, // abrió su tienda para verla como sus clientes
     venta: rows_('Ventas').some(v => !v.anulada),
     cliente: rows_('Clientes').some(c => c.activo),
     compartir: cfg.sysPasoCompartir === 'si' || pedT,
@@ -5264,7 +5265,7 @@ function pasos_() {
   };
 }
 // Los pasos se guardan en Licencias para el Panel (lista de clientes y embudo de cada publicidad): claves hechas separadas por coma
-const PASOS_K = ['negocio', 'producto', 'venta', 'cliente', 'compartir', 'pedido', 'caja', 'cuenta'];
+const PASOS_K = ['negocio', 'producto', 'ver', 'venta', 'cliente', 'compartir', 'pedido', 'caja', 'cuenta'];
 function pasosGuardar_(l, p) {
   if (!l || !l.id || !p) return;
   const v = PASOS_K.filter(k => p[k]).join(',') || 'ninguno';
@@ -5294,7 +5295,7 @@ function recordatorioPrueba_(l) {
 }
 function pasoMarca_(u, d) {
   req_(u, ['admin']);
-  const k = { compartir: 'sysPasoCompartir', cuenta: 'sysPasoCuenta' }[String(d && d.k || '')];
+  const k = { compartir: 'sysPasoCompartir', cuenta: 'sysPasoCuenta', ver: 'sysPasoVer' }[String(d && d.k || '')];
   if (!k) throw new Error('Paso no válido');
   if (config_()[k] !== 'si') guardarConfig_({ [k]: 'si' });
   return true;
