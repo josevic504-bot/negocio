@@ -6703,7 +6703,7 @@ function formProducto(p, onSave, pre) {
   const isvG = Math.round(num(S.config.isv) * 100);
   const h = hoja({ titulo: nuevo ? 'Nuevo producto' : 'Editar producto', ancho: 1, html: `
     <div class="pf-top"><div class="pf-img" id="pf-img"></div><div class="grow">
-      ${S.plus ? `<div class="row"><label class="btn sm">${ic('cam', 16)} Foto<input type="file" accept="image/*" id="pf-file" hidden></label><button class="btn sm ghost" data-a="pfQuitarFoto" ${st.foto ? '' : 'hidden'} id="pf-qf">Quitar foto</button></div><small class="hint">Si el producto se agota y pasa 3 meses sin movimiento, la foto se borra sola.</small>`
+      ${S.plus ? `<div class="row"><label class="btn sm">${ic('cam', 16)} Foto<input type="file" accept="image/*" id="pf-file" hidden></label><button class="btn sm ghost" data-a="pfQuitarFoto" ${st.foto ? '' : 'hidden'} id="pf-qf">Quitar foto</button></div>${nuevo ? '' : '<small class="hint">Si el producto se agota y pasa 3 meses sin movimiento, la foto se borra sola.</small>'}`
         : `<div class="row"><span class="badge b-mut">${ic('lock', 13)} Fotos con Plus</span><button class="btn sm ghost" data-a="plusInfo">Ver Plus</button></div>`}
       <div class="emojis" id="pf-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${st.icono === e ? 'on' : ''}">${e}</button>`).join('')}<input id="pf-emo-in" maxlength="4" placeholder="Otro" value="${EMOJIS.includes(st.icono) ? '' : esc(st.icono)}"></div></div></div>
     <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. ${esc(PASO_EJ[S.config.giro] || 'Camiseta básica')}"></label>
