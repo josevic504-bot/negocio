@@ -7590,7 +7590,7 @@ function solicitudDir_(d, ip) {
 }
 /* ---- Tiendas Catrachas: análisis para el Panel (visitas al sitio, clics a las tiendas, búsquedas y solicitudes) ----
  * El sitio manda sus visitas con páginas «tc-…»: tc-inicio, tc-dir, tc-giro-…, tc-gc-…, tc-ciudad-…, tc-t-<código> (ficha),
- * tc-ir-<código> (clic para entrar a una tienda), tc-b-<lo que buscaron>, tc-aparecer, tc-negocio, tc-prog-…, tc-guia-… */
+ * tc-p-<código> (página de un producto de esa tienda), tc-ir-<código> (clic para entrar a una tienda), tc-b-<lo que buscaron>, tc-aparecer, tc-negocio, tc-prog-…, tc-guia-… */
 function panelCatrachas_(d) {
   const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 30, desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
   let todas = []; try { todas = visitasFilas_(60000, 'tc'); } catch (e) {}
@@ -7598,7 +7598,7 @@ function panelCatrachas_(d) {
   const tipo = p => p.indexOf('tc-ir-') === 0 ? 'ir' : p.indexOf('tc-b-') === 0 ? 'buscar' : 'vista';
   const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
   const vistas = f.filter(x => tipo(x.pagina) === 'vista'), clics = f.filter(x => tipo(x.pagina) === 'ir'), busq = f.filter(x => tipo(x.pagina) === 'buscar');
-  const seccion = p => p === 'catrachas' || p === 'tc-inicio' ? 'Inicio' : p === 'tc-dir' ? 'Directorio' : /^tc-(giro|gc|ciudad)-/.test(p) ? 'Tipo de negocio y ciudad' : p.indexOf('tc-t-') === 0 ? 'Fichas de tienda'
+  const seccion = p => p === 'catrachas' || p === 'tc-inicio' ? 'Inicio' : p === 'tc-dir' ? 'Directorio' : /^tc-(giro|gc|ciudad)-/.test(p) ? 'Tipo de negocio y ciudad' : p.indexOf('tc-t-') === 0 ? 'Fichas de tienda' : p.indexOf('tc-p-') === 0 ? 'Páginas de producto'
     : p === 'tc-aparecer' ? '«Aparece aquí»' : p === 'tc-negocio' || p.indexOf('tc-prog') === 0 ? 'Para tu negocio' : p.indexOf('tc-guia') === 0 ? 'Guías' : 'Otras';
   const contar = (l, fn) => { const o = {}; l.forEach(x => { const k = fn(x) || 'directo'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n); };
   // Tiendas: cuántas veces vieron su ficha y cuántas veces tocaron para entrar
