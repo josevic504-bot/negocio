@@ -4356,9 +4356,9 @@ function panelImportar(id, nombre) {
   });
 }
 // Primeros pasos del cliente (1.9.82): en qué paso va y cuál le falta, para saber qué decirle
-const PASOS_P = [['negocio', 'Logo y colores'], ['producto', 'Producto propio'], ['venta', 'Primera venta'], ['cliente', 'Un cliente'], ['compartir', 'Compartió su tienda'], ['pedido', 'Pedido en línea'], ['caja', 'Cierre de caja'], ['cuenta', '¿Cómo me fue hoy?']];
-const PASOS_C = { negocio: 'su logo', producto: 'productos', venta: '1.ª venta', cliente: 'un cliente', compartir: 'compartir tienda', pedido: 'pedido en línea', caja: 'cierre de caja', cuenta: '¿cómo me fue?' };
-const pasosLista = n => PASOS_P.filter(x => (n.plus || n.estado === 'prueba') || !['compartir', 'pedido'].includes(x[0]));
+const PASOS_P = [['negocio', 'Logo y colores'], ['producto', 'Producto propio'], ['ver', 'Vio su tienda'], ['venta', 'Primera venta'], ['cliente', 'Un cliente'], ['compartir', 'Compartió su tienda'], ['pedido', 'Pedido en línea'], ['caja', 'Cierre de caja'], ['cuenta', '¿Cómo me fue hoy?']];
+const PASOS_C = { negocio: 'su logo', producto: 'productos', ver: 'ver su tienda', venta: '1.ª venta', cliente: 'un cliente', compartir: 'compartir tienda', pedido: 'pedido en línea', caja: 'cierre de caja', cuenta: '¿cómo me fue?' };
+const pasosLista = n => PASOS_P.filter(x => (n.plus || n.estado === 'prueba') || !['ver', 'compartir', 'pedido'].includes(x[0]));
 // En la lista de clientes: barritas de los primeros pasos y el que le falta
 function pasosMini(n) {
   const p = n.pasos; if (!p || n.colab) return '';
@@ -6833,6 +6833,7 @@ function formProducto(p, onSave, pre) {
     const i = S.productos.findIndex(x => x.id === g.id);
     if (i >= 0) S.productos[i] = g; else S.productos.push(g);
     guardarCache(); h.cerrar(); toast(nuevo ? 'Producto agregado' : 'Cambios guardados', 'ok');
+    if (nuevo) setTimeout(pasoTrasProducto, 350);
     if (onSave) onSave(g); else if (S.vista === 'productos') listaProductos(); else if (S.vista === 'precios') R.precios(); else if (S.vista === 'inicio') R.inicio();
   } });
   h.botones(bs);
@@ -11185,6 +11186,7 @@ function pasosDef() {
     : { ic: 'cart', t: 'Haz tu primera venta', s: 'Aunque sea de prueba', ayuda: GP.vender, ir: ['vender'] };
   const abierta = S.config.tienda === 'si', l = [
     { k: 'producto', ic: 'box', t: 'Crea ' + (PASO_COSA[S.config.giro] || 'tu primer producto'), s: 'Uno tuyo, no de ejemplo', ayuda: busca(x => x.n === 1), ir: ['productos'] },
+    ...(S.plus ? [{ k: 'ver', ic: 'eye', t: 'Mira tu tienda como la ven tus clientes', s: 'Lo que creaste ya está en tu tienda en línea', fn: pasoVerTienda }] : []),
     Object.assign({ k: 'venta' }, venta),
     { k: 'negocio', ic: 'palette', t: 'Configura tu negocio', s: 'Tu logo y tus colores', ir: ['ajustes', { sec: 'apariencia' }] },
     { k: 'cliente', ic: 'users', t: 'Registra un cliente', s: 'Para tus ventas al crédito', ayuda: GP.clientes, ir: ['clientes'] }
@@ -11236,6 +11238,21 @@ function pasoMarca(k) {
   if (!p || p[k] || SOPORTE || !puede('admin')) return;
   p[k] = true; pasosRepinta();
   api('pasoMarca', { k }, true).catch(() => {});
+}
+// «Mira tu tienda como la ven tus clientes»: el enganche después del primer producto
+function pasoVerTienda() {
+  if (!(S.inicio && S.inicio.pasos && S.inicio.pasos.producto) && !S.productos.some(p => p.activo && !/^EJ\d/.test(String(p.codigo || '')))) { toast('Primero crea ' + (PASO_COSA[S.config.giro] || 'tu primer producto') + ': así lo ves en tu tienda', 'error', 4000); ir('productos'); return; }
+  if (S.config.tienda !== 'si') { toast('Primero enciende tu tienda en línea', 'error'); ir('tienda', {}); return; }
+  window.open(linkTienda(), '_blank', 'noopener'); pasoMarca('ver');
+}
+// Al guardar su primer producto propio (en prueba): se le invita a verlo en su tienda
+function pasoTrasProducto() {
+  const p = S.inicio && S.inicio.pasos, L = S.licencia;
+  if (!L || L.estado !== 'prueba' || !S.plus || SOPORTE || !puede('admin') || S.config.tienda !== 'si' || (p && (p.ver || p.pedido))) return;
+  if (S.productos.filter(x => x.activo && !/^EJ\d/.test(String(x.codigo || ''))).length !== 1) return;
+  if (p) p.producto = true;
+  const h = hoja({ titulo: '', html: `<div class="st-e">Primeros pasos</div><h2 class="st-h">¡Ya está en tu tienda en línea!</h2><p class="st-p">Lo que acabas de crear ya lo pueden ver y pedir tus clientes. Míralo tal como lo ven ellos.</p>` });
+  h.botones([{ t: 'Después', fn: () => h.cerrar() }, { t: 'Ver mi tienda', cls: 'pri', fn: () => { h.cerrar(); pasoVerTienda(); } }]);
 }
 function pasoPedidoPrueba() {
   if (S.config.tienda !== 'si') { toast('Primero enciende tu tienda en línea', 'error'); ir('tienda', {}); return; }
