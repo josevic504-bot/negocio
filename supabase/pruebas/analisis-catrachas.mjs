@@ -15,7 +15,7 @@ const sirve = (raiz, puerto) => http.createServer((q, r) => { const u = decodeUR
 const web = sirve(RAIZ, 8784), web2 = sirve(PUB, 8785);
 let fallas = 0; const v = (n, c, x) => { console.log((c ? '✔ ' : '✘ ') + n); if (!c) { fallas++; if (x !== undefined) console.log('   ', JSON.stringify(x).slice(0, 500)); } };
 await db.aplicar({ props: { PANEL_CLAVE: 'clave123' } });
-const reg = await api('registrar', { negocio: 'Flores del Valle', nombre: 'Ana Mejía', giro: 'floristeria', whatsapp: '33130280', pin: '1234' });
+const reg = await api('registrar', { negocio: 'Flores del Valle', nombre: 'Ana Mejía', giro: 'floristeria', whatsapp: '33130280', pin: '1234', ciudad: 'El Progreso' });
 const neg = (await api('bootstrap', {}, reg.data.token)).data.negocioId, nid = neg.toLowerCase();
 // 1) Servidor: visitas del sitio
 let k = 0; const ev = async (p, o, d) => api('visita', { p, o: o || 'google', d: d || 'cel', v: 'persona' + String(1000 + (k++)) });
