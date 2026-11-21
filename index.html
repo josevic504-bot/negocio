@@ -1321,6 +1321,7 @@ body[data-vista="vender"] .apk-bar,body.noscroll .apk-bar{opacity:0;pointer-even
 .pp-i{display:flex;align-items:center;gap:11px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:none;border:0;border-top:1px solid var(--line);padding:9px 2px}.pp-i b{display:block;font-weight:600;font-size:14.5px;line-height:1.2}.pp-i small{color:var(--mut);font-size:12.5px;line-height:1.25;display:block;margin-top:1px}
 .pp-ck{width:26px;height:26px;border-radius:50%;border:2px solid var(--pri);color:transparent;display:flex;align-items:center;justify-content:center;flex:none}.pp-i.ok .pp-ck{background:var(--pri);color:#fff}.pp-i.ok b{text-decoration:line-through;color:var(--mut);font-weight:500}
 .pp-ir{flex:none;font-size:12.5px;font-weight:700;color:var(--pri);background:color-mix(in srgb,var(--pri) 12%,transparent);border-radius:20px;padding:4px 12px}.pp-oc{display:block;margin:4px 0 0 auto;background:none;border:0;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer;padding:6px 2px}
+.pe-sig{display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;background:color-mix(in srgb,var(--pri) 8%,var(--card));border:2px solid var(--pri);border-radius:18px;padding:14px 12px}.pe-sig b{display:block;font-size:17px;font-weight:700;line-height:1.2}.pe-sig small{color:var(--mut);font-size:13px}.pe-ic{width:48px;height:48px;border-radius:14px;background:var(--pri);color:#fff;display:flex;align-items:center;justify-content:center;flex:none}.pe .pp-i:first-child{border-top:0}
 .pp-p{border:1px solid var(--line);border-radius:16px;padding:12px;margin:0 0 12px}.pp-p .gg-bar{margin:8px 0}.pp-p .chip{font-size:12px;cursor:default}.pp-fin{text-align:center}.pp-fin h3{display:block;margin:6px 0 4px}.pp-fin p{color:var(--mut);font-size:14px;line-height:1.35;margin:0 0 12px}.pp-fi{width:52px;height:52px;border-radius:50%;margin:2px auto 0;background:#00b56e;color:#fff;display:flex;align-items:center;justify-content:center}.pp-auto{display:flex;align-items:center;gap:5px;margin:8px 0 0}
 .st-e{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--pri);font-weight:700;margin-bottom:3px}.st-d{display:flex;gap:5px;margin:4px 0 10px}.st-d i{height:5px;flex:1;border-radius:3px;background:var(--line)}.st-d i.on{background:var(--pri)}.st-h{font:600 27px/1.08 var(--serif);margin:0 0 5px}.st-p{color:var(--mut);font-size:14.5px;line-height:1.35;margin:0 0 11px}
 .st-img{display:block;width:100%;border-radius:15px;border:1px solid var(--line);margin-bottom:12px}.st-l{display:flex;flex-direction:column;gap:7px;margin-bottom:6px}.st-li{display:flex;gap:9px;font-size:14px;line-height:1.3}.st-li>i{font:700 12.5px var(--sans,inherit);font-style:normal;width:22px;height:22px;border-radius:50%;background:#e8a400;color:#2a1600;display:flex;align-items:center;justify-content:center;flex:none}.st-li>i.v{background:color-mix(in srgb,var(--pri) 14%,transparent);color:var(--pri)}.st-li b{font-weight:600}.st-ok{margin-top:10px}
@@ -2757,7 +2758,7 @@ async function registrarse(ev) {
     limpiarSesion();
     await arrancar();
     toast('¡Bienvenido! Tu prueba de ' + DIAS_PRUEBA_REG + ' días ya comenzó', 'ok', 5000);
-    guiaIniciar();
+    pasosEmergente(true);
   } catch (e) { const el = $('#r-err'); if (el) el.textContent = e.message; }
   finally { registrando = false; const b = $('#r-btn'); if (b) { b.disabled = false; b.textContent = 'Comenzar prueba gratis'; } }
 }
@@ -4985,7 +4986,7 @@ R.inicio = () => {
   const d = S.inicio, m = $('#main');
   if (!d || Date.now() - (S.inicioT || 0) > 20000) {
     const t0 = S.tienda || ''; // si mientras tanto se eligió otra tienda, esta respuesta ya no sirve
-    api('inicio', {}, !!d).then(x => { if ((S.tienda || '') !== t0) return; S.inicio = x; S.inicioT = Date.now(); if (S.vista === 'inicio' && (!PILA.length || $('#main .today.sk'))) R.inicio(); }).catch(e => { if (!d && (S.tienda || '') === t0) err(e); });
+    api('inicio', {}, !!d).then(x => { if ((S.tienda || '') !== t0) return; S.inicio = x; S.inicioT = Date.now(); if (S.vista === 'inicio' && (!PILA.length || $('#main .today.sk'))) R.inicio(); if (S.vista === 'inicio' && !PILA.length) pasosEmergente(); }).catch(e => { if (!d && (S.tienda || '') === t0) err(e); });
     if (!d) { m.innerHTML = `<div class="today sk"><div class="skl" style="width:40%"></div><div class="skl big"></div><div class="skl" style="width:60%"></div></div>`; return; }
   }
   const rol = S.user.rol, hoyTxt = cap(fFechaL(hoy()));
@@ -11183,9 +11184,9 @@ function pasosDef() {
     : cwOrd() ? { ic: 'wrench', t: 'Cobra tu primer lavado', s: 'Recibe el vehículo y cóbralo', ayuda: busca(x => x.ir === 'ordenes'), ir: ['ordenes'] }
     : { ic: 'cart', t: 'Haz tu primera venta', s: 'Aunque sea de prueba', ayuda: GP.vender, ir: ['vender'] };
   const abierta = S.config.tienda === 'si', l = [
-    { k: 'negocio', ic: 'palette', t: 'Configura tu negocio', s: 'Tu logo y tus colores', ir: ['ajustes', { sec: 'apariencia' }] },
     { k: 'producto', ic: 'box', t: 'Crea ' + (PASO_COSA[S.config.giro] || 'tu primer producto'), s: 'Uno tuyo, no de ejemplo', ayuda: busca(x => x.n === 1), ir: ['productos'] },
     Object.assign({ k: 'venta' }, venta),
+    { k: 'negocio', ic: 'palette', t: 'Configura tu negocio', s: 'Tu logo y tus colores', ir: ['ajustes', { sec: 'apariencia' }] },
     { k: 'cliente', ic: 'users', t: 'Registra un cliente', s: 'Para tus ventas al crédito', ayuda: GP.clientes, ir: ['clientes'] }
   ];
   if (S.plus) l.push( // la tienda en línea: incluida en la prueba
@@ -11208,6 +11209,26 @@ function pasosCard(d) {
     <div class="pp-l">${l.map(x => `<button class="pp-i ${p[x.k] ? 'ok' : ''}" data-a="pasoIr" data-k="${x.k}"><span class="pp-ck">${ic('check', 15)}</span><span class="gg-t"><b>${x.t}</b><small>${x.s}</small></span>${p[x.k] ? '' : '<span class="pp-ir">Ir</span>'}</button>`).join('')}</div>
     <button class="pp-oc" data-a="pasosOcultar">Ocultar por ahora</button></div>`;
 }
+/* Primeros pasos como ventana emergente: es lo primero que ve el negocio en prueba al entrar (una vez por sesión).
+ * Muestra UN paso siguiente, grande, y debajo la lista. «Omitir» la deja para mañana; la lista sigue en Inicio. */
+function pasosEmergente(forzar) {
+  const L = S.licencia, p = (S.inicio && S.inicio.pasos) || (forzar ? {} : null);
+  if (!p || !L || L.estado !== 'prueba' || !S.config || SOPORTE || !puede('admin')) return false;
+  const st = LS.json(pasosKey(), {}) || {}, l = pasosDef(), falt = l.filter(x => !p[x.k]);
+  if (!falt.length) return false;
+  if (!forzar) { if (st.omite === hoy()) return false; try { if (sessionStorage.getItem(LS_NS + 'ppVisto')) return false; } catch (e) {} }
+  try { sessionStorage.setItem(LS_NS + 'ppVisto', '1'); } catch (e) {}
+  const sig = falt[0], hechos = l.length - falt.length;
+  const h = hoja({ titulo: '', cls: 'pe', html: `<div class="st-e">Primeros pasos · ${hechos} de ${l.length}</div><h2 class="st-h">${hechos ? 'Tu siguiente paso' : 'Empieza por aquí'}</h2>
+    <div class="gg-bar" style="margin:8px 0 12px"><i style="width:${Math.round(hechos / l.length * 100)}%"></i></div>
+    <button class="pe-sig" data-a="pasoEmg" data-k="${sig.k}"><span class="pe-ic">${ic(sig.ic, 26)}</span><span class="gg-t"><b>${sig.t}</b><small>${sig.s}</small></span><span class="pp-ir">Ir</span></button>
+    <p class="xs mut" style="margin:14px 2px 2px">${falt.length > 1 ? 'Después, a tu ritmo:' : 'Y con eso terminas.'}</p>
+    <div class="pp-l">${l.filter(x => x !== sig).map(x => `<button class="pp-i ${p[x.k] ? 'ok' : ''}" data-a="pasoEmg" data-k="${x.k}"><span class="pp-ck">${ic('check', 15)}</span><span class="gg-t"><b>${x.t}</b><small>${x.s}</small></span></button>`).join('')}</div>
+    <p class="xs mut" style="text-align:center;margin:10px 0 0">Cada paso se marca solo cuando lo haces. La lista queda en Inicio.</p>` });
+  h.botones([{ t: 'Omitir', fn: () => { const s2 = LS.json(pasosKey(), {}) || {}; s2.omite = hoy(); LS.set(pasosKey(), JSON.stringify(s2)); h.cerrar(); toast('Los encuentras en Inicio, en «Primeros pasos»', 'ok', 3500); } }, { t: 'Hacerlo ahora', cls: 'pri', fn: () => { h.cerrar(); pasoHoja(sig); } }]);
+  return true;
+}
+ACC.pasoEmg = el => { const x = pasosDef().find(q => q.k === el.dataset.k); cerrarHojas(); if (x) pasoHoja(x); };
 const pasosRepinta = () => { const c = $('#pp-card'); if (c && S.inicio) c.outerHTML = pasosCard(S.inicio); };
 // Pasos que el servidor no ve solo (compartir la tienda, abrir «¿Cómo me fue hoy?»): se marcan al hacerlos
 function pasoMarca(k) {
