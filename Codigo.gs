@@ -53,7 +53,10 @@ const SCHEMA_M = {
   // Contador de visitas a las páginas (catálogo, Negocio VM, Salón VM, Eventos VM). Sin datos personales: vid es un número al azar del navegador.
   Visitas:     ['id','fecha','pagina','origen','disp','vid','ref'],
   // Tiendas Catrachas: negocios con tienda propia (no usan el programa) que piden aparecer en el directorio. estado: nueva, contactada, aprobada, descartada
-  Solicitudes: ['id','fecha','negocio','nombre','whatsapp','tipo','ciudad','enlace','nota','estado','creado']
+  Solicitudes: ['id','fecha','negocio','nombre','whatsapp','tipo','ciudad','enlace','nota','estado','creado'],
+  // Tiendas Catrachas: lo que escribieron en Google y Bing para llegar al sitio. La llena una vez al día la función «buscadores» de Supabase.
+  // Una fila por día, buscador (google, bing) y búsqueda; consulta vacía = total del día. posicion: lugar promedio en la lista de resultados
+  Buscadores:  ['id','fecha','motor','consulta','impresiones','clics','posicion']
 };
 const PANEL_SEG = 7776000; // 90 días sin usarlo (se renueva al entrar); en Supabase ya no aplica el límite de 6 horas de Google
 const GRACIA_DEF = 5; // días después de la fecha de pago antes de pausar el programa
@@ -7615,7 +7618,34 @@ function panelCatrachas_(d) {
     busquedas: contar(busq, x => x.pagina.slice(5).replace(/-/g, ' ')).slice(0, 15), nBusquedas: busq.length,
     duenos: { aparecer: vistas.filter(x => x.pagina === 'tc-aparecer').length, negocio: vistas.filter(x => seccion(x.pagina) === 'Para tu negocio').length, guias: vistas.filter(x => seccion(x.pagina) === 'Guías').length,
       solicitudes: solP.length, total: sol.length, nuevas: est('nueva'), contactadas: est('contactada'), aprobadas: est('aprobada'), descartadas: est('descartada') },
-    precio: 150 };
+    busc: buscadoresResumen_(desde), precio: 150 };
+}
+/* ---- Tiendas Catrachas: cómo nos encuentran en Google y Bing (veces que salió el sitio, clics y lugar en la lista, por búsqueda) ----
+ * Los buscadores no le dicen al sitio qué escribió la persona: ese dato solo lo dan Search Console y Bing Webmaster.
+ * Los totales salen de las filas sin búsqueda (son los reales: los buscadores esconden las búsquedas muy raras). */
+function buscadoresResumen_(desde) {
+  let filas = []; try { filas = mRows_('Buscadores'); } catch (e) { return null; }
+  const P = PropertiesService.getScriptProperties(); let est = {}; try { est = JSON.parse(P.getProperty('BUSCADORES_ESTADO') || '{}') || {}; } catch (e) {}
+  const n = v => Number(v) || 0, r1 = v => Math.round(v * 10) / 10, out = { cuando: est.cuando || '', motores: {}, consultas: [] }, Q = {};
+  ['google', 'bing'].forEach(m => {
+    const e = est[m] || {}, tot = { imp: 0, clics: 0, pos: 0, dias: 0, hasta: '', ok: e.ok !== false && !!est.cuando, error: e.ok === false ? String(e.error || '') : '' }; let peso = 0, pp = 0;
+    filas.forEach(f => {
+      if (f.motor !== m) return;
+      if (!f.consulta && f.fecha > tot.hasta && (n(f.impresiones) || n(f.clics))) tot.hasta = f.fecha; // último día con datos, aunque quede fuera del período
+      if (f.fecha < desde) return;
+      const imp = n(f.impresiones), cl = n(f.clics), pos = n(f.posicion);
+      if (!f.consulta) { tot.imp += imp; tot.clics += cl; tot.dias++; if (pos && imp) { pp += pos * imp; peso += imp; } return; }
+      if (/\b(site|inurl|intitle):/i.test(f.consulta)) return; // búsquedas de programas automáticos, no de personas
+      const q = Q[m + '|' + f.consulta] = Q[m + '|' + f.consulta] || { q: f.consulta, m: m, imp: 0, clics: 0, pp: 0, peso: 0 };
+      q.imp += imp; q.clics += cl; if (pos && imp) { q.pp += pos * imp; q.peso += imp; }
+    });
+    // Bing no da el lugar promedio del día: se saca de sus búsquedas
+    if (!peso) Object.keys(Q).forEach(k => { if (Q[k].m === m) { pp += Q[k].pp; peso += Q[k].peso; } });
+    tot.pos = peso ? r1(pp / peso) : 0; out.motores[m] = tot;
+  });
+  out.consultas = Object.keys(Q).map(k => Q[k]).sort((a, b) => b.clics - a.clics || b.imp - a.imp).slice(0, 80)
+    .map(q => ({ q: q.q, m: q.m, imp: q.imp, clics: q.clics, pos: q.peso ? r1(q.pp / q.peso) : 0 }));
+  return out;
 }
 function panelSolicitudes_() { return mRows_('Solicitudes').slice().reverse().slice(0, 100); }
 function panelSolicitudEstado_(d) {

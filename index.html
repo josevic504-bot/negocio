@@ -3230,10 +3230,39 @@ function panelMensajeA(id, n) {
 /* ---- Panel: mensajes a los negocios ---- */
 // Tiendas Catrachas: análisis del sitio (visitas, clics a tiendas, búsquedas, interés de dueños) para ver si el directorio es viable
 ACC.panelCatrachas = async () => {
-  const st = { dias: 30 };
+  const st = { dias: 30, motor: 'todos', x: null };
   const h = hoja({ titulo: 'Análisis de Tiendas Catrachas', ancho: 1, html: `<div class="chips" id="tc-d">${[[7, '7 días'], [30, '30 días'], [90, '90 días']].map(([k, t]) => `<button type="button" class="chip ${k === st.dias ? 'on' : ''}" data-d="${k}">${t}</button>`).join('')}</div><div id="tc-c"><div class="empty">Cargando…</div></div>` });
   const filas = (l, max, vacio) => l.length ? `<div class="pn-card pn-ori" style="width:100%">${l.map((o, i) => `<div><em>${esc(o.k)}</em><span style="width:${Math.max(8, Math.round(o.n * 110 / max))}px;opacity:${Math.max(.35, 1 - i * .12)}"></span><b>${o.n}</b></div>`).join('')}</div>` : `<div class="empty">${vacio}</div>`;
-  const pinta = x => { const du = x.duenos, cambio = x.anterior ? Math.round((x.visitas - x.anterior) * 100 / x.anterior) : null, mb = Math.max(1, ...x.barras.map(b => b.n));
+  // Cómo nos encuentran en buscadores: lo que la gente escribió en Google y Bing (lo trae una tarea diaria; el sitio no puede saberlo por sí solo)
+  const NB = { google: 'Google', bing: 'Bing' }, lugar = p => p ? Math.round(p) + '.º' : '—';
+  const busc = (b, motor) => {
+    if (!b) return '';
+    const ms = motor === 'todos' ? ['google', 'bing'] : [motor], M = ms.map(m => b.motores[m] || { imp: 0, clics: 0, pos: 0 });
+    const imp = M.reduce((a, m) => a + m.imp, 0), cl = M.reduce((a, m) => a + m.clics, 0), peso = M.reduce((a, m) => a + (m.pos ? m.imp : 0), 0), pos = peso ? M.reduce((a, m) => a + m.pos * (m.pos ? m.imp : 0), 0) / peso : 0;
+    const qs = b.consultas.filter(q => ms.indexOf(q.m) >= 0), donde = motor === 'todos' ? 'los buscadores' : NB[motor];
+    // Lectura: solo lo que dicen los números, sin adivinar
+    const L = [];
+    if (!b.cuando) L.push('Todavía no se han traído datos de los buscadores. La primera lectura se hace sola, una vez al día.');
+    ms.forEach(m => { const e = b.motores[m] || {}; if (e.error) L.push(`No se pudo leer ${NB[m]}: ${e.error}`); else if (b.cuando && !e.hasta) L.push(`${NB[m]} todavía no tiene datos del sitio. Un sitio recién agregado tarda unos días en aparecer.`); });
+    if (imp) {
+      if (imp < 50) L.push(`Todavía son pocos datos: el sitio salió ${imp} ${imp === 1 ? 'vez' : 'veces'} en ${donde}. Con menos de 50, los números cambian mucho de un día a otro.`);
+      const top = qs.filter(q => q.clics > 0)[0];
+      if (top) L.push(`La búsqueda que más trae gente es «${top.q}» (${top.clics} ${top.clics === 1 ? 'clic' : 'clics'}).`);
+      else if (!cl) L.push(`El sitio salió ${imp} ${imp === 1 ? 'vez' : 'veces'} y nadie tocó el resultado${pos > 10 ? `. Está en el lugar ${lugar(pos)} en promedio: casi nadie baja tanto en la lista` : ''}.`);
+      const op = qs.filter(q => q.imp >= 10 && q.clics * 100 < q.imp * 3).sort((a, c) => c.imp - a.imp)[0];
+      if (op) L.push(`«${op.q}» sale mucho (${op.imp} veces) pero casi nadie entra: está en el lugar ${lugar(op.pos)}.`);
+      const enLista = qs.reduce((a, q) => a + q.imp, 0);
+      if (enLista < imp) L.push('La lista de abajo suma menos que el total porque los buscadores no muestran las búsquedas muy raras.');
+    } else if (b.cuando && ms.some(m => (b.motores[m] || {}).hasta)) L.push(`En este período el sitio no salió en ${donde}.`);
+    const tabla = qs.length ? `<div class="pn-card" style="width:100%;padding:8px 14px"><div class="xs mut" style="display:grid;grid-template-columns:minmax(0,1fr) 52px 46px 50px;gap:6px;padding:4px 0"><span>Búsqueda</span><span style="text-align:right">Salió</span><span style="text-align:right">Clics</span><span style="text-align:right">Lugar</span></div>${qs.slice(0, 40).map(q => `<div class="n" style="display:grid;grid-template-columns:minmax(0,1fr) 52px 46px 50px;gap:6px;padding:8px 0;border-top:1px solid var(--line);font-size:13.5px"><span style="overflow-wrap:anywhere">${esc(q.q)}${motor === 'todos' ? ` <small class="mut">${NB[q.m]}</small>` : ''}</span><span class="mut" style="text-align:right">${q.imp}</span><b style="text-align:right">${q.clics}</b><span class="mut" style="text-align:right">${lugar(q.pos)}</span></div>`).join('')}</div>` : `<div class="empty">${imp ? 'Los buscadores todavía no muestran con qué búsquedas salió' : 'Todavía no hay búsquedas en este período'}</div>`;
+    const fresco = b.cuando ? new Date(b.cuando) : null, fk = fresco ? fresco.getFullYear() + '-' + String(fresco.getMonth() + 1).padStart(2, '0') + '-' + String(fresco.getDate()).padStart(2, '0') : '';
+    return `<div class="pn-h">Cómo nos encuentran en buscadores</div><div class="chips" id="tc-bm">${[['todos', 'Todos'], ['google', 'Google'], ['bing', 'Bing']].map(([k, t]) => `<button type="button" class="chip ${k === motor ? 'on' : ''}" data-bm="${k}">${t}</button>`).join('')}</div>
+      <div class="pn-g2" style="margin-top:9px"><div class="pn-k"><small>Veces que saliste</small><b>${imp}</b><i>en los resultados</i></div><div class="pn-k"><small>Clics</small><b>${cl}</b><i>entraron al sitio</i></div>
+      <div class="pn-k"><small>Entran</small><b>${imp ? Math.round(cl * 100 / imp) + ' de 100' : '—'}</b><i>de quienes te ven</i></div><div class="pn-k"><small>Lugar promedio</small><b>${lugar(pos)}</b><i>en la lista</i></div></div>
+      ${L.length ? `<div class="pn-card" style="width:100%;padding:10px 16px;margin-top:9px">${L.map(t => `<p class="sm" style="margin:6px 0">${esc(t)}</p>`).join('')}</div>` : ''}
+      <div class="sm mut" style="margin:14px 2px 7px">Lo que escribieron para llegar</div>${tabla}
+      <small class="mut" style="display:block;margin:8px 2px 0">Datos de Google y Bing, actualizados una vez al día${fk ? ' (última vez: ' + esc(fFechaC(fk)) + ')' : ''}. Llegan con 1 a 3 días de atraso.</small>`; };
+  const pinta = x => { st.x = x; const du = x.duenos, cambio = x.anterior ? Math.round((x.visitas - x.anterior) * 100 / x.anterior) : null, mb = Math.max(1, ...x.barras.map(b => b.n));
     // Lectura: solo lo que dicen los números, sin adivinar
     const L = [];
     if (x.visitas < 50) L.push('Todavía son pocas visitas para sacar conclusiones: con menos de 50, cualquier porcentaje cambia mucho de un día a otro.');
@@ -3250,10 +3279,12 @@ ACC.panelCatrachas = async () => {
       <div class="pn-h">Tiendas más vistas</div>${x.tiendas.length ? `<div class="list">${x.tiendas.map(t => `<div class="li"><div class="tx"><b>${esc(t.negocio)}</b><small>${t.vistas} ${t.vistas === 1 ? 'vista' : 'vistas'} de su ficha · ${t.clics} ${t.clics === 1 ? 'clic' : 'clics'} para entrar</small></div></div>`).join('')}</div>` : '<div class="empty">Todavía ninguna tienda ha recibido visitas desde el directorio</div>'}
       <div class="pn-h">Lo que buscan (${x.nBusquedas})</div>${filas(x.busquedas, Math.max(1, ...x.busquedas.map(o => o.n)), 'Nadie ha usado el buscador')}
       <div class="pn-h">De dónde llegan</div>${filas(x.origen.map(o => ({ k: visOri(o.k)[0], n: o.n })), Math.max(1, ...x.origen.map(o => o.n)), 'Sin datos')}
+      <div id="tc-b">${busc(x.busc, st.motor)}</div>
       <div class="pn-h">Interés de los negocios</div><div class="pn-g2"><div class="pn-k"><small>Vieron «Aparece aquí»</small><b>${du.aparecer}</b><i>${du.solicitudes} ${du.solicitudes === 1 ? 'solicitud' : 'solicitudes'}</i></div><div class="pn-k"><small>Vieron «Para tu negocio»</small><b>${du.negocio}</b><i>${du.guias} en guías</i></div></div>
       <button class="pn-card" data-a="panelSolicitudes" style="width:100%;text-align:left;padding:12px 16px"><b>Solicitudes en total: ${du.total}</b><small style="display:block">${du.nuevas} nuevas · ${du.contactadas} contactadas · ${du.aprobadas} aprobadas · ${du.descartadas} descartadas</small></button>`; };
   const carga = () => api('panelCatrachas', { dias: st.dias }, true).then(pinta).catch(err);
-  h.el.addEventListener('click', e => { const b = e.target.closest('[data-d]'); if (!b) return; st.dias = Number(b.dataset.d); $$('#tc-d .chip', h.el).forEach(x => x.classList.toggle('on', x === b)); carga(); });
+  h.el.addEventListener('click', e => { const m = e.target.closest('[data-bm]'); if (m && st.x) { st.motor = m.dataset.bm; $('#tc-b', h.el).innerHTML = busc(st.x.busc, st.motor); return; }
+    const b = e.target.closest('[data-d]'); if (!b) return; st.dias = Number(b.dataset.d); $$('#tc-d .chip', h.el).forEach(x => x.classList.toggle('on', x === b)); carga(); });
   carga();
 };
 // Tiendas Catrachas: solicitudes del formulario «Aparece aquí» del sitio (negocios que no usan el programa)
@@ -3310,7 +3341,7 @@ async function panelResumen() {
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
 // si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas. También la pantalla de Visitas.
 // «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
-const PANEL_REV = 10; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+const PANEL_REV = 11; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
 let pnTecleo = 0, pnAutoDesde = 0;
 document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
 const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
