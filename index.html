@@ -6706,7 +6706,7 @@ function formProducto(p, onSave, pre) {
       ${S.plus ? `<div class="row"><label class="btn sm">${ic('cam', 16)} Foto<input type="file" accept="image/*" id="pf-file" hidden></label><button class="btn sm ghost" data-a="pfQuitarFoto" ${st.foto ? '' : 'hidden'} id="pf-qf">Quitar foto</button></div><small class="hint">Si el producto se agota y pasa 3 meses sin movimiento, la foto se borra sola.</small>`
         : `<div class="row"><span class="badge b-mut">${ic('lock', 13)} Fotos con Plus</span><button class="btn sm ghost" data-a="plusInfo">Ver Plus</button></div>`}
       <div class="emojis" id="pf-emo">${EMOJIS.map(e => `<button type="button" data-e="${e}" class="${st.icono === e ? 'on' : ''}">${e}</button>`).join('')}<input id="pf-emo-in" maxlength="4" placeholder="Otro" value="${EMOJIS.includes(st.icono) ? '' : esc(st.icono)}"></div></div></div>
-    <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. Camiseta básica"></label>
+    <label class="fld"><span>Nombre *</span><input id="pf-nom" maxlength="80" value="${esc(p.nombre || '')}" placeholder="Ej. ${esc(PASO_EJ[S.config.giro] || 'Camiseta básica')}"></label>
     <div class="fld"><span>Categoría *</span>${elegirHTML('pf-cat', p.categoria || '', catsSugeridas(), 'Escribe la categoría nueva')}</div>
     ${modOn('catalogo') ? `<div class="fld"><span>Subcategoría</span><div id="pf-subw">${elegirHTML('pf-sub', p.sub || '', subsDe(p.categoria), girosOn().includes('vitaminas') ? 'Ej. Multivitamínicos, Proteínas' : 'Ej. Dama, Base, Gloss')}</div></div>` : ''}
     <label class="fld"><span>Código</span><div class="input-row"><input id="pf-cod" maxlength="40" value="${esc(p.codigo || '')}" placeholder="${nuevo ? 'Se pone solo: ' + codAuto(giroDeP(p)) : 'Opcional'}"><button class="btn icon" type="button" data-a="pfScan" aria-label="Escanear">${ic('barcode')}</button></div>${nuevo ? '<small class="hint" id="pf-codh">Déjalo vacío y se pone solo con las letras de tu giro. Si el producto trae código de barras, escanéalo.</small>' : ''}</label>
@@ -11207,6 +11207,16 @@ function guiaDe() { const g = GUIA[S.config.giro] || GUIA.otro; return { n: g.n,
  * negocio ya hizo: el servidor lo revisa en «inicio» (d.pasos). Al tocar un paso se abre su explicación con
  * imagen (la guía por tipo de negocio) o se va directo a la pantalla. Al completarlos sale la felicitación y se oculta. */
 const PASO_COSA = { comida: 'tu primer plato', streaming: 'tu primer plan', recargas: 'tu primer paquete', floristeria: 'tu primer arreglo', joyeria: 'tu primera joya', servicios: 'tu primer servicio', carwash: 'tu primer servicio' };
+// «Crea tu primer producto» explicado en palabras simples (solo 3 datos) y con el botón que abre directo el formulario.
+// Los negocios que no venden productos sueltos (planes, recargas, servicios, lavados) conservan su guía propia.
+const PASO_EJ = { manualidades: 'Llavero de resina con flores', floristeria: 'Ramo de 12 rosas', comida: 'Baleada con todo', joyeria: 'Cadena de plata', boutique: 'Blusa floreada', panaderia: 'Pan de coco', tienda: 'Refresco de 3 litros', variedades: 'Termo de acero', ferreteria: 'Martillo de uña', farmacia: 'Alcohol en gel', tecnologia: 'Cargador tipo C', belleza: 'Labial mate', repuestos: 'Filtro de aceite', vitaminas: 'Vitamina C' };
+function pasoProdSimple(g) {
+  const gi = S.config.giro;
+  if (susOn() || ['streaming', 'recargas', 'servicios', 'carwash', 'veterinaria', 'compras'].includes(gi)) return null;
+  const cosa = (PASO_COSA[gi] || 'tu primer producto'), ej = PASO_EJ[gi];
+  return { h: 'Crea ' + cosa, p: 'Solo necesitas 3 datos: nombre, categoría y precio. Lo demás lo puedes llenar después.', img: (g && g.img) || 'p_' + gi, n: 1, b: 'Crear ahora',
+    l: ['<b>Nombre:</b> como lo piden tus clientes.' + (ej ? ' Por ejemplo: «' + ej + '».' : ''), '<b>Categoría:</b> toca una de las que ya vienen, o crea la tuya.', '<b>Precio de venta:</b> lo que cobras por uno.', '<b>Guardar:</b> y al instante aparece en tu tienda en línea. La foto es opcional, pero con foto se vende más.'] };
+}
 const pasosKey = () => 'pasos_' + (S.negocioId || '1');
 function pasosDef() {
   const g = guiaDe(), busca = f => g.p.find(x => x && f(x));
@@ -11216,7 +11226,7 @@ function pasosDef() {
     : cwOrd() ? { ic: 'wrench', t: 'Cobra tu primer lavado', s: 'Recibe el vehículo y cóbralo', ayuda: busca(x => x.ir === 'ordenes'), ir: ['ordenes'] }
     : { ic: 'cart', t: 'Haz tu primera venta', s: 'Aunque sea de prueba', ayuda: GP.vender, ir: ['vender'] };
   const abierta = S.config.tienda === 'si', l = [
-    { k: 'producto', ic: 'box', t: 'Crea ' + (PASO_COSA[S.config.giro] || 'tu primer producto'), s: 'Uno tuyo, no de ejemplo', ayuda: busca(x => x.n === 1), ir: ['productos'] },
+    Object.assign({ k: 'producto', ic: 'box', t: 'Crea ' + (PASO_COSA[S.config.giro] || 'tu primer producto'), s: 'Uno tuyo, no de ejemplo' }, pasoProdSimple() ? { ayuda: pasoProdSimple(busca(x => x.n === 1)), fn: () => { ir('productos'); setTimeout(() => formProducto(null), 450); } } : { ayuda: busca(x => x.n === 1), ir: ['productos'] }),
     ...(S.plus ? [{ k: 'ver', ic: 'eye', t: 'Mira tu tienda como la ven tus clientes', s: 'Lo que creaste ya está en tu tienda en línea', fn: pasoVerTienda }] : []),
     Object.assign({ k: 'venta' }, venta),
     { k: 'negocio', ic: 'palette', t: 'Configura tu negocio', s: 'Tu logo y tus colores', ir: ['ajustes', { sec: 'apariencia' }] },
