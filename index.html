@@ -89,6 +89,8 @@ body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{paddin
 .pn-chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-bottom:9px}.pn-chips .chip{flex:0 0 auto}
 .pn-cta{display:flex;align-items:center;gap:12px;width:100%;border:0;border-radius:18px;padding:14px 16px;background:linear-gradient(135deg,var(--h1),var(--h2));color:#fff;text-align:left;font:inherit;cursor:pointer;box-shadow:var(--sh);margin-top:4px}
 .pn-cta b{display:block;font-size:15px}.pn-cta small{display:block;opacity:.88;font-size:12px}
+.tc-pl{margin-top:20px}.tc-pl summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--sh)}.tc-pl summary::-webkit-details-marker{display:none}
+.tc-pl summary span{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}.tc-pl summary small{flex:1;text-align:right;font-size:13px;color:var(--pri);font-weight:600}.tc-pl summary .ic{color:var(--mut);transition:transform .2s}.tc-pl[open] summary .ic{transform:rotate(180deg)}.tc-pl[open] summary{margin-bottom:9px}
 .pn-ori{margin-top:9px;padding:6px 0;cursor:pointer}.pn-ori>div{display:flex;align-items:center;gap:10px;padding:6px 14px;font-size:13.5px}.pn-ori em{flex:1;font-style:normal}.pn-ori span{height:8px;border-radius:4px;background:var(--pri)}.pn-ori b{min-width:28px;text-align:right}
 .pn-pub{padding:13px 14px;cursor:pointer}.pn-pub small{display:block;color:var(--mut);font-size:12px;margin-top:7px}
 .pn-esp{padding:13px 14px}.pn-esp-f{margin-top:12px}.pn-esp-f:first-child{margin-top:0}.pn-esp-t{display:flex;justify-content:space-between;align-items:baseline;gap:10px;font-size:14px}.pn-esp-t b{font-weight:600}.pn-esp-t span{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums;white-space:nowrap}.pn-esp small{display:block;margin-top:4px;font-size:12px;color:var(--mut)}.pn-esp .pn-prog span{min-width:4px}
@@ -3231,7 +3233,7 @@ function panelMensajeA(id, n) {
 /* ---- Panel: mensajes a los negocios ---- */
 // Tiendas Catrachas: análisis del sitio (visitas, clics a tiendas, búsquedas, interés de dueños) para ver si el directorio es viable
 ACC.panelCatrachas = async () => {
-  const st = { dias: 30, motor: 'todos', x: null };
+  const st = { dias: 30, motor: 'todos', x: null, plAbierto: false };
   const h = hoja({ titulo: 'Análisis de Tiendas Catrachas', ancho: 1, html: `<div class="chips" id="tc-d">${[[7, '7 días'], [30, '30 días'], [90, '90 días']].map(([k, t]) => `<button type="button" class="chip ${k === st.dias ? 'on' : ''}" data-d="${k}">${t}</button>`).join('')}</div><div id="tc-c"><div class="empty">Cargando…</div></div>` });
   const filas = (l, max, vacio) => l.length ? `<div class="pn-card pn-ori" style="width:100%">${l.map((o, i) => `<div><em>${esc(o.k)}</em><span style="width:${Math.max(8, Math.round(o.n * 110 / max))}px;opacity:${Math.max(.35, 1 - i * .12)}"></span><b>${o.n}</b></div>`).join('')}</div>` : `<div class="empty">${vacio}</div>`;
   // Cómo nos encuentran en buscadores: lo que la gente escribió en Google y Bing (lo trae una tarea diaria; el sitio no puede saberlo por sí solo)
@@ -3263,6 +3265,13 @@ ACC.panelCatrachas = async () => {
       ${L.length ? `<div class="pn-card" style="width:100%;padding:10px 16px;margin-top:9px">${L.map(t => `<p class="sm" style="margin:6px 0">${esc(t)}</p>`).join('')}</div>` : ''}
       <div class="sm mut" style="margin:14px 2px 7px">Lo que escribieron para llegar</div>${tabla}
       <small class="mut" style="display:block;margin:8px 2px 0">Datos de Google y Bing, actualizados una vez al día${fk ? ' (última vez: ' + esc(fFechaC(fk)) + ')' : ''}. Llegan con 1 a 3 días de atraso.</small>`; };
+  // Plantillas de Excel del sitio: colapsable (cerrado muestra solo el resumen); recuerda si lo dejaste abierto al cambiar de período
+  const plUno = (n, s1, sn) => n + ' ' + (n === 1 ? s1 : sn);
+  const plantillas = p => !p ? '' : `<details class="tc-pl" id="tc-pl"${st.plAbierto ? ' open' : ''}><summary><span>Plantillas de Excel</span><small>${plUno(p.bajadas, 'descarga', 'descargas')} · ${plUno(p.vistas, 'vista', 'vistas')}</small>${ic('down', 18)}</summary>
+      <div class="pn-g2"><div class="pn-k"><small>Descargas</small><b>${p.bajadas}</b><i>${plUno(p.personasBajan, 'persona', 'personas')}</i></div><div class="pn-k"><small>Vieron las plantillas</small><b>${p.vistas}</b><i>visitas a sus páginas</i></div>
+      <div class="pn-k"><small>Descargan</small><b>${p.personas ? p.tasa + ' de 100' : '—'}</b><i>de quienes ven una plantilla</i></div><div class="pn-k"><small>Plantilla completa</small><b>${p.wa}</b><i>pidieron la contraseña</i></div></div>
+      <div class="list" style="margin-top:9px">${p.lista.map(t => `<div class="li" style="cursor:default"><div class="tx"><b>${esc(t.nombre)}</b><small>${plUno(t.vistas, 'vista', 'vistas')} de su página · <span style="color:var(--pri);font-weight:600">${plUno(t.bajadas, 'descarga', 'descargas')}</span>${t.wa ? ` · ${plUno(t.wa, 'pidió', 'pidieron')} la contraseña` : ''}</small></div></div>`).join('')}</div>
+      <small class="mut" style="display:block;margin:8px 2px 0">Cada navegador cuenta una descarga por plantilla cada 30 minutos.</small></details>`;
   const pinta = x => { st.x = x; const du = x.duenos, cambio = x.anterior ? Math.round((x.visitas - x.anterior) * 100 / x.anterior) : null, mb = Math.max(1, ...x.barras.map(b => b.n));
     // Lectura: solo lo que dicen los números, sin adivinar
     const L = [];
@@ -3272,6 +3281,8 @@ ACC.panelCatrachas = async () => {
     if (x.busquedas.length) L.push(`Lo más buscado: «${x.busquedas[0].k}». Si no hay tiendas de eso, es un tipo de negocio que conviene conseguir.`);
     L.push(du.aparecer ? `${du.aparecer} ${du.aparecer === 1 ? 'visita' : 'visitas'} a «Aparece aquí» y ${du.solicitudes} ${du.solicitudes === 1 ? 'solicitud' : 'solicitudes'} en el período${du.aparecer >= 10 && !du.solicitudes ? ': ven el precio y no llenan el formulario' : ''}.` : 'Nadie ha abierto «Aparece aquí» en este período.');
     if (du.aprobadas) L.push(`${du.aprobadas} ${du.aprobadas === 1 ? 'tienda externa aprobada' : 'tiendas externas aprobadas'} × ${money(x.precio)} = ${money(du.aprobadas * x.precio)} al mes.`);
+    const pl = x.plantillas;
+    if (pl) L.push(pl.bajadas ? `${plUno(pl.bajadas, 'descarga', 'descargas')} de plantillas en el período. La más descargada: «${pl.lista[0].nombre}» (${pl.lista[0].bajadas}).${pl.wa ? ` ${plUno(pl.wa, 'toque', 'toques')} a «Comprar la contraseña».` : ''}` : pl.vistas ? `${plUno(pl.vistas, 'visita', 'visitas')} a las plantillas y ninguna descarga en el período.` : 'Nadie ha visto las plantillas en este período.');
     $('#tc-c', h.el).innerHTML = `<div class="pn-g2" style="margin-top:12px"><div class="pn-k"><small>Visitas</small><b>${x.visitas}</b><i>${cambio === null ? 'sin período anterior' : (cambio >= 0 ? '+' : '') + cambio + ' % vs. antes'}</i></div><div class="pn-k"><small>Personas distintas</small><b>${x.personas}</b><i>${x.cel} % desde celular</i></div>
       <div class="pn-k"><small>Clics a tiendas</small><b>${x.clics}</b><i>${x.personasClic} ${x.personasClic === 1 ? 'persona' : 'personas'}</i></div><div class="pn-k"><small>Entran a una tienda</small><b>${x.tasa} %</b><i>de quienes visitan</i></div></div>
       <div class="pn-h">Lectura</div><div class="pn-card" style="width:100%;padding:10px 16px">${L.map(t => `<p class="sm" style="margin:6px 0">${esc(t)}</p>`).join('')}</div>
@@ -3281,11 +3292,13 @@ ACC.panelCatrachas = async () => {
       <div class="pn-h">Lo que buscan (${x.nBusquedas})</div>${filas(x.busquedas, Math.max(1, ...x.busquedas.map(o => o.n)), 'Nadie ha usado el buscador')}
       <div class="pn-h">De dónde llegan</div>${filas(x.origen.map(o => ({ k: visOri(o.k)[0], n: o.n })), Math.max(1, ...x.origen.map(o => o.n)), 'Sin datos')}
       <div id="tc-b">${busc(x.busc, st.motor)}</div>
+      ${plantillas(x.plantillas)}
       <div class="pn-h">Interés de los negocios</div><div class="pn-g2"><div class="pn-k"><small>Vieron «Aparece aquí»</small><b>${du.aparecer}</b><i>${du.solicitudes} ${du.solicitudes === 1 ? 'solicitud' : 'solicitudes'}</i></div><div class="pn-k"><small>Vieron «Para tu negocio»</small><b>${du.negocio}</b><i>${du.guias} en guías</i></div></div>
       <button class="pn-card" data-a="panelSolicitudes" style="width:100%;text-align:left;padding:12px 16px"><b>Solicitudes en total: ${du.total}</b><small style="display:block">${du.nuevas} nuevas · ${du.contactadas} contactadas · ${du.aprobadas} aprobadas · ${du.descartadas} descartadas</small></button>`; };
   const carga = () => api('panelCatrachas', { dias: st.dias }, true).then(pinta).catch(err);
   h.el.addEventListener('click', e => { const m = e.target.closest('[data-bm]'); if (m && st.x) { st.motor = m.dataset.bm; $('#tc-b', h.el).innerHTML = busc(st.x.busc, st.motor); return; }
     const b = e.target.closest('[data-d]'); if (!b) return; st.dias = Number(b.dataset.d); $$('#tc-d .chip', h.el).forEach(x => x.classList.toggle('on', x === b)); carga(); });
+  h.el.addEventListener('toggle', e => { if (e.target.id === 'tc-pl') st.plAbierto = e.target.open; }, true);
   carga();
 };
 // Tiendas Catrachas: solicitudes del formulario «Aparece aquí» del sitio (negocios que no usan el programa)

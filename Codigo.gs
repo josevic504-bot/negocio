@@ -7590,16 +7590,27 @@ function solicitudDir_(d, ip) {
 }
 /* ---- Tiendas Catrachas: análisis para el Panel (visitas al sitio, clics a las tiendas, búsquedas y solicitudes) ----
  * El sitio manda sus visitas con páginas «tc-…»: tc-inicio, tc-dir, tc-giro-…, tc-gc-…, tc-ciudad-…, tc-t-<código> (ficha),
- * tc-p-<código> (página de un producto de esa tienda), tc-ir-<código> (clic para entrar a una tienda), tc-b-<lo que buscaron>, tc-aparecer, tc-negocio, tc-prog-…, tc-guia-… */
+ * tc-p-<código> (página de un producto de esa tienda), tc-ir-<código> (clic para entrar a una tienda), tc-b-<lo que buscaron>, tc-aparecer, tc-negocio, tc-prog-…, tc-guia-…,
+ * tc-plant (lista de plantillas), tc-plant-N (página de la plantilla N), tc-bajar-N (descarga de la plantilla N) y tc-bajar-N-wa (toque a «Comprar la contraseña» de la de pago).
+ * Las descargas y los toques no son visitas: se cuentan aparte, en el bloque de plantillas. */
+// Plantillas de Excel del sitio, en el mismo orden que el arreglo PLANTILLAS de generar.mjs (repositorio sitio): la N es la posición
+const PLANTILLAS_TC = ['Inventario', 'Cierre de caja diario', 'Arqueo de caja', 'Ventas al crédito', 'Calculadora de precio de venta', 'Control de gastos del mes', 'Pedidos por encargo y apartados', 'Plantilla completa para tu negocio'];
+// Número de la plantilla de una descarga. Las primeras descargas (22/11/2026) se guardaron con el nombre cortado («tc-bajar-plantilla-completa-pa»)
+function plantillaTC_(r) {
+  if (/^\d+$/.test(r)) return Number(r);
+  if (!r) return 0;
+  const i = PLANTILLAS_TC.findIndex(n => slug_(n.replace(/\s+/g, '-'), 60).indexOf(r) === 0);
+  return i + 1;
+}
 function panelCatrachas_(d) {
   const dias = [7, 30, 90].indexOf(Number(d && d.dias)) >= 0 ? Number(d.dias) : 30, desde = diaMenos_(dias - 1), antes = diaMenos_(2 * dias - 1);
   let todas = []; try { todas = visitasFilas_(60000, 'tc'); } catch (e) {}
   const f = todas.filter(x => x.fecha.slice(0, 10) >= desde), prev = todas.filter(x => { const k = x.fecha.slice(0, 10); return k >= antes && k < desde; });
-  const tipo = p => p.indexOf('tc-ir-') === 0 ? 'ir' : p.indexOf('tc-b-') === 0 ? 'buscar' : 'vista';
+  const tipo = p => p.indexOf('tc-ir-') === 0 ? 'ir' : p.indexOf('tc-b-') === 0 ? 'buscar' : p.indexOf('tc-bajar-') === 0 ? 'bajar' : 'vista';
   const unicos = l => { const u = {}; l.forEach(x => { u[x.vid || x.fecha + x.pagina] = 1; }); return Object.keys(u).length; };
   const vistas = f.filter(x => tipo(x.pagina) === 'vista'), clics = f.filter(x => tipo(x.pagina) === 'ir'), busq = f.filter(x => tipo(x.pagina) === 'buscar');
   const seccion = p => p === 'catrachas' || p === 'tc-inicio' ? 'Inicio' : p === 'tc-dir' ? 'Directorio' : /^tc-(giro|gc|ciudad)-/.test(p) ? 'Tipo de negocio y ciudad' : p.indexOf('tc-t-') === 0 ? 'Fichas de tienda' : p.indexOf('tc-p-') === 0 ? 'Páginas de producto'
-    : p === 'tc-aparecer' ? '«Aparece aquí»' : p === 'tc-negocio' || p.indexOf('tc-prog') === 0 ? 'Para tu negocio' : p.indexOf('tc-guia') === 0 ? 'Guías' : 'Otras';
+    : p === 'tc-aparecer' ? '«Aparece aquí»' : p === 'tc-negocio' || p.indexOf('tc-prog') === 0 ? 'Para tu negocio' : p.indexOf('tc-guia') === 0 ? 'Guías' : p.indexOf('tc-plant') === 0 ? 'Plantillas' : 'Otras';
   const contar = (l, fn) => { const o = {}; l.forEach(x => { const k = fn(x) || 'directo'; o[k] = (o[k] || 0) + 1; }); return Object.keys(o).map(k => ({ k: k, n: o[k] })).sort((a, b) => b.n - a.n); };
   // Tiendas: cuántas veces vieron su ficha y cuántas veces tocaron para entrar
   const nombres = {}; mRows_('Licencias').forEach(l => { nombres[String(l.id).toLowerCase()] = l.negocio; });
@@ -7611,6 +7622,17 @@ function panelCatrachas_(d) {
   else { for (let w = 12; w >= 0; w--) { const a = diaMenos_(w * 7 + 6), b = diaMenos_(w * 7); if (b >= desde) barras.push({ k: a < desde ? desde : a, n: vistas.filter(x => { const k = x.fecha.slice(0, 10); return k >= a && k <= b; }).length, semana: true }); } }
   const sol = mRows_('Solicitudes'), solP = sol.filter(s => String(s.fecha).slice(0, 10) >= desde), est = e => sol.filter(s => s.estado === e).length;
   const personas = unicos(vistas), queEntran = unicos(clics);
+  // Plantillas de Excel: vistas de cada página, descargas y toques para comprar la contraseña
+  const bajadas = f.filter(x => tipo(x.pagina) === 'bajar'), verPl = vistas.filter(x => seccion(x.pagina) === 'Plantillas');
+  const PL = PLANTILLAS_TC.map((n, i) => ({ n: i + 1, nombre: n, vistas: 0, bajadas: 0, wa: 0 }));
+  const pl = n => PL[n - 1] || (PL[n - 1] = { n: n, nombre: 'Plantilla ' + n, vistas: 0, bajadas: 0, wa: 0 });
+  verPl.forEach(x => { const m = /^tc-plant-(\d+)$/.exec(x.pagina); if (m) pl(Number(m[1])).vistas++; });
+  const desc = [], toques = [];
+  bajadas.forEach(x => { const r = x.pagina.slice(9), wa = /-wa$/.test(r), n = plantillaTC_(wa ? r.slice(0, -3) : r); if (!n) return; if (wa) { pl(n).wa++; toques.push(x); } else { pl(n).bajadas++; desc.push(x); } });
+  const personasPl = unicos(verPl), personasBajan = unicos(desc);
+  const plantillas = { vistas: verPl.length, personas: personasPl, bajadas: desc.length, personasBajan: personasBajan, wa: toques.length,
+    tasa: personasPl ? Math.min(100, Math.round(personasBajan * 100 / personasPl)) : 0,
+    lista: PL.filter(Boolean).sort((a, b) => b.bajadas - a.bajadas || b.vistas - a.vistas || a.n - b.n) };
   return { dias: dias, desde: desde, visitas: vistas.length, personas: personas, anterior: prev.filter(x => tipo(x.pagina) === 'vista').length,
     clics: clics.length, personasClic: queEntran, tasa: personas ? Math.round(queEntran * 100 / personas) : 0,
     cel: vistas.length ? Math.round(vistas.filter(x => x.disp !== 'pc').length * 100 / vistas.length) : 0,
@@ -7619,7 +7641,7 @@ function panelCatrachas_(d) {
     busquedas: contar(busq, x => x.pagina.slice(5).replace(/-/g, ' ')).slice(0, 15), nBusquedas: busq.length,
     duenos: { aparecer: vistas.filter(x => x.pagina === 'tc-aparecer').length, negocio: vistas.filter(x => seccion(x.pagina) === 'Para tu negocio').length, guias: vistas.filter(x => seccion(x.pagina) === 'Guías').length,
       solicitudes: solP.length, total: sol.length, nuevas: est('nueva'), contactadas: est('contactada'), aprobadas: est('aprobada'), descartadas: est('descartada') },
-    busc: buscadoresResumen_(desde), precio: 150 };
+    busc: buscadoresResumen_(desde), precio: 150, plantillas: plantillas };
 }
 /* ---- Tiendas Catrachas: cómo nos encuentran en Google y Bing (veces que salió el sitio, clics y lugar en la lista, por búsqueda) ----
  * Los buscadores no le dicen al sitio qué escribió la persona: ese dato solo lo dan Search Console y Bing Webmaster.
