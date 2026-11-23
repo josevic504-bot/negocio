@@ -538,6 +538,23 @@ function RECORDATORIOS_(ids) {
     const err = []; let sinC = 0;
     for (const l of pend) { try { const x = await hacerRespaldo(l.id, dom ? 'semanal' : 'diario', true, Rq, true); if (x.omitido) sinC++; else n++; } catch (e) { err.push(l.negocio || l.id); log('respaldo ' + l.id + ': ' + e); } }
     log('respaldos del día: ' + n + ' de ' + pend.length + ' · sin cambios ' + sinC);
+    // Regla de inactividad: prueba vencida y más de 30 días sin entrar → pasa a «Eliminada» como si el cliente la hubiera eliminado
+    // (30 días para recuperarla desde el Panel; después la purga de abajo la borra). Su WhatsApp queda libre para registrarse de nuevo.
+    // No toca licencias activas, colaboradores, pausadas ni negocios agrupados con otro de la misma persona.
+    try {
+      const mm = (await db.cargar({ m: ['Licencias', 'Accesos'] })).m, L = mm.Licencias || [], AC = mm.Accesos || [];
+      const grupo = new Set(L.filter(x => x.persona).flatMap(x => [x.id, x.persona]));
+      const inact = L.filter(x => negValido(x.id) && ['prueba', 'vencida'].indexOf(String(x.estado || '').trim().toLowerCase()) >= 0 && !grupo.has(x.id)
+        && /^\d{4}-\d{2}-\d{2}/.test(String(x.vencePrueba || '')) && String(x.vencePrueba).slice(0, 16).replace('T', ' ') <= ahoraHN()
+        && dias(x.ultimaConexion || x.registro) > 30);
+      for (const l of inact) {
+        const sinEntrar = Math.floor(dias(l.ultimaConexion || l.registro)), motivo = 'Prueba vencida y ' + sinEntrar + ' días sin entrar';
+        const ops = AC.filter(a => a.negocioId === l.id && String(a.whatsapp).indexOf('x') !== 0).map(a => ({ t: 'Accesos', op: 'upd', k: { negocioId: a.negocioId, usuarioId: a.usuarioId }, row: { whatsapp: 'x' + a.whatsapp } }));
+        ops.push({ t: 'Licencias', op: 'upd', k: { id: l.id }, row: { estado: 'Eliminada', eliminadoEl: hoy + '|Vencida|' + motivo + '|inactividad', notas: ('Eliminada por inactividad ' + hoy + (l.notas ? ' · ' + l.notas : '')).slice(0, 500) } },
+          { t: 'Seguimiento', op: 'ins', k: { id: 'SG' + l.id.slice(-6) + Date.now().toString(36) }, row: { id: 'SG' + l.id.slice(-6) + Date.now().toString(36), negocioId: l.id, tipo: 'accion', fecha: ahoraHN(), nota: 'Eliminado por inactividad: ' + motivo.toLowerCase() + '. Su WhatsApp quedó libre.' } });
+        try { await db.aplicar({ ops }); log('eliminada por inactividad ' + l.id + ' (' + sinEntrar + ' días)'); } catch (e) { log('inactividad ' + l.id + ': ' + e); }
+      }
+    } catch (e) { log('regla de inactividad: ' + e); }
     // Cuentas que el cliente eliminó hace más de 30 días: se borran definitivamente (datos, respaldos y accesos)
     const todas = (await db.cargar({ m: ['Licencias'] })).m.Licencias || [];
     for (const l of todas.filter(x => String(x.estado).toLowerCase() === 'eliminada' && x.eliminadoEl && x.purgado !== 'si' && dias(String(x.eliminadoEl).split('|')[0]) >= 30)) {
