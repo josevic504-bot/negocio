@@ -2636,9 +2636,11 @@ function panelResumen_() {
   lics.sort((a, b) => a.ultimaConexion < b.ultimaConexion ? 1 : -1);
   const mes = hoy_().slice(0, 7), todosPagos = mRows_('PagosLic'), pagos = todosPagos.filter(p => String(p.fecha).slice(0, 7) === mes);
   // Conversión: de las pruebas que ya terminaron (o se activaron antes de terminar), cuántas compraron
-  const terminadas = lics.filter(x => x.estado === 'activa' || x.estado === 'vencida' || x.estado === 'bloqueada'), pagoLicDe = {}, compraron = (todosPagos.forEach(p => { if (Number(p.monto) > 0) pagoLicDe[p.negocioId] = 1; }), lics.filter(x => x.estado === 'activa' || (x.estado === 'bloqueada' && pagoLicDe[x.id]))); // quien pagó y está en pausa también compró
+  // Los eliminados por inactividad (prueba vencida y más de 30 días sin entrar) siguen contando como pruebas que terminaron sin comprar
+  const inactivas = mRows_('Licencias').filter(l => dup.indexOf(l) < 0 && esEliminada_(l) && /\|inactividad$/.test(String(l.eliminadoEl || '')));
+  const terminadas = lics.filter(x => x.estado === 'activa' || x.estado === 'vencida' || x.estado === 'bloqueada').concat(inactivas), pagoLicDe = {}, compraron = (todosPagos.forEach(p => { if (Number(p.monto) > 0) pagoLicDe[p.negocioId] = 1; }), lics.filter(x => x.estado === 'activa' || (x.estado === 'bloqueada' && pagoLicDe[x.id]))); // quien pagó y está en pausa también compró
   const porMes = {};
-  lics.forEach(x => { const m = String(x.registro).slice(0, 7); if (!/^\d{4}-\d{2}$/.test(m)) return; const o = porMes[m] = porMes[m] || { mes: m, registros: 0, activos: 0 }; o.registros++; if (x.estado === 'activa') o.activos++; });
+  lics.concat(inactivas).forEach(x => { const m = String(x.registro).slice(0, 7); if (!/^\d{4}-\d{2}$/.test(m)) return; const o = porMes[m] = porMes[m] || { mes: m, registros: 0, activos: 0 }; o.registros++; if (x.estado === 'activa') o.activos++; });
   // Activados sin pago anotado (licencia o Plus)
   const pagoDe = {}; todosPagos.forEach(p => { (pagoDe[p.negocioId] = pagoDe[p.negocioId] || {})[String(p.concepto).toLowerCase().indexOf('plus') >= 0 ? 'plus' : 'lic'] = true; });
   const sinPago = [];
@@ -2663,7 +2665,7 @@ function panelResumen_() {
     porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION, colaboradores: colabs.length,
     visitas: visitasMini_(), vendedores: vendedores_().map(v => ({ codigo: v.codigo, nombre: v.nombre })),
     // Las cuentas eliminadas quedan para siempre en el Panel: a los 30 días se borran sus datos (purgado), pero no el registro de que existió
-    eliminadas: mRows_('Licencias').filter(l => esEliminada_(l) && l.eliminadoEl).map(l => { const p = String(l.eliminadoEl).split('|'); return { id: l.id, negocio: l.negocio, dueno: l.dueno, giro: l.giro, whatsapp: l.whatsapp, estado: 'eliminada', fecha: p[0], antes: p[1] || '', motivo: p[2] || '', borraEl: addDiasIso_(p[0], 30), purgado: l.purgado === 'si', registro: l.registro, origen: l.origen || '', ultimaConexion: l.ultimaConexion, plus: false, giros: [], cobro: null }; }),
+    eliminadas: mRows_('Licencias').filter(l => esEliminada_(l) && l.eliminadoEl).map(l => { const p = String(l.eliminadoEl).split('|'); return { id: l.id, negocio: l.negocio, dueno: l.dueno, giro: l.giro, whatsapp: l.whatsapp, estado: 'eliminada', fecha: p[0], antes: p[1] || '', motivo: p[2] || '', inactivo: p[3] === 'inactividad', borraEl: addDiasIso_(p[0], 30), purgado: l.purgado === 'si', registro: l.registro, origen: l.origen || '', ultimaConexion: l.ultimaConexion, plus: false, giros: [], cobro: null }; }),
     avisosCli: segs.filter(x => x.tipo === 'cliente' && diasDesde_(x.fecha) <= 7).sort((a, b) => a.fecha < b.fecha ? 1 : -1).slice(0, 10).map(x => { const l = vivas.concat(mRows_('Licencias').filter(esEliminada_)).find(k => k.id === x.negocioId) || {}; return { id: x.negocioId, negocio: l.negocio || '', fecha: x.fecha, nota: x.nota }; }),
     contactar: lics.filter(x => x.contactar).sort((a, b) => orden[a.contactar] - orden[b.contactar]),
     negocios: lics.concat(colabs), duplicados: dup.map(l => ({ id: l.id, negocio: l.negocio, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, estado: l.estado, limpiada: String(l.estado).toLowerCase() === 'duplicada' })),
@@ -2820,7 +2822,7 @@ function panelImportar_(d) {
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
   const l = licDe_(d.id), f = panelFicha_(l, mRows_('Seguimiento'));
-  if (esEliminada_(l) && l.eliminadoEl) { const p = String(l.eliminadoEl).split('|'); f.estado = 'eliminada'; f.eliminada = { fecha: p[0], antes: p[1] || '', motivo: p[2] || '', borraEl: addDiasIso_(p[0], 30), purgado: l.purgado === 'si' }; }
+  if (esEliminada_(l) && l.eliminadoEl) { const p = String(l.eliminadoEl).split('|'); f.estado = 'eliminada'; f.eliminada = { fecha: p[0], antes: p[1] || '', motivo: p[2] || '', inactivo: p[3] === 'inactividad', borraEl: addDiasIso_(p[0], 30), purgado: l.purgado === 'si' }; }
   const camps = campanas_(), og = origenesLic_([l])[l.id] || {}, c = campanaDe_(l, camps, og.canal);
   f.origen = og;
   f.llego = c ? { id: c.id, nombre: c.plataforma + ' · «' + c.nombre + '»', desde: c.desde, hasta: c.hasta, auto: !l.llegoPor } : { id: '', nombre: '', directo: l.llegoPor === 'directo' };
@@ -2954,7 +2956,7 @@ function panelAccion_(d) {
       const sa = masterSheet_('Accesos'), ha = SCHEMA_M.Accesos;
       mRows_('Accesos').filter(a => a.negocioId === l.id && a._fila && String(a.whatsapp).indexOf('x') === 0).forEach(a => sa.getRange(a._fila, ha.indexOf('whatsapp') + 1).setValue(String(a.whatsapp).slice(1)));
       delete MEMO._m_Accesos;
-      upd.estado = antes === 'Eliminada' ? 'Prueba' : antes; upd.eliminadoEl = ''; nota = 'Cuenta recuperada (el cliente la había eliminado)'; break;
+      upd.estado = antes === 'Eliminada' ? 'Prueba' : antes; upd.eliminadoEl = ''; nota = /\|inactividad$/.test(String(l.eliminadoEl)) ? 'Cuenta recuperada (se había eliminado por inactividad)' : 'Cuenta recuperada (el cliente la había eliminado)'; break;
     }
     case 'colaborador': upd.estado = 'Colaborador'; upd.cobro = ''; nota = 'Marcado como colaborador · todo activo sin cobro' + (d.nota ? ' · ' + txt_(d.nota, 120) : ''); break;
     case 'quitarColab': upd.estado = (msDeLocal_(String(l.vencePrueba).slice(0, 10) + 'T23:59') || 0) > Date.now() ? 'Prueba' : 'Vencida'; nota = 'Ya no es colaborador'; break;
