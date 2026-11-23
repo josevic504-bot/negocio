@@ -21,6 +21,9 @@
  */
 const MULTI_NEGOCIO = true;
 const DIAS_PRUEBA = 7;              // días de prueba gratis (0 = sin límite en modo un solo negocio)
+// Promoción del sorteo (20 de diciembre): los negocios que se inscriben antes tienen prueba hasta ese día completo (vencePrueba = día siguiente, vence a las 00:00).
+// Si 7 días normales llegan más lejos, se usan los 7 días. Pasada la fecha no hace nada.
+const PROMO_PRUEBA = { hasta: '2026-12-21', nota: 'Sorteo 20 de diciembre' };
 const CONTACTO_WA = '50433130265';  // WhatsApp para activar el sistema (con código de país)
 const URL_APP = 'https://app.molinasoluciones.com/'; // dirección pública de la app (para enlaces en correos)
 const CARPETA_DATOS = 'Gestión de Negocio VM – Datos';
@@ -1488,6 +1491,12 @@ function registrar_(d) {
   cs.put(kReg, '1', 180);
   try { return registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg); } finally { try { cs.remove(kReg); } catch (e) {} }
 }
+// Fecha en que vence la prueba de un negocio nuevo: 7 días, o la fecha de la promoción si llega más lejos
+function vencePruebaNueva_() {
+  const normal = Utilities.formatDate(new Date(Date.now() + DIAS_PRUEBA * 86400000), TZ, 'yyyy-MM-dd');
+  const p = PROMO_PRUEBA && PROMO_PRUEBA.hasta;
+  return p && /^\d{4}-\d{2}-\d{2}$/.test(p) && p > normal ? p : normal;
+}
 function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) {
   // La hoja del negocio se crea y se prepara fuera del candado (tarda): así no detiene las ventas de los demás negocios
   const libro = SpreadsheetApp.create('Negocio – ' + negocio);
@@ -1495,7 +1504,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
   const id = 'N' + Date.now().toString(36).toUpperCase() + Math.floor(Math.random() * 1296).toString(36).toUpperCase();
   const ahora = ahora_().replace('T', ' ');
   const lic = { id: id, negocio: negocio, giro: GIROS[giro].n, dueno: nombre, whatsapp: wa, registro: ahora,
-    vencePrueba: Utilities.formatDate(new Date(Date.now() + DIAS_PRUEBA * 86400000), TZ, 'yyyy-MM-dd'),
+    vencePrueba: vencePruebaNueva_(),
     estado: 'Prueba', usuarios: 1, ultimaConexion: ahora, hojaId: libro.getId(),
     origen: slug_(d.origen && d.origen.o, 20), vid: String(d.origen && d.origen.v || '').replace(/[^A-Za-z0-9]/g, '').slice(0, 24) };
   NEG = { id: id, hojaId: libro.getId(), lic: lic };

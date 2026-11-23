@@ -1747,6 +1747,10 @@ const APP_VER = '1.9.92';
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
 const DIAS_PRUEBA_REG = 7;
+// Promoción del sorteo (20 de diciembre): quien se inscribe antes tiene prueba hasta ese día completo. El servidor (Codigo.gs, PROMO_PRUEBA) hace lo mismo.
+// Se apaga sola: cuando 7 días normales ya llegan más lejos que la fecha, vuelve a decir «7 días».
+const PROMO_PRUEBA = { hasta: '2026-12-21', texto: 'hasta el 20 de diciembre' };
+function promoPrueba() { const fin = new Date(PROMO_PRUEBA.hasta + 'T00:00:00-06:00').getTime(); return fin > Date.now() + DIAS_PRUEBA_REG * 86400000 ? PROMO_PRUEBA.texto : ''; }
 
 /* ===================== ALMACENAMIENTO LOCAL ===================== */
 const LS_NS = (() => { try { const p = location.pathname.split('/').filter(Boolean); if (p.length && /\.html?$/i.test(p[p.length - 1])) p.pop(); return 'gnvm@/' + p.join('/') + '|'; } catch (e) { return 'gnvm@|'; } })();
@@ -2522,7 +2526,7 @@ function mostrarVencida(info) {
     return;
   }
   $('#login').innerHTML = `<div class="lg-hero"><div class="mono">${ic('lock', 30)}</div><div class="hero-name">${bloq ? 'Cuenta suspendida' : 'Tu prueba terminó'}</div><div class="hero-tag">Gestión de Negocio VM</div></div>
-    <div class="lg-card"><p class="lg-p">${bloq ? `El acceso a <b>${esc(nombre)}</b> está pausado. Tu información sigue guardada y segura.` : `Gracias por probar el sistema en <b>${esc(nombre)}</b> durante ${DIAS_PRUEBA_REG} días. Tu información está guardada: al activarlo, todo sigue tal como lo dejaste.`}</p>
+    <div class="lg-card"><p class="lg-p">${bloq ? `El acceso a <b>${esc(nombre)}</b> está pausado. Tu información sigue guardada y segura.` : `Gracias por probar el sistema en <b>${esc(nombre)}</b> durante tu prueba gratis. Tu información está guardada: al activarlo, todo sigue tal como lo dejaste.`}</p>
     <a class="btn wa big" href="${waLink(tel, (bloq ? 'Hola, quiero reactivar Gestión de Negocio VM para ' : 'Hola, quiero activar Gestión de Negocio VM para ') + nombre)}" target="_blank" rel="noopener">${ic('wa')} ${bloq ? 'Reactivar por WhatsApp' : 'Activar por WhatsApp'}</a>
     <p class="lg-p sm mut">Escríbenos y lo activamos el mismo día.</p>
     <button class="btn ghost big" type="button" onclick="location.reload()">Ingresar con otra cuenta</button></div>${creditoHTML()}`;
@@ -2546,13 +2550,13 @@ function pintarLogin() {
   const multi = S.multi;
   const giros = (S.giros.length ? S.giros : GIROS_LOCAL);
   $('#login').innerHTML = `<div class="lg-hero${reg ? ' chico' : ''}">${logo && !reg ? `<div class="hero-logo"><img src="${esc(logo)}" alt=""></div>` : `<div class="mono">${ic('store', reg ? 22 : 30)}</div>`}
-      <div class="hero-name">${esc(!reg && !demo && nombre ? nombre : 'Gestión de Negocio VM')}</div><div class="hero-tag">${reg ? 'Prueba gratis ' + DIAS_PRUEBA_REG + ' días' : demo ? 'Modo prueba' : marca && eslogan ? esc(eslogan) : 'Administra tu negocio'}</div>
+      <div class="hero-name">${esc(!reg && !demo && nombre ? nombre : 'Gestión de Negocio VM')}</div><div class="hero-tag">${reg ? 'Prueba gratis ' + (promoPrueba() || DIAS_PRUEBA_REG + ' días') : demo ? 'Modo prueba' : marca && eslogan ? esc(eslogan) : 'Administra tu negocio'}</div>
       ${DEMO.on && !demo ? '<span class="demo-tag" style="position:relative;z-index:1">MODO PRUEBA</span>' : ''}</div>
     <div class="lg-card">
     ${demo ? `<h3 class="lg-t">Conoce el sistema</h3><p class="lg-p">Entra a un <b>negocio de ejemplo</b> con productos, ventas, clientes, pedidos en línea y reportes. Todo queda solo en este navegador.</p>
       <button class="btn pri big" data-a="demoEjemplo">${ic('sparkle')} Entrar al negocio de ejemplo</button>
       <button class="btn big" data-a="lmodo" data-m="reg" style="margin-top:8px">Registrar un negocio propio de prueba</button>`
-    : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p" style="margin-bottom:10px"><b>${DIAS_PRUEBA_REG} días gratis</b> · sistema completo · sin tarjeta</p>
+    : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p" style="margin-bottom:10px"><b>${promoPrueba() ? 'Gratis ' + promoPrueba() : DIAS_PRUEBA_REG + ' días gratis'}</b> · sistema completo · sin tarjeta</p>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
         <label class="fld"><span>Tipo de negocio</span><select id="r-giro" hidden>${giros.map(g => `<option value="${g.id}" data-nuevo="${['carwash', 'joyeria', 'floristeria', 'vitaminas', 'manualidades'].includes(g.id) ? 1 : ''}">${esc(g.n)}</option>`).join('')}</select>${gselBtn('r-giro', giros[0])}</label>
@@ -2568,7 +2572,7 @@ function pintarLogin() {
         : `<label class="fld"><span>Usuario</span><input id="l-user" autocomplete="username" autocapitalize="none" required></label>
         <label class="fld"><span>Contraseña</span>${pw('id="l-pass" autocomplete="current-password" required')}</label>`}
         <button class="btn pri big" type="submit">Ingresar</button><div class="lg-err" id="l-err"></div></form>`}
-    ${multi && !demo ? `<button class="btn ghost big" data-a="lmodo" data-m="${reg ? 'ing' : 'reg'}">${reg ? 'Ya tengo cuenta · Ingresar' : `Soy nuevo · Probar ${DIAS_PRUEBA_REG} días gratis`}</button>` : ''}
+    ${multi && !demo ? `<button class="btn ghost big" data-a="lmodo" data-m="${reg ? 'ing' : 'reg'}">${reg ? 'Ya tengo cuenta · Ingresar' : `Soy nuevo · ${promoPrueba() ? 'Probar gratis ' + promoPrueba() : 'Probar ' + DIAS_PRUEBA_REG + ' días gratis'}`}</button>` : ''}
     ${demo ? `<button class="btn ghost big" data-a="lmodo" data-m="ing">Ya registré un negocio de prueba · Ingresar</button>` : ''}
     ${marca ? `<p class="lg-sig">${ic('store', 14)} Gestión de Negocio VM</p>` : ''}
     <div class="row" style="justify-content:center;margin-top:6px">${!API_URL_DEFAULT || DEMO.on ? `<button class="btn ghost sm" data-a="alternarDemo">${DEMO.on ? 'Salir del modo prueba' : 'Probar en modo prueba'}</button>` : ''}${!API_URL_DEFAULT && !DEMO.on ? `<button class="btn ghost sm" data-a="configServidor">Configurar servidor</button>` : ''}${DEMO.on && !demo ? `<button class="btn ghost sm" data-a="lmodo" data-m="demo">Negocio de ejemplo</button>` : ''}</div>${enSupabase() && !DEMO.on ? `<div style="text-align:center"><button class="sb-login" data-a="menuServidor">⚡ Conectado al servidor nuevo (prueba)</button></div>` : ''}
@@ -2599,7 +2603,7 @@ const INTRO = [
 ];
 function pintarIntro() {
   const n = S.introN || 0, last = n === INTRO.length - 1;
-  $('#login').innerHTML = `<div class="lg-hero chico"><div class="mono">${ic('store', 22)}</div><div class="hero-name">Gestión de Negocio VM</div><div class="hero-tag">Pruébalo gratis ${DIAS_PRUEBA_REG} días · sin tarjeta</div></div>
+  $('#login').innerHTML = `<div class="lg-hero chico"><div class="mono">${ic('store', 22)}</div><div class="hero-name">Gestión de Negocio VM</div><div class="hero-tag">Pruébalo gratis ${promoPrueba() || DIAS_PRUEBA_REG + ' días'} · sin tarjeta</div></div>
     <div class="lg-card"><div class="in-wrap"><div class="in-track" style="transform:translateX(-${n * 100}%)">${INTRO.map(s => `<div class="in-sl"><div class="in-vis"><div class="in-ico">${ic(s.i, 18)}</div>${s.v()}</div><h3>${s.t}${s.plus ? ' <span class="in-plus">PLUS</span>' : ''}</h3><p>${s.p}</p></div>`).join('')}</div></div>
     <div class="in-dots">${INTRO.map((_, k) => `<i class="${k === n ? 'on' : ''}"></i>`).join('')}</div>
     <button class="btn pri big" data-a="introFin" style="width:100%">${ic('sparkle')} Crear mi cuenta gratis</button>
@@ -2759,7 +2763,7 @@ async function registrarse(ev) {
     S.token = r.token; LS.set(tokenKey(), r.token); LS.set('cuenta', 'ing'); if (!DEMO.on) mvMarca('mv_cliente');
     limpiarSesion();
     await arrancar();
-    toast('¡Bienvenido! Tu prueba de ' + DIAS_PRUEBA_REG + ' días ya comenzó', 'ok', 5000);
+    toast(promoPrueba() ? '¡Bienvenido! Tu prueba gratis dura ' + promoPrueba() : '¡Bienvenido! Tu prueba de ' + DIAS_PRUEBA_REG + ' días ya comenzó', 'ok', 5000);
     pasosEmergente(true);
   } catch (e) { const el = $('#r-err'); if (el) el.textContent = e.message; }
   finally { registrando = false; const b = $('#r-btn'); if (b) { b.disabled = false; b.textContent = 'Comenzar prueba gratis'; } }
