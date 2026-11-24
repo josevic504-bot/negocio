@@ -1429,6 +1429,14 @@ html.av-on body{padding-top:calc(34px + env(safe-area-inset-top))}html.av-on .ba
 @keyframes avOnda{to{transform:scale(1.9);opacity:0}}
 .av-tools{display:flex;flex-direction:column;gap:8px}.av-tools.off{opacity:.45;pointer-events:none}.av-tools .seg button.av-finb{color:var(--bad)}
 .av-nota{display:flex;gap:8px}.av-nota input{flex:1;min-width:0;border:1.5px solid var(--line);border-radius:12px;padding:10px 12px;font:400 14px var(--font);background:var(--card);color:var(--ink)}
+.ct-btn{margin:2px 0 14px;text-align:center}.ct-btn .btn{width:100%}.ct-sub{display:block;width:100%;border:0;background:none;font:inherit;font-size:12.5px;color:var(--mut);margin-top:6px;padding:2px;cursor:pointer}button.ct-sub{color:var(--pri)}
+.ct-op{border:1.5px solid transparent;border-radius:14px}.ct-op.on{border-color:var(--pri)}.ct-op .ct-ck{color:var(--pri);opacity:0}.ct-op.on .ct-ck{opacity:1}
+.ct-prog{height:8px;border-radius:99px;background:var(--line);overflow:hidden;margin:6px 0 4px}.ct-prog i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--h1),var(--h2));border-radius:99px;transition:width .2s}
+.ct-row{align-items:center}.ct-row .tx{min-width:0}.ct-chip{margin-top:4px}
+.ct-in{flex:none;width:68px;text-align:center;font:600 17px var(--font);padding:9px 4px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);color:var(--ink)}.ct-in.lleno{border-color:var(--pri)}.ct-in:focus{outline:2px solid var(--pri);outline-offset:1px}
+.imp-col{display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1.1fr);align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}.imp-col:last-of-type{border-bottom:0}
+.imp-col .de{min-width:0}.imp-col .de b{display:block;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.imp-col .de small{display:block;font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.imp-col .fl{color:var(--mut)}.imp-col select{width:100%;font:500 14px var(--font);padding:7px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}.imp-col select.ok{border-color:color-mix(in srgb,var(--ok) 55%,transparent)}.imp-col select.no{color:var(--mut);border-style:dashed}
 </style>
 <script src="visitas.js?v=3" defer></script>
 </head>
@@ -1742,7 +1750,7 @@ function demoCompilar(src, DEMO) {
    ========================================================== */
 // Servidor: Supabase desde el 30 oct 2026 (antes Google Apps Script: https://script.google.com/macros/s/AKfycbydoXTHuahXlpTZymAtY5n-3zBnn57ofHkg5lO3x6XFcDjmoJFEjhrwNNlNmhkAp4hJ/exec)
 const API_URL_DEFAULT = 'https://qvhtlezxjklhwlnvexje.supabase.co/functions/v1/api';
-const APP_VER = '1.9.92';
+const APP_VER = '1.9.93';
 // Supabase: avisos con la app cerrada (llave pública VAPID) y cambios al instante entre equipos (Realtime). Las dos llaves son públicas.
 const SB = { url: 'https://qvhtlezxjklhwlnvexje.supabase.co', key: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InF2aHRsZXp4amtsaHdsbnZleGplIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM0MDg2NTEsImV4cCI6MjEwODk4NDY1MX0.y95iOCUtPiT-KbMDKsbPtCGs1qXG_SWOL_2Vmsv5bZo', vapid: 'BFhvkY6QnNffCWKKReTUs18yHm3spAWoFCA9FHvVA12YneejN3SRX-2UJqklGV-vWOlJz2uCisgeEB9DBTXOgFI' };
 const CONTACTO_WA = '50433130265';
@@ -2420,6 +2428,7 @@ async function arrancar() {
 function aplicarDatos(d) {
   ['config', 'usuarios', 'productos', 'clientes', 'proveedores', 'gastoCats', 'giros'].forEach(k => { if (d[k]) S[k] = d[k]; });
   if (d.licencia) S.licencia = d.licencia;
+  if (d.ultimoConteo !== undefined) S.ultimoConteo = d.ultimoConteo;
   if (d.plus !== undefined) S.plus = !!d.plus;
   if (d.plusIncluido !== undefined) S.plusIncluido = !!d.plusIncluido;
   if (d.contab !== undefined) S.contab = !!d.contab;
@@ -3361,7 +3370,7 @@ async function panelResumen() {
 // El Panel abierto se actualiza solo: cada minuto y al volver a esta pantalla. Solo en las pestañas principales, sin una hoja abierta y sin estar escribiendo;
 // si nada cambió no se toca la pantalla, y si cambió se vuelve a pintar en el mismo lugar donde estabas. También la pantalla de Visitas.
 // «Escribiendo» = tecleó en los últimos 15 segundos (en el teléfono el buscador se queda con el foco aunque ya no se escriba, y eso frenaba la actualización)
-const PANEL_REV = 12; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
+const PANEL_REV = 13; // sube cuando cambia el código del Panel: el Panel abierto se recarga solo para tomarlo
 let pnTecleo = 0, pnAutoDesde = 0;
 document.addEventListener('input', () => { pnTecleo = Date.now(); }, true);
 const pnOcupado = () => PILA.length > 0 || !$('#main .pn') || P.tab === 'resp' || Date.now() - pnTecleo < 15000;
@@ -4346,65 +4355,252 @@ function panelVincularNegocio(n) {
     h.botones([]);
   });
 }
-/* ---- Panel: cargar productos de un negocio desde Excel ---- */
-const COLS_IMP = [['nombre', 'Nombre *'], ['categoria', 'Categoría *'], ['sub', 'Subcategoría'], ['precio', 'Precio *'], ['costo', 'Costo'], ['existencia', 'Existencia'], ['codigo', 'Código'],
+/* ---- Panel: cargar productos de un negocio desde Excel ----
+ * 1.9.93: plantilla según el giro con un comentario en cada título e instrucciones paso a paso; se elige la hoja del archivo y qué columna es cada cosa;
+ * categoría para los que no traen; respaldo antes de cargar y «Deshacer esta carga» por 24 horas; aviso al cliente por WhatsApp. */
+const COLS_IMP = [['nombre', 'Nombre *'], ['categoria', 'Categoría *'], ['precio', 'Precio *'], ['costo', 'Costo'], ['existencia', 'Existencia'], ['codigo', 'Código'], ['sub', 'Subcategoría'],
   ['op1', 'Opción 1'], ['val1', 'Valores 1'], ['op2', 'Opción 2'], ['val2', 'Valores 2'], ['op3', 'Opción 3'], ['val3', 'Valores 3'], ['preciosOp', 'Precios por opción'], ['existOp', 'Existencias por opción'],
   ['precioEsp', 'Precio especial'], ['minEsp', 'Desde piezas'], ['descripcion', 'Descripción'], ['lema', 'Frase destacada'], ['puntos', 'Beneficios'], ['tienda', 'En la tienda']];
-// Otros nombres de columna que también se reconocen (por si la lista del cliente viene con sus propios títulos)
-const ALIAS_IMP = { producto: 'nombre', articulo: 'nombre', descripcion_del_producto: 'nombre', precio_detalle: 'precio', precio_de_venta: 'precio', detalle: 'precio', stock: 'existencia', existencias: 'existencia', cantidad: 'existencia', inventario: 'existencia',
-  codigo_de_barras: 'codigo', cod: 'codigo', especial: 'precioEsp', precio_mayoreo: 'precioEsp', minimo: 'minEsp', desde: 'minEsp', subcategoria: 'sub', tonos: 'val1', tallas: 'val1' };
-async function plantillaImportar() {
-  await cargarLib('xlsx');
-  const ej = [['Corrector líquido', 'Rostro', 'Corrección', 140, 90, '', 'BM-552', 'Tono', 'Nude 1#fbe0cf, Nude 3#f3cfa8, Beige 2#f1c39e', '', '', '', '', '', 'Nude 1 = 10; Nude 3 = 0; Beige 2 = 7', 130, 3, '', 'Cobertura que se siente ligera.', 'Cobertura uniforme | Textura ligera | Larga duración', 'si'],
-    ['Loción Brisa', 'Lociones', 'Dama', 450, 280, '', '', 'Presentación', '50 ml, 100 ml', '', '', '', '', '100 ml = 650', '50 ml = 12; 100 ml = 8', '', '', 'Fragancia floral', '', '', 'si'],
-    ['Blusa casual', 'Ropa', 'Dama', 380, 220, '', '', 'Talla', 'S, M, L', 'Color', 'Negro#222222, Rosa#f2a7bd', '', '', '', 'S / Negro = 2; M / Negro = 3; M / Rosa = 1', 340, 3, '', '', '', 'si'],
-    ['Body splash 250 ml', 'Lociones', 'Body splash', 220, 130, 24, 'BS-250', '', '', '', '', '', '', '', '', '', '', '', '', '', 'si']];
-  const wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet([COLS_IMP.map(c => c[1])].concat(ej));
-  ws['!cols'] = COLS_IMP.map(c => ({ wch: ['nombre', 'val1', 'val2', 'existOp', 'puntos', 'descripcion', 'lema'].includes(c[0]) ? 30 : 14 }));
-  XLSX.utils.book_append_sheet(wb, ws, 'Productos');
-  const ins = [['Cómo llenar la plantilla'], [''], ['Obligatorio: Nombre, Categoría y Precio. Lo demás es opcional. Borra las filas de ejemplo.'],
-    ['Existencia: cuántos hay. Si el producto lleva existencias por opción, deja Existencia vacía y usa «Existencias por opción».'],
-    ['Opción 1 / Valores 1: el nombre de la opción (Tono, Talla, Presentación…) y sus valores separados por comas. Para el color del tono agrega #código: Nude 1#fbe0cf.'],
-    ['Precios por opción: solo las que cuestan distinto. Ej.: 100 ml = 650'],
-    ['Existencias por opción: Nude 1 = 10; Nude 3 = 0. Con dos opciones: M / Negro = 3'],
-    ['Precio especial y Desde piezas: ej. 130 desde 3 piezas.'], ['Beneficios: sepáralos con |'], ['En la tienda: si / no (si lo dejas vacío, sí aparece).'],
-    ['Si el producto ya existe (mismo código o mismo nombre), se actualiza en vez de duplicarse.']];
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ins), 'Instrucciones');
-  const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
-  descargar(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'plantilla-productos.xlsx');
+// Qué va en cada columna: [obligatoria, qué escribir, ejemplo]. Sale como comentario en el título de la plantilla y en la hoja «Instrucciones»
+const DOC_IMP = {
+  nombre: [1, 'El nombre del producto, como quieres que lo vean tus clientes. No repitas el mismo nombre en dos filas.', 'Taza decorada'],
+  categoria: [1, 'El grupo al que pertenece el producto. Con ella se ordena el inventario y las secciones de la tienda en línea.', 'Regalos'],
+  precio: [1, 'Precio de venta al cliente, en lempiras. Escribe solo el número: sin «L» y sin punto de miles.', '150   o   1200.50'],
+  costo: [0, 'Cuánto te cuesta a ti cada unidad. Con él se calcula tu ganancia. Solo el número.', '70'],
+  existencia: [0, 'Cuántas unidades tienes hoy. Déjala vacía si el producto lleva existencias por talla, tono o presentación.', '24'],
+  codigo: [0, 'El código de barras o tu código interno. Si lo dejas vacío, el programa crea uno solo.', '7501333'],
+  sub: [0, 'Un grupo más pequeño dentro de la categoría.', 'Tazas'],
+  op1: [0, 'Solo si el producto se vende en tallas, tonos, colores o presentaciones: el nombre de esa opción.', 'Talla'],
+  val1: [0, 'Los valores de la opción 1, separados por comas. Para el color de un tono agrega # y el código del color.', 'S, M, L'],
+  op2: [0, 'Una segunda opción, solo si la tiene (por ejemplo, talla y color).', 'Color'],
+  val2: [0, 'Los valores de la opción 2, separados por comas.', 'Negro, Rosa'],
+  op3: [0, 'Una tercera opción, solo si la tiene.', 'Tela'],
+  val3: [0, 'Los valores de la opción 3, separados por comas.', 'Algodón, Lino'],
+  preciosOp: [0, 'Solo las opciones que cuestan distinto al precio normal: opción = precio, separadas por punto y coma.', '100 ml = 650'],
+  existOp: [0, 'Cuántas hay de cada opción: opción = cantidad, separadas por punto y coma. Con dos opciones se escribe M / Negro = 3.', 'S = 2; M = 5; L = 0'],
+  precioEsp: [0, 'Precio rebajado cuando compran varias piezas (mayoreo). Va junto con «Desde piezas».', '130'],
+  minEsp: [0, 'Desde cuántas piezas vale el precio especial.', '3'],
+  descripcion: [0, 'El texto que ve el cliente en la tienda en línea.', 'Taza de cerámica de 11 oz'],
+  lema: [0, 'Una frase corta que se destaca en la tienda.', 'El regalo perfecto'],
+  puntos: [0, 'Beneficios cortos, separados con | (barra vertical).', 'Apta para microondas | Lavable'],
+  tienda: [0, 'Escribe «no» si no quieres que salga en la tienda en línea. Si lo dejas vacío, sí sale.', 'no']
+};
+// Otros títulos que también se reconocen (la lista del cliente casi nunca viene con nuestros títulos)
+const ALIAS_IMP = { producto: 'nombre', productos: 'nombre', articulo: 'nombre', articulos: 'nombre', item: 'nombre', nombre_del_producto: 'nombre', descripcion_del_producto: 'nombre', detalle_del_producto: 'nombre',
+  linea: 'categoria', familia: 'categoria', grupo: 'categoria', departamento: 'categoria', rubro: 'categoria', tipo: 'categoria', categorias: 'categoria',
+  p_venta: 'precio', pventa: 'precio', precio_venta: 'precio', precio_de_venta: 'precio', precio_detalle: 'precio', detalle: 'precio', pvp: 'precio', precio_publico: 'precio', precio_al_publico: 'precio', precio_unitario: 'precio', venta: 'precio', precio_l: 'precio',
+  p_costo: 'costo', pcosto: 'costo', costo_unitario: 'costo', precio_compra: 'costo', precio_de_compra: 'costo', compra: 'costo',
+  stock: 'existencia', existencias: 'existencia', cantidad: 'existencia', cant: 'existencia', inventario: 'existencia', unidades: 'existencia', disponible: 'existencia', disponibles: 'existencia', inv: 'existencia',
+  codigo_de_barras: 'codigo', cod: 'codigo', sku: 'codigo', barcode: 'codigo', referencia: 'codigo', ref: 'codigo', codigo_interno: 'codigo',
+  especial: 'precioEsp', precio_mayoreo: 'precioEsp', mayoreo: 'precioEsp', precio_por_mayor: 'precioEsp', minimo: 'minEsp', desde: 'minEsp', subcategoria: 'sub', subgrupo: 'sub',
+  tallas: 'val1', talla: 'val1', tonos: 'val1', tono: 'val1', colores: 'val1', color: 'val1', presentaciones: 'val1', presentacion: 'val1', sabores: 'val1', sabor: 'val1' };
+// Nombre de la opción cuando la columna del cliente se llama «Tallas», «Tonos»…
+const OPC_IMP = { talla: 'Talla', tallas: 'Talla', tono: 'Tono', tonos: 'Tono', color: 'Color', colores: 'Color', presentacion: 'Presentación', presentaciones: 'Presentación', sabor: 'Sabor', sabores: 'Sabor' };
+// Ejemplos de la plantilla según el giro del cliente (las filas «Ejemplo:» no se cargan)
+const EJ_IMP = {
+  _base: [{ nombre: 'Taza decorada', categoria: 'Regalos', precio: 150, costo: 70, existencia: 24, sub: 'Tazas' }, { nombre: 'Termo de acero 750 ml', categoria: 'Hogar', precio: 320, costo: 190, existencia: 14 },
+    { nombre: 'Camiseta básica', categoria: 'Ropa', precio: 250, costo: 140, op1: 'Talla', val1: 'S, M, L', existOp: 'S = 4; M = 6; L = 2', precioEsp: 220, minEsp: 3 }],
+  tienda: [{ nombre: 'Arroz 1 lb', categoria: 'Granos', precio: 18, costo: 14, existencia: 50, codigo: '7401001' }, { nombre: 'Aceite 750 ml', categoria: 'Abarrotes', precio: 68, costo: 55, existencia: 12 }, { nombre: 'Refresco 2 litros', categoria: 'Bebidas', precio: 45, costo: 36, existencia: 24, precioEsp: 42, minEsp: 6 }],
+  ferreteria: [{ nombre: 'Martillo de uña 16 oz', categoria: 'Herramientas', precio: 220, costo: 150, existencia: 8 }, { nombre: 'Clavo de 2" (libra)', categoria: 'Clavos y tornillos', precio: 25, costo: 17, existencia: 40 },
+    { nombre: 'Pintura látex (galón)', categoria: 'Pinturas', precio: 520, costo: 380, op1: 'Color', val1: 'Blanco, Gris, Beige', existOp: 'Blanco = 6; Gris = 3; Beige = 2' }],
+  repuestos: [{ nombre: 'Aceite de motor 20W-50 (litro)', categoria: 'Lubricantes', precio: 180, costo: 120, existencia: 24 }, { nombre: 'Filtro de aceite', categoria: 'Filtros', precio: 150, costo: 90, existencia: 10, codigo: 'FA-2001' }, { nombre: 'Bujía', categoria: 'Encendido', precio: 85, costo: 50, existencia: 30, precioEsp: 75, minEsp: 4 }],
+  boutique: [{ nombre: 'Blusa casual', categoria: 'Ropa', sub: 'Dama', precio: 380, costo: 220, op1: 'Talla', val1: 'S, M, L', op2: 'Color', val2: 'Negro#222222, Rosa#f2a7bd', existOp: 'S / Negro = 2; M / Negro = 3; M / Rosa = 1', precioEsp: 340, minEsp: 3 },
+    { nombre: 'Jeans clásico', categoria: 'Ropa', sub: 'Caballero', precio: 650, costo: 400, op1: 'Talla', val1: '30, 32, 34', existOp: '30 = 3; 32 = 5; 34 = 2' }, { nombre: 'Sandalia de playa', categoria: 'Calzado', precio: 420, costo: 260, op1: 'Talla', val1: '36, 37, 38', existOp: '36 = 2; 37 = 4; 38 = 1' }],
+  catalogo: [{ nombre: 'Corrector líquido', categoria: 'Rostro', sub: 'Corrección', precio: 140, costo: 90, codigo: 'BM-552', op1: 'Tono', val1: 'Nude 1#fbe0cf, Nude 3#f3cfa8, Beige 2#f1c39e', existOp: 'Nude 1 = 10; Nude 3 = 0; Beige 2 = 7', precioEsp: 130, minEsp: 3, lema: 'Cobertura que se siente ligera.', puntos: 'Cobertura uniforme | Textura ligera | Larga duración' },
+    { nombre: 'Loción Brisa', categoria: 'Lociones', sub: 'Dama', precio: 450, costo: 280, op1: 'Presentación', val1: '50 ml, 100 ml', preciosOp: '100 ml = 650', existOp: '50 ml = 12; 100 ml = 8', descripcion: 'Fragancia floral' },
+    { nombre: 'Body splash 250 ml', categoria: 'Lociones', sub: 'Body splash', precio: 220, costo: 130, existencia: 24, codigo: 'BS-250' }],
+  farmacia: [{ nombre: 'Acetaminofén 500 mg (caja de 10)', categoria: 'Analgésicos', precio: 35, costo: 22, existencia: 30 }, { nombre: 'Alcohol 70 % (250 ml)', categoria: 'Primeros auxilios', precio: 45, costo: 30, existencia: 20 }, { nombre: 'Suero oral', categoria: 'Hidratación', precio: 28, costo: 18, existencia: 40, op1: 'Sabor', val1: 'Coco, Fresa', existOp: 'Coco = 25; Fresa = 15' }],
+  vitaminas: [{ nombre: 'Vitamina C 1000 mg (60 tabletas)', categoria: 'Vitaminas', precio: 380, costo: 240, existencia: 10 }, { nombre: 'Proteína whey 2 lb', categoria: 'Proteínas', precio: 1250, costo: 850, op1: 'Sabor', val1: 'Chocolate, Vainilla', existOp: 'Chocolate = 4; Vainilla = 2' }, { nombre: 'Omega 3 (90 cápsulas)', categoria: 'Suplementos', precio: 520, costo: 330, existencia: 8 }],
+  tecnologia: [{ nombre: 'Cargador rápido USB-C', categoria: 'Accesorios', precio: 230, costo: 120, existencia: 14, codigo: '7501259' }, { nombre: 'Audífonos inalámbricos', categoria: 'Audio', precio: 650, costo: 410, existencia: 5 }, { nombre: 'Protector de pantalla', categoria: 'Accesorios', precio: 120, costo: 40, op1: 'Modelo', val1: 'iPhone 13, Galaxy A15', existOp: 'iPhone 13 = 6; Galaxy A15 = 9' }],
+  comida: [{ nombre: 'Baleada sencilla', categoria: 'Desayunos', precio: 25, costo: 10 }, { nombre: 'Pollo con tajadas', categoria: 'Platos fuertes', precio: 120, costo: 65 }, { nombre: 'Refresco natural', categoria: 'Bebidas', precio: 30, costo: 10, op1: 'Sabor', val1: 'Horchata, Tamarindo' }]
+};
+const ejDeGiro = g => EJ_IMP[g] || EJ_IMP._base;
+const zImp = t => norm(String(t)).replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+const etqImp = k => (COLS_IMP.find(c => c[0] === k) || [k, k])[1];
+function autoColImp(titulo) {
+  const z = zImp(titulo); if (!z) return '';
+  const porEt = {}; COLS_IMP.forEach(([k, t]) => { porEt[zImp(t)] = k; });
+  return porEt[z] || ALIAS_IMP[z] || (COLS_IMP.find(x => x[0].toLowerCase() === z) || [''])[0];
 }
-async function leerHojaImportar(file) {
+async function plantillaImportar(giro, giroNombre) {
   await cargarLib('xlsx');
-  const wb = XLSX.read(await file.arrayBuffer()), ws = wb.Sheets[wb.SheetNames[0]];
-  const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: true });
-  const hi = rows.findIndex(r => r.some(c => /nombre|producto/i.test(String(c)))); if (hi < 0) throw new Error('No encontré la fila de títulos (Nombre, Categoría, Precio…)');
-  const porEt = {}; COLS_IMP.forEach(([k, t]) => { porEt[norm(t).replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '')] = k; });
-  const cols = rows[hi].map(c => { const z = norm(String(c)).replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, ''); return porEt[z] || ALIAS_IMP[z] || COLS_IMP.find(x => x[0].toLowerCase() === z)?.[0] || ''; });
-  if (!cols.includes('nombre')) throw new Error('La hoja necesita la columna «Nombre»');
-  return rows.slice(hi + 1).map((r, i) => { const o = { _fila: hi + i + 2 }; cols.forEach((k, j) => { if (k && r[j] !== '' && r[j] !== null && r[j] !== undefined) o[k] = r[j]; }); return o; }).filter(o => Object.keys(o).length > 1);
-}
-function panelImportar(id, nombre) {
-  let filas = null, rev = null;
-  const h = hoja({ titulo: 'Cargar productos', ancho: 1, html: `<p class="sm mut" style="margin:0 0 10px">A <b>${esc(nombre)}</b>. Los productos que ya tiene (mismo código o nombre) se actualizan.</p>
-    <div class="panel" style="margin-bottom:10px"><b>1. Plantilla</b><p class="xs mut" style="margin:4px 0 8px">Llénala con la lista del cliente (o usa su propia hoja con columnas Nombre, Categoría, Precio…).</p><button class="btn" data-a="impPlantilla">${ic('down', 16)} Descargar plantilla Excel</button></div>
-    <div class="panel"><b>2. Sube la hoja</b><p class="xs mut" style="margin:4px 0 8px">Primero te muestro lo que se va a cargar; nada se guarda hasta que confirmes.</p><label class="btn pri">${ic('doc', 16)} Elegir archivo Excel<input type="file" accept=".xlsx,.xls,.csv" id="imp-f" hidden></label></div>
-    <div id="imp-r"></div>` });
-  ACC.impPlantilla = () => plantillaImportar().catch(err);
-  const pinta = (r, hecho) => {
-    $('#imp-r', h.el).innerHTML = `<div class="kpis" style="margin-top:12px"><div class="kpi" style="--k:#00b56e"><small>${hecho ? 'Cargados' : 'Nuevos'}</small><b>${hecho ? r.cargados : r.nuevos}</b></div>${hecho ? '' : `<div class="kpi" style="--k:var(--warn)"><small>Ya existen (se actualizan)</small><b>${r.actualizados}</b></div>`}<div class="kpi" style="--k:var(--bad)"><small>Con error</small><b>${r.errores.length}</b></div></div>
-      ${r.errores.length ? `<div class="aviso warn sm" style="margin-top:10px">${ic('alert', 18)}<div>${r.errores.slice(0, 30).map(e => `Fila ${e.fila}${e.nombre ? ' · «' + esc(e.nombre) + '»' : ''}: ${esc(e.error)}`).join('<br>')}${r.errores.length > 30 ? '<br>…' : ''}</div></div>` : ''}
-      ${hecho ? '' : `<div class="tbl-w" style="margin-top:10px"><table class="tbl"><tr><th>Producto</th><th>Categoría</th><th class="n">Precio</th><th class="n">Exist.</th></tr>${r.lista.map(x => `<tr><td><b>${esc(x.nombre)}</b>${x.nuevo ? '' : ' <span class="badge b-warn">actualiza</span>'}${x.det ? `<br><small class="mut">${esc(x.det)}</small>` : ''}</td><td>${esc(x.categoria)}</td><td class="n">${money(x.precio)}</td><td class="n">${x.existencia === null ? '—' : cant(x.existencia)}</td></tr>`).join('')}</table></div>`}`;
-    const n = r.nuevos + r.actualizados;
-    h.botones(hecho ? [{ t: 'Listo', cls: 'pri', fn: () => h.cerrar() }] : n ? [{ t: `Cargar ${n} producto${n === 1 ? '' : 's'} a ${esc(nombre)}`, cls: 'pri big', fn: async () => {
-      if (r.errores.length && !(await confirmar(`${r.errores.length === 1 ? 'Una fila tiene' : r.errores.length + ' filas tienen'} error y no se van a cargar. ¿Cargar las demás?`, { si: 'Cargar las demás' }))) return;
-      const f = await api('panelImportar', { negocio: id, filas }); pinta(f, true); toast(f.cargados + ' productos cargados a ' + nombre, 'ok', 4000);
-    } }] : []);
-  };
-  $('#imp-f', h.el).addEventListener('change', async e => {
-    const f = e.target.files[0]; if (!f) return;
-    try { loader(true); filas = await leerHojaImportar(f); if (!filas.length) throw new Error('La hoja no tiene productos'); rev = await api('panelImportar', { negocio: id, filas, revisar: true }, true); pinta(rev); }
-    catch (x) { err(x); } finally { loader(false); e.target.value = ''; }
+  const ej = ejDeGiro(giro);
+  const ws = XLSX.utils.aoa_to_sheet([COLS_IMP.map(c => c[1])].concat(ej.map(o => COLS_IMP.map(([k]) => k === 'nombre' ? 'Ejemplo: ' + o.nombre : o[k] === undefined ? '' : o[k]))));
+  // Un comentario en cada título: qué va, si es obligatoria y un ejemplo (en Excel se ve al pasar el mouse o tocar el triángulo rojo)
+  COLS_IMP.forEach(([k, t], i) => {
+    const d = DOC_IMP[k], ref = XLSX.utils.encode_cell({ r: 0, c: i }); if (!d || !ws[ref]) return;
+    ws[ref].c = [{ a: 'Molina Soluciones', t: (d[0] ? 'OBLIGATORIA. ' : 'Opcional. ') + d[1] + '\nEjemplo: ' + d[2] }]; ws[ref].c.hidden = true;
   });
+  ws['!cols'] = COLS_IMP.map(c => ({ wch: ['nombre', 'val1', 'val2', 'existOp', 'puntos', 'descripcion', 'lema', 'preciosOp'].includes(c[0]) ? 32 : c[0] === 'categoria' ? 18 : 13 }));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Productos');
+  const ins = [['CÓMO LLENAR LA PLANTILLA DE PRODUCTOS'], ['Gestión de Negocio VM · Molina Soluciones Digitales' + (giroNombre ? ' · ejemplos para ' + giroNombre : '')], [''],
+    ['PASO A PASO'],
+    ['1. Abre la hoja «Productos». Cada fila es un producto.'],
+    ['2. Llena siempre las 3 columnas con asterisco (*): Nombre, Categoría y Precio. Las demás son opcionales.'],
+    ['3. ¿No sabes qué va en una columna? Pasa el mouse (o toca) sobre su título: tiene un comentario con la explicación y un ejemplo. También está en la tabla de abajo.'],
+    ['4. Las filas que empiezan con «Ejemplo:» NO se cargan. Úsalas de guía y escribe tus productos debajo, o bórralas.'],
+    ['5. Guarda el archivo y envíalo. Antes de cargarlo se revisa todo y se avisa si alguna fila tiene un error.'], [''],
+    ['REGLAS IMPORTANTES'],
+    ['• Precios y costos: escribe solo el número, sin «L» y sin punto de miles. Bien: 1200.50  ·  1200     Mal: L 1.200,50'],
+    ['• No repitas el mismo producto en dos filas. Si un producto ya está en el programa (mismo código o mismo nombre), se actualiza en vez de duplicarse.'],
+    ['• Si el producto se vende en tallas, tonos o presentaciones: escribe la opción en «Opción 1», sus valores en «Valores 1», deja «Existencia» vacía y pon cuántas hay de cada una en «Existencias por opción».'],
+    ['• No cambies ni borres los títulos de la primera fila de «Productos».'], [''],
+    ['QUÉ VA EN CADA COLUMNA'], ['Columna', '¿Obligatoria?', 'Qué escribir', 'Ejemplo']]
+    .concat(COLS_IMP.map(([k, t]) => { const d = DOC_IMP[k] || [0, '', '']; return [t.replace(' *', ''), d[0] ? 'Sí' : 'No', d[1], d[2]]; }));
+  const wi = XLSX.utils.aoa_to_sheet(ins); wi['!cols'] = [{ wch: 24 }, { wch: 14 }, { wch: 90 }, { wch: 28 }];
+  XLSX.utils.book_append_sheet(wb, wi, 'Instrucciones');
+  const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+  descargar(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'plantilla-productos' + (giro ? '-' + giro : '') + '.xlsx');
+}
+// Lee todas las hojas del archivo: dónde están los títulos y qué columna parece cada cosa
+async function leerLibroImportar(file) {
+  await cargarLib('xlsx');
+  const wb = XLSX.read(await file.arrayBuffer());
+  const hojas = wb.SheetNames.filter(n => !/^instrucciones$/i.test(n.trim())).map(nombre => {
+    const rows = XLSX.utils.sheet_to_json(wb.Sheets[nombre], { header: 1, defval: '', raw: true });
+    let hi = -1, mejor = 0;
+    rows.slice(0, 15).forEach((r, i) => { const n = r.filter(c => autoColImp(c)).length + (r.some(c => /nombre|producto|articulo/i.test(norm(String(c)))) ? 1 : 0); if (n > mejor) { mejor = n; hi = i; } });
+    if (hi < 0) hi = rows.findIndex(r => r.filter(c => String(c).trim() !== '').length >= 2);
+    const titulos = hi >= 0 ? rows[hi].map(c => String(c).trim()) : [];
+    const nums = [], filas = hi < 0 ? [] : rows.slice(hi + 1).filter((r, i) => { const si = r.some(c => String(c).trim() !== ''); if (si) nums.push(hi + i + 2); return si; }); // nums: número de fila en Excel
+    const usados = new Set(), auto = titulos.map(t => { const k = autoColImp(t); if (!k || usados.has(k)) return ''; usados.add(k); return k; });
+    return { nombre, hi, titulos, filas, nums, auto, rec: auto.filter(Boolean).length };
+  }).filter(x => x.titulos.length && x.filas.length);
+  if (!hojas.length) throw new Error('No encontré productos en el archivo. Revisa que la primera fila tenga los títulos (Nombre, Categoría, Precio…).');
+  return hojas;
+}
+// Arma las filas para el servidor con la relación de columnas elegida
+function filasImportar(hoja, mapa) {
+  let ejemplos = 0;
+  const out = hoja.filas.map((r, i) => {
+    const o = { _fila: hoja.nums[i] };
+    mapa.forEach((k, j) => { if (!k) return; const v = r[j]; if (v === '' || v === null || v === undefined || o[k] !== undefined) return; o[k] = v; if (k === 'val1' && !o.op1 && OPC_IMP[zImp(hoja.titulos[j])]) o.op1 = OPC_IMP[zImp(hoja.titulos[j])]; });
+    if (o.nombre !== undefined && /^ejemplo\s*:/i.test(String(o.nombre).trim())) { ejemplos++; return null; }
+    return Object.keys(o).length > 1 ? o : null;
+  }).filter(Boolean);
+  return { filas: out, ejemplos };
+}
+const impDesKey = id => 'impDeshacer_' + id;
+function panelImportar(id, n) {
+  const nombre = n.negocio;
+  let libro = null, hs = 0, mapa = [], archivo = '';
+  const h = hoja({ titulo: 'Cargar productos', ancho: 1, html: `<p class="sm mut" style="margin:0 0 10px">A <b>${esc(nombre)}</b>${n.giro ? ' · giro ' + esc(n.giro) : ''}. Los productos que ya tiene (mismo código o nombre) se actualizan.</p>
+    <div id="imp-des"></div>
+    <div class="panel" style="margin-bottom:10px"><b>1. Plantilla</b><p class="xs mut" style="margin:4px 0 8px">Con ejemplos de su giro, un comentario en cada columna que explica qué va y una hoja de instrucciones paso a paso.</p><button class="btn" data-x="plantilla">${ic('down', 16)} Descargar plantilla Excel</button></div>
+    <div class="panel" style="margin-bottom:10px" id="imp-arch"></div>
+    <div class="panel" id="imp-map" hidden></div>` });
+  const pintaDes = () => {
+    const u = LS.json(impDesKey(id), null), vivo = u && Date.now() - u.t < 86400000;
+    $('#imp-des', h.el).innerHTML = vivo ? `<div class="aviso warn sm" style="margin-bottom:10px">${ic('undo', 18)}<div>Cargaste ${u.n} productos ${esc(hace(toLocal(new Date(u.t)).slice(0, 16)))}. <a data-x="deshacer" style="color:var(--pri);cursor:pointer">Deshacer esa carga</a></div></div>` : '';
+  };
+  pintaDes();
+  const pintaArch = () => {
+    const H = libro && libro[hs];
+    $('#imp-arch', h.el).innerHTML = !libro ? `<b>2. Archivo del cliente</b><p class="xs mut" style="margin:4px 0 8px">La plantilla llena o la lista que te mandó el cliente: se reconocen sus propios títulos.</p><label class="btn pri">${ic('doc', 16)} Elegir archivo Excel<input type="file" accept=".xlsx,.xls,.csv" class="imp-f" hidden></label>`
+      : `<div class="row sp"><b>2. Archivo del cliente</b><label style="color:var(--pri);font-size:13px;cursor:pointer">Cambiar<input type="file" accept=".xlsx,.xls,.csv" class="imp-f" hidden></label></div>
+      <div class="li" style="padding:8px 0 0"><div class="av t-verde">${ic('doc', 18)}</div><div class="tx"><b>${esc(archivo)}</b><small>${libro.length} hoja${libro.length === 1 ? '' : 's'} con datos · ${H.filas.length} fila${H.filas.length === 1 ? '' : 's'} en «${esc(H.nombre)}»</small></div></div>
+      ${libro.length > 1 ? `<span class="op-l" style="margin-top:8px">¿Qué hoja tiene los productos?</span><div class="chips" style="flex-wrap:wrap">${libro.map((x, i) => `<button type="button" class="chip ${i === hs ? 'on' : ''}" data-hoja="${i}">${esc(x.nombre)}</button>`).join('')}</div>` : ''}`;
+  };
+  const pintaMapa = () => {
+    const H = libro[hs], rec = mapa.filter(Boolean).length, cat = mapa.includes('categoria');
+    const opt = k => `<option value="">No cargar</option>${COLS_IMP.map(([c, t]) => `<option value="${c}" ${c === k ? 'selected' : ''}>${esc(t.replace(' *', ''))}</option>`).join('')}`;
+    const ej = j => { const v = H.filas.map(r => r[j]).find(x => String(x).trim() !== ''); return v === undefined ? '' : String(v).slice(0, 24); };
+    $('#imp-map', h.el).hidden = false;
+    $('#imp-map', h.el).innerHTML = `<b>3. Relaciona las columnas</b><p class="xs mut" style="margin:4px 0 6px">Reconocí ${rec} de ${H.titulos.filter(Boolean).length}. Cambia las que no estén bien; «No cargar» la deja fuera.</p>
+      ${H.titulos.map((t, j) => !t && !ej(j) ? '' : `<div class="imp-col"><div class="de"><b>${esc(t || 'Columna ' + (j + 1))}</b><small>${esc(ej(j)) || '—'}</small></div><span class="fl">${ic('right', 14)}</span>
+        <select data-col="${j}" class="${mapa[j] ? 'ok' : 'no'}">${opt(mapa[j])}</select></div>`).join('')}
+      <label class="fld" style="margin-top:10px"><span>Categoría para los que no traen${cat ? '' : ' (el archivo no tiene categoría)'}</span><input id="imp-cat" maxlength="40" value="${esc(h.catDef !== undefined ? h.catDef : 'Varios')}" placeholder="Ej. Varios"></label>`;
+    h.botones([{ t: 'Revisar antes de cargar', cls: 'pri big', fn: revisar }]);
+  };
+  const leer = async f => {
+    try { loader(true); libro = await leerLibroImportar(f); archivo = f.name; hs = libro.reduce((b, x, i) => x.rec > libro[b].rec ? i : b, 0); mapa = libro[hs].auto.slice(); pintaArch(); pintaMapa(); }
+    catch (x) { err(x); } finally { loader(false); }
+  };
+  h.b.addEventListener('change', e => {
+    if (e.target.classList.contains('imp-f')) { const f = e.target.files[0]; e.target.value = ''; if (f) leer(f); return; }
+    const s = e.target.closest('[data-col]'); if (s) { const j = Number(s.dataset.col), v = s.value; if (v) mapa = mapa.map((k, i) => i !== j && k === v ? '' : k); mapa[j] = v; pintaMapa(); }
+  });
+  h.b.addEventListener('input', e => { if (e.target.id === 'imp-cat') h.catDef = e.target.value; });
+  h.b.addEventListener('click', async e => {
+    const c = e.target.closest('[data-hoja]'); if (c) { hs = Number(c.dataset.hoja); mapa = libro[hs].auto.slice(); pintaArch(); pintaMapa(); return; }
+    const x = e.target.closest('[data-x]'); if (!x) return;
+    if (x.dataset.x === 'plantilla') { plantillaImportar(n.giroId, n.giro).catch(err); return; }
+    if (x.dataset.x === 'deshacer') { if (await deshacerImportar(id, nombre)) pintaDes(); }
+  });
+  pintaArch();
+  async function revisar() {
+    const H = libro[hs], catDef = ($('#imp-cat', h.el).value || '').trim();
+    if (!mapa.includes('nombre')) throw new Error('Elige qué columna es el «Nombre» del producto');
+    if (!mapa.includes('precio')) throw new Error('Elige qué columna es el «Precio»');
+    if (!mapa.includes('categoria') && !catDef) throw new Error('Elige qué columna es la «Categoría» o escribe una categoría para todos');
+    const { filas, ejemplos } = filasImportar(H, mapa);
+    if (!filas.length) throw new Error(ejemplos ? 'El archivo solo tiene las filas de ejemplo. Escribe los productos del cliente debajo.' : 'La hoja no tiene productos');
+    const rev = await api('panelImportar', { negocio: id, filas, revisar: true, catDefecto: catDef });
+    panelImportarRevision(id, n, filas, rev, { catDef, ejemplos, hoja: H, mapa, alCargar: () => { h.cerrar(); } });
+  }
+}
+function panelImportarRevision(id, n, filas, r, o) {
+  const nombre = n.negocio, total = r.nuevos + r.actualizados, porDef = r.lista.filter(x => x.catDef).length;
+  const h = hoja({ titulo: 'Revisar la carga', ancho: 1, html: `
+    <div class="kpis" style="margin-top:2px"><div class="kpi" style="--k:#00b56e"><small>Nuevos</small><b>${r.nuevos}</b></div><div class="kpi" style="--k:var(--warn)"><small>Se actualizan</small><b>${r.actualizados}</b></div><div class="kpi" style="--k:var(--bad)"><small>Con error</small><b>${r.errores.length}</b><i>${r.errores.length ? 'no se cargan' : 'ninguno'}</i></div></div>
+    ${o.ejemplos ? `<div class="aviso info sm" style="margin-top:10px">${ic('info', 18)}<div>Se omitieron ${o.ejemplos} fila${o.ejemplos === 1 ? '' : 's'} de ejemplo de la plantilla.</div></div>` : ''}
+    ${r.errores.length ? `<div class="aviso warn sm" style="margin-top:10px">${ic('alert', 18)}<div>${r.errores.slice(0, 30).map(e => `Fila ${e.fila}${e.nombre ? ' · «' + esc(e.nombre) + '»' : ''}: ${esc(e.error)}`).join('<br>')}${r.errores.length > 30 ? '<br>…' : ''}<br><a data-x="errores" style="color:var(--pri);cursor:pointer">Descargar las filas con error en Excel</a> para corregirlas y volver a subirlas.</div></div>` : ''}
+    ${porDef ? `<p class="xs mut" style="margin:10px 2px 0">${porDef} sin categoría van a quedar en «${esc(o.catDef)}».</p>` : ''}
+    ${total ? `<div class="tbl-w" style="margin-top:10px"><table class="tbl"><tr><th>Producto</th><th>Categoría</th><th class="n">Precio</th><th class="n">Exist.</th></tr>${r.lista.map(x => `<tr><td><b>${esc(x.nombre)}</b>${x.nuevo ? '' : ' <span class="badge b-warn">actualiza</span>'}${x.det ? `<br><small class="mut">${esc(x.det)}</small>` : ''}</td><td>${esc(x.categoria)}${x.catDef ? '<br><small class="mut">sin categoría</small>' : ''}</td><td class="n">${money(x.precio)}</td><td class="n">${x.existencia === null ? '—' : cant(x.existencia)}</td></tr>`).join('')}</table></div>${total > r.lista.length ? `<p class="xs mut">…y ${total - r.lista.length} más</p>` : ''}
+    <div class="aviso info sm" style="margin-top:10px">${ic('save', 18)}<div>Antes de cargar se hace un respaldo de su información. Si algo sale mal, podrás <b>deshacer esta carga</b> durante 24 horas.</div></div>` : ''}` });
+  h.b.addEventListener('click', e => { if (e.target.closest('[data-x="errores"]')) erroresImportar(r.errores, filas, nombre).catch(err); });
+  h.botones(total ? [{ t: `Cargar ${total} producto${total === 1 ? '' : 's'}`, cls: 'pri big', fn: async () => {
+    if (r.errores.length && !(await confirmar(`${r.errores.length === 1 ? 'Una fila tiene' : r.errores.length + ' filas tienen'} error y no se van a cargar. ¿Cargar las demás?`, { si: 'Cargar las demás' }))) return;
+    let rb = null;
+    try { rb = await api('panelRespaldoHacer', { id, forzar: true }, true); } catch (x) { rb = null; }
+    if (!rb || !rb.id) { if (!(await confirmar('No se pudo hacer el respaldo antes de cargar. Si sigues, no vas a poder deshacer esta carga. ¿Cargar de todos modos?', { si: 'Cargar sin respaldo' }))) return; }
+    const f = await api('panelImportar', { negocio: id, filas, catDefecto: o.catDef });
+    if (rb && rb.id && f.cargados) LS.set(impDesKey(id), JSON.stringify({ rid: rb.id, t: Date.now(), n: f.cargados }));
+    toast(f.cargados + ' productos cargados a ' + nombre, 'ok', 4000);
+    if (o.alCargar) o.alCargar();
+    panelImportarListo(h, id, n, f, filas, !!(rb && rb.id));
+  } }] : [{ t: 'Volver', cls: 'pri', fn: () => h.cerrar() }]);
+}
+function panelImportarListo(h, id, n, f, filas, conResp) {
+  const nombre = n.negocio, ahora = new Date(), fin = new Date(ahora.getTime() + 86400000);
+  const msg = `Hola ${n.dueno || ''}, ya cargué ${f.cargados} producto${f.cargados === 1 ? '' : 's'} a tu programa Gestión de Negocio VM. Entra y revísalos en Productos. Solo falta ponerles foto para que tu tienda en línea se vea mejor.`;
+  $('.sheet-h h3', h.el).textContent = 'Carga lista';
+  h.b.innerHTML = `<div style="text-align:center;padding:6px 0 4px"><div class="av t-verde" style="width:56px;height:56px;margin:0 auto 8px">${ic('check', 28)}</div><b style="font-size:19px">${f.cargados} producto${f.cargados === 1 ? '' : 's'} cargado${f.cargados === 1 ? '' : 's'}</b><p class="sm mut" style="margin:4px 0 0">a ${esc(nombre)} · hoy ${esc(h12(toLocal(ahora).slice(11, 16)))}</p></div>
+    <div class="kpis" style="margin-top:12px"><div class="kpi" style="--k:#00b56e"><small>Nuevos</small><b>${f.nuevos}</b></div><div class="kpi" style="--k:var(--warn)"><small>Actualizados</small><b>${f.actualizados}</b></div><div class="kpi" style="--k:var(--bad)"><small>No cargados</small><b>${f.errores.length}</b>${f.errores.length ? '<i><a data-x="errores" style="color:var(--pri);cursor:pointer">descárgalos en Excel</a></i>' : ''}</div></div>
+    <div class="list" style="margin-top:10px">
+      <a class="li ch" href="${esc(waLink(n.whatsapp, msg))}" target="_blank" rel="noopener" style="color:inherit;text-decoration:none"><div class="av t-pri">${ic('wa', 18)}</div><div class="tx"><b>Avisarle al cliente</b><small>«${esc(msg.slice(0, 70))}…»</small></div>${ic('right', 16)}</a>
+      <div class="li ch" data-x="verApp"><div class="av t-cian">${ic('eye', 18)}</div><div class="tx"><b>Ver cómo quedaron en su app</b><small>Modo soporte, solo ver</small></div>${ic('right', 16)}</div>
+      ${conResp ? `<div class="li ch" data-x="deshacer"><div class="av t-rojo">${ic('undo', 18)}</div><div class="tx"><b>Deshacer esta carga</b><small>Disponible hasta mañana ${esc(h12(toLocal(fin).slice(11, 16)))}</small></div>${ic('right', 16)}</div>` : ''}
+    </div>
+    <small class="hint" style="display:block;margin-top:10px">Queda anotado en el historial de su ficha: «Carga desde Excel · ${f.cargados} productos».</small>`;
+  h.b.onclick = async e => {
+    const x = e.target.closest('[data-x]'); if (!x) return;
+    try {
+      if (x.dataset.x === 'errores') return erroresImportar(f.errores, filas, nombre);
+      if (x.dataset.x === 'verApp') { const r = await api('panelVerApp', { id }); window.open(new URL('./?soporte=' + r.token, document.baseURI).href, '_blank'); toast('Se abrió su app en modo soporte (solo ver, 2 horas)', 'ok', 4000); return; }
+      if (x.dataset.x === 'deshacer' && await deshacerImportar(id, nombre)) h.cerrar();
+    } catch (z) { err(z); }
+  };
+  h.botones([{ t: 'Listo', cls: 'pri', fn: () => h.cerrar() }]);
+}
+// Vuelve los productos a como estaban antes de la carga (con el respaldo que se hizo justo antes)
+async function deshacerImportar(id, nombre) {
+  const u = LS.json(impDesKey(id), null);
+  if (!u || Date.now() - u.t > 86400000) { LS.del(impDesKey(id)); toast('Ya pasaron más de 24 horas: esa carga ya no se puede deshacer desde aquí. Usa los respaldos de la ficha.', 'error', 6000); return false; }
+  if (!(await confirmar(`Los productos de ${esc(nombre)} vuelven a como estaban antes de cargar el Excel. Si el cliente ya vendió o ajustó productos después, esas existencias también regresan. ¿Deshacer la carga?`, { si: 'Deshacer la carga' }))) return false;
+  await api('panelRespaldoRestaurar', { id, rid: u.rid, alcance: 'productos' });
+  LS.del(impDesKey(id)); toast('Listo: la carga se deshizo', 'ok', 4000);
+  return true;
+}
+// Las filas con error en un Excel, con su motivo, para corregirlas y volver a subirlas
+async function erroresImportar(errores, filas, nombre) {
+  await cargarLib('xlsx');
+  const porF = {}; filas.forEach(o => { porF[o._fila] = o; });
+  const cols = COLS_IMP.filter(([k]) => errores.some(e => porF[e.fila] && porF[e.fila][k] !== undefined));
+  const aoa = [['Fila', 'Error'].concat(cols.map(c => c[1]))].concat(errores.map(e => { const o = porF[e.fila] || {}; return [e.fila, e.error].concat(cols.map(([k]) => o[k] === undefined ? '' : o[k])); }));
+  const ws = XLSX.utils.aoa_to_sheet(aoa); ws['!cols'] = [{ wch: 6 }, { wch: 46 }].concat(cols.map(() => ({ wch: 16 })));
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Con error');
+  descargar(new Blob([XLSX.write(wb, { bookType: 'xlsx', type: 'array' })], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), 'errores ' + String(nombre).replace(/[\\/:*?"<>|]/g, '').slice(0, 40) + '.xlsx');
 }
 // Primeros pasos del cliente (1.9.82): en qué paso va y cuál le falta, para saber qué decirle
 const PASOS_P = [['negocio', 'Logo y colores'], ['producto', 'Producto propio'], ['ver', 'Vio su tienda'], ['venta', 'Primera venta'], ['cliente', 'Un cliente'], ['compartir', 'Compartió su tienda'], ['pedido', 'Pedido en línea'], ['caja', 'Cierre de caja'], ['cuenta', '¿Cómo me fue hoy?']];
@@ -4481,7 +4677,7 @@ async function panelFicha(id) {
       ${panelSecGiros(n)}${panelSecGrupo(n)}
       <div class="sec-t"><h3>Productos</h3></div>
       <div class="row"><button class="btn pri" data-x="importar">${ic('doc', 16)} Cargar productos desde Excel</button><button class="btn" data-x="copiar">${ic('copy', 16)} Copiar de otro negocio</button></div>
-      <small class="hint">Llena la plantilla con la lista del cliente y se la cargas de un solo; los que ya tiene se actualizan.</small>
+      <small class="hint">Descarga la plantilla con ejemplos de su giro o sube la lista que te mandó el cliente: eliges qué columna es cada cosa, revisas y se carga con respaldo para deshacer.</small>
       <div class="sec-t"><h3>Respaldos</h3><a data-x="respHacer">Hacer uno ahora</a></div>
       <div class="list" id="pf-resp"><div class="empty">Cargando…</div></div>
       <small class="hint">Se hace solo cada noche a las 2 a. m., si hubo cambios. Las copias se guardan hasta 30 días. Toca una para restaurarla o descargarla en Excel.</small>
@@ -4508,7 +4704,7 @@ async function panelFicha(id) {
       try {
         if (x === 'waSug') { panelWaSugerencias(id, n); return; }
         if (x === 'sinChat') { toast('Este cliente todavía no ha abierto un chat de soporte. La ayuda en vivo se inicia desde su chat.', '', 5000); return; }
-        if (x === 'importar') { panelImportar(id, n.negocio); return; }
+        if (x === 'importar') { panelImportar(id, n); return; }
         if (x === 'copiar') { await panelCopiar(id, n); return; }
         if (x === 'respHacer') { b.disabled = true; try { await respHacer(id); await panelRespCargar(id, h); } finally { b.disabled = false; } return; }
         if (x === 'resp') { const r = (h.resp || []).find(k => k.id === b.dataset.r); if (r) panelRespAbrir(id, n, r, h); return; }
@@ -6663,6 +6859,7 @@ R.productos = () => {
   const fil = [['', 'Todos'], ['bajos', 'Por agotarse'], ['agotados', 'Agotados']].concat(modOn('caducidad') ? [['caducan', 'Por caducar']] : []).concat([['tienda', 'En la tienda'], ['sinfoto', 'Sin foto'], ['inactivos', 'Inactivos']]).filter(x => (x[0] !== 'tienda' || S.plus) && (x[0] !== 'sinfoto' || sinFoto));
   const avFoto = sinFoto && puede('admin', 'bodega') && f.pfil !== 'sinfoto' && !S.f.avFotoOff ? `<div class="aviso info sm">${ic('cam', 20)}<div><b>${sinFoto === 1 ? '1 producto no tiene foto.' : sinFoto + ' productos no tienen foto.'}</b> <small style="display:inline">Con fotos reales tu tienda y Vender se ven mucho mejor.</small></div><button class="btn sm pri" data-a="pfil" data-k="sinfoto">Ver</button><button class="btn icon ghost sm" data-a="avFotoOff" aria-label="Cerrar">${ic('x', 16)}</button></div>` : '';
   $('#main').innerHTML = `${avFoto}${puede('admin', 'bodega') ? `<div class="kpis"><div class="kpi"><small>Productos activos</small><b>${act.length}</b></div><div class="kpi" style="--k:var(--warn)"><small>Por agotarse</small><b>${bajos.length}</b><i>${agot.length} agotados</i></div>${puede('admin', 'bodega') ? `<div class="kpi" style="--k:#00b56e"><small>Inventario al costo</small><b class="n">${money(valor)}</b></div>` : ''}</div>` : ''}
+    ${conteoBotonHTML(ctrl)}
     <div class="srch" style="margin-bottom:10px">${ic('search', 18)}<input id="p-q" placeholder="Buscar por nombre, código o categoría…" value="${esc(f.pq || '')}"></div>
     <div class="chips">${fil.map(x => `<button class="chip ${(f.pfil || '') === x[0] ? 'on' : ''}" data-a="pfil" data-k="${x[0]}">${x[1]}</button>`).join('')}</div>
     <div class="chips" style="margin:6px 0 12px"><button class="chip ${!f.pcat ? 'on' : ''}" data-a="pcat" data-c="">Todas las categorías</button>${cats.map(c => `<button class="chip ${f.pcat === c ? 'on' : ''}" data-a="pcat" data-c="${esc(c)}">${esc(c)}</button>`).join('')}</div>
@@ -6940,6 +7137,211 @@ ACC.ajusteRapido = () => {
   const pinta = () => { const q = norm($('#ar-q', h.el).value); $('#ar-l', h.el).innerHTML = l.filter(p => !q || norm(p.nombre).includes(q) || norm(p.codigo).includes(q)).slice(0, 60).map(p => `<div class="li" data-ar="${p.id}">${avatarProd(p)}<div class="tx"><b>${esc(p.nombre)}</b><small>${esc(p.categoria)}</small></div><div class="am">${cant(p.stock)}</div></div>`).join(''); };
   $('#ar-q', h.el).addEventListener('input', pinta); pinta();
   $('#ar-l', h.el).addEventListener('click', e => { const x = e.target.closest('[data-ar]'); if (!x) return; h.cerrar(); ajusteStock(byId(S.productos, x.dataset.ar)); });
+};
+/* ===== Conteo físico de inventario (1.9.93) =====
+ * Se cuenta en el teléfono (lo contado se guarda en este equipo mientras tanto) y al final se aplican de una vez las diferencias.
+ * A ciegas: quien cuenta no ve cuánto dice el sistema. Lo que no se cuenta no se toca. El historial lo guarda el servidor (últimos 20). */
+const CT_MOT = ['Dañado', 'Pérdida', 'Vencido', 'Error de registro', 'Otro'];
+const ctKey = () => mk('conteo_' + (S.negocioId || '1'));
+const ctLeer = () => { const c = LS.json(ctKey(), null); return c && Array.isArray(c.ids) ? c : null; };
+const ctGuardar = c => LS.set(ctKey(), JSON.stringify(c));
+const ctBorrar = () => LS.del(ctKey());
+const ctUniverso = () => S.productos.filter(p => p.activo && p.tipo === 'producto' && enTiendaP(p));
+// Las filas a contar: una por producto, o una por opción si lleva tallas, tonos o presentaciones
+function ctFilas(c) {
+  const out = [];
+  c.ids.forEach(id => {
+    const p = byId(S.productos, id); if (!p || !p.activo || p.tipo !== 'producto') return;
+    const V = varsDe(p);
+    if (V) Object.keys(V).forEach(k => out.push({ k: p.id + '|' + k, id: p.id, v: k, p, sis: num(V[k].s) }));
+    else out.push({ k: p.id, id: p.id, v: '', p, sis: num(p.stock) });
+  });
+  if (c.orden) out.sort((a, b) => String(a.p.categoria || '').localeCompare(String(b.p.categoria || '')) || a.p.nombre.localeCompare(b.p.nombre));
+  return out;
+}
+const ctVal = (c, k) => { const x = c.cont[k]; return x === undefined || x === null || String(x).trim() === '' ? null : num(x); };
+const ctContados = c => ctFilas(c).filter(f => ctVal(c, f.k) !== null).length;
+const ctNombre = f => f.p.nombre + (f.v ? ' · ' + etiquetaVar(f.v) : '');
+
+// Botón en Productos (solo administrador y bodega)
+function conteoBotonHTML(ctrl) {
+  if (!puede('admin', 'bodega') || !ctrl.length) return '';
+  const c = ctLeer(), u = S.ultimoConteo;
+  const sub = c ? `Tienes un conteo a medias: ${ctContados(c)} de ${ctFilas(c).length} contados`
+    : u ? `Último conteo: ${hace(u.fecha)} · ${u.dif ? u.dif + (u.dif === 1 ? ' diferencia' : ' diferencias') : 'todo cuadró'} · ver historial`
+    : 'Compara lo que hay en tu tienda con lo registrado';
+  return `<div class="ct-btn"><button class="btn pri big" data-a="conteoAbrir">${ic('layers', 18)} ${c ? 'Seguir contando' : 'Contar inventario'}</button>
+    ${u && !c ? `<button type="button" class="ct-sub" data-a="conteoHist">${esc(sub)}</button>` : `<small class="ct-sub">${esc(sub)}</small>`}</div>`;
+}
+
+ACC.conteoAbrir = () => {
+  const c = ctLeer();
+  if (!c) return conteoNuevo();
+  const h = hoja({ titulo: 'Conteo a medias', cls: 'chica', html: `<p class="sm mut" style="margin:0 0 10px">Empezaste un conteo ${esc(hace(c.ini))}: llevas <b>${ctContados(c)} de ${ctFilas(c).length}</b>.</p>
+    <div class="list"><div class="li ch" data-x="seguir"><div class="av t-pri">${ic('layers', 18)}</div><div class="tx"><b>Seguir contando</b><small>${esc(c.alcance)}${c.ciego ? ' · a ciegas' : ''}</small></div>${ic('right', 16)}</div>
+    <div class="li ch" data-x="nuevo"><div class="av t-rojo">${ic('refresh', 18)}</div><div class="tx"><b>Empezar otro</b><small>Se borra lo que llevas contado</small></div>${ic('right', 16)}</div></div>` });
+  h.b.onclick = async e => {
+    const x = e.target.closest('[data-x]'); if (!x) return;
+    if (x.dataset.x === 'seguir') { h.cerrar(); return conteoContar(); }
+    if (!(await confirmar('Se borra lo que llevas contado. ¿Empezar otro conteo?', { si: 'Empezar otro' }))) return;
+    ctBorrar(); h.cerrar(); conteoNuevo();
+  };
+};
+
+function conteoNuevo() {
+  const U = ctUniverso();
+  if (!U.length) { toast('No tienes productos con existencias para contar', 'error'); return; }
+  const cats = [...new Set(U.map(p => p.categoria || 'Sin categoría'))].sort((a, b) => a.localeCompare(b));
+  let alc = 'todo'; const sel = new Set();
+  const h = hoja({ titulo: 'Nuevo conteo', html: `<p class="sm mut" style="margin:0 0 12px">Cuenta lo que hay en tu tienda y el programa lo compara con lo registrado. Nada cambia hasta que apliques los ajustes.</p>
+    <span class="op-l">¿Qué vas a contar?</span>
+    <div class="list" id="ct-alc">
+      <div class="li ch ct-op on" data-alc="todo"><div class="av t-pri">${ic('box', 18)}</div><div class="tx"><b>Todo el inventario</b><small>${U.length} producto${U.length === 1 ? '' : 's'}</small></div><span class="ct-ck">${ic('check', 18)}</span></div>
+      <div class="li ch ct-op" data-alc="cats"><div class="av t-cian">${ic('tag', 18)}</div><div class="tx"><b>Una o varias categorías</b><small>${esc(cats.slice(0, 6).join(', '))}${cats.length > 6 ? '…' : ''}</small></div><span class="ct-ck">${ic('check', 18)}</span></div>
+      <div class="li ch ct-op" data-alc="mov"><div class="av t-rojo">${ic('trend', 18)}</div><div class="tx"><b>Solo los que se mueven más</b><small>Vendidos en los últimos 30 días</small></div><span class="ct-ck">${ic('check', 18)}</span></div>
+    </div>
+    <div class="chips" id="ct-cats" style="flex-wrap:wrap;margin-top:10px" hidden>${cats.map(k => `<button type="button" class="chip" data-cat="${esc(k)}">${esc(k)}</button>`).join('')}</div>
+    <label class="sw-row" style="margin-top:12px"><input type="checkbox" id="ct-ciego" checked><span class="sw"></span><div><b>Conteo a ciegas</b><small>Quien cuenta no ve cuánto dice el sistema. Así cuenta lo que de verdad hay.</small></div></label>
+    <label class="sw-row"><input type="checkbox" id="ct-orden" checked><span class="sw"></span><div><b>Ordenar por categoría</b><small>Para contar estante por estante.</small></div></label>
+    <label class="fld" style="margin-top:8px"><span>¿Quién cuenta?</span><input id="ct-quien" maxlength="40" value="${esc(S.user ? S.user.nombre : '')}"></label>` });
+  $('#ct-alc', h.el).addEventListener('click', e => {
+    const x = e.target.closest('[data-alc]'); if (!x) return; alc = x.dataset.alc;
+    $$('#ct-alc .ct-op', h.el).forEach(y => y.classList.toggle('on', y === x));
+    $('#ct-cats', h.el).hidden = alc !== 'cats';
+  });
+  $('#ct-cats', h.el).addEventListener('click', e => { const b = e.target.closest('[data-cat]'); if (!b) return; const k = b.dataset.cat; sel.has(k) ? sel.delete(k) : sel.add(k); b.classList.toggle('on', sel.has(k)); });
+  h.botones([{ t: ic('layers', 18) + ' Empezar conteo', cls: 'pri big', fn: async () => {
+    let ids = U.map(p => p.id), etq = 'Todo el inventario';
+    if (alc === 'cats') {
+      if (!sel.size) throw new Error('Elige al menos una categoría');
+      ids = U.filter(p => sel.has(p.categoria || 'Sin categoría')).map(p => p.id); etq = [...sel].join(', ');
+    } else if (alc === 'mov') {
+      const d = await api('inventario', {}, true), mv = new Set((d.productos || []).filter(p => num(p.vendidos30) > 0).map(p => p.id));
+      ids = U.filter(p => mv.has(p.id)).map(p => p.id); etq = 'Vendidos en 30 días';
+      if (!ids.length) throw new Error('No hubo ventas de productos en los últimos 30 días. Elige otra opción.');
+    }
+    const c = { ini: toLocal(new Date()).slice(0, 16), alcance: etq.slice(0, 60), ciego: $('#ct-ciego', h.el).checked, orden: $('#ct-orden', h.el).checked,
+      quien: $('#ct-quien', h.el).value.trim().slice(0, 40), ids, cont: {}, mot: {} };
+    ctGuardar(c); h.cerrar(); conteoContar();
+  } }]);
+}
+
+function conteoContar() {
+  const c = ctLeer(); if (!c) return;
+  const F = ctFilas(c);
+  if (!F.length) { ctBorrar(); toast('Los productos de este conteo ya no existen', 'error'); return; }
+  const chip = (f, v) => v === null ? '<span class="badge b-mut">Sin contar</span>' : c.ciego ? `<span class="badge b-ok">${ic('check', 12)} Contado</span>`
+    : v === f.sis ? `<span class="badge b-ok">${ic('check', 12)} Cuadra</span>` : v < f.sis ? `<span class="badge b-bad">Faltan ${cant(r2(f.sis - v))}</span>` : `<span class="badge b-warn">Sobra${v - f.sis === 1 ? '' : 'n'} ${cant(r2(v - f.sis))}</span>`;
+  const fila = f => { const v = ctVal(c, f.k);
+    return `<div class="li ct-row" data-k="${esc(f.k)}">${avatarProd(f.p)}<div class="tx"><b>${esc(f.p.nombre)}</b><small>${f.v ? esc(etiquetaVar(f.v)) + ' · ' : ''}${c.ciego ? esc(f.p.codigo || f.p.categoria || '') : 'Sistema: ' + cant(f.sis)}</small><div class="ct-chip">${chip(f, v)}</div></div>
+      <input class="ct-in${v === null ? '' : ' lleno'}" inputmode="decimal" enterkeyhint="next" aria-label="Contado de ${esc(ctNombre(f))}" value="${v === null ? '' : esc(String(c.cont[f.k]))}" placeholder="—"></div>`; };
+  let html = '', cat = null;
+  F.forEach(f => {
+    const k = f.p.categoria || 'Sin categoría';
+    if (c.orden && k !== cat) { if (cat !== null) html += '</div>'; cat = k; const n = F.filter(x => (x.p.categoria || 'Sin categoría') === k).length; html += `<div class="sec-t ct-cat" data-cat="${esc(k)}"><h3>${esc(k)}</h3><small class="mut">${n}</small></div><div class="list">`; }
+    else if (!c.orden && cat === null) { cat = ''; html += '<div class="list">'; }
+    html += fila(f);
+  });
+  html += '</div>';
+  const h = hoja({ titulo: 'Contando', full: 1, extra: c.ciego ? '<span class="badge b-info" style="margin-right:6px">A ciegas</span>' : '', html: `
+    <div class="row sp"><small class="mut"><b style="color:var(--ink)" id="ct-n">0 de ${F.length}</b> contados</small><small class="mut">Se guarda en este equipo</small></div>
+    <div class="ct-prog"><i id="ct-bar"></i></div>
+    <div class="srch" style="margin:10px 0">${ic('search', 18)}<input id="ct-q" placeholder="Buscar o escribir el código…" enterkeyhint="search"><button type="button" class="btn icon ghost" id="ct-scan" aria-label="Escanear código">${ic('barcode', 20)}</button></div>
+    <div id="ct-l">${html}</div>` });
+  const prog = () => { const n = F.filter(f => ctVal(c, f.k) !== null).length; $('#ct-n', h.el).textContent = n + ' de ' + F.length; $('#ct-bar', h.el).style.width = Math.round(n / F.length * 100) + '%'; };
+  prog();
+  const porK = {}; F.forEach(f => { porK[f.k] = f; });
+  const lista = $('#ct-l', h.el);
+  lista.addEventListener('input', e => {
+    const inp = e.target.closest('.ct-in'); if (!inp) return;
+    const row = inp.closest('[data-k]'), f = porK[row.dataset.k]; if (!f) return;
+    const t = inp.value.replace(',', '.').trim();
+    if (t === '') delete c.cont[f.k]; else c.cont[f.k] = t;
+    ctGuardar(c);
+    const v = ctVal(c, f.k); inp.classList.toggle('lleno', v !== null);
+    $('.ct-chip', row).innerHTML = chip(f, v); prog();
+  });
+  // Enter pasa al siguiente sin contar
+  lista.addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !e.target.classList.contains('ct-in')) return; e.preventDefault();
+    const ins = $$('.ct-in', lista).filter(x => !x.closest('.ct-row').hidden), i = ins.indexOf(e.target);
+    const sig = ins.slice(i + 1).find(x => x.value === '') || ins[i + 1]; if (sig) { sig.focus(); sig.select(); } else e.target.blur();
+  });
+  const ir = f => { const row = lista.querySelector(`[data-k="${CSS.escape(f.k)}"]`); if (!row) return; $('#ct-q', h.el).value = ''; filtrar(); row.scrollIntoView({ block: 'center' }); const inp = $('.ct-in', row); setTimeout(() => { inp.focus(); inp.select(); }, 60); };
+  const filtrar = () => {
+    const q = norm($('#ct-q', h.el).value);
+    $$('.ct-row', lista).forEach(r => { const f = porK[r.dataset.k]; r.hidden = !!q && !norm(ctNombre(f)).includes(q) && !norm(f.p.codigo || '').includes(q); });
+    $$('.ct-cat', lista).forEach(s => { const l = s.nextElementSibling; const vis = $$('.ct-row', l).some(r => !r.hidden); s.hidden = !vis; l.hidden = !vis; });
+  };
+  $('#ct-q', h.el).addEventListener('input', filtrar);
+  $('#ct-q', h.el).addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return; e.preventDefault();
+    const q = norm(e.target.value); if (!q) return;
+    const f = F.find(x => norm(x.p.codigo || '') === q) || F.find(x => !lista.querySelector(`[data-k="${CSS.escape(x.k)}"]`).hidden);
+    if (f) ir(f); else toast('No está en este conteo', 'error');
+  });
+  $('#ct-scan', h.el).onclick = () => escanearCodigo(cod => { const f = F.find(x => String(x.p.codigo || '') === String(cod)); if (!f) { toast('El código ' + cod + ' no está en este conteo', 'error'); return false; } ir(f); return true; }, true);
+  h.botones([{ t: 'Seguir después', cls: '', fn: () => { h.cerrar(); if (S.vista === 'productos') R.productos(); } },
+    { t: 'Ver diferencias', cls: 'pri', fn: () => {
+      if (!F.some(f => ctVal(c, f.k) !== null)) throw new Error('Todavía no has contado ningún producto');
+      h.cerrar(); conteoResultado();
+    } }]);
+}
+
+function conteoResultado() {
+  const c = ctLeer(); if (!c) return;
+  const F = ctFilas(c), cont = F.filter(f => ctVal(c, f.k) !== null), sin = F.length - cont.length;
+  const dif = cont.map(f => Object.assign({ d: r2(ctVal(c, f.k) - f.sis) }, f)).filter(f => Math.abs(f.d) > 0.0005);
+  const val = f => r2(Math.abs(f.d) * num(f.p.costo));
+  const falt = dif.filter(f => f.d < 0), sob = dif.filter(f => f.d > 0);
+  const fU = falt.reduce((a, f) => a - f.d, 0), fL = falt.reduce((a, f) => a + val(f), 0), sU = sob.reduce((a, f) => a + f.d, 0), sL = sob.reduce((a, f) => a + val(f), 0);
+  const neta = r2(sL - fL), inv = ctUniverso().reduce((a, p) => a + Math.max(0, num(p.stock)) * num(p.costo), 0);
+  const pct = inv > 0 ? Math.abs(neta) / inv * 100 : 0;
+  const motDe = f => c.mot[f.k] || '';
+  const filaD = f => `<div class="li ct-row" data-k="${esc(f.k)}">${avatarProd(f.p)}<div class="tx"><b>${esc(f.p.nombre)}</b><small>${f.v ? esc(etiquetaVar(f.v)) + ' · ' : ''}Sistema ${cant(f.sis)} · contado ${cant(ctVal(c, f.k))}</small>
+      <div class="chips ct-mot" style="margin-top:6px;flex-wrap:wrap">${CT_MOT.map(m => `<button type="button" class="chip ${motDe(f) === m ? 'on' : ''}" data-m="${esc(m)}">${esc(m)}</button>`).join('')}</div></div>
+      <div class="am n" style="text-align:right"><b class="${f.d < 0 ? 'c-bad' : 'c-warn'}">${f.d > 0 ? '+' : '−'}${cant(Math.abs(f.d))}</b><br><small class="${f.d < 0 ? 'c-bad' : 'c-warn'}">${f.d > 0 ? '+' : '−'}${money(val(f))}</small></div></div>`;
+  const h = hoja({ titulo: 'Resultado del conteo', full: 1, html: `
+    <div class="kpis"><div class="kpi" style="--k:#00b56e"><small>Cuadran</small><b>${cont.length - dif.length}</b><i>de ${cont.length} contado${cont.length === 1 ? '' : 's'}</i></div><div class="kpi" style="--k:var(--bad)"><small>Faltan</small><b class="${fL ? 'c-bad' : ''}">${fL ? '−' : ''}${money(fL)}</b><i>${cant(fU)} unidad${fU === 1 ? '' : 'es'} · al costo</i></div></div>
+    <div class="kpis"><div class="kpi" style="--k:var(--warn)"><small>Sobran</small><b>${sL ? '+' : ''}${money(sL)}</b><i>${cant(sU)} unidad${sU === 1 ? '' : 'es'}</i></div><div class="kpi" style="--k:var(--pri)"><small>Diferencia neta</small><b class="${neta < 0 ? 'c-bad' : ''}">${neta < 0 ? '−' : neta > 0 ? '+' : ''}${money(Math.abs(neta))}</b><i>${pct.toFixed(1)} % del inventario</i></div></div>
+    ${sin ? `<div class="aviso warn sm" style="margin-top:12px">${ic('alert', 18)}<div><b>${sin} sin contar.</b> Esos no se cambian. <a data-x="volver" style="color:var(--pri);cursor:pointer">Volver a contar</a></div></div>` : ''}
+    ${dif.length ? `<div class="sec-t"><h3>Diferencias</h3><small class="mut">¿Por qué?</small></div><div class="list" id="ct-dif">${dif.map(filaD).join('')}</div>`
+      : `<div class="empty" style="margin-top:14px">${ic('check', 22)}<br>Todo lo contado cuadra con lo registrado</div>`}
+    <div class="aviso info sm" style="margin-top:12px">${ic('info', 18)}<div>Al aplicar, las existencias quedan como las contaste. Cada ajuste queda en el historial del producto como «Conteo físico», con el motivo y quién contó.</div></div>` });
+  h.b.addEventListener('click', e => {
+    if (e.target.closest('[data-x="volver"]')) { h.cerrar(); conteoContar(); return; }
+    const b = e.target.closest('[data-m]'); if (!b) return;
+    const k = b.closest('[data-k]').dataset.k; c.mot[k] = c.mot[k] === b.dataset.m ? '' : b.dataset.m; ctGuardar(c);
+    $$('[data-m]', b.parentNode).forEach(x => x.classList.toggle('on', x.dataset.m === c.mot[k]));
+  });
+  const texto = () => [`*Conteo de inventario · ${S.config.nombre || 'Mi negocio'}*`, `${fFechaC(hoy())} · contó ${c.quien || (S.user && S.user.nombre) || ''}${c.ciego ? ' (a ciegas)' : ''}`, `${c.alcance}`,
+    `Contados: ${cont.length} · Cuadran: ${cont.length - dif.length}${sin ? ' · Sin contar: ' + sin : ''}`, `Faltan: ${cant(fU)} (${money(fL)}) · Sobran: ${cant(sU)} (${money(sL)})`, `Diferencia neta: ${neta < 0 ? '−' : ''}${money(Math.abs(neta))}`]
+    .concat(dif.length ? ['', 'Diferencias:'].concat(dif.slice(0, 40).map(f => `• ${ctNombre(f)}: ${f.d > 0 ? '+' : '−'}${cant(Math.abs(f.d))}${motDe(f) ? ' (' + motDe(f) + ')' : ''}`)) : []).join('\n');
+  h.botones([{ t: ic('wa', 18) + ' Enviar', cls: 'wa', fn: () => { window.open('https://wa.me/?text=' + encodeURIComponent(texto()), '_blank'); } },
+    { t: dif.length ? `Aplicar ${dif.length} ajuste${dif.length === 1 ? '' : 's'}` : 'Guardar conteo', cls: 'pri', fn: async () => {
+      if (dif.length && !(await confirmar(`Las existencias de ${dif.length === 1 ? '1 producto' : dif.length + ' productos'} van a quedar como las contaste. ¿Aplicar?`, { si: 'Aplicar' }))) return;
+      const r = await apiUna(h, 'conteoAplicar', { lineas: cont.map(f => ({ id: f.id, v: f.v, c: ctVal(c, f.k), m: c.mot[f.k] || '' })), alcance: c.alcance, ciego: !!c.ciego, quien: c.quien, sinContar: sin });
+      S.productos = r.productos; S.ultimoConteo = r.conteo; S.inicio = null; guardarCache(); ctBorrar();
+      toast(dif.length ? 'Conteo aplicado: existencias al día' : 'Conteo guardado: todo cuadró', 'ok', 4000);
+      h.botones([{ t: ic('wa', 18) + ' Enviar resumen', cls: 'wa', fn: () => { window.open('https://wa.me/?text=' + encodeURIComponent(texto()), '_blank'); } }, { t: 'Listo', cls: 'pri', fn: () => h.cerrar() }]);
+      h.b.insertAdjacentHTML('afterbegin', `<div class="aviso ok sm" style="margin-bottom:12px">${ic('check', 18)}<div><b>${dif.length ? 'Ajustes aplicados.' : 'Conteo guardado.'}</b> Lo puedes ver de nuevo en Productos › historial de conteos.</div></div>`);
+      $$('.ct-mot', h.el).forEach(x => { x.style.pointerEvents = 'none'; });
+      if (S.vista === 'productos') R.productos(); else if (S.vista === 'inicio') R.inicio();
+    } }]);
+}
+
+ACC.conteoHist = async () => {
+  const l = await api('conteos', {});
+  const h = hoja({ titulo: 'Historial de conteos', html: l.length ? `<div class="list">${l.map(x => { const neta = r2(num(x.sobranL) - num(x.faltanL));
+    return `<div class="li ch" data-id="${esc(x.id)}"><div class="av ${x.dif ? 't-rojo' : 't-verde'}">${ic(x.dif ? 'alert' : 'check', 18)}</div><div class="tx"><b>${esc(fFechaC(String(x.fecha).slice(0, 10)))} · ${esc(x.quien)}</b><small>${esc(x.alcance)} · ${x.contados} contado${x.contados === 1 ? '' : 's'}${x.ciego ? ' · a ciegas' : ''}</small><small>${x.dif ? x.dif + (x.dif === 1 ? ' diferencia' : ' diferencias') : 'Todo cuadró'}</small></div><div class="am n ${neta < 0 ? 'c-bad' : ''}">${neta ? (neta < 0 ? '−' : '+') + money(Math.abs(neta)) : '—'}</div></div>`; }).join('')}</div>`
+    : '<div class="empty">Todavía no hay conteos</div>' });
+  h.b.onclick = async e => {
+    const x = e.target.closest('[data-id]'); if (!x) return;
+    const c = l.find(y => y.id === x.dataset.id), d = await api('conteoDetalle', { id: c.id });
+    const h2 = hoja({ titulo: 'Conteo del ' + fFechaC(String(c.fecha).slice(0, 10)), html: `<p class="sm mut" style="margin:0 0 10px">${esc(c.alcance)} · contó ${esc(c.quien)}${c.ciego ? ' (a ciegas)' : ''} · aplicó ${esc(c.por)}</p>
+      <div class="kpis"><div class="kpi" style="--k:#00b56e"><small>Cuadraron</small><b>${c.cuadran}</b><i>de ${c.contados}</i></div><div class="kpi" style="--k:var(--bad)"><small>Faltaron</small><b class="${c.faltanL ? 'c-bad' : ''}">${c.faltanL ? '−' : ''}${money(c.faltanL)}</b><i>${cant(c.faltanU)} u.</i></div><div class="kpi" style="--k:var(--warn)"><small>Sobraron</small><b>${money(c.sobranL)}</b><i>${cant(c.sobranU)} u.</i></div></div>
+      ${d.length ? `<div class="list" style="margin-top:10px">${d.map(m => `<div class="li"><div class="tx"><b>${esc(m.nombre)}${m.variante ? ' · ' + esc(etiquetaVar(m.variante)) : ''}</b><small>${m.motivo ? esc(m.motivo) : 'Sin motivo'} · quedó en ${cant(m.stock)}</small></div><div class="am n" style="text-align:right"><b class="${m.cantidad < 0 ? 'c-bad' : 'c-warn'}">${m.cantidad > 0 ? '+' : '−'}${cant(Math.abs(m.cantidad))}</b><br><small class="mut">${money(m.valor)}</small></div></div>`).join('')}</div>` : '<div class="empty">Todo cuadró: no hubo ajustes</div>'}` });
+  };
 };
 async function kardex(p) {
   const l = await api('kardex', { id: p.id });
@@ -11345,6 +11747,10 @@ ACC.pasosOcultar = () => { const st = LS.json(pasosKey(), {}) || {}; st.oculta =
 ACC.pasosFin = () => { const st = LS.json(pasosKey(), {}) || {}; st.fin = 1; LS.set(pasosKey(), JSON.stringify(st)); const c = $('#pp-card'); if (c) c.remove(); };
 
 const NOVEDADES = [
+  { v: '1.9.93', fecha: '2026-11-24', items: [
+    { i: 'layers', t: 'Conteo físico de inventario', d: 'En Productos, toca «Contar inventario»: elige si cuentas todo, unas categorías o lo que más se vende, escribe o escanea cuántos hay de cada producto y el programa te dice qué cuadra, qué falta y qué sobra, en lempiras. Con un toque dejas las existencias como las contaste.', ir: 'productos' },
+    { i: 'eye', t: 'Conteo a ciegas e historial', d: 'Si lo activas, quien cuenta no ve cuánto dice el sistema, para que cuente lo que de verdad hay. Puedes dejar el conteo a medias y seguir después, ponerle el motivo a cada diferencia y ver todos tus conteos en el historial.', ir: 'productos' }
+  ] },
   { v: '1.9.92', fecha: '2026-11-19', items: [
     { i: 'check', t: 'Revisión completa: cobros y existencias más exactos', d: 'Revisamos todo el programa y corregimos varios detalles: el precio propio de una talla, tono o presentación se respeta al cobrar; en Mesas, lo que se agrega mientras se cobra ya no se pierde; un abono, gasto, compra o cierre no se registra dos veces si falla la señal; y al guardar un producto con tallas no se cambian sus existencias si no las tocaste.' },
     { i: 'coin', t: 'Lo cobrado sale el día en que entró el dinero', d: 'Si una venta estaba al crédito y la cambias a pagada otro día, ese cobro ahora aparece en Reportes (Diario y Cobrado) el día en que la cobraste.' }

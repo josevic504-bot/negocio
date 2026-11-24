@@ -398,6 +398,9 @@ function rutaUsuario_(a, u, d, req) {
     case 'cuentaProveedor': return cuentaProveedor_(u, d);
     case 'ajusteStock':     return lock_(() => unaVez_('aj', d, () => ajusteStock_(u, d)));
     case 'kardex':          return kardex_(u, d);
+    case 'conteoAplicar':   return lock_(() => unaVez_('ct', d, () => conteoAplicar_(u, d)));
+    case 'conteoDetalle':   return conteoDetalle_(u, d);
+    case 'conteos':         return conteos_(u);
     case 'gastos':          return gastos_(u, d);
     case 'guardarGasto':    return lock_(() => d && d.registro && !d.registro.id ? unaVez_('ga', d, () => guardarGasto_(u, d)) : guardarGasto_(u, d));
     case 'anularGasto':     return lock_(() => anularGasto_(u, d));
@@ -1135,6 +1138,7 @@ function bootstrap_(u, d) {
     version: VERSION,
     sar: estadoSAR_()
   };
+  if (u.rol === 'admin' || u.rol === 'bodega') { const hc = parseJ_(r.config.sysConteos, []); r.ultimoConteo = Array.isArray(hc) && hc[0] ? hc[0] : null; } // para el botón «Contar inventario»
   sinInternos_(r.config);
   if (MULTI_NEGOCIO && NEG) { try { const dsf = licDesfase_(r.config), upd = Object.assign({ ultimaConexion: ahora_().replace('T', ' ') }, dsf); if (d && d.app) upd.version = String(d.app).slice(0, 12); if (d && d.vid && !NEG.lic.vid && u.rol === 'admin') upd.vid = String(d.vid).replace(/[^A-Za-z0-9]/g, '').slice(0, 24); mSet_('Licencias', NEG.lic, Object.assign(upd, usoLic_())); if (Object.keys(dsf).length) CacheService.getScriptCache().remove('L_' + NEG.id); } catch (e) {} }
   if (MULTI_NEGOCIO && NEG) { try { r.enlace = enlaceAsegurar_(NEG.lic); } catch (e) { r.enlace = ''; } }
@@ -2766,7 +2770,7 @@ function panelImportar_(d) {
   if (!filas.length) throw new Error('La hoja no tiene productos');
   const prods = rows_('Productos'), porCod = {}, porNom = {};
   prods.forEach(p => { if (p.codigo) porCod[String(p.codigo).toLowerCase()] = p; porNom[String(p.nombre).trim().toLowerCase()] = p; });
-  const n_ = x => { const v = Number(String(x === undefined || x === null ? '' : x).replace(/[^\d.\-]/g, '')); return isFinite(v) ? v : NaN; };
+  const n_ = numImp_, catDef = txt_(d.catDefecto, 40);
   const vacio = x => x === undefined || x === null || String(x).trim() === '';
   const res = { nuevos: 0, actualizados: 0, errores: [], lista: [] }, plan = [], vistos = {};
   filas.forEach((f, i) => {
@@ -2774,14 +2778,16 @@ function panelImportar_(d) {
     try {
       if (!nombre) throw new Error('falta el nombre');
       const clave = nombre.toLowerCase(); if (vistos[clave]) throw new Error('está repetido (fila ' + vistos[clave] + ')'); vistos[clave] = fila;
-      const categoria = txt_(f.categoria, 40); if (!categoria) throw new Error('falta la categoría');
-      const precio = n_(f.precio); if (!(precio > 0)) throw new Error('falta el precio');
-      const costo = vacio(f.costo) ? null : n_(f.costo); if (costo !== null && !(costo >= 0)) throw new Error('el costo no es válido');
-      const exist = vacio(f.existencia) ? null : n_(f.existencia); if (exist !== null && !(exist >= 0)) throw new Error('la existencia no es válida');
+      const categoria = txt_(f.categoria, 40) || catDef; if (!categoria) throw new Error('falta la categoría');
+      if (vacio(f.precio)) throw new Error('falta el precio');
+      const precio = n_(f.precio, true); if (isNaN(precio)) throw new Error('el precio «' + String(f.precio).slice(0, 20) + '» no se entiende'); if (!(precio > 0)) throw new Error('el precio debe ser mayor que cero');
+      const costo = vacio(f.costo) ? null : n_(f.costo); if (costo !== null && !(costo >= 0)) throw new Error('el costo «' + String(f.costo).slice(0, 20) + '» no se entiende');
+      const exist = vacio(f.existencia) ? null : n_(f.existencia); if (exist !== null && !(exist >= 0)) throw new Error('la existencia «' + String(f.existencia).slice(0, 20) + '» no se entiende');
       const codigo = txt_(f.codigo, 40);
       const opciones = opciones_([[f.op1, f.val1], [f.op2, f.val2], [f.op3, f.val3]].filter(x => !vacio(x[0]) && !vacio(x[1])).map(x => txt_(x[0], 30) + ': ' + String(x[1])).join('|'));
       const ex = (codigo && porCod[codigo.toLowerCase()]) || porNom[clave] || null;
       const reg = { nombre: nombre, categoria: categoria, precio: r2_(precio), tienda: !/^no$/i.test(String(f.tienda || '').trim()) };
+      if (!txt_(f.categoria, 40)) reg._catDef = 1;
       if (ex && vacio(f.tienda)) delete reg.tienda; // columna vacía en un producto que ya existe: se respeta si el dueño lo tenía oculto de la tienda
       if (ex) reg.id = ex.id;
       if (codigo) reg.codigo = codigo;
@@ -2789,7 +2795,7 @@ function panelImportar_(d) {
       if (opciones) reg.opciones = opciones;
       ['sub', 'lema', 'descripcion'].forEach(k => { if (!vacio(f[k])) reg[k] = txt_(f[k], k === 'descripcion' ? 300 : 90); });
       if (!vacio(f.puntos)) reg.puntos = String(f.puntos).split(/\||\n/).map(x => txt_(x, 80)).filter(Boolean).slice(0, 6).join('|');
-      if (!vacio(f.precioEsp)) { reg.precioEsp = r2_(n_(f.precioEsp) || 0); reg.minEsp = Math.floor(n_(f.minEsp) || 0); if (reg.precioEsp > 0 && reg.minEsp < 2) throw new Error('falta desde cuántas piezas vale el precio especial'); if (reg.precioEsp >= reg.precio) throw new Error('el precio especial debe ser menor que el normal'); }
+      if (!vacio(f.precioEsp)) { reg.precioEsp = r2_(n_(f.precioEsp, true) || 0); reg.minEsp = Math.floor(n_(f.minEsp) || 0); if (reg.precioEsp > 0 && reg.minEsp < 2) throw new Error('falta desde cuántas piezas vale el precio especial'); if (reg.precioEsp >= reg.precio) throw new Error('el precio especial debe ser menor que el normal'); }
       // Precio y existencia por opción: «50 ml = 450; 100 ml = 650» · con dos opciones «M / Negro = 3»
       const base = { nombre: nombre, opciones: opciones || (ex ? ex.opciones : '') }, por = {};
       [['preciosOp', 'p'], ['existOp', 's']].forEach(([col, campo]) => {
@@ -2810,7 +2816,7 @@ function panelImportar_(d) {
   res.nuevos = plan.filter(x => !x.ex).length; res.actualizados = plan.length - res.nuevos;
   res.lista = plan.slice(0, 400).map(x => { const r = x.reg, V = r.variantes, ops = opsDe_(r.opciones ? r : (x.ex || {}));
     let ex = x.exist; if (V) ex = Object.keys(V).reduce((a, k) => a + Number(V[k].s || 0), 0);
-    return { fila: x.fila, nombre: r.nombre, categoria: r.categoria, precio: r.precio, existencia: ex, nuevo: !x.ex,
+    return { fila: x.fila, nombre: r.nombre, categoria: r.categoria, catDef: !!r._catDef, precio: r.precio, existencia: ex, nuevo: !x.ex,
       det: [ops.map(o => o.v.length + ' ' + o.n.toLowerCase()).join(' · '), r.precioEsp ? 'esp. ' + r.precioEsp + ' desde ' + r.minEsp : '', V && Object.keys(V).some(k => V[k].p > 0) ? 'precio por opción' : ''].filter(Boolean).join(' · ') }; });
   if (d.revisar) return res;
   const adm = rows_('Usuarios').find(x => x.rol === 'admin' && x.activo && !x.sucursal) || rows_('Usuarios').find(x => x.rol === 'admin' && x.activo) || rows_('Usuarios').find(x => x.rol === 'admin');
@@ -2818,7 +2824,7 @@ function panelImportar_(d) {
   let hechos = 0;
   plan.forEach(x => {
     try {
-      const reg = Object.assign({}, x.reg); if (reg.variantes) reg.variantes = JSON.stringify(reg.variantes);
+      const reg = Object.assign({}, x.reg); if (reg.variantes) reg.variantes = JSON.stringify(reg.variantes); delete reg._catDef;
       if (!x.ex && x.exist !== null) reg.stock = x.exist;
       const g = guardar_(adm, { entidad: 'Productos', registro: reg });
       if (x.ex && x.exist !== null && !varsDe_(g) && g.tipo === 'producto' && Math.abs(Number(g.stock) - x.exist) > 0.0005) ajusteStock_(adm, { id: g.id, modo: 'conteo', cantidad: x.exist, motivo: 'Carga desde Excel' });
@@ -2826,7 +2832,23 @@ function panelImportar_(d) {
     } catch (e) { res.errores.push({ fila: x.fila, nombre: x.reg.nombre, error: e.message }); }
   });
   res.cargados = hechos;
+  if (hechos) try { mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: 'Carga desde Excel · ' + hechos + ' producto' + (hechos === 1 ? '' : 's') + ' (' + res.nuevos + ' nuevos, ' + res.actualizados + ' actualizados)' + (res.errores.length ? ' · ' + res.errores.length + ' con error' : '') }); } catch (e) {}
   return res;
+}
+/* Números que vienen del Excel del cliente: «L 1,200.50», «1.200,50», «1,200», «12,5». Si un texto no se entiende devuelve NaN.
+   En precios (estricto), «1.200» con un solo punto y tres cifras puede ser mil doscientos o uno punto dos: se rechaza para no guardar un precio equivocado.
+   En costos y existencias el punto es decimal (12.125), como se escribe en Honduras. */
+function numImp_(x, estricto) {
+  if (typeof x === 'number') return isFinite(x) ? x : NaN;
+  let s = String(x === undefined || x === null ? '' : x).trim().replace(/[^\d.,\-]/g, '');
+  if (!/\d/.test(s)) return NaN;
+  const neg = s.charAt(0) === '-'; s = s.replace(/-/g, '');
+  const uP = s.lastIndexOf('.'), uC = s.lastIndexOf(',');
+  if (uP >= 0 && uC >= 0) { const dec = uP > uC ? '.' : ','; s = s.split(dec === '.' ? ',' : '.').join(''); if (dec === ',') s = s.replace(',', '.'); }
+  else if (uC >= 0) s = /^\d{1,3}(,\d{3})+$/.test(s) ? s.split(',').join('') : s.split(',').length === 2 ? s.replace(',', '.') : 'x';
+  else if (uP >= 0 && s.split('.').length > 2) s = /^\d{1,3}(\.\d{3})+$/.test(s) ? s.split('.').join('') : 'x';
+  else if (estricto && /^[1-9]\d{0,2}\.\d{3}$/.test(s)) throw new Error('«' + String(x).trim().slice(0, 20) + '» puede ser mil o uno con decimales: escríbelo sin punto (1200) o con dos decimales (1.20)');
+  const v = Number(s); return isFinite(v) ? (neg ? -v : v) : NaN;
 }
 function licDe_(id) { const l = mRows_('Licencias').find(x => x.id === id); if (!l) throw new Error('Ese negocio no existe'); return l; }
 function panelNegocio_(d) {
@@ -3858,6 +3880,54 @@ function kardex_(u, d) {
   const us = porId_(rows_('Usuarios'));
   return desc_(rows_('Inventario').filter(m => m.productoId === d.id), 'fecha').slice(0, 200)
     .map(m => { m.usuario = us[m.usuarioId] ? us[m.usuarioId].nombre : ''; return m; });
+}
+
+/* ---- Conteo físico de inventario (1.9.93): se cuentan varios productos y se ajusta de una vez lo que no cuadra ----
+   d.lineas: [{ id, v: opción ('' si el producto no tiene), c: lo contado, m: motivo }]. Lo que no se contó no se toca.
+   Cada diferencia queda en el historial del producto como «ajuste» con refId = id del conteo (y entra a la contabilidad como cualquier ajuste).
+   El resumen de los últimos 20 conteos se guarda en Config.sysConteos (no lo puede cambiar el cliente: no está en CONFIG_EDITABLE). */
+const MOT_CONTEO = ['Dañado', 'Pérdida', 'Vencido', 'Error de registro', 'Otro'];
+function conteoAplicar_(u, d) {
+  req_(u, ['admin','bodega']);
+  const L = Array.isArray(d.lineas) ? d.lineas.slice(0, 3000) : [];
+  if (!L.length) throw new Error('No contaste ningún producto');
+  const pm = porId_(rows_('Productos')), actA = girosActivos_(), fijaA = tiendaAsignada_(u, actA);
+  const id = 'CT' + Date.now().toString(36).toUpperCase(), vistos = {}, porMot = {}, costos = {};
+  const R = { cuadran: 0, faltanU: 0, faltanL: 0, sobranU: 0, sobranL: 0, dif: 0 };
+  L.forEach(x => {
+    const p = pm[x && x.id];
+    if (!p || p.tipo !== 'producto') throw new Error('Un producto del conteo ya no existe o no lleva existencias. Cierra el conteo y vuelve a abrirlo.');
+    if (fijaA && giroDeProd_(p, actA) !== fijaA) throw new Error('«' + p.nombre + '» es de otra tienda');
+    const V = varsDe_(p), vk = V ? varKey_(p, x.v) : '';
+    if (V && !vk) throw new Error('Falta la opción de «' + p.nombre + '» (talla, tono…)');
+    const k = p.id + (vk ? SEPV + vk : '');
+    if (vistos[k]) return; vistos[k] = 1;
+    if (!esNum_(x.c)) throw new Error('Revisa lo contado de «' + p.nombre + '»');
+    const c = r3_(x.c); if (!(c >= 0)) throw new Error('Lo contado de «' + p.nombre + '» no es válido');
+    const base = vk ? Number(V[vk] && V[vk].s) || 0 : Number(p.stock) || 0, delta = r3_(c - base);
+    if (!delta) { R.cuadran++; return; }
+    const val = r2_(Math.abs(delta) * (Number(p.costo) || 0)), mot = MOT_CONTEO.indexOf(x.m) >= 0 ? x.m : '';
+    if (delta < 0) { R.faltanU = r3_(R.faltanU - delta); R.faltanL = r2_(R.faltanL + val); } else { R.sobranU = r3_(R.sobranU + delta); R.sobranL = r2_(R.sobranL + val); }
+    R.dif++; costos[p.id] = p.costo;
+    (porMot[mot] = porMot[mot] || {})[k] = delta;
+  });
+  // Un movimiento por motivo (el kardex dice por qué); moverStock_ vuelve a leer las existencias en cada llamada
+  Object.keys(porMot).forEach(m => moverStock_(porMot[m], 'ajuste', id, u, 'Conteo físico' + (m ? ' · ' + m : ''), undefined, costos));
+  let hist = parseJ_(config_().sysConteos, []); if (!Array.isArray(hist)) hist = [];
+  const res = Object.assign({ id: id, fecha: ahora_(), quien: txt_(d.quien, 40) || u.nombre, por: u.nombre, alcance: txt_(d.alcance, 60) || 'Todo el inventario',
+    ciego: d.ciego === true, contados: Object.keys(vistos).length, sinContar: Math.max(0, Math.floor(Number(d.sinContar) || 0)), tienda: fijaA || '' }, R);
+  hist = [res].concat(hist).slice(0, 20);
+  guardarConfig_({ sysConteos: JSON.stringify(hist) });
+  return { conteo: res, conteos: hist, productos: rows_('Productos') };
+}
+function conteos_(u) { req_(u, ['admin','bodega']); const h = parseJ_(config_().sysConteos, []); return Array.isArray(h) ? h : []; }
+// Las diferencias de un conteo ya aplicado (para verlo de nuevo desde el historial)
+function conteoDetalle_(u, d) {
+  req_(u, ['admin','bodega']);
+  const id = txt_(d.id, 30); if (!/^CT[0-9A-Z]+$/.test(id)) throw new Error('Conteo no válido');
+  const pm = porId_(rows_('Productos'));
+  return rows_('Inventario').filter(m => m.refId === id).map(m => { const p = pm[m.productoId] || {}, c = Number(m.cantidad) || 0;
+    return { nombre: p.nombre || 'Producto borrado', variante: m.variante || '', cantidad: c, valor: r2_(Math.abs(c) * (Number(m.costo) || 0)), motivo: String(m.nota || '').replace(/^Conteo físico( · )?/, ''), stock: m.stock }; });
 }
 
 /* ===================== VENTAS ===================== */
