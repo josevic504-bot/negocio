@@ -1437,6 +1437,7 @@ html.av-on body{padding-top:calc(34px + env(safe-area-inset-top))}html.av-on .ba
 .imp-col{display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1.1fr);align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid var(--line)}.imp-col:last-of-type{border-bottom:0}
 .imp-col .de{min-width:0}.imp-col .de b{display:block;font-family:ui-monospace,Consolas,monospace;font-size:12.5px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.imp-col .de small{display:block;font-size:11.5px;color:var(--mut);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .imp-col .fl{color:var(--mut)}.imp-col select{width:100%;font:500 14px var(--font);padding:7px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink)}.imp-col select.ok{border-color:color-mix(in srgb,var(--ok) 55%,transparent)}.imp-col select.no{color:var(--mut);border-style:dashed}
+.in-demo{margin:14px 0 2px;font-weight:600}
 </style>
 <script src="visitas.js?v=3" defer></script>
 </head>
@@ -2201,6 +2202,7 @@ function ir(v, params, sinHist) {
   S.charts = {};
   const cambio = S.vista !== v;
   S.vista = v; S.params = params || {};
+  if (cambio) demoContarVista();
   try { if (!sinHist && location.hash.slice(1) !== v) history.replaceState(null, '', '#' + v); } catch (e) {}
   if (cambio) { const m = $('#main'); if (m) m.innerHTML = '<div class="empty">Cargando…</div>'; } // nunca queda a la vista la pantalla anterior
   render();
@@ -2616,8 +2618,9 @@ function pintarIntro() {
     <div class="lg-card"><div class="in-wrap"><div class="in-track" style="transform:translateX(-${n * 100}%)">${INTRO.map(s => `<div class="in-sl"><div class="in-vis"><div class="in-ico">${ic(s.i, 18)}</div>${s.v()}</div><h3>${s.t}${s.plus ? ' <span class="in-plus">PLUS</span>' : ''}</h3><p>${s.p}</p></div>`).join('')}</div></div>
     <div class="in-dots">${INTRO.map((_, k) => `<i class="${k === n ? 'on' : ''}"></i>`).join('')}</div>
     <button class="btn pri big" data-a="introFin" style="width:100%">${ic('sparkle')} Crear mi cuenta gratis</button>
-    <div class="in-nav" style="margin-top:8px">${DEMO.on ? '' : `<button class="btn big" data-a="verDemo">Verlo por dentro</button>`}${last ? '' : `<button class="btn big" data-a="introSig">Siguiente ${ic('right', 18)}</button>`}</div>
-    <button class="btn ghost big" data-a="lmodo" data-m="ing" style="margin-top:6px">Ya tengo cuenta · Ingresar</button></div>${creditoHTML()}`;
+    ${last ? '' : `<div class="in-nav" style="margin-top:8px"><button class="btn big" data-a="introSig" style="flex:1">Siguiente ${ic('right', 18)}</button></div>`}
+    <button class="btn ghost big" data-a="lmodo" data-m="ing" style="margin-top:6px">Ya tengo cuenta · Ingresar</button>
+    ${DEMO.on ? '' : `<button type="button" class="in-link in-demo" data-a="verDemo">${ic('eye', 15)} ¿Primero quieres verlo? Mira un negocio de ejemplo</button>`}</div>${creditoHTML()}`;
   const w = $('#login .in-wrap'); let x0 = null;
   w.addEventListener('touchstart', e => { x0 = e.touches[0].clientX; }, { passive: true });
   w.addEventListener('touchend', e => { if (x0 == null) return; const dx = e.changedTouches[0].clientX - x0; x0 = null;
@@ -2629,9 +2632,31 @@ ACC.introSig = () => { S.introN = Math.min(INTRO.length - 1, (S.introN || 0) + 1
 const pasoReg = p => { if (DEMO.on) return; try { (window.mvq = window.mvq || []).push('r-' + p); } catch (e) {} };
 // «Verlo por dentro»: abre el negocio de ejemplo sin registrarse y deja a la mano el botón para crear la cuenta
 ACC.verDemo = () => { pasoReg('demo'); LS.set('demoVisita', '1'); LS.set('modo', 'demo'); try { sessionStorage.setItem(LS_NS + 'demoDirecto', '1'); } catch (e) {} location.replace(location.pathname); };
-ACC.demoCrear = () => { LS.del('demoVisita'); LS.set('volvioDemo', '1'); LS.set('introVisto', '1'); LS.set('modo', 'real'); try { sessionStorage.removeItem(LS_NS + 'modoSes'); } catch (e) {} location.replace(location.pathname); };
+ACC.demoCrear = () => { LS.del('demoVisita'); LS.del('demoAvisoVisto'); LS.set('volvioDemo', '1'); LS.set('introVisto', '1'); LS.set('modo', 'real'); try { sessionStorage.removeItem(LS_NS + 'modoSes'); } catch (e) {} location.replace(location.pathname); };
+ACC.demoCrearBarra = () => { pasoDemo('demo-crear'); ACC.demoCrear(); };
 ACC.demoCtaX = () => { LS.del('demoVisita'); const c = $('#demo-cta'); if (c) c.remove(); };
-function demoCta() { if (!DEMO.on || !LS.get('demoVisita', '') || $('#demo-cta')) return; const d = document.createElement('div'); d.id = 'demo-cta'; d.innerHTML = '<span>Este es un negocio de ejemplo</span><button class="btn pri" data-a="demoCrear">Crear mi cuenta gratis</button><button class="x" data-a="demoCtaX" aria-label="Cerrar">×</button>'; document.body.appendChild(d); }
+function demoCta() { if (!DEMO.on || !LS.get('demoVisita', '') || $('#demo-cta')) return; demoContarVista(); const d = document.createElement('div'); d.id = 'demo-cta'; d.innerHTML = '<span>Este es un negocio de ejemplo</span><button class="btn pri" data-a="demoCrearBarra">Crear mi cuenta gratis</button><button class="x" data-a="demoCtaX" aria-label="Cerrar">×</button>'; document.body.appendChild(d); }
+/* Negocio de ejemplo (nov 2026): después de ver 3 pantallas, o al minuto, sale una sola vez la invitación a crear la cuenta.
+   Se mide aparte: r-demo-aviso (se mostró) y r-demo-crear (tocó crear desde la demostración). */
+const pasoDemo = p => { try { (window.mvq = window.mvq || []).push('r-' + p); } catch (e) {} };
+let demoAvT = null;
+function demoAvisoCuenta(motivo) {
+  if (!DEMO.on || !LS.get('demoVisita', '') || LS.get('demoAvisoVisto', '') || PILA.length) return;
+  LS.set('demoAvisoVisto', '1'); clearTimeout(demoAvT); pasoDemo('demo-aviso');
+  const h = hoja({ titulo: '¿Te gustó lo que viste?', cls: 'chica', html: `<p class="sm" style="margin:0 0 12px">Así se vería <b>tu</b> negocio. Crea tu cuenta y empieza con tus propios productos.</p>
+    <div class="list">
+      <div class="li"><div class="av t-pri">${ic('box', 18)}</div><div class="tx"><b>Tus productos y tus precios</b><small>Elige tu tipo de negocio y la app se adapta</small></div></div>
+      <div class="li"><div class="av t-cian">${ic('globe', 18)}</div><div class="tx"><b>Tu propia tienda en línea</b><small>Un enlace para compartir por WhatsApp</small></div></div>
+      <div class="li"><div class="av t-verde">${ic('check', 18)}</div><div class="tx"><b>Gratis ${esc(promoPrueba() || DIAS_PRUEBA_REG + ' días')}</b><small>Sin tarjeta · tu cuenta en 1 minuto</small></div></div>
+    </div>` });
+  h.botones([{ t: 'Seguir viendo', cls: '', fn: () => h.cerrar() }, { t: ic('sparkle', 16) + ' Crear mi cuenta gratis', cls: 'pri', fn: () => { pasoDemo('demo-crear'); ACC.demoCrear(); } }]);
+}
+function demoContarVista() {
+  if (!DEMO.on || !LS.get('demoVisita', '') || LS.get('demoAvisoVisto', '')) return;
+  S.demoVistas = (S.demoVistas || 0) + 1;
+  if (!demoAvT) demoAvT = setTimeout(() => demoAvisoCuenta('tiempo'), 60000);
+  if (S.demoVistas >= 4) setTimeout(() => demoAvisoCuenta('vistas'), 900); // la 1.ª es Inicio: 3 pantallas vistas después
+}
 ACC.introFin = () => { S.introVista = 1; LS.set('introVisto', '1'); S.lmodo = 'reg'; S.lmodoElegido = 1; pintarLogin(); window.scrollTo(0, 0); };
 ACC.introVer = () => { S.lmodo = 'intro'; S.introN = 0; pintarLogin(); window.scrollTo(0, 0); };
 async function ingresar(ev) {
