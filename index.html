@@ -12304,7 +12304,7 @@ function enAppInstalada() {
 }
 let APK_OK = null;
 async function ofrecerApk() {
-  if (!/Android/i.test(navigator.userAgent) || enAppInstalada() || S.enTienda || $('#apk-bar')) return;
+  if (!/Android/i.test(navigator.userAgent) || enAppInstalada() || S.enTienda || DEMO.on || $('#apk-bar')) return; // en el negocio de ejemplo la invitación es a crear la cuenta, no a descargar
   if (!/^https?:$/.test(location.protocol)) return;
   if (Date.now() - num(LS.get('apkNo', '0')) < APK_PAUSA) return;
   if (APK_OK === null) {
