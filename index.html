@@ -80,6 +80,7 @@ body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{paddin
 .pn-it>.ic{color:var(--mut)}.pn-it>.av{flex:none}
 .pn-ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;color:var(--ink)}
 .pn-n{background:var(--pri);color:#fff;border-radius:10px;font-size:12px;font-weight:700;padding:2px 8px}
+.pn-cobro{display:block;height:5px;border-radius:4px;background:var(--line);margin-top:6px;overflow:hidden}.pn-cobro>span{display:block;height:100%;border-radius:4px}
 .pn-vacio{display:flex;align-items:center;gap:8px;padding:14px;color:var(--mut);font-size:13.5px;cursor:default}button.pn-vacio{cursor:pointer}
 .pn-bars{display:flex;align-items:flex-end;gap:8px;padding:12px 14px 10px}
 .pn-bars>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--mut)}.pn-bars em{font-style:normal;font-size:11px}
@@ -3379,7 +3380,7 @@ ACC.panelMensajes = async () => {
 const PN_TABS = [['dash', 'Dashboard'], ['cli', 'Clientes'], ['mkt', 'Marketing'], ['resp', 'Respaldos']];
 const diasDesdeF = f => { const t = Date.parse(String(f || '').slice(0, 10) + 'T00:00:00'); return isFinite(t) ? Math.floor((Date.now() - t) / 86400000) : 999; };
 const pnInact7 = d => (d.eliminadas || []).filter(x => x.inactivo && !x.purgado && diasDesdeF(x.fecha) <= 7);
-const pnPendN = d => (d.comprobantes || []).length + (d.soporteSin || 0) + (d.sinPago || []).length + (d.eliminadas || []).filter(x => !x.purgado && !x.inactivo).length + (pnInact7(d).length ? 1 : 0) + (d.avisosCli || []).filter(x => !/eliminó su cuenta/.test(x.nota)).length;
+const pnPendN = d => (d.comprobantes || []).length + (d.soporteSin || 0) + (d.sinPago || []).length + (d.porCobrar || []).filter(x => x.atrasado).length + (d.eliminadas || []).filter(x => !x.purgado && !x.inactivo).length + (pnInact7(d).length ? 1 : 0) + (d.avisosCli || []).filter(x => !/eliminó su cuenta/.test(x.nota)).length;
 function pnTabsHTML() {
   const t = P.tab || 'dash', n = P.d ? pnPendN(P.d) : 0;
   return `<div class="pn-tabs" id="pn-tabs">${PN_TABS.map(([k, x]) => `<button class="${k === t ? 'on' : ''}" data-a="panelTab" data-k="${k}">${x}${k === 'dash' && n ? `<i>${n}</i>` : ''}</button>`).join('')}</div>`;
@@ -3444,6 +3445,14 @@ function pnDashboard(d) {
   if ((d.comprobantes || []).length) pend.push(pnFila('panelIrComp', 'coin', 'var(--okb, #e6f7ef)', 'Comprobantes por revisar', d.comprobantes.slice(0, 2).map(c => esc(c.negocio) + ' · ' + money(c.monto)).join(' · '), d.comprobantes.length));
   if (d.soporteSin) pend.push(pnFila('panelSoporteLista', 'chat', 'var(--pri2)', 'Soporte sin leer', 'Mensajes de los negocios', d.soporteSin));
   if ((d.sinPago || []).length) pend.push(pnFila('panelVer', 'bank', 'var(--warnb)', `Activación${d.sinPago.length > 1 ? 'es' : ''} sin pago anotado`, d.sinPago.map(x => esc(x.negocio) + ' (' + x.que + ')').join(' · '), d.sinPago.length, ` data-id="${esc(d.sinPago[0].id)}"`));
+  // Plan de pagos en curso: ya abonó y le faltan cuotas. Solo cuenta como pendiente si la próxima ya venció
+  (d.porCobrar || []).forEach(x => {
+    const tot = x.abonado + x.falta, pct = tot > 0 ? Math.round(x.abonado * 100 / tot) : 0, at = x.atrasado;
+    const t = at ? 'Pago atrasado' : x.cuotas > 1 ? `Le faltan ${x.cuotas} pagos` : x.cuotas ? 'Le falta 1 pago' : 'Le falta pagar';
+    const cuando = x.prox ? (x.cuotas > 1 ? ', próximo ' : ' el ') + esc(fCorta(x.prox)) : '';
+    const s = `${esc(x.negocio)} · abonó ${money(x.abonado)} · ${at ? 'debía ' + money(x.monto) + ' el ' + esc(fCorta(x.prox)) : 'falta ' + money(x.falta) + cuando}`;
+    pend.push(`<button class="pn-it" data-a="panelVer" data-id="${esc(x.id)}"><span class="pn-ico" style="background:${at ? 'var(--badb)' : 'var(--okb)'};color:${at ? 'var(--bad)' : 'var(--ok)'}">${ic('cal', 18)}</span><div><b>${t}</b><small style="white-space:normal">${s}</small><span class="pn-cobro"><span style="width:${pct}%;background:${at ? 'var(--bad)' : 'var(--ok)'}"></span></span></div>${at ? '<span class="pn-n" style="background:var(--bad)">1</span>' : ic('right', 16)}</button>`);
+  });
   { const ia = pnInact7(d); if (ia.length) pend.push(pnFila('panelTab', 'trash', 'var(--badb)', 'Eliminados por inactividad', `${ia.length === 1 ? esc(ia[0].negocio) : ia.length + ' negocios'} · prueba vencida y más de 30 días sin entrar · se recuperan hasta 30 días después`, ia.length, ' data-k="cli" data-f="eliminada"')); }
   (d.eliminadas || []).filter(x => !x.purgado && !x.inactivo).forEach(x => pend.push(pnFila('panelVer', 'trash', 'var(--badb)', 'Eliminó su cuenta', `${esc(x.negocio)} · ${esc(fCorta(x.fecha))} · se borra el ${esc(fCorta(x.borraEl))}`, '', ` data-id="${esc(x.id)}"`)));
   (d.avisosCli || []).filter(x => !/eliminó su cuenta/.test(x.nota)).forEach(x => pend.push(pnFila('panelVer', 'alert', 'var(--warnb)', /todos sus datos/.test(x.nota) ? 'Borró todos sus datos' : 'Borró sus movimientos', `${esc(x.negocio)} · ${esc(cuandoP(x.fecha))} · copia guardada`, '', ` data-id="${esc(x.id)}"`)));

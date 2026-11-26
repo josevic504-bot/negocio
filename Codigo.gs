@@ -2654,10 +2654,21 @@ function panelResumen_() {
   const terminadas = lics.filter(x => x.estado === 'activa' || x.estado === 'vencida' || x.estado === 'bloqueada').concat(inactivas), pagoLicDe = {}, compraron = (todosPagos.forEach(p => { if (Number(p.monto) > 0) pagoLicDe[p.negocioId] = 1; }), lics.filter(x => x.estado === 'activa' || (x.estado === 'bloqueada' && pagoLicDe[x.id]))); // quien pagó y está en pausa también compró
   const porMes = {};
   lics.concat(inactivas).forEach(x => { const m = String(x.registro).slice(0, 7); if (!/^\d{4}-\d{2}$/.test(m)) return; const o = porMes[m] = porMes[m] || { mes: m, registros: 0, activos: 0 }; o.registros++; if (x.estado === 'activa') o.activos++; });
-  // Activados sin pago anotado (licencia o Plus)
-  const pagoDe = {}; todosPagos.forEach(p => { (pagoDe[p.negocioId] = pagoDe[p.negocioId] || {})[String(p.concepto).toLowerCase().indexOf('plus') >= 0 ? 'plus' : 'lic'] = true; });
-  const sinPago = [];
-  lics.forEach(x => { const p = pagoDe[x.id] || {}; if (x.estado === 'activa' && !p.lic) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: 'Licencia' }); if (x.plus && x.estado !== 'prueba' && !p.plus) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: 'Plus' }); });
+  // Activados sin pago anotado: sin ningún abono y sin pagos programados (si ya abonó o tiene plan de pagos, va a «porCobrar»)
+  const abonadoDe = {}; todosPagos.forEach(p => { if (Number(p.monto) > 0) abonadoDe[p.negocioId] = r2_((abonadoDe[p.negocioId] || 0) + Number(p.monto)); });
+  const licPorId = {}; vivas.forEach(l => { licPorId[l.id] = l; });
+  const sinPago = [], porCobrar = [], hoyP = hoy_();
+  lics.forEach(x => {
+    const activo = x.estado === 'activa' || (x.plus && x.estado !== 'prueba');
+    if (!activo && x.estado !== 'bloqueada') return;
+    const abonado = abonadoDe[x.id] || 0, pend = parseJ_((licPorId[x.id] || {}).cobro, []), cu = Array.isArray(pend) ? pend : [];
+    if (!abonado && !cu.length) { if (activo) sinPago.push({ id: x.id, negocio: x.negocio, dueno: x.dueno, que: x.estado === 'activa' ? (x.plus ? 'Licencia y Plus' : 'Licencia') : 'Plus' }); return; }
+    // Con precio acordado, lo que falta es el precio menos lo abonado; sin él, la suma de los pagos programados
+    const precio = x.precio || 0, falta = precio > 0 ? r2_(Math.max(0, precio - abonado)) : r2_(cu.reduce((a, c) => a + (Number(c.m) || 0), 0));
+    if (precio > 0 ? !(falta > 0) : !cu.length) return; // ya pagó todo
+    porCobrar.push({ id: x.id, negocio: x.negocio, abonado: abonado, falta: falta, precio: precio, cuotas: cu.length, prox: cu.length ? cu[0].f : '', monto: cu.length ? Number(cu[0].m) || 0 : falta, atrasado: !!cu.length && cu[0].f < hoyP });
+  });
+  porCobrar.sort((a, b) => (b.atrasado - a.atrasado) || (a.prox < b.prox ? -1 : 1));
   const sop = mRows_('Soporte');
   // Soporte sin responder, dentro de la tarjeta de cada cliente
   const sopDe = {};
@@ -2675,7 +2686,7 @@ function panelResumen_() {
       ingresosMes: ingresosMes, pagosMes: pagos.length, gastosMes: gastosMes, gastosMesN: gastos.filter(g => fecha10_(g.fecha).slice(0, 7) === mes).length, resultadoMes: r2_(ingresosMes - gastosMes),
       invertidoPub: rc.invertido, recuperadoPub: rc.recuperado, registrosSemana: lics.filter(x => diasDesde_(x.registro) <= 7).length,
       terminadas: terminadas.length, compraron: compraron.length, conversion: terminadas.length ? Math.round(compraron.length * 100 / terminadas.length) : 0, ingresosTotal: r2_(todosPagos.reduce((a, p) => a + (Number(p.monto) || 0), 0)), sinVender7: lics.filter(x => x.estado !== 'vencida' && x.estado !== 'bloqueada' && x.sinVender >= 7).length },
-    porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, etiquetas: ETIQUETAS_LIC, appVer: VERSION, colaboradores: colabs.length,
+    porMes: Object.keys(porMes).sort().slice(-6).map(k => porMes[k]), sinPago: sinPago, porCobrar: porCobrar, etiquetas: ETIQUETAS_LIC, appVer: VERSION, colaboradores: colabs.length,
     visitas: visitasMini_(), vendedores: vendedores_().map(v => ({ codigo: v.codigo, nombre: v.nombre })),
     // Las cuentas eliminadas quedan para siempre en el Panel: a los 30 días se borran sus datos (purgado), pero no el registro de que existió
     eliminadas: mRows_('Licencias').filter(l => esEliminada_(l) && l.eliminadoEl).map(l => { const p = String(l.eliminadoEl).split('|'); return { id: l.id, negocio: l.negocio, dueno: l.dueno, giro: l.giro, whatsapp: l.whatsapp, estado: 'eliminada', fecha: p[0], antes: p[1] || '', motivo: p[2] || '', inactivo: p[3] === 'inactividad', borraEl: addDiasIso_(p[0], 30), purgado: l.purgado === 'si', registro: l.registro, origen: l.origen || '', ultimaConexion: l.ultimaConexion, plus: false, giros: [], cobro: null }; }),
