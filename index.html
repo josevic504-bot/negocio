@@ -81,6 +81,7 @@ body.panel #bnav,body.panel #tnav{display:none!important}body.panel #main{paddin
 .pn-ico{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;flex:none;color:var(--ink)}
 .pn-n{background:var(--pri);color:#fff;border-radius:10px;font-size:12px;font-weight:700;padding:2px 8px}
 .pn-cobro{display:block;height:5px;border-radius:4px;background:var(--line);margin-top:6px;overflow:hidden}.pn-cobro>span{display:block;height:100%;border-radius:4px}
+.pc-card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:12px 14px;margin-bottom:6px}.pc-f{display:flex;justify-content:space-between;align-items:center;gap:8px}.pc-f>b{font-size:20px}.pc-f.sm{font-size:13px;color:var(--mut)}.pc-f.sm b{color:var(--ink)}.pc-av{display:flex;align-items:center;gap:5px;margin-top:8px;color:var(--warn);font-size:12px}
 .pn-vacio{display:flex;align-items:center;gap:8px;padding:14px;color:var(--mut);font-size:13.5px;cursor:default}button.pn-vacio{cursor:pointer}
 .pn-bars{display:flex;align-items:flex-end;gap:8px;padding:12px 14px 10px}
 .pn-bars>div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:var(--mut)}.pn-bars em{font-style:normal;font-size:11px}
@@ -4225,6 +4226,35 @@ function cuotaEstado(c) {
   if (h >= pausa) return ['t-rojo', 'b-bad', 'En pausa desde el ' + fCorta(pausa)];
   return ['t-naranja', 'b-warn', (dias === 0 ? 'Vence hoy' : 'Atrasada ' + dias + (dias === 1 ? ' día' : ' días')) + ' · se pausa el ' + fCorta(pausa)];
 }
+// Precio acordado con el cliente: lo que va a pagar en total (a veces se le baja al costo del programa) y cuánto le falta
+function panelSecPrecio(n) {
+  const ab = (n.pagos || []).reduce((a, p) => a + (Number(p.monto) || 0), 0), pr = Number(n.precio) || 0;
+  const prog = (n.cuotas || []).filter(c => c.estado === 'pendiente').reduce((a, c) => a + c.monto, 0);
+  if (!pr) return `<div class="sec-t"><h3>Precio acordado</h3><a data-x="precio">Definir</a></div><p class="h" style="margin:-4px 2px 0">Escribe cuánto va a pagar en total este cliente (si le bajaste al precio, pon lo que acordaron). Así el Panel te dice cuánto le falta.</p>`;
+  const falta = Math.max(0, pr - ab), pct = Math.min(100, Math.round(ab * 100 / pr)), lista = PRECIO_NEGOCIO + (n.plus ? 500 : 0);
+  const dif = Math.abs(prog - falta) >= 0.01 && prog > 0 ? `<small class="pc-av">${ic('alert', 13)} Los pagos programados suman ${money(prog)} y le falta ${money(falta)}</small>` : '';
+  return `<div class="sec-t"><h3>Precio acordado</h3><a data-x="precio">Cambiar</a></div>
+    <div class="pc-card"><div class="pc-f"><b class="n">${money(pr)}</b>${pr < lista ? `<span class="badge b-info">Descuento de ${money(lista - pr)}</span>` : ''}</div>
+    <div class="pn-cobro" style="height:7px;margin:9px 0 7px"><span style="width:${pct}%;background:var(--ok)"></span></div>
+    <div class="pc-f sm"><span>Abonado <b class="n">${money(ab)}</b></span><span>${falta > 0 ? `Falta <b class="n">${money(falta)}</b>` : `<b style="color:var(--ok)">${ic('check', 14)} Pagado completo</b>`}</span></div>${dif}</div>`;
+}
+function panelPrecioForm(n) {
+  return new Promise(ok => {
+    const lista = PRECIO_NEGOCIO + (n.plus ? 500 : 0), pr = Number(n.precio) || 0;
+    const h = hoja({ titulo: 'Precio acordado', html: `<p class="sm mut" style="margin-top:0">${esc(n.negocio)} · ${esc(n.dueno)} · precio normal ${money(lista)}${n.plus ? ' (con tienda en línea)' : ''}</p>
+      <label class="fld"><span>¿Cuánto va a pagar en total?</span><input id="pc-m" inputmode="decimal" value="${pr ? fmtN(pr) : fmtN(lista)}"></label>
+      <label class="fld"><span>Motivo (opcional)</span><input id="pc-n" maxlength="120" placeholder="Ej.: descuento por pago en 3 cuotas"></label>
+      <small class="hint" style="display:block;margin:-6px 0 4px">Queda anotado en su seguimiento. El cliente no lo ve.</small>` });
+    h.onClose = () => ok(false);
+    const bt = [{ t: '✓ Guardar', cls: 'pri', fn: async () => {
+      const m = num($('#pc-m', h.el).value); if (!(m > 0)) throw new Error('Escribe el precio');
+      await api('panelPrecio', { id: n.id, precio: m, nota: $('#pc-n', h.el).value.trim() });
+      h.onClose = null; h.cerrar(); toast('Precio acordado guardado', 'ok'); ok(true);
+    } }];
+    if (pr) bt.unshift({ t: 'Quitar', cls: 'ghost', fn: async () => { await api('panelPrecio', { id: n.id, precio: 0 }); h.onClose = null; h.cerrar(); toast('Precio acordado quitado', 'ok'); ok(true); } });
+    h.botones(bt);
+  });
+}
 function panelSecCuotas(n) {
   const l = n.cuotas || [], pend = l.filter(c => c.estado === 'pendiente'), tot = pend.reduce((a, c) => a + c.monto, 0);
   return `<div class="sec-t"><h3>Pagos programados</h3><a data-x="cuotaNueva">+ Programar</a></div>
@@ -4244,7 +4274,7 @@ function panelSecContratos(n) {
 }
 function panelNuevoContrato(n) {
   return new Promise(ok => {
-    const sug = (n.cuotas || []).filter(c => c.estado === 'pendiente').reduce((a, c) => a + c.monto, 0) + (n.pagos || []).reduce((a, p) => a + (Number(p.monto) || 0), 0); // lo pagado más lo programado
+    const sug = Number(n.precio) || (n.cuotas || []).filter(c => c.estado === 'pendiente').reduce((a, c) => a + c.monto, 0) + (n.pagos || []).reduce((a, p) => a + (Number(p.monto) || 0), 0); // el precio acordado, o lo pagado más lo programado
     const h = hoja({ titulo: 'Nuevo contrato', ancho: 1, html: `<p class="sm mut" style="margin-top:0">${esc(n.negocio)} · ${esc(n.dueno)} · ${esc(fmtWA(n.whatsapp))}${n.datos && n.datos.rtn ? ' · RTN ' + esc(n.datos.rtn) : ''}</p>
       <label class="fld"><span>Título</span><input id="ct-t" maxlength="120" value="Contrato de licencia de uso · Gestión de Negocio VM"></label>
       <div class="f2"><label class="fld"><span>Valor de la licencia</span><input id="ct-m" inputmode="decimal" value="${sug ? fmtN(sug) : ''}" placeholder="0.00"></label><label class="fld"><span>Rige desde</span><input id="ct-d" type="date" value="${hoy()}"></label></div>
@@ -4703,7 +4733,7 @@ async function panelFicha(id) {
       </div></div>
       <div class="fx-g${ab[2] ? '' : ' cerrado'}"><button type="button" class="fx-gh" data-gf="2"><span class="fx-n">2</span><b>Licencia y pagos</b><small>${n.pagos.length ? n.pagos.length + ' pago' + (n.pagos.length === 1 ? '' : 's') + ' recibido' + (n.pagos.length === 1 ? '' : 's') : 'Sin pagos todavía'}</small>${ic('right', 16)}</button><div class="fx-gb">
       <div class="acciones">${n.colab ? `<button class="btn bad" data-x="quitarColab">${ic('x', 16)} Quitar colaborador</button>` : `${n.estado === 'bloqueada' ? `<button class="btn pri" data-x="reanudar">▶ Reanudar acceso</button>` : n.estado === 'activa' ? '' : `<button class="btn pri" data-x="activar">✓ Activar licencia</button>`}${n.plus ? `<button class="btn ghost" data-x="quitarPlus">Quitar Plus</button>` : `<button class="btn acc" data-x="plus">Activar Plus</button>`}${n.contab ? `<button class="btn ghost" data-x="quitarContab">Quitar Contabilidad</button>` : `<button class="btn" data-x="contab">${ic('chart', 16)} Activar Contabilidad</button>`}${n.estado === 'activa' ? '' : `<button class="btn" data-x="extender">+7 días de prueba</button>`}${n.estado === 'bloqueada' ? '' : `<button class="btn ghost" data-x="pausar">⏸ Pausar</button>`}<button class="btn ghost" data-x="colaborador" style="color:#6a3df0">${ic('star', 16)} Marcar colaborador</button>`}</div>
-      ${panelSecCuotas(n)}${panelSecContratos(n)}
+      ${panelSecPrecio(n)}${panelSecCuotas(n)}${panelSecContratos(n)}
       <div class="sec-t"><h3>Pagos recibidos</h3><a data-x="pago">+ Anotar pago</a></div>
       <div class="list">${n.pagos.map(p => `<div class="li"><div class="av t-verde">${ic('coin', 20)}</div><div class="tx"><b>${esc(p.concepto)}</b><small>${esc(fFechaC(String(p.fecha).slice(0, 10)))} · ${esc(p.metodo)}${p.nota ? ' · ' + esc(p.nota) : ''}</small>${n.llego && n.llego.id ? `<small style="color:var(--pri)">${ic('sparkle', 12)} Llegó por ${esc(n.llego.nombre)}</small>` : ''}</div><div class="am n">${money(p.monto)}</div></div>`).join('') || '<div class="empty">Sin pagos todavía</div>'}</div>
       </div></div>
@@ -4746,6 +4776,7 @@ async function panelFicha(id) {
         if (x === 'verApp') { const r = await api('panelVerApp', { id }); window.open(new URL('./?soporte=' + r.token, document.baseURI).href, '_blank'); toast('Se abrió su app en modo soporte (solo ver, 2 horas)', 'ok', 4000); return; }
         if (x === 'pago') { const r = await panelFormPago('Anotar pago', 'Licencia'); if (!r) return; if (!(r.monto > 0)) throw new Error('Escribe el monto'); await api('panelPago', Object.assign({ id }, r)); toast('Pago anotado', 'ok'); }
         else if (x === 'nota') { await api('panelNota', { id, notas: $('#pn-notas', h.el).value }); toast('Notas guardadas', 'ok'); }
+        else if (x === 'precio') { if (!(await panelPrecioForm(n))) return; }
         else if (x === 'cuotaNueva') { if (!(await panelProgramarPagos(n))) return; }
         else if (x === 'cuotaPagar' || x === 'cuotaMover' || x === 'cuotaQuitar') { if (!(await panelCuotaAccion(n, x, b.dataset.id))) return; }
         else if (x === 'bienv') { panelBienvenida(n); return; }

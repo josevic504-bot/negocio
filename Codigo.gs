@@ -38,7 +38,7 @@ const DIAS_FOTO = 90;               // las fotos de productos agotados y sin mov
  */
 
 const SCHEMA_M = {
-  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo','eliminadoEl','purgado','pasos','enlace'],
+  Licencias:   ['id','negocio','giro','dueno','whatsapp','registro','vencePrueba','estado','usuarios','ultimaConexion','hojaId','plus','notas','ultimaVenta','ventas7','version','etiqueta','contab','llegoPor','giros','persona','cobro','origen','vid','nProductos','nClientes','respaldo','eliminadoEl','purgado','pasos','enlace','precio'],
   Accesos:     ['whatsapp','negocioId','usuarioId','activo'],
   // Panel Molina (súper admin): soporte, seguimiento y pagos de licencias
   Soporte:     ['id','negocioId','negocio','dueno','whatsapp','motivo','modulo','estado','version','diaPrueba','ultimo','ultimoTexto','deCliente','sinLeerAdm','sinLeerCli','creado'],
@@ -2522,6 +2522,7 @@ function rutaPanel_(a, d) {
     case 'panelPago':              return panelPago_(d);
     case 'panelCuotas':            return panelCuotas_(d);
     case 'panelNota':              return panelNota_(d);
+    case 'panelPrecio':            return panelPrecio_(d);
     case 'panelContrato':          return panelContrato_(d);
     case 'panelPlantillas':        return plantillas_();
     case 'panelPlantillasGuardar': return plantillasGuardar_(d);
@@ -2600,7 +2601,7 @@ function panelFicha_(l, segs) {
   const o = { id: l.id, negocio: l.negocio, giro: l.giro, dueno: l.dueno, whatsapp: l.whatsapp, registro: l.registro, vencePrueba: l.vencePrueba, estado: est, diasRestantes: lic.diasRestantes || 0, dia: dia,
     usuarios: Number(l.usuarios) || 1, ultimaConexion: l.ultimaConexion, sinEntrar: diasCal_(l.ultimaConexion), plus: ['sí', 'si'].indexOf(String(l.plus).toLowerCase()) >= 0, contab: ['sí', 'si'].indexOf(String(l.contab).toLowerCase()) >= 0, notas: l.notas || '', contactar: '',
     ultimaVenta: l.ultimaVenta || '', sinVender: diasCal_(l.ultimaVenta), ventas7: diasDesde_(l.ultimaVenta) >= 7 ? 0 : Number(l.ventas7) || 0, // ventas7 se anota cuando el negocio usa la app: si su última venta ya tiene 7 días o más, esta semana no vendió
-    version: l.version || '', etiqueta: l.etiqueta || '', enlace: l.enlace || '',
+    version: l.version || '', etiqueta: l.etiqueta || '', enlace: l.enlace || '', precio: Number(l.precio) || 0,
     giros: String(l.giros || '').split(',').map(x => x.trim()).filter(x => x && own_(GIROS, x)), persona: l.persona || '', cobro: cobroDe_(l), colab: esColab_(l) };
   if (o.colab) { o.plus = true; o.contab = true; }
   o.salud = saludDe_(o, l.nProductos, l.nClientes); o.respaldo = l.respaldo || '';
@@ -3113,6 +3114,15 @@ function panelCuotas_(d) {
     } else throw new Error('Acción no válida');
   }
   cobroResumen_(l.id);
+  return panelNegocio_({ id: l.id });
+}
+// Precio acordado con el cliente (a veces se le baja al costo del programa). 0 = sin definir. Con él, el Panel calcula cuánto le falta.
+function panelPrecio_(d) {
+  const l = licDe_(d.id), antes = Number(l.precio) || 0, p = r2_(Number(d.precio) || 0);
+  if (p < 0) throw new Error('El precio no puede ser negativo');
+  mSet_('Licencias', l, { precio: p > 0 ? String(p) : '' });
+  mAppend_('Seguimiento', { id: mId_('S'), negocioId: l.id, tipo: 'accion', fecha: ahora_().replace('T', ' '), nota: (p > 0 ? 'Precio acordado: ' + money_(p, { moneda: 'L' }) + (antes ? ' (antes ' + money_(antes, { moneda: 'L' }) + ')' : '') : 'Precio acordado quitado') + (d.nota ? ' · ' + txt_(d.nota, 120) : '') });
+  try { CacheService.getScriptCache().remove('L_' + l.id); } catch (e) {}
   return panelNegocio_({ id: l.id });
 }
 function panelNota_(d) { const l = licDe_(d.id); mSet_('Licencias', l, { notas: txt_(d.notas, 500) }); return panelNegocio_({ id: l.id }); }
