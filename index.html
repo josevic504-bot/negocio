@@ -2552,8 +2552,11 @@ function pintarLogin() {
   setTimeout(() => { try { ofrecerApk(); } catch (e) {} }, 1500);
   $('#login').hidden = false;
   if (!DEMO.on && LS.get('volvioDemo', '')) { LS.del('volvioDemo'); S.lmodo = 'reg'; S.lmodoElegido = 1; } // vuelve de «Verlo por dentro» directo a crear su cuenta
+  if (!DEMO.on && LS.get('volvioIng', '')) { LS.del('volvioIng'); S.lmodo = 'ing'; S.lmodoElegido = 1; } // salió del negocio de ejemplo para ingresar con su cuenta
   if (!S.lmodo) S.lmodo = LS.get('cuenta', '') || DEMO.on ? 'ing' : 'reg';
   if (DEMO.on && !LS.get('cuenta', '') && !S.lmodoElegido) S.lmodo = 'demo';
+  // En el programa publicado, el modo prueba solo muestra el negocio de ejemplo: registrarse o ingresar siempre va al servidor real
+  if (DEMO.on && API_URL_DEFAULT) { if (S.lmodo === 'reg') return ACC.demoCrear(); S.lmodo = 'demo'; }
   if (!S.multi && S.lmodo === 'reg') S.lmodo = 'ing';
   if (S.lmodo === 'reg' && !S.introVista && !LS.get('introVisto', '')) { S.lmodo = 'intro'; S.introN = 0; }
   if (S.lmodo === 'intro') return pintarIntro();
@@ -2568,7 +2571,7 @@ function pintarLogin() {
     <div class="lg-card">
     ${demo ? `<h3 class="lg-t">Conoce el sistema</h3><p class="lg-p">Entra a un <b>negocio de ejemplo</b> con productos, ventas, clientes, pedidos en línea y reportes. Todo queda solo en este navegador.</p>
       <button class="btn pri big" data-a="demoEjemplo">${ic('sparkle')} Entrar al negocio de ejemplo</button>
-      <button class="btn big" data-a="lmodo" data-m="reg" style="margin-top:8px">Registrar un negocio propio de prueba</button>`
+      <button class="btn big" data-a="demoCrear" style="margin-top:8px">${ic('sparkle', 16)} Crear mi cuenta gratis</button>`
     : reg ? `<h3 class="lg-t">Crea tu cuenta</h3><p class="lg-p" style="margin-bottom:10px"><b>${promoPrueba() ? 'Gratis ' + promoPrueba() : DIAS_PRUEBA_REG + ' días gratis'}</b> · sistema completo · sin tarjeta</p>
       <form id="f-reg" autocomplete="on">
         <label class="fld"><span>Nombre de tu negocio</span><input id="r-neg" maxlength="60" required placeholder="Ej. Variedades Sofía"></label>
@@ -2586,7 +2589,7 @@ function pintarLogin() {
         <label class="fld"><span>Contraseña</span>${pw('id="l-pass" autocomplete="current-password" required')}</label>`}
         <button class="btn pri big" type="submit">Ingresar</button><div class="lg-err" id="l-err"></div></form>`}
     ${multi && !demo ? `<button class="btn ghost big" data-a="lmodo" data-m="${reg ? 'ing' : 'reg'}">${reg ? 'Ya tengo cuenta · Ingresar' : `Soy nuevo · ${promoPrueba() ? 'Probar gratis ' + promoPrueba() : 'Probar ' + DIAS_PRUEBA_REG + ' días gratis'}`}</button>` : ''}
-    ${demo ? `<button class="btn ghost big" data-a="lmodo" data-m="ing">Ya registré un negocio de prueba · Ingresar</button>` : ''}
+    ${demo ? `<button class="btn ghost big" data-a="demoIngresar">Ya tengo cuenta · Ingresar</button>` : ''}
     ${marca ? `<p class="lg-sig">${ic('store', 14)} Gestión de Negocio VM</p>` : ''}
     <div class="row" style="justify-content:center;margin-top:6px">${!API_URL_DEFAULT || DEMO.on ? `<button class="btn ghost sm" data-a="alternarDemo">${DEMO.on ? 'Salir del modo prueba' : 'Probar en modo prueba'}</button>` : ''}${!API_URL_DEFAULT && !DEMO.on ? `<button class="btn ghost sm" data-a="configServidor">Configurar servidor</button>` : ''}${DEMO.on && !demo ? `<button class="btn ghost sm" data-a="lmodo" data-m="demo">Negocio de ejemplo</button>` : ''}</div>${enSupabase() && !DEMO.on ? `<div style="text-align:center"><button class="sb-login" data-a="menuServidor">⚡ Conectado al servidor nuevo (prueba)</button></div>` : ''}
     </div>${creditoHTML()}`;
@@ -2633,8 +2636,9 @@ ACC.introSig = () => { S.introN = Math.min(INTRO.length - 1, (S.introN || 0) + 1
 // Pasos del registro (Panel Molina): se anotan como visitas «r-…» para saber dónde se va la gente que llega de un anuncio. No guardan nada personal.
 const pasoReg = p => { if (DEMO.on) return; try { (window.mvq = window.mvq || []).push('r-' + p); } catch (e) {} };
 // «Verlo por dentro»: abre el negocio de ejemplo sin registrarse y deja a la mano el botón para crear la cuenta
-ACC.verDemo = () => { pasoReg('demo'); LS.set('demoVisita', '1'); LS.set('modo', 'demo'); try { sessionStorage.setItem(LS_NS + 'demoDirecto', '1'); } catch (e) {} location.replace(location.pathname); };
+ACC.verDemo = () => { pasoReg('demo'); LS.set('demoVisita', '1'); try { sessionStorage.setItem(LS_NS + 'modoSes', 'demo'); sessionStorage.setItem(LS_NS + 'demoDirecto', '1'); } catch (e) {} location.replace(location.pathname); };
 ACC.demoCrear = () => { LS.del('demoVisita'); LS.del('demoAvisoVisto'); LS.set('volvioDemo', '1'); LS.set('introVisto', '1'); LS.set('modo', 'real'); try { sessionStorage.removeItem(LS_NS + 'modoSes'); } catch (e) {} location.replace(location.pathname); };
+ACC.demoIngresar = () => { LS.set('volvioIng', '1'); LS.set('modo', 'real'); try { sessionStorage.removeItem(LS_NS + 'modoSes'); } catch (e) {} location.replace(location.pathname); };
 ACC.demoCrearBarra = () => { pasoDemo('demo-crear'); ACC.demoCrear(); };
 ACC.demoCtaX = () => { LS.del('demoVisita'); const c = $('#demo-cta'); if (c) c.remove(); };
 function demoCta() { if (!DEMO.on || !LS.get('demoVisita', '') || $('#demo-cta')) return; demoContarVista(); const d = document.createElement('div'); d.id = 'demo-cta'; d.innerHTML = '<span>Este es un negocio de ejemplo</span><button class="btn pri" data-a="demoCrearBarra">Crear mi cuenta gratis</button><button class="x" data-a="demoCtaX" aria-label="Cerrar">×</button>'; document.body.appendChild(d); }
@@ -5264,7 +5268,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   aplicarTema(LS.get('tema', TEMA_DEF));
   const q = new URLSearchParams(location.search);
   // Enlace de demostración: …/?demo abre el negocio de ejemplo
-  if (q.has('demo')) { if (LS.get('token', '') && !DEMO.on) { try { sessionStorage.setItem(LS_NS + 'modoSes', 'demo'); } catch (e) {} } else LS.set('modo', 'demo'); // con una sesión real guardada, la demo es solo de esta pestaña
+  // 26 nov 2026: el modo prueba ya no se queda guardado en el teléfono (antes rompía los enlaces de tiendas y no dejaba llegar al registro)
+  if (API_URL_DEFAULT && LS.get('modo', '') === 'demo') { LS.set('modo', 'real'); if (DEMO.on && !modoSes() && !q.has('demo')) { location.reload(); return; } }
+  if (q.has('demo')) { try { sessionStorage.setItem(LS_NS + 'modoSes', 'demo'); } catch (e) {} LS.set('demoVisita', '1'); // la demo es solo de esta pestaña
     if (!LS.get('cuenta', '')) S.lmodo = 'demo'; history.replaceState(null, '', location.pathname); if (!DEMO.on) { location.reload(); return; } }
   if (q.has('tienda')) { S.enTienda = true; return iniciarTienda(q.get('tienda')); }
   if (q.has('panel')) { if (DEMO.on) { try { await demoFuente(); demoBackend(); } catch (e) { toast(e.message, 'error'); } } return iniciarPanel(); }
@@ -12541,7 +12547,8 @@ async function iniciarTienda(id) {
   T.compras = LS.json(tKey('compras'), []) || [];
   $('#tienda').innerHTML = `<div class="shop-hero"><div class="hero-c"><div class="mono">${ic('store', 28)}</div><div class="hero-name">Cargando…</div></div></div>`;
   try {
-    T.info = await api('tiendaInfo', { negocio: T.id }, true);
+    try { T.info = await api('tiendaInfo', { negocio: T.id }, true); }
+    catch (e0) { if (!DEMO.on || String(e0.message || '').indexOf('TIENDA_CERRADA|') === 0) throw e0; DEMO.on = false; T.info = await api('tiendaInfo', { negocio: T.id }, true); } // modo prueba abierto en este teléfono pero la tienda es real
   } catch (e) {
     const m = String(e.message || '');
     if (m.indexOf('TIENDA_CERRADA|') === 0) { let x = {}; try { x = JSON.parse(m.slice(15)); } catch (z) {} return tiendaCerrada(x); }
