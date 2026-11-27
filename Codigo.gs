@@ -73,7 +73,7 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado','sucursal'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes','rinde','lotes'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes','rinde','lotes','parte','alterno','marcaRep','compat'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Conciliacion:   ['id','mes','saldoBanco','marcados','nota','actualizado','listo'],
@@ -131,7 +131,7 @@ const CONFIG_DEF = {
   tienda: 'no', tiendaMensaje: '', tiendaEntrega: 'ambos', tiendaEnvio: '0', tiendaMinimo: '0', tiendaHorario: '',
   tiendaPagos: 'Efectivo,Transferencia', tiendaDatosPago: '', tiendaEnlacePago: '', tiendaTigo: '', tiendaMostrarStock: 'no', tiendaSinStock: 'no',
   // Información del negocio en la tienda y sección del propietario
-  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', dirOn: 'no', dirCiudad: '', dirFrase: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', mesas: '', mesasZonas: '', tiempoPrep: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
+  tiendaSobre: '', tiendaInstagram: '', tiendaFacebook: '', tiendaMapa: '', tiendaAbre: '', tiendaCierra: '', tiendaDias: '1,2,3,4,5,6', citaCupo: '3', sinOrdenes: '', ramoPrecios: 'si', tiendaChat: 'si', tiendaFuente: 'elegante', tiendaModo: 'auto', tiendaPortada: '', dirOn: 'no', dirCiudad: '', dirFrase: '', tiendaSecciones: '', catalogo: '', secciones: '', venderInicio: 'catalogo', suscripciones: '', plataformas: '', susAviso: '7', msjSusPorVencer: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} vence el *{vence}*. ¿La renovamos? Son {precio} por mes. — {negocio}', msjSusVencida: 'Hola {cliente} 👋 Tu suscripción de *{plataforma}*{perfil} venció el {vence}. Si quieres seguir disfrutándola, renuévala por {precio} al mes. — {negocio}', caducidad: '', lotes: '', recompra: '', recAviso: '7', recompraAv: '', msjRecompra: 'Hola {cliente} 👋 Tu *{producto}* ya casi se termina. ¿Te apartamos otro? — {negocio}', comanda: '', mesas: '', mesasZonas: '', tiempoPrep: '', ordenes: '', series: '', variantes: '', encargos: '', agenda: '', mascotas: '',
   // Veterinaria: quién firma las recetas, si llevan diagnóstico y los recordatorios de vacunas
   vetNombre: '', vetRegistro: '', vetFirma: '', recetaDx: 'si', vacAviso: '7',
   // Cotizaciones y contratos (servicios)
@@ -203,8 +203,16 @@ const GIROS = {
       ['Proteína whey 2 lb','Deporte','💪',890,600,6,'Sabor: Vainilla, Chocolate',{ rinde: 30, vm: 3 }],
       ['Creatina 300 g','Deporte','🏋️',650,420,5,'',{ rinde: 60, vm: 16 }],
       ['Vitaminas masticables niños','Niños','🧸',240,140,10,'',{ rinde: 30, vm: 9 }]] },
-  repuestos:  { n: 'Taller mecánico y repuestos', ant: ['Repuestos / taller'], cats: ['Motor','Frenos','Eléctrico','Aceites','Llantas','Servicios'],
-    ej: [['Aceite 20W-50 (litro)','Aceites','🛢️',190,130,30],['Filtro de aceite','Motor','🧰',150,90,20,'Vehículo: Toyota, Nissan, Honda'],['Pastillas de freno','Frenos','🛞',650,420,8],['Bujía','Motor','⚡',95,55,40],['Batería 12 V','Eléctrico','🔋',2300,1700,4],['Cambio de aceite (mano de obra)','Servicios','🔧',250,0,0],['Alineado y balanceo','Servicios','🛠️',450,0,0],['Llanta rin 14','Llantas','🛞',1650,1150,6]] },
+  repuestos:  { n: 'Repuestos y taller (carro y moto)', ant: ['Repuestos / taller', 'Taller mecánico y repuestos'], cats: ['Motor','Frenos','Suspensión','Eléctrico','Filtros','Aceites','Llantas','Motos','Servicios'],
+    ej: [['Pastillas de freno delanteras','Frenos','🛑',850,520,12,'',{ marcaRep: 'Bosch', parte: '04465-02220', descripcion: 'Juego de 4 pastillas para el freno delantero. Cerámicas, bajo polvo.', compat: { t: 'carro', v: [['Toyota','Corolla',2009,2013],['Toyota','Yaris',2010,2014],['Toyota','Matrix',2009,2013]] } }],
+      ['Filtro de aceite','Filtros','🛢️',150,90,20,'',{ marcaRep: 'Denso', parte: '90915-YZZE1', descripcion: 'Filtro de aceite de motor. Cámbialo con cada cambio de aceite.', compat: { t: 'carro', v: [['Toyota','Corolla',2003,2019],['Toyota','Hilux',2005,2015],['Toyota','Yaris',2006,2018]] } }],
+      ['Bujía iridium (c/u)','Motor','⚡',210,130,24,'',{ marcaRep: 'NGK', parte: 'IFR5T11', descripcion: 'Bujía de iridio de larga duración.', compat: { t: 'carro', v: [['Toyota','Corolla',2009,2018],['Nissan','Sentra',2007,2012]] } }],
+      ['Amortiguador delantero','Suspensión','🔩',1350,880,6,'Lado: Izquierdo, Derecho',{ marcaRep: 'KYB', parte: '339025', descripcion: 'Amortiguador de gas para la suspensión delantera.', compat: { t: 'carro', v: [['Nissan','Sentra',2007,2012]] } }],
+      ['Kit de arrastre (cadena y piñones)','Motos','⛓️',1150,760,8,'',{ marcaRep: 'DID', parte: '428H-118L', descripcion: 'Cadena 428 con piñón y corona.', compat: { t: 'moto', v: [['Honda','XR150L',2015,2024],['Honda','CGL125',2010,2022]] } }],
+      ['Zapatas de freno trasero','Motos','🛞',280,160,15,'',{ parte: '06430-KRE', descripcion: 'Par de zapatas para freno de tambor trasero.', compat: { t: 'moto', v: [['Honda','XR150L',2015,2024],['Yamaha','YBR125',2012,2022]] } }],
+      ['Aceite 20W-50 (litro)','Aceites','🛢️',190,130,30,'',{ marcaRep: 'Castrol', descripcion: 'Aceite mineral para motor a gasolina.', compat: { t: 'ambos', v: [] } }],
+      ['Batería 12 V','Eléctrico','🔋',2300,1700,4,'',{ marcaRep: 'LTH', descripcion: 'Batería libre de mantenimiento.', compat: { t: 'carro', v: [] } }],
+      ['Cambio de aceite (mano de obra)','Servicios','🔧',250,0,0],['Alineado y balanceo','Servicios','🛠️',450,0,0]] },
   carwash:    { n: 'Carwash / lavado de autos', cats: ['Lavado','Detallado','Motos','Extras','Productos'],
     ej: [['Lavado y aspirado','Lavado','🚿',250,0,0,'Tamaño: Sedán, Camioneta, Microbús',{ vars: { 'Tamaño: Sedán': { p: 250, s: 0 }, 'Tamaño: Camioneta': { p: 320, s: 0 }, 'Tamaño: Microbús': { p: 400, s: 0 } } }],
       ['Lavado express (solo exterior)','Lavado','💦',150,0,0,'Tamaño: Sedán, Camioneta',{ vars: { 'Tamaño: Sedán': { p: 150, s: 0 }, 'Tamaño: Camioneta': { p: 190, s: 0 } } }],
@@ -1514,6 +1522,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
   NEG = { id: id, hojaId: libro.getId(), lic: lic };
   MEMO._ss = libro;
   instalarNegocio_({ nombre: negocio, giro: giro, telefono: wa.length === 11 && wa.indexOf('504') === 0 ? wa.slice(3, 7) + '-' + wa.slice(7) : wa,
+    sinOrdenes: giro === 'repuestos' && d.taller === 'no', // «Repuestos y taller»: si solo vende repuestos, las órdenes de trabajo empiezan apagadas
     ciudad: txt_(d.ciudad, 40), // la ciudad se pide al registrarse: con ella el negocio sale bien ubicado en Tiendas Catrachas desde el inicio
     admin: { usuario: wa, nombre: nombre, pin: pin } });
   const adm = rows_('Usuarios').find(x => x.usuario === wa);
@@ -1529,7 +1538,9 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
 const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda', 'mesas'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], manualidades: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
-function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => (MODULOS_GIRO[g] || []).indexOf(k) >= 0); }
+// ¿La función k viene incluida en el giro g? En «Repuestos y taller» las órdenes se pueden apagar (sinOrdenes = solo vende repuestos)
+function modFijo_(k, g, cfg) { return (MODULOS_GIRO[g] || []).indexOf(k) >= 0 && !(g === 'repuestos' && k === 'ordenes' && cfg && cfg.sinOrdenes === 'si'); }
+function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => modFijo_(k, g, cfg)); }
 // Funciones que se encienden por negocio o por tienda (las mismas de «Funciones» en la app)
 const MODULOS_SRV = ['caducidad', 'lotes', 'recompra', 'mesas', 'comanda', 'ordenes', 'series', 'variantes', 'encargos', 'agenda', 'suscripciones', 'mascotas', 'secciones', 'catalogo', 'cotizaciones'];
 const EST_ORDEN = ['recibido', 'proceso', 'listo', 'entregado', 'cancelado'];
@@ -1542,6 +1553,40 @@ function caducan_() {
     .map(p => ({ id: p.id, nombre: p.nombre, caduca: p.caduca, stock: p.stock, vencido: p.caduca < h }))
     .sort((a, b) => a.caduca < b.caduca ? -1 : 1);
   return { n: l.length, vencidos: l.filter(x => x.vencido).length, lista: l.slice(0, 8) };
+}
+
+/* ---- Repuestos: a qué vehículos le queda cada repuesto (1.9.94) ----
+   compat = JSON { t: 'carro' | 'moto' | 'ambos', v: [[marca, modelo, desde, hasta], …] } · sin vehículos = universal */
+const COMPAT_MAX = 40;
+const MARCAS_2P = ['Mercedes Benz', 'Land Rover', 'Alfa Romeo', 'Great Wall', 'Aston Martin', 'Harley Davidson', 'Royal Enfield', 'Rolls Royce'];
+const titulo_ = t => t === t.toLowerCase() ? t.replace(/(^|\s)\S/g, m => m.toUpperCase()) : t;
+function anioCompat_(x) { const n = parseInt(x, 10), tope = new Date().getFullYear() + 1; return isNaN(n) ? NaN : Math.max(1950, Math.min(tope, n)); }
+function compat_(x) {
+  const o = typeof x === 'object' && x ? x : parseJ_(String(x || ''), null);
+  if (!o || typeof o !== 'object') return '';
+  const t = ['carro', 'moto', 'ambos'].indexOf(o.t) >= 0 ? o.t : 'ambos', vistos = {}, v = [];
+  (Array.isArray(o.v) ? o.v : []).forEach(f => {
+    if (!Array.isArray(f) || v.length >= COMPAT_MAX) return;
+    const marca = titulo_(txt_(f[0], 30)), modelo = txt_(f[1], 40);
+    if (!marca || !modelo) return;
+    let d = anioCompat_(f[2]), h = anioCompat_(f[3]);
+    if (isNaN(d) && isNaN(h)) { d = 0; h = 0; } else if (isNaN(d)) d = h; else if (isNaN(h)) h = d; // 0–0 = todos los años
+    if (d > h) { const z = d; d = h; h = z; }
+    const k = (marca + '|' + modelo + '|' + d + '|' + h).toLowerCase(); if (vistos[k]) return; vistos[k] = 1;
+    v.push([marca, modelo, d, h]);
+  });
+  return JSON.stringify({ t: t, v: v });
+}
+// Excel: «Toyota Corolla 2009-2013; Honda XR150L 2015» → [[Toyota, Corolla, 2009, 2013], [Honda, XR150L, 2015, 2015]]
+function compatTexto_(s) {
+  return String(s || '').split(/;|\n/).map(x => x.trim()).filter(Boolean).map(x => {
+    const m = /^(.+?)\s+(\d{4})(?:\s*[-–]\s*(\d{4}))?$/.exec(x);
+    if (!m) throw new Error('«' + x.slice(0, 40) + '» debe llevar marca, modelo y año (ej. Toyota Corolla 2009-2013)');
+    const mm = m[1].trim(), m2 = MARCAS_2P.find(b => mm.toLowerCase().indexOf(b.toLowerCase() + ' ') === 0);
+    const marca = m2 || mm.split(' ')[0], modelo = mm.slice(marca.length).trim();
+    if (!modelo) throw new Error('a «' + x.slice(0, 40) + '» le falta el modelo (ej. Toyota Corolla 2009-2013)');
+    return [m2 || marca, modelo, Number(m[2]), Number(m[3] || m[2])];
+  });
 }
 
 /* ---- Órdenes de trabajo (taller, repuestos, servicios técnicos) ---- */
@@ -2806,6 +2851,12 @@ function panelImportar_(d) {
       if (costo !== null) reg.costo = r4_(costo);
       if (opciones) reg.opciones = opciones;
       ['sub', 'lema', 'descripcion'].forEach(k => { if (!vacio(f[k])) reg[k] = txt_(f[k], k === 'descripcion' ? 300 : 90); });
+      // Repuestos: nº de parte, código alterno, marca, «Es para» (carro / moto / ambos) y «Le queda a» (Toyota Corolla 2009-2013; …)
+      ['parte', 'alterno', 'marcaRep'].forEach(k => { if (!vacio(f[k])) reg[k] = txt_(f[k], 40); });
+      if (!vacio(f.espara) || !vacio(f.lequeda)) {
+        const ep = String(f.espara || ''), tipoV = /amb/i.test(ep) ? 'ambos' : /moto/i.test(ep) ? 'moto' : /carro|auto|veh/i.test(ep) ? 'carro' : 'ambos';
+        reg.compat = compat_({ t: tipoV, v: vacio(f.lequeda) ? [] : compatTexto_(f.lequeda) });
+      }
       if (!vacio(f.puntos)) reg.puntos = String(f.puntos).split(/\||\n/).map(x => txt_(x, 80)).filter(Boolean).slice(0, 6).join('|');
       if (!vacio(f.precioEsp)) { reg.precioEsp = r2_(n_(f.precioEsp, true) || 0); reg.minEsp = Math.floor(n_(f.minEsp) || 0); if (reg.precioEsp > 0 && reg.minEsp < 2) throw new Error('falta desde cuántas piezas vale el precio especial'); if (reg.precioEsp >= reg.precio) throw new Error('el precio especial debe ser menor que el normal'); }
       // Precio y existencia por opción: «50 ml = 450; 100 ml = 650» · con dos opciones «M / Negro = 3»
@@ -2829,7 +2880,7 @@ function panelImportar_(d) {
   res.lista = plan.slice(0, 400).map(x => { const r = x.reg, V = r.variantes, ops = opsDe_(r.opciones ? r : (x.ex || {}));
     let ex = x.exist; if (V) ex = Object.keys(V).reduce((a, k) => a + Number(V[k].s || 0), 0);
     return { fila: x.fila, nombre: r.nombre, categoria: r.categoria, catDef: !!r._catDef, precio: r.precio, existencia: ex, nuevo: !x.ex,
-      det: [ops.map(o => o.v.length + ' ' + o.n.toLowerCase()).join(' · '), r.precioEsp ? 'esp. ' + r.precioEsp + ' desde ' + r.minEsp : '', V && Object.keys(V).some(k => V[k].p > 0) ? 'precio por opción' : ''].filter(Boolean).join(' · ') }; });
+      det: [ops.map(o => o.v.length + ' ' + o.n.toLowerCase()).join(' · '), r.compat && JSON.parse(r.compat).v.length ? (n => n + (n === 1 ? ' vehículo' : ' vehículos'))(JSON.parse(r.compat).v.length) : '', r.parte ? 'nº ' + r.parte : '', r.precioEsp ? 'esp. ' + r.precioEsp + ' desde ' + r.minEsp : '', V && Object.keys(V).some(k => V[k].p > 0) ? 'precio por opción' : ''].filter(Boolean).join(' · ') }; });
   if (d.revisar) return res;
   const adm = rows_('Usuarios').find(x => x.rol === 'admin' && x.activo && !x.sucursal) || rows_('Usuarios').find(x => x.rol === 'admin' && x.activo) || rows_('Usuarios').find(x => x.rol === 'admin');
   if (!adm) throw new Error('El negocio no tiene administrador');
@@ -3445,6 +3496,9 @@ function guardar_(u, d) {
     // Vitaminas: cuántos días rinde una unidad (para avisar la recompra). Los lotes solo cambian con loteAgregar/loteBaja y el inventario
     if (r.rinde !== undefined) r.rinde = Math.max(0, Math.min(3650, parseInt(r.rinde, 10) || 0));
     delete r.lotes;
+    // Repuestos: nº de parte, código alterno, marca del repuesto y a qué vehículos le queda
+    ['parte', 'alterno', 'marcaRep'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 40); });
+    if (r.compat !== undefined) r.compat = compat_(r.compat);
     // Catálogo: subcategoría, frase destacada, beneficios y precio especial desde N piezas
     if (r.sub !== undefined) r.sub = txt_(r.sub, 40);
     if (r.lema !== undefined) r.lema = txt_(r.lema, 90);
@@ -3546,9 +3600,10 @@ function cargarEjemplos_(u, d) {
     if (existentes.indexOf(x[0].toLowerCase()) >= 0) return;
     const p = upsert_('Productos', { codigo: codEj(), nombre: x[0], categoria: x[1], icono: x[2], precio: x[3], costo: x[4],
       tipo: x[5] > 0 ? 'producto' : 'servicio', unidad: 'unidad', stock: 0, stockMin: x[5] > 0 ? Math.max(1, Math.round(x[5] / 5)) : 0,
-      tasaIsv: '', foto: '', descripcion: '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid,
+      tasaIsv: '', foto: '', descripcion: x[7] && x[7].descripcion || '', opciones: x[6] || '', tienda: true, activo: true, creado: ahora_(), plataforma: x[7] && x[7].plataforma || '', entrega: x[7] && x[7].entrega || '', incluye: x[7] && x[7].incluye || '', giro: gid === cfg.giro ? '' : gid,
       sub: x[7] && x[7].sub || '', lema: x[7] && x[7].lema || '', puntos: x[7] && x[7].puntos || '', precioEsp: x[7] && x[7].precioEsp || 0, minEsp: x[7] && x[7].minEsp || 0,
-      variantes: x[7] && x[7].vars ? JSON.stringify(x[7].vars) : '', rinde: x[7] && x[7].rinde || 0, lotes: '' });
+      variantes: x[7] && x[7].vars ? JSON.stringify(x[7].vars) : '', rinde: x[7] && x[7].rinde || 0, lotes: '',
+      parte: x[7] && x[7].parte || '', alterno: '', marcaRep: x[7] && x[7].marcaRep || '', compat: x[7] && x[7].compat ? compat_(x[7].compat) : '' });
     if (p.tipo === 'producto' && x[5] > 0) {
       if (x[7] && x[7].vm) LOTE_ENT[p.id] = { l: 'EJ-' + String(i + 1).padStart(3, '0'), v: mesesSumar_(hoy_(), x[7].vm) };
       moverStock_({ [p.id]: x[5] }, 'inicial', '', u, 'Existencia inicial (ejemplo)');
@@ -6147,6 +6202,8 @@ function tiendaInfo_(d) {
       if (String(p.creado).slice(0, 10) >= nuevoDesde) o.nuevo = true;
       if (p.tipo === 'servicio') o.serv = 1;
       if (Number(p.rinde) > 0) o.rinde = Number(p.rinde);
+      if (p.parte) o.parte = p.parte; if (p.alterno) o.alterno = p.alterno; if (p.marcaRep) o.marcaRep = p.marcaRep;
+      if (p.compat) { const cp = parseJ_(p.compat, null); if (cp && Array.isArray(cp.v)) o.compat = cp; }
       if (p.caduca && activos.indexOf('vitaminas') >= 0 && p.caduca >= hoy_()) o.vence = String(p.caduca).slice(0, 7);
       if (p.tipo === 'producto') { o.agotado = !sin && p.stock <= 0; if (ver) o.stock = Math.max(0, p.stock); else if (!sin) o.max = Math.max(0, Math.floor(p.stock)); }
       return o;
@@ -6739,7 +6796,7 @@ function instalarNegocio_(op) {
     const actual = sh.getRange(1, 1, 1, h.length).getValues()[0];
     if (h.some((k, i) => actual[i] !== k)) sh.getRange(1, 1, 1, h.length).setValues([h]).setFontWeight('bold').setBackground('#d10f6f').setFontColor('#ffffff');
   });
-  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si', dirOn: 'si', dirCiudad: op.ciudad || '' } : {}); // los negocios nuevos empiezan con Tiendas Catrachas encendido (aparecen desde la prueba gratis, al crear productos propios)
+  if (rows_('Config').length === 0) guardarConfig_(op.nombre ? { nombre: op.nombre, giro: op.giro || 'otro', telefono: op.telefono || '', tienda: 'si', dirOn: 'si', dirCiudad: op.ciudad || '', sinOrdenes: op.sinOrdenes ? 'si' : '' } : {}); // los negocios nuevos empiezan con Tiendas Catrachas encendido (aparecen desde la prueba gratis, al crear productos propios)
   if (rows_('Usuarios').length === 0) {
     const salt = Utilities.getUuid(), a = op.admin || { usuario: 'admin', nombre: 'Administrador', pin: 'admin123' };
     upsert_('Usuarios', { usuario: a.usuario, nombre: a.nombre, rol: 'admin', color: '#d10f6f',
@@ -7041,7 +7098,7 @@ function girosLinea_(cfg) {
 // ¿La función k está encendida en la tienda g? La de su tipo de negocio siempre; las demás según «Funciones por tienda»
 function modEnGiro_(k, g, cfg) {
   cfg = cfg || config_();
-  if ((MODULOS_GIRO[g] || []).indexOf(k) >= 0) return true;
+  if (modFijo_(k, g, cfg)) return true;
   const mt = girosActivos_(cfg).length > 1 ? parseJ_(cfg.modTiendas, {}) || {} : {};
   return Array.isArray(mt[k]) ? mt[k].indexOf(g) >= 0 : cfg[k] === 'si';
 }
