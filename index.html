@@ -1910,7 +1910,7 @@ const ILUS = [
   [/lampar|foco|led|electric|bombill|luz/, 'M24 6a12 12 0 0 0-7 22v5h14v-5a12 12 0 0 0-7-22zM19 38h10M21 42h6'],
   [/cuaderno|libro|escolar|lapiz|papeler|agenda|libreta/, 'M10 8h22a4 4 0 0 1 4 4v28H14a4 4 0 0 1-4-4zM14 36h22M10 8v28M16 16h12'],
   [/regalo|obsequio|detalle/, 'M8 18h32v8H8zM10 26h28v16H10zM24 18v24M24 18c-4 0-8-2-8-6s6-4 8 6c2-10 8-10 8-6s-4 6-8 6'],
-  [/cafe|te\b|taza|termo|chocolate caliente/, 'M10 14h26v16a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8zM36 18h4a4 4 0 0 1 0 8h-4M17 8c0 2 2 2 2 4M25 8c0 2 2 2 2 4'],
+  [/cafe|\bte\b|taza|termo|chocolate caliente/, 'M10 14h26v16a8 8 0 0 1-8 8H18a8 8 0 0 1-8-8zM36 18h4a4 4 0 0 1 0 8h-4M17 8c0 2 2 2 2 4M25 8c0 2 2 2 2 4'],
   [/refresc|agua|jugo|licuad|bebida|gaseosa|cerveza|soda|vaso/, 'M20 6h8v6h-8zM18 12h12l2 8v22H16V20z'],
   [/pastel|postre|torta|queque|cupcake|dulce|helado/, 'M10 24h28v16H10zM10 30c4 0 4 3 7 3s3-3 7-3 4 3 7 3 3-3 7-3M24 24v-8M24 10v2M22 16h4'],
   [/pizza/, 'M24 8L8 40h32zM24 8c8 0 14 5 16 11M24 8c-8 0-14 5-16 11M22 24a1 1 0 1 0 .1 0M29 32a1 1 0 1 0 .1 0M19 34a1 1 0 1 0 .1 0'],
@@ -1942,7 +1942,46 @@ const ILUS = [
   [/carro|auto|moto|vehic/, 'M8 28l4-10h24l4 10v10H8zM8 28h32M14 38v4M34 38v4M14 32h4M30 32h4'],
   [/cuidado|higiene|shampoo|champu|desodor|pasta|cepillo/, 'M18 12h12v30H18zM20 12V8h8v4M22 20h4M22 26h4'],
   [/.*/, 'M8 10h14l18 18-12 12L8 22zM15 17a1.5 1.5 0 1 0 .1 0'] ];
-const iluProd = p => { const t = norm((p.categoria || '') + ' ' + (p.nombre || '')); const d = (ILUS.find(x => x[0].test(t)) || ILUS[ILUS.length - 1])[1]; return `<span class="ilu"><svg viewBox="0 0 48 48"><path d="${d}"/></svg></span>`; };
+// Dibujos propios de cada giro: se buscan primero (así «zapatas de freno» no sale como zapato ni «cadena 428» como collar)
+const ILUS_GIRO = {
+  repuestos: [
+    [/servicio|mano de obra|alineado|balanceo|cambio|instalac|reparac|diagnost|escaneo/, 'M12 36l20-20M8 40l4-4M32 16l4-4a4 4 0 0 0 6 6l-4 4M14 10l8 8-4 4-8-8z'],
+    [/filtro/, 'M14 12h20v28H14zM14 18h20M14 34h20M19 18v16M24 18v16M29 18v16M19 6h10v6H19z'],
+    [/pastilla|zapata|disco|freno|caliper|mordaza/, 'M24 6a18 18 0 1 0 .01 0zM24 18a6 6 0 1 0 .01 0M24 11v2M24 35v2M11 24h2M35 24h2M31 5a20 20 0 0 1 12 12l-7 3a13 13 0 0 0-8-8z'],
+    [/bujia|cable de bujia|bobina|encendido/, 'M21 4h6v6h-6zM18 10h12v6H18zM16 16h16v4H16zM19 20h10v12H19zM22 32h4v5h-4zM24 37v3M24 40l4 3'],
+    [/bateria|acumulador/, 'M6 16h36v24H6zM12 16v-4h6v4M30 16v-4h6v4M11 27h7M33 24v6M30 27h6'],
+    [/cadena|kit de arrastre|arrastre|pinon|corona|catarina/, 'M8 31l7-7a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7zM26 17l7-7a5 5 0 0 1 7 7l-7 7a5 5 0 0 1-7-7zM19 29l10-10'],
+    [/amortigu|suspens|resorte|muelle|rotula|terminal|buje/, 'M20 4h8v6h-8zM24 10v3M15 13l18 4M15 17l18 4M15 21l18 4M15 25l18 4M15 29l18 4M24 33v5M20 38h8v6h-8z'],
+    [/llanta|neumat|rin\b|aro\b|tubo de llanta|camara/, 'M24 6a18 18 0 1 0 .01 0zM24 16a8 8 0 1 0 .01 0M24 6v10M24 32v10M6 24h10M32 24h10'],
+    [/banda|correa|faja/, 'M14 10a8 8 0 1 0 .01 0M34 22a8 8 0 1 0 .01 0M8 14l18 16M20 10l20 14'],
+    [/espejo|retrovisor/, 'M8 16a16 10 0 1 0 32 0 16 10 0 1 0-32 0M24 26v10M18 40h12'],
+    [/foco|faro|luz|stop|direccional|bombillo|led/, 'M20 12a12 12 0 0 1 0 24zM20 12h-4a12 12 0 0 0 0 24h4M28 16l12-4M28 24h14M28 32l12 4'],
+    [/aceite|lubric|grasa|atf|refriger|anticongel|liquido/, 'M14 14h20l4 6v22H10V20zM20 14V8h8v6M24 23s-6 6-6 10a6 6 0 0 0 12 0c0-4-6-10-6-10z'],
+    [/piston|motor|empaque|junta|culata|valvula|anillo/, 'M14 8h20v14H14zM14 12h20M14 16h20M20 22l2 11M28 22l-2 11M18 33h12a3 3 0 0 1 0 6H18a3 3 0 0 1 0-6z'],
+    [/moto/, 'M4 34a6 6 0 1 0 12 0 6 6 0 1 0-12 0M32 34a6 6 0 1 0 12 0 6 6 0 1 0-12 0M10 34l8-10h10l6-8M26 24l12 10M28 16h8M18 24l-4-6h-6'],
+    [/carro|auto|vehic/, 'M8 28l4-10h24l4 10v10H8zM8 28h32M14 38v4M34 38v4M14 32h4M30 32h4']
+  ]
+};
+// Si ningún dibujo coincide con el nombre: el dibujo de su tipo de negocio (no una etiqueta genérica)
+const ILU_DEF = {
+  tienda: 'M14 14c0-4 4-6 10-6s10 2 10 6M14 14c-6 8-6 20 0 28h20c6-8 6-20 0-28M14 14h20', variedades: 'M12 16h24l2 26H10zM18 16v-2a6 6 0 0 1 12 0v2',
+  ferreteria: 'M10 14l10-6 6 6-10 6zM22 20l16 16-4 4-16-16zM14 8l4 4', comida: 'M6 34h36M10 34a14 14 0 0 1 28 0M24 20v-4M22 16h4',
+  boutique: 'M24 14a4 4 0 1 1 4-4M24 14v4L6 32a2 2 0 0 0 1 4h34a2 2 0 0 0 1-4L24 18', farmacia: 'M18 6h12v6H18zM15 12h18v30H15zM15 21h18v13H15zM21 27h6M24 24v6',
+  vitaminas: 'M12 20a8 8 0 0 1 8-8h8a8 8 0 0 1 0 16h-8a8 8 0 0 1-8-8zM24 12v16', repuestos: 'M30 6a8 8 0 0 0-10 10L8 28l4 8 8 4 12-12a8 8 0 0 0 10-10l-6 2-4-4z',
+  carwash: 'M8 28l4-10h24l4 10v10H8zM8 28h32M14 38v4M34 38v4M18 6c0 3-3 4-3 6a3 3 0 0 0 6 0c0-2-3-3-3-6zM30 6c0 3-3 4-3 6a3 3 0 0 0 6 0c0-2-3-3-3-6z',
+  joyeria: 'M24 18a12 12 0 1 0 .01 0M18 8h12l3 6-9 4-9-4z', floristeria: 'M24 26c-7 0-10-5-10-13l5 3 5-6 5 6 5-3c0 8-3 13-10 13zM24 26v18M24 36c-5 0-8-3-9-6M24 40c5 0 8-3 9-6',
+  manualidades: 'M8 18h32v8H8zM10 26h28v16H10zM24 18v24M24 18c-4 0-8-2-8-6s6-4 8 6c2-10 8-10 8-6s-4 6-8 6', tecnologia: 'M15 5h18a3 3 0 0 1 3 3v32a3 3 0 0 1-3 3H15a3 3 0 0 1-3-3V8a3 3 0 0 1 3-3zM21 38h6',
+  belleza: 'M12 10a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM12 28a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM16 18l24 14M16 30l24-14', catalogo: 'M19 20h10v22H19zM21 20V9l8 4v7M17 30h14',
+  panaderia: 'M8 24c0-6 8-10 16-10s16 4 16 10v14H8zM16 24v14M32 24v14', servicios: 'M12 36l20-20M8 40l4-4M32 16l4-4a4 4 0 0 0 6 6l-4 4M14 10l8 8-4 4-8-8z',
+  streaming: 'M6 10h36v24H6zM18 40h12M24 34v6M21 17v10l8-5z', compras: 'M8 16h32v24H8zM8 16l4-8h24l4 8M24 16v24M18 24l6-6 6 6',
+  recargas: 'M14 16h20a8 8 0 0 1 8 8v6a5 5 0 0 1-9 3l-2-3H17l-2 3a5 5 0 0 1-9-3v-6a8 8 0 0 1 8-8zM14 21v6M11 24h6M31 23h1M35 26h1', veterinaria: 'M16 20a3 4 0 1 0 .1 0M32 20a3 4 0 1 0 .1 0M21 12a3 4 0 1 0 .1 0M27 12a3 4 0 1 0 .1 0M16 34c0-6 4-10 8-10s8 4 8 10c0 3-2 5-4 5-2 0-3-1-4-1s-2 1-4 1c-2 0-4-2-4-5z'
+};
+// Giro del producto: en la tienda viene en p.g; en el programa, su sección o el giro del negocio
+const giroIlu = p => p.g || (typeof giroDeP === 'function' && S.config ? giroDeP(p) : '') || '';
+const iluProd = p => { const n = norm(p.nombre), t = norm((p.categoria || '') + ' ' + (p.nombre || '')), g = giroIlu(p), gl = ILUS_GIRO[g] || [], gen = ILUS.slice(0, -1);
+  // Primero por el nombre con los dibujos del giro, luego con la categoría, luego los dibujos generales y al final el del giro
+  const x = gl.find(x => x[0].test(n)) || gl.find(x => x[0].test(t)) || gen.find(x => x[0].test(t)), d = x ? x[1] : ILU_DEF[g] || ILUS[ILUS.length - 1][1];
+  return `<span class="ilu"><svg viewBox="0 0 48 48"><path d="${d}"/></svg></span>`; };
 const fotoSrc = f => !f ? '' : String(f).indexOf('data:') === 0 || String(f).indexOf('http') === 0 || String(f).indexOf('iconos/') === 0 ? f : 'https://drive.google.com/thumbnail?id=' + encodeURIComponent(f) + '&sz=w600';
 const fotoAncha = f => fotoSrc(f).replace('sz=w600', 'sz=w1400');
 function avatarProd(p, cls) {
@@ -11942,6 +11981,7 @@ const NOVEDADES = [
   { v: '1.9.94', fecha: '2026-11-27', items: [
     { i: 'car', t: 'Repuestos para carro y moto', d: 'Tu tipo de negocio ahora se llama «Repuestos y taller (carro y moto)». En cada repuesto anota si es para carro o moto, su marca, el nº de parte, para qué sirve y a qué vehículos le queda (marca, modelo y años).', ir: 'productos', si: () => girosOn().includes('repuestos') },
     { i: 'search', t: 'Busca por vehículo', d: 'En Vender y en tu tienda en línea eliges marca, modelo y año, y salen solo los repuestos que le quedan a ese vehículo. También se busca por nº de parte.', ir: 'vender', si: () => girosOn().includes('repuestos') },
+    { i: 'box', t: 'Dibujos según tu tipo de negocio', d: 'Los productos sin foto ahora muestran un dibujo que va con tu tipo de negocio, en el programa y en tu tienda en línea.', ir: 'productos' },
     { i: 'wrench', t: '¿Solo vendes repuestos?', d: 'Si no haces reparaciones, apaga «Órdenes de trabajo» en Ajustes › Funciones por tipo de negocio.', ir: 'ajustes', si: () => girosOn().includes('repuestos') }
   ] },
   { v: '1.9.93', fecha: '2026-11-24', items: [
