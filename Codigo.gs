@@ -73,7 +73,7 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado','sucursal'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes','rinde','lotes','parte','alterno','marcaRep','compat','despiece','receta','recetaExtra'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes','rinde','lotes','parte','alterno','marcaRep','compat','despiece','receta','recetaExtra','paquete'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Conciliacion:   ['id','mes','saldoBanco','marcados','nota','actualizado','listo'],
@@ -113,7 +113,7 @@ const SCHEMA = {
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
   Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z', MesaCuentas:'MC', Comandas:'CM' };
-const NUMS = new Set(['recetaExtra','sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
+const NUMS = new Set(['paquete','recetaExtra','sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp','rinde','personas']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
@@ -1626,6 +1626,7 @@ function insumos_(ventas, pm) {
   const quedan = ids.map(id => pm[id]).filter(p => Number(p.stock) > 0).map(p => ({ nombre: p.nombre, stock: r3_(p.stock), valor: r2_(p.stock * (Number(p.costo) || 0)) })).sort((a, b) => b.valor - a.valor);
   return { usado: r2_(usado), queda: r2_(quedan.reduce((a, x) => a + x.valor, 0)), detalle: quedan.slice(0, 4), faltan: ids.filter(id => Number(pm[id].stock) < 0).map(id => pm[id].nombre).slice(0, 4) };
 }
+function fmtPaq_(cant, paq) { const n = cant / paq; return (Math.abs(n - Math.round(n)) < 0.0005 ? Math.round(n) : r2_(n)) + (n === 1 ? ' paquete' : ' paquetes') + ' de ' + paq; }
 function repartoDespiece_(dp, cantidad, totalLinea) {
   const base = dp.v.reduce((a, x) => a + x.n * (dp.m === 'igual' ? 1 : x.p), 0), out = {};
   dp.v.forEach(x => { const piezas = r3_(cantidad * x.n), parte = base > 0 ? totalLinea * x.n * (dp.m === 'igual' ? 1 : x.p) / base : 0;
@@ -3574,6 +3575,7 @@ function guardar_(u, d) {
     // Restaurante: el producto que se compra entero se despieza (pollo → pechugas, piernas…) y el plato descuenta sus piezas
     if (r.despiece !== undefined) r.despiece = despieceLimpio_(r.despiece, r.id);
     if (r.receta !== undefined) r.receta = recetaLimpia_(r.receta, r.id);
+    if (r.paquete !== undefined) r.paquete = Math.max(0, Math.min(100000, parseInt(r.paquete, 10) || 0)); // se compra por paquete: cuántas unidades trae normalmente
     if (r.recetaExtra !== undefined) { r.recetaExtra = r2_(Number(r.recetaExtra) || 0); if (r.recetaExtra < 0) throw new Error('Los montos no pueden ser negativos'); }
     { const rc = r.receta !== undefined ? r.receta : prev ? prev.receta : '', ex = r.recetaExtra !== undefined ? r.recetaExtra : prev ? Number(prev.recetaExtra) || 0 : 0;
       if (rc || (r.recetaExtra !== undefined && ex > 0)) r.costo = costoReceta_({ receta: rc, recetaExtra: ex }); }
@@ -4504,7 +4506,8 @@ function compra_(u, d) {
     const cant = r3_(i.cantidad), costo = r4_(i.costo);
     const vk = !p._nuevo && varsDe_(p) ? varKey_(p, i.variante) : '';
     if (!p._nuevo && varsDe_(p) && !vk) throw new Error('Elige ' + opsDe_(p).map(o => o.n.toLowerCase()).join(' y ') + ' de «' + p.nombre + '» en la compra');
-    return { p: p, vk: vk, cantidad: cant, costo: costo, precio: precio, margen: margen };
+    const paq = parseInt(i.paquete, 10) > 1 ? Math.min(100000, parseInt(i.paquete, 10)) : 0; // compra por paquete: la app ya manda la cantidad en unidades y el costo por unidad
+    return { p: p, vk: vk, cantidad: cant, costo: costo, precio: precio, margen: margen, paquete: paq };
   });
   if (!items.length) throw new Error('Agrega al menos un producto');
   const prov = d.proveedorId ? rows_('Proveedores').find(x => x.id === d.proveedorId) : null;
@@ -4534,7 +4537,8 @@ function compra_(u, d) {
   };
   if (girosActivos_().length > 1) c.sucursal = tiendaReq_(u, d) || girosActivos_()[0];
   appendRows_('Compras', [c]);
-  appendRows_('CompraDetalle', items.map((i, k) => ({ id: newId_('CompraDetalle') + k, compraId: c.id, productoId: i.p.id, descripcion: i.p.nombre + (i.vk ? ' (' + i.vk + ')' : ''),
+  items.forEach(i => { if (i.paquete && !pj && Number(i.p.paquete) !== i.paquete) upsert_('Productos', { id: i.p.id, paquete: i.paquete }); }); // la próxima compra ya sugiere ese tamaño
+  appendRows_('CompraDetalle', items.map((i, k) => ({ id: newId_('CompraDetalle') + k, compraId: c.id, productoId: i.p.id, descripcion: i.p.nombre + (i.vk ? ' (' + i.vk + ')' : '') + (i.paquete ? ' · ' + fmtPaq_(i.cantidad, i.paquete) : ''),
     cantidad: i.cantidad, costo: i.costo, total: r2_(i.cantidad * i.costo),
     precioAnt: i.precio !== null && i.precio > 0 && Math.abs(i.precio - (i.p.precio || 0)) > 0.004 ? (nuevos.indexOf(i.p.id) >= 0 ? 0 : i.p.precio) : '',
     precio: i.precio !== null && i.precio > 0 && Math.abs(i.precio - (i.p.precio || 0)) > 0.004 ? i.precio : '' })));
