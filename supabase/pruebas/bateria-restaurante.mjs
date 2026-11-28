@@ -137,6 +137,24 @@ ok('anular la compra anula su gasto del evento', r.ok && pj.gastos.find(g => g.i
 await api('estadoProyecto', { id: pjId, estado: 'cancelado' }, tok);
 mal('compra para un evento cancelado', await api('compra', { proyectoId: pjId, items: [{ productoId: pollo.id, cantidad: 1, costo: 150 }], metodo: 'Efectivo', clave: K() }, tok), /cancelado/);
 
+sec('Insumos por paquete');
+const vaso = await prod({ nombre: 'Vaso desechable 16 oz', categoria: 'Insumos', tipo: 'producto', precio: 0, paquete: '50' });
+ok('paquete guardado como número', vaso.paquete === 50, vaso.paquete);
+r = await api('guardar', { entidad: 'Productos', registro: { id: vaso.id, paquete: -3 } }, tok);
+ok('paquete negativo queda en 0', r.ok && r.data.paquete === 0, r.data && r.data.paquete);
+// La app manda 2 paquetes de 50 a L 95 como 100 unidades a L 1.90, con el tamaño del paquete
+r = await api('compra', { items: [{ productoId: vaso.id, cantidad: 100, costo: 1.9, paquete: 50 }], metodo: 'Efectivo', clave: K() }, tok);
+let va = await P(vaso.id);
+ok('compra por paquete: 100 vasos a L 1.90', r.ok && va.stock === 100 && cerca(va.costo, 1.9), [r.error, va.stock, va.costo]);
+ok('recuerda el tamaño del paquete', va.paquete === 50, va.paquete);
+const cdv = (await api('compras', {}, tok)).data.lista.find(c => c.id === r.data.compra.id);
+ok('el detalle dice «2 paquetes de 50»', cdv && /2 paquetes de 50/.test(cdv.detalle[0].descripcion), cdv && cdv.detalle[0].descripcion);
+r = await api('compra', { items: [{ productoId: vaso.id, cantidad: 100, costo: 1.6, paquete: 100 }], metodo: 'Efectivo', clave: K() }, tok);
+va = await P(vaso.id);
+ok('otro tamaño (paquete de 100) cambia el sugerido y promedia el costo', va.paquete === 100 && va.stock === 200 && cerca(va.costo, 1.75), [va.paquete, va.stock, va.costo]);
+const pll = await prod({ nombre: 'Pollo para llevar', categoria: 'Platos', tipo: 'servicio', precio: 130, receta: [{ id: pierna.id, n: 1 }, { id: vaso.id, n: 1 }], recetaExtra: 15 });
+ok('el vaso entra al costo del plato', cerca(pll.costo, r2((await P(pierna.id)).costo + 1.75 + 15)), pll.costo);
+
 function r2(x) { return Math.round(x * 100) / 100; }
 function hoyF() { const d = new Date(Date.now() - 6 * 3600e3); return d.toISOString().slice(0, 10); }
 console.log(`\n==== RESULTADO: ${pasadas} pasadas · ${fallidas} fallidas ====`);
