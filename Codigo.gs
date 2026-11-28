@@ -73,7 +73,7 @@ const SESION_SEG = 21600; // 6 horas (máximo permitido por CacheService)
 
 const SCHEMA = {
   Usuarios:       ['id','usuario','nombre','rol','color','hash','salt','activo','creado','sucursal'],
-  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes','rinde','lotes','parte','alterno','marcaRep','compat'],
+  Productos:      ['id','codigo','nombre','categoria','tipo','unidad','precio','costo','margen','stock','stockMin','tasaIsv','icono','foto','fotoFecha','descripcion','tienda','activo','creado','opciones','plataforma','entrega','incluye','caduca','garantia','giro','sub','lema','puntos','precioEsp','minEsp','variantes','rinde','lotes','parte','alterno','marcaRep','compat','despiece','receta','recetaExtra'],
   PlanCuentas:    ['id','codigo','nombre','tipo','naturaleza','padre','activo','creado'],
   Asientos:       ['id','numero','fecha','tipo','concepto','lineas','ref','usuarioId','anulado','anulacion','creado'],
   Conciliacion:   ['id','mes','saldoBanco','marcados','nota','actualizado','listo'],
@@ -92,7 +92,7 @@ const SCHEMA = {
   Cotizaciones:   ['id','numero','fecha','clienteId','cliente','telefono','proyecto','entrega','items','descuento','conIsv','subtotal','total','anticipo','validez','condiciones','gracias','notas','planPagos','estado','proyectoId','aceptadaEl','contrato','contratoFirma','contratoPor','contratoEl','acta','actaFirma','actaPor','actaEl','usuarioId','creado','actualizado'],
   Vacunas:        ['id','mascotaId','consultaId','tipo','nombre','productoId','fecha','proxima','lote','estado','avisado','usuarioId','creado'],
   Abonos:         ['id','fecha','clienteId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','ref','sucursal'],
-  Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion','sucursal'],
+  Compras:        ['id','numero','fecha','proveedorId','factura','total','saldo','metodo','usuarioId','anulada','nota','anulacion','sucursal','proyectoId'],
   CompraDetalle:  ['id','compraId','productoId','descripcion','cantidad','costo','total','precioAnt','precio'],
   Pagos:          ['id','fecha','proveedorId','monto','metodo','aplicado','usuarioId','nota','anulado','anulacion','sucursal'],
   Gastos:         ['id','fechaGasto','categoria','detalle','proveedor','monto','metodo','usuarioId','nota','anulado','creado','anulacion','giro','sucursal'],
@@ -101,7 +101,7 @@ const SCHEMA = {
   Cierres:        ['id','desde','hasta','usuarioId','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','nota','marca','sucursal'],
   Distribuciones: ['id','mes','tipo','destino','detalle','monto','usuarioId','nota','anulado','creado'],
   Proyectos:      ['id','nombre','cliente','descripcion','estado','inicio','fin','margen','presupuesto','usuarioId','nota','creado','actualizado','cotizacionId','clienteId','entrega'],
-  ProyectoGastos: ['id','proyectoId','dia','categoria','descripcion','cantidad','costoUnit','monto','productoId','caja','usuarioId','anulado','creado','anulacion','sucursal'],
+  ProyectoGastos: ['id','proyectoId','dia','categoria','descripcion','cantidad','costoUnit','monto','productoId','caja','usuarioId','anulado','creado','anulacion','sucursal','compraId'],
   ProyectoProductos: ['id','proyectoId','nombre','cantidad','unidad','peso','precio','productoId','inventario','creado','estado','entregado'],
   Chats:          ['id','telefono','nombre','clienteId','clave','productoId','producto','ultimo','ultimoTexto','deCliente','sinLeer','creado'],
   Mensajes:       ['id','chatId','de','texto','usuarioId','fecha'],
@@ -113,7 +113,7 @@ const SCHEMA = {
 };
 const PREFIJO = { Usuarios:'U', Productos:'R', Clientes:'C', Proveedores:'B', Ventas:'V', VentaDetalle:'D', Abonos:'A', Compras:'K', CompraDetalle:'E',
   Pagos:'G', Gastos:'X', Inventario:'I', Pedidos:'P', Cierres:'Z', Distribuciones:'Q', Proyectos:'J', ProyectoGastos:'Y', ProyectoProductos:'W', Chats:'H', Mensajes:'M', Ordenes:'O', Agenda:'T', Cuentas:'N', Suscripciones:'S', PlanCuentas:'F', Asientos:'L', Mascotas:'A', Consultas:'Q', Vacunas:'Y', Cotizaciones:'Z', MesaCuentas:'MC', Comandas:'CM' };
-const NUMS = new Set(['sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
+const NUMS = new Set(['recetaExtra','sinLeer','margen','precio','costo','stock','stockMin','limite','subtotal','descuento','isv','total','recibido','cambio','saldo','cantidad','monto',
   'envio','fondo','ventas','cobros','gastos','pagos','esperado','contado','diferencia','costoUnit','peso','presupuesto','precioAnt','anticipo','garantia','temperatura','validez','precioEsp','minEsp','rinde','personas']);
 const BOOLS = new Set(['activo','anulada','anulado','tienda','caja','deCliente']);
 const SOLO_FECHA = new Set(['fechaGasto','dia','inicio','fin','inventario','vence','caduca','promesa','nacimiento','control','proxima','avisado','entrega']);
@@ -1537,7 +1537,7 @@ function registrarCrear_(d, negocio, nombre, giro, wa, pin, yaExiste, cs, nReg) 
 
 /* ===================== FUNCIONES POR TIPO DE NEGOCIO ===================== */
 /* Cada giro trae encendidas las funciones que le sirven; cualquier negocio puede encender las demás desde Ajustes. */
-const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda', 'mesas'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], manualidades: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
+const MODULOS_GIRO = { farmacia: ['caducidad'], tienda: ['caducidad'], comida: ['comanda', 'mesas', 'cotizaciones'], repuestos: ['ordenes'], carwash: ['ordenes', 'agenda', 'variantes'], floristeria: ['variantes'], manualidades: ['variantes'], joyeria: ['variantes', 'series'], servicios: ['ordenes'], tecnologia: ['series', 'ordenes'], boutique: ['variantes'], variedades: ['variantes'], compras: ['variantes'], panaderia: ['encargos'], belleza: ['agenda'], catalogo: ['variantes', 'catalogo'], streaming: ['suscripciones', 'secciones'], recargas: ['secciones'], veterinaria: ['mascotas', 'agenda', 'caducidad', 'ordenes'], servicios: ['ordenes', 'cotizaciones'], vitaminas: ['caducidad', 'lotes', 'recompra', 'variantes', 'catalogo', 'secciones'] };
 // ¿La función k viene incluida en el giro g? En «Repuestos y taller» las órdenes se pueden apagar (sinOrdenes = solo vende repuestos)
 function modFijo_(k, g, cfg) { return (MODULOS_GIRO[g] || []).indexOf(k) >= 0 && !(g === 'repuestos' && k === 'ordenes' && cfg && cfg.sinOrdenes === 'si'); }
 function modOn_(k) { const cfg = config_(); return cfg[k] === 'si' || girosActivos_(cfg).some(g => modFijo_(k, g, cfg)); }
@@ -1561,6 +1561,78 @@ const COMPAT_MAX = 40;
 const MARCAS_2P = ['Mercedes Benz', 'Land Rover', 'Alfa Romeo', 'Great Wall', 'Aston Martin', 'Harley Davidson', 'Royal Enfield', 'Rolls Royce'];
 const titulo_ = t => t === t.toLowerCase() ? t.replace(/(^|\s)\S/g, m => m.toUpperCase()) : t;
 function anioCompat_(x) { const n = parseInt(x, 10), tope = new Date().getFullYear() + 1; return isNaN(n) ? NaN : Math.max(1950, Math.min(tope, n)); }
+/* ---- Restaurante: despiece y receta ----
+ * despiece (en lo que se compra entero): { m: 'peso' | 'igual', v: [{ id: pieza, n: piezas por cada unidad comprada, p: peso relativo }] }
+ * receta (en el plato): [{ id: pieza o insumo, n: cantidad por plato }] + recetaExtra (lo demás del plato, en lempiras)
+ * Las piezas deben ser productos que controlan existencias; el producto no puede ser pieza de sí mismo. */
+function piezasValidas_(lista, propio, que) {
+  const pm = porId_(rows_('Productos')), vistos = {};
+  return lista.filter(x => x && typeof x === 'object').map(x => {
+    const id = String(x.id || ''), n = r3_(Number(x.n) || 0);
+    const p = pm[id];
+    if (!p) throw new Error('Una pieza ' + que + ' ya no existe');
+    if (propio && id === propio) throw new Error('«' + p.nombre + '» no puede ser pieza de sí mismo');
+    if (p.tipo !== 'producto') throw new Error('«' + p.nombre + '» no controla existencias: no puede ser pieza ' + que);
+    if (!(n > 0) || n > 9999) throw new Error('Escribe cuántas «' + p.nombre + '» van ' + que);
+    if (vistos[id]) throw new Error('«' + p.nombre + '» está dos veces ' + que);
+    vistos[id] = 1;
+    return { id: id, n: n, p: x.p };
+  });
+}
+function despieceLimpio_(x, propio) {
+  if (!x) return '';
+  const o = typeof x === 'object' ? x : parseJ_(x, null);
+  if (!o || !Array.isArray(o.v)) throw new Error('El despiece no es válido');
+  if (o.v.length > 12) throw new Error('El despiece admite hasta 12 piezas');
+  const m = o.m === 'igual' ? 'igual' : 'peso';
+  const v = piezasValidas_(o.v, propio, 'del despiece').map(y => ({ id: y.id, n: y.n, p: m === 'igual' ? 1 : Math.max(0.01, Math.min(1000, r2_(Number(y.p) || 1))) }));
+  return v.length ? JSON.stringify({ m: m, v: v }) : '';
+}
+function recetaLimpia_(x, propio) {
+  if (!x) return '';
+  const o = typeof x === 'object' ? x : parseJ_(x, null);
+  if (!Array.isArray(o)) throw new Error('Lo que lleva el plato no es válido');
+  if (o.length > 12) throw new Error('Un plato admite hasta 12 piezas o insumos');
+  const v = piezasValidas_(o, propio, 'en el plato').map(y => ({ id: y.id, n: y.n }));
+  return v.length ? JSON.stringify(v) : '';
+}
+function despieceDe_(p) { const o = p && p.despiece ? parseJ_(p.despiece, null) : null; return o && Array.isArray(o.v) && o.v.length ? o : null; }
+function recetaDe_(p) { const o = p && p.receta ? parseJ_(p.receta, null) : null; return Array.isArray(o) && o.length ? o : null; }
+function tieneReceta_(p) { return !!recetaDe_(p) || Number(p && p.recetaExtra) > 0; }
+// Costo de un plato: piezas al costo actual de cada una + lo demás del plato (una pieza borrada no suma)
+function costoReceta_(p, pm) {
+  pm = pm || porId_(rows_('Productos'));
+  const rc = recetaDe_(p) || [];
+  return r4_(rc.reduce((a, x) => a + (pm[x.id] ? (Number(pm[x.id].costo) || 0) * x.n : 0), 0) + (Number(p.recetaExtra) || 0));
+}
+// Reparto del costo de una línea de compra entre las piezas: { id: { cant, costo unitario } }
+// Los platos que llevan estas piezas actualizan su costo (para que la lista y los reportes muestren el costo de hoy)
+function refrescarRecetas_(ids) {
+  const set = {}; (ids || []).forEach(id => { set[id] = 1; });
+  const prods = rows_('Productos'), pm = porId_(prods);
+  prods.forEach(p => { const rc = recetaDe_(p); if (!rc || !rc.some(x => set[x.id])) return;
+    const c = costoReceta_(p, pm); if (Math.abs(c - (Number(p.costo) || 0)) > 0.00005) upsert_('Productos', { id: p.id, costo: c }); });
+}
+function insumos_(ventas, pm) {
+  const set = {};
+  Object.keys(pm).forEach(id => { const p = pm[id], dp = despieceDe_(p), rc = recetaDe_(p);
+    if (dp) dp.v.forEach(x => { set[x.id] = 1; }); if (rc) rc.forEach(x => { set[x.id] = 1; }); });
+  const ids = Object.keys(set).filter(id => pm[id] && pm[id].tipo === 'producto');
+  if (!ids.length) return null;
+  const vids = {}; ventas.forEach(v => { vids[v.id] = 1; });
+  const desde = ventas.reduce((a, v) => Math.min(a, idMs_(v.id) || a), Date.now()) - 60000;
+  let usado = 0;
+  if (ventas.length) rowsDesde_('Inventario', desde).forEach(m => { if (m.tipo === 'venta' && vids[m.refId] && set[m.productoId]) usado += -(Number(m.cantidad) || 0) * (Number(m.costo) || 0); });
+  const quedan = ids.map(id => pm[id]).filter(p => Number(p.stock) > 0).map(p => ({ nombre: p.nombre, stock: r3_(p.stock), valor: r2_(p.stock * (Number(p.costo) || 0)) })).sort((a, b) => b.valor - a.valor);
+  return { usado: r2_(usado), queda: r2_(quedan.reduce((a, x) => a + x.valor, 0)), detalle: quedan.slice(0, 4), faltan: ids.filter(id => Number(pm[id].stock) < 0).map(id => pm[id].nombre).slice(0, 4) };
+}
+function repartoDespiece_(dp, cantidad, totalLinea) {
+  const base = dp.v.reduce((a, x) => a + x.n * (dp.m === 'igual' ? 1 : x.p), 0), out = {};
+  dp.v.forEach(x => { const piezas = r3_(cantidad * x.n), parte = base > 0 ? totalLinea * x.n * (dp.m === 'igual' ? 1 : x.p) / base : 0;
+    out[x.id] = { cant: piezas, costo: piezas > 0 ? r4_(parte / piezas) : 0 }; });
+  return out;
+}
+
 function compat_(x) {
   const o = typeof x === 'object' && x ? x : parseJ_(String(x || ''), null);
   if (!o || typeof o !== 'object') return '';
@@ -3499,6 +3571,12 @@ function guardar_(u, d) {
     // Repuestos: nº de parte, código alterno, marca del repuesto y a qué vehículos le queda
     ['parte', 'alterno', 'marcaRep'].forEach(k => { if (r[k] !== undefined) r[k] = txt_(r[k], 40); });
     if (r.compat !== undefined) r.compat = compat_(r.compat);
+    // Restaurante: el producto que se compra entero se despieza (pollo → pechugas, piernas…) y el plato descuenta sus piezas
+    if (r.despiece !== undefined) r.despiece = despieceLimpio_(r.despiece, r.id);
+    if (r.receta !== undefined) r.receta = recetaLimpia_(r.receta, r.id);
+    if (r.recetaExtra !== undefined) { r.recetaExtra = r2_(Number(r.recetaExtra) || 0); if (r.recetaExtra < 0) throw new Error('Los montos no pueden ser negativos'); }
+    { const rc = r.receta !== undefined ? r.receta : prev ? prev.receta : '', ex = r.recetaExtra !== undefined ? r.recetaExtra : prev ? Number(prev.recetaExtra) || 0 : 0;
+      if (rc || (r.recetaExtra !== undefined && ex > 0)) r.costo = costoReceta_({ receta: rc, recetaExtra: ex }); }
     // Catálogo: subcategoría, frase destacada, beneficios y precio especial desde N piezas
     if (r.sub !== undefined) r.sub = txt_(r.sub, 40);
     if (r.lema !== undefined) r.lema = txt_(r.lema, 90);
@@ -3533,6 +3611,7 @@ function guardar_(u, d) {
     if (r.categoria) { const ex = rows_('Productos').find(p => p.categoria.toLowerCase() === r.categoria.toLowerCase()); if (ex) r.categoria = ex.categoria; }
     if (prev && prev.foto && r.foto !== undefined && r.foto !== prev.foto) borrarFoto_(prev.foto);
     const g = upsert_('Productos', r);
+    if (prev && r.costo !== undefined && Math.abs((Number(prev.costo) || 0) - r.costo) > 0.00005) refrescarRecetas_([g.id]); // los platos que llevan esta pieza toman su costo nuevo
     // Las existencias por opción se dejan como las escribió, y el total del producto queda igual a la suma (con su movimiento de inventario)
     if (varQuiere && g.tipo === 'producto') {
       const V = varsDe_(g) || {}, mov = {}; let suma = 0, dv = 0;
@@ -4082,7 +4161,7 @@ function venta_(u, d, interno) {
     const desc = p ? p.nombre + (i.variante ? ' · ' + txt_(i.variante, 60) : '') : txt_(i.descripcion, 80);
     if (!desc) throw new Error('Escribe la descripción del artículo');
     if (!p && !(i.costo === undefined || i.costo === '' || i.costo === null) && !(Number(i.costo) >= 0)) throw new Error('El costo de «' + desc + '» no es válido');
-    const costoP = p ? (ed && ed.costos && ed.costos[p.id] !== undefined ? ed.costos[p.id] : p.costo) : 0; // al editar, lo ya vendido conserva su costo
+    const costoP = p ? (ed && ed.costos && ed.costos[p.id] !== undefined ? ed.costos[p.id] : tieneReceta_(p) ? costoReceta_(p, pm) : p.costo) : 0; // al editar, lo ya vendido conserva su costo; un plato cuesta lo que valen hoy sus piezas
     return { p: p, vk: vk, productoId: p ? p.id : '', descripcion: vk && i.variante === undefined && p ? p.nombre + ' · ' + vk.split(', ').map(x => x.split(': ')[1]).join(' · ') : desc, cantidad: cant, precio: precio, costo: p ? costoP : costosPedido[desc] !== undefined ? r4_(costosPedido[desc].length > 1 ? costosPedido[desc].shift() : costosPedido[desc][0]) : r4_(Math.max(0, Number(i.costo) || 0)), serie: txt_(i.serie, 60), garantia: p && p.garantia ? Number(p.garantia) : (parseInt(i.garantia, 10) || 0) };
   });
   if (!items.length) throw new Error('El ticket está vacío');
@@ -4191,6 +4270,8 @@ function venta_(u, d, interno) {
   appendRows_('VentaDetalle', detalle);
   const cambios = {};
   Object.keys(pedidoK).forEach(k => { cambios[k] = -pedidoK[k]; });
+  // Platos con receta: salen sus piezas (no frenan la venta: si faltan, la existencia queda en negativo y se ve en el inventario)
+  items.forEach(i => { const rc = i.p ? recetaDe_(i.p) : null; if (rc) rc.forEach(x => { if (pm[x.id] && pm[x.id].tipo === 'producto') cambios[x.id] = r3_((cambios[x.id] || 0) - i.cantidad * x.n); }); });
   moverStock_(cambios, 'venta', venta.id, u, ed ? 'Edición ' + venta.numero : venta.numero, fecha);
   if (d.pedidoId) upsert_('Pedidos', { id: d.pedidoId, estado: 'entregado', ventaId: venta.id, actualizado: ahora_() });
   const nuevasSus = susRegistrar_(u, planSus, venta);
@@ -4432,6 +4513,9 @@ function compra_(u, d) {
   const total = r2_(items.reduce((a, i) => a + r2_(i.cantidad * i.costo), 0));
   const fecha = /^\d{4}-\d{2}-\d{2}$/.test(String(d.fecha || '')) && d.fecha <= hoy_() ? (d.fecha === hoy_() ? ahora_() : d.fecha + 'T12:00') : ahora_();
   if (mesCerrado_(fecha)) throw new Error('Ese mes ya está cerrado en Contabilidad: registra la compra con fecha del mes abierto.');
+  // Compra para un evento o proyecto: no entra al inventario, cada línea queda como gasto del proyecto
+  const pj = d.proyectoId ? proyectoValido_(d.proyectoId, true) : null;
+  if (pj && items.some(i => i.p._nuevo)) throw new Error('En una compra para un evento usa productos que ya existen (o anótalo como gasto del evento)');
   // Ya validado todo: se crean los productos nuevos (sin existencias; las suma la compra)
   const cats = {};
   prods.forEach(p => { if (p.categoria) cats[String(p.categoria).toLowerCase()] = p.categoria; });
@@ -4446,7 +4530,7 @@ function compra_(u, d) {
   });
   const c = {
     id: newId_('Compras'), numero: siguiente_('C'), fecha: fecha, proveedorId: prov ? prov.id : '', factura: txt_(d.factura, 40),
-    total: total, saldo: metodo === 'Crédito' ? total : 0, metodo: metodo, usuarioId: u.id, anulada: false, nota: txt_(d.nota, 200)
+    total: total, saldo: metodo === 'Crédito' ? total : 0, metodo: metodo, usuarioId: u.id, anulada: false, nota: txt_(d.nota, 200), proyectoId: pj ? pj.id : ''
   };
   if (girosActivos_().length > 1) c.sucursal = tiendaReq_(u, d) || girosActivos_()[0];
   appendRows_('Compras', [c]);
@@ -4454,20 +4538,36 @@ function compra_(u, d) {
     cantidad: i.cantidad, costo: i.costo, total: r2_(i.cantidad * i.costo),
     precioAnt: i.precio !== null && i.precio > 0 && Math.abs(i.precio - (i.p.precio || 0)) > 0.004 ? (nuevos.indexOf(i.p.id) >= 0 ? 0 : i.p.precio) : '',
     precio: i.precio !== null && i.precio > 0 && Math.abs(i.precio - (i.p.precio || 0)) > 0.004 ? i.precio : '' })));
+  if (pj) {
+    appendRows_('ProyectoGastos', items.map((i, k) => ({ id: newId_('ProyectoGastos') + k, proyectoId: pj.id, dia: fecha.slice(0, 10), categoria: 'Compras del evento',
+      descripcion: txt_(i.p.nombre + (i.vk ? ' (' + i.vk + ')' : '') + (prov ? ' · ' + prov.nombre : ''), 120), cantidad: i.cantidad, costoUnit: i.costo, monto: r2_(i.cantidad * i.costo),
+      productoId: '', caja: false, usuarioId: u.id, anulado: false, creado: ahora_(), compraId: c.id, sucursal: c.sucursal || '' })));
+    tocarProyecto_(pj.id);
+    return { compra: c, productos: rows_('Productos'), proveedores: proveedoresConSaldo_(), nuevos: nuevos };
+  }
   // Costo promedio ponderado y nuevo precio de venta (si se indicó)
   const agr = {};
   items.forEach(i => { const x = agr[i.p.id] || (agr[i.p.id] = { p: i.p, cant: 0, valor: 0, precio: null, margen: null }); x.cant += i.cantidad; x.valor += i.cantidad * i.costo; if (i.precio !== null) x.precio = i.precio; if (i.margen !== null) x.margen = i.margen; });
-  const cambios = {};
+  const cambios = {}, pmA = porId_(rows_('Productos')), piezas = {}, costosMov = {};
+  // Lo que se compra entero y tiene despiece: entran sus piezas (con su parte del costo), no el producto entero
+  items.forEach(i => { const dp = despieceDe_(i.p); if (!dp || i.vk) return; i.despiezado = true;
+    const rp = repartoDespiece_(dp, i.cantidad, i.cantidad * i.costo);
+    Object.keys(rp).forEach(id => { if (!pmA[id]) return; const x = piezas[id] || (piezas[id] = { cant: 0, valor: 0 }); x.cant = r3_(x.cant + rp[id].cant); x.valor += rp[id].cant * rp[id].costo; }); });
   Object.keys(agr).forEach(id => {
-    const x = agr[id], st = Math.max(0, x.p.stock);
-    const nuevoCosto = st + x.cant > 0 ? r4_((st * x.p.costo + x.valor) / (st + x.cant)) : x.p.costo;
+    const x = agr[id], st = Math.max(0, x.p.stock), entero = items.some(i => i.p.id === id && i.despiezado);
+    const nuevoCosto = entero ? r4_(x.valor / x.cant) : st + x.cant > 0 ? r4_((st * x.p.costo + x.valor) / (st + x.cant)) : x.p.costo; // el entero guarda su último costo de compra
     const upd = { id: id, costo: nuevoCosto };
     if (x.precio !== null && x.precio > 0) upd.precio = x.precio;
     if (x.margen !== null) upd.margen = x.margen;
     upsert_('Productos', upd);
   });
-  items.forEach(i => { const k = i.p.id + (i.vk ? SEPV + i.vk : ''); cambios[k] = r3_((cambios[k] || 0) + i.cantidad); });
-  moverStock_(cambios, 'compra', c.id, u, c.numero + (c.factura ? ' · Fact. ' + c.factura : ''), fecha);
+  Object.keys(piezas).forEach(id => { const p = pmA[id], x = piezas[id], st = Math.max(0, Number(p.stock) || 0), c0 = Number(p.costo) || 0;
+    const nc = st + x.cant > 0 ? r4_((st * c0 + x.valor) / (st + x.cant)) : c0;
+    upsert_('Productos', { id: id, costo: nc }); costosMov[id] = r4_(x.valor / x.cant);
+    cambios[id] = r3_((cambios[id] || 0) + x.cant); });
+  items.forEach(i => { if (i.despiezado) return; const k = i.p.id + (i.vk ? SEPV + i.vk : ''); cambios[k] = r3_((cambios[k] || 0) + i.cantidad); });
+  moverStock_(cambios, 'compra', c.id, u, c.numero + (c.factura ? ' · Fact. ' + c.factura : ''), fecha, costosMov);
+  if (Object.keys(piezas).length || Object.keys(agr).length) refrescarRecetas_(Object.keys(piezas).concat(Object.keys(agr)));
   return { compra: c, productos: rows_('Productos'), proveedores: proveedoresConSaldo_(), nuevos: nuevos };
 }
 
@@ -4498,6 +4598,12 @@ function anularCompra_(u, d) {
   const pedF = rows_('Pedidos').filter(x => { const r = reciboDe_(x); return r && r.compraId === c.id; });
   const usado = pedF.find(x => x.ventaId || reciboDe_(x).liberado);
   if (usado) throw new Error('El pedido ' + usado.numero + ' de esta factura ya se ' + (reciboDe_(usado).liberado ? 'liberó' : 'entregó') + ': la compra ya no se puede anular.');
+  if (c.proyectoId) { // compra para un evento: no movió inventario; se anulan sus gastos en el evento
+    rows_('ProyectoGastos').filter(g => g.compraId === c.id && !g.anulado).forEach(g => upsert_('ProyectoGastos', { id: g.id, anulado: true, anulacion: marca_() }));
+    if (rows_('Proyectos').some(x => x.id === c.proyectoId)) tocarProyecto_(c.proyectoId);
+    upsert_('Compras', { id: c.id, anulada: true, saldo: 0, anulacion: marca_(), nota: (c.nota ? c.nota + ' · ' : '') + 'Anulada por ' + u.nombre + ' ' + ahora_().replace('T', ' ') });
+    return { productos: rows_('Productos'), proveedores: proveedoresConSaldo_() };
+  }
   const det = rows_('CompraDetalle').filter(x => x.compraId === c.id), pm = porId_(rows_('Productos')), cambios = {}, agr = {};
   det.forEach(i => {
     const x = agr[i.productoId] || (agr[i.productoId] = { cant: 0, valor: 0, precioAnt: null, precio: null });
@@ -4506,6 +4612,9 @@ function anularCompra_(u, d) {
   });
   // Se devuelve lo que entró con la compra (por producto y opción); las compras viejas, por su detalle
   const entro = movDe_(c.id, 'compra', (idMs_(c.id) || 0) - 60000);
+  // Piezas de un despiece: entraron con su propio costo (está en el movimiento); se quitan de su costo promedio
+  rowsDesde_('Inventario', (idMs_(c.id) || 0) - 60000).forEach(m => { if (m.refId !== c.id || m.tipo !== 'compra' || det.some(i => i.productoId === m.productoId)) return;
+    const x = agr[m.productoId] || (agr[m.productoId] = { cant: 0, valor: 0, precioAnt: null, precio: null }); x.cant += Number(m.cantidad) || 0; x.valor += (Number(m.cantidad) || 0) * (Number(m.costo) || 0); });
   if (Object.keys(entro).length) Object.keys(entro).forEach(k => { cambios[k] = entro[k]; });
   else det.forEach(i => { cambios[i.productoId] = r3_((cambios[i.productoId] || 0) - i.cantidad); });
   const tot = totPorId_(cambios);
@@ -4519,6 +4628,7 @@ function anularCompra_(u, d) {
     if (Object.keys(upd).length > 1) upsert_('Productos', upd);
   });
   moverStock_(cambios, 'anulación', c.id, u, 'Anulación ' + c.numero);
+  refrescarRecetas_(Object.keys(agr));
   const gIds = {};
   pedF.forEach(x => { const r = reciboDe_(x); if (r.gastoId) gIds[r.gastoId] = 1; upsert_('Pedidos', { id: x.id, recibo: '', estado: ['listo', 'confirmado'].indexOf(x.estado) >= 0 ? 'confirmado' : x.estado, actualizado: ahora_(), nota: ((x.nota ? x.nota + ' · ' : '') + 'Factura anulada (' + c.numero + ')').slice(-1000) }); });
   rows_('Gastos').filter(g => gIds[g.id] && !g.anulado).forEach(g => upsert_('Gastos', { id: g.id, anulado: true, anulacion: marca_(), nota: (g.nota ? g.nota + ' · ' : '') + 'Anulado con la compra ' + c.numero }));
@@ -5542,7 +5652,7 @@ function reporte_(u, d) {
   // Cobros, compras y pagos: con una sección elegida, solo los registrados en esa tienda
   const deG = x => !giro || tiendaDoc_(x, activos) === giro, enR = f => f >= r.desde && f <= r.hasta;
   rows_('Abonos').forEach(a => { if (!a.anulado && enR(a.fecha) && deG(a)) k.cobros += a.monto; });
-  rows_('Compras').forEach(c => { if (!c.anulada && enR(c.fecha) && deG(c)) k.compras += c.total; });
+  rows_('Compras').forEach(c => { if (!c.anulada && !c.proyectoId && enR(c.fecha) && deG(c)) k.compras += c.total; }); // las compras de un evento van a su evento
   rows_('Pagos').forEach(p => { if (!p.anulado && enR(p.fecha) && deG(p)) k.pagos += p.monto; });
   const anul = rows_('Ventas').filter(v => v.anulada && !v.corregida && enR(v.fecha)); // las editadas no cuentan como anuladas
   k.anuladas = giro ? (() => { const tv = tiendasVentas_(anul, null, activos); return anul.filter(v => tv[v.id] === giro).length; })() : anul.length;
@@ -5561,6 +5671,9 @@ function reporte_(u, d) {
     meseros: Object.keys(porMesero).map(x => { const o = porMesero[x]; o.ventas = r2_(o.ventas); return o; }).sort((a, b) => b.ventas - a.ventas),
     porHora: porHora, giro: giro
   };
+  // Restaurante: de lo comprado, cuánto salió en los platos y cuánto queda en piezas para mañana
+  const ins = insumos_(vs, pm);
+  if (ins) { ins.compras = k.compras; res.insumos = ins; }
   if ((activos.length > 1 && lista.length > 1) || giro) { // con un solo giro activo no hay secciones (aunque haya ventas de un giro de antes)
     res.gastosGenerales = r2_(general);
     res.secciones = lista.filter(g => secs[g].activa || secs[g].n || secs[g].propios).map(g => {
@@ -5936,7 +6049,7 @@ function proyecto_(u, d) {
   const prods = rows_('ProyectoProductos').filter(x => x.proyectoId === p.id);
   p.r = calcProyecto_(p, gastos, prods, config_());
   p.gastos = desc_(gastos.map(g => { g._k = g.dia + g.creado; g.usuario = us[g.usuarioId] ? us[g.usuarioId].nombre : ''; return g; }), '_k');
-  if (p.cotizacionId && modOn_('cotizaciones')) { const q = rows_('Cotizaciones').find(x => x.id === p.cotizacionId); if (q) { cotLlena_(q); p.cot = { id: q.id, numero: q.numero, total: q.total, cobrado: q.cobrado, saldo: q.saldo, pagos: q.pagos, contratoEl: q.contratoEl, contratoPor: q.contratoPor, actaEl: q.actaEl, actaPor: q.actaPor, telefono: q.telefono, clienteId: q.clienteId }; } }
+  if (p.cotizacionId && modOn_('cotizaciones')) { const q = rows_('Cotizaciones').find(x => x.id === p.cotizacionId); if (q) { cotLlena_(q); p.cot = { id: q.id, numero: q.numero, total: q.total, cobrado: q.cobrado, saldo: q.saldo, pagos: q.pagos, contratoEl: q.contratoEl, contratoPor: q.contratoPor, actaEl: q.actaEl, actaPor: q.actaPor, telefono: q.telefono, clienteId: q.clienteId, subtotal: q.subtotal, descuento: q.descuento, isv: r2_((Number(q.total) || 0) - ((Number(q.subtotal) || 0) - (Number(q.descuento) || 0))) }; } }
   return p;
 }
 
@@ -6012,6 +6125,7 @@ function gastoProyecto_(u, d) {
   if (r.id && !prev) throw new Error('El gasto ya no existe');
   if (prev && prev.anulado) throw new Error('No se puede modificar un gasto anulado');
   if (prev && prev.productoId) throw new Error('El material tomado del inventario no se puede modificar. Anúlalo y regístralo de nuevo.');
+  if (prev && prev.compraId) throw new Error('Este gasto viene de una compra. Para cambiarlo, anula la compra y regístrala de nuevo.');
   if (prev && u.rol !== 'admin' && prev.usuarioId !== u.id) throw new Error('Solo el administrador o quien lo registró puede modificarlo');
   let cat = txt_(r.categoria, 40) || 'Otros';
   const ci = CAT_PROY.find(c => c.toLowerCase() === cat.toLowerCase()); if (ci) cat = ci;
@@ -6061,6 +6175,7 @@ function anularGastoProyecto_(u, d) {
   if (!g) throw new Error('El gasto no existe');
   if (g.anulado) throw new Error('El gasto ya está anulado');
   if (u.rol !== 'admin' && g.usuarioId !== u.id) throw new Error('Solo el administrador o quien lo registró puede anularlo');
+  if (g.compraId) { const cg = rows_('Compras').find(x => x.id === g.compraId); if (cg && !cg.anulada) throw new Error('Este gasto viene de la compra ' + cg.numero + '. Para quitarlo, anula esa compra en Compras.'); }
   const p = proyectoValido_(g.proyectoId);
   upsert_('ProyectoGastos', { id: g.id, anulado: true, anulacion: marca_() });
   let prods = null;
